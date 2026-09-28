@@ -997,7 +997,8 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
   color:var(--red);
   border-color:#6c1b2b;
   background:#230812;
-}.module-priority.medium{
+}
+.module-priority.medium{
   color:var(--orange);
   border-color:#71400f;
   background:#241504;
@@ -1996,7 +1997,8 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
   font-size:18px;
   margin-bottom:8px;
 }
-.post-process-card span{  display:block;
+.post-process-card span{
+  display:block;
   color:var(--muted);
   font-size:12px;
   line-height:1.45;
@@ -2995,7 +2997,8 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
       <button class="btn" onclick="setFullDateRange()">📆 Ver todas las fechas</button>
       <button class="btn orange" onclick="excludeMostRecentDate()">🙈 Todas menos fecha más reciente</button>
       <button class="btn" onclick="setMostRecentDateOnly()">📅 Solo fecha más reciente</button>
-      <button class="btn purple" onclick="protectCurrentRange()">💾 Proteger rango mostrado</button>      <button class="btn red" onclick="clearDateRange()">✕ Quitar fecha</button>
+      <button class="btn purple" onclick="protectCurrentRange()">💾 Proteger rango mostrado</button>
+      <button class="btn red" onclick="clearDateRange()">✕ Quitar fecha</button>
       <div class="control">
         <label>Antigüedad para “prob. cerrada”</label>
         <select id="closedMonthsThreshold" onchange="applyFilters()">
@@ -3994,7 +3997,8 @@ function mainSessionCandidates(){
       if(hist!==0)return hist;
       const scoreA=(a.riskLevel==='alto'?4:a.riskLevel==='medio'?2:0)+(isProbablyClosed(a)?3:0)+(followerAgeDays(a)>=180?1:0);
       const scoreB=(b.riskLevel==='alto'?4:b.riskLevel==='medio'?2:0)+(isProbablyClosed(b)?3:0)+(followerAgeDays(b)>=180?1:0);
-      if(scoreA!==scoreB)return scoreB-scoreA;      return (a.dateMain||0)-(b.dateMain||0);
+      if(scoreA!==scoreB)return scoreB-scoreA;
+      return (a.dateMain||0)-(b.dateMain||0);
     }));
 }
 function buildGuidedSession100(){
@@ -4993,7 +4997,8 @@ function setReviewedTodayFilter(){
   const from=document.getElementById('reviewedFrom');
   const to=document.getElementById('reviewedTo');
   if(from)from.value=val;
-  if(to)to.value=val;  const f=document.getElementById('filterSelect'); if(f)f.value='reviewed_range';
+  if(to)to.value=val;
+  const f=document.getElementById('filterSelect'); if(f)f.value='reviewed_range';
   applyFilters();
   showPage('list');
 }
@@ -5992,7 +5997,8 @@ function snoozeUntil(username){
 }
 function saveSnoozeMap(){localStorage.setItem(LS_SNOOZE,JSON.stringify(snoozeMap||{}));}
 function loadSnoozeMap(){try{snoozeMap=JSON.parse(localStorage.getItem(LS_SNOOZE)||'{}')||{}}catch{snoozeMap={}}}
-function isSnoozed(rowOrUsername){  const username=typeof rowOrUsername==='string'?rowOrUsername:rowOrUsername?.username;
+function isSnoozed(rowOrUsername){
+  const username=typeof rowOrUsername==='string'?rowOrUsername:rowOrUsername?.username;
   if(!username)return false;
   const until=snoozeUntil(username);
   if(!until)return false;
@@ -6991,7 +6997,8 @@ function openAllSelectedTabs(){
   logAction('open',`Se abrieron ${rows.length} perfiles seleccionados`,{count:rows.length,source:'todo seleccionado',bad:counts.bad,good:counts.good});
   showVerifyPopup(rows);
   addBatchHistory('todo seleccionado', rows);
-  msg(`${rows.length} pestañas seleccionadas abiertas.`, 's');}
+  msg(`${rows.length} pestañas seleccionadas abiertas.`, 's');
+}
 
 // Alias por compatibilidad con versiones anteriores / atajos si existieran.
 function openSelectedTabs(){
@@ -7990,7 +7997,8 @@ function renderCompare(){
     <div class="stat"><b style="color:var(--green)">${compareGained.length}</b><span>nuevos seguidores</span></div>
     <div class="stat"><b>${compareStayed.length}</b><span>se quedaron</span></div>
     <div class="stat"><b style="color:var(--orange)">${compareLost.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>te dejaron y tú los sigues</span></div>
-  `;  document.getElementById('lostFollowersList').innerHTML=renderCompareList(compareLost,'lost');
+  `;
+  document.getElementById('lostFollowersList').innerHTML=renderCompareList(compareLost,'lost');
   document.getElementById('gainedFollowersList').innerHTML=renderCompareList(compareGained,'gained');
   document.getElementById('stayedFollowersList').innerHTML=renderCompareList(compareStayed,'stayed');
 }
@@ -8989,7 +8997,8 @@ function focusBatchFill(primaryRows, fallbackRows, n, kind){
       if(activeBatchRowResolved(r,kind))return;
       seen.add(r.username);
       if(!target || out.length<target)out.push(r);
-    });  }
+    });
+  }
   add(primaryRows);
   if(target && out.length<target)add(fallbackRows);
   return target ? out.slice(0,target) : out;
@@ -9988,7 +9997,8 @@ function resetDoubleCheckCycle(show=true){
     </div>
 
     <div class="focus-review-list" id="extraFocusList"></div>
-  </div></div>
+  </div>
+</div>
 
 
 <div class="safe-focus-popup" id="safeFocusPopup">
@@ -10987,7 +10997,8 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
     const payload=detectPayload(text,source);
     if(payload.category==='unknown'&&categoryFromFilename(source)==='pending_follow_requests')payload.category='pending_follow_requests';
     if(payload.format==='html')return parseHTMLUsers(payload,source).map(x=>({username:x.username,href:x.href,name:x.name||'',url:x.url||'',timestamp:x.timestamp||0,source,fbid:''}));
-    if(payload.format==='json'&&typeof extractPendingRequestsFromJSON==='function')return extractPendingRequestsFromJSON(payload.data,source)||[];    // Compatibilidad legacy con TXT/JSON extraño.
+    if(payload.format==='json'&&typeof extractPendingRequestsFromJSON==='function')return extractPendingRequestsFromJSON(payload.data,source)||[];
+    // Compatibilidad legacy con TXT/JSON extraño.
     let out=[];
     try{if(typeof extractPendingRequestsFromJSON==='function')out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source)||[])}catch{}
     const raw=decodeText(text), re=/"label"\s*:\s*"Username"[\s\S]{0,160}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;
