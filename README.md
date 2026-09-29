@@ -22,6 +22,10 @@ Download `index.html` and open it in a modern desktop browser. No build step is 
 
 IG Cleaner Pro is designed as a local tool. The app analyzes files you select in your browser. It does not use the Instagram API and does not automate account actions.
 
+## Development contract
+
+Before redesigning or refactoring IG Cleaner Pro, read [PROJECT_LOG.md](PROJECT_LOG.md). It documents the workflows that must not be removed, including Followers session/history, Recheck, Double Check, Focus behavior, and regression checks required before merging to `main`.
+
 ## Author
 
 **Michel Armando Duarte Flores**  
