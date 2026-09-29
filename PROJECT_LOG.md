@@ -225,3 +225,17 @@ During the v120.x UI experiments, several regressions were found:
 These are now explicitly documented as **regressions that must not recur**.
 
 The redesign may continue, but functionality must be preserved first and reorganized second.
+
+
+## 2026-09-29 — mandatory module sidebars
+
+The right-side **live sidebar is part of the functional UX contract**, not an optional decoration.
+
+- **Review** keeps its existing right-side live panel.
+- **Followers** must have its own right-side live panel with Followers/Mutuals-specific data.
+- **Pending** must have its own right-side live panel with Pending-specific data.
+- These sidebars should contain the module's live/session information such as last action, opened/reviewed counts, pending/resolved state, active batch, reopen counts, module-specific status, saved history/activity, and relevant quick actions.
+- When Followers switches between **All Followers** and **Mutuals**, the same Followers sidebar may update its scope, but it must remain visible.
+- Do **not** replace these sidebars with session/history cards inserted into the central workspace.
+- The central workspace is for the module's focus controls, filters, tables and primary content; live tracking belongs in the right sidebar.
+- A redesign that removes either the Followers or Pending sidebar is a regression.
