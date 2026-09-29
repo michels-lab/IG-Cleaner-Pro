@@ -239,3 +239,23 @@ The right-side **live sidebar is part of the functional UX contract**, not an op
 - Do **not** replace these sidebars with session/history cards inserted into the central workspace.
 - The central workspace is for the module's focus controls, filters, tables and primary content; live tracking belongs in the right sidebar.
 - A redesign that removes either the Followers or Pending sidebar is a regression.
+
+
+### Recent activity parity across module sidebars
+
+Review, Followers/Mutuals, and Pending must each expose a full **Recent activity** block in their right-side live sidebar.
+
+At minimum, each module must show its own scoped metrics for:
+- reviewed in the last 1 h and 3 h;
+- opened in the last 1 h and 3 h;
+- Focus activity in the last 1 h and 3 h;
+- action count in the last 1 h and 3 h;
+- reviewed today and in the last 24 h;
+- opened today and in the last 24 h;
+- batches today and in the last 24 h;
+- protected/paused today as appropriate to the module;
+- reopened today.
+
+These counters must be **module-scoped**. Followers/Mutuals must not show Review or Pending activity, and Pending must not show Review or Followers activity.
+
+A reduced sidebar that only shows last action + a few totals is a regression.
