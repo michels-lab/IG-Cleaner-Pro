@@ -290,3 +290,18 @@ The file-detection preview must never label a valid JSON file as invalid because
 - Header-only sampling may be used for HTML detection.
 - “JSON inválido” is reserved for a full JSON document that actually fails parsing.
 - Diagnostic/preview messaging must agree with the importer whenever the importer successfully parses the file.
+
+
+### Explicit relative time for last action
+
+The top card of the Review, Followers/Mutuals, and Pending sidebars must state the last action in explicit human relative time.
+
+Required pattern:
+- `ÚLTIMA ACCIÓN · hace 3 horas`
+- `ÚLTIMA ACCIÓN · hace 5 días`
+- `ÚLTIMA ACCIÓN · hace 12 minutos`
+- `ÚLTIMA ACCIÓN · hace un momento`
+
+Directly below it, show what was done. The exact date/time may remain as secondary text.
+
+Do not show only an absolute timestamp or force the user to calculate how long ago the action happened.
