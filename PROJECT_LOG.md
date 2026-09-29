@@ -305,3 +305,19 @@ Required pattern:
 Directly below it, show what was done. The exact date/time may remain as secondary text.
 
 Do not show only an absolute timestamp or force the user to calculate how long ago the action happened.
+
+
+#### Relative-time precision
+
+The last-action relative timestamp must be precise enough to identify when the event happened, while still showing the exact date/time underneath.
+
+Examples:
+- `hace 7 min`
+- `hace 1 h 23 min`
+- `hace 5 h 04 min`
+- `hace 2 días 3 h`
+- `hace 1 semana 2 días`
+- `hace 2 meses 5 días`
+- `hace 1 año 2 meses`
+
+For events under 24 hours, preserve minutes rather than rounding down to only whole hours.
