@@ -259,3 +259,34 @@ At minimum, each module must show its own scoped metrics for:
 These counters must be **module-scoped**. Followers/Mutuals must not show Review or Pending activity, and Pending must not show Review or Followers activity.
 
 A reduced sidebar that only shows last action + a few totals is a regression.
+
+
+### Standard activity hierarchy for all three work sidebars
+
+The right-side live panels for **Review**, **Followers/Mutuals**, and **Pending** must use the same primary activity hierarchy.
+
+Required order, from top to bottom:
+1. **Last action** — show exactly what was done and when it happened.
+2. **Opened this session**.
+3. **Opened today**.
+4. **Opened in the last 7 rolling days**.
+5. **Opened in the last 1 hour**.
+6. **Opened in the last 2 hours**.
+7. **Opened in the last 3 hours**.
+8. **Module-scoped action history**.
+9. Secondary module-specific state and controls.
+
+“Opened” means profiles actually opened through logged open/focus/reopen actions; the same definition must be used across all three modules.
+
+Followers may switch scope to Mutuals, but the hierarchy stays identical and only the data scope changes.
+
+Do not replace this structure with different metric sets for each module.
+
+### JSON detection diagnostic rule
+
+The file-detection preview must never label a valid JSON file as invalid because only a truncated header was parsed.
+
+- Full JSON must be read before using JSON.parse for validity.
+- Header-only sampling may be used for HTML detection.
+- “JSON inválido” is reserved for a full JSON document that actually fails parsing.
+- Diagnostic/preview messaging must agree with the importer whenever the importer successfully parses the file.
