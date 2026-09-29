@@ -321,3 +321,37 @@ Examples:
 - `hace 1 año 2 meses`
 
 For events under 24 hours, preserve minutes rather than rounding down to only whole hours.
+
+
+## 2026-09-29 — Mutuals and non-followed Followers are separate workspaces
+
+The Followers data must be partitioned into two distinct workspaces in the UI:
+
+### Mutuals
+Contains only followers that the user also follows (`iFollow === true`).
+
+It must have its own:
+- page/navigation entry;
+- Focus 20 / 30 / 40;
+- recommended/risk batches;
+- filters and table;
+- standardized right sidebar;
+- last action, opened-session/time-window metrics and action history.
+
+### Followers que no sigo
+Contains only followers that follow the user but the user does not follow (`iFollow === false`).
+
+It must have its own:
+- page/navigation entry;
+- Focus 20 / 30 / 40;
+- recommended/risk batches;
+- filters and table;
+- standardized right sidebar;
+- last action, opened-session/time-window metrics and action history.
+
+Do **not** put Mutuals and followers the user does not follow in the same page behind an internal `Todos / Mutuos / No los sigo` selector.
+
+Historical data may come from the same Followers export, but presentation, focus candidates, action history and live session scope must stay separated.
+
+### Layout rule
+Mutuals, Followers que no sigo and Pending use exactly one flexible central content column plus one right live sidebar on desktop. Never reserve sidebar width twice through nested padding/fixed-panel rules; doing so crushes the central content and is a regression.
