@@ -1,6 +1,6 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
-_Last updated: 2026-09-29_
+_Last updated: 2026-09-30_
 
 This file is the **functional contract** for IG Cleaner Pro. UI redesigns, refactors, performance work, and future releases must preserve the capabilities listed here unless Michel Armando Duarte Flores explicitly requests their removal.
 
@@ -414,3 +414,75 @@ When `pending_follow_requests` is found inside the primary Instagram ZIP import:
 - if Pending data exists but the current filters produce zero rows, the empty-state message must say that no rows match the filters rather than asking the user to upload `pending_follow_requests.json`.
 
 The real 2026-09-30 reference ZIP contains exactly one `connections/followers_and_following/pending_follow_requests.json` file with **418** entries using the `label_values` schema.
+
+
+## 2026-09-30 — Experience layer: Import Report, Command Center and Focus Session
+
+These features improve execution speed without replacing the v119 engine or the module-specific workflows.
+
+### Import Intelligence Report
+After a complete Instagram ZIP is processed, Import must expose an operational report based on the current export.
+
+At minimum show:
+- Following;
+- Followers;
+- Mutuals;
+- current accounts that do not follow back, respecting existing evidence safeguards;
+- Followers the user does not follow;
+- Pending;
+- current critical-priority count;
+- compatible extra-export records/files when available.
+
+The report must provide direct navigation/actions into Review, Mutuals, Followers, Pending and/or Command Center. It must use the already parsed in-memory data and must not require the internal ZIP files to be uploaded again.
+
+### Command Center live work queue
+Home / Command Center must expose work that is actually available now rather than only static navigation cards.
+
+It must include live candidate availability for:
+- Review Focus;
+- Recheck / Double Check;
+- Mutuals;
+- Followers the user does not follow;
+- Pending.
+
+If an active Focus batch exists, continuing that batch takes precedence over suggesting a new one. Starting a Command Center action must call the existing module-specific workflow; it must not create a second focus engine.
+
+### Focus Session
+A Focus batch may use a dedicated one-profile-at-a-time working surface.
+
+Required behavior:
+- preserve the existing active batch as the source of truth;
+- show `resolved / total` progress and remaining count;
+- show username plus relationship/review context already known by the app;
+- show saved profile-history context when available;
+- allow opening the current profile and reopening unresolved profiles;
+- support individual decisions without automatically applying one decision to the entire batch;
+- Review / Mutuals / Followers support Reviewed, Protect, Keep/Conserve, Snooze and the existing secondary decision types where applicable;
+- Pending supports Still pending, Accepted, Reviewed, Snooze and the existing secondary decision types where applicable;
+- “Next without marking” must leave that profile unresolved;
+- resolving one profile must prune only that profile from the active batch;
+- finishing all profiles must leave the active batch empty and show a session summary;
+- closing early must preserve unresolved active-batch state so the session can be recovered;
+- the legacy/classic batch confirmation UI remains available as a fallback.
+
+The Focus Session is a new working surface over the existing v119/v120 batch state, not a replacement for module state/history or evidence logic.
+
+### Regression found during v120.19 validation
+`autoCleanGarbageStates()` referenced the nonexistent `savePendingSnooze()` helper. The correct persisted-state helper is `savePendingSnoozeMap()`.
+
+### v120.19 real-export validation
+Validated locally against the supplied 2026-09-30 Instagram ZIP:
+- 11,785 Following;
+- 21,824 Followers;
+- 418 Pending;
+- 11,087 Mutuals;
+- 698 current no-follow-back rows under the app's current evidence rules;
+- 10,737 Followers the user does not follow;
+- 27 critical-priority rows;
+- Import Report visible after ZIP processing;
+- Command Center work queue populated from live candidate functions;
+- Pending remained 418 visible rows after ZIP import;
+- Focus Session individual-resolution smoke tests passed for Review, Mutuals, Followers and Pending;
+- no page errors or console warnings in the final browser smoke test;
+- 0 duplicate DOM IDs;
+- all 12 inline scripts pass JavaScript syntax validation.
