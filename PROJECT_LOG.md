@@ -400,3 +400,17 @@ The importer must be tested against both the sanitized fixture and the locally s
 A real regression found during this validation: `following_hashtags.json` was initially misclassified as Following because of the filename substring. The ZIP classifier must only treat the actual Following account export as Following.
 
 Validated reference counts on 2026-09-30: **11,785 Following / 21,824 Followers / 418 Pending**.
+
+
+### ZIP-to-Pending synchronization is mandatory
+
+When `pending_follow_requests` is found inside the primary Instagram ZIP import:
+
+- parsed rows must be assigned to `pendingRequestsRaw`, persisted, and rendered immediately in the Pending workspace;
+- the Pending workspace must visibly state that its current source came from the ZIP and show the number of loaded requests;
+- the manual Pending file input is an alternative/replacement path only; it must not keep presenting `Sin archivo` as if no Pending source exists after successful ZIP import;
+- ZIP import must reset stale Pending search/risk/age/view filters to a visible all-data state so imported records cannot appear missing because of an old filter;
+- after global rebuild/filter routines run, Pending must be rendered again so later refreshes cannot leave a stale empty table;
+- if Pending data exists but the current filters produce zero rows, the empty-state message must say that no rows match the filters rather than asking the user to upload `pending_follow_requests.json`.
+
+The real 2026-09-30 reference ZIP contains exactly one `connections/followers_and_following/pending_follow_requests.json` file with **418** entries using the `label_values` schema.
