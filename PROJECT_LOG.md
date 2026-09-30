@@ -355,3 +355,29 @@ Historical data may come from the same Followers export, but presentation, focus
 
 ### Layout rule
 Mutuals, Followers que no sigo and Pending use exactly one flexible central content column plus one right live sidebar on desktop. Never reserve sidebar width twice through nested padding/fixed-panel rules; doing so crushes the central content and is a regression.
+
+
+## 2026-09-30 — Complete Instagram ZIP is the primary import workflow
+
+The **primary** way to load Instagram data into IG Cleaner Pro is the complete `.zip` export downloaded from Instagram.
+
+Required behavior:
+- The Import page must present **Import complete Instagram export (.zip)** as the recommended/default path.
+- The user should not need to unzip the export manually.
+- ZIP processing happens locally in the browser; the archive is not uploaded to a server.
+- Search recursively through folders inside the archive.
+- Automatically identify and group every supported export, including:
+  - Following;
+  - all `followers_*` files;
+  - Pending follow requests;
+  - Recent follow requests;
+  - Recently unfollowed profiles;
+  - Blocked profiles;
+  - other export categories explicitly supported by the app in the future.
+- Following/Followers/Pending found in the ZIP must be loaded into their normal app workflows automatically.
+- Additional supported exports must be analyzed and surfaced automatically rather than requiring the user to select them again.
+- The ZIP route must reuse the **same format detection/parsers** as manual import. Do not maintain a second independent interpretation of Instagram data.
+- Files may be nested in arbitrary folders; do not depend on one fixed Instagram folder path.
+- Multiple Followers files must be combined automatically.
+- Manual upload of individual JSON/HTML files remains available as an **advanced/alternative import path**, not the primary UX.
+- Invalid/encrypted/unsupported archives must produce an explicit error without destroying the currently stored review state.
