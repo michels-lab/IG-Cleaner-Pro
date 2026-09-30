@@ -381,3 +381,22 @@ Required behavior:
 - Multiple Followers files must be combined automatically.
 - Manual upload of individual JSON/HTML files remains available as an **advanced/alternative import path**, not the primary UX.
 - Invalid/encrypted/unsupported archives must produce an explicit error without destroying the currently stored review state.
+
+
+### ZIP fixture must be derived from a real export structure
+
+The repository fixture at `tests/fixtures/instagram-export-sample.zip` must remain sanitized but structurally faithful to a real Instagram export.
+
+For the 2026-09-30 reference structure:
+- preserve the 13 real archive paths and nested folders;
+- preserve JSON root types and key shapes;
+- preserve the three `followers_*.json` split;
+- preserve the real Pending / Recent / Blocked `label_values` schema;
+- preserve ZIP STORE (method 0) when that is what the real export uses;
+- include neighboring exports such as `following_hashtags.json` so regression tests prove they are ignored rather than misclassified.
+
+The importer must be tested against both the sanitized fixture and the locally supplied real reference ZIP before a ZIP-import change is considered validated.
+
+A real regression found during this validation: `following_hashtags.json` was initially misclassified as Following because of the filename substring. The ZIP classifier must only treat the actual Following account export as Following.
+
+Validated reference counts on 2026-09-30: **11,785 Following / 21,824 Followers / 418 Pending**.
