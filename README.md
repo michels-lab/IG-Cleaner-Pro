@@ -4,7 +4,7 @@ Local-first workspace for reviewing Instagram exports, comparing following/follo
 
 ## Current version
 
-**v119 — HTML comparable-range · JSON intact**
+**v120.20 — ZIP primary import · JSON/HTML parity**
 
 ## What it does
 
