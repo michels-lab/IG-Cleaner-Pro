@@ -486,3 +486,13 @@ Validated locally against the supplied 2026-09-30 Instagram ZIP:
 - no page errors or console warnings in the final browser smoke test;
 - 0 duplicate DOM IDs;
 - all 12 inline scripts pass JavaScript syntax validation.
+
+
+## 2026-10-03 — v120.20 ZIP HTML/JSON parity
+
+- Source baseline: v120.19 experience upgrade.
+- Complete Instagram ZIP remains the primary import workflow.
+- ZIP import now activates the HTML relationship-evidence safeguards from the files found inside the ZIP itself, instead of depending on the manual Followers file input.
+- JSON import/parsing behavior is intentionally unchanged.
+- Manual JSON/HTML uploads remain an advanced alternative path.
+- Structural validation: all inline scripts pass syntax validation and no duplicate DOM IDs were found.
