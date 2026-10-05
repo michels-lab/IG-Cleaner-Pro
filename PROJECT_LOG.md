@@ -679,3 +679,14 @@ The next chat should continue from this section instead of reconstructing the An
   - the obsolete duplicate `assets/ig_cleaner_workspace.html` is absent.
 - CI workflow now also triggers when its own workflow file changes.
 - Desktop parsers, JSON import behavior, HTML evidence safeguards, Focus determinism and sync semantics were not modified by this cleanup.
+
+### CI revalidation after single-asset cleanup
+
+- Hardened Android CI run `37390702783` completed **SUCCESS** on commit `8cbd0f048453d87283e03ae7ae67ebb885314421`.
+- Workflow artifact: `ig-cleaner-companion-debug` (artifact id `11380688614`).
+- Extracted APK size: **6,880,202 bytes**.
+- APK SHA-256: `bc706c76857a18a5fdfce3ffafa9a3edfe01188c952edc4c57667a86529397d9`.
+- APK inspection confirms exactly one IG Cleaner Workspace asset:
+  - `assets/ig_cleaner_pro_v120_27_synced_companion.html` — 1,670,732 bytes.
+- Obsolete duplicate `assets/ig_cleaner_workspace.html` is no longer packaged.
+- Current release gate: device validation remains required before merging to `main` and publishing v120.29 pre-release.
