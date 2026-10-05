@@ -6,6 +6,7 @@ on:
     branches: ["android-*"]
     paths:
       - "android/**"
+      - ".github/workflows/android-companion.yml"
 
 jobs:
   android:
@@ -35,6 +36,18 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
       - run: gradle :app:assembleDebug
+      - name: Verify embedded Workspace asset
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OFFICIAL="assets/ig_cleaner_pro_v120_27_synced_companion.html"
+          LEGACY="assets/ig_cleaner_workspace.html"
+          unzip -l "$APK" | grep "$OFFICIAL"
+          SIZE="$(unzip -l "$APK" | awk -v asset="$OFFICIAL" '$0 ~ asset {print $1}')"
+          test -n "$SIZE" && test "$SIZE" -gt 1500000
+          if unzip -l "$APK" | grep -q "$LEGACY"; then
+            echo "::error::Duplicate legacy Workspace asset is still packaged: $LEGACY"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: ig-cleaner-companion-debug
