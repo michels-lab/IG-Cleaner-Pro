@@ -31,3 +31,29 @@ The anon/publishable key is safe to ship in a client only because RLS is enabled
 ## Android build
 
 The project has no third-party runtime SDK. It calls Supabase Auth/PostgREST with Android's built-in HTTP stack. A GitHub Actions workflow is included under `android/.github/workflows/android-companion.yml`; if you copy it to repository root `.github/workflows/`, it builds `app-debug.apk` as an artifact.
+
+## Build verification — 2026-10-05
+
+- GitHub Actions run `37297653870` completed successfully on branch `sync-companion-v120.27`.
+- `gradle :app:assembleDebug` completed successfully.
+- Debug APK SHA-256: `31568b5175882f131c26cb3314fe57ade7da6cc2a4804a6e60539f9f2a1109ae`.
+- The APK is included in `dist/IG_Cleaner_Companion_v120.27-debug.apk`.
+
+## Remaining live-backend step
+
+The Desktop and Android clients are implemented and build-tested, but a real Supabase project must still have `supabase/schema.sql` applied and both clients must be configured with that project's URL and publishable/anon key. Never use a Supabase service-role key in either client.
+
+## Simplified account UX hotfix
+
+The Supabase project URL and publishable key are embedded in the clients. End users never enter backend configuration or a password.
+
+Authentication uses email OTP:
+1. Enter email.
+2. Tap **Enviar código**.
+3. Enter the code from the email.
+4. Tap **Entrar con código**.
+5. The session is persisted locally and sync runs automatically on Desktop.
+
+### One-time Supabase email template setup
+
+In Supabase Dashboard -> Authentication -> Email Templates -> Magic Link, make the email display the OTP token by using `{{ .Token }}` instead of requiring the confirmation URL. This is a project-owner setup step, not an end-user step.
