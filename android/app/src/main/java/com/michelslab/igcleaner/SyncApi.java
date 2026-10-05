@@ -37,6 +37,32 @@ public final class SyncApi {
     public String getRefreshToken() { return refreshToken == null ? "" : refreshToken; }
     public boolean hasSession() { return accessToken != null && !accessToken.isBlank(); }
 
+    public synchronized void adoptWebSession(String rawJson) {
+        try {
+            if (rawJson == null || rawJson.isBlank() || "null".equals(rawJson.trim())) {
+                logout();
+                return;
+            }
+            JSONObject session = new JSONObject(rawJson);
+            String nextAccess = session.optString("access_token", "");
+            String nextRefresh = session.optString("refresh_token", "");
+            if (nextAccess.isBlank()) return;
+            accessToken = nextAccess;
+            if (!nextRefresh.isBlank()) refreshToken = nextRefresh;
+            JSONObject user = session.optJSONObject("user");
+            if (user != null && !user.optString("email", "").isBlank()) {
+                email = user.optString("email").trim();
+            }
+            prefs.edit()
+                    .putString("access", accessToken)
+                    .putString("refresh", refreshToken == null ? "" : refreshToken)
+                    .putString("email", email == null ? "" : email)
+                    .apply();
+        } catch (Exception ignored) {
+            // Keep the last known-good native session if the WebView sends malformed data.
+        }
+    }
+
     public JSONObject webSession() {
         JSONObject out = new JSONObject();
         try {
@@ -124,7 +150,9 @@ public final class SyncApi {
             saveSession(result);
             return hasSession();
         } catch (Exception ignored) {
-            logout();
+            // Do not destroy the remembered session on a transient auth/network failure.
+            // The Web workspace may still own a newer rotated refresh token and will bridge
+            // it back into native storage as soon as it refreshes successfully.
             return false;
         }
     }
