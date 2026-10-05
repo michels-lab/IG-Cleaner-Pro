@@ -73,7 +73,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private SyncApi api;
     private String deviceId;
-    private String currentScreen = "focus";
+    private String currentScreen = "workspace";
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -140,18 +140,18 @@ public final class MainActivity extends AppCompatActivity {
                     .edit().putString("device_id", deviceId).apply();
         }
 
-        toolbar = findViewById(R.id.toolbar);
-        bottomNav = findViewById(R.id.bottomNav);
-        content = findViewById(R.id.content);
-        globalStatus = findViewById(R.id.globalStatus);
-
-        View root = findViewById(R.id.appRoot);
+        View root = findViewById(R.id.mainRoot);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(0, bars.top, 0, bars.bottom);
             return insets;
         });
         ViewCompat.requestApplyInsets(root);
+
+        toolbar = findViewById(R.id.toolbar);
+        bottomNav = findViewById(R.id.bottomNav);
+        content = findViewById(R.id.content);
+        globalStatus = findViewById(R.id.globalStatus);
 
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.actionSync) {
@@ -280,7 +280,7 @@ public final class MainActivity extends AppCompatActivity {
             }
         });
 
-        workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_workspace.html");
+        workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_pro_v120_27_synced_companion.html");
         setGlobalStatus("Workspace completo · Android");
     }
 
