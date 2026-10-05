@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ig_bg">
@@ -8,4 +9,12 @@
         android:id="@+id/workspaceWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/workspaceLoading"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        app:indicatorColor="@color/ig_cyan"
+        app:trackColor="@color/ig_surface_2"/>
 </FrameLayout>
