@@ -24,7 +24,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            assets.srcDir("../../desktop")
+            assets.setSrcDirs(listOf("../../desktop"))
         }
     }
 
