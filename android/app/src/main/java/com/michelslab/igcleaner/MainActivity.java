@@ -152,6 +152,7 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setSelectedItemId(R.id.navFocus);
+        showFocusScreen();
         mainHandler.post(autoSync);
     }
 
