@@ -3,7 +3,7 @@ name: Build IG Cleaner Companion
 on:
   workflow_dispatch:
   push:
-    branches: ["android-native-v120.28"]
+    branches: ["android-full-workspace-v120.29"]
     paths:
       - "android/**"
 
