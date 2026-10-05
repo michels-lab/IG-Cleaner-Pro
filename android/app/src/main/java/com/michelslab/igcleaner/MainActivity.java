@@ -19,11 +19,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -79,9 +74,6 @@ public final class MainActivity extends AppCompatActivity {
     private SyncApi api;
     private String deviceId;
     private String currentScreen = "workspace";
-    private WebView workspaceWebView;
-    private ValueCallback<Uri[]> fileChooserCallback;
-    private static final int FILE_CHOOSER_REQUEST = 9012;
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -150,7 +142,7 @@ public final class MainActivity extends AppCompatActivity {
 
         View root = findViewById(R.id.mainRoot);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            android.graphics.Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()).toPlatformInsets();
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(0, bars.top, 0, bars.bottom);
             return insets;
         });
@@ -160,14 +152,6 @@ public final class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNav);
         content = findViewById(R.id.content);
         globalStatus = findViewById(R.id.globalStatus);
-
-        View root = findViewById(R.id.appRoot);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, bars.top, 0, bars.bottom);
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(root);
 
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.actionSync) {
@@ -182,10 +166,6 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.navWorkspace) {
-                showWorkspaceScreen();
-                return true;
-            }
             if (item.getItemId() == R.id.navWorkspace) {
                 showWorkspaceScreen();
                 return true;
@@ -300,7 +280,7 @@ public final class MainActivity extends AppCompatActivity {
             }
         });
 
-        workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_workspace.html");
+        workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_pro_v120_27_synced_companion.html");
         setGlobalStatus("Workspace completo · Android");
     }
 
