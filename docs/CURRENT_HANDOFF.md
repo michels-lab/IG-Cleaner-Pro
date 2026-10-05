@@ -20,15 +20,19 @@ Implementation choice:
 - package the official Desktop HTML as the Android **Workspace**;
 - keep native **Focus**, **Audit** and **Cuenta** for mobile-specific UX.
 
+## Completed after LIMÓN
+
+1. Removed duplicate Workspace packaging at the Gradle source-set level; Desktop is now the single packaged asset source.
+2. Verified active Android About/version text already reports v120.29 Beta.
+3. Generalized Android CI to `android-*` and added APK-level Workspace verification so duplicate/missing assets fail CI.
+
 ## Do next
 
-1. Remove obsolete duplicate Android workspace asset if present.
-2. Update remaining v120.28 About/version text to v120.29.
-3. Generalize branch-specific Android CI trigger.
-4. Install the newest v120.29 artifact on the target phone.
-5. Validate Workspace, file picker/ZIP import, OTP persistence, Focus round-trip, Android→Desktop review sync, Audit origin and export-to-Downloads.
-6. If validation passes: merge branch to main and publish pre-release v120.29.
-7. If validation fails: fix on the same branch and record evidence in PROJECT_LOG before release.
+1. Confirm CI passes for the single-asset hardening commits.
+2. Install the newest v120.29 artifact on the target phone.
+3. Validate Workspace, file picker/ZIP import, OTP persistence, Focus round-trip, Android→Desktop review sync, Audit origin and export-to-Downloads.
+4. If validation passes: merge branch to main and publish pre-release v120.29.
+5. If validation fails: fix on the same branch and record evidence in PROJECT_LOG before release.
 
 ## Do not regress
 
