@@ -22,6 +22,12 @@ android {
         }
     }
 
+    sourceSets {
+        getByName("main") {
+            assets.srcDir("../../desktop")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
