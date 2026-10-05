@@ -2,11 +2,14 @@ package com.michelslab.igcleaner;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.ContentValues;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Environment;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,9 +19,20 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ProgressBar;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,6 +48,9 @@ import com.google.android.material.textfield.TextInputEditText;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -62,6 +79,11 @@ public final class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private FrameLayout content;
     private TextView globalStatus;
+
+    private WebView workspaceWebView;
+    private ProgressBar workspaceLoading;
+    private ValueCallback<Uri[]> filePathCallback;
+    private static final int FILE_CHOOSER_REQUEST = 12029;
 
     private View focusView;
     private TextView focusTitle;
@@ -123,6 +145,14 @@ public final class MainActivity extends AppCompatActivity {
         content = findViewById(R.id.content);
         globalStatus = findViewById(R.id.globalStatus);
 
+        View root = findViewById(R.id.root);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, bars.top, 0, bars.bottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
+
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.actionSync) {
                 syncNow();
@@ -136,6 +166,10 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.navWorkspace) {
+                showWorkspaceScreen();
+                return true;
+            }
             if (item.getItemId() == R.id.navFocus) {
                 showFocusScreen();
                 return true;
@@ -151,8 +185,8 @@ public final class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        bottomNav.setSelectedItemId(R.id.navFocus);
-        showFocusScreen();
+        bottomNav.setSelectedItemId(R.id.navWorkspace);
+        showWorkspaceScreen();
         mainHandler.post(autoSync);
     }
 
@@ -165,6 +199,10 @@ public final class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if ("workspace".equals(currentScreen) && workspaceWebView != null && workspaceWebView.canGoBack()) {
+            workspaceWebView.goBack();
+            return;
+        }
         if ("focus".equals(currentScreen) && currentBatch != null) {
             currentBatch = null;
             showFocusScreen();
@@ -173,8 +211,216 @@ public final class MainActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
+
+    private void showWorkspaceScreen() {
+        currentScreen = "workspace";
+        currentBatch = null;
+        toolbar.setSubtitle("FULL WORKSPACE");
+
+        View view = LayoutInflater.from(this).inflate(R.layout.screen_workspace, content, false);
+        content.removeAllViews();
+        content.addView(view);
+
+        workspaceWebView = view.findViewById(R.id.workspaceWebView);
+        workspaceLoading = view.findViewById(R.id.workspaceLoading);
+
+        WebSettings settings = workspaceWebView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.29");
+
+        workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
+        workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
+
+        workspaceWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> callback,
+                                             FileChooserParams params) {
+                if (filePathCallback != null) filePathCallback.onReceiveValue(null);
+                filePathCallback = callback;
+                try {
+                    Intent intent = params.createIntent();
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+                    return true;
+                } catch (Exception error) {
+                    filePathCallback = null;
+                    Snackbar.make(content, "No pude abrir el selector de archivos.", Snackbar.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        });
+
+        workspaceWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+                if (host.contains("instagram.com")) {
+                    openExternalUri(uri);
+                    return true;
+                }
+                if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
+                    openExternalUri(uri);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                workspaceLoading.setVisibility(View.GONE);
+                bootstrapWorkspace();
+            }
+        });
+
+        workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_workspace.html");
+        setGlobalStatus("Workspace completo · Android");
+    }
+
+    private void bootstrapWorkspace() {
+        if (workspaceWebView == null) return;
+        try {
+            JSONObject cfg = new JSONObject()
+                    .put("email", api.getEmail())
+                    .put("auto", true);
+            JSONObject device = new JSONObject()
+                    .put("id", deviceId)
+                    .put("type", "android")
+                    .put("label", deviceLabel());
+
+            String session = api.hasSession() ? api.webSession().toString() : "null";
+            String js = "(function(){"
+                    + "try{"
+                    + "localStorage.setItem('igc_v12027_supabase_config'," + JSONObject.quote(cfg.toString()) + ");"
+                    + (api.hasSession()
+                        ? "localStorage.setItem('igc_v12027_supabase_session'," + JSONObject.quote(session) + ");"
+                        : "localStorage.removeItem('igc_v12027_supabase_session');")
+                    + "localStorage.setItem('igc_v12026_device_identity'," + JSONObject.quote(device.toString()) + ");"
+                    + "if(!sessionStorage.getItem('igc_android_bootstrapped')){sessionStorage.setItem('igc_android_bootstrapped','1');location.reload();return;}"
+                    + "document.documentElement.classList.add('igc-android-host');"
+                    + "if(!document.getElementById('igcAndroidHostStyle')){var s=document.createElement('style');s.id='igcAndroidHostStyle';"
+                    + "s.textContent='.igc-commandbar{position:sticky;top:0}.igc-stage{min-width:0}.igc-workspace{padding-bottom:24px}.igc-rail{max-height:100vh}.igc-engine-badge:after{content:\" · Android\";}';document.head.appendChild(s);}"
+                    + "var go=function(){AndroidBridge.openNativeFocus();};"
+                    + "['focusMode20','focusMode30','focusMode40'].forEach(function(n){if(typeof window[n]==='function')window[n]=go;});"
+                    + "if(typeof window.followersMutualFocusN==='function')window.followersMutualFocusN=function(){go();};"
+                    + "if(typeof window.followersFocusN==='function')window.followersFocusN=function(){go();};"
+                    + "if(typeof window.pendingFocusN==='function')window.pendingFocusN=function(){go();};"
+                    + "if(typeof window.followersFocusRiskN==='function')window.followersFocusRiskN=function(){go();};"
+                    + "if(typeof window.pendingFocusRiskN==='function')window.pendingFocusRiskN=function(){go();};"
+                    + "var orig=window.open;var last=0;window.open=function(u,t,f){"
+                    + "if(/instagram\\.com/i.test(String(u||''))){var now=Date.now();if(now-last<700){AndroidBridge.bulkOpenBlocked();return null;}last=now;AndroidBridge.openInstagramUrl(String(u));return null;}"
+                    + "return orig?orig.call(window,u,t,f):null;};"
+                    + "}catch(e){console.error('Android bootstrap',e);}"
+                    + "})();";
+            workspaceWebView.evaluateJavascript(js, null);
+        } catch (Exception error) {
+            setGlobalStatus("Workspace: error de sesión");
+        }
+    }
+
+    private void openExternalUri(Uri uri) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        } catch (Exception error) {
+            Snackbar.make(content, "No se pudo abrir el enlace.", Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private void saveWorkspaceExport(String fileName, String mimeType, String dataUrl) {
+        runAsync(() -> {
+            int comma = dataUrl.indexOf(',');
+            String payload = comma >= 0 ? dataUrl.substring(comma + 1) : dataUrl;
+            byte[] bytes = android.util.Base64.decode(payload, android.util.Base64.DEFAULT);
+            String safeName = (fileName == null || fileName.isBlank())
+                    ? "ig_cleaner_export_" + System.currentTimeMillis() + ".html"
+                    : fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+            String savedLabel;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, safeName);
+                values.put(MediaStore.Downloads.MIME_TYPE,
+                        mimeType == null || mimeType.isBlank() ? "text/html" : mimeType);
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/IG Cleaner");
+                Uri outUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (outUri == null) throw new IllegalStateException("No se pudo crear la descarga.");
+                try (OutputStream stream = getContentResolver().openOutputStream(outUri)) {
+                    if (stream == null) throw new IllegalStateException("No se pudo abrir la descarga.");
+                    stream.write(bytes);
+                }
+                savedLabel = "Descargas/IG Cleaner/" + safeName;
+            } else {
+                File dir = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "IG Cleaner");
+                if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("No se pudo crear la carpeta.");
+                File out = new File(dir, safeName);
+                try (FileOutputStream stream = new FileOutputStream(out)) {
+                    stream.write(bytes);
+                }
+                savedLabel = out.getAbsolutePath();
+            }
+
+            String finalSavedLabel = savedLabel;
+            mainHandler.post(() -> Snackbar.make(content,
+                    "Exportado: " + finalSavedLabel, Snackbar.LENGTH_LONG).show());
+        }, true);
+    }
+
+    private final class WorkspaceBridge {
+        @JavascriptInterface
+        public void openNativeFocus() {
+            mainHandler.post(() -> bottomNav.setSelectedItemId(R.id.navFocus));
+        }
+
+        @JavascriptInterface
+        public void openInstagramUrl(String url) {
+            mainHandler.post(() -> {
+                try {
+                    Uri uri = Uri.parse(url);
+                    String username = uri.getPathSegments().isEmpty() ? "" : uri.getPathSegments().get(0);
+                    if (!username.isBlank()) openInstagram(username);
+                    else openExternalUri(uri);
+                } catch (Exception ignored) {}
+            });
+        }
+
+        @JavascriptInterface
+        public void bulkOpenBlocked() {
+            mainHandler.post(() -> Toast.makeText(MainActivity.this,
+                    "En Android usa Focus: un perfil por vez.", Toast.LENGTH_SHORT).show());
+        }
+
+        @JavascriptInterface
+        public void saveBase64(String fileName, String mimeType, String dataUrl) {
+            saveWorkspaceExport(fileName, mimeType, dataUrl);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (filePathCallback != null) {
+                Uri[] result = resultCode == RESULT_OK
+                        ? WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+                        : null;
+                filePathCallback.onReceiveValue(result);
+                filePathCallback = null;
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void showFocusScreen() {
         currentScreen = "focus";
+        toolbar.setSubtitle("MOBILE FOCUS");
         currentBatch = null;
         clearFocusState();
 
@@ -508,6 +754,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showAuditScreen() {
         currentScreen = "audit";
+        toolbar.setSubtitle("CROSS-DEVICE AUDIT");
         currentBatch = null;
         auditOpened.clear();
         auditEventByUsername.clear();
@@ -630,6 +877,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showAccountScreen() {
         currentScreen = "account";
+        toolbar.setSubtitle("CUENTA Y SYNC");
         currentBatch = null;
 
         View view = LayoutInflater.from(this).inflate(R.layout.screen_account, content, false);
@@ -683,7 +931,7 @@ public final class MainActivity extends AppCompatActivity {
                     touchDevice();
                     mainHandler.post(() -> {
                         setGlobalStatus("Conectado · Android");
-                        bottomNav.setSelectedItemId(R.id.navFocus);
+                        bottomNav.setSelectedItemId(R.id.navWorkspace);
                         Snackbar.make(content, "Cuenta conectada", Snackbar.LENGTH_LONG).show();
                     });
                 }, true);
@@ -704,6 +952,7 @@ public final class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
                 if ("focus".equals(currentScreen) && currentBatch == null) loadBatches();
+                if ("workspace".equals(currentScreen) && workspaceWebView != null) bootstrapWorkspace();
             });
         }, true);
     }
