@@ -19,6 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -73,7 +78,10 @@ public final class MainActivity extends AppCompatActivity {
 
     private SyncApi api;
     private String deviceId;
-    private String currentScreen = "focus";
+    private String currentScreen = "workspace";
+    private WebView workspaceWebView;
+    private ValueCallback<Uri[]> fileChooserCallback;
+    private static final int FILE_CHOOSER_REQUEST = 9012;
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -140,6 +148,14 @@ public final class MainActivity extends AppCompatActivity {
                     .edit().putString("device_id", deviceId).apply();
         }
 
+        View root = findViewById(R.id.mainRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            android.graphics.Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()).toPlatformInsets();
+            v.setPadding(0, bars.top, 0, bars.bottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
+
         toolbar = findViewById(R.id.toolbar);
         bottomNav = findViewById(R.id.bottomNav);
         content = findViewById(R.id.content);
@@ -166,6 +182,10 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.navWorkspace) {
+                showWorkspaceScreen();
+                return true;
+            }
             if (item.getItemId() == R.id.navWorkspace) {
                 showWorkspaceScreen();
                 return true;
