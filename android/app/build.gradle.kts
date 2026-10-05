@@ -1,3 +1,4 @@
+// IG Cleaner Android v120.30 — unified account/session + complete list sync
 plugins { id("com.android.application") }
 
 android {
