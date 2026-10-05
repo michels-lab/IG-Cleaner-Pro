@@ -1,0 +1,4 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/actionSync" android:icon="@drawable/ic_sync" android:title="Sincronizar" android:showAsAction="always"/>
+    <item android:id="@+id/actionAbout" android:icon="@drawable/ic_info" android:title="Acerca de" android:showAsAction="always"/>
+</menu>
