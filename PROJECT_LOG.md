@@ -548,3 +548,55 @@ Added the repository-level Michel's Lab governance declaration:
 - Verified compiled APK: 6,880,075 bytes, 904 entries, embedded `assets/ig_cleaner_workspace.html` = 1,670,732 bytes.
 - APK SHA-256 from validated artifact: `ae6a02abd26c3cc09f9b735b162f4008c6e6a56c385d8b7a092312e50f3de30a`.
 - Remaining device validation: install/launch on target phone, mobile ZIP import, Workspace navigation, Desktop ↔ Android Focus round-trip and export flow.
+
+
+## 2026-10-05 — LIMÓN handoff: Android full workspace v120.29
+
+### Estado actual
+- Desktop estable/sincronizable: v120.27 con Supabase + OTP, Audit cross-device y Focus congelado/sincronizable.
+- Android v120.28 fue una reconstrucción nativa Material que ya abre y compila, pero el usuario la rechazó como producto final porque seguía siendo un companion reducido y no exponía la amplitud funcional de la app Desktop.
+- La dirección corregida es **IG Cleaner completo en Android**, no un companion recortado.
+- Rama activa: `android-full-workspace-v120.29`.
+- v120.29 conserva Focus / Audit / Cuenta como superficies Android nativas y añade **Workspace** como acceso al motor completo de Desktop.
+- El Workspace empaqueta el HTML oficial de Desktop desde `desktop/` mediante Android Gradle `sourceSets`, evitando mantener una segunda copia funcional del motor.
+- Navegación móvil actual: Workspace / Focus / Audit / Cuenta.
+- Workspace carga el motor Desktop dentro de WebView con JavaScript, DOM storage, file access y bridge Android.
+- El selector `<input type="file">` del Desktop abre el file picker Android, permitiendo importar ZIP/JSON/HTML desde el teléfono.
+- Los enlaces de Instagram se enrutan a la app de Instagram cuando está instalada.
+- Aperturas masivas desde el Workspace se redirigen/bloquean en Android a favor del flujo Focus de un perfil por vez.
+- El bridge Android ya contempla transferencia de sesión/configuración, exportaciones hacia Descargas e integración con Focus nativo.
+- Se corrigió el solapamiento visual con status bar usando WindowInsets.
+- Se consolidó una sola implementación de Workspace tras detectar duplicaciones de variables/imports/insets durante el desarrollo.
+
+### Validación
+- GitHub Actions run `37388962937`: `gradle :app:assembleDebug` **SUCCESS**.
+- El APK generado incluye el HTML Desktop oficial empaquetado como asset.
+- Artifact ZIP de Actions: ~6.8 MB; APK inspeccionado previamente: ~7.8 MB.
+- El Desktop HTML empaquetado pesa ~1.67 MB.
+- El build incluye Material Components, AndroidX, RecyclerView, XML layouts, launcher resources, Workspace WebView, Focus, Audit y Cuenta.
+
+### Release / ramas
+- `v120.27`: pre-release publicada; primera sync Desktop ↔ Android.
+- `v120.28`: pre-release publicada; app Android nativa abre, pero funcionalmente quedó demasiado reducida respecto a Desktop.
+- `v120.29`: **todavía NO publicada ni fusionada a main** al momento de este handoff.
+- No llamar v120.29 “lista” hasta instalarla en el teléfono objetivo y comprobar el Workspace real.
+
+### Pendientes inmediatos para el siguiente chat
+1. Eliminar/ignorar cualquier asset duplicado/obsoleto de Workspace que no sea el HTML oficial empaquetado desde `desktop/`.
+2. Actualizar About/strings Android de v120.28 → v120.29 donde aún quede identidad vieja.
+3. Revisar el workflow Android para que no quede acoplado innecesariamente a una sola rama temporal.
+4. Instalar el APK v120.29 en el teléfono objetivo y verificar:
+   - arranque sin crash;
+   - status bar/insets correctos;
+   - Workspace visible y navegable;
+   - módulos Desktop disponibles: Home/Command Center, Review, Mutuals, Followers, Pending, Import, Insights, Changes, Vault, Health, About;
+   - selector de ZIP desde Android;
+   - persistencia de datos del Workspace;
+   - OTP/sesión Android;
+   - Focus Desktop → Android;
+   - finalización Android → revisión visible en Desktop;
+   - Audit con origen Android/Desktop.
+5. Solo después de esa validación: merge a `main` y release formal `v120.29`.
+
+### Decisión de producto
+Android debe ofrecer el mismo producto/datos que Desktop, pero no necesariamente la misma interacción. La diferencia intencional principal es Focus: Desktop puede abrir múltiples perfiles; Android usa checklist y apertura uno-a-uno. No volver a reducir Android a una app de solo Focus/Audit/Cuenta.
