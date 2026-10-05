@@ -8,12 +8,11 @@
         android:id="@+id/workspaceWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:overScrollMode="never"/>
+        android:background="@color/ig_bg"/>
 
-    <ProgressBar
+    <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/workspaceLoading"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:indeterminate="true"/>
 </FrameLayout>
