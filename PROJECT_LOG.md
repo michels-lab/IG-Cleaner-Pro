@@ -531,3 +531,20 @@ Added the repository-level Michel's Lab governance declaration:
 - Generated APK size: 5,911,264 bytes; archive contains Material/AndroidX/runtime resources rather than the previous minimal shell.
 - APK SHA-256 from the successful build artifact: `30f5a48715279f419ae2610986ef28dbc6ed49bcc6f91bee1abceb513ca4898c`.
 - Remaining validation before calling Android production-ready: install/launch on the target phone, OTP login on-device, Focus Desktop → Android round-trip, Android batch completion → Desktop review projection, and Audit origin verification.
+
+
+## 2026-10-05 — Android v120.29 full Workspace
+
+- Added a fourth Android module: **Workspace**, loaded by default.
+- Embedded the complete Desktop workspace HTML inside the APK so Android exposes Home/Command Center, Review, Mutuals, Followers, Pending, Import, Insights, Changes, Vault, Health and About rather than only Focus/Audit/Account.
+- Kept Focus, Audit and Account as native Android surfaces optimized for mobile.
+- Desktop-style multi-profile Focus actions inside Workspace are redirected to native Mobile Focus so Android continues opening one Instagram profile at a time.
+- Added Android WebView file chooser support so ZIP/JSON/HTML imports can be selected from the phone.
+- Added Android bridge hooks for Instagram links and portable HTML exports.
+- Added session bootstrap so the embedded Workspace can share the authenticated Supabase session/device identity with the native shell.
+- Corrected system-bar insets so the toolbar no longer renders under the Android status bar.
+- Android version bumped to 120.29.
+- GitHub Actions run 37387118838 completed successfully.
+- Verified compiled APK: 6,880,075 bytes, 904 entries, embedded `assets/ig_cleaner_workspace.html` = 1,670,732 bytes.
+- APK SHA-256 from validated artifact: `ae6a02abd26c3cc09f9b735b162f4008c6e6a56c385d8b7a092312e50f3de30a`.
+- Remaining device validation: install/launch on target phone, mobile ZIP import, Workspace navigation, Desktop ↔ Android Focus round-trip and export flow.

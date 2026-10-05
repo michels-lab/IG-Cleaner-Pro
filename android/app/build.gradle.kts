@@ -8,8 +8,8 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12028
-        versionName = "120.28"
+        versionCode = 12029
+        versionName = "120.29"
     }
 
     buildTypes {
@@ -31,5 +31,6 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.webkit:webkit:1.12.1")
     implementation("com.google.android.material:material:1.12.0")
 }

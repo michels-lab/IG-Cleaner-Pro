@@ -33,7 +33,20 @@ public final class SyncApi {
     }
 
     public String getEmail() { return email == null ? "" : email; }
+    public String getAccessToken() { return accessToken == null ? "" : accessToken; }
+    public String getRefreshToken() { return refreshToken == null ? "" : refreshToken; }
     public boolean hasSession() { return accessToken != null && !accessToken.isBlank(); }
+
+    public JSONObject webSession() {
+        JSONObject out = new JSONObject();
+        try {
+            out.put("access_token", getAccessToken());
+            out.put("refresh_token", getRefreshToken());
+            out.put("token_type", "bearer");
+            out.put("user", new JSONObject().put("email", getEmail()));
+        } catch (Exception ignored) {}
+        return out;
+    }
 
     public void setEmail(String value) {
         email = value == null ? "" : value.trim();
