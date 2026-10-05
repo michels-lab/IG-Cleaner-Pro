@@ -36,6 +36,8 @@ public final class SyncApi {
     public String getAccessToken() { return accessToken == null ? "" : accessToken; }
     public String getRefreshToken() { return refreshToken == null ? "" : refreshToken; }
     public boolean hasSession() { return accessToken != null && !accessToken.isBlank(); }
+    public boolean nativeSessionIsNewer() { return prefs.getBoolean("native_newer", false); }
+    public void markSessionBridgedToWeb() { prefs.edit().putBoolean("native_newer", false).apply(); }
 
     public synchronized void adoptWebSession(String rawJson) {
         try {
@@ -57,6 +59,7 @@ public final class SyncApi {
                     .putString("access", accessToken)
                     .putString("refresh", refreshToken == null ? "" : refreshToken)
                     .putString("email", email == null ? "" : email)
+                    .putBoolean("native_newer", false)
                     .apply();
         } catch (Exception ignored) {
             // Keep the last known-good native session if the WebView sends malformed data.
@@ -105,7 +108,7 @@ public final class SyncApi {
     public void logout() {
         accessToken = "";
         refreshToken = "";
-        prefs.edit().remove("access").remove("refresh").apply();
+        prefs.edit().remove("access").remove("refresh").remove("native_newer").apply();
     }
 
     public JSONArray get(String tableQuery) throws Exception {
@@ -138,7 +141,11 @@ public final class SyncApi {
         refreshToken = result.optString("refresh_token", refreshToken == null ? "" : refreshToken);
         JSONObject user = result.optJSONObject("user");
         if (user != null && !user.optString("email").isBlank()) setEmail(user.optString("email"));
-        prefs.edit().putString("access", accessToken).putString("refresh", refreshToken).apply();
+        prefs.edit()
+                .putString("access", accessToken)
+                .putString("refresh", refreshToken)
+                .putBoolean("native_newer", true)
+                .apply();
     }
 
     private boolean refreshSession() {
