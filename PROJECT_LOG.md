@@ -661,3 +661,21 @@ Android debe ofrecer el mismo producto/datos que Desktop, pero no necesariamente
 
 ### Handoff rule
 The next chat should continue from this section instead of reconstructing the Android work from screenshots or older v120.27/v120.28 assumptions.
+
+## 2026-10-05 — Android v120.29 single Workspace asset hardening
+
+- Resumed from handoff trigger **LIMÓN** on `android-full-workspace-v120.29`.
+- Inspected validated CI artifact from run `37388962937` and found two embedded Workspace assets:
+  - `assets/ig_cleaner_pro_v120_27_synced_companion.html`
+  - `assets/ig_cleaner_workspace.html`
+- Both files were byte-identical: 1,670,732 bytes each, SHA-256 `cc9d3cbe83a453d20e7bd525af2a22f80e8be826d61d468df053b68efb320862`.
+- Root cause: Android's default asset source remained active while `../../desktop` was added with `assets.srcDir(...)`, so Gradle packaged both the Android copy and the Desktop copy.
+- Changed the Android source set to `assets.setSrcDirs(listOf("../../desktop"))` so the packaged Workspace has one source of truth: the official Desktop HTML.
+- Confirmed Android user-facing version/About strings already report **v120.29 Beta**; no remaining v120.28 product text was found in the active Android files checked.
+- Confirmed Android CI branch matching is generalized to `android-*`.
+- Hardened Android CI to inspect the built APK and fail unless:
+  - the official Desktop Workspace asset is present;
+  - its packaged size is greater than 1.5 MB;
+  - the obsolete duplicate `assets/ig_cleaner_workspace.html` is absent.
+- CI workflow now also triggers when its own workflow file changes.
+- Desktop parsers, JSON import behavior, HTML evidence safeguards, Focus determinism and sync semantics were not modified by this cleanup.
