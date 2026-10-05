@@ -74,6 +74,7 @@ public final class MainActivity extends AppCompatActivity {
     private SyncApi api;
     private String deviceId;
     private String currentScreen = "workspace";
+    private String workspaceTargetPage = "";
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -83,7 +84,7 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12029;
+    private static final int FILE_CHOOSER_REQUEST = 12030;
 
     private View focusView;
     private TextView focusTitle;
@@ -112,19 +113,6 @@ public final class MainActivity extends AppCompatActivity {
     private ProfileAdapter auditAdapter;
     private final Map<String, JSONObject> auditEventByUsername = new HashMap<>();
     private final Set<String> auditOpened = new HashSet<>();
-
-    private final Runnable autoSync = new Runnable() {
-        @Override public void run() {
-            if (api != null && api.hasSession()) {
-                runAsync(() -> {
-                    touchDevice();
-                    mainHandler.post(() -> setGlobalStatus("Sincronizado · " +
-                            DateFormat.getTimeFormat(MainActivity.this).format(new Date())));
-                }, false);
-            }
-            mainHandler.postDelayed(this, 15_000);
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,7 +167,7 @@ public final class MainActivity extends AppCompatActivity {
                 return true;
             }
             if (item.getItemId() == R.id.navAccount) {
-                showAccountScreen();
+                showWorkspaceAccountScreen();
                 return true;
             }
             return false;
@@ -187,12 +175,11 @@ public final class MainActivity extends AppCompatActivity {
 
         bottomNav.setSelectedItemId(R.id.navWorkspace);
         showWorkspaceScreen();
-        mainHandler.post(autoSync);
     }
 
     @Override
     protected void onDestroy() {
-        mainHandler.removeCallbacks(autoSync);
+        disposeWorkspaceWebView();
         io.shutdownNow();
         super.onDestroy();
     }
@@ -213,9 +200,19 @@ public final class MainActivity extends AppCompatActivity {
 
 
     private void showWorkspaceScreen() {
-        currentScreen = "workspace";
+        showWorkspaceScreen("", "FULL WORKSPACE");
+    }
+
+    private void showWorkspaceAccountScreen() {
+        showWorkspaceScreen("sync", "CUENTA Y SYNC");
+    }
+
+    private void showWorkspaceScreen(String targetPage, String subtitle) {
+        workspaceTargetPage = targetPage == null ? "" : targetPage;
+        currentScreen = workspaceTargetPage.isBlank() ? "workspace" : "account";
         currentBatch = null;
-        toolbar.setSubtitle("FULL WORKSPACE");
+        toolbar.setSubtitle(subtitle);
+        disposeWorkspaceWebView();
 
         View view = LayoutInflater.from(this).inflate(R.layout.screen_workspace, content, false);
         content.removeAllViews();
@@ -234,7 +231,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.29");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.30");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
@@ -296,17 +293,28 @@ public final class MainActivity extends AppCompatActivity {
                     .put("label", deviceLabel());
 
             String session = api.hasSession() ? api.webSession().toString() : "null";
+            boolean nativeSessionNewer = api.hasSession() && api.nativeSessionIsNewer();
+            String sessionBridge = "";
+            if (api.hasSession()) {
+                String quoted = JSONObject.quote(session);
+                sessionBridge = nativeSessionNewer
+                        ? "localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");"
+                        : "if(!localStorage.getItem('igc_v12027_supabase_session'))localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");";
+            }
+            String targetPage = workspaceTargetPage == null ? "" : workspaceTargetPage;
             String js = "(function(){"
                     + "try{"
                     + "localStorage.setItem('igc_v12027_supabase_config'," + JSONObject.quote(cfg.toString()) + ");"
-                    + (api.hasSession()
-                        ? "localStorage.setItem('igc_v12027_supabase_session'," + JSONObject.quote(session) + ");"
-                        : "localStorage.removeItem('igc_v12027_supabase_session');")
+                    + sessionBridge
                     + "localStorage.setItem('igc_v12026_device_identity'," + JSONObject.quote(device.toString()) + ");"
                     + "if(!sessionStorage.getItem('igc_android_bootstrapped')){sessionStorage.setItem('igc_android_bootstrapped','1');location.reload();return;}"
+                    + "var ws=localStorage.getItem('igc_v12027_supabase_session');if(ws){try{AndroidBridge.syncSession(ws);}catch(_){}}"
                     + "document.documentElement.classList.add('igc-android-host');"
                     + "if(!document.getElementById('igcAndroidHostStyle')){var s=document.createElement('style');s.id='igcAndroidHostStyle';"
                     + "s.textContent='.igc-commandbar{position:sticky;top:0}.igc-stage{min-width:0}.igc-workspace{padding-bottom:24px}.igc-rail{max-height:100vh}.igc-engine-badge:after{content:\" · Android\";}';document.head.appendChild(s);}"
+                    + (!targetPage.isBlank()
+                        ? "if(typeof window.showPage==='function')window.showPage(" + JSONObject.quote(targetPage) + ");"
+                        : "")
                     + "var go=function(){AndroidBridge.openNativeFocus();};"
                     + "['focusMode20','focusMode30','focusMode40'].forEach(function(n){if(typeof window[n]==='function')window[n]=go;});"
                     + "if(typeof window.followersMutualFocusN==='function')window.followersMutualFocusN=function(){go();};"
@@ -323,6 +331,18 @@ public final class MainActivity extends AppCompatActivity {
         } catch (Exception error) {
             setGlobalStatus("Workspace: error de sesión");
         }
+    }
+
+    private void disposeWorkspaceWebView() {
+        if (workspaceWebView == null) return;
+        try {
+            workspaceWebView.stopLoading();
+            workspaceWebView.onPause();
+            workspaceWebView.removeJavascriptInterface("AndroidBridge");
+            workspaceWebView.destroy();
+        } catch (Exception ignored) {}
+        workspaceWebView = null;
+        workspaceLoading = null;
     }
 
     private void openExternalUri(Uri uri) {
@@ -375,6 +395,18 @@ public final class MainActivity extends AppCompatActivity {
 
     private final class WorkspaceBridge {
         @JavascriptInterface
+        public void syncSession(String sessionJson) {
+            api.adoptWebSession(sessionJson);
+            mainHandler.post(() -> {
+                if (api.hasSession()) {
+                    setGlobalStatus("Cuenta conectada · sesión compartida");
+                } else {
+                    setGlobalStatus("Sesión cerrada");
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void openNativeFocus() {
             mainHandler.post(() -> bottomNav.setSelectedItemId(R.id.navFocus));
         }
@@ -419,6 +451,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showFocusScreen() {
+        disposeWorkspaceWebView();
         currentScreen = "focus";
         toolbar.setSubtitle("MOBILE FOCUS");
         currentBatch = null;
@@ -753,6 +786,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showAuditScreen() {
+        disposeWorkspaceWebView();
         currentScreen = "audit";
         toolbar.setSubtitle("CROSS-DEVICE AUDIT");
         currentBatch = null;
@@ -875,71 +909,16 @@ public final class MainActivity extends AppCompatActivity {
         }, true);
     }
 
-    private void showAccountScreen() {
-        currentScreen = "account";
-        toolbar.setSubtitle("CUENTA Y SYNC");
-        currentBatch = null;
-
-        View view = LayoutInflater.from(this).inflate(R.layout.screen_account, content, false);
-        content.removeAllViews();
-        content.addView(view);
-
-        View authGroup = view.findViewById(R.id.authGroup);
-        View connectedCard = view.findViewById(R.id.connectedCard);
-
-        if (api.hasSession()) {
-            authGroup.setVisibility(View.GONE);
-            connectedCard.setVisibility(View.VISIBLE);
-
-            TextView email = view.findViewById(R.id.accountEmail);
-            TextView device = view.findViewById(R.id.deviceLabel);
-            email.setText(api.getEmail());
-            device.setText(deviceLabel() + " · Android");
-
-            view.findViewById(R.id.syncNow).setOnClickListener(v -> syncNow());
-            view.findViewById(R.id.logout).setOnClickListener(v -> {
-                api.logout();
-                setGlobalStatus("Sesión cerrada");
-                showAccountScreen();
-            });
-        } else {
-            connectedCard.setVisibility(View.GONE);
-            authGroup.setVisibility(View.VISIBLE);
-
-            TextInputEditText email = view.findViewById(R.id.emailInput);
-            TextInputEditText code = view.findViewById(R.id.codeInput);
-            email.setText(api.getEmail());
-
-            view.findViewById(R.id.sendCode).setOnClickListener(v -> {
-                String value = textOf(email);
-                setGlobalStatus("Enviando código…");
-                runAsync(() -> {
-                    api.sendOtp(value);
-                    mainHandler.post(() -> {
-                        setGlobalStatus("Código enviado");
-                        Snackbar.make(content, "Revisa tu correo y escribe el código", Snackbar.LENGTH_LONG).show();
-                    });
-                }, true);
-            });
-
-            view.findViewById(R.id.verifyCode).setOnClickListener(v -> {
-                api.setEmail(textOf(email));
-                String otp = textOf(code);
-                setGlobalStatus("Verificando…");
-                runAsync(() -> {
-                    api.verifyOtp(otp);
-                    touchDevice();
-                    mainHandler.post(() -> {
-                        setGlobalStatus("Conectado · Android");
-                        bottomNav.setSelectedItemId(R.id.navWorkspace);
-                        Snackbar.make(content, "Cuenta conectada", Snackbar.LENGTH_LONG).show();
-                    });
-                }, true);
-            });
-        }
-    }
-
     private void syncNow() {
+        if (("workspace".equals(currentScreen) || "account".equals(currentScreen))
+                && workspaceWebView != null) {
+            setGlobalStatus("Sincronizando Workspace…");
+            workspaceWebView.evaluateJavascript(
+                    "(function(){if(typeof window.igcSyncNow==='function'){window.igcSyncNow();return 'ok';}return 'missing';})()",
+                    null);
+            return;
+        }
+
         if (!api.hasSession()) {
             bottomNav.setSelectedItemId(R.id.navAccount);
             Snackbar.make(content, "Inicia sesión para sincronizar", Snackbar.LENGTH_LONG).show();
@@ -952,7 +931,6 @@ public final class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
                 if ("focus".equals(currentScreen) && currentBatch == null) loadBatches();
-                if ("workspace".equals(currentScreen) && workspaceWebView != null) bootstrapWorkspace();
             });
         }, true);
     }
