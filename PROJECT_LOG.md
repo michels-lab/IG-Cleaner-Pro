@@ -513,3 +513,21 @@ Added the repository-level Michel's Lab governance declaration:
 - Reusable/cross-app decisions are promoted to the master standards repository.
 - The master repository polls child status centrally; this repository receives no credential that can write to the master.
 - Secret values remain prohibited from both repositories.
+
+
+## 2026-10-05 — Android Companion v120.28 native rebuild
+
+- Replaced the ultra-minimal v120.27 Android prototype after the first distributed APK was only ~25 KB and failed to launch reliably on the target phone.
+- v120.28 uses a conventional Android app structure with AppCompat, Material Components, RecyclerView, XML layouts, theme resources, launcher resources and bottom navigation.
+- Android UX is intentionally different from Desktop: Focus 20/30/40 is shown as a one-profile-at-a-time checklist instead of opening many browser tabs.
+- Opening a profile records an `opened` / `reopened` event; it does not by itself mark the profile reviewed.
+- Completing the entire checklist requires explicit confirmation before the batch and profile states become reviewed.
+- Review events preserve source device (`android` or `desktop`) and remain distinct from Audit events.
+- Audit includes quick access to the latest reviewed/opened profiles by Android or Desktop and records subsequent audit activity separately.
+- Supabase URL + publishable key remain app configuration; users only see email OTP login.
+- Sync tokens are excluded from Android backup/device-transfer rules.
+- Android applicationId for beta debug builds uses `.beta`, allowing the v120.28 beta to coexist with an older installed build during validation.
+- GitHub Actions build run 37378481902 completed successfully after the resource-string correction.
+- Generated APK size: 5,911,264 bytes; archive contains Material/AndroidX/runtime resources rather than the previous minimal shell.
+- APK SHA-256 from the successful build artifact: `30f5a48715279f419ae2610986ef28dbc6ed49bcc6f91bee1abceb513ca4898c`.
+- Remaining validation before calling Android production-ready: install/launch on the target phone, OTP login on-device, Focus Desktop → Android round-trip, Android batch completion → Desktop review projection, and Audit origin verification.

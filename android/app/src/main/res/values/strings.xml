@@ -1,1 +1,8 @@
-<resources><string name="app_name">IG Cleaner Companion</string></resources>
+<resources>
+    <string name="app_name">IG Cleaner</string>
+    <string name="nav_focus">Focus</string>
+    <string name="nav_audit">Audit</string>
+    <string name="nav_account">Cuenta</string>
+    <string name="about_title">IG Cleaner Companion</string>
+    <string name="about_body">v120.28 Beta\nMichel’s Lab\n\nCompanion Android sincronizado con IG Cleaner Desktop. Revisión y auditoría se registran por dispositivo.</string>
+</resources>

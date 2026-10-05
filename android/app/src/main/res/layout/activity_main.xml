@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/ig_bg">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:paddingHorizontal="8dp"
+        app:title="IG Cleaner"
+        app:subtitle="SYNCED COMPANION"
+        app:titleTextColor="@color/ig_text"
+        app:subtitleTextColor="@color/ig_muted"
+        app:menu="@menu/top_app_bar"/>
+
+    <TextView
+        android:id="@+id/globalStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="8dp"
+        android:text="Listo"
+        android:textColor="@color/ig_muted"
+        android:textSize="12sp"/>
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/ig_surface"
+        app:itemIconTint="@color/ig_text"
+        app:itemTextColor="@color/ig_text"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav"/>
+</LinearLayout>

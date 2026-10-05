@@ -1,0 +1,12 @@
+<resources>
+    <color name="ig_bg">#060910</color>
+    <color name="ig_surface">#0D1521</color>
+    <color name="ig_surface_2">#121C2B</color>
+    <color name="ig_border">#20314B</color>
+    <color name="ig_text">#EFF6FF</color>
+    <color name="ig_muted">#8E9EB4</color>
+    <color name="ig_cyan">#71D7FF</color>
+    <color name="ig_green">#63D1A7</color>
+    <color name="ig_gold">#EFBD62</color>
+    <color name="ig_red">#FF859A</color>
+</resources>

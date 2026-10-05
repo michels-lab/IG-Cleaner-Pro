@@ -2,34 +2,184 @@ package com.michelslab.igcleaner;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import org.json.*;
-import java.io.*;
-import java.net.*;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class SyncApi {
-    private static final String URL="https://ilmztedebwdzgnlrvwxy.supabase.co";
-    private static final String KEY="sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1";
+    private static final String BASE_URL = "https://ilmztedebwdzgnlrvwxy.supabase.co";
+    private static final String PUBLISHABLE_KEY = "sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1";
+
     private final SharedPreferences prefs;
-    private String access, refresh, userEmail;
-    public SyncApi(Context c){ prefs=c.getSharedPreferences("igc_sync",Context.MODE_PRIVATE); load(); }
-    public void setEmail(String email){ userEmail=email==null?"":email.trim(); prefs.edit().putString("email",userEmail).apply(); }
-    public String getEmail(){return userEmail;} public boolean hasSession(){return access!=null&&!access.isEmpty();}
-    private void load(){userEmail=prefs.getString("email","");access=prefs.getString("access","");refresh=prefs.getString("refresh","");}
-    private void saveSession(JSONObject j){access=j.optString("access_token","");refresh=j.optString("refresh_token",refresh);JSONObject u=j.optJSONObject("user");if(u!=null&&!u.optString("email","").isEmpty())setEmail(u.optString("email"));prefs.edit().putString("access",access).putString("refresh",refresh).apply();}
-    public void sendOtp(String email) throws Exception { setEmail(email); if(userEmail.isEmpty())throw new IllegalArgumentException("Escribe tu correo"); request("POST","/auth/v1/otp",new JSONObject().put("email",userEmail).put("create_user",true),false,null); }
-    public JSONObject verifyOtp(String code) throws Exception { if(userEmail.isEmpty())throw new IllegalStateException("Escribe tu correo");String token=code==null?"":code.replaceAll("\\s+","");if(token.isEmpty())throw new IllegalArgumentException("Escribe el código");JSONObject r=request("POST","/auth/v1/verify",new JSONObject().put("type","email").put("email",userEmail).put("token",token),false,null);saveSession(r);if(!hasSession())throw new IOException("El código no produjo una sesión");return r; }
-    public void logout(){access="";refresh="";prefs.edit().remove("access").remove("refresh").apply();}
-    private boolean refresh() { try{ if(refresh==null||refresh.isEmpty())return false; JSONObject r=request("POST","/auth/v1/token?grant_type=refresh_token",new JSONObject().put("refresh_token",refresh),false,null); saveSession(r); return !access.isEmpty(); }catch(Exception e){return false;} }
-    private JSONObject request(String method,String path,JSONObject body,boolean auth,Map<String,String> extra) throws Exception { String s=raw(method,path,body==null?null:body.toString(),auth,extra); return s.isEmpty()?new JSONObject():new JSONObject(s); }
-    private String raw(String method,String path,String body,boolean auth,Map<String,String> extra) throws Exception {
-        HttpURLConnection c=(HttpURLConnection)new URL(URL+path).openConnection();c.setRequestMethod(method);c.setConnectTimeout(15000);c.setReadTimeout(20000);c.setRequestProperty("apikey",KEY);c.setRequestProperty("Content-Type","application/json");if(auth&&!access.isEmpty())c.setRequestProperty("Authorization","Bearer "+access);if(extra!=null)for(Map.Entry<String,String> e:extra.entrySet())c.setRequestProperty(e.getKey(),e.getValue());if(body!=null){c.setDoOutput(true);try(OutputStream os=c.getOutputStream()){os.write(body.getBytes(StandardCharsets.UTF_8));}}
-        int code=c.getResponseCode();InputStream is=code>=200&&code<300?c.getInputStream():c.getErrorStream();String txt="";if(is!=null){try(BufferedReader br=new BufferedReader(new InputStreamReader(is,StandardCharsets.UTF_8))){StringBuilder sb=new StringBuilder();String line;while((line=br.readLine())!=null)sb.append(line);txt=sb.toString();}}
-        if((code==401||code==403)&&auth&&refresh()){return raw(method,path,body,true,extra);}if(code<200||code>=300)throw new IOException("HTTP "+code+" "+txt);return txt;
+    private String accessToken;
+    private String refreshToken;
+    private String email;
+
+    public SyncApi(Context context) {
+        prefs = context.getSharedPreferences("igc_sync", Context.MODE_PRIVATE);
+        load();
     }
-    public JSONArray get(String tableQuery) throws Exception { String s=raw("GET","/rest/v1/"+tableQuery,null,true,null);return s.isEmpty()?new JSONArray():new JSONArray(s); }
-    public void upsert(String table,String conflict,JSONArray rows) throws Exception { Map<String,String> h=new HashMap<>();h.put("Prefer","resolution=merge-duplicates,return=minimal");raw("POST","/rest/v1/"+table+"?on_conflict="+URLEncoder.encode(conflict,"UTF-8"),rows.toString(),true,h); }
-    public void patch(String tableQuery,JSONObject body) throws Exception { Map<String,String> h=new HashMap<>();h.put("Prefer","return=minimal");raw("PATCH","/rest/v1/"+tableQuery,body.toString(),true,h); }
-    public void insert(String table,JSONArray rows) throws Exception { Map<String,String> h=new HashMap<>();h.put("Prefer","resolution=merge-duplicates,return=minimal");raw("POST","/rest/v1/"+table,rows.toString(),true,h); }
+
+    public String getEmail() { return email == null ? "" : email; }
+    public boolean hasSession() { return accessToken != null && !accessToken.isBlank(); }
+
+    public void setEmail(String value) {
+        email = value == null ? "" : value.trim();
+        prefs.edit().putString("email", email).apply();
+    }
+
+    public void sendOtp(String value) throws Exception {
+        setEmail(value);
+        if (email.isBlank()) throw new IllegalArgumentException("Escribe tu correo.");
+        requestObject("POST", "/auth/v1/otp",
+                new JSONObject().put("email", email).put("create_user", true),
+                false, null);
+    }
+
+    public void verifyOtp(String code) throws Exception {
+        if (email.isBlank()) throw new IllegalStateException("Escribe tu correo.");
+        String token = code == null ? "" : code.replaceAll("\\s+", "");
+        if (token.isBlank()) throw new IllegalArgumentException("Escribe el código del correo.");
+
+        JSONObject result = requestObject("POST", "/auth/v1/verify",
+                new JSONObject()
+                        .put("type", "email")
+                        .put("email", email)
+                        .put("token", token),
+                false, null);
+        saveSession(result);
+        if (!hasSession()) throw new IOException("Supabase no devolvió una sesión.");
+    }
+
+    public void logout() {
+        accessToken = "";
+        refreshToken = "";
+        prefs.edit().remove("access").remove("refresh").apply();
+    }
+
+    public JSONArray get(String tableQuery) throws Exception {
+        String raw = raw("GET", "/rest/v1/" + tableQuery, null, true, null);
+        return raw.isBlank() ? new JSONArray() : new JSONArray(raw);
+    }
+
+    public void upsert(String table, String conflict, JSONArray rows) throws Exception {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Prefer", "resolution=merge-duplicates,return=minimal");
+        raw("POST",
+                "/rest/v1/" + table + "?on_conflict=" + URLEncoder.encode(conflict, StandardCharsets.UTF_8),
+                rows.toString(), true, headers);
+    }
+
+    public void patch(String tableQuery, JSONObject body) throws Exception {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Prefer", "return=minimal");
+        raw("PATCH", "/rest/v1/" + tableQuery, body.toString(), true, headers);
+    }
+
+    private void load() {
+        email = prefs.getString("email", "");
+        accessToken = prefs.getString("access", "");
+        refreshToken = prefs.getString("refresh", "");
+    }
+
+    private void saveSession(JSONObject result) {
+        accessToken = result.optString("access_token", "");
+        refreshToken = result.optString("refresh_token", refreshToken == null ? "" : refreshToken);
+        JSONObject user = result.optJSONObject("user");
+        if (user != null && !user.optString("email").isBlank()) setEmail(user.optString("email"));
+        prefs.edit().putString("access", accessToken).putString("refresh", refreshToken).apply();
+    }
+
+    private boolean refreshSession() {
+        try {
+            if (refreshToken == null || refreshToken.isBlank()) return false;
+            JSONObject result = requestObject("POST", "/auth/v1/token?grant_type=refresh_token",
+                    new JSONObject().put("refresh_token", refreshToken),
+                    false, null);
+            saveSession(result);
+            return hasSession();
+        } catch (Exception ignored) {
+            logout();
+            return false;
+        }
+    }
+
+    private JSONObject requestObject(String method, String path, JSONObject body,
+                                     boolean auth, Map<String, String> headers) throws Exception {
+        String raw = raw(method, path, body == null ? null : body.toString(), auth, headers);
+        return raw.isBlank() ? new JSONObject() : new JSONObject(raw);
+    }
+
+    private String raw(String method, String path, String body, boolean auth,
+                       Map<String, String> headers) throws Exception {
+        return raw(method, path, body, auth, headers, true);
+    }
+
+    private String raw(String method, String path, String body, boolean auth,
+                       Map<String, String> headers, boolean allowRefresh) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(BASE_URL + path).openConnection();
+        connection.setRequestMethod(method);
+        connection.setConnectTimeout(15_000);
+        connection.setReadTimeout(20_000);
+        connection.setRequestProperty("apikey", PUBLISHABLE_KEY);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+        if (auth && hasSession()) connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
+            }
+        }
+
+        if (body != null) {
+            connection.setDoOutput(true);
+            try (OutputStream stream = connection.getOutputStream()) {
+                stream.write(body.getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        int status = connection.getResponseCode();
+        InputStream input = status >= 200 && status < 300
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+
+        String response = "";
+        if (input != null) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) builder.append(line);
+                response = builder.toString();
+            }
+        }
+
+        if ((status == 401 || status == 403) && auth && allowRefresh && refreshSession()) {
+            return raw(method, path, body, true, headers, false);
+        }
+
+        if (status < 200 || status >= 300) {
+            String message = response;
+            try {
+                JSONObject error = new JSONObject(response);
+                message = error.optString("msg",
+                        error.optString("message",
+                                error.optString("error_description", response)));
+            } catch (Exception ignored) {}
+            throw new IOException("HTTP " + status + (message.isBlank() ? "" : " · " + message));
+        }
+
+        return response;
+    }
 }
