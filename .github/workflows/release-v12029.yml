@@ -48,35 +48,36 @@ jobs:
       - name: Verify embedded Workspace
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-          unzip -l "$APK" | grep "assets/ig_cleaner_workspace.html"
-          test "$(unzip -l "$APK" | awk '/assets\/ig_cleaner_workspace.html/{print $1}')" -gt 1500000
+          OFFICIAL="assets/ig_cleaner_pro_v120_27_synced_companion.html"
+          LEGACY="assets/ig_cleaner_workspace.html"
+          unzip -l "$APK" | grep "$OFFICIAL"
+          SIZE="$(unzip -l "$APK" | awk -v asset="$OFFICIAL" '$0 ~ asset {print $1}')"
+          test -n "$SIZE" && test "$SIZE" -gt 1500000
+          if unzip -l "$APK" | grep -q "$LEGACY"; then
+            echo "::error::Duplicate legacy Workspace asset is still packaged: $LEGACY"
+            exit 1
+          fi
 
       - name: Prepare release assets
         working-directory: .
         run: |
+          rm -rf release-assets
           mkdir -p release-assets
           cp android/app/build/outputs/apk/debug/app-debug.apk release-assets/IG_Cleaner_Companion_v120.29-beta.apk
           cd release-assets
           sha256sum IG_Cleaner_Companion_v120.29-beta.apk > SHA256SUMS.txt
           ls -lh
 
-      - name: Publish v120.29 pre-release
+      - name: Publish or refresh v120.29 pre-release
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v120.29 >/dev/null 2>&1; then
-            echo "Release v120.29 already exists."
-            exit 0
-          fi
+          TAG="v120.29"
+          TITLE="IG Cleaner v120.29 — Full Android Workspace Beta"
 
-          gh release create v120.29 \
-            release-assets/IG_Cleaner_Companion_v120.29-beta.apk \
-            release-assets/SHA256SUMS.txt \
-            --target "${GITHUB_SHA}" \
-            --prerelease \
-            --title "IG Cleaner v120.29 — Full Android Workspace Beta" \
-            --notes "Android now includes the full IG Cleaner workspace plus native mobile Focus, Audit and Account.
+          cat > release-assets/RELEASE_NOTES.md <<'EOF'
+          Android now includes the full IG Cleaner workspace plus native mobile Focus, Audit and Account.
 
           Included:
           - Home / Command Center
@@ -100,5 +101,30 @@ jobs:
           - Desktop-style multi-profile Focus actions redirect to Mobile Focus so Android opens profiles one at a time.
           - Supabase session/device identity is shared with the embedded Workspace.
           - System-bar overlap from v120.28 is corrected.
+          - The APK now packages exactly one official Desktop Workspace asset.
+          - CI rejects missing, undersized or duplicated Workspace assets.
 
-          This remains beta until validated on the target phone."
+          This remains a beta release until validated on the target phone.
+          EOF
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Refreshing existing $TAG release."
+            git tag -f "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG" --force
+            gh release upload "$TAG" \
+              release-assets/IG_Cleaner_Companion_v120.29-beta.apk \
+              release-assets/SHA256SUMS.txt \
+              --clobber
+            gh release edit "$TAG" \
+              --prerelease \
+              --title "$TITLE" \
+              --notes-file release-assets/RELEASE_NOTES.md
+          else
+            gh release create "$TAG" \
+              release-assets/IG_Cleaner_Companion_v120.29-beta.apk \
+              release-assets/SHA256SUMS.txt \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --title "$TITLE" \
+              --notes-file release-assets/RELEASE_NOTES.md
+          fi
