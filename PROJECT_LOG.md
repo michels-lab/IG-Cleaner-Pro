@@ -496,3 +496,9 @@ Validated locally against the supplied 2026-09-30 Instagram ZIP:
 - JSON import/parsing behavior is intentionally unchanged.
 - Manual JSON/HTML uploads remain an advanced alternative path.
 - Structural validation: all inline scripts pass syntax validation and no duplicate DOM IDs were found.
+
+## 2026-10-05 — Infrastructure / cloud audit
+
+Added `docs/INFRASTRUCTURE_AUDIT.md`.
+
+The current local-only architecture is an intentional privacy property: Instagram exports stay in the browser and no backend is required. Supabase/Google cloud must therefore remain optional future architecture, not a default dependency. Near-term infrastructure gaps are CI, update/distribution design, centralized privacy documentation and browser-storage migration/versioning.
