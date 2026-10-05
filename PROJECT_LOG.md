@@ -502,3 +502,14 @@ Validated locally against the supplied 2026-09-30 Instagram ZIP:
 Added `docs/INFRASTRUCTURE_AUDIT.md`.
 
 The current local-only architecture is an intentional privacy property: Instagram exports stay in the browser and no backend is required. Supabase/Google cloud must therefore remain optional future architecture, not a default dependency. Near-term infrastructure gaps are CI, update/distribution design, centralized privacy documentation and browser-storage migration/versioning.
+
+## 2026-10-05 — Michel's Lab parent/child governance contract
+
+Added the repository-level Michel's Lab governance declaration:
+
+- `.michelslab/project.yml` identifies `realmichelduarte/Michel-Software-Standards` as the shared standards authority.
+- `MICHELS_LAB_PROJECT.md` documents the human-readable reporting contract.
+- App-specific implementation evidence remains in this repository.
+- Reusable/cross-app decisions are promoted to the master standards repository.
+- The master repository polls child status centrally; this repository receives no credential that can write to the master.
+- Secret values remain prohibited from both repositories.
