@@ -145,7 +145,7 @@ public final class MainActivity extends AppCompatActivity {
         content = findViewById(R.id.content);
         globalStatus = findViewById(R.id.globalStatus);
 
-        View root = findViewById(R.id.root);
+        View root = findViewById(R.id.appRoot);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(0, bars.top, 0, bars.bottom);
