@@ -2,10 +2,6 @@ name: Build IG Cleaner Companion
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["sync-companion-v120.27"]
-    paths:
-      - "android/**"
 
 jobs:
   android:
