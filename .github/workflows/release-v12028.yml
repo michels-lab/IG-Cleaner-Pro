@@ -1,0 +1,87 @@
+name: Publish IG Cleaner Android v120.28
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/release-v12028.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build Android beta
+        run: gradle :app:assembleDebug
+
+      - name: Prepare release assets
+        working-directory: .
+        run: |
+          mkdir -p release-assets
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-assets/IG_Cleaner_Companion_v120.28-beta.apk
+          cd release-assets
+          sha256sum IG_Cleaner_Companion_v120.28-beta.apk > SHA256SUMS.txt
+          ls -lh
+
+      - name: Publish v120.28 pre-release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v120.28 >/dev/null 2>&1; then
+            echo "Release v120.28 already exists."
+            exit 0
+          fi
+
+          gh release create v120.28 \
+            release-assets/IG_Cleaner_Companion_v120.28-beta.apk \
+            release-assets/SHA256SUMS.txt \
+            --target "${GITHUB_SHA}" \
+            --prerelease \
+            --title "IG Cleaner Companion v120.28 — Native Android Beta" \
+            --notes "Android companion rebuilt from the ground up as a conventional native Material app.
+
+          Highlights:
+          - AppCompat + Material Components + RecyclerView
+          - Native Focus, Audit and Account screens
+          - Focus 20/30/40 as a one-profile-at-a-time checklist
+          - Explicit final confirmation before a batch becomes reviewed
+          - Review and Audit preserve Desktop/Android origin
+          - Email OTP login with hidden backend configuration
+          - Foreground sync heartbeat and real launcher resources
+          - Sync session excluded from device backup
+
+          GitHub Actions compiles the APK from main before publishing this release.
+
+          This remains a beta release until install/launch, OTP, Focus round-trip and Audit are validated on the target phone."
