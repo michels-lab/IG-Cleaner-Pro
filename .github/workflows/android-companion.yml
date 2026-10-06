@@ -8,6 +8,9 @@ on:
       - "android/**"
       - ".github/workflows/android-companion.yml"
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -52,3 +55,25 @@ jobs:
         with:
           name: ig-cleaner-companion-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish v120.30 prerelease
+        if: github.ref_name == 'android-full-sync-v120.30'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_APK="IG-Cleaner-v120.30-beta.apk"
+          cp "$APK" "$RELEASE_APK"
+
+          NOTES=Android v120.30 beta\n\n- One Cuenta/login experience on Android.\n- Hardened Supabase session refresh and WebView/native session sharing.\n- Full Following, Followers and Pending list snapshots sync from Desktop to Android.\n- Review, Mutuals, Followers and Pending can reconstruct the same people on Android.\n\nValidation: GitHub Actions build + embedded Workspace verification passed. Device round-trip validation is still pending.'
+
+          if gh release view v120.30 >/dev/null 2>&1; then
+            gh release edit v120.30 --title "IG Cleaner v120.30 Beta" --notes "$NOTES" --prerelease
+            gh release upload v120.30 "$RELEASE_APK" --clobber
+          else
+            gh release create v120.30 "$RELEASE_APK" \
+              --target "$GITHUB_SHA" \
+              --title "IG Cleaner v120.30 Beta" \
+              --notes "$NOTES" \
+              --prerelease
+          fi
