@@ -822,3 +822,12 @@ The next chat should continue from this section instead of reconstructing the An
 - Release workflow now triggers for Desktop/branding changes as well as Android changes.
 - CI validates inline Desktop JavaScript syntax before assembling the APK.
 - Release includes APK, versioned Desktop HTML, canonical Desktop HTML and official SVG logo.
+
+
+### v120.33 follow-up — Desktop password parity and truthful Android pending count
+- Desktop Cuenta changed from OTP-primary to email + password primary.
+- First-time/recovery flow remains OTP -> verify email -> save a new password.
+- Desktop sync form was restyled so password/email fields use the same product surfaces as the rest of the app.
+- Desktop About privacy text was corrected: the original Instagram export remains local, while normalized lists/review state may be stored privately in Supabase when sync is enabled.
+- Android now tracks whether review-state sync is actually available. Before review history arrives, Home shows REVIEW STATE as unavailable rather than calling all 751 raw no-follow-back relationships “review pending”.
+- Review remains browsable as raw relationship data while the historical state is missing; labels explicitly say RAW MATCHES until the snapshot is restored.
