@@ -733,3 +733,43 @@ The next chat should continue from this section instead of reconstructing the An
 4. Confirm the real usernames appear in Android Review, Mutuals, Followers and Pending without re-importing the export on the phone.
 5. Close/reopen Android and confirm Cuenta remains connected and no second light-blue login appears.
 6. Run a Focus/review on Android and verify the result returns to Desktop.
+
+
+## 2026-10-06 — Android v120.32: Pro UI, password-first auth, cache and sync hardening
+
+### Visual system
+- Android now uses the actual Desktop v120.5 design tokens: #060910 background, #090E17 canvas, #0D1521 surface, #111C2B surface 2, #162335 surface 3, #F3F7FC text, #8D9CB2 muted, #5D9CFF blue, #71D7FF cyan, #EFBD62 gold, #63D1A7 green, #FF7184 red and #AA8CFF violet.
+- Rebuilt the Android shell around a custom IG monogram and the product name “Instagram Cleaner Pro”.
+- Replaced the generic launcher checkmark icon with the IG Cleaner Pro monogram.
+- Typography follows Desktop: system sans for UI and monospace for usernames, KPIs and status microcopy.
+- Bottom navigation is now Home / Review / Focus / Activity / Profile.
+- Advanced Desktop/WebView tools moved to the overflow menu instead of serving as the primary mobile UI.
+
+### Native mobile product UX
+- Home is a native dashboard with Review pending, Mutuals, Followers and Requests KPIs.
+- Review is native and contains Not following back / Mutuals / Followers / Requests subviews.
+- Added native search, compact social-profile rows, pull-to-refresh and haptic feedback.
+- Focus and Activity were restyled to match the Desktop visual system.
+- Raw loading zeros are avoided by restoring the last successful per-account cache before refreshing.
+
+### Authentication
+- Primary Android sign-in is email + password.
+- OTP is secondary and used for first-time setup or password recovery.
+- OTP verification can establish the authenticated session and immediately save a new password.
+- Password input is preserved exactly and is not trimmed.
+- Existing Supabase refresh-token persistence remains in place.
+
+### Sync/state
+- Android cache stores Following, Followers, Pending and workspace state per account.
+- Native refresh pulls list_snapshots, workspace_state and profile_state.
+- profile_state is merged into the native projection so Android Focus reviews are reflected without waiting for Desktop to republish workspace_state.
+- Review unresolved count follows Desktop semantics by excluding reviewed, protected and active-snooze profiles.
+- Pending unresolved count excludes reviewed and active-snooze requests.
+
+### Security
+- Revoked client EXECUTE privileges on public.rls_auto_enable() from PUBLIC, anon and authenticated; Supabase security advisor warning cleared.
+- Supabase leaked-password protection remains a project Auth setting to enable separately; the current connector does not expose that configuration mutation.
+
+### Validation / release
+- v120.32 prerelease workflow builds the Android APK and Desktop HTML and overwrites release assets with the latest validated branch build.
+- Latest release is https://github.com/realmichelduarte/IG-Cleaner-Pro/releases/tag/v120.32
