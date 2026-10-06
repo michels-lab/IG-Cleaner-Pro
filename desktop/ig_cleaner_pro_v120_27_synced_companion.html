@@ -4993,6 +4993,7 @@ function reviewChanged(row){
 function saveReviewedState(){
   saveSet(LS_DONE,doneSet);
   localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta));
+  window.igcQueueStateSync?.('review-state');
 }
 
 
@@ -6220,7 +6221,7 @@ function snoozeUntil(username){
   const ts=Number(snoozeMap&&snoozeMap[username]||0);
   return Number.isFinite(ts)?ts:0;
 }
-function saveSnoozeMap(){localStorage.setItem(LS_SNOOZE,JSON.stringify(snoozeMap||{}));}
+function saveSnoozeMap(){localStorage.setItem(LS_SNOOZE,JSON.stringify(snoozeMap||{}));window.igcQueueStateSync?.('snooze')}
 function loadSnoozeMap(){try{snoozeMap=JSON.parse(localStorage.getItem(LS_SNOOZE)||'{}')||{}}catch{snoozeMap={}}}
 function isSnoozed(rowOrUsername){
   const username=typeof rowOrUsername==='string'?rowOrUsername:rowOrUsername?.username;
@@ -8303,13 +8304,13 @@ function exportCompareCSV(type){
   msg('CSV de comparación exportado.','s');
 }
 
-function saveSet(key,set){localStorage.setItem(key,JSON.stringify([...set]))}
+function saveSet(key,set){localStorage.setItem(key,JSON.stringify([...set]));if(key===LS_PROT||key===LS_DONE)window.igcQueueStateSync?.('set:'+key)}
 function loadSet(key){try{return new Set(JSON.parse(localStorage.getItem(key)||'[]'))}catch{return new Set()}}
 function saveConfig(){
   const config={medium:getMediumThreshold(),high:getHighThreshold(),pageSize};
   localStorage.setItem(LS_CONFIG,JSON.stringify(config));
 }
-function saveReviewedMeta(){localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta||{}));}
+function saveReviewedMeta(){localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta||{}));window.igcQueueStateSync?.('review-meta')}
 function loadLocalState(){
   protectedSet=loadSet(LS_PROT);
   doneSet=loadSet(LS_DONE);
@@ -8330,8 +8331,8 @@ function loadLocalState(){
 function loadPendingState(){try{pendingRequestsRaw=JSON.parse(localStorage.getItem(LS_PENDING_REQUESTS)||'[]')||[]}catch{pendingRequestsRaw=[]}pendingOpenedSet=loadSet(LS_PENDING_OPENED);try{pendingReviewedMeta=JSON.parse(localStorage.getItem(LS_PENDING_REVIEW_META)||'{}')||{}}catch{pendingReviewedMeta={}}try{pendingSnoozeMap=JSON.parse(localStorage.getItem(LS_PENDING_SNOOZE)||'{}')||{}}catch{pendingSnoozeMap={}}clearExpiredPendingSnoozes()}
 function savePendingRequests(){localStorage.setItem(LS_PENDING_REQUESTS,JSON.stringify(pendingRequestsRaw||[]))}
 function savePendingOpened(){saveSet(LS_PENDING_OPENED,pendingOpenedSet)}
-function savePendingReviewedMeta(){localStorage.setItem(LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta||{}))}
-function savePendingSnoozeMap(){localStorage.setItem(LS_PENDING_SNOOZE,JSON.stringify(pendingSnoozeMap||{}))}
+function savePendingReviewedMeta(){localStorage.setItem(LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta||{}));window.igcQueueStateSync?.('pending-review')}
+function savePendingSnoozeMap(){localStorage.setItem(LS_PENDING_SNOOZE,JSON.stringify(pendingSnoozeMap||{}));window.igcQueueStateSync?.('pending-snooze')}
 function pendingReviewedAt(username){return pendingReviewedMeta?.[username]?.reviewedAt||0}
 function pendingDecision(username){return pendingReviewedMeta?.[username]?.decision||''}
 function pendingReviewDate(username){return pendingReviewedMeta?.[username]?.reviewedAt||0}
