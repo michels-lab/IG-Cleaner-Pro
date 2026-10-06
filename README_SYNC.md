@@ -127,3 +127,10 @@ Security note: client EXECUTE privileges were revoked from public.rls_auto_enabl
 - Reviews received from Android are persisted into Desktop local state, including the reviewed/protected sets and review metadata.
 - The official product mark is the blue/cyan **IG** monogram in `branding/ig-cleaner-pro-mark.svg`; Android and Desktop use this identity consistently.
 - CI checks every executable inline Desktop JavaScript block with `node --check` before building Android.
+
+
+### v120.33 authentication and truthful loading states
+
+Desktop uses the same password-first account model as Android. OTP is shown only for first-time setup or password recovery, where it verifies the email before a new password is saved.
+
+Android distinguishes raw relationship data from synchronized review state. If Following/Followers are present but no Desktop `workspace_state` or newer `profile_state` exists yet, Home shows the relationship lists but does **not** claim that every non-mutual account is an unresolved review. Once Desktop v120.33 publishes review history, the true unresolved count is shown automatically.
