@@ -165,18 +165,37 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         View root = findViewById(R.id.mainRoot);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, bars.top, 0, bars.bottom);
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(root);
-
         toolbar = findViewById(R.id.toolbar);
         bottomNav = findViewById(R.id.bottomNav);
         content = findViewById(R.id.content);
         globalStatus = findViewById(R.id.globalStatus);
         brandContext = findViewById(R.id.brandContext);
+
+        // Keep app content below the status bar, while the bottom navigation owns
+        // the navigation-bar inset. This avoids double-insetting and clipped labels
+        // on Samsung 3-button navigation as well as gesture navigation.
+        final int navBaseHeight = dp(80);
+        final int navBaseTop = dp(4);
+        final int navBaseBottom = dp(8);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets status = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            Insets navigation = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            v.setPadding(0, status.top, 0, 0);
+
+            ViewGroup.LayoutParams params = bottomNav.getLayoutParams();
+            int targetHeight = navBaseHeight + navigation.bottom;
+            if (params.height != targetHeight) {
+                params.height = targetHeight;
+                bottomNav.setLayoutParams(params);
+            }
+            bottomNav.setPadding(
+                    bottomNav.getPaddingLeft(),
+                    navBaseTop,
+                    bottomNav.getPaddingRight(),
+                    navBaseBottom + navigation.bottom);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
 
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.actionSync) {
