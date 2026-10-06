@@ -1,18 +1,41 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.IGCleaner" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/ig_cyan</item>
-        <item name="colorOnPrimary">@color/ig_bg</item>
-        <item name="colorSecondary">@color/ig_green</item>
+        <item name="colorPrimary">@color/ig_blue</item>
+        <item name="colorOnPrimary">@color/ig_text</item>
+        <item name="colorSecondary">@color/ig_cyan</item>
         <item name="colorOnSecondary">@color/ig_bg</item>
         <item name="colorSurface">@color/ig_surface</item>
+        <item name="colorSurfaceVariant">@color/ig_surface_2</item>
         <item name="colorOnSurface">@color/ig_text</item>
+        <item name="colorOutline">@color/ig_border</item>
         <item name="android:colorAccent">@color/ig_cyan</item>
         <item name="android:windowBackground">@drawable/ig_brand_splash</item>
         <item name="android:statusBarColor">@color/ig_bg</item>
         <item name="android:navigationBarColor">@color/ig_bg</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
+    </style>
+
+    <style name="TextAppearance.IGC.Brand" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ig_text</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextAppearance.IGC.Micro" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/ig_muted</item>
+        <item name="android:textSize">9sp</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
+    <style name="TextAppearance.IGC.Kpi" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ig_text</item>
     </style>
 </resources>
