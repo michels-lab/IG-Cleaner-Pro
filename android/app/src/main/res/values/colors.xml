@@ -1,12 +1,20 @@
 <resources>
     <color name="ig_bg">#060910</color>
+    <color name="ig_canvas">#090E17</color>
     <color name="ig_surface">#0D1521</color>
-    <color name="ig_surface_2">#121C2B</color>
-    <color name="ig_border">#20314B</color>
-    <color name="ig_text">#EFF6FF</color>
-    <color name="ig_muted">#8E9EB4</color>
+    <color name="ig_surface_2">#111C2B</color>
+    <color name="ig_surface_3">#162335</color>
+    <color name="ig_border">#21A1B8DC</color>
+    <color name="ig_border_strong">#4579BDFF</color>
+    <color name="ig_text">#F3F7FC</color>
+    <color name="ig_muted">#8D9CB2</color>
+    <color name="ig_dim">#5F6E83</color>
+    <color name="ig_blue">#5D9CFF</color>
     <color name="ig_cyan">#71D7FF</color>
-    <color name="ig_green">#63D1A7</color>
     <color name="ig_gold">#EFBD62</color>
-    <color name="ig_red">#FF859A</color>
+    <color name="ig_green">#63D1A7</color>
+    <color name="ig_red">#FF7184</color>
+    <color name="ig_violet">#AA8CFF</color>
+    <color name="ig_nav_active">#1F5D9CFF</color>
+    <color name="ig_transparent">#00000000</color>
 </resources>
