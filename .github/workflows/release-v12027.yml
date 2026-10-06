@@ -1,10 +1,6 @@
 name: Publish IG Cleaner v120.27
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - ".github/workflows/release-v12027.yml"
   workflow_dispatch:
 
 permissions:
