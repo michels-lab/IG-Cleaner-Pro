@@ -58,8 +58,10 @@ jobs:
           assert m['releasePolicy']['automaticPublishFromMain'] is False
           assert m['releasePolicy']['explicitManualPublishRequired'] is True
           assert m['releasePolicy']['checksumsRequired'] is True
+          assert m['releasePolicy']['nextRelease']=='v120.34'
+          assert m['releasePolicy']['githubPrerelease'] is False
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
-          print('Distribution/state manifest passed.')
+          print('Distribution/state manifest passed for stable v120.34.')
           PY
 
   android:
