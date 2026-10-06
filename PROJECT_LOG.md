@@ -779,3 +779,17 @@ Validated:
 
 The only later branch change is this documentation entry. No sync/auth/review data model change and no release publication occurred.
 
+## 2026-10-06 — Stable GitHub release v120.29 published
+
+Published/refreshed **v120.29** as a normal GitHub Release (not a prerelease) after official branding adoption and hardened CI passed.
+
+Release validation workflow: `37516998786` — **SUCCESS**.
+
+Published assets:
+- `IG-Cleaner-Pro-v120.29-Desktop.html` — self-contained Desktop/local-Web app;
+- `IG-Cleaner-Pro-v120.29-Android-beta.apk` — Android beta companion;
+- `IG-Cleaner-Pro-logo.svg` — official product icon source;
+- `SHA256SUMS.txt` — integrity hashes for all distributed assets.
+
+The release is stable for the Desktop/local-Web product. Android remains explicitly beta pending target-device and production-store validation. No claim of Google Play/production-device validation was made.
+
