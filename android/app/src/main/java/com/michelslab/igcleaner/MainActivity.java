@@ -3,6 +3,7 @@ package com.michelslab.igcleaner;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.os.Environment;
 import android.text.format.DateFormat;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +39,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -47,6 +50,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -83,15 +87,17 @@ public final class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private FrameLayout content;
     private TextView globalStatus;
+    private TextView brandContext;
 
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12031;
+    private static final int FILE_CHOOSER_REQUEST = 12032;
 
     private View mobileWorkspaceView;
     private RecyclerView workspaceProfileList;
     private WorkspaceProfileAdapter workspaceAdapter;
+    private TextView mobileWorkspaceTitle;
     private TextView mobileWorkspaceSubtitle;
     private TextView workspaceSectionTitle;
     private TextView workspaceSectionSubtitle;
@@ -99,11 +105,22 @@ public final class MainActivity extends AppCompatActivity {
     private TextView kpiMainLabel;
     private TextView kpiSecondary;
     private TextView kpiSecondaryLabel;
+    private TextView homeReviewCount;
+    private TextView homeMutualCount;
+    private TextView homeFollowerCount;
+    private TextView homePendingCount;
+    private View homeKpis;
+    private View sectionKpis;
+    private View reviewTabsScroll;
+    private TextInputLayout workspaceSearchLayout;
+    private LinearProgressIndicator workspaceSyncProgress;
+    private SwipeRefreshLayout workspaceRefresh;
     private JSONArray syncedFollowing = new JSONArray();
     private JSONArray syncedFollowers = new JSONArray();
     private JSONArray syncedPending = new JSONArray();
     private JSONObject syncedWorkspaceState = new JSONObject();
-    private String workspaceSection = "review";
+    private String workspaceSection = "home";
+    private static final String CACHE_PREFS = "igc_workspace_cache";
 
     private View focusView;
     private TextView focusTitle;
@@ -159,10 +176,15 @@ public final class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNav);
         content = findViewById(R.id.content);
         globalStatus = findViewById(R.id.globalStatus);
+        brandContext = findViewById(R.id.brandContext);
 
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.actionSync) {
                 syncNow();
+                return true;
+            }
+            if (item.getItemId() == R.id.actionTools) {
+                showWorkspaceScreen("", "Advanced tools");
                 return true;
             }
             if (item.getItemId() == R.id.actionAbout) {
@@ -173,27 +195,31 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.navWorkspace) {
-                showMobileWorkspaceScreen();
+            bottomNav.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+            if (item.getItemId() == R.id.navHome) {
+                showMobileWorkspaceScreen("home");
+                return true;
+            }
+            if (item.getItemId() == R.id.navReview) {
+                showMobileWorkspaceScreen("review");
                 return true;
             }
             if (item.getItemId() == R.id.navFocus) {
                 showFocusScreen();
                 return true;
             }
-            if (item.getItemId() == R.id.navAudit) {
+            if (item.getItemId() == R.id.navActivity) {
                 showAuditScreen();
                 return true;
             }
-            if (item.getItemId() == R.id.navAccount) {
+            if (item.getItemId() == R.id.navProfile) {
                 showNativeAccountScreen();
                 return true;
             }
             return false;
         });
 
-        bottomNav.setSelectedItemId(R.id.navWorkspace);
-        showMobileWorkspaceScreen();
+        bottomNav.setSelectedItemId(R.id.navHome);
     }
 
     @Override
