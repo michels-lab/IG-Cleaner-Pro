@@ -726,3 +726,19 @@ Added `release/distribution-manifest.json` and `docs/UPDATE_AND_STATE_MIGRATION.
 
 Legacy version-specific release workflows no longer publish from a qualifying push to `main`. v120.29 additionally requires explicit manual `publish=true`. Release publication remains separate from CI/build success and real-device gates.
 
+### Validation evidence
+
+Pull-request CI run `37507759707` completed **SUCCESS** on branch HEAD `86e9e01038e779f9b3520efbb565924c5e75c854`.
+
+Validated:
+- Desktop local-app contract;
+- full-document JSON parsing and local import surface;
+- persistent localStorage / IndexedDB compatibility markers;
+- required Review / Followers / Mutuals / Pending workflows;
+- inline JavaScript syntax and static DOM ID uniqueness;
+- repaired auditable sanitized Instagram export fixture;
+- Android debug build;
+- exactly one embedded Workspace asset.
+
+No release publication was authorized or performed.
+
