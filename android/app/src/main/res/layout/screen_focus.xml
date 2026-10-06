@@ -4,21 +4,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp"
+    android:paddingTop="15dp"
+    android:paddingBottom="12dp">
 
-    <TextView android:id="@+id/focusTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Focus" android:textColor="@color/ig_text" android:textSize="28sp" android:textStyle="bold"/>
-    <TextView android:id="@+id/focusSubtitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="@color/ig_muted" android:textSize="14sp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="FOCUS MODE"
+        android:textColor="@color/ig_cyan"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.14"/>
+
+    <TextView
+        android:id="@+id/focusTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="Focus"
+        android:textColor="@color/ig_text"
+        android:textSize="27sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/focusSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:textColor="@color/ig_muted"
+        android:textSize="12sp"/>
 
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/focusProgress"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="3dp"
         android:layout_marginTop="14dp"
         android:visibility="gone"
         app:indicatorColor="@color/ig_cyan"
         app:trackColor="@color/ig_surface_2"/>
 
-    <TextView android:id="@+id/focusProgressLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="@color/ig_green" android:textStyle="bold" android:visibility="gone"/>
+    <TextView
+        android:id="@+id/focusProgressLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:fontFamily="monospace"
+        android:textColor="@color/ig_green"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone"/>
 
     <ScrollView
         android:id="@+id/batchScroll"
@@ -31,7 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="12dp"/>
+            android:paddingTop="14dp"/>
     </ScrollView>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -39,7 +75,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingTop="10dp"
+        android:paddingTop="12dp"
         android:clipToPadding="false"
         android:visibility="gone"/>
 
@@ -55,24 +91,33 @@
             android:id="@+id/nextPending"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Siguiente perfil"/>
+            android:text="Next profile"
+            android:textAllCaps="false"
+            app:cornerRadius="14dp"
+            app:strokeColor="@color/ig_border_strong"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/finishBatch"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginStart="10dp"
-            android:text="Finalizar"/>
+            android:text="Finish"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@color/ig_blue"
+            app:cornerRadius="14dp"/>
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/refreshFocus"
-        style="@style/Widget.Material3.Button.OutlinedButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Actualizar Focus"/>
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:text="Refresh Focus"
+        android:textAllCaps="false"
+        android:textColor="@color/ig_cyan"/>
 </LinearLayout>
