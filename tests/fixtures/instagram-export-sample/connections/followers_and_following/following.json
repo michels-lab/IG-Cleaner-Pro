@@ -1,0 +1,7 @@
+{
+  "relationships_following": [
+    {"title":"alpha_test","string_list_data":[{"href":"https://www.instagram.com/_u/alpha_test","value":"alpha_test","timestamp":1700000001}]},
+    {"title":"beta_test","string_list_data":[{"href":"https://www.instagram.com/_u/beta_test","value":"beta_test","timestamp":1700000002}]},
+    {"title":"gamma_test","string_list_data":[{"href":"https://www.instagram.com/_u/gamma_test","value":"gamma_test","timestamp":1700000003}]}
+  ]
+}
