@@ -117,6 +117,6 @@ Primary Android navigation is Home / Review / Focus / Activity / Profile. Home a
 
 Home/Review restore the last successful per-account cache first, then refresh list_snapshots, workspace_state and profile_state. This prevents temporary zero-count states while the network refresh is running. Pull-to-refresh is supported.
 
-Password sign-in uses Supabase Auth. On first-time setup or recovery, the user requests an email OTP, verifies it, sets a new password, and future sign-ins use email + password.
+Password sign-in uses Supabase Auth. On first-time setup or recovery, the user requests an email OTP, verifies it, sets a new password, and future sign-ins use email + password. Already-connected users can set or change their password directly from Profile without signing out.
 
 Security note: client EXECUTE privileges were revoked from public.rls_auto_enable(). Supabase leaked-password protection should also be enabled in the project Auth settings.
