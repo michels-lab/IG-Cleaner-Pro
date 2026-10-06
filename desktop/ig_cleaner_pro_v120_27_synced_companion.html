@@ -12492,10 +12492,7 @@ function r24ReportHtml(sections){
 </style></head><body><main class="shell"><header class="hero"><span class="eyebrow">IG CLEANER PRO · PORTABLE STATUS REPORT</span><h1>Estado de relaciones y revisión</h1><p>Generado el ${r24Esc(generated.toLocaleString('es-MX',{dateStyle:'long',timeStyle:'short'}))}. Los enlaces abren directamente el perfil de Instagram; este archivo no necesita IG Cleaner para funcionar.</p><div class="summary"><div><b>${total}</b><span>perfiles en listas</span></div><div><b>${reviewed}</b><span>revisados vigentes</span></div><div><b>${pending}</b><span>pendientes / recheck</span></div></div><nav class="nav">${nav}</nav></header><div class="tools"><input id="search" type="search" placeholder="Buscar @usuario, decisión, contexto, cambio…"><select id="status"><option value="all">Todos los estados</option><option value="pending">No revisados</option><option value="reviewed">Revisados</option><option value="recheck">Revisar de nuevo</option></select></div>${body}<div class="footer">IG Cleaner Pro · Michel's Lab · snapshot local exportado desde tu navegador</div></main><script>
 (()=>{const q=document.getElementById('search'),s=document.getElementById('status');function apply(){const term=(q.value||'').trim().toLowerCase(),status=s.value;document.querySelectorAll('.report-section').forEach(sec=>{let n=0;sec.querySelectorAll('tbody tr[data-search]').forEach(tr=>{const ok=(!term||tr.dataset.search.includes(term))&&(status==='all'||tr.dataset.status===status);tr.hidden=!ok;if(ok)n++});const c=sec.querySelector('.visible-count');if(c)c.textContent=n})}q.addEventListener('input',apply);s.addEventListener('change',apply)})();
 <\/script>
-\n\n<script id="igc-official-brand-startup">
-(()=>{const hide=()=>{const el=document.getElementById('igcBrandSplash');if(!el)return;requestAnimationFrame(()=>{el.classList.add('hide');setTimeout(()=>el.remove(),320)})};if(document.readyState==='complete')hide();else window.addEventListener('load',hide,{once:true});setTimeout(hide,2200)})();
-</script>
-</body></html>`;
+\n\n</body></html>`;
 }
 window.igcExportPortableHtmlReport=function(){
   const sections=r24Snapshot(),total=sections.reduce((n,s)=>n+s.rows.length,0);
@@ -12840,5 +12837,8 @@ setTimeout(install,0);
 </script>
 <!-- v120.27: Supabase-backed Desktop ↔ Android sync center; existing relationship parsers unchanged. -->
 
+<script id="igc-official-brand-startup">
+(()=>{const hide=()=>{const el=document.getElementById('igcBrandSplash');if(!el)return;requestAnimationFrame(()=>{el.classList.add('hide');setTimeout(()=>el.remove(),320)})};if(document.readyState==='complete')hide();else window.addEventListener('load',hide,{once:true});setTimeout(hide,2200)})();
+</script>
 </body>
 </html>
