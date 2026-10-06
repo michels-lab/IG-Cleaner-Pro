@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "product": "Instagram Cleaner Pro",
+  "version_line": "120",
+  "next_release": "120.34",
+  "next_tag": "v120.34",
+  "channel": "stable",
+  "prerelease": false,
+  "auto_publish": false,
+  "explicit_user_authorization_required": true,
+  "version_source_of_truth": ".michelslab/release-policy.json",
+  "rules": [
+    "Never infer the release version from a branch name, historical workflow, Android versionCode, prerelease tag, or stale handoff.",
+    "Before publishing, query GitHub Releases and reconcile the requested tag with this file and current product version files.",
+    "Normal release means GitHub prerelease=false.",
+    "Development and validation workflows must not publish releases.",
+    "Only the dedicated governed release workflow may publish the next release."
+  ]
+}
