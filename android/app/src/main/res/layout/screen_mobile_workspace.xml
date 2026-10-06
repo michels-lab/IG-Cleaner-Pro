@@ -4,150 +4,240 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/ig_bg"
-    android:paddingHorizontal="16dp">
+    android:background="@color/ig_bg">
 
-    <TextView
-        android:id="@+id/mobileWorkspaceTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Tu Instagram"
-        android:textColor="@color/ig_text"
-        android:textSize="26sp"
-        android:textStyle="bold"/>
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="8dp">
 
-    <TextView
-        android:id="@+id/mobileWorkspaceSubtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="Cargando datos sincronizados…"
-        android:textColor="@color/ig_muted"
-        android:textSize="13sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your Instagram workspace"
+            android:textColor="@color/ig_text"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/mobileWorkspaceSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Sincronizando…"
+            android:textColor="@color/ig_muted"
+            android:textSize="13sp"/>
+    </LinearLayout>
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:scrollbars="none">
+        android:scrollbars="none"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/workspaceTabs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:selectionRequired="true"
-            app:singleSelection="true">
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabHome"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:text="Home"
+                android:textAllCaps="false"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabReview"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Review"/>
+                android:layout_height="44dp"
+                android:text="Review"
+                android:textAllCaps="false"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabMutuals"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Mutuals"/>
+                android:layout_height="44dp"
+                android:text="Mutuals"
+                android:textAllCaps="false"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabFollowers"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Followers"/>
+                android:layout_height="44dp"
+                android:text="Followers"
+                android:textAllCaps="false"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/tabPending"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pending"/>
+                android:layout_height="44dp"
+                android:text="Pending"
+                android:textAllCaps="false"/>
         </com.google.android.material.button.MaterialButtonToggleGroup>
     </HorizontalScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
         android:orientation="horizontal"
-        android:weightSum="2">
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="12dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="96dp"
             android:layout_weight="1"
             android:layout_marginEnd="6dp"
             app:cardBackgroundColor="@color/ig_surface"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="20dp"
             app:strokeColor="@color/ig_border"
             app:strokeWidth="1dp">
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:padding="14dp">
-                <TextView android:id="@+id/kpiMain" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/ig_text" android:textSize="26sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/kpiMainLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pendientes" android:textColor="@color/ig_muted" android:textSize="11sp" android:textAllCaps="true"/>
+                android:gravity="center_vertical"
+                android:padding="16dp">
+                <TextView
+                    android:id="@+id/kpiMain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/ig_text"
+                    android:textSize="28sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/kpiMainLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Primary"
+                    android:textColor="@color/ig_muted"
+                    android:textSize="11sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="96dp"
             android:layout_weight="1"
             android:layout_marginStart="6dp"
             app:cardBackgroundColor="@color/ig_surface"
-            app:cardCornerRadius="18dp"
+            app:cardCornerRadius="20dp"
             app:strokeColor="@color/ig_border"
             app:strokeWidth="1dp">
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:padding="14dp">
-                <TextView android:id="@+id/kpiSecondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/ig_text" android:textSize="26sp" android:textStyle="bold"/>
-                <TextView android:id="@+id/kpiSecondaryLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total" android:textColor="@color/ig_muted" android:textSize="11sp" android:textAllCaps="true"/>
+                android:gravity="center_vertical"
+                android:padding="16dp">
+                <TextView
+                    android:id="@+id/kpiSecondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/ig_cyan"
+                    android:textSize="28sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/kpiSecondaryLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Secondary"
+                    android:textColor="@color/ig_muted"
+                    android:textSize="11sp"
+                    android:textStyle="bold"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/workspaceSectionTitle"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:text="Pendientes de revisar"
-        android:textColor="@color/ig_text"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginTop="12dp"
+        android:hint="Buscar perfil"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusTopStart="18dp"
+        app:boxCornerRadiusTopEnd="18dp"
+        app:boxCornerRadiusBottomStart="18dp"
+        app:boxCornerRadiusBottomEnd="18dp"
+        app:boxStrokeColor="@color/ig_border"
+        app:startIconDrawable="@android:drawable/ic_menu_search">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/workspaceSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="@color/ig_text"/>
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:id="@+id/workspaceSectionSubtitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="Toca un perfil para abrir Instagram."
-        android:textColor="@color/ig_muted"
-        android:textSize="12sp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/workspaceSectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Review"
+                android:textColor="@color/ig_text"
+                android:textSize="19sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/workspaceSectionSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/ig_muted"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/openAdvancedWorkspace"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tools"
+            android:textAllCaps="false"/>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/workspaceProfileList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="10dp"
         android:clipToPadding="false"
-        android:paddingBottom="12dp"/>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/openAdvancedWorkspace"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:text="Herramientas avanzadas"/>
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="20dp"/>
 </LinearLayout>
