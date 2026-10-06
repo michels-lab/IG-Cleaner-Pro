@@ -27,6 +27,18 @@
     "automaticPublishFromMain": false,
     "explicitManualPublishRequired": true,
     "checksumsRequired": true,
-    "deviceValidationRequiredForAndroidProduction": true
+    "deviceValidationRequiredForAndroidProduction": true,
+    "nextRelease": "v120.34",
+    "githubPrerelease": false,
+    "minimumPreviousNormalRelease": "v120.29",
+    "retiredAutomaticOrVersionSpecificTargets": [
+      "v120.27",
+      "v120.28",
+      "v120.29",
+      "v120.30",
+      "v120.31",
+      "v120.32",
+      "v120.33"
+    ]
   }
 }
