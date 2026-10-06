@@ -92,7 +92,7 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12032;
+    private static final int FILE_CHOOSER_REQUEST = 12033;
 
     private View mobileWorkspaceView;
     private RecyclerView workspaceProfileList;
@@ -891,7 +891,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.32");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.33");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
