@@ -276,6 +276,17 @@
                     app:cornerRadius="14dp"/>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/managePassword"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Set / change password"
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="@color/ig_border_strong"/>
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/logout"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
