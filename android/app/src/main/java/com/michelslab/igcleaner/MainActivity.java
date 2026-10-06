@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -84,7 +85,23 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12030;
+    private static final int FILE_CHOOSER_REQUEST = 12031;
+
+    private View mobileWorkspaceView;
+    private RecyclerView workspaceProfileList;
+    private WorkspaceProfileAdapter workspaceAdapter;
+    private TextView mobileWorkspaceSubtitle;
+    private TextView workspaceSectionTitle;
+    private TextView workspaceSectionSubtitle;
+    private TextView kpiMain;
+    private TextView kpiMainLabel;
+    private TextView kpiSecondary;
+    private TextView kpiSecondaryLabel;
+    private JSONArray syncedFollowing = new JSONArray();
+    private JSONArray syncedFollowers = new JSONArray();
+    private JSONArray syncedPending = new JSONArray();
+    private JSONObject syncedWorkspaceState = new JSONObject();
+    private String workspaceSection = "review";
 
     private View focusView;
     private TextView focusTitle;
@@ -155,7 +172,7 @@ public final class MainActivity extends AppCompatActivity {
 
         bottomNav.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.navWorkspace) {
-                showWorkspaceScreen();
+                showMobileWorkspaceScreen();
                 return true;
             }
             if (item.getItemId() == R.id.navFocus) {
@@ -174,7 +191,7 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setSelectedItemId(R.id.navWorkspace);
-        showWorkspaceScreen();
+        showMobileWorkspaceScreen();
     }
 
     @Override
@@ -186,7 +203,7 @@ public final class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if ("workspace".equals(currentScreen) && workspaceWebView != null && workspaceWebView.canGoBack()) {
+        if (("advanced".equals(currentScreen) || "account".equals(currentScreen)) && workspaceWebView != null && workspaceWebView.canGoBack()) {
             workspaceWebView.goBack();
             return;
         }
@@ -199,6 +216,251 @@ public final class MainActivity extends AppCompatActivity {
     }
 
 
+    private void showMobileWorkspaceScreen() {
+        disposeWorkspaceWebView();
+        currentScreen = "workspace";
+        currentBatch = null;
+        toolbar.setSubtitle("WORKSPACE");
+        workspaceSection = "review";
+
+        mobileWorkspaceView = LayoutInflater.from(this).inflate(R.layout.screen_mobile_workspace, content, false);
+        content.removeAllViews();
+        content.addView(mobileWorkspaceView);
+
+        workspaceProfileList = mobileWorkspaceView.findViewById(R.id.workspaceProfileList);
+        mobileWorkspaceSubtitle = mobileWorkspaceView.findViewById(R.id.mobileWorkspaceSubtitle);
+        workspaceSectionTitle = mobileWorkspaceView.findViewById(R.id.workspaceSectionTitle);
+        workspaceSectionSubtitle = mobileWorkspaceView.findViewById(R.id.workspaceSectionSubtitle);
+        kpiMain = mobileWorkspaceView.findViewById(R.id.kpiMain);
+        kpiMainLabel = mobileWorkspaceView.findViewById(R.id.kpiMainLabel);
+        kpiSecondary = mobileWorkspaceView.findViewById(R.id.kpiSecondary);
+        kpiSecondaryLabel = mobileWorkspaceView.findViewById(R.id.kpiSecondaryLabel);
+
+        workspaceAdapter = new WorkspaceProfileAdapter(row -> openInstagram(row.username));
+        workspaceProfileList.setLayoutManager(new LinearLayoutManager(this));
+        workspaceProfileList.setAdapter(workspaceAdapter);
+
+        MaterialButtonToggleGroup tabs = mobileWorkspaceView.findViewById(R.id.workspaceTabs);
+        tabs.check(R.id.tabReview);
+        tabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            if (checkedId == R.id.tabReview) workspaceSection = "review";
+            else if (checkedId == R.id.tabMutuals) workspaceSection = "mutuals";
+            else if (checkedId == R.id.tabFollowers) workspaceSection = "followers";
+            else if (checkedId == R.id.tabPending) workspaceSection = "pending";
+            renderMobileWorkspace();
+        });
+
+        mobileWorkspaceView.findViewById(R.id.openAdvancedWorkspace).setOnClickListener(v ->
+                showWorkspaceScreen("", "HERRAMIENTAS"));
+
+        if (!api.hasSession()) {
+            mobileWorkspaceSubtitle.setText("Conecta tu cuenta para cargar las listas sincronizadas.");
+            workspaceAdapter.submit(new ArrayList<>());
+            return;
+        }
+        loadMobileWorkspace();
+    }
+
+    private void loadMobileWorkspace() {
+        setGlobalStatus("Cargando listas…");
+        runAsync(() -> {
+            JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+            JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
+            JSONObject state = stateRows.length() > 0 && stateRows.optJSONObject(0) != null
+                    ? stateRows.optJSONObject(0).optJSONObject("payload") : null;
+            if (state == null) state = new JSONObject();
+
+            JSONArray following = new JSONArray();
+            JSONArray followers = new JSONArray();
+            JSONArray pending = new JSONArray();
+
+            for (int i = 0; i < snapshots.length(); i++) {
+                JSONObject snap = snapshots.optJSONObject(i);
+                if (snap == null) continue;
+                JSONArray payload = snap.optJSONArray("payload");
+                if (payload == null) payload = new JSONArray();
+                switch (snap.optString("list_name")) {
+                    case "following" -> following = payload;
+                    case "followers" -> followers = payload;
+                    case "pending" -> pending = payload;
+                }
+            }
+
+            syncedFollowing = following;
+            syncedFollowers = followers;
+            syncedPending = pending;
+            syncedWorkspaceState = state;
+
+            mainHandler.post(() -> {
+                if (!"workspace".equals(currentScreen) || mobileWorkspaceView == null) return;
+                renderMobileWorkspace();
+                setGlobalStatus("Listas sincronizadas · " +
+                        (syncedFollowing.length() + syncedFollowers.length() + syncedPending.length()) + " registros");
+            });
+        }, true);
+    }
+
+    private void renderMobileWorkspace() {
+        if (workspaceAdapter == null) return;
+
+        Map<String, JSONObject> followingMapNative = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followersMapNative = jsonArrayByUsername(syncedFollowers);
+        Set<String> done = jsonStringSet(syncedWorkspaceState.optJSONArray("done"));
+        Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+        JSONObject snooze = syncedWorkspaceState.optJSONObject("snooze");
+        JSONObject reviewedMeta = syncedWorkspaceState.optJSONObject("reviewedMeta");
+        JSONObject pendingReviewed = syncedWorkspaceState.optJSONObject("pendingReviewedMeta");
+        JSONObject pendingSnooze = syncedWorkspaceState.optJSONObject("pendingSnooze");
+
+        List<WorkspaceProfileAdapter.Row> rows = new ArrayList<>();
+        int total;
+        int main;
+
+        if ("review".equals(workspaceSection)) {
+            int rawNotBack = 0;
+            int unresolved = 0;
+            for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
+                String username = entry.getKey();
+                if (followersMapNative.containsKey(username)) continue;
+                rawNotBack++;
+                JSONObject source = entry.getValue();
+                boolean resolved = isNativeFollowingResolved(username, source, done, protectedUsers, snooze, reviewedMeta);
+                if (!resolved) {
+                    unresolved++;
+                    rows.add(new WorkspaceProfileAdapter.Row(
+                            username,
+                            nativeDateDetail(source, "Lo sigues"),
+                            "NO TE SIGUE"));
+                }
+            }
+            main = unresolved;
+            total = rawNotBack;
+            workspaceSectionTitle.setText("Review");
+            workspaceSectionSubtitle.setText("Cuentas que sigues, no te siguen y todavía no están resueltas.");
+            kpiMainLabel.setText("Pendientes reales");
+            kpiSecondaryLabel.setText("No te siguen");
+        } else if ("mutuals".equals(workspaceSection)) {
+            for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
+                if (!followersMapNative.containsKey(entry.getKey())) continue;
+                rows.add(new WorkspaceProfileAdapter.Row(
+                        entry.getKey(),
+                        nativeDateDetail(entry.getValue(), "Mutuo"),
+                        "MUTUAL"));
+            }
+            main = rows.size();
+            total = syncedFollowing.length();
+            workspaceSectionTitle.setText("Mutuals");
+            workspaceSectionSubtitle.setText("Personas que tú sigues y también te siguen.");
+            kpiMainLabel.setText("Mutuos");
+            kpiSecondaryLabel.setText("Following");
+        } else if ("followers".equals(workspaceSection)) {
+            for (Map.Entry<String, JSONObject> entry : followersMapNative.entrySet()) {
+                boolean mutual = followingMapNative.containsKey(entry.getKey());
+                rows.add(new WorkspaceProfileAdapter.Row(
+                        entry.getKey(),
+                        nativeDateDetail(entry.getValue(), mutual ? "También lo sigues" : "Solo follower"),
+                        mutual ? "MUTUAL" : "FOLLOWER"));
+            }
+            main = rows.size();
+            total = Math.max(0, followersMapNative.size() - countMutuals(followingMapNative, followersMapNative));
+            workspaceSectionTitle.setText("Followers");
+            workspaceSectionSubtitle.setText("Todos tus followers sincronizados.");
+            kpiMainLabel.setText("Followers");
+            kpiSecondaryLabel.setText("Solo followers");
+        } else {
+            int unresolved = 0;
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < syncedPending.length(); i++) {
+                JSONObject p = syncedPending.optJSONObject(i);
+                if (p == null) continue;
+                String username = p.optString("username", "").toLowerCase(Locale.ROOT);
+                if (username.isBlank()) continue;
+                JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
+                long snoozeUntil = pendingSnooze == null ? 0 : pendingSnooze.optLong(username, 0);
+                boolean resolved = meta != null && meta.optLong("reviewedAt", 0) > 0;
+                boolean paused = snoozeUntil > now;
+                if (!resolved && !paused) {
+                    unresolved++;
+                    rows.add(new WorkspaceProfileAdapter.Row(
+                            username,
+                            nativeDateDetail(p, "Solicitud enviada"),
+                            "PENDING"));
+                }
+            }
+            main = unresolved;
+            total = syncedPending.length();
+            workspaceSectionTitle.setText("Pending");
+            workspaceSectionSubtitle.setText("Solicitudes enviadas que siguen pendientes de revisión.");
+            kpiMainLabel.setText("Pendientes");
+            kpiSecondaryLabel.setText("Total requests");
+        }
+
+        kpiMain.setText(String.valueOf(main));
+        kpiSecondary.setText(String.valueOf(total));
+        mobileWorkspaceSubtitle.setText(syncedFollowing.length() + " following · " +
+                syncedFollowers.length() + " followers · " + syncedPending.length() + " requests");
+        workspaceAdapter.submit(rows);
+    }
+
+    private boolean isNativeFollowingResolved(String username, JSONObject source,
+                                              Set<String> done, Set<String> protectedUsers,
+                                              JSONObject snooze, JSONObject reviewedMeta) {
+        if (protectedUsers.contains(username)) return true;
+        if (snooze != null && snooze.optLong(username, 0) > System.currentTimeMillis()) return true;
+        if (!done.contains(username) || reviewedMeta == null) return false;
+
+        JSONObject meta = reviewedMeta.optJSONObject(username);
+        if (meta == null) return false;
+        if (!"following".equals(meta.optString("mode"))) return false;
+        if (meta.optBoolean("relationGood", true)) return false;
+        if (meta.optBoolean("followsBack", true)) return false;
+        if (meta.optBoolean("isFollower", true)) return false;
+
+        long reviewedAt = meta.optLong("reviewedAt", 0);
+        long dateMain = source == null ? 0 : source.optLong("timestamp", 0);
+        return reviewedAt > 0 && (dateMain <= 0 || dateMain * 1000L <= reviewedAt);
+    }
+
+    private Map<String, JSONObject> jsonArrayByUsername(JSONArray array) {
+        LinkedHashMap<String, JSONObject> out = new LinkedHashMap<>();
+        if (array == null) return out;
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject row = array.optJSONObject(i);
+            if (row == null) continue;
+            String username = row.optString("username", "").toLowerCase(Locale.ROOT);
+            if (!username.isBlank()) out.put(username, row);
+        }
+        return out;
+    }
+
+    private Set<String> jsonStringSet(JSONArray array) {
+        Set<String> out = new HashSet<>();
+        if (array == null) return out;
+        for (int i = 0; i < array.length(); i++) {
+            String value = array.optString(i, "").toLowerCase(Locale.ROOT);
+            if (!value.isBlank()) out.add(value);
+        }
+        return out;
+    }
+
+    private int countMutuals(Map<String, JSONObject> following, Map<String, JSONObject> followers) {
+        int count = 0;
+        for (String username : following.keySet()) if (followers.containsKey(username)) count++;
+        return count;
+    }
+
+    private String nativeDateDetail(JSONObject row, String prefix) {
+        long ts = row == null ? 0 : row.optLong("timestamp", 0);
+        if (ts <= 0) return prefix;
+        try {
+            Date date = new Date(ts * 1000L);
+            return prefix + " · " + DateFormat.getMediumDateFormat(this).format(date);
+        } catch (Exception ignored) {
+            return prefix;
+        }
+    }
+
     private void showWorkspaceScreen() {
         showWorkspaceScreen("", "FULL WORKSPACE");
     }
@@ -209,7 +471,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showWorkspaceScreen(String targetPage, String subtitle) {
         workspaceTargetPage = targetPage == null ? "" : targetPage;
-        currentScreen = workspaceTargetPage.isBlank() ? "workspace" : "account";
+        currentScreen = workspaceTargetPage.isBlank() ? "advanced" : "account";
         currentBatch = null;
         toolbar.setSubtitle(subtitle);
         disposeWorkspaceWebView();
@@ -231,7 +493,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.30");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.31");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
@@ -910,7 +1172,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void syncNow() {
-        if (("workspace".equals(currentScreen) || "account".equals(currentScreen))
+        if (("advanced".equals(currentScreen) || "account".equals(currentScreen))
                 && workspaceWebView != null) {
             setGlobalStatus("Sincronizando Workspace…");
             workspaceWebView.evaluateJavascript(
@@ -922,6 +1184,11 @@ public final class MainActivity extends AppCompatActivity {
         if (!api.hasSession()) {
             bottomNav.setSelectedItemId(R.id.navAccount);
             Snackbar.make(content, "Inicia sesión para sincronizar", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+
+        if ("workspace".equals(currentScreen)) {
+            loadMobileWorkspace();
             return;
         }
 
