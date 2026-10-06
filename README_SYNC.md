@@ -1,6 +1,6 @@
 # IG Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current Android work line: **v120.30 beta**.
+Current Android work line: **v120.33 beta**.
 
 ## Product model
 
@@ -11,7 +11,7 @@ IG Cleaner is one product with two interaction surfaces:
 
 Android is not a reduced companion. The Workspace exposes the same list data and modules as Desktop; native screens are kept only where mobile interaction benefits from a different workflow.
 
-## What synchronizes in v120.30
+## What synchronizes
 
 Supabase now stores both workflow state **and normalized list snapshots**:
 
@@ -49,11 +49,7 @@ Session refresh was hardened for Supabase refresh-token rotation:
 - refreshed Workspace credentials are bridged back into native storage;
 - the hidden Workspace is destroyed when entering native Focus/Audit so two independent 15-second refresh loops do not race each other.
 
-End users only enter:
-1. email;
-2. **Enviar código**;
-3. the OTP from email;
-4. **Entrar con código**.
+Android uses email + password as the primary sign-in flow. Email OTP is reserved for first-time password setup and account recovery. Already-connected users can set/change a password from Profile without signing out.
 
 Project URL and publishable key remain application configuration. Never ship a service-role key, database password, SMTP credential, refresh token or other privileged secret.
 
@@ -80,7 +76,7 @@ v120.30 uses:
 
 All application tables use Row Level Security so authenticated users can access only their own rows.
 
-## Android v120.30
+## Android product surfaces
 
 Android includes:
 
@@ -120,3 +116,14 @@ Home/Review restore the last successful per-account cache first, then refresh li
 Password sign-in uses Supabase Auth. On first-time setup or recovery, the user requests an email OTP, verifies it, sets a new password, and future sign-ins use email + password. Already-connected users can set or change their password directly from Profile without signing out.
 
 Security note: client EXECUTE privileges were revoked from public.rls_auto_enable(). Supabase leaked-password protection should also be enabled in the project Auth settings.
+
+
+## v120.33 hotfix guarantees
+
+- The Android bottom navigation owns the navigation-bar inset instead of applying that inset to the whole root view. This prevents Home/Review/Focus/Activity/Profile labels and indicators from being clipped by Samsung gesture or 3-button navigation.
+- Desktop publishes review state immediately after review/protect/snooze decisions through a debounced state push.
+- Legacy Desktop profiles that are in the historical reviewed set but predate intelligent `reviewedMeta.reviewedAt` are normalized once and published instead of disappearing from Android.
+- The complete `workspace_state` Desktop snapshot is authoritative for state at or before its timestamp; Android overlays only newer `profile_state` rows.
+- Reviews received from Android are persisted into Desktop local state, including the reviewed/protected sets and review metadata.
+- The official product mark is the blue/cyan **IG** monogram in `branding/ig-cleaner-pro-mark.svg`; Android and Desktop use this identity consistently.
+- CI checks every executable inline Desktop JavaScript block with `node --check` before building Android.
