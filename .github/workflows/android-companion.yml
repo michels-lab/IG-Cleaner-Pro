@@ -119,7 +119,7 @@ jobs:
           EOF
 
           if gh release view v120.33 >/dev/null 2>&1; then
-            gh release edit v120.33 --target "$GITHUB_SHA" --title "Instagram Cleaner Pro v120.33 Beta" --notes-file release-notes.md --prerelease
+            gh release edit v120.33 --title "Instagram Cleaner Pro v120.33 Beta" --notes-file release-notes.md --prerelease
             gh release upload v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" --clobber
           else
             gh release create v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" \
