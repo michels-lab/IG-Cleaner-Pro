@@ -38,7 +38,7 @@ Android does not overwrite the canonical Desktop list snapshot merely because a 
 
 ## Authentication and session ownership
 
-Android now has **one visible account experience**: the Workspace **Cuenta** page.
+Android now has **one native Profile account experience**. Password is the primary sign-in method; email OTP is reserved for first-time password setup and recovery.
 
 The former separate native light-blue login is no longer used by bottom navigation. The Workspace session is bridged into the native Focus/Audit layer so all Android surfaces share the same authenticated account.
 
@@ -107,3 +107,16 @@ Workspace integration also provides:
 - The remaining gate is on-device functional validation: publish populated lists from the updated Desktop, sync Android, verify the real usernames appear in Review/Mutuals/Followers/Pending, and verify session persistence after app close/reopen.
 
 Do not merge/release v120.30 until that device round-trip is confirmed.
+
+
+## v120.32 Android product layer
+
+Android now uses the Desktop design system as its canonical visual language rather than generic Material defaults. The mobile shell uses the Desktop palette, IG monogram, sans/monospace hierarchy and compact surface/border treatment.
+
+Primary Android navigation is Home / Review / Focus / Activity / Profile. Home and Review are native. Advanced Desktop tools remain accessible from the overflow menu.
+
+Home/Review restore the last successful per-account cache first, then refresh list_snapshots, workspace_state and profile_state. This prevents temporary zero-count states while the network refresh is running. Pull-to-refresh is supported.
+
+Password sign-in uses Supabase Auth. On first-time setup or recovery, the user requests an email OTP, verifies it, sets a new password, and future sign-ins use email + password.
+
+Security note: client EXECUTE privileges were revoked from public.rls_auto_enable(). Supabase leaked-password protection should also be enabled in the project Auth settings.
