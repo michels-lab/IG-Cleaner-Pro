@@ -13,7 +13,7 @@ mark = read("branding/ig-cleaner-pro/official-mark.svg")
 lockup = read("branding/ig-cleaner-pro/official-lockup.svg")
 
 for token in ('viewBox="0 0 1024 1024"', 'M170 650 500 510 842 650 505 815Z', '#15e4f5', '#e3aa3e'):
-    assert token in (icon + mark).lower(), f"Canonical icon/mark token missing: {token}"
+    assert token.lower() in (icon + mark).lower(), f"Canonical icon/mark token missing: {token}"
 
 assert 'viewBox="0 0 1600 600"' in lockup
 assert 'IG Cleaner' in lockup and '>Pro<' in lockup
