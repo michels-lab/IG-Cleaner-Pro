@@ -4,82 +4,121 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp"
+    android:paddingTop="15dp"
+    android:paddingBottom="12dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CROSS-DEVICE"
+        android:textColor="@color/ig_cyan"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.14"/>
 
     <TextView
         android:id="@+id/auditTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Audit"
+        android:layout_marginTop="5dp"
+        android:text="Activity"
         android:textColor="@color/ig_text"
-        android:textSize="28sp"
+        android:textSize="27sp"
         android:textStyle="bold"/>
 
     <TextView
         android:id="@+id/auditSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Vuelve a abrir perfiles revisados desde Desktop o Android sin modificar su revisión original."
+        android:layout_marginTop="5dp"
+        android:text="Review recent activity from Desktop or Android without rewriting the original review state."
         android:textColor="@color/ig_muted"
-        android:textSize="14sp"/>
+        android:textSize="12sp"/>
 
-    <LinearLayout
-        android:id="@+id/auditQuickActions"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:orientation="vertical">
+        app:cardBackgroundColor="@color/ig_surface"
+        app:cardCornerRadius="18dp"
+        app:strokeColor="@color/ig_border"
+        app:strokeWidth="1dp">
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/auditAndroidReviewed"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="20 revisados Android"/>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/auditDesktopReviewed"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="20 revisados PC"/>
-        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/auditQuickActions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:orientation="vertical">
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/auditAndroidOpened"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="20 abiertos Android"/>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/auditDesktopOpened"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="20 abiertos PC"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/auditAndroidReviewed"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Reviewed · Android"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/ig_border"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/auditDesktopReviewed"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Reviewed · PC"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/ig_border"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/auditAndroidOpened"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Opened · Android"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/ig_border"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/auditDesktopOpened"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Opened · PC"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/ig_border"/>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/auditList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:clipToPadding="false"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/finishAudit"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Marcar auditoría completada"
-        android:visibility="gone"/>
+        android:layout_height="48dp"
+        android:text="Complete audit"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:backgroundTint="@color/ig_blue"
+        app:cornerRadius="14dp"/>
 </LinearLayout>
