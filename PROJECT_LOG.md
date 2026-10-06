@@ -705,3 +705,24 @@ Added `.github/ISSUE_TEMPLATE/chatgpt-task.yml` so new implementation/audit task
 
 Purpose: reduce repeated context reconstruction in future ChatGPT sessions and make repository work resumable from a bounded GitHub Issue without changing product behavior.
 \n
+
+## 2026-10-06 — CI and distribution hardening
+
+Added a unified repository CI gate for the real Desktop/local-Web and Android product paths.
+
+Desktop CI now checks:
+- full-document JSON parsing contract;
+- local HTML/raw import pipeline;
+- Review / Followers / Mutuals / Pending workflow presence;
+- stable localStorage and IndexedDB identifiers;
+- full-backup controls;
+- duplicate static DOM IDs;
+- inline JavaScript syntax;
+- sanitized Instagram ZIP fixture structure.
+
+Android CI builds the real debug app and verifies exactly one packaged Workspace asset.
+
+Added `release/distribution-manifest.json` and `docs/UPDATE_AND_STATE_MIGRATION.md` to define the browser-state schema, migration rules, checksum requirements and safe Desktop/Android distribution policy.
+
+Legacy version-specific release workflows no longer publish from a qualifying push to `main`. v120.29 additionally requires explicit manual `publish=true`. Release publication remains separate from CI/build success and real-device gates.
+
