@@ -774,3 +774,15 @@ The next chat should continue from this section instead of reconstructing the An
 ### Validation / release
 - v120.32 prerelease workflow builds the Android APK and Desktop HTML and overwrites release assets with the latest validated branch build.
 - Latest release is https://github.com/realmichelduarte/IG-Cleaner-Pro/releases/tag/v120.32
+
+
+### Database source verification (2026-10-06)
+- Supabase list_snapshots contains complete payloads, not just counts:
+  - following: 11,869 rows
+  - followers: 21,864 rows
+  - pending requests: 194 rows
+- Direct server-side relationship check yields:
+  - mutuals: 11,118
+  - not following back: 751
+- This confirms the earlier Android value 751 belongs to the “not following back” Review queue, while Pending requests is a different list with 194 entries in the latest snapshot.
+- Android v120.32 reads the actual payload arrays, so each profile is available to native list rendering rather than only displaying aggregate table counts.
