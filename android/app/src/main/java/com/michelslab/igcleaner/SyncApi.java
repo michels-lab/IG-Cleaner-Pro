@@ -105,6 +105,35 @@ public final class SyncApi {
         if (!hasSession()) throw new IOException("Supabase no devolvió una sesión.");
     }
 
+    public void signInWithPassword(String value, String password) throws Exception {
+        setEmail(value);
+        if (email.isBlank()) throw new IllegalArgumentException("Escribe tu correo.");
+        String pass = password == null ? "" : password;
+        if (pass.isBlank()) throw new IllegalArgumentException("Escribe tu contraseña.");
+
+        JSONObject result = requestObject("POST", "/auth/v1/token?grant_type=password",
+                new JSONObject()
+                        .put("email", email)
+                        .put("password", pass),
+                false, null);
+        saveSession(result);
+        if (!hasSession()) throw new IOException("No se pudo iniciar sesión.");
+    }
+
+    public void updatePassword(String password) throws Exception {
+        String pass = password == null ? "" : password;
+        if (pass.length() < 8) throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres.");
+        if (!hasSession()) throw new IllegalStateException("Verifica primero tu correo.");
+        requestObject("PUT", "/auth/v1/user",
+                new JSONObject().put("password", pass),
+                true, null);
+    }
+
+    public void verifyOtpAndSetPassword(String code, String password) throws Exception {
+        verifyOtp(code);
+        updatePassword(password);
+    }
+
     public void logout() {
         accessToken = "";
         refreshToken = "";
