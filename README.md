@@ -4,14 +4,14 @@ Local-first workspace for reviewing Instagram exports, comparing following/follo
 
 ## Current version
 
-**v120.20 — ZIP primary import · JSON/HTML parity**
+**v120.30 beta — Desktop/Android full-list sync**
 
 ## What it does
 
 - Loads Instagram following/followers exports in supported JSON or HTML formats.
 - Compares relationship data and keeps ambiguous HTML evidence separate from confirmed relationship evidence.
 - Provides focus batches, re-check workflows, filters, review history, protected accounts, pending-request analysis, diagnostics, and exports.
-- Works locally in the browser: no backend, no Instagram login, no automatic unfollow, and no upload of your Instagram export data to a server.
+- Does not log in to Instagram or automate unfollows. When cross-device sync is enabled, the original Instagram export file remains local, while normalized Following/Followers/Pending profile-list records plus workflow metadata are stored in the user's private Supabase rows.
 - Includes an in-app About / Developer, Legal, and Version section.
 
 ## Run locally
@@ -20,7 +20,7 @@ Download `index.html` and open it in a modern desktop browser. No build step is 
 
 ## Privacy
 
-IG Cleaner Pro is designed as a local tool. The app analyzes files you select in your browser. It does not use the Instagram API and does not automate account actions.
+IG Cleaner Pro analyzes the Instagram export locally and does not use the Instagram API or automate account actions. With cross-device sync enabled, the original ZIP/JSON/HTML file is not uploaded as a backup; normalized profile-list records and review/workflow state are synchronized through the configured Supabase backend under Row Level Security.
 
 ## Development contract
 
