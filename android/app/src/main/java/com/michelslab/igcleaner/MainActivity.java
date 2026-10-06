@@ -716,16 +716,21 @@ public final class MainActivity extends AppCompatActivity {
     private void showNativeAccountScreen() {
         disposeWorkspaceWebView();
         currentScreen = "account_native";
-        toolbar.setSubtitle("Cuenta");
+        setBrandContext("PROFILE");
 
         View view = LayoutInflater.from(this).inflate(R.layout.screen_account, content, false);
         content.removeAllViews();
         content.addView(view);
 
         LinearLayout authGroup = view.findViewById(R.id.authGroup);
+        LinearLayout otpGroup = view.findViewById(R.id.otpGroup);
         MaterialCardView connectedCard = view.findViewById(R.id.connectedCard);
         TextInputEditText emailInput = view.findViewById(R.id.emailInput);
+        TextInputEditText passwordInput = view.findViewById(R.id.passwordInput);
         TextInputEditText codeInput = view.findViewById(R.id.codeInput);
+        TextInputEditText newPasswordInput = view.findViewById(R.id.newPasswordInput);
+        MaterialButton passwordSignIn = view.findViewById(R.id.passwordSignIn);
+        MaterialButton useCode = view.findViewById(R.id.useCode);
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton sync = view.findViewById(R.id.syncNow);
@@ -738,32 +743,68 @@ public final class MainActivity extends AppCompatActivity {
         authGroup.setVisibility(connected ? View.GONE : View.VISIBLE);
         connectedCard.setVisibility(connected ? View.VISIBLE : View.GONE);
         accountEmail.setText(api.getEmail());
-        label.setText(deviceLabel() + " · sesión compartida");
+        label.setText(deviceLabel() + " · session remembered on this device");
 
-        sendCode.setOnClickListener(v -> runAsync(() -> {
-            api.sendOtp(textOf(emailInput));
-            mainHandler.post(() -> Snackbar.make(content, "Código enviado al correo", Snackbar.LENGTH_LONG).show());
-        }, true));
+        passwordSignIn.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
+            setGlobalStatus("SIGNING IN • password");
+            runAsync(() -> {
+                api.signInWithPassword(textOf(emailInput), textOf(passwordInput));
+                touchDevice();
+                mainHandler.post(() -> {
+                    setGlobalStatus("CONNECTED • session restored");
+                    showNativeAccountScreen();
+                    Snackbar.make(content, "Signed in successfully", Snackbar.LENGTH_SHORT).show();
+                });
+            }, true);
+        });
 
-        verifyCode.setOnClickListener(v -> runAsync(() -> {
-            api.setEmail(textOf(emailInput));
-            api.verifyOtp(textOf(codeInput));
-            mainHandler.post(this::showNativeAccountScreen);
-        }, true));
+        useCode.setOnClickListener(v -> {
+            boolean show = otpGroup.getVisibility() != View.VISIBLE;
+            otpGroup.setVisibility(show ? View.VISIBLE : View.GONE);
+            useCode.setText(show ? "Hide verification options" : "First time or forgot password?");
+        });
+
+        sendCode.setOnClickListener(v -> {
+            setGlobalStatus("SENDING CODE • check your email");
+            runAsync(() -> {
+                api.sendOtp(textOf(emailInput));
+                mainHandler.post(() -> {
+                    setGlobalStatus("CODE SENT • waiting for verification");
+                    Snackbar.make(content, "Verification code sent", Snackbar.LENGTH_LONG).show();
+                });
+            }, true);
+        });
+
+        verifyCode.setOnClickListener(v -> {
+            setGlobalStatus("VERIFYING • securing account");
+            runAsync(() -> {
+                api.setEmail(textOf(emailInput));
+                api.verifyOtpAndSetPassword(textOf(codeInput), textOf(newPasswordInput));
+                touchDevice();
+                mainHandler.post(() -> {
+                    setGlobalStatus("CONNECTED • password saved");
+                    showNativeAccountScreen();
+                    Snackbar.make(content, "Email verified and password saved", Snackbar.LENGTH_LONG).show();
+                });
+            }, true);
+        });
 
         sync.setOnClickListener(v -> {
-            setGlobalStatus("Sincronizando…");
+            setGlobalStatus("SYNCING • account and device");
             runAsync(() -> {
                 touchDevice();
                 mainHandler.post(() -> {
-                    setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
-                    Snackbar.make(content, "Cuenta y dispositivo sincronizados", Snackbar.LENGTH_SHORT).show();
+                    setGlobalStatus("SYNCED • " + DateFormat.getTimeFormat(this).format(new Date()));
+                    Snackbar.make(content, "Account synced", Snackbar.LENGTH_SHORT).show();
                 });
             }, true);
         });
 
         logout.setOnClickListener(v -> {
+            clearWorkspaceCache();
             api.logout();
+            setGlobalStatus("SIGNED OUT");
             showNativeAccountScreen();
         });
     }
@@ -772,7 +813,7 @@ public final class MainActivity extends AppCompatActivity {
         workspaceTargetPage = targetPage == null ? "" : targetPage;
         currentScreen = workspaceTargetPage.isBlank() ? "advanced" : "account";
         currentBatch = null;
-        toolbar.setSubtitle(subtitle);
+        setBrandContext("ADVANCED TOOLS");
         disposeWorkspaceWebView();
 
         View view = LayoutInflater.from(this).inflate(R.layout.screen_workspace, content, false);
@@ -792,7 +833,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.31");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.32");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
@@ -839,7 +880,7 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         workspaceWebView.loadUrl("file:///android_asset/ig_cleaner_pro_v120_27_synced_companion.html");
-        setGlobalStatus("Workspace completo · Android");
+        setGlobalStatus("ADVANCED TOOLS • desktop engine");
     }
 
     private void bootstrapWorkspace() {
