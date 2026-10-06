@@ -765,3 +765,17 @@ Added `tests/branding-contract.py` and wired it into unified CI to guard canonic
 
 **Validation status:** implementation complete; PR Desktop + Android CI must pass before Issue #6 is closed.
 
+### Branding validation complete
+
+Pull-request CI run `37512776514` completed **SUCCESS** on functional/test commit `da3021660ea83614c50f7adf7584b3f12b1fba48`.
+
+Validated:
+- Desktop local-app regression contract;
+- official branding contract for vendored canonical SVGs and active Desktop/Android references;
+- Desktop inline JavaScript syntax after splash integration;
+- sanitized Instagram fixture contract;
+- Android debug build with the official adaptive launcher/startup resources;
+- exactly one embedded Workspace asset.
+
+The only later branch change is this documentation entry. No sync/auth/review data model change and no release publication occurred.
+
