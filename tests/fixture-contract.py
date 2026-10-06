@@ -1,33 +1,43 @@
 #!/usr/bin/env python3
 import json
 import pathlib
-import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-fixture = ROOT / "tests" / "fixtures" / "instagram-export-sample.zip"
-assert fixture.exists() and fixture.stat().st_size > 1000, "Sanitized Instagram fixture is missing or empty."
+fixture = ROOT / "tests" / "fixtures" / "instagram-export-sample"
+assert fixture.is_dir(), "Sanitized Instagram fixture directory is missing."
 
-with zipfile.ZipFile(fixture) as z:
-    names = z.namelist()
-    assert names, "Fixture ZIP is empty."
-    lowered = [n.lower() for n in names]
-    assert any("following" in n for n in lowered), "Fixture must exercise following import."
-    assert any("followers" in n for n in lowered), "Fixture must exercise followers import."
-    assert any("pending" in n or "request" in n for n in lowered), "Fixture must exercise pending/request import."
+files = [p for p in fixture.rglob("*") if p.is_file()]
+assert len(files) == 13, f"Expected 13 sanitized fixture files, found {len(files)}."
 
-    parsed_json = 0
-    html_files = 0
-    for name in names:
-        data = z.read(name)
-        if name.lower().endswith(".json"):
-            json.loads(data.decode("utf-8"))
-            parsed_json += 1
-        elif name.lower().endswith((".html", ".htm")):
-            text = data.decode("utf-8", errors="strict")
-            assert "instagram" in text.lower() or "profile" in text.lower(), f"Unexpected HTML fixture: {name}"
-            html_files += 1
+lowered = [str(p.relative_to(fixture)).lower() for p in files]
+assert any("following.json" in n for n in lowered), "Fixture must exercise following import."
+assert sum("followers_" in n and n.endswith(".json") for n in lowered) == 3, "Fixture must contain three followers parts."
+assert any("pending_follow_requests" in n for n in lowered), "Fixture must exercise pending requests."
 
-    assert parsed_json > 0, "Fixture must contain at least one valid JSON document."
-    assert html_files > 0, "Fixture must contain at least one HTML export."
+parsed_json = 0
+html_files = 0
+for path in files:
+    data = path.read_bytes()
+    if path.suffix.lower() == ".json":
+        json.loads(data.decode("utf-8"))
+        parsed_json += 1
+    elif path.suffix.lower() in {".html", ".htm"}:
+        text = data.decode("utf-8", errors="strict")
+        assert "instagram.com" in text.lower(), f"Unexpected HTML fixture: {path}"
+        html_files += 1
 
-print(f"Fixture contract passed: {len(names)} files, {parsed_json} JSON, {html_files} HTML.")
+assert parsed_json == 12, f"Expected 12 valid JSON fixture files, found {parsed_json}."
+assert html_files == 1, f"Expected one HTML fixture, found {html_files}."
+
+following = json.loads((fixture / "connections/followers_and_following/following.json").read_text())
+assert len(following["relationships_following"]) == 3
+
+followers = []
+for i in range(1, 4):
+    followers += json.loads((fixture / f"connections/followers_and_following/followers_{i}.json").read_text())
+assert len(followers) == 5
+
+pending = json.loads((fixture / "connections/followers_and_following/pending_follow_requests.json").read_text())
+assert len(pending["relationships_follow_requests_sent"]) == 2
+
+print("Fixture contract passed: 13 files; Following 3; Followers 5; Pending 2.")
