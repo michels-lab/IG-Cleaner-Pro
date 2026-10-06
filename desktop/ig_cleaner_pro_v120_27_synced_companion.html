@@ -13001,6 +13001,7 @@ async function pushProfileState(){const rows=localStateRows();if(!rows.length)re
 async function pushWorkspaceState(){
   const d=currentDevice();
   if(d.type!=='desktop')return 0;
+  normalizeLegacyReviewState();
   const payload={
     done:[...(doneSet||new Set())],
     protected:[...(protectedSet||new Set())],
@@ -13009,6 +13010,7 @@ async function pushWorkspaceState(){
     pendingOpened:[...(pendingOpenedSet||new Set())],
     pendingReviewedMeta:pendingReviewedMeta||{},
     pendingSnooze:pendingSnoozeMap||{},
+    profileHistory:profileHistory||{},
     updatedAt:Date.now()
   };
   await rest('workspace_state?on_conflict=user_id,state_key',{
@@ -13018,8 +13020,42 @@ async function pushWorkspaceState(){
   });
   return 1;
 }
-function applyOneState(r){const u=String(r.username||'').toLowerCase(),at=ms(r.reviewed_at),device=r.reviewed_device||'remote',decision=r.decision||'';if(!u||!at)return false;if(r.module==='pending'){const cur=Number(pendingReviewedMeta?.[u]?.reviewedAt||0);if(at<=cur)return false;pendingReviewedMeta[u]={...(pendingReviewedMeta[u]||{}),reviewedAt:at,decision,label:`Sync · ${device}`};pendingOpenedSet?.add?.(u);return true}const ctx=r.context?.row||r.context?.context?.row||{};const mode=(r.module==='followers'||r.module==='mutual')?'followers':'following';const cur=Number(reviewedMeta?.[u]?.reviewedAt||0);if(at<=cur)return false;doneSet.add(u);reviewedMeta[u]={mode,relation:ctx.relation||'',relationGood:!!ctx.relationGood,followsBack:!!ctx.followsBack,isFollower:!!ctx.isFollower,iFollow:mode==='following'?true:!!ctx.iFollow,dateMain:Number(ctx.dateMain||0),reviewedAt:at,reviewReason:decision,reviewSource:`sync:${device}`};return true}
-async function pullProfileState(){const rows=await rest('profile_state?select=*&order=reviewed_at.desc&limit=20000',{method:'GET'});let changed=0;for(const r of rows||[])if(applyOneState(r))changed++;if(changed){try{saveReviewedMeta?.()}catch{}try{savePendingReviewedMeta?.();savePendingOpened?.()}catch{}try{buildRows?.();applyFilters?.();renderAll?.();renderPendingRequests?.();renderFollowersMutualTab?.();renderFollowersAllWorkspace?.()}catch{}}S.stats.statesDown=(rows||[]).length;return {rows:(rows||[]).length,changed}}
+function applyOneState(r){
+  const u=String(r.username||'').toLowerCase(),at=ms(r.reviewed_at),device=r.reviewed_device||'remote',decision=r.decision||'';
+  if(!u||!at)return false;
+  if(r.module==='pending'){
+    const cur=Number(pendingReviewedMeta?.[u]?.reviewedAt||0);
+    if(at<=cur)return false;
+    pendingReviewedMeta[u]={...(pendingReviewedMeta[u]||{}),reviewedAt:at,decision,label:`Sync · ${device}`};
+    pendingOpenedSet?.add?.(u);
+    return true;
+  }
+  const ctx=r.context?.row||r.context?.context?.row||{};
+  const mode=(r.module==='followers'||r.module==='mutual')?'followers':'following';
+  const cur=Number(reviewedMeta?.[u]?.reviewedAt||0);
+  if(at<=cur)return false;
+  doneSet.add(u);
+  if(r.protected)protectedSet.add(u);
+  reviewedMeta[u]={mode,relation:ctx.relation||'',relationGood:!!ctx.relationGood,followsBack:!!ctx.followsBack,isFollower:!!ctx.isFollower,iFollow:mode==='following'?true:!!ctx.iFollow,dateMain:Number(ctx.dateMain||0),reviewedAt:at,reviewReason:decision,reviewSource:`sync:${device}`};
+  return true;
+}
+async function pullProfileState(){
+  const rows=await rest('profile_state?select=*&order=reviewed_at.desc&limit=20000',{method:'GET'});
+  let changed=0;
+  for(const r of rows||[])if(applyOneState(r))changed++;
+  if(changed){
+    try{
+      localStorage.setItem(LS_DONE,JSON.stringify([...(doneSet||new Set())]));
+      localStorage.setItem(LS_PROT,JSON.stringify([...(protectedSet||new Set())]));
+      localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta||{}));
+      localStorage.setItem(LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta||{}));
+      localStorage.setItem(LS_PENDING_OPENED,JSON.stringify([...(pendingOpenedSet||new Set())]));
+    }catch{}
+    try{buildRows?.();applyFilters?.();renderAll?.();renderPendingRequests?.();renderFollowersMutualTab?.();renderFollowersAllWorkspace?.()}catch{}
+  }
+  S.stats.statesDown=(rows||[]).length;
+  return {rows:(rows||[]).length,changed};
+}
 async function touchDevice(){const d=currentDevice();await rest('devices?on_conflict=user_id,device_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{device_id:d.id,device_type:d.type,label:d.label,last_seen:new Date().toISOString()}])})}
 async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
