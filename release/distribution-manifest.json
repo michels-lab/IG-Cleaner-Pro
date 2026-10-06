@@ -1,0 +1,32 @@
+{
+  "schema": "ig-cleaner-distribution-v1",
+  "product": "IG Cleaner Pro",
+  "repository": "realmichelduarte/IG-Cleaner-Pro",
+  "channels": {
+    "desktop": {
+      "artifact": "IG-Cleaner-Pro.html",
+      "transport": "github-release",
+      "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration"
+    },
+    "android": {
+      "artifact": "IG-Cleaner-Pro-Android.apk",
+      "transport": "github-release",
+      "productionTransport": "google-play-after-device-validation"
+    }
+  },
+  "browserState": {
+    "schema": 1,
+    "localStoragePolicy": "existing keys are stable unless an explicit migration is shipped",
+    "indexedDb": {
+      "name": "ig_cleaner_pro_history",
+      "version": 1
+    },
+    "backupRequiredBeforeBreakingChange": true
+  },
+  "releasePolicy": {
+    "automaticPublishFromMain": false,
+    "explicitManualPublishRequired": true,
+    "checksumsRequired": true,
+    "deviceValidationRequiredForAndroidProduction": true
+  }
+}
