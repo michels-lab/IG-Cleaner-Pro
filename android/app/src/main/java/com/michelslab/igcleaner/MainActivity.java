@@ -370,9 +370,13 @@ public final class MainActivity extends AppCompatActivity {
                 JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
                 JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
 
-                JSONObject state = stateRows.length() > 0 && stateRows.optJSONObject(0) != null
-                        ? stateRows.optJSONObject(0).optJSONObject("payload") : null;
+                JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
+                JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
                 if (state == null) state = new JSONObject();
+                long snapshotUpdatedAt = stateRow == null
+                        ? 0L
+                        : parseInstant(stateRow.optString("updated_at", "")).toEpochMilli();
+                state.put("_snapshotUpdatedAt", snapshotUpdatedAt);
                 mergeRemoteProfileState(state, profileStates);
 
                 JSONArray following = new JSONArray();
@@ -419,6 +423,8 @@ public final class MainActivity extends AppCompatActivity {
         JSONObject pendingReviewed = state.optJSONObject("pendingReviewedMeta");
         if (pendingReviewed == null) pendingReviewed = new JSONObject();
 
+        long snapshotUpdatedAt = state.optLong("_snapshotUpdatedAt", 0L);
+
         for (int i = 0; i < profileStates.length(); i++) {
             JSONObject row = profileStates.optJSONObject(i);
             if (row == null) continue;
@@ -426,6 +432,12 @@ public final class MainActivity extends AppCompatActivity {
             if (username.isBlank()) continue;
             long reviewedAt = parseInstant(row.optString("reviewed_at")).toEpochMilli();
             if (reviewedAt <= 0) continue;
+
+            // A complete Desktop workspace snapshot is authoritative for every
+            // profile state at or before its own timestamp. Only reviews that
+            // happened after that snapshot are overlaid from profile_state.
+            if (snapshotUpdatedAt > 0 && reviewedAt <= snapshotUpdatedAt) continue;
+
             String module = row.optString("module", "main");
 
             if (row.optBoolean("protected", false)) protectedUsers.add(username);
