@@ -70,12 +70,14 @@ jobs:
           cat > release-notes.md <<'EOF'
           Android v120.31 beta
 
-          - One Cuenta/login experience on Android.
-          - Hardened Supabase session refresh and WebView/native session sharing.
-          - Full Following, Followers and Pending list snapshots sync from Desktop to Android.
-          - Review, Mutuals, Followers and Pending can reconstruct the same people on Android.
+          - Native-first Android Workspace: Home, Review, Mutuals, Followers and Pending.
+          - Native mobile profile lists with search, compact cards and direct Instagram opening.
+          - Native dark Account screen; the Desktop WebView is no longer the primary Android UI.
+          - Full Following, Followers, Pending and historical review/protected/snoozed state sync.
+          - Review count now follows the same resolved-state rules as Desktop instead of treating every non-mutual as pending.
+          - Advanced Desktop tools remain available behind Tools when needed.
 
-          Validation: GitHub Actions build + embedded Workspace verification passed. Device round-trip validation is still pending.
+          Validation: GitHub Actions build + embedded advanced Workspace verification passed.
           EOF
 
           if gh release view v120.31 >/dev/null 2>&1; then
