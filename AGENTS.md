@@ -15,20 +15,31 @@ Shared Michel's Lab rules live in `realmichelduarte/Michel-Software-Standards`.
 - Preserve the accepted Michel's Lab/IG Cleaner visual family unless redesign is explicitly in scope.
 - Never commit Supabase privileged keys, database passwords, SMTP credentials, OTP secrets or user export data.
 
-## About identity — mandatory
 
-About is a primary IG Cleaner Pro brand surface, not a plain metadata/settings page.
+## Fundamental visual identity and About — mandatory
 
-It MUST intentionally combine:
-- the approved product mark/lockup with prominent visual presence;
-- the current canonical Michel Duarte portrait;
-- Michel's Lab / developer identity;
-- social links using **both the recognizable network icon and the visible network name**.
+This is a **core IG Cleaner Pro product contract**, not optional branding polish.
 
-For social links, render icon + label together (for example Instagram icon + `Instagram`, GitHub icon + `GitHub`). Do not use text-only rows as the finished design, and do not use icon-only controls without a visible/accessibility label.
+### Product-wide visual system
 
-Use the canonical URLs from the master `brand/developer-profile.json`. Treat the portrait, logo, social controls and metadata as one coherent branded composition derived from the product's visual language.
+The approved stacked-layers + sparkle logo geometry is the foundation of the app's visual system. Preserve the defining silhouette, proportions and spatial relationships. Color, monochrome/inverted treatment, glow, glass, outline, translucency, material and motion may adapt to theme/context.
 
+Do not satisfy branding by pasting the source SVG into unrelated screens. Translate the mark's visual DNA into cards, batches, focus/review hierarchy, selected/completed states, audit/review emphasis, separators, highlights and motion where appropriate. Cleanup workflow clarity, local-first privacy and state semantics remain hard constraints.
+
+### About hierarchy
+
+About MUST be intentionally designed in this order:
+
+1. **Product identity first** — approved IG Cleaner Pro mark/lockup, product name, real current version and product-facing composition derived from the app identity.
+2. **About the author** — current canonical Michel Duarte portrait, **Michel Duarte**, and appropriate developer copy.
+3. **Michel's Lab parent brand** — official Michel's Lab mark/lockup shown as the studio/ecosystem identity without overpowering IG Cleaner Pro.
+4. **Social profiles** — each visible network link shows the recognizable network icon **and** the visible network name together, using canonical URLs from the master `brand/developer-profile.json`.
+
+Do not finish About with text-only social links or icon-only social buttons. Accessibility labels/tooltips supplement the visible network name; they do not replace it.
+
+Treat this hierarchy and the product-wide logo-derived design language as part of product completeness. Visual work must not regress it.
+
+Follow `standards/PRODUCT_IDENTITY_STANDARD.md` and `standards/ABOUT_STANDARD.md` in `realmichelduarte/Michel-Software-Standards`.
 
 ## Validation
 
