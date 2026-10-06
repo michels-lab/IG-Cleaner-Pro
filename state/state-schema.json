@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "product": "IG Cleaner Pro",
+  "browserStorage": {
+    "policy": "preserve-in-place",
+    "keys": {
+      "protected": "ig_v13_protected",
+      "reviewed": "ig_v13_done",
+      "reviewMeta": "ig_v15_review_meta",
+      "internalSnapshot": "ig_v17_internal_snapshot",
+      "lastZipRelations": "ig_cleaner_v12022_last_zip_relations",
+      "config": "ig_v13_config",
+      "rateGoal": "ig_cleaner_v96_rate_goal_per_hour",
+      "actionLog": "ig_v39_action_log",
+      "snooze": "ig_v43_snooze_map",
+      "dailyGoal": "ig_v43_daily_goal",
+      "pendingRequests": "ig_v47_pending_requests",
+      "pendingOpened": "ig_v47_pending_opened",
+      "pendingReviewMeta": "ig_v50_pending_review_meta",
+      "pendingSnooze": "ig_v50_pending_snooze_map",
+      "activeFocusBatch": "ig_v68_active_focus_batch",
+      "profileHistory": "ig_v69_profile_history",
+      "doubleCheckSeen": "ig_cleaner_v96_double_check_seen",
+      "recheckSeen": "ig_cleaner_v96_recheck_seen",
+      "guidedSession100": "ig_v69_guided_session_100",
+      "preparedFocusBatches": "ig_v12024_prepared_focus_batches",
+      "supabaseConfig": "igc_v12027_supabase_config",
+      "supabaseSession": "igc_v12027_supabase_session",
+      "deviceIdentity": "igc_v12026_device_identity"
+    }
+  },
+  "androidNativeStorage": {
+    "policy": "preserve-in-place",
+    "sharedPreferences": "igc_sync",
+    "keys": [
+      "device_id",
+      "email",
+      "access",
+      "refresh"
+    ]
+  },
+  "migrationRules": [
+    "Existing keys must not be renamed, deleted, or repurposed without a schemaVersion increment and explicit migration.",
+    "Updates must preserve browser/WebView DOM storage and Android SharedPreferences.",
+    "Raw Instagram export contents remain local and are not part of cloud migration.",
+    "A new schema may add keys without destructive migration when old keys remain readable.",
+    "CI must exercise sanitized ZIP import and representative persisted review state before release."
+  ]
+}
