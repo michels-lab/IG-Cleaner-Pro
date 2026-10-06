@@ -1055,7 +1055,7 @@ public final class MainActivity extends AppCompatActivity {
     private void showFocusScreen() {
         disposeWorkspaceWebView();
         currentScreen = "focus";
-        toolbar.setSubtitle("MOBILE FOCUS");
+        setBrandContext("FOCUS");
         currentBatch = null;
         clearFocusState();
 
@@ -1087,12 +1087,12 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         if (!api.hasSession()) {
-            focusSubtitle.setText("Inicia sesión en Cuenta para recibir los Focus preparados en Desktop.");
-            addEmptyCard(batchContainer, "Sin cuenta conectada",
-                    "La sincronización usa tu correo y un código. No necesitas configurar Supabase.");
+            focusSubtitle.setText("Sign in from Profile to receive Focus batches prepared on Desktop.");
+            addEmptyCard(batchContainer, "Account required",
+                    "Use your email and password. Verification code is only needed for first-time setup or recovery.");
             MaterialButton account = new MaterialButton(this);
-            account.setText("Ir a Cuenta");
-            account.setOnClickListener(v -> bottomNav.setSelectedItemId(R.id.navAccount));
+            account.setText("Go to Profile");
+            account.setOnClickListener(v -> bottomNav.setSelectedItemId(R.id.navProfile));
             batchContainer.addView(account);
             return;
         }
@@ -1390,7 +1390,7 @@ public final class MainActivity extends AppCompatActivity {
     private void showAuditScreen() {
         disposeWorkspaceWebView();
         currentScreen = "audit";
-        toolbar.setSubtitle("CROSS-DEVICE AUDIT");
+        setBrandContext("ACTIVITY");
         currentBatch = null;
         auditOpened.clear();
         auditEventByUsername.clear();
@@ -1412,17 +1412,17 @@ public final class MainActivity extends AppCompatActivity {
         finishAudit.setOnClickListener(v -> finishAuditSession());
 
         if (!api.hasSession()) {
-            addEmptyAudit("Inicia sesión en Cuenta para consultar el historial sincronizado.");
+            addEmptyAudit("Sign in from Profile to load cross-device activity.");
         }
     }
 
     private void loadAudit(String device, String action) {
         if (!api.hasSession()) {
-            bottomNav.setSelectedItemId(R.id.navAccount);
+            bottomNav.setSelectedItemId(R.id.navProfile);
             return;
         }
 
-        setGlobalStatus("Cargando Audit…");
+        setGlobalStatus("LOADING • activity");
         runAsync(() -> {
             JSONArray events = api.get("audit_events?select=*&device_type=eq." + encode(device) +
                     "&action=eq." + encode(action) + "&order=event_at.desc&limit=200");
@@ -1456,7 +1456,7 @@ public final class MainActivity extends AppCompatActivity {
                 subtitle.setText(rows.isEmpty()
                         ? "No hay perfiles para este filtro todavía."
                         : rows.size() + " perfiles · toca uno para abrirlo y auditarlo.");
-                setGlobalStatus("Audit listo · " + rows.size() + " perfil(es)");
+                setGlobalStatus("ACTIVITY READY • " + rows.size() + " profiles");
             });
         }, true);
     }
@@ -1522,7 +1522,7 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         if (!api.hasSession()) {
-            bottomNav.setSelectedItemId(R.id.navAccount);
+            bottomNav.setSelectedItemId(R.id.navProfile);
             Snackbar.make(content, "Inicia sesión para sincronizar", Snackbar.LENGTH_LONG).show();
             return;
         }
@@ -1643,8 +1643,27 @@ public final class MainActivity extends AppCompatActivity {
         return view;
     }
 
+    private void setBrandContext(String value) {
+        if (brandContext != null) brandContext.setText((value == null || value.isBlank()) ? "MICHEL'S LAB" : value);
+    }
+
     private void setGlobalStatus(String value) {
-        if (globalStatus != null) globalStatus.setText(value);
+        if (globalStatus != null) globalStatus.setText(value == null ? "" : value);
+    }
+
+    private String friendlyError(Exception error) {
+        String raw = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+        String lower = raw.toLowerCase(Locale.ROOT);
+        if (lower.contains("invalid login credentials") || lower.contains("invalid credentials")) {
+            return "Email or password is incorrect.";
+        }
+        if (lower.contains("token has expired") || lower.contains("jwt expired") || lower.contains("http 401") || lower.contains("http 403")) {
+            return "Your session expired. Sign in again from Profile.";
+        }
+        if (lower.contains("network") || lower.contains("timed out") || lower.contains("timeout") || lower.contains("unable to resolve")) {
+            return "Connection problem. Your cached lists are still available.";
+        }
+        return raw;
     }
 
     private void runAsync(Task task, boolean reportError) {
@@ -1654,8 +1673,8 @@ public final class MainActivity extends AppCompatActivity {
             } catch (Exception error) {
                 if (reportError) {
                     mainHandler.post(() -> {
-                        String message = error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
-                        setGlobalStatus("Error · " + message);
+                        String message = friendlyError(error);
+                        setGlobalStatus("ATTENTION • " + message);
                         Snackbar.make(content, message, Snackbar.LENGTH_LONG).show();
                     });
                 }
