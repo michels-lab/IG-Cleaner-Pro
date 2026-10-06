@@ -98,17 +98,28 @@ create table if not exists public.list_snapshots (
 );
 create index if not exists list_snapshots_user_updated_idx on public.list_snapshots(user_id,updated_at desc);
 
+create table if not exists public.workspace_state (
+  user_id uuid not null default auth.uid(),
+  state_key text not null default 'primary',
+  payload jsonb not null default '{}'::jsonb,
+  source_device text not null default 'desktop',
+  updated_at timestamptz not null default now(),
+  primary key (user_id,state_key)
+);
+
+
 alter table public.devices enable row level security;
 alter table public.audit_events enable row level security;
 alter table public.focus_batches enable row level security;
 alter table public.focus_batch_items enable row level security;
 alter table public.profile_state enable row level security;
 alter table public.list_snapshots enable row level security;
+alter table public.workspace_state enable row level security;
 
 do $$
 declare t text;
 begin
-  foreach t in array array['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots'] loop
+  foreach t in array array['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state'] loop
     execute format('drop policy if exists igc_select_own on public.%I',t);
     execute format('drop policy if exists igc_insert_own on public.%I',t);
     execute format('drop policy if exists igc_update_own on public.%I',t);
@@ -121,4 +132,4 @@ begin
 end $$;
 
 grant usage on schema public to authenticated;
-grant select,insert,update,delete on public.devices, public.audit_events, public.focus_batches, public.focus_batch_items, public.profile_state, public.list_snapshots to authenticated;
+grant select,insert,update,delete on public.devices, public.audit_events, public.focus_batches, public.focus_batch_items, public.profile_state, public.list_snapshots, public.workspace_state to authenticated;
