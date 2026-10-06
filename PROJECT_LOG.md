@@ -831,3 +831,23 @@ The next chat should continue from this section instead of reconstructing the An
 - Desktop About privacy text was corrected: the original Instagram export remains local, while normalized lists/review state may be stored privately in Supabase when sync is enabled.
 - Android now tracks whether review-state sync is actually available. Before review history arrives, Home shows REVIEW STATE as unavailable rather than calling all 751 raw no-follow-back relationships “review pending”.
 - Review remains browsable as raw relationship data while the historical state is missing; labels explicitly say RAW MATCHES until the snapshot is restored.
+
+
+### Final v120.33 CI / release verification
+- Final workflow run: `37430546910` — **SUCCESS**.
+- Desktop inline JavaScript syntax validation: **SUCCESS**.
+- Android `:app:assembleDebug`: **SUCCESS**.
+- Embedded Desktop Workspace verification: **SUCCESS**.
+- GitHub Release publication/update: **SUCCESS**.
+- Release: `v120.33` — **Instagram Cleaner Pro v120.33 Beta**.
+- Final release APK: `Instagram-Cleaner-Pro-v120.33-beta.apk`
+  - size: 6,931,874 bytes
+  - SHA-256: `e6d82a21265d90cddfe71f3cc9b1f396bbebe89c91898cafeb7fdad57d776df4`
+- Final Desktop HTML (versioned + canonical fixed-name copies):
+  - size: 1,685,822 bytes
+  - SHA-256: `50d37089630f8d72b99468dd6b6031baf750a73feb51e180081a8a73b7e722be`
+- Official logo asset:
+  - `Instagram-Cleaner-Pro-logo.svg`
+  - SHA-256: `a6cc543987fa21968c9f09c8c595a9924e1ffbce49721a6779d802cc30b836b7`
+- Release assets were overwritten after final code changes, so downloads now correspond to the validated v120.33 hotfix build.
+- Historical-review limitation is explicit: review state that exists only in an older browser/file-local storage area cannot be inferred from Following/Followers. It must be opened by the sync-capable Desktop build in the same stored state, or exported/restored through IG Cleaner backup, then synchronized once. Future review/protect/snooze changes publish automatically.
