@@ -18,3 +18,6 @@ Audit the requested surface plus adjacent flows. Pay special attention to:
 - CI/release claims that are not tied to current HEAD.
 
 If assigned only to audit, report findings with severity, evidence and exact acceptance criteria. If assigned to fix, keep changes surgical and update `PROJECT_LOG.md`.
+
+For UI/About changes, treat identity/About regression as a real defect: verify recognizable canonical logo geometry, product-derived cleanup visual language, product → author → Michel's Lab hierarchy, canonical portrait usage, and social controls that visibly show both network icon and network name.
+
