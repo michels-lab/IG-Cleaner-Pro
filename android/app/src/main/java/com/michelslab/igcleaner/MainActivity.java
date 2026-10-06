@@ -734,6 +734,7 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton sync = view.findViewById(R.id.syncNow);
+        MaterialButton managePassword = view.findViewById(R.id.managePassword);
         MaterialButton logout = view.findViewById(R.id.logout);
         TextView accountEmail = view.findViewById(R.id.accountEmail);
         TextView label = view.findViewById(R.id.deviceLabel);
@@ -799,6 +800,32 @@ public final class MainActivity extends AppCompatActivity {
                     Snackbar.make(content, "Account synced", Snackbar.LENGTH_SHORT).show();
                 });
             }, true);
+        });
+
+        managePassword.setOnClickListener(v -> {
+            TextInputEditText passwordField = new TextInputEditText(this);
+            passwordField.setHint("New password");
+            passwordField.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            int pad = dp(20);
+            passwordField.setPadding(pad, dp(10), pad, dp(10));
+
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Set password")
+                    .setMessage("Use at least 8 characters. This password will work for future sign-ins.")
+                    .setView(passwordField)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Save", (dialog, which) -> {
+                        setGlobalStatus("UPDATING • password");
+                        runAsync(() -> {
+                            api.updatePassword(rawTextOf(passwordField));
+                            mainHandler.post(() -> {
+                                setGlobalStatus("SECURE • password updated");
+                                Snackbar.make(content, "Password updated", Snackbar.LENGTH_LONG).show();
+                            });
+                        }, true);
+                    })
+                    .show();
         });
 
         logout.setOnClickListener(v -> {
