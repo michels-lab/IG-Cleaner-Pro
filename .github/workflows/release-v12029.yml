@@ -1,17 +1,20 @@
 name: Publish IG Cleaner Android v120.29
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - ".github/workflows/release-v12029.yml"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish or refresh the v120.29 prerelease after required validation.
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: ${{ inputs.publish == true }}
     runs-on: ubuntu-latest
     defaults:
       run:

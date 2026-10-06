@@ -1,0 +1,102 @@
+name: IG Cleaner Pro CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'android-*'
+      - 'development/**'
+      - 'fix/**'
+      - 'release/**'
+    paths:
+      - 'desktop/**'
+      - 'android/**'
+      - 'tests/**'
+      - 'release/**'
+      - 'docs/UPDATE_AND_STATE_MIGRATION.md'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'android/**'
+      - 'tests/**'
+      - 'release/**'
+      - 'docs/UPDATE_AND_STATE_MIGRATION.md'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-contract:
+    name: Desktop local-app contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate Desktop HTML and persistent-state contract
+        run: node tests/desktop-contract.test.cjs
+      - name: Validate sanitized Instagram import fixture
+        run: python tests/fixture-contract.py
+      - name: Validate distribution manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('release/distribution-manifest.json').read_text())
+          assert m['schema']=='ig-cleaner-distribution-v1'
+          assert m['releasePolicy']['automaticPublishFromMain'] is False
+          assert m['releasePolicy']['explicitManualPublishRequired'] is True
+          assert m['releasePolicy']['checksumsRequired'] is True
+          assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
+          print('Distribution/state manifest passed.')
+          PY
+
+  android:
+    name: Android build + embedded Workspace
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build real Android app path
+        run: gradle :app:assembleDebug
+      - name: Verify exactly one embedded Workspace
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          OFFICIAL="assets/ig_cleaner_pro_v120_27_synced_companion.html"
+          LEGACY="assets/ig_cleaner_workspace.html"
+          COUNT="$(unzip -l "$APK" | grep -c "$OFFICIAL" || true)"
+          test "$COUNT" -eq 1
+          SIZE="$(unzip -l "$APK" | awk -v asset="$OFFICIAL" '$0 ~ asset {print $1}')"
+          test -n "$SIZE" && test "$SIZE" -gt 1500000
+          if unzip -l "$APK" | grep -q "$LEGACY"; then
+            echo "::error::Duplicate legacy Workspace asset is packaged: $LEGACY"
+            exit 1
+          fi
