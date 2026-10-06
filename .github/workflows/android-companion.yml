@@ -6,6 +6,8 @@ on:
     branches: ["android-*"]
     paths:
       - "android/**"
+      - "desktop/**"
+      - "branding/**"
       - ".github/workflows/android-companion.yml"
 
 permissions:
@@ -38,6 +40,34 @@ jobs:
           test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Validate Desktop JavaScript
+        working-directory: .
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, subprocess, tempfile, sys
+          html = pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script([^>]*)>(.*?)</script>", html, flags=re.I|re.S)
+          checked = 0
+          for i, (attrs, code) in enumerate(scripts):
+              m = re.search(r'type=["\']([^"\']+)["\']', attrs, flags=re.I)
+              if m and "javascript" not in m.group(1).lower() and "ecmascript" not in m.group(1).lower():
+                  continue
+              if not code.strip():
+                  continue
+              path = pathlib.Path(tempfile.gettempdir()) / f"igc-inline-{i}.js"
+              path.write_text(code, encoding="utf-8")
+              result = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout)
+                  print(result.stderr)
+                  sys.exit(result.returncode)
+              checked += 1
+          print(f"Validated {checked} inline JavaScript blocks.")
+          assert 'Instagram Cleaner Pro' in html
+          assert 'normalizeLegacyReviewState' in html
+          assert 'igcQueueStateSync' in html
+          PY
+
       - run: gradle :app:assembleDebug
       - name: Verify embedded Workspace asset
         run: |
@@ -56,37 +86,43 @@ jobs:
           name: ig-cleaner-companion-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish v120.32 prerelease
-        if: github.ref_name == 'android-pro-ui-v120.32'
+      - name: Publish v120.33 prerelease
+        if: github.ref_name == 'android-sync-hotfix-v120.33'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-          RELEASE_APK="IG-Cleaner-v120.32-beta.apk"
-          RELEASE_DESKTOP="IG-Cleaner-v120.32-Desktop.html"
+          RELEASE_APK="Instagram-Cleaner-Pro-v120.33-beta.apk"
+          RELEASE_DESKTOP="Instagram-Cleaner-Pro-v120.33-Desktop.html"
+          CANONICAL_DESKTOP="Instagram-Cleaner-Pro-Desktop.html"
+          RELEASE_LOGO="Instagram-Cleaner-Pro-logo.svg"
+
           cp "$APK" "$RELEASE_APK"
           cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$RELEASE_DESKTOP"
+          cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$CANONICAL_DESKTOP"
+          cp "../branding/ig-cleaner-pro-mark.svg" "$RELEASE_LOGO"
 
           cat > release-notes.md <<'EOF'
-          Android v120.32 beta
+          Instagram Cleaner Pro v120.33 beta
 
-          - Desktop-derived visual system: exact core palette, IG brand mark, typography hierarchy and compact mobile surfaces.
-          - Native Home and Review navigation with cached restoration, pull-to-refresh, search and direct Instagram opening.
-          - Password-first Profile sign-in; OTP is reserved for first-time setup and password recovery.
-          - Following, Followers, Pending, review/protected/snoozed state and profile_state are merged for consistent counts across devices.
-          - Friendly session/network states replace raw HTTP/token errors and cached data stays visible during refresh.
-          - Advanced Desktop tools remain available from the overflow menu instead of dominating the mobile UI.
+          - Fixes clipped bottom navigation on Samsung gesture and 3-button navigation by handling navigation-bar insets on the nav itself.
+          - Desktop now migrates legacy reviewed profiles that had no intelligent review timestamp and publishes them to Supabase.
+          - Review/protect/snooze decisions now queue an immediate state sync instead of waiting only for the periodic sync.
+          - Android treats the latest full Desktop workspace snapshot as authoritative and only overlays newer profile_state reviews.
+          - Remote Android reviews are persisted back into Desktop local state after sync.
+          - The blue/cyan IG monogram is now the official product logo across Android, Desktop, favicon, About and release assets.
+          - Desktop JavaScript syntax is validated in CI before the Android build.
 
-          Validation: GitHub Actions build + embedded advanced Workspace verification passed.
+          Note: historical reviews that exist only inside an older local Desktop HTML cannot appear in the cloud until that local state is opened with this sync-capable Desktop build (or restored from its backup) and synchronized.
           EOF
 
-          if gh release view v120.32 >/dev/null 2>&1; then
-            gh release edit v120.32 --target "$GITHUB_SHA" --title "IG Cleaner v120.32 Beta" --notes-file release-notes.md --prerelease
-            gh release upload v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
+          if gh release view v120.33 >/dev/null 2>&1; then
+            gh release edit v120.33 --target "$GITHUB_SHA" --title "Instagram Cleaner Pro v120.33 Beta" --notes-file release-notes.md --prerelease
+            gh release upload v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" --clobber
           else
-            gh release create v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" \
+            gh release create v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" \
               --target "$GITHUB_SHA" \
-              --title "IG Cleaner v120.32 Beta" \
+              --title "Instagram Cleaner Pro v120.33 Beta" \
               --notes-file release-notes.md \
               --prerelease
           fi
