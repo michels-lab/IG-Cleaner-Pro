@@ -690,3 +690,46 @@ The next chat should continue from this section instead of reconstructing the An
   - `assets/ig_cleaner_pro_v120_27_synced_companion.html` — 1,670,732 bytes.
 - Obsolete duplicate `assets/ig_cleaner_workspace.html` is no longer packaged.
 - Current release gate: device validation remains required before merging to `main` and publishing v120.29 pre-release.
+
+## 2026-10-05 — Android/Desktop v120.30: unified account + complete people-list sync
+
+### User validation finding
+- On Android, two different account/login surfaces were visible after session failure: the native Material screen and the Workspace Cuenta page.
+- The native screen reported `HTTP 403 · Token has expired or is invalid`, while the embedded Workspace could hold a separate Supabase session.
+- Android could report sync activity but still did not contain the actual usernames shown in Desktop Review/Mutuals/Followers/Pending.
+- Root cause: v120.29 synchronized devices, events, review projection and Focus batches, but **not the complete Following/Followers/Pending datasets**.
+
+### Authentication/session fix
+- New branch: `android-full-sync-v120.30`.
+- Android bottom-nav Cuenta now opens the existing dark Workspace Cuenta page; the former light-blue native login is no longer the normal login route.
+- Added WebView → native session bridge so a refreshed/verified Workspace Supabase session becomes the session used by native Focus/Audit.
+- Native refresh failures no longer automatically delete the remembered session.
+- REST refresh retry now handles both 401 and 403 in the Workspace sync bridge.
+- Removed the always-running native 15 s sync loop while Workspace owns automatic sync.
+- Workspace WebView is destroyed when entering native Focus/Audit, preventing competing refresh-token rotation loops.
+- Device registration now respects the actual Workspace device identity instead of hard-coding `desktop`.
+
+### Complete list synchronization
+- Added private RLS table `public.list_snapshots` with one canonical row per authenticated user/list: `following`, `followers`, `pending`.
+- Each snapshot stores the normalized list payload, count, source device, content hash and capture/update timestamps.
+- Live migration `add_full_list_snapshots_v120_30` applied successfully to Supabase project `ig-cleaner-sync`.
+- Desktop publishes populated list snapshots after import/process and sync.
+- Android pulls the snapshots into `followingRaw`, `followersRaw` and `pendingRequestsRaw`, rebuilds the relationship maps and rerenders Review, Mutuals, Followers, Pending, profile stats and module summaries.
+- Fresh/empty Android installs do not overwrite Desktop's canonical list snapshot.
+- The original ZIP/JSON/HTML file is still not uploaded as a backup; the normalized profile-list records now do sync.
+
+### Version / validation
+- Android bumped to `versionCode 12030`, `versionName 120.30`.
+- GitHub Actions run `37391428384`: **SUCCESS**.
+- `:app:assembleDebug`: **SUCCESS**.
+- CI step `Verify embedded Workspace asset`: **SUCCESS**.
+- Supabase confirmed `list_snapshots` exists with RLS enabled.
+- No merge to `main` and no v120.30 release yet.
+
+### Required phone/desktop round-trip before release
+1. Open the updated Desktop v120.30 HTML on the computer containing the populated IG Cleaner lists.
+2. Sync once so Following/Followers/Pending populate `list_snapshots`.
+3. Install Android v120.30 and sign in through the single Workspace Cuenta page if needed.
+4. Confirm the real usernames appear in Android Review, Mutuals, Followers and Pending without re-importing the export on the phone.
+5. Close/reopen Android and confirm Cuenta remains connected and no second light-blue login appears.
+6. Run a Focus/review on Android and verify the result returns to Desktop.
