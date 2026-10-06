@@ -1,9 +1,9 @@
-name: Build IG Cleaner Companion
+name: Validate Instagram Cleaner Pro
 
 on:
   workflow_dispatch:
   push:
-    branches: ["android-*"]
+    branches: ["main", "android-*", "release-*"]
     paths:
       - "android/**"
       - "desktop/**"
@@ -11,7 +11,7 @@ on:
       - ".github/workflows/android-companion.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   android:
@@ -86,45 +86,3 @@ jobs:
           name: ig-cleaner-companion-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish v120.33 prerelease
-        if: github.ref_name == 'android-sync-hotfix-v120.33'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          APK="app/build/outputs/apk/debug/app-debug.apk"
-          RELEASE_APK="Instagram-Cleaner-Pro-v120.33-beta.apk"
-          RELEASE_DESKTOP="Instagram-Cleaner-Pro-v120.33-Desktop.html"
-          CANONICAL_DESKTOP="Instagram-Cleaner-Pro-Desktop.html"
-          RELEASE_LOGO="Instagram-Cleaner-Pro-logo.svg"
-
-          cp "$APK" "$RELEASE_APK"
-          cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$RELEASE_DESKTOP"
-          cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$CANONICAL_DESKTOP"
-          cp "../branding/ig-cleaner-pro-mark.svg" "$RELEASE_LOGO"
-
-          cat > release-notes.md <<'EOF'
-          Instagram Cleaner Pro v120.33 beta
-
-          - Fixes clipped bottom navigation on Samsung gesture and 3-button navigation by handling navigation-bar insets on the nav itself.
-          - Desktop now migrates legacy reviewed profiles that had no intelligent review timestamp and publishes them to Supabase.
-          - Review/protect/snooze decisions now queue an immediate state sync instead of waiting only for the periodic sync.
-          - Android no longer labels every raw not-following-back match as Review pending before Desktop review history has arrived.
-          - Android treats the latest full Desktop workspace snapshot as authoritative and only overlays newer profile_state reviews.
-          - Remote Android reviews are persisted back into Desktop local state after sync.
-          - Email + password is now the primary login on both Android and Desktop; OTP is for first-time setup/recovery.
-          - The blue/cyan IG monogram is now the official product logo across Android, Desktop, favicon, About and release assets.
-          - Desktop JavaScript syntax is validated in CI before the Android build.
-
-          Note: historical reviews that exist only inside an older local Desktop HTML cannot appear in the cloud until that local state is opened with this sync-capable Desktop build (or restored from its backup) and synchronized.
-          EOF
-
-          if gh release view v120.33 >/dev/null 2>&1; then
-            gh release edit v120.33 --title "Instagram Cleaner Pro v120.33 Beta" --notes-file release-notes.md --prerelease
-            gh release upload v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" --clobber
-          else
-            gh release create v120.33 "$RELEASE_APK" "$RELEASE_DESKTOP" "$CANONICAL_DESKTOP" "$RELEASE_LOGO" \
-              --target "$GITHUB_SHA" \
-              --title "Instagram Cleaner Pro v120.33 Beta" \
-              --notes-file release-notes.md \
-              --prerelease
-          fi
