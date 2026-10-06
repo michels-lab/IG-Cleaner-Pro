@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "version": "120.34",
+  "tag": "v120.34",
+  "authorized": false,
+  "authorization_source": null,
+  "request_id": null,
+  "note": "Prepared but NOT authorized for publication. Set authorized=true only after explicit user instruction to publish v120.34."
+}
