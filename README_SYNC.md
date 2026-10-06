@@ -1,59 +1,80 @@
-# IG Cleaner Pro v120.27 — Desktop + Android Companion + Supabase Sync
+# IG Cleaner Pro — Desktop + Android + Supabase Sync
 
-This bundle contains the first complete cross-device architecture for IG Cleaner Pro.
+Current Android work line: **v120.29 beta**.
 
-## Included
+## Product model
 
-- `desktop/ig_cleaner_pro_v120_27_synced_companion.html` — the existing desktop app plus a Sync Center.
-- `android/` — native Android companion project. Focus is a checklist: tap one profile, Instagram opens, that row is marked opened, and the batch is only marked reviewed when you confirm the completed checklist.
-- `supabase/schema.sql` — private per-user sync tables with Row Level Security.
+IG Cleaner is one product with two interaction surfaces:
 
-## Sync semantics
+- **Desktop:** the full single-file IG Cleaner workspace.
+- **Android:** the full Desktop workspace packaged inside the app **plus** native mobile Focus, Audit and Account surfaces.
 
-- Review and audit are separate events.
-- Every event records device (`desktop` / `android`), device id, timestamp, module and batch.
-- A Focus prepared on Desktop is uploaded with its exact frozen username order.
-- Android updates `focus_batch_items` one profile at a time and completes the batch only after explicit confirmation.
-- `profile_state` is the current review projection. The newest `reviewed_at` wins; the event log is never overwritten.
-- Desktop pulls remote `profile_state`, so Android-reviewed profiles become reviewed on Desktop.
-- Audit events do not alter the original review timestamp.
+The Android app is not intended to be a reduced companion anymore. The Workspace tab exposes the same Desktop engine/modules; native screens only replace workflows where mobile interaction should differ.
 
-## One-time Supabase setup
+## Shared sync semantics
 
-1. Create/open a Supabase project.
-2. Run `supabase/schema.sql` in SQL Editor.
-3. In Desktop → **Sync**, enter Project URL + anon/publishable key + email/password.
-4. Use the same Project URL/key/email/password in Android → **Sync**.
-5. Prepare a Foco 20/30/40 on Desktop and press Sync. It appears in Android.
+Supabase stores synchronized **metadata/state**, not the raw Instagram export:
 
-The anon/publishable key is safe to ship in a client only because RLS is enabled. Never use a service-role key in Desktop or Android.
+- device identity / last-seen;
+- frozen Focus batches and batch items;
+- audit events;
+- projected per-profile review state.
 
-## Android build
+Rules:
+- opening a profile and reviewing a profile are separate events;
+- review history is append-only through audit events;
+- current review projection uses the newest review timestamp;
+- every event preserves source device (`desktop` / `android`);
+- Audit never rewrites the original review time;
+- Focus prepared on Desktop keeps its exact frozen username order when consumed on Android;
+- Android reviews must appear on Desktop after sync, and vice versa.
 
-The project has no third-party runtime SDK. It calls Supabase Auth/PostgREST with Android's built-in HTTP stack. A GitHub Actions workflow is included under `android/.github/workflows/android-companion.yml`; if you copy it to repository root `.github/workflows/`, it builds `app-debug.apk` as an artifact.
+## Authentication
 
-## Build verification — 2026-10-05
+End users see only:
 
-- GitHub Actions run `37297653870` completed successfully on branch `sync-companion-v120.27`.
-- `gradle :app:assembleDebug` completed successfully.
-- Debug APK SHA-256: `31568b5175882f131c26cb3314fe57ade7da6cc2a4804a6e60539f9f2a1109ae`.
-- The APK is included in `dist/IG_Cleaner_Companion_v120.27-debug.apk`.
+1. email;
+2. **Enviar código**;
+3. OTP from email;
+4. **Entrar**.
 
-## Remaining live-backend step
+The Supabase Project URL and publishable key are application configuration. They are not user-facing fields.
 
-The Desktop and Android clients are implemented and build-tested, but a real Supabase project must still have `supabase/schema.sql` applied and both clients must be configured with that project's URL and publishable/anon key. Never use a Supabase service-role key in either client.
+Never ship a service-role key, database password, SMTP credential, refresh token or other privileged secret.
 
-## Simplified account UX hotfix
+## Privacy boundary
 
-The Supabase project URL and publishable key are embedded in the clients. End users never enter backend configuration or a password.
+Instagram ZIP/JSON/HTML import is still processed locally in the client workflow. The current sync architecture is for review/workflow metadata.
 
-Authentication uses email OTP:
-1. Enter email.
-2. Tap **Enviar código**.
-3. Enter the code from the email.
-4. Tap **Entrar con código**.
-5. The session is persisted locally and sync runs automatically on Desktop.
+Raw Instagram export backup/upload is **not** part of the current sync contract.
 
-### One-time Supabase email template setup
+## Android v120.29
 
-In Supabase Dashboard -> Authentication -> Email Templates -> Magic Link, make the email display the OTP token by using `{{ .Token }}` instead of requiring the confirmation URL. This is a project-owner setup step, not an end-user step.
+Android includes:
+- Workspace — packaged Desktop engine;
+- Focus — one-profile-at-a-time checklist;
+- Audit — cross-device review/open history;
+- Cuenta — OTP login and sync status.
+
+Workspace integration also provides:
+- Android file chooser for HTML/JSON/ZIP import inputs;
+- external Instagram-link handling;
+- mobile prevention/redirection of Desktop bulk-profile opening;
+- bridge for generated exports to Android Downloads;
+- session/device bootstrap into the embedded Desktop engine.
+
+## Current validation
+
+GitHub Actions run `37388962937` compiled `android-full-workspace-v120.29` successfully.
+
+Before v120.29 is released, the target-phone validation gate is:
+- cold launch;
+- full Workspace module rendering;
+- ZIP/file picker import;
+- OTP/session persistence;
+- Desktop ↔ Android Focus round-trip;
+- Android review projection back to Desktop;
+- Audit origin correctness;
+- HTML export to Downloads.
+
+See `PROJECT_LOG.md` for the chronological implementation record.

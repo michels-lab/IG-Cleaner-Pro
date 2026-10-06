@@ -548,3 +548,145 @@ Added the repository-level Michel's Lab governance declaration:
 - Verified compiled APK: 6,880,075 bytes, 904 entries, embedded `assets/ig_cleaner_workspace.html` = 1,670,732 bytes.
 - APK SHA-256 from validated artifact: `ae6a02abd26c3cc09f9b735b162f4008c6e6a56c385d8b7a092312e50f3de30a`.
 - Remaining device validation: install/launch on target phone, mobile ZIP import, Workspace navigation, Desktop ↔ Android Focus round-trip and export flow.
+
+
+## 2026-10-05 — LIMÓN handoff: Android full workspace v120.29
+
+### Estado actual
+- Desktop estable/sincronizable: v120.27 con Supabase + OTP, Audit cross-device y Focus congelado/sincronizable.
+- Android v120.28 fue una reconstrucción nativa Material que ya abre y compila, pero el usuario la rechazó como producto final porque seguía siendo un companion reducido y no exponía la amplitud funcional de la app Desktop.
+- La dirección corregida es **IG Cleaner completo en Android**, no un companion recortado.
+- Rama activa: `android-full-workspace-v120.29`.
+- v120.29 conserva Focus / Audit / Cuenta como superficies Android nativas y añade **Workspace** como acceso al motor completo de Desktop.
+- El Workspace empaqueta el HTML oficial de Desktop desde `desktop/` mediante Android Gradle `sourceSets`, evitando mantener una segunda copia funcional del motor.
+- Navegación móvil actual: Workspace / Focus / Audit / Cuenta.
+- Workspace carga el motor Desktop dentro de WebView con JavaScript, DOM storage, file access y bridge Android.
+- El selector `<input type="file">` del Desktop abre el file picker Android, permitiendo importar ZIP/JSON/HTML desde el teléfono.
+- Los enlaces de Instagram se enrutan a la app de Instagram cuando está instalada.
+- Aperturas masivas desde el Workspace se redirigen/bloquean en Android a favor del flujo Focus de un perfil por vez.
+- El bridge Android ya contempla transferencia de sesión/configuración, exportaciones hacia Descargas e integración con Focus nativo.
+- Se corrigió el solapamiento visual con status bar usando WindowInsets.
+- Se consolidó una sola implementación de Workspace tras detectar duplicaciones de variables/imports/insets durante el desarrollo.
+
+### Validación
+- GitHub Actions run `37388962937`: `gradle :app:assembleDebug` **SUCCESS**.
+- El APK generado incluye el HTML Desktop oficial empaquetado como asset.
+- Artifact ZIP de Actions: ~6.8 MB; APK inspeccionado previamente: ~7.8 MB.
+- El Desktop HTML empaquetado pesa ~1.67 MB.
+- El build incluye Material Components, AndroidX, RecyclerView, XML layouts, launcher resources, Workspace WebView, Focus, Audit y Cuenta.
+
+### Release / ramas
+- `v120.27`: pre-release publicada; primera sync Desktop ↔ Android.
+- `v120.28`: pre-release publicada; app Android nativa abre, pero funcionalmente quedó demasiado reducida respecto a Desktop.
+- `v120.29`: **todavía NO publicada ni fusionada a main** al momento de este handoff.
+- No llamar v120.29 “lista” hasta instalarla en el teléfono objetivo y comprobar el Workspace real.
+
+### Pendientes inmediatos para el siguiente chat
+1. Eliminar/ignorar cualquier asset duplicado/obsoleto de Workspace que no sea el HTML oficial empaquetado desde `desktop/`.
+2. Actualizar About/strings Android de v120.28 → v120.29 donde aún quede identidad vieja.
+3. Revisar el workflow Android para que no quede acoplado innecesariamente a una sola rama temporal.
+4. Instalar el APK v120.29 en el teléfono objetivo y verificar:
+   - arranque sin crash;
+   - status bar/insets correctos;
+   - Workspace visible y navegable;
+   - módulos Desktop disponibles: Home/Command Center, Review, Mutuals, Followers, Pending, Import, Insights, Changes, Vault, Health, About;
+   - selector de ZIP desde Android;
+   - persistencia de datos del Workspace;
+   - OTP/sesión Android;
+   - Focus Desktop → Android;
+   - finalización Android → revisión visible en Desktop;
+   - Audit con origen Android/Desktop.
+5. Solo después de esa validación: merge a `main` y release formal `v120.29`.
+
+### Decisión de producto
+Android debe ofrecer el mismo producto/datos que Desktop, pero no necesariamente la misma interacción. La diferencia intencional principal es Focus: Desktop puede abrir múltiples perfiles; Android usa checklist y apertura uno-a-uno. No volver a reducir Android a una app de solo Focus/Audit/Cuenta.
+
+
+## 2026-10-05 — LIMÓN handoff — Android full workspace v120.29
+
+### What changed in this work session
+- v120.27 established the first Desktop ↔ Android sync architecture with Supabase, email OTP authentication, device-aware review/audit events and frozen Focus batches.
+- v120.27 Android was rejected as a real product build after the distributed APK was only ~25 KB and failed to launch reliably on the target phone.
+- v120.28 rebuilt Android as a conventional Material/AppCompat application. GitHub Actions compiled successfully and the app launched on-device, but user validation found that it exposed only the companion surfaces and did **not** provide the feature breadth of Desktop.
+- v120.29 therefore changes the Android product model from “small companion” to **full Android workspace + native mobile tools**.
+
+### v120.29 current architecture
+- Branch: `android-full-workspace-v120.29`.
+- Android version metadata: `versionCode 12029`, `versionName 120.29`.
+- The official Desktop HTML under `desktop/` is packaged into the Android APK through the Android Gradle main asset source set.
+- Android starts on a **Workspace** tab that loads the real Desktop app in a WebView instead of reproducing its modules separately.
+- Desktop surfaces available through Workspace include the existing Home/Command Center, Review, Mutuals, Followers, Pending, Import, Insights, Changes, Vault/exports, Health, About and other current Desktop modules.
+- The Android bottom navigation also keeps native **Focus**, **Audit** and **Cuenta** surfaces because those workflows benefit from mobile-specific interaction.
+- Native Focus opens one Instagram profile at a time and uses a checklist; opening and reviewing remain distinct events.
+- Native Audit preserves source-device provenance and does not rewrite the original review timestamp.
+- Cuenta uses the same email OTP / Supabase session as Desktop; end users do not enter backend URLs or keys.
+- Workspace bootstrapping transfers the Android session/device identity into the embedded Desktop engine.
+- Android intercepts Instagram links and routes them to the Instagram app/browser.
+- Desktop multi-profile opening is redirected/limited on Android so bulk browser-tab behavior does not become the mobile workflow.
+- Android file chooser support allows the embedded Desktop importer to request files from the phone.
+- Workspace export bridge can save generated HTML exports into Android Downloads.
+- System-bar insets were corrected so app content no longer renders underneath the Android status/navigation bars.
+
+### Backend/privacy boundary
+- Supabase is now an implemented backend for **sync metadata/state**: devices, Focus batches/items, audit events and projected profile review state.
+- Authentication is email OTP.
+- Row Level Security is enabled by the app schema; clients use only the publishable key.
+- Raw Instagram ZIP/JSON/HTML export contents remain local to the client workflow and are not intentionally uploaded as part of the sync contract.
+- Review metadata may sync across Desktop and Android; raw export backup is a separate future decision and is not implied by current sync.
+
+### Validation at chat close
+- GitHub Actions run `37388962937` on `android-full-workspace-v120.29` completed **SUCCESS**.
+- The final successful build occurred after consolidating duplicate Workspace implementations, restoring the loading indicator and fixing root window insets.
+- The Android build artifact `ig-cleaner-companion-debug` was produced by that run.
+- The full Workspace uses the official Desktop file `desktop/ig_cleaner_pro_v120_27_synced_companion.html` as the packaged engine.
+- No v120.29 GitHub Release has been published yet.
+
+### Known pending work / next-chat starting point
+1. Remove the obsolete duplicate `android/app/src/main/assets/ig_cleaner_workspace.html` file if still present; Gradle now packages the official `desktop/` asset directly.
+2. Update About/product text that still identifies Android as v120.28 where applicable.
+3. Make the Android companion CI trigger reusable/generic instead of branch-specific to v120.29.
+4. Update `README_SYNC.md` fully for the current OTP + full-workspace architecture.
+5. Install the final v120.29 artifact on the target phone and validate:
+   - cold launch;
+   - Workspace renders Desktop modules;
+   - status-bar inset;
+   - Android ZIP/file chooser import;
+   - OTP/session persistence;
+   - Desktop → Android Focus round-trip;
+   - Android completion → Desktop reviewed state;
+   - Audit device provenance;
+   - Workspace HTML export to Downloads.
+6. Only after those checks, merge `android-full-workspace-v120.29` to `main` and publish GitHub pre-release `v120.29`.
+7. Do not modify the stable Desktop import/JSON parsing semantics while finishing Android parity.
+
+### Handoff rule
+The next chat should continue from this section instead of reconstructing the Android work from screenshots or older v120.27/v120.28 assumptions.
+
+## 2026-10-05 — Android v120.29 single Workspace asset hardening
+
+- Resumed from handoff trigger **LIMÓN** on `android-full-workspace-v120.29`.
+- Inspected validated CI artifact from run `37388962937` and found two embedded Workspace assets:
+  - `assets/ig_cleaner_pro_v120_27_synced_companion.html`
+  - `assets/ig_cleaner_workspace.html`
+- Both files were byte-identical: 1,670,732 bytes each, SHA-256 `cc9d3cbe83a453d20e7bd525af2a22f80e8be826d61d468df053b68efb320862`.
+- Root cause: Android's default asset source remained active while `../../desktop` was added with `assets.srcDir(...)`, so Gradle packaged both the Android copy and the Desktop copy.
+- Changed the Android source set to `assets.setSrcDirs(listOf("../../desktop"))` so the packaged Workspace has one source of truth: the official Desktop HTML.
+- Confirmed Android user-facing version/About strings already report **v120.29 Beta**; no remaining v120.28 product text was found in the active Android files checked.
+- Confirmed Android CI branch matching is generalized to `android-*`.
+- Hardened Android CI to inspect the built APK and fail unless:
+  - the official Desktop Workspace asset is present;
+  - its packaged size is greater than 1.5 MB;
+  - the obsolete duplicate `assets/ig_cleaner_workspace.html` is absent.
+- CI workflow now also triggers when its own workflow file changes.
+- Desktop parsers, JSON import behavior, HTML evidence safeguards, Focus determinism and sync semantics were not modified by this cleanup.
+
+### CI revalidation after single-asset cleanup
+
+- Hardened Android CI run `37390702783` completed **SUCCESS** on commit `8cbd0f048453d87283e03ae7ae67ebb885314421`.
+- Workflow artifact: `ig-cleaner-companion-debug` (artifact id `11380688614`).
+- Extracted APK size: **6,880,202 bytes**.
+- APK SHA-256: `bc706c76857a18a5fdfce3ffafa9a3edfe01188c952edc4c57667a86529397d9`.
+- APK inspection confirms exactly one IG Cleaner Workspace asset:
+  - `assets/ig_cleaner_pro_v120_27_synced_companion.html` — 1,670,732 bytes.
+- Obsolete duplicate `assets/ig_cleaner_workspace.html` is no longer packaged.
+- Current release gate: device validation remains required before merging to `main` and publishing v120.29 pre-release.
