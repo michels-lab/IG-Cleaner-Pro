@@ -1,0 +1,21 @@
+<resources>
+    <style name="Theme.IGCleaner" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/ig_cyan</item>
+        <item name="colorOnPrimary">@color/ig_bg</item>
+        <item name="colorSecondary">@color/ig_green</item>
+        <item name="colorOnSecondary">@color/ig_bg</item>
+        <item name="colorSurface">@color/ig_surface</item>
+        <item name="colorOnSurface">@color/ig_text</item>
+        <item name="android:colorAccent">@color/ig_cyan</item>
+        <item name="android:windowBackground">@drawable/ig_brand_splash</item>
+        <item name="android:windowSplashScreenBackground">@color/ig_brand_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ig_official_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ig_brand_bg</item>
+        <item name="android:statusBarColor">@color/ig_bg</item>
+        <item name="android:navigationBarColor">@color/ig_bg</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
+    </style>
+</resources>
