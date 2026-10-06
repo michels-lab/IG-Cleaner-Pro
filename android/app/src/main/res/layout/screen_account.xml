@@ -3,18 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/ig_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="28dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cuenta y sincronización"
+            android:text="Cuenta"
             android:textColor="@color/ig_text"
             android:textSize="28sp"
             android:textStyle="bold"/>
@@ -23,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Desktop y Android comparten revisiones, tandas y Audit. La nube ya viene configurada."
+            android:text="Una sesión para Desktop y Android."
             android:textColor="@color/ig_muted"
             android:textSize="14sp"/>
 
@@ -31,69 +35,99 @@
             android:id="@+id/authGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="24dp"
             android:orientation="vertical">
 
-            <com.google.android.material.textfield.TextInputLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Correo"
-                app:boxBackgroundMode="outline"
-                app:boxStrokeColor="@color/ig_cyan">
+                app:cardBackgroundColor="@color/ig_surface"
+                app:cardCornerRadius="22dp"
+                app:strokeColor="@color/ig_border"
+                app:strokeWidth="1dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/emailInput"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textEmailAddress"
-                    android:textColor="@color/ig_text"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:padding="18dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/sendCode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Enviar código"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SIGN IN"
+                        android:textColor="@color/ig_cyan"
+                        android:textSize="11sp"
+                        android:textStyle="bold"/>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:hint="Código del correo"
-                app:boxBackgroundMode="outline"
-                app:boxStrokeColor="@color/ig_cyan">
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="Correo"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxStrokeColor="@color/ig_border">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/codeInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:maxLength="8"
-                    android:textColor="@color/ig_text"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/emailInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress"
+                            android:textColor="@color/ig_text"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/verifyCode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Entrar"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sendCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Enviar código"
+                        android:textAllCaps="false"
+                        app:cornerRadius="16dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="No necesitas contraseña, URL ni keys. La sesión queda recordada en este dispositivo."
-                android:textColor="@color/ig_muted"
-                android:textSize="12sp"/>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Código del correo"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:boxStrokeColor="@color/ig_border">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/codeInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLength="8"
+                            android:textColor="@color/ig_text"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/verifyCode"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Entrar"
+                        android:textAllCaps="false"
+                        app:cornerRadius="16dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/connectedCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="24dp"
             android:visibility="gone"
             app:cardBackgroundColor="@color/ig_surface"
             app:cardCornerRadius="22dp"
@@ -104,48 +138,60 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="CONECTADO"
+                    android:text="CONNECTED"
                     android:textColor="@color/ig_green"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/accountEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
                     android:textColor="@color/ig_text"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/deviceLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="5dp"
                     android:textColor="@color/ig_muted"
                     android:textSize="13sp"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/syncNow"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:text="Sincronizar ahora"/>
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:text="Sincronizar ahora"
+                    android:textAllCaps="false"
+                    app:cornerRadius="16dp"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/logout"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Cerrar sesión"/>
+                    android:layout_height="48dp"
+                    android:layout_marginTop="6dp"
+                    android:text="Cerrar sesión"
+                    android:textAllCaps="false"
+                    android:textColor="@color/ig_red"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Tus listas sincronizadas están protegidas por tu cuenta. IG Cleaner no inicia sesión en Instagram ni automatiza acciones."
+            android:textColor="@color/ig_muted"
+            android:textSize="12sp"/>
     </LinearLayout>
 </ScrollView>
