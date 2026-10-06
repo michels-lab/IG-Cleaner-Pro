@@ -786,3 +786,39 @@ The next chat should continue from this section instead of reconstructing the An
   - not following back: 751
 - This confirms the earlier Android value 751 belongs to the “not following back” Review queue, while Pending requests is a different list with 194 entries in the latest snapshot.
 - Android v120.32 reads the actual payload arrays, so each profile is available to native list rendering rather than only displaying aggregate table counts.
+
+
+## 2026-10-06 — Android/Desktop v120.33: clipped-nav + historical-review sync hotfix
+
+### User validation findings
+- Samsung on-device screenshot showed the bottom navigation content/selection background clipped at the lower edge.
+- Android successfully received Following/Followers/Pending payloads but still showed profiles as Review-pending when those profiles had already been reviewed in the older Desktop/web state.
+- The blue/cyan IG launcher icon was explicitly promoted to the permanent official product logo.
+
+### Bottom navigation
+- Root now consumes only the status-bar inset.
+- BottomNavigationView owns the navigation-bar inset and dynamically grows from an 80dp visual base.
+- Added safe top/bottom padding inside the navigation surface.
+- Designed to cover Samsung 3-button navigation and gesture navigation without double-insetting.
+
+### Review-state synchronization
+- Added `normalizeLegacyReviewState()` on Desktop.
+- Historical `doneSet` rows that lack a `reviewedAt` timestamp now receive a one-time persisted review record based on current relationship context and available profile history.
+- Review/protected/snooze and Pending review/snooze persistence now queues a 650ms debounced cloud state push.
+- `pushWorkspaceState()` publishes the complete current Desktop snapshot plus profile history.
+- Desktop now persists remote Android reviews back into local reviewed/protected metadata after pull.
+- Android records the `workspace_state.updated_at` snapshot timestamp and ignores older/equal `profile_state` projections, preventing stale review rows from reappearing after a newer full Desktop snapshot.
+- Only profile_state rows newer than the Desktop snapshot overlay it.
+
+### Official brand
+- Official name: **Instagram Cleaner Pro**.
+- Official mark: blue/cyan **IG** rounded-square monogram with cyan/gold/violet lower accent.
+- Android launcher and header, Desktop rail, favicon and About now use the same identity.
+- Canonical asset: `branding/ig-cleaner-pro-mark.svg`.
+- Brand rules documented in `docs/BRAND.md`.
+
+### Release/validation
+- Version bumped to v120.33.
+- Release workflow now triggers for Desktop/branding changes as well as Android changes.
+- CI validates inline Desktop JavaScript syntax before assembling the APK.
+- Release includes APK, versioned Desktop HTML, canonical Desktop HTML and official SVG logo.
