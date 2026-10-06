@@ -12877,7 +12877,79 @@ async function pullListSnapshots(){
 }
 
 async function pushPreparedBatches(){let p={};try{p=JSON.parse(localStorage.getItem(BATCH_LS)||'{}')||{}}catch{}const batches=[];const items=[];for(const [k,b] of Object.entries(p)){if(!b?.usernames?.length)continue;if(!b.syncId){b.syncId=`focus_${b.createdAt}_${b.kind}_${b.n}_${hash(b.usernames.join('|'))}`;p[k]=b}batches.push({id:b.syncId,module:b.kind,label:b.label||`${b.kind} Foco ${b.n}`,target_size:Number(b.n||b.usernames.length),status:'prepared',created_device:currentDevice().type,created_at:iso(b.createdAt),source_signature:b.signature||'',updated_at:new Date().toISOString()});b.usernames.forEach((u,i)=>{const c=rowContext(u,b.kind);items.push({batch_id:b.syncId,position:i+1,username:u,status:'pending',context:{...c,preparedAt:b.createdAt}})})}try{localStorage.setItem(BATCH_LS,JSON.stringify(p))}catch{}if(batches.length){await rest('focus_batches?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(batches)});for(let i=0;i<items.length;i+=500)await rest('focus_batch_items?on_conflict=user_id,batch_id,username',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(items.slice(i,i+500))})}S.stats.batchesUp=batches.length;return batches.length}
-function localStateRows(){const out=[];const latest=new Map();for(const e of (window.igcAuditGetEvents?.()||[])){if(e.action!=='reviewed'||!e.username)continue;const key=`${e.username}|${e.module||'main'}`;if(!latest.has(key)||latest.get(key).ts<e.ts)latest.set(key,e)}for(const e of latest.values()){let module=e.module==='review'||e.module==='list'?'main':e.module;if(module==='followersMutual')module='mutual';if(module==='followersFans')module='followers';if(module==='pendingRequests')module='pending';const c=rowContext(e.username,module);out.push({username:e.username,module,reviewed_at:iso(e.ts),reviewed_device:e.deviceType||currentDevice().type,reviewed_device_id:e.deviceId||currentDevice().id,decision:e.decision||'',protected:false,context:c,updated_at:iso(e.ts)})}return out}
+function localStateRows(){
+  const byKey=new Map();
+  const put=(row)=>{
+    if(!row?.username||!row?.module||!row?.reviewed_at)return;
+    const key=`${row.username}|${row.module}`,at=ms(row.reviewed_at);
+    const prev=byKey.get(key);
+    if(!prev||at>=ms(prev.reviewed_at))byKey.set(key,row);
+  };
+
+  // v120.31: publish the actual persisted review state too, not only audit events.
+  // Older IG Cleaner builds already have reviewedMeta/doneSet/pendingReviewedMeta but no audit events.
+  for(const [rawUser,m] of Object.entries(reviewedMeta||{})){
+    const username=String(rawUser||'').toLowerCase();
+    const at=Number(m?.reviewedAt||0);
+    if(!username||!at||!doneSet?.has?.(username))continue;
+    const mode=m?.mode==='followers'?'followers':'main';
+    const c=rowContext(username,mode);
+    put({
+      username,
+      module:mode,
+      reviewed_at:iso(at),
+      reviewed_device:String(m?.reviewSource||'').startsWith('sync:')?String(m.reviewSource).slice(5):'desktop',
+      reviewed_device_id:currentDevice().id,
+      decision:m?.reviewReason||'',
+      protected:!!protectedSet?.has?.(username),
+      context:{...c,legacyState:true,meta:{
+        mode:m?.mode||'',
+        relation:m?.relation||'',
+        relationGood:!!m?.relationGood,
+        followsBack:!!m?.followsBack,
+        isFollower:!!m?.isFollower,
+        iFollow:!!m?.iFollow,
+        dateMain:Number(m?.dateMain||0)
+      }},
+      updated_at:iso(at)
+    });
+  }
+
+  for(const [rawUser,m] of Object.entries(pendingReviewedMeta||{})){
+    const username=String(rawUser||'').toLowerCase();
+    const at=Number(m?.reviewedAt||0);
+    if(!username||!at)continue;
+    const c=rowContext(username,'pending');
+    put({
+      username,
+      module:'pending',
+      reviewed_at:iso(at),
+      reviewed_device:'desktop',
+      reviewed_device_id:currentDevice().id,
+      decision:m?.decision||m?.reviewReason||'',
+      protected:false,
+      context:{...c,legacyState:true},
+      updated_at:iso(at)
+    });
+  }
+
+  // New audit events still win when they are newer.
+  const latest=new Map();
+  for(const e of (window.igcAuditGetEvents?.()||[])){
+    if(e.action!=='reviewed'||!e.username)continue;
+    const key=`${e.username}|${e.module||'main'}`;
+    if(!latest.has(key)||latest.get(key).ts<e.ts)latest.set(key,e);
+  }
+  for(const e of latest.values()){
+    let module=e.module==='review'||e.module==='list'?'main':e.module;
+    if(module==='followersMutual')module='followers';
+    if(module==='followersFans')module='followers';
+    if(module==='pendingRequests')module='pending';
+    const c=rowContext(e.username,module);
+    put({username:e.username,module,reviewed_at:iso(e.ts),reviewed_device:e.deviceType||currentDevice().type,reviewed_device_id:e.deviceId||currentDevice().id,decision:e.decision||'',protected:!!protectedSet?.has?.(e.username),context:c,updated_at:iso(e.ts)});
+  }
+  return [...byKey.values()];
+}
 async function pushProfileState(){const rows=localStateRows();if(!rows.length)return 0;for(let i=0;i<rows.length;i+=500)await rest('profile_state?on_conflict=user_id,username,module',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows.slice(i,i+500))});return rows.length}
 function applyOneState(r){const u=String(r.username||'').toLowerCase(),at=ms(r.reviewed_at),device=r.reviewed_device||'remote',decision=r.decision||'';if(!u||!at)return false;if(r.module==='pending'){const cur=Number(pendingReviewedMeta?.[u]?.reviewedAt||0);if(at<=cur)return false;pendingReviewedMeta[u]={...(pendingReviewedMeta[u]||{}),reviewedAt:at,decision,label:`Sync · ${device}`};pendingOpenedSet?.add?.(u);return true}const ctx=r.context?.row||r.context?.context?.row||{};const mode=(r.module==='followers'||r.module==='mutual')?'followers':'following';const cur=Number(reviewedMeta?.[u]?.reviewedAt||0);if(at<=cur)return false;doneSet.add(u);reviewedMeta[u]={mode,relation:ctx.relation||'',relationGood:!!ctx.relationGood,followsBack:!!ctx.followsBack,isFollower:!!ctx.isFollower,iFollow:mode==='following'?true:!!ctx.iFollow,dateMain:Number(ctx.dateMain||0),reviewedAt:at,reviewReason:decision,reviewSource:`sync:${device}`};return true}
 async function pullProfileState(){const rows=await rest('profile_state?select=*&order=reviewed_at.desc&limit=20000',{method:'GET'});let changed=0;for(const r of rows||[])if(applyOneState(r))changed++;if(changed){try{saveReviewedMeta?.()}catch{}try{savePendingReviewedMeta?.();savePendingOpened?.()}catch{}try{buildRows?.();applyFilters?.();renderAll?.();renderPendingRequests?.();renderFollowersMutualTab?.();renderFollowersAllWorkspace?.()}catch{}}S.stats.statesDown=(rows||[]).length;return {rows:(rows||[]).length,changed}}
