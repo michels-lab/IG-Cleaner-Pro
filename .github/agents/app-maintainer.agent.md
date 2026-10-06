@@ -16,5 +16,8 @@ Prefer coherent fixes over per-profile manual notes, duplicate state or UI patch
 
 Do not change versions or publish releases unless explicitly authorized.
 
-Fundamental identity requirement: any visual/About work must follow `AGENTS.md`: the stacked-layers + sparkle geometry is the product-wide design foundation; About uses product → author → Michel's Lab → social hierarchy; every social profile visibly shows icon + network name. Do not implement sticker branding or regress this contract.
+Fundamental identity requirement: any visual/About work must follow `AGENTS.md`: the official rounded-square IG monogram geometry is the product-wide design foundation; About uses product → author → Michel's Lab → social hierarchy; every social profile visibly shows icon + network name. Do not implement sticker branding or regress this contract.
 
+
+
+Before changing version-bearing files, read `release/distribution-manifest.json`. App-maintainer work must not choose or publish a release version independently.
