@@ -15,6 +15,21 @@ Shared Michel's Lab rules live in `realmichelduarte/Michel-Software-Standards`.
 - Preserve the accepted Michel's Lab/IG Cleaner visual family unless redesign is explicitly in scope.
 - Never commit Supabase privileged keys, database passwords, SMTP credentials, OTP secrets or user export data.
 
+## About identity — mandatory
+
+About is a primary IG Cleaner Pro brand surface, not a plain metadata/settings page.
+
+It MUST intentionally combine:
+- the approved product mark/lockup with prominent visual presence;
+- the current canonical Michel Duarte portrait;
+- Michel's Lab / developer identity;
+- social links using **both the recognizable network icon and the visible network name**.
+
+For social links, render icon + label together (for example Instagram icon + `Instagram`, GitHub icon + `GitHub`). Do not use text-only rows as the finished design, and do not use icon-only controls without a visible/accessibility label.
+
+Use the canonical URLs from the master `brand/developer-profile.json`. Treat the portrait, logo, social controls and metadata as one coherent branded composition derived from the product's visual language.
+
+
 ## Validation
 
 Inspect current CI/workflows and run the strongest relevant current-commit checks. Desktop/local-Web changes must validate import/state migration and the affected interaction flow. Android changes must build the real app path and keep device-only parity/sync/export behavior explicitly open until actually tested.
