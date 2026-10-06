@@ -57,7 +57,7 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Publish v120.32 prerelease
-        if: github.ref_name == 'android-native-workspace-v120.32'
+        if: github.ref_name == 'android-pro-ui-v120.32'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
