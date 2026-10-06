@@ -8,8 +8,8 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12029
-        versionName = "120.29"
+        versionCode = 12034
+        versionName = "120.34"
     }
 
     buildTypes {
