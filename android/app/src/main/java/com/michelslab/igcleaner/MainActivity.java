@@ -81,7 +81,7 @@ public final class MainActivity extends AppCompatActivity {
     private TextView globalStatus;
 
     private WebView workspaceWebView;
-    private ProgressBar workspaceLoading;
+    private View workspaceLoadingBrand;
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 12029;
 
@@ -222,7 +222,7 @@ public final class MainActivity extends AppCompatActivity {
         content.addView(view);
 
         workspaceWebView = view.findViewById(R.id.workspaceWebView);
-        workspaceLoading = view.findViewById(R.id.workspaceLoading);
+        workspaceLoadingBrand = view.findViewById(R.id.workspaceLoadingBrand);
 
         WebSettings settings = workspaceWebView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -275,7 +275,7 @@ public final class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                workspaceLoading.setVisibility(View.GONE);
+                workspaceLoadingBrand.setVisibility(View.GONE);
                 bootstrapWorkspace();
             }
         });
@@ -959,6 +959,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showAbout() {
         new MaterialAlertDialogBuilder(this)
+                .setIcon(R.drawable.ig_official_mark)
                 .setTitle(getString(R.string.about_title))
                 .setMessage(getString(R.string.about_body))
                 .setPositiveButton("Cerrar", null)

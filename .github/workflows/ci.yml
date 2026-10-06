@@ -11,6 +11,7 @@ on:
       - 'release/**'
     paths:
       - 'desktop/**'
+      - 'branding/**'
       - 'android/**'
       - 'tests/**'
       - 'release/**'
@@ -19,6 +20,7 @@ on:
   pull_request:
     paths:
       - 'desktop/**'
+      - 'branding/**'
       - 'android/**'
       - 'tests/**'
       - 'release/**'
@@ -44,6 +46,8 @@ jobs:
         run: node tests/desktop-contract.test.cjs
       - name: Validate sanitized Instagram import fixture
         run: python tests/fixture-contract.py
+      - name: Validate official product branding
+        run: python tests/branding-contract.py
       - name: Validate distribution manifest
         run: |
           python - <<'PY'

@@ -742,3 +742,40 @@ Validated:
 
 No release publication was authorized or performed.
 
+## 2026-10-06 — Official IG Cleaner Pro product identity adoption
+
+Implemented the Michel's Lab canonical **Option 3 — stacked layers + sparkle** identity from `realmichelduarte/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro`.
+
+Adopted surfaces:
+- vendored canonical app-icon, mark and lockup SVGs under `branding/ig-cleaner-pro/`;
+- Desktop/local-Web favicon/shortcut identity using the official app icon;
+- Desktop startup splash using the official app icon;
+- Desktop rail/in-app branding using the official transparent mark;
+- Desktop About using the official lockup;
+- Android adaptive launcher using the official mark over the canonical dark-blue background;
+- Android startup/window splash;
+- Android toolbar mark;
+- Android Workspace loading surface;
+- Android About dialog mark;
+- Android product display name aligned to **IG Cleaner Pro**.
+
+The Desktop artifact remains self-contained: runtime surfaces embed the canonical SVGs as local data URIs and do not hotlink the standards repository.
+
+Added `tests/branding-contract.py` and wired it into unified CI to guard canonical asset presence, launcher/splash/About references and removal of the obsolete IG/check-style active branding.
+
+**Validation status:** implementation complete; PR Desktop + Android CI must pass before Issue #6 is closed.
+
+### Branding validation complete
+
+Pull-request CI run `37512776514` completed **SUCCESS** on functional/test commit `da3021660ea83614c50f7adf7584b3f12b1fba48`.
+
+Validated:
+- Desktop local-app regression contract;
+- official branding contract for vendored canonical SVGs and active Desktop/Android references;
+- Desktop inline JavaScript syntax after splash integration;
+- sanitized Instagram fixture contract;
+- Android debug build with the official adaptive launcher/startup resources;
+- exactly one embedded Workspace asset.
+
+The only later branch change is this documentation entry. No sync/auth/review data model change and no release publication occurred.
+

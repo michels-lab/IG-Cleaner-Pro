@@ -7,7 +7,7 @@
         <item name="colorSurface">@color/ig_surface</item>
         <item name="colorOnSurface">@color/ig_text</item>
         <item name="android:colorAccent">@color/ig_cyan</item>
-        <item name="android:windowBackground">@color/ig_bg</item>
+        <item name="android:windowBackground">@drawable/ig_brand_splash</item>
         <item name="android:statusBarColor">@color/ig_bg</item>
         <item name="android:navigationBarColor">@color/ig_bg</item>
         <item name="android:fontFamily">sans</item>

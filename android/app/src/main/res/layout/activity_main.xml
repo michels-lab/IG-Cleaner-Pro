@@ -13,10 +13,11 @@
         android:layout_height="wrap_content"
         android:minHeight="?attr/actionBarSize"
         android:paddingHorizontal="8dp"
-        app:title="IG Cleaner"
-        app:subtitle="SYNCED COMPANION"
+        app:title="IG Cleaner Pro"
+        app:subtitle="MICHEL’S LAB"
         app:titleTextColor="@color/ig_text"
         app:subtitleTextColor="@color/ig_muted"
+        app:logo="@drawable/ig_official_mark"
         app:menu="@menu/top_app_bar"/>
 
     <TextView
