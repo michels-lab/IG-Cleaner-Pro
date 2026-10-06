@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">Instagram Cleaner Pro</title>
+  <desc id="desc">Official IG monogram for Instagram Cleaner Pro.</desc>
+  <defs>
+    <linearGradient id="g" x1="14" y1="14" x2="94" y2="94" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F6FD3"/>
+      <stop offset="1" stop-color="#5ECFFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="14" width="80" height="80" rx="20" fill="url(#g)"/>
+  <text x="54" y="66" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="35" font-weight="800" fill="#F3F7FC">IG</text>
+  <rect x="29" y="78" width="23" height="3" rx="1.5" fill="#71D7FF"/>
+  <rect x="52" y="78" width="14" height="3" rx="1.5" fill="#EFBD62"/>
+  <rect x="66" y="78" width="13" height="3" rx="1.5" fill="#AA8CFF"/>
+</svg>
