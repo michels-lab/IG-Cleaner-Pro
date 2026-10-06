@@ -56,37 +56,37 @@ jobs:
           name: ig-cleaner-companion-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish v120.31 prerelease
-        if: github.ref_name == 'android-native-workspace-v120.31'
+      - name: Publish v120.32 prerelease
+        if: github.ref_name == 'android-native-workspace-v120.32'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-          RELEASE_APK="IG-Cleaner-v120.31-beta.apk"
-          RELEASE_DESKTOP="IG-Cleaner-v120.31-Desktop.html"
+          RELEASE_APK="IG-Cleaner-v120.32-beta.apk"
+          RELEASE_DESKTOP="IG-Cleaner-v120.32-Desktop.html"
           cp "$APK" "$RELEASE_APK"
           cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$RELEASE_DESKTOP"
 
           cat > release-notes.md <<'EOF'
-          Android v120.31 beta
+          Android v120.32 beta
 
-          - Native-first Android Workspace: Home, Review, Mutuals, Followers and Pending.
-          - Native mobile profile lists with search, compact cards and direct Instagram opening.
-          - Native dark Account screen; the Desktop WebView is no longer the primary Android UI.
-          - Full Following, Followers, Pending and historical review/protected/snoozed state sync.
-          - Review count now follows the same resolved-state rules as Desktop instead of treating every non-mutual as pending.
-          - Advanced Desktop tools remain available behind Tools when needed.
+          - Desktop-derived visual system: exact core palette, IG brand mark, typography hierarchy and compact mobile surfaces.
+          - Native Home and Review navigation with cached restoration, pull-to-refresh, search and direct Instagram opening.
+          - Password-first Profile sign-in; OTP is reserved for first-time setup and password recovery.
+          - Following, Followers, Pending, review/protected/snoozed state and profile_state are merged for consistent counts across devices.
+          - Friendly session/network states replace raw HTTP/token errors and cached data stays visible during refresh.
+          - Advanced Desktop tools remain available from the overflow menu instead of dominating the mobile UI.
 
           Validation: GitHub Actions build + embedded advanced Workspace verification passed.
           EOF
 
-          if gh release view v120.31 >/dev/null 2>&1; then
-            gh release edit v120.31 --title "IG Cleaner v120.31 Beta" --notes-file release-notes.md --prerelease
-            gh release upload v120.31 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
+          if gh release view v120.32 >/dev/null 2>&1; then
+            gh release edit v120.32 --title "IG Cleaner v120.32 Beta" --notes-file release-notes.md --prerelease
+            gh release upload v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
           else
-            gh release create v120.31 "$RELEASE_APK" "$RELEASE_DESKTOP" \
+            gh release create v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" \
               --target "$GITHUB_SHA" \
-              --title "IG Cleaner v120.31 Beta" \
+              --title "IG Cleaner v120.32 Beta" \
               --notes-file release-notes.md \
               --prerelease
           fi
