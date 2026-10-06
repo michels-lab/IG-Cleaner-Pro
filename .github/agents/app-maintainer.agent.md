@@ -15,3 +15,6 @@ For Supabase work, preserve the local raw-export boundary, use public client cre
 Prefer coherent fixes over per-profile manual notes, duplicate state or UI patches. Run the strongest relevant current-commit checks and update `PROJECT_LOG.md`.
 
 Do not change versions or publish releases unless explicitly authorized.
+
+Fundamental identity requirement: any visual/About work must follow `AGENTS.md`: the stacked-layers + sparkle geometry is the product-wide design foundation; About uses product → author → Michel's Lab → social hierarchy; every social profile visibly shows icon + network name. Do not implement sticker branding or regress this contract.
+
