@@ -754,6 +754,7 @@ The next chat should continue from this section instead of reconstructing the An
 
 ### Authentication
 - Primary Android sign-in is email + password.
+- Already-connected accounts can create or change their password directly from Profile without signing out or requesting a new OTP.
 - OTP is secondary and used for first-time setup or password recovery.
 - OTP verification can establish the authenticated session and immediately save a new password.
 - Password input is preserved exactly and is not trimmed.
