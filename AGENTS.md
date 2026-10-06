@@ -22,7 +22,7 @@ This is a **core IG Cleaner Pro product contract**, not optional branding polish
 
 ### Product-wide visual system
 
-The approved stacked-layers + sparkle logo geometry is the foundation of the app's visual system. Preserve the defining silhouette, proportions and spatial relationships. Color, monochrome/inverted treatment, glow, glass, outline, translucency, material and motion may adapt to theme/context.
+The approved rounded-square **IG monogram** is the foundation of the app's visual system. Preserve the defining `IG` geometry, rounded-square silhouette, blue→cyan depth and restrained cyan/gold/violet lower accent relationships. Color, monochrome/inverted treatment, glow, glass, outline, translucency, material and motion may adapt to theme/context.
 
 Do not satisfy branding by pasting the source SVG into unrelated screens. Translate the mark's visual DNA into cards, batches, focus/review hierarchy, selected/completed states, audit/review emphasis, separators, highlights and motion where appropriate. Cleanup workflow clarity, local-first privacy and state semantics remain hard constraints.
 
@@ -52,6 +52,18 @@ Supabase changes require RLS/data-boundary reasoning and, when possible, real-pr
 Update `PROJECT_LOG.md` with meaningful fixes, regressions, decisions and validation. Infrastructure changes also update `docs/INFRASTRUCTURE_AUDIT.md` when relevant.
 
 Do not bump versions or publish releases unless explicitly assigned.
+
+## Release/version authority — mandatory
+
+- Read `release/distribution-manifest.json` before changing versions or release workflows.
+- The manifest's `releasePolicy.nextRelease` is the authoritative next publication target.
+- Never infer a release number from a branch name, historical tag, prerelease, stale handoff, Android versionCode, or retired workflow filename.
+- Before release work, query GitHub Releases and reconcile them with the manifest and all version-bearing files.
+- Generic validation/build workflows MUST NOT publish releases.
+- Historical version-specific publishers must remain disabled.
+- A normal/stable release must publish with GitHub `prerelease=false`; never silently substitute a prerelease.
+- Do not publish an Android stable artifact whose installed package/version identity still says beta or whose signing continuity is not established.
+- Current prepared target: **v120.34**. It is not published until the user explicitly authorizes publication.
 
 
 ## Intelligent brand adoption
