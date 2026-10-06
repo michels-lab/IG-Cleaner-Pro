@@ -11,6 +11,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Environment;
 import android.text.format.DateFormat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -184,7 +186,7 @@ public final class MainActivity extends AppCompatActivity {
                 return true;
             }
             if (item.getItemId() == R.id.navAccount) {
-                showWorkspaceAccountScreen();
+                showNativeAccountScreen();
                 return true;
             }
             return false;
@@ -220,8 +222,8 @@ public final class MainActivity extends AppCompatActivity {
         disposeWorkspaceWebView();
         currentScreen = "workspace";
         currentBatch = null;
-        toolbar.setSubtitle("WORKSPACE");
-        workspaceSection = "review";
+        toolbar.setSubtitle("Workspace");
+        workspaceSection = "home";
 
         mobileWorkspaceView = LayoutInflater.from(this).inflate(R.layout.screen_mobile_workspace, content, false);
         content.removeAllViews();
@@ -241,14 +243,24 @@ public final class MainActivity extends AppCompatActivity {
         workspaceProfileList.setAdapter(workspaceAdapter);
 
         MaterialButtonToggleGroup tabs = mobileWorkspaceView.findViewById(R.id.workspaceTabs);
-        tabs.check(R.id.tabReview);
+        tabs.check(R.id.tabHome);
         tabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
-            if (checkedId == R.id.tabReview) workspaceSection = "review";
+            if (checkedId == R.id.tabHome) workspaceSection = "home";
+            else if (checkedId == R.id.tabReview) workspaceSection = "review";
             else if (checkedId == R.id.tabMutuals) workspaceSection = "mutuals";
             else if (checkedId == R.id.tabFollowers) workspaceSection = "followers";
             else if (checkedId == R.id.tabPending) workspaceSection = "pending";
             renderMobileWorkspace();
+        });
+
+        TextInputEditText search = mobileWorkspaceView.findViewById(R.id.workspaceSearch);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence value, int start, int before, int count) {
+                if (workspaceAdapter != null) workspaceAdapter.filter(value == null ? "" : value.toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         mobileWorkspaceView.findViewById(R.id.openAdvancedWorkspace).setOnClickListener(v ->
@@ -317,7 +329,26 @@ public final class MainActivity extends AppCompatActivity {
         int total;
         int main;
 
-        if ("review".equals(workspaceSection)) {
+        if ("home".equals(workspaceSection)) {
+            int mutuals = countMutuals(followingMapNative, followersMapNative);
+            int rawNotBack = Math.max(0, followingMapNative.size() - mutuals);
+            int unresolved = 0;
+            for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
+                String username = entry.getKey();
+                if (followersMapNative.containsKey(username)) continue;
+                if (!isNativeFollowingResolved(username, entry.getValue(), done, protectedUsers, snooze, reviewedMeta)) {
+                    unresolved++;
+                    if (rows.size() < 30) rows.add(new WorkspaceProfileAdapter.Row(
+                            username, nativeDateDetail(entry.getValue(), "Necesita revisión"), "REVIEW"));
+                }
+            }
+            main = unresolved;
+            total = syncedPending.length();
+            workspaceSectionTitle.setText("Needs attention");
+            workspaceSectionSubtitle.setText("Los perfiles que vale la pena revisar primero.");
+            kpiMainLabel.setText("Review pendiente");
+            kpiSecondaryLabel.setText("Pending requests");
+        } else if ("review".equals(workspaceSection)) {
             int rawNotBack = 0;
             int unresolved = 0;
             for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
@@ -466,7 +497,62 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showWorkspaceAccountScreen() {
-        showWorkspaceScreen("sync", "CUENTA Y SYNC");
+        showNativeAccountScreen();
+    }
+
+    private void showNativeAccountScreen() {
+        disposeWorkspaceWebView();
+        currentScreen = "account_native";
+        toolbar.setSubtitle("Cuenta");
+
+        View view = LayoutInflater.from(this).inflate(R.layout.screen_account, content, false);
+        content.removeAllViews();
+        content.addView(view);
+
+        LinearLayout authGroup = view.findViewById(R.id.authGroup);
+        MaterialCardView connectedCard = view.findViewById(R.id.connectedCard);
+        TextInputEditText emailInput = view.findViewById(R.id.emailInput);
+        TextInputEditText codeInput = view.findViewById(R.id.codeInput);
+        MaterialButton sendCode = view.findViewById(R.id.sendCode);
+        MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
+        MaterialButton sync = view.findViewById(R.id.syncNow);
+        MaterialButton logout = view.findViewById(R.id.logout);
+        TextView accountEmail = view.findViewById(R.id.accountEmail);
+        TextView label = view.findViewById(R.id.deviceLabel);
+
+        emailInput.setText(api.getEmail());
+        boolean connected = api.hasSession();
+        authGroup.setVisibility(connected ? View.GONE : View.VISIBLE);
+        connectedCard.setVisibility(connected ? View.VISIBLE : View.GONE);
+        accountEmail.setText(api.getEmail());
+        label.setText(deviceLabel() + " · sesión compartida");
+
+        sendCode.setOnClickListener(v -> runAsync(() -> {
+            api.sendOtp(textOf(emailInput));
+            mainHandler.post(() -> Snackbar.make(content, "Código enviado al correo", Snackbar.LENGTH_LONG).show());
+        }, true));
+
+        verifyCode.setOnClickListener(v -> runAsync(() -> {
+            api.setEmail(textOf(emailInput));
+            api.verifyOtp(textOf(codeInput));
+            mainHandler.post(this::showNativeAccountScreen);
+        }, true));
+
+        sync.setOnClickListener(v -> {
+            setGlobalStatus("Sincronizando…");
+            runAsync(() -> {
+                touchDevice();
+                mainHandler.post(() -> {
+                    setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
+                    Snackbar.make(content, "Cuenta y dispositivo sincronizados", Snackbar.LENGTH_SHORT).show();
+                });
+            }, true);
+        });
+
+        logout.setOnClickListener(v -> {
+            api.logout();
+            showNativeAccountScreen();
+        });
     }
 
     private void showWorkspaceScreen(String targetPage, String subtitle) {
