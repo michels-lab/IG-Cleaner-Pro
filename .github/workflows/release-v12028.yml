@@ -1,10 +1,6 @@
 name: Publish IG Cleaner Android v120.28
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - ".github/workflows/release-v12028.yml"
   workflow_dispatch:
 
 permissions:
