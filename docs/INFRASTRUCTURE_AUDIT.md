@@ -58,3 +58,18 @@ Not allowed in shipped clients or Git:
 - refresh/access tokens;
 - signing passwords/private signing keys;
 - private GitHub credentials.
+
+## 2026-10-06 — CI / update / migration hardening
+
+Implemented the missing deterministic repository gates:
+- unified Desktop + Android CI;
+- sanitized ZIP fixture validation;
+- Desktop syntax/workflow/state compatibility contract;
+- distribution manifest with browser-state schema 1;
+- explicit migration/rollback rules;
+- explicit-release publication policy.
+
+Persistent browser state is now formally treated as a compatibility surface. Existing localStorage keys and IndexedDB `ig_cleaner_pro_history` version 1 may not be renamed/reset without an explicit migration and regression evidence.
+
+Version-specific release workflows were separated from ordinary `main` validation so CI success cannot silently publish a release. Android production/Play remains blocked on real-device validation.
+
