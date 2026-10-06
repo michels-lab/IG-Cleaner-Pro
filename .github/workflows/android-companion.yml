@@ -108,8 +108,10 @@ jobs:
           - Fixes clipped bottom navigation on Samsung gesture and 3-button navigation by handling navigation-bar insets on the nav itself.
           - Desktop now migrates legacy reviewed profiles that had no intelligent review timestamp and publishes them to Supabase.
           - Review/protect/snooze decisions now queue an immediate state sync instead of waiting only for the periodic sync.
+          - Android no longer labels every raw not-following-back match as Review pending before Desktop review history has arrived.
           - Android treats the latest full Desktop workspace snapshot as authoritative and only overlays newer profile_state reviews.
           - Remote Android reviews are persisted back into Desktop local state after sync.
+          - Email + password is now the primary login on both Android and Desktop; OTP is for first-time setup/recovery.
           - The blue/cyan IG monogram is now the official product logo across Android, Desktop, favicon, About and release assets.
           - Desktop JavaScript syntax is validated in CI before the Android build.
 
