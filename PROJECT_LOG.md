@@ -690,3 +690,12 @@ The next chat should continue from this section instead of reconstructing the An
   - `assets/ig_cleaner_pro_v120_27_synced_companion.html` — 1,670,732 bytes.
 - Obsolete duplicate `assets/ig_cleaner_workspace.html` is no longer packaged.
 - Current release gate: device validation remains required before merging to `main` and publishing v120.29 pre-release.
+
+## 2026-10-06 — GitHub Copilot agent delegation
+
+Added repository-level Copilot instructions and custom App Maintainer, QA Regression and Release Manager agents. The contracts preserve the canonical Desktop engine/workflows, Android parity requirements, local raw-export privacy boundary, Supabase workflow-metadata/RLS model, Focus/opened/reviewed semantics and device provenance.
+
+Purpose: delegate bounded implementation, regression checks and release preparation to repository agents so cross-project ChatGPT work can focus on product decisions and coordination.
+
+No product behavior, schema, version or release artifact changed in this infrastructure-only update.
+
