@@ -56,19 +56,19 @@ jobs:
           name: ig-cleaner-companion-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish v120.30 prerelease
-        if: github.ref_name == 'android-full-sync-v120.30'
+      - name: Publish v120.31 prerelease
+        if: github.ref_name == 'android-native-workspace-v120.31'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
-          RELEASE_APK="IG-Cleaner-v120.30-beta.apk"
-          RELEASE_DESKTOP="IG-Cleaner-v120.30-Desktop.html"
+          RELEASE_APK="IG-Cleaner-v120.31-beta.apk"
+          RELEASE_DESKTOP="IG-Cleaner-v120.31-Desktop.html"
           cp "$APK" "$RELEASE_APK"
           cp "../desktop/ig_cleaner_pro_v120_27_synced_companion.html" "$RELEASE_DESKTOP"
 
           cat > release-notes.md <<'EOF'
-          Android v120.30 beta
+          Android v120.31 beta
 
           - One Cuenta/login experience on Android.
           - Hardened Supabase session refresh and WebView/native session sharing.
@@ -78,13 +78,13 @@ jobs:
           Validation: GitHub Actions build + embedded Workspace verification passed. Device round-trip validation is still pending.
           EOF
 
-          if gh release view v120.30 >/dev/null 2>&1; then
-            gh release edit v120.30 --title "IG Cleaner v120.30 Beta" --notes-file release-notes.md --prerelease
-            gh release upload v120.30 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
+          if gh release view v120.31 >/dev/null 2>&1; then
+            gh release edit v120.31 --title "IG Cleaner v120.31 Beta" --notes-file release-notes.md --prerelease
+            gh release upload v120.31 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
           else
-            gh release create v120.30 "$RELEASE_APK" "$RELEASE_DESKTOP" \
+            gh release create v120.31 "$RELEASE_APK" "$RELEASE_DESKTOP" \
               --target "$GITHUB_SHA" \
-              --title "IG Cleaner v120.30 Beta" \
+              --title "IG Cleaner v120.31 Beta" \
               --notes-file release-notes.md \
               --prerelease
           fi
