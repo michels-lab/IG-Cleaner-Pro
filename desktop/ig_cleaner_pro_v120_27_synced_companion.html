@@ -12879,7 +12879,52 @@ async function pullListSnapshots(){
 }
 
 async function pushPreparedBatches(){let p={};try{p=JSON.parse(localStorage.getItem(BATCH_LS)||'{}')||{}}catch{}const batches=[];const items=[];for(const [k,b] of Object.entries(p)){if(!b?.usernames?.length)continue;if(!b.syncId){b.syncId=`focus_${b.createdAt}_${b.kind}_${b.n}_${hash(b.usernames.join('|'))}`;p[k]=b}batches.push({id:b.syncId,module:b.kind,label:b.label||`${b.kind} Foco ${b.n}`,target_size:Number(b.n||b.usernames.length),status:'prepared',created_device:currentDevice().type,created_at:iso(b.createdAt),source_signature:b.signature||'',updated_at:new Date().toISOString()});b.usernames.forEach((u,i)=>{const c=rowContext(u,b.kind);items.push({batch_id:b.syncId,position:i+1,username:u,status:'pending',context:{...c,preparedAt:b.createdAt}})})}try{localStorage.setItem(BATCH_LS,JSON.stringify(p))}catch{}if(batches.length){await rest('focus_batches?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(batches)});for(let i=0;i<items.length;i+=500)await rest('focus_batch_items?on_conflict=user_id,batch_id,username',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(items.slice(i,i+500))})}S.stats.batchesUp=batches.length;return batches.length}
+function normalizeLegacyReviewState(){
+  let changed=0;
+  const now=Date.now();
+  for(const raw of [...(doneSet||new Set())]){
+    const username=String(raw||'').toLowerCase();
+    if(!username)continue;
+    const old=(reviewedMeta&&reviewedMeta[username])||{};
+    if(Number(old.reviewedAt||0)>0)continue;
+    let mode=old.mode;
+    if(mode!=='following'&&mode!=='followers'){
+      mode=followingMap?.has?.(username)?'following':(followersMap?.has?.(username)?'followers':'following');
+    }
+    const cx=rowContext(username,mode==='followers'?'followers':'main');
+    const row=cx?.row||{};
+    const reviewedAt=Number(profileHistory?.[username]?.lastReviewed||0)||now;
+    reviewedMeta[username]={
+      ...old,
+      mode,
+      relation:old.relation??row.relation??'',
+      relationGood:old.relationGood??!!row.relationGood,
+      followsBack:old.followsBack??!!row.followsBack,
+      isFollower:old.isFollower??!!row.isFollower,
+      iFollow:old.iFollow??(mode==='following'?true:!!row.iFollow),
+      dateMain:Number(old.dateMain||row.dateMain||0),
+      reviewedAt,
+      reviewReason:old.reviewReason||'',
+      reviewSource:old.reviewSource||'legacy-migrated'
+    };
+    changed++;
+  }
+  for(const [username,meta] of Object.entries(pendingReviewedMeta||{})){
+    if(!meta||Number(meta.reviewedAt||0)>0)continue;
+    if(!meta.decision&&!meta.reviewReason)continue;
+    meta.reviewedAt=Number(profileHistory?.[username]?.lastReviewed||0)||now;
+    meta.label=meta.label||'Migrated review';
+    changed++;
+  }
+  if(changed){
+    localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta||{}));
+    localStorage.setItem(LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta||{}));
+    localStorage.setItem(LS_DONE,JSON.stringify([...(doneSet||new Set())]));
+  }
+  return changed;
+}
 function localStateRows(){
+  normalizeLegacyReviewState();
   const byKey=new Map();
   const put=(row)=>{
     if(!row?.username||!row?.module||!row?.reviewed_at)return;
