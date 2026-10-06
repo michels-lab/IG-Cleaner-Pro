@@ -81,7 +81,7 @@ jobs:
           EOF
 
           if gh release view v120.32 >/dev/null 2>&1; then
-            gh release edit v120.32 --title "IG Cleaner v120.32 Beta" --notes-file release-notes.md --prerelease
+            gh release edit v120.32 --target "$GITHUB_SHA" --title "IG Cleaner v120.32 Beta" --notes-file release-notes.md --prerelease
             gh release upload v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" --clobber
           else
             gh release create v120.32 "$RELEASE_APK" "$RELEASE_DESKTOP" \
