@@ -106,6 +106,7 @@ public final class MainActivity extends AppCompatActivity {
     private TextView kpiSecondary;
     private TextView kpiSecondaryLabel;
     private TextView homeReviewCount;
+    private TextView homeReviewLabel;
     private TextView homeMutualCount;
     private TextView homeFollowerCount;
     private TextView homePendingCount;
@@ -119,6 +120,7 @@ public final class MainActivity extends AppCompatActivity {
     private JSONArray syncedFollowers = new JSONArray();
     private JSONArray syncedPending = new JSONArray();
     private JSONObject syncedWorkspaceState = new JSONObject();
+    private boolean syncedReviewStateAvailable = false;
     private String workspaceSection = "home";
     private static final String CACHE_PREFS = "igc_workspace_cache";
 
@@ -288,6 +290,7 @@ public final class MainActivity extends AppCompatActivity {
         kpiSecondary = mobileWorkspaceView.findViewById(R.id.kpiSecondary);
         kpiSecondaryLabel = mobileWorkspaceView.findViewById(R.id.kpiSecondaryLabel);
         homeReviewCount = mobileWorkspaceView.findViewById(R.id.homeReviewCount);
+        homeReviewLabel = mobileWorkspaceView.findViewById(R.id.homeReviewLabel);
         homeMutualCount = mobileWorkspaceView.findViewById(R.id.homeMutualCount);
         homeFollowerCount = mobileWorkspaceView.findViewById(R.id.homeFollowerCount);
         homePendingCount = mobileWorkspaceView.findViewById(R.id.homePendingCount);
@@ -371,6 +374,7 @@ public final class MainActivity extends AppCompatActivity {
                 JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
 
                 JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
+                syncedReviewStateAvailable = stateRow != null || profileStates.length() > 0;
                 JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
                 if (state == null) state = new JSONObject();
                 long snapshotUpdatedAt = stateRow == null
@@ -500,6 +504,7 @@ public final class MainActivity extends AppCompatActivity {
             syncedFollowers = new JSONArray(followers);
             syncedPending = pending.isBlank() ? new JSONArray() : new JSONArray(pending);
             syncedWorkspaceState = state.isBlank() ? new JSONObject() : new JSONObject(state);
+            syncedReviewStateAvailable = cache.getBoolean("review_state_available_" + suffix, false);
             return true;
         } catch (Exception ignored) {
             return false;
@@ -514,6 +519,7 @@ public final class MainActivity extends AppCompatActivity {
                     .putString("followers_" + suffix, syncedFollowers.toString())
                     .putString("pending_" + suffix, syncedPending.toString())
                     .putString("state_" + suffix, syncedWorkspaceState.toString())
+                    .putBoolean("review_state_available_" + suffix, syncedReviewStateAvailable)
                     .putLong("updated_" + suffix, System.currentTimeMillis())
                     .apply();
         } catch (Exception ignored) {}
@@ -527,6 +533,7 @@ public final class MainActivity extends AppCompatActivity {
                 .remove("followers_" + suffix)
                 .remove("pending_" + suffix)
                 .remove("state_" + suffix)
+                .remove("review_state_available_" + suffix)
                 .remove("updated_" + suffix)
                 .apply();
     }
@@ -581,7 +588,8 @@ public final class MainActivity extends AppCompatActivity {
         workspaceSearchLayout.setVisibility(home ? View.GONE : View.VISIBLE);
         mobileWorkspaceTitle.setText(home ? "Home" : "Review");
 
-        homeReviewCount.setText(String.valueOf(unresolvedReview));
+        homeReviewCount.setText(syncedReviewStateAvailable ? String.valueOf(unresolvedReview) : "—");
+        homeReviewLabel.setText(syncedReviewStateAvailable ? "REVIEW PENDING" : "REVIEW STATE");
         homeMutualCount.setText(String.valueOf(mutuals));
         homeFollowerCount.setText(String.valueOf(followersMapNative.size()));
         homePendingCount.setText(String.valueOf(unresolvedPending));
@@ -599,10 +607,12 @@ public final class MainActivity extends AppCompatActivity {
                             username, nativeDateDetail(entry.getValue(), "Needs review"), "REVIEW"));
                 }
             }
-            workspaceSectionTitle.setText("Continue review");
-            workspaceSectionSubtitle.setText(unresolvedReview == 0
-                    ? "Your main cleanup queue is clear."
-                    : unresolvedReview + " profiles still need a decision. Tap one to open Instagram.");
+            workspaceSectionTitle.setText(syncedReviewStateAvailable ? "Continue review" : "Restore review history");
+            workspaceSectionSubtitle.setText(!syncedReviewStateAvailable
+                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.33 once to restore the real pending count."
+                    : (unresolvedReview == 0
+                        ? "Your main cleanup queue is clear."
+                        : unresolvedReview + " profiles still need a decision. Tap one to open Instagram."));
         } else if ("review".equals(workspaceSection)) {
             int rawNotBack = 0;
             for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
@@ -614,11 +624,13 @@ public final class MainActivity extends AppCompatActivity {
                             username, nativeDateDetail(entry.getValue(), "You follow"), "NOT BACK"));
                 }
             }
-            main = unresolvedReview;
+            main = syncedReviewStateAvailable ? unresolvedReview : rawNotBack;
             total = rawNotBack;
             workspaceSectionTitle.setText("Not following back");
-            workspaceSectionSubtitle.setText("Only unresolved accounts. Reviewed, protected and snoozed profiles stay out of this queue.");
-            kpiMainLabel.setText("PENDING");
+            workspaceSectionSubtitle.setText(syncedReviewStateAvailable
+                    ? "Only unresolved accounts. Reviewed, protected and snoozed profiles stay out of this queue."
+                    : "Review history has not been restored yet. These are raw relationship matches, not confirmed pending reviews.");
+            kpiMainLabel.setText(syncedReviewStateAvailable ? "PENDING" : "RAW MATCHES");
             kpiSecondaryLabel.setText("RAW TOTAL");
         } else if ("mutuals".equals(workspaceSection)) {
             for (Map.Entry<String, JSONObject> entry : followingMapNative.entrySet()) {
