@@ -749,7 +749,7 @@ public final class MainActivity extends AppCompatActivity {
             v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
             setGlobalStatus("SIGNING IN • password");
             runAsync(() -> {
-                api.signInWithPassword(textOf(emailInput), textOf(passwordInput));
+                api.signInWithPassword(textOf(emailInput), rawTextOf(passwordInput));
                 touchDevice();
                 mainHandler.post(() -> {
                     setGlobalStatus("CONNECTED • session restored");
@@ -780,7 +780,7 @@ public final class MainActivity extends AppCompatActivity {
             setGlobalStatus("VERIFYING • securing account");
             runAsync(() -> {
                 api.setEmail(textOf(emailInput));
-                api.verifyOtpAndSetPassword(textOf(codeInput), textOf(newPasswordInput));
+                api.verifyOtpAndSetPassword(textOf(codeInput), rawTextOf(newPasswordInput));
                 touchDevice();
                 mainHandler.post(() -> {
                     setGlobalStatus("CONNECTED • password saved");
@@ -1715,6 +1715,10 @@ public final class MainActivity extends AppCompatActivity {
 
     private String textOf(TextInputEditText input) {
         return input.getText() == null ? "" : input.getText().toString().trim();
+    }
+
+    private String rawTextOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString();
     }
 
     private String encode(String value) {
