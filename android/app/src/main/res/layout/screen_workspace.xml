@@ -10,11 +10,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/workspaceLoading"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+    <LinearLayout
+        android:id="@+id/workspaceLoadingBrand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        app:indicatorColor="@color/ig_cyan"
-        app:trackColor="@color/ig_surface_2"/>
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="112dp"
+            android:layout_height="112dp"
+            android:contentDescription="@string/brand_logo_description"
+            android:src="@drawable/ig_official_mark"/>
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/workspaceLoading"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginTop="14dp"
+            app:indicatorColor="@color/ig_cyan"
+            app:trackColor="@color/ig_surface_2"/>
+    </LinearLayout>
 </FrameLayout>
