@@ -11,7 +11,7 @@ assert len(files) == 13, f"Expected 13 sanitized fixture files, found {len(files
 
 lowered = [str(p.relative_to(fixture)).lower() for p in files]
 assert any("following.json" in n for n in lowered), "Fixture must exercise following import."
-assert sum("followers_" in n and n.endswith(".json") for n in lowered) == 3, "Fixture must contain three followers parts."
+assert sum(p.name.startswith("followers_") and p.suffix.lower() == ".json" for p in files) == 3, "Fixture must contain three followers parts."
 assert any("pending_follow_requests" in n for n in lowered), "Fixture must exercise pending requests."
 
 parsed_json = 0
