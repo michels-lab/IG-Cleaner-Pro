@@ -49,7 +49,6 @@ assert signing["keystorePolicy"] == "private-backup-only-never-commit"
 
 android = manifest["channels"]["android"]
 assert android["artifactTemplate"] == "IG-Cleaner-Pro-Android-v{version}.apk"
-assert android["artifactTemplate"] == "IG-Cleaner-Pro-Android-v{version}.apk"
 assert android["stableArtifactRequiresPersistentSigning"] is True
 assert manifest["releasePolicy"]["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
 assert manifest["releasePolicy"]["genericPublisher"] == ".github/workflows/release.yml"
