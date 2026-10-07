@@ -46,7 +46,7 @@ It refuses to publish unless:
 - the production signer fingerprint matches;
 - the stable APK package/version checks pass.
 
-The old `.github/workflows/release-v12034.yml` remains historical/manual only.
+The old `.github/workflows/release-v12034.yml` is now a harmless retired stub; it cannot publish anything.
 
 ### Automated Supabase RLS isolation
 
@@ -67,6 +67,10 @@ CI job:
 - uses 35 assertions.
 
 A transactional production smoke check also confirmed the live project isolates temporary rows by authenticated JWT subject. Temporary rows were rolled back.
+
+### RLS policy optimization
+
+The seven live policy sets were migrated from row-by-row `auth.uid()` evaluation to explicit `TO authenticated` policies using `(select auth.uid()) = user_id`. This preserves ownership semantics while avoiding repeated auth-function evaluation. Supabase Performance Advisor dropped from **28 Auth RLS Initialization Plan warnings** to **0** after the migration. The only remaining performance notice is an informational unused-index hint for `audit_events_user_device_idx`.
 
 ### Synchronized-data privacy controls
 
