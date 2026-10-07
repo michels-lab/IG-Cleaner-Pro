@@ -13,8 +13,21 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
+      IGC_ANDROID_KEY_ALIAS: ${{ secrets.IGC_ANDROID_KEY_ALIAS }}
+      IGC_ANDROID_KEY_PASSWORD: ${{ secrets.IGC_ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
 
       - name: Verify explicit release authorization
         run: |
@@ -22,21 +35,28 @@ jobs:
           import json, pathlib
           manifest = json.loads(pathlib.Path("release/distribution-manifest.json").read_text())
           request = json.loads(pathlib.Path(".michelslab/release-request.json").read_text())
+          signing = json.loads(pathlib.Path("release/android-signing.json").read_text())
           policy = manifest["releasePolicy"]
 
           assert policy["nextRelease"] == "v120.34"
           assert policy["githubPrerelease"] is False
           assert policy["explicitManualPublishRequired"] is True
+          assert policy["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
           assert request["version"] == "120.34"
           assert request["tag"] == "v120.34"
           assert request["authorized"] is True
           assert request.get("authorization_source")
-          assert request.get("android_stable_artifact") == "withheld-no-production-signing"
+          assert request.get("android_stable_artifact") == "signed-production-keystore"
+
+          assert signing["packageId"] == "com.michelslab.igcleaner"
+          assert signing["versionCode"] == 12034
+          assert signing["versionName"] == "120.34"
 
           gradle = pathlib.Path("android/app/build.gradle.kts").read_text()
           assert 'versionCode = 12034' in gradle
           assert 'versionName = "120.34"' in gradle
           assert 'applicationIdSuffix = ".beta"' in gradle
+          assert "Production Android signing is required" in gradle
 
           html = pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
           assert "Engine v119 · UI v120.34" in html
@@ -54,8 +74,73 @@ jobs:
           python3 tests/branding-contract.py
           python3 tests/privacy-contract.py
           python3 tests/android-contract.py
+          python3 tests/android-signing-contract.py
 
-      - name: Build Desktop release bundle
+      - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore production Android keystore
+        env:
+          IGC_ANDROID_KEYSTORE_B64: ${{ secrets.IGC_ANDROID_KEYSTORE_B64 }}
+        run: |
+          test -n "$IGC_ANDROID_KEYSTORE_B64"
+          test -n "$IGC_ANDROID_KEYSTORE_PASSWORD"
+          test -n "$IGC_ANDROID_KEY_ALIAS"
+          test -n "$IGC_ANDROID_KEY_PASSWORD"
+          IGC_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/ig-cleaner-pro-release.jks"
+          echo "$IGC_ANDROID_KEYSTORE_B64" | base64 --decode > "$IGC_ANDROID_KEYSTORE_PATH"
+          chmod 600 "$IGC_ANDROID_KEYSTORE_PATH"
+          echo "IGC_ANDROID_KEYSTORE_PATH=$IGC_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify production signing identity
+        run: |
+          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"])')"
+          ACTUAL="$(keytool -list -v -keystore "$IGC_ANDROID_KEYSTORE_PATH" -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" -alias "$IGC_ANDROID_KEY_ALIAS" | awk -F'SHA256: ' '/SHA256:/{gsub(/:/,"",$2); print $2; exit}')"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Build signed Android release
+        run: gradle -p android :app:assembleRelease
+
+      - name: Verify signed Android package
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK"
+
+          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+          "$AAPT" dump badging "$APK" | tee /tmp/badging.txt
+
+          grep -q "package: name='com.michelslab.igcleaner'" /tmp/badging.txt
+          grep -q "versionCode='12034'" /tmp/badging.txt
+          grep -q "versionName='120.34'" /tmp/badging.txt
+          if grep -q "com.michelslab.igcleaner.beta" /tmp/badging.txt; then
+            echo "::error::Stable APK still has beta application id."
+            exit 1
+          fi
+
+          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"])')"
+          EXPECTED_LOWER="$(echo "$EXPECTED" | tr '[:upper:]' '[:lower:]')"
+          ACTUAL="$(awk -F': ' '/Signer #1 certificate SHA-256 digest:/{print $2; exit}' /tmp/apksigner.txt | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$EXPECTED_LOWER"
+
+      - name: Build release bundle
         run: |
           rm -rf dist package
           mkdir -p package/assets/michels-lab dist
@@ -64,15 +149,17 @@ jobs:
           cp desktop/assets/michels-lab/official-lockup.png package/assets/michels-lab/official-lockup.png
           cp branding/ig-cleaner-pro/official-app-icon.svg dist/Instagram-Cleaner-Pro-v120.34-logo.svg
           cp docs/PRIVACY.md dist/Instagram-Cleaner-Pro-v120.34-PRIVACY.md
+          cp android/app/build/outputs/apk/release/app-release.apk dist/IG-Cleaner-Pro-Android-v120.34.apk
           (cd package && zip -r ../dist/IG-Cleaner-Pro-Desktop-v120.34.zip .)
-          (cd dist && sha256sum IG-Cleaner-Pro-Desktop-v120.34.zip Instagram-Cleaner-Pro-v120.34-logo.svg Instagram-Cleaner-Pro-v120.34-PRIVACY.md > SHA256SUMS.txt)
+          (cd dist && sha256sum IG-Cleaner-Pro-Desktop-v120.34.zip IG-Cleaner-Pro-Android-v120.34.apk Instagram-Cleaner-Pro-v120.34-logo.svg Instagram-Cleaner-Pro-v120.34-PRIVACY.md > SHA256SUMS.txt)
 
-      - name: Verify Desktop bundle contents
+      - name: Verify release bundle contents
         run: |
           unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip
           unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "IG-Cleaner-Pro.html"
           unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "assets/michel_duarte_avatar.jpg"
           unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "assets/michels-lab/official-lockup.png"
+          test -f dist/IG-Cleaner-Pro-Android-v120.34.apk
 
       - name: Publish normal GitHub release v120.34
         env:
@@ -84,36 +171,43 @@ jobs:
           Normal GitHub release (**not a prerelease**).
 
           Highlights:
-          - Android-side Focus creation logic for Review, Mutuals, Followers-you-don't-follow and Pending, with Focus 20/30/40.
+          - Android-side Focus creation for Review, Mutuals, Followers-you-don't-follow and Pending, with Focus 20/30/40.
           - Restored full Desktop ↔ Android state synchronization, including historical-review normalization, list snapshots and workspace state.
           - Canonical Instagram Cleaner Pro stacked-layers + sparkle identity.
           - Canonical Michel Duarte portrait and finalized Michel's Lab About branding.
           - Local-first privacy surface and documented synchronized-data boundary.
           - Android bottom-navigation inset protection for Samsung gesture/3-button navigation.
-          - Regression contracts covering sync, branding, privacy, Focus autonomy and Android insets.
+          - Regression contracts covering sync, branding, privacy, Focus autonomy, Android insets and production signing.
 
           ## Desktop
           Use **IG-Cleaner-Pro-Desktop-v120.34.zip**. Keep the HTML and its `assets/` folder together.
 
           ## Android
-          A stable v120.34 APK is intentionally **not attached** to this release because the repository does not yet have production signing continuity. The current CI APK uses the `.beta` debug package and is not being mislabeled as stable.
-
-          Validated implementation evidence includes GitHub Actions run **37562844481** (full repository CI: success) plus companion builds from the same v120.34 work line.
+          Use **IG-Cleaner-Pro-Android-v120.34.apk**. This APK uses the stable package **com.michelslab.igcleaner**, version **120.34**, and the persistent IG Cleaner Pro production signing identity recorded in `release/android-signing.json`.
 
           SHA-256 checksums are in **SHA256SUMS.txt**.
           EOF
 
           if gh release view v120.34 >/dev/null 2>&1; then
-            gh release edit v120.34               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+            gh release edit v120.34 \
+              --target "$GITHUB_SHA" \
+              --title "Instagram Cleaner Pro v120.34" \
+              --notes-file release-notes.md \
+              --latest
             gh release upload v120.34 dist/* --clobber
           else
-            gh release create v120.34 dist/*               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+            gh release create v120.34 dist/* \
+              --target "$GITHUB_SHA" \
+              --title "Instagram Cleaner Pro v120.34" \
+              --notes-file release-notes.md \
+              --latest
           fi
 
-      - name: Verify published release channel
+      - name: Verify published release channel and Android asset
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/v120.34 --jq .prerelease)" = "false"
           test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/v120.34 --jq .draft)" = "false"
+          gh release view v120.34 --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Android-v120.34.apk"
           gh release view v120.34 --json tagName,isPrerelease,isDraft,url
