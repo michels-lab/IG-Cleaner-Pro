@@ -1196,7 +1196,7 @@ public final class MainActivity extends AppCompatActivity {
         currentBatch = null;
         clearFocusState();
         focusTitle.setText("Focus");
-        focusSubtitle.setText("Selecciona una tanda preparada en Desktop o continúa una ya iniciada.");
+        focusSubtitle.setText("Crea una tanda aquí o continúa una preparada en cualquier dispositivo.");
         focusProgress.setVisibility(View.GONE);
         focusProgressLabel.setVisibility(View.GONE);
         profileList.setVisibility(View.GONE);
@@ -1204,9 +1204,11 @@ public final class MainActivity extends AppCompatActivity {
         batchScroll.setVisibility(View.VISIBLE);
         batchContainer.removeAllViews();
 
+        batchContainer.addView(createFocusBuilderCard());
+
         if (batches.length() == 0) {
-            addEmptyCard(batchContainer, "No hay Focus preparados",
-                    "En Desktop usa “Ver siguiente Foco 20/30/40” y sincroniza. Esa tanda aparecerá aquí.");
+            addEmptyCard(batchContainer, "No hay tandas activas",
+                    "Puedes crear Foco 20/30/40 directamente en Android. Se guardará en tu cuenta y Desktop podrá verla.");
             return;
         }
 
@@ -1214,6 +1216,323 @@ public final class MainActivity extends AppCompatActivity {
             JSONObject batch = batches.optJSONObject(i);
             if (batch != null) batchContainer.addView(createBatchCard(batch));
         }
+    }
+
+    private View createFocusBuilderCard() {
+        MaterialCardView card = new MaterialCardView(this);
+        card.setCardBackgroundColor(getColor(R.color.ig_surface_2));
+        card.setStrokeColor(getColor(R.color.ig_border_strong));
+        card.setStrokeWidth(dp(1));
+        card.setRadius(dp(20));
+
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setPadding(dp(16), dp(16), dp(16), dp(16));
+
+        TextView eyebrow = text("CREATE ON ANDROID", 10, R.color.ig_cyan, true);
+        TextView title = text("New Focus", 20, R.color.ig_text, true);
+        TextView body = text("Choose Review, Mutuals, Followers or Requests, then create a frozen Focus 20/30/40 from the same synced state used by Desktop.",
+                12, R.color.ig_muted, false);
+
+        MaterialButton create = new MaterialButton(this);
+        create.setText("Create Focus");
+        create.setAllCaps(false);
+        create.setCornerRadius(dp(14));
+        LinearLayout.LayoutParams buttonLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        buttonLp.setMargins(0, dp(12), 0, 0);
+        create.setLayoutParams(buttonLp);
+        create.setOnClickListener(v -> showCreateFocusDialog());
+
+        inner.addView(eyebrow);
+        inner.addView(title);
+        inner.addView(body);
+        inner.addView(create);
+        card.addView(inner);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 0, dp(14));
+        card.setLayoutParams(lp);
+        return card;
+    }
+
+    private void showCreateFocusDialog() {
+        if (!api.hasSession()) {
+            bottomNav.setSelectedItemId(R.id.navProfile);
+            return;
+        }
+
+        String[] labels = {
+                "Review · no te siguen",
+                "Mutuals · se siguen mutuamente",
+                "Followers · tú no los sigues",
+                "Requests · solicitudes pendientes"
+        };
+        String[] modules = {"main", "mutual", "followers", "pending"};
+        final int[] selected = {0};
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Create Focus")
+                .setSingleChoiceItems(labels, 0, (dialog, which) -> selected[0] = which)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Next", (dialog, which) ->
+                        showFocusSizeDialog(modules[selected[0]]))
+                .show();
+    }
+
+    private void showFocusSizeDialog(String module) {
+        String[] sizes = {"Focus 20", "Focus 30", "Focus 40"};
+        int[] values = {20, 30, 40};
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(focusModuleLabel(module))
+                .setItems(sizes, (dialog, which) -> createFocusBatch(module, values[which]))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void createFocusBatch(String module, int requestedSize) {
+        setGlobalStatus("PREPARING • " + focusModuleLabel(module) + " " + requestedSize);
+        runAsync(() -> {
+            touchDevice();
+            refreshFocusSourceData();
+
+            if (!syncedReviewStateAvailable) {
+                throw new IllegalStateException("Review history has not finished syncing. Sync Desktop once, then Android can create Focus independently.");
+            }
+
+            Set<String> alreadyInFocus = activeFocusUsernames();
+            List<JSONObject> candidates = buildNativeFocusCandidates(module, alreadyInFocus);
+            if (candidates.isEmpty()) {
+                throw new IllegalStateException("No eligible profiles are available for " + focusModuleLabel(module) + ".");
+            }
+
+            int count = Math.min(requestedSize, candidates.size());
+            List<JSONObject> selected = new ArrayList<>(candidates.subList(0, count));
+            String batchId = "focus_android_" + System.currentTimeMillis() + "_" +
+                    UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+            String now = Instant.now().toString();
+            String label = "Android · " + focusModuleLabel(module) + " · Focus " + requestedSize;
+
+            JSONObject batch = new JSONObject()
+                    .put("id", batchId)
+                    .put("module", module)
+                    .put("label", label)
+                    .put("target_size", count)
+                    .put("status", "prepared")
+                    .put("created_device", "android")
+                    .put("created_at", now)
+                    .put("source_signature", "android-v120.34:" + module + ":" + requestedSize)
+                    .put("updated_at", now);
+            api.upsert("focus_batches", "user_id,id", new JSONArray().put(batch));
+
+            JSONArray items = new JSONArray();
+            for (int i = 0; i < selected.size(); i++) {
+                JSONObject candidate = selected.get(i);
+                items.put(new JSONObject()
+                        .put("batch_id", batchId)
+                        .put("position", i + 1)
+                        .put("username", candidate.optString("username"))
+                        .put("status", "pending")
+                        .put("context", candidate.optJSONObject("context") == null
+                                ? new JSONObject()
+                                : candidate.optJSONObject("context"))
+                        .put("updated_at", now));
+            }
+            api.upsert("focus_batch_items", "user_id,batch_id,username", items);
+
+            insertEvent("", "batch_created", module, batchId, label, count, "",
+                    new JSONObject()
+                            .put("requested_size", requestedSize)
+                            .put("created_device", "android")
+                            .put("usernames", usernames(items)));
+
+            mainHandler.post(() -> {
+                if (!"focus".equals(currentScreen)) return;
+                Snackbar.make(content,
+                        count == requestedSize
+                                ? "Focus " + requestedSize + " creado en Android"
+                                : "Solo había " + count + " perfiles elegibles; se creó la tanda con esos perfiles",
+                        Snackbar.LENGTH_LONG).show();
+                loadBatch(batch);
+            });
+        }, true);
+    }
+
+    private void refreshFocusSourceData() throws Exception {
+        JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+        JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
+        JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
+
+        JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
+        JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
+        if (state == null) state = new JSONObject();
+        long snapshotUpdatedAt = stateRow == null
+                ? 0L
+                : parseInstant(stateRow.optString("updated_at", "")).toEpochMilli();
+        state.put("_snapshotUpdatedAt", snapshotUpdatedAt);
+        syncedReviewStateAvailable = stateRow != null || profileStates.length() > 0;
+        mergeRemoteProfileState(state, profileStates);
+
+        JSONArray following = new JSONArray();
+        JSONArray followers = new JSONArray();
+        JSONArray pending = new JSONArray();
+        for (int i = 0; i < snapshots.length(); i++) {
+            JSONObject snap = snapshots.optJSONObject(i);
+            if (snap == null) continue;
+            JSONArray payload = snap.optJSONArray("payload");
+            if (payload == null) payload = new JSONArray();
+            switch (snap.optString("list_name")) {
+                case "following" -> following = payload;
+                case "followers" -> followers = payload;
+                case "pending" -> pending = payload;
+            }
+        }
+
+        syncedFollowing = following;
+        syncedFollowers = followers;
+        syncedPending = pending;
+        syncedWorkspaceState = state;
+        saveWorkspaceCache();
+    }
+
+    private Set<String> activeFocusUsernames() throws Exception {
+        Set<String> usernames = new HashSet<>();
+        JSONArray batches = api.get("focus_batches?select=id&status=in.(prepared,active)&limit=50");
+        for (int i = 0; i < batches.length(); i++) {
+            JSONObject batch = batches.optJSONObject(i);
+            if (batch == null) continue;
+            String id = batch.optString("id", "");
+            if (id.isBlank()) continue;
+            JSONArray items = api.get("focus_batch_items?select=username,status&batch_id=eq." +
+                    encode(id) + "&status=in.(pending,opened)");
+            for (int j = 0; j < items.length(); j++) {
+                String username = items.optJSONObject(j) == null
+                        ? ""
+                        : items.optJSONObject(j).optString("username", "").toLowerCase(Locale.ROOT);
+                if (!username.isBlank()) usernames.add(username);
+            }
+        }
+        return usernames;
+    }
+
+    private List<JSONObject> buildNativeFocusCandidates(String module, Set<String> excluded) throws Exception {
+        Map<String, JSONObject> following = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followers = jsonArrayByUsername(syncedFollowers);
+        Set<String> done = jsonStringSet(syncedWorkspaceState.optJSONArray("done"));
+        Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+        JSONObject snooze = syncedWorkspaceState.optJSONObject("snooze");
+        JSONObject reviewedMeta = syncedWorkspaceState.optJSONObject("reviewedMeta");
+        JSONObject pendingReviewed = syncedWorkspaceState.optJSONObject("pendingReviewedMeta");
+        JSONObject pendingSnooze = syncedWorkspaceState.optJSONObject("pendingSnooze");
+
+        List<JSONObject> out = new ArrayList<>();
+        long now = System.currentTimeMillis();
+
+        if ("main".equals(module)) {
+            for (Map.Entry<String, JSONObject> entry : following.entrySet()) {
+                String username = entry.getKey();
+                JSONObject source = entry.getValue();
+                if (followers.containsKey(username) || excluded.contains(username)) continue;
+                if (isNativeFollowingResolved(username, source, done, protectedUsers, snooze, reviewedMeta)) continue;
+                out.add(nativeFocusCandidate(username, source, module,
+                        "Doesn't follow you back", false, true));
+            }
+        } else if ("mutual".equals(module)) {
+            for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
+                String username = entry.getKey();
+                if (!following.containsKey(username) || excluded.contains(username)) continue;
+                JSONObject source = entry.getValue();
+                if (isNativeReviewedForMode(username, source, "followers",
+                        done, protectedUsers, snooze, reviewedMeta)) continue;
+                out.add(nativeFocusCandidate(username, source, module,
+                        "You follow each other", true, true));
+            }
+        } else if ("followers".equals(module)) {
+            for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
+                String username = entry.getKey();
+                if (following.containsKey(username) || excluded.contains(username)) continue;
+                JSONObject source = entry.getValue();
+                if (isNativeReviewedForMode(username, source, "followers",
+                        done, protectedUsers, snooze, reviewedMeta)) continue;
+                out.add(nativeFocusCandidate(username, source, module,
+                        "Follower you don't follow back", true, false));
+            }
+        } else if ("pending".equals(module)) {
+            for (int i = 0; i < syncedPending.length(); i++) {
+                JSONObject source = syncedPending.optJSONObject(i);
+                if (source == null) continue;
+                String username = source.optString("username", "").toLowerCase(Locale.ROOT);
+                if (username.isBlank() || excluded.contains(username)) continue;
+                JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
+                long snoozeUntil = pendingSnooze == null ? 0L : pendingSnooze.optLong(username, 0L);
+                boolean reviewed = meta != null && meta.optLong("reviewedAt", 0L) > 0L;
+                if (reviewed || snoozeUntil > now) continue;
+                out.add(nativeFocusCandidate(username, source, module,
+                        "Pending follow request", false, true));
+            }
+        }
+
+        out.sort((a, b) -> compareFocusTimestamp(
+                a.optJSONObject("source"),
+                b.optJSONObject("source"),
+                a.optString("username"),
+                b.optString("username")));
+        return out;
+    }
+
+    private JSONObject nativeFocusCandidate(String username, JSONObject source, String module,
+                                            String contextText, boolean isFollower, boolean iFollow) throws Exception {
+        JSONObject row = new JSONObject()
+                .put("relation", contextText)
+                .put("relationGood", "mutual".equals(module))
+                .put("followsBack", "mutual".equals(module))
+                .put("isFollower", isFollower)
+                .put("iFollow", iFollow)
+                .put("dateMain", source == null ? 0 : source.optLong("timestamp", 0));
+
+        JSONObject context = new JSONObject()
+                .put("context", contextText)
+                .put("source", "android")
+                .put("row", row);
+
+        return new JSONObject()
+                .put("username", username)
+                .put("source", source == null ? new JSONObject() : source)
+                .put("context", context);
+    }
+
+    private int compareFocusTimestamp(JSONObject a, JSONObject b, String usernameA, String usernameB) {
+        long ta = a == null ? 0L : a.optLong("timestamp", 0L);
+        long tb = b == null ? 0L : b.optLong("timestamp", 0L);
+        if (ta > 0 && tb > 0 && ta != tb) return Long.compare(ta, tb);
+        if (ta > 0 && tb <= 0) return -1;
+        if (ta <= 0 && tb > 0) return 1;
+        return usernameA.compareTo(usernameB);
+    }
+
+    private boolean isNativeReviewedForMode(String username, JSONObject source, String mode,
+                                            Set<String> done, Set<String> protectedUsers,
+                                            JSONObject snooze, JSONObject reviewedMeta) {
+        if (protectedUsers.contains(username)) return true;
+        if (snooze != null && snooze.optLong(username, 0L) > System.currentTimeMillis()) return true;
+        if (!done.contains(username) || reviewedMeta == null) return false;
+
+        JSONObject meta = reviewedMeta.optJSONObject(username);
+        if (meta == null || !mode.equals(meta.optString("mode", ""))) return false;
+
+        long reviewedAt = meta.optLong("reviewedAt", 0L);
+        long sourceAt = source == null ? 0L : source.optLong("timestamp", 0L) * 1000L;
+        return reviewedAt > 0L && (sourceAt <= 0L || sourceAt <= reviewedAt);
+    }
+
+    private String focusModuleLabel(String module) {
+        return switch (module) {
+            case "mutual" -> "Mutuals";
+            case "followers" -> "Followers";
+            case "pending" -> "Requests";
+            default -> "Review";
+        };
     }
 
     private View createBatchCard(JSONObject batch) {
@@ -1255,6 +1574,13 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("Cargando " + batch.optString("label", "Focus") + "…");
 
         runAsync(() -> {
+            String currentStatus = batch.optString("status", "prepared");
+            if ("prepared".equals(currentStatus)) {
+                String now = Instant.now().toString();
+                api.patch("focus_batches?id=eq." + encode(batch.optString("id")),
+                        new JSONObject().put("status", "active").put("updated_at", now));
+                batch.put("status", "active");
+            }
             String batchId = encode(batch.optString("id"));
             JSONArray items = api.get("focus_batch_items?select=*&batch_id=eq." + batchId + "&order=position.asc");
             currentItems = items;
