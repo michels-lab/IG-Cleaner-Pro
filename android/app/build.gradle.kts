@@ -12,6 +12,18 @@ val releaseSigningConfigured = listOf(
     releaseKeyPassword,
 ).all { !it.isNullOrBlank() }
 
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("assembleRelease", ignoreCase = true) ||
+        it.contains("bundleRelease", ignoreCase = true)
+}
+
+if (releaseTaskRequested && !releaseSigningConfigured) {
+    throw GradleException(
+        "Production Android signing is required. Set IGC_ANDROID_KEYSTORE_PATH, " +
+            "IGC_ANDROID_KEYSTORE_PASSWORD, IGC_ANDROID_KEY_ALIAS and IGC_ANDROID_KEY_PASSWORD."
+    )
+}
+
 android {
     namespace = "com.michelslab.igcleaner"
     compileSdk = 35
@@ -59,17 +71,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
-tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
-    doFirst {
-        if (!releaseSigningConfigured) {
-            throw GradleException(
-                "Production Android signing is required. Set IGC_ANDROID_KEYSTORE_PATH, " +
-                    "IGC_ANDROID_KEYSTORE_PASSWORD, IGC_ANDROID_KEY_ALIAS and IGC_ANDROID_KEY_PASSWORD."
-            )
-        }
     }
 }
 
