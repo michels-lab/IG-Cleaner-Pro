@@ -10,6 +10,9 @@ manifest = json.loads((ROOT / "release/distribution-manifest.json").read_text(en
 signing = json.loads((ROOT / "release/android-signing.json").read_text(encoding="utf-8"))
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
+next_version=manifest["releasePolicy"]["nextRelease"].removeprefix("v")
+expected_code=int(next_version.replace(".",""))
+
 for token in (
     "IGC_ANDROID_KEYSTORE_PATH",
     "IGC_ANDROID_KEYSTORE_PASSWORD",
@@ -19,8 +22,8 @@ for token in (
     "releaseTaskRequested",
     'contains("assembleRelease"',
     "Production Android signing is required",
-    "versionCode = 12035",
-    'versionName = "120.35"',
+    f"versionCode = {expected_code}",
+    f'versionName = "{next_version}"',
 ):
     assert token in gradle, f"Release signing Gradle contract missing: {token}"
 
@@ -40,8 +43,8 @@ for token in (
     assert token in workflow, f"Stable Android release workflow contract missing: {token}"
 
 assert signing["packageId"] == "com.michelslab.igcleaner"
-assert signing["versionCode"] == 12035
-assert signing["versionName"] == "120.35"
+assert signing["versionCode"] == expected_code
+assert signing["versionName"] == next_version
 assert signing["keyAlias"] == "ig-cleaner-pro"
 assert signing["certificateSha256"] == "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33"
 assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
