@@ -21,6 +21,12 @@ for table in tables:
     assert table in suite, f"RLS isolation suite does not cover {table}"
 
 for token in (
+    "to authenticated using ((select auth.uid()) = user_id)",
+    "to authenticated with check ((select auth.uid()) = user_id)",
+):
+    assert token in schema, f"Optimized authenticated-only RLS policy missing: {token}"
+
+for token in (
     "select plan(35)",
     "set local role authenticated",
     "set local request.jwt.claim.sub",
