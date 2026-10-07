@@ -38,8 +38,8 @@ assert signing["packageId"] == "com.michelslab.igcleaner"
 assert signing["versionCode"] == 12034
 assert signing["versionName"] == "120.34"
 assert signing["keyAlias"] == "ig-cleaner-pro"
-assert signing["certificateSha256"] == "2E47E4438DAC3E3ED5CFF36E31689BE21EE27B08CCF2A40E0E7209CC57D72A14"
-assert signing["certificateValidUntil"] == "2054-02-22T03:44:28Z"
+assert signing["certificateSha256"] == "6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43"
+assert signing["certificateValidUntil"] == "2126-10-08T03:55:18Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
 
 android = manifest["channels"]["android"]
