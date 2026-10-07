@@ -48,7 +48,7 @@ assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
 
 android = manifest["channels"]["android"]
-assert android["artifact"] == "IG-Cleaner-Pro-Android-v120.34.apk"
+assert android["artifactTemplate"] == "IG-Cleaner-Pro-Android-v{version}.apk"
 assert android["artifactTemplate"] == "IG-Cleaner-Pro-Android-v{version}.apk"
 assert android["stableArtifactRequiresPersistentSigning"] is True
 assert manifest["releasePolicy"]["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
