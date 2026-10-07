@@ -2401,10 +2401,10 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
 .aboutFooter{position:relative;z-index:1;display:flex;justify-content:space-between;gap:18px;align-items:center;padding:14px 4px 0;color:#90a8c3;font-size:11px}
 .aboutFooter .motto{border-left:2px solid #e4b448;padding-left:15px}
 .aboutVersion{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(229,184,79,.35);border-radius:999px;padding:4px 8px;color:#e9c56d;margin-left:8px}
-.legalOverlay,.versionOverlay{position:fixed;inset:0;z-index:2147483640;background:rgba(3,9,17,.76);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:24px}
-.legalOverlay.open,.versionOverlay.open{display:flex}
-.legalDialog,.versionDialog{width:min(700px,100%);max-height:min(86vh,860px);overflow:auto;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px}
-.legalDialog h3,.versionDialog h3{margin:0 0 8px;font-size:18px;color:#fff}
+.legalOverlay,.privacyOverlay,.versionOverlay{position:fixed;inset:0;z-index:2147483640;background:rgba(3,9,17,.76);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:24px}
+.legalOverlay.open,.privacyOverlay.open,.versionOverlay.open{display:flex}
+.legalDialog,.privacyDialog,.versionDialog{width:min(700px,100%);max-height:min(86vh,860px);overflow:auto;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px}
+.legalDialog h3,.privacyDialog h3,.versionDialog h3{margin:0 0 8px;font-size:18px;color:#fff}
 .legalCopy{font-size:11px;line-height:1.65;color:var(--muted);white-space:pre-wrap}
 .legalActions{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;margin-top:15px}
 .versionGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -12038,7 +12038,7 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
 <a class="aboutSocial" href="mailto:realmichelduarte@gmail.com"><div class="aboutIcon mail">✉</div><div><b>Email</b><span>realmichelduarte@gmail.com</span></div></a>
 </div>
 </div>
-<div class="aboutMetaActions"><button class="btn" id="aboutLegalBtn">Legal</button><button class="btn" id="aboutVersionBtn">Versión</button></div>
+<div class="aboutMetaActions"><button class="btn" id="aboutPrivacyBtn">Privacidad</button><button class="btn" id="aboutLegalBtn">Legal</button><button class="btn" id="aboutVersionBtn">Versión</button></div>
 <div class="aboutFooter">
 <div>© 2026 Michel Armando Duarte Flores / Michel's Lab. All rights reserved. <span class="aboutVersion">Instagram Cleaner Pro · UI v120.34</span></div>
 <div class="motto">Datos locales. Decisiones claras.</div>
@@ -12054,6 +12054,26 @@ La disponibilidad del código fuente, la distribución de una build HTML o la pu
 
 IG Cleaner Pro es una herramienta independiente y no está afiliada, patrocinada ni respaldada por Instagram ni por Meta Platforms, Inc.</div>
 <div class="legalActions"><button class="btn primary" id="legalClose">Cerrar</button></div>
+</section>
+</div>
+<div aria-hidden="true" class="privacyOverlay" id="privacyOverlay">
+<section aria-labelledby="privacyTitle" aria-modal="true" class="privacyDialog" role="dialog">
+<h3 id="privacyTitle">Instagram Cleaner Pro — Privacidad</h3>
+<div class="legalCopy">LOCAL-FIRST
+El export original de Instagram (ZIP/JSON/HTML) se procesa localmente y no se sube como respaldo en la nube.
+
+SI ACTIVAS SYNC
+Se pueden guardar de forma privada en tu cuenta datos normalizados necesarios para Desktop ↔ Android: listas de usernames/relaciones, estado reviewed/protected/snoozed, Focus batches, eventos de auditoría y datos de dispositivo.
+
+ALMACENAMIENTO LOCAL
+La app usa localStorage y IndexedDB para conservar estado, revisiones y snapshots. Ese estado permanece hasta que lo eliminas/restableces o una migración documentada lo transforma.
+
+BACKUP / CAMBIOS
+Antes de un reset o migración destructiva, exporta un respaldo desde Vault. Cambiar de origen/ruta/perfil del navegador puede abrir un contexto de almacenamiento distinto.
+
+ELIMINACIÓN
+Eliminar datos locales no demuestra que se hayan borrado filas sincronizadas en la nube, y borrar datos en la nube no elimina copias o respaldos locales independientes. v120.34 todavía no declara implementado un único botón para borrar todos los datos sincronizados.</div>
+<div class="legalActions"><button class="btn primary" id="privacyClose">Cerrar</button></div>
 </section>
 </div>
 <div aria-hidden="true" class="versionOverlay" id="versionOverlay">
@@ -12076,11 +12096,12 @@ IG Cleaner Pro es una herramienta independiente y no está afiliada, patrocinada
   const openBtn=byId('aboutDeveloperBtn');
   const closeBtn=byId('aboutDeveloperClose');
   const legal=byId('legalOverlay');
+  const privacy=byId('privacyOverlay');
   const version=byId('versionOverlay');
   const portrait=byId('aboutPortraitImg');
   const portraitFrame=byId('aboutAvatarFrame');
   const setOpen=(el,on)=>{if(!el)return;el.classList.toggle('open',!!on);el.setAttribute('aria-hidden',on?'false':'true')};
-  const closeAll=()=>{setOpen(legal,false);setOpen(version,false);setOpen(about,false)};
+  const closeAll=()=>{setOpen(legal,false);setOpen(privacy,false);setOpen(version,false);setOpen(about,false)};
   if(portrait&&portraitFrame){
     portrait.addEventListener('error',()=>{portrait.style.display='none';portraitFrame.classList.add('fallback')},{once:true});
     portrait.addEventListener('load',()=>{portraitFrame.classList.remove('fallback');portrait.style.display='block'});
@@ -12088,6 +12109,9 @@ IG Cleaner Pro es una herramienta independiente y no está afiliada, patrocinada
   openBtn?.addEventListener('click',()=>{setOpen(about,true);closeBtn?.focus()});
   closeBtn?.addEventListener('click',()=>{setOpen(about,false);openBtn?.focus()});
   about?.addEventListener('click',e=>{if(e.target===about)setOpen(about,false)});
+  byId('aboutPrivacyBtn')?.addEventListener('click',()=>setOpen(privacy,true));
+  byId('privacyClose')?.addEventListener('click',()=>setOpen(privacy,false));
+  privacy?.addEventListener('click',e=>{if(e.target===privacy)setOpen(privacy,false)});
   byId('aboutLegalBtn')?.addEventListener('click',()=>setOpen(legal,true));
   byId('legalClose')?.addEventListener('click',()=>setOpen(legal,false));
   legal?.addEventListener('click',e=>{if(e.target===legal)setOpen(legal,false)});
