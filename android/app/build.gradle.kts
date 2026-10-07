@@ -1,4 +1,4 @@
-// IG Cleaner Android v120.33 — unified account/session + complete list sync
+// IG Cleaner Android v120.34 — unified account/session + complete list sync
 plugins { id("com.android.application") }
 
 android {
@@ -9,8 +9,8 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12033
-        versionName = "120.33"
+        versionCode = 12034
+        versionName = "120.34"
     }
 
     buildTypes {
