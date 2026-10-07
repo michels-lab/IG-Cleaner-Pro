@@ -4,6 +4,6 @@
   "tag": "v120.34",
   "authorized": false,
   "authorization_source": null,
-  "request_id": null,
-  "note": "Prepared but NOT authorized for publication. Set authorized=true only after explicit user instruction to publish v120.34."
+  "request_id": "v120.34-gate-dry-run-2026-10-06",
+  "note": "Dry-run the governed v120.34 release gate with publication explicitly unauthorized."
 }
