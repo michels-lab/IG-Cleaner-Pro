@@ -12071,9 +12071,10 @@ La app usa localStorage y IndexedDB para conservar estado, revisiones y snapshot
 BACKUP / CAMBIOS
 Antes de un reset o migración destructiva, exporta un respaldo desde Vault. Cambiar de origen/ruta/perfil del navegador puede abrir un contexto de almacenamiento distinto.
 
-ELIMINACIÓN
-Eliminar datos locales no demuestra que se hayan borrado filas sincronizadas en la nube, y borrar datos en la nube no elimina copias o respaldos locales independientes. v120.34 todavía no declara implementado un único botón para borrar todos los datos sincronizados.</div>
-<div class="legalActions"><button class="btn primary" id="privacyClose">Cerrar</button></div>
+GESTIÓN DE DATOS SINCRONIZADOS
+Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la nube o borrar todas sus filas sincronizadas. El borrado de nube no elimina el ZIP/JSON/HTML original ni respaldos locales independientes. Después de borrar la nube, la app cierra la sesión para impedir que el auto-sync vuelva a cargar inmediatamente el estado local.</div>
+<div id="privacyDataStatus" class="legalCopy" style="margin-top:12px">Inicia sesión en Cuenta para exportar o borrar datos sincronizados.</div>
+<div class="legalActions"><button class="btn green" id="privacyExportCloud">Exportar datos de nube</button><button class="btn red" id="privacyDeleteCloud">Borrar datos de nube</button><button class="btn primary" id="privacyClose">Cerrar</button></div>
 </section>
 </div>
 <div aria-hidden="true" class="versionOverlay" id="versionOverlay">
@@ -12110,6 +12111,8 @@ Eliminar datos locales no demuestra que se hayan borrado filas sincronizadas en 
   closeBtn?.addEventListener('click',()=>{setOpen(about,false);openBtn?.focus()});
   about?.addEventListener('click',e=>{if(e.target===about)setOpen(about,false)});
   byId('aboutPrivacyBtn')?.addEventListener('click',()=>setOpen(privacy,true));
+  byId('privacyExportCloud')?.addEventListener('click',()=>window.igcPrivacyExportCloudData?.());
+  byId('privacyDeleteCloud')?.addEventListener('click',()=>window.igcPrivacyDeleteCloudData?.());
   byId('privacyClose')?.addEventListener('click',()=>setOpen(privacy,false));
   privacy?.addEventListener('click',e=>{if(e.target===privacy)setOpen(privacy,false)});
   byId('aboutLegalBtn')?.addEventListener('click',()=>setOpen(legal,true));
@@ -12819,6 +12822,82 @@ async function verifyOtpAndSetPassword(){await verifyOtp();const password=String
 async function refresh(){if(!S.session?.refresh_token)return false;try{const d=await jfetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:JSON.stringify({refresh_token:S.session.refresh_token})});if(d?.access_token){S.session=d;saveSession();return true}}catch(e){console.warn('refresh session',e)}return false}
 async function ensureAuth(){if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta primero.');return true}
 async function rest(path,opt={}){try{return await jfetch('/rest/v1/'+path,opt)}catch(e){if((e.status===401||e.status===403)&&await refresh())return await jfetch('/rest/v1/'+path,opt);throw e}}
+const IGC_SYNC_TABLES=['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state'];
+function privacyDataStatus(text,type=''){
+  const el=document.getElementById('privacyDataStatus');
+  if(!el)return;
+  el.textContent=text;
+  el.style.color=type==='error'?'#ff9aa8':type==='ok'?'#83e4be':'';
+}
+async function fetchAllCloudRows(table){
+  const all=[];let offset=0;
+  while(true){
+    const rows=await rest(`${table}?select=*&limit=1000&offset=${offset}`,{method:'GET'});
+    if(!Array.isArray(rows))break;
+    all.push(...rows);
+    if(rows.length<1000)break;
+    offset+=rows.length;
+  }
+  return all;
+}
+async function deliverPrivacyJson(fileName,payload){
+  const text=JSON.stringify(payload,null,2);
+  if(window.AndroidBridge&&typeof window.AndroidBridge.saveBase64==='function'){
+    const blob=new Blob([text],{type:'application/json'});
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(r.error||new Error('No se pudo preparar el archivo.'));r.readAsDataURL(blob)});
+    window.AndroidBridge.saveBase64(fileName,'application/json',dataUrl);
+    return;
+  }
+  const blob=new Blob([text],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+window.igcPrivacyExportCloudData=async function(){
+  try{
+    await ensureAuth();
+    privacyDataStatus('Preparando export de datos sincronizados…');
+    const tables={};const counts={};
+    for(const table of IGC_SYNC_TABLES){
+      tables[table]=await fetchAllCloudRows(table);
+      counts[table]=tables[table].length;
+    }
+    const payload={
+      schema:'ig-cleaner-cloud-export-v1',
+      exportedAt:new Date().toISOString(),
+      account:S.session?.user?.email||S.cfg.email||'',
+      device:currentDevice(),
+      note:'Contiene únicamente datos sincronizados de IG Cleaner Pro. No contiene el export original de Instagram.',
+      counts,
+      tables
+    };
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    await deliverPrivacyJson(`IG-Cleaner-Pro-cloud-export-${stamp}.json`,payload);
+    privacyDataStatus(`Export listo · ${Object.values(counts).reduce((a,b)=>a+b,0)} filas sincronizadas.`,'ok');
+  }catch(e){
+    privacyDataStatus(`No se pudo exportar: ${e.message||e}`,'error');
+  }
+};
+window.igcPrivacyDeleteCloudData=async function(){
+  try{
+    await ensureAuth();
+    if(!confirm('Esto borrará TODOS los datos sincronizados de esta cuenta en la nube. Tus exports originales y respaldos locales independientes no se borrarán. ¿Continuar?'))return;
+    const typed=prompt('Confirmación final: escribe BORRAR NUBE');
+    if(String(typed||'').trim().toUpperCase()!=='BORRAR NUBE'){privacyDataStatus('Borrado cancelado.');return}
+    privacyDataStatus('Borrando datos sincronizados…');
+    const order=['focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
+    for(const table of order){
+      await rest(`${table}?user_id=not.is.null`,{method:'DELETE',headers:{Prefer:'return=minimal'}});
+    }
+    dataMeta={};saveDataMeta();
+    S.stats={eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0};
+    S.session=null;saveSession();renderAuthUi();schedule();
+    privacyDataStatus('Datos sincronizados borrados. Sesión cerrada para evitar una resincronización automática.','ok');
+    status('Datos de nube borrados · sesión cerrada. Tus datos locales permanecen intactos.','warn');
+  }catch(e){
+    privacyDataStatus(`No se pudo borrar la nube: ${e.message||e}`,'error');
+  }
+};
 function iso(v){return new Date(Number(v||Date.now())).toISOString()}
 function ms(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0}
 function currentDevice(){let d={};try{d=JSON.parse(localStorage.getItem('igc_v12026_device_identity')||'{}')||{}}catch{}return {id:d.id||'desktop',type:d.type||'desktop',label:d.label||'Desktop'}}
