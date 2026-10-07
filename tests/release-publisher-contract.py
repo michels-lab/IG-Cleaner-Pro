@@ -23,13 +23,39 @@ for token in (
 ):
     assert token in workflow, f"Generic release publisher token missing: {token}"
 
-assert manifest["channels"]["desktop"]["artifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.zip"
-assert manifest["channels"]["android"]["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
-assert manifest["releasePolicy"]["genericPublisher"]==".github/workflows/release.yml"
-assert manifest["releasePolicy"]["currentStableRelease"]=="v120.34"
-assert manifest["releasePolicy"]["nextRelease"]=="v120.35"
-assert request["version"]=="120.34"
-assert request["status"]=="published"
-assert request["authorized"] is False
+desktop=manifest["channels"]["desktop"]
+android=manifest["channels"]["android"]
+policy=manifest["releasePolicy"]
+
+assert desktop["artifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.zip"
+assert android["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
+assert policy["genericPublisher"]==".github/workflows/release.yml"
+assert policy["explicitManualPublishRequired"] is True
+assert policy["automaticPublishFromMain"] is False
+assert policy["githubPrerelease"] is False
+
+current=policy["currentStableRelease"]
+next_release=policy["nextRelease"]
+assert current.startswith("v") and next_release.startswith("v")
+assert current != next_release
+
+status=request.get("status")
+authorized=request.get("authorized")
+tag=str(request.get("tag",""))
+
+if authorized:
+    # A live release request must point only at the governed next release.
+    assert status in ("requested","authorized")
+    assert tag == next_release
+    assert request.get("version") == next_release.removeprefix("v")
+    assert request.get("requested_channel") == "stable"
+    assert request.get("github_prerelease") is False
+else:
+    # Between releases, the last request is retained as immutable publication evidence.
+    assert status == "published"
+    assert tag == current
+    assert request.get("version") == current.removeprefix("v")
+    assert request.get("published_run")
+    assert request.get("published_commit")
 
 print("Generic release publisher contract passed.")
