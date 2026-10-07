@@ -1,4 +1,4 @@
--- IG Cleaner Pro v120.34 — Supabase sync schema
+-- IG Cleaner Pro v120.35 — Supabase sync schema
 -- Run once in Supabase SQL Editor. Tables are private per authenticated user via RLS.
 
 create extension if not exists pgcrypto;
