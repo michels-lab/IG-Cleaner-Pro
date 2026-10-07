@@ -851,3 +851,43 @@ The next chat should continue from this section instead of reconstructing the An
   - SHA-256: `a6cc543987fa21968c9f09c8c595a9924e1ffbce49721a6779d802cc30b836b7`
 - Release assets were overwritten after final code changes, so downloads now correspond to the validated v120.33 hotfix build.
 - Historical-review limitation is explicit: review state that exists only in an older browser/file-local storage area cannot be inferred from Following/Followers. It must be opened by the sync-capable Desktop build in the same stored state, or exported/restored through IG Cleaner backup, then synchronized once. Future review/protect/snooze changes publish automatically.
+
+
+## 2026-10-06 — v120.34 release reconciliation, canonical identity and Android Focus autonomy
+
+### Release/version correction
+- User explicitly requires the next release to be v120.34 and does not want normal releases silently published as GitHub prereleases.
+- Added/confirmed `.michelslab/release-policy.json`: next_release=120.34, next_tag=v120.34, channel=stable, prerelease=false, auto_publish=false.
+- Publication remains gated by `.michelslab/release-request.json`; it is currently NOT authorized.
+- Synced AGENTS/copilot/app-maintainer/QA/release-manager governance from current `main` into the release branch.
+- Release Manager now explicitly refuses to infer/backslide versions from branch names, stale workflows, old tags or Android versionCode.
+- Historical v120.27 and v120.28 publisher workflows are disabled.
+- Added dedicated `release-v12034.yml`; normal validation never publishes.
+
+### Canonical product identity
+- Confirmed Michel-Software-Standards is correct: Instagram Cleaner Pro's official mark is three stacked layer/diamond planes plus the restrained upper-right sparkle.
+- The rounded-square IG monogram introduced during the v120.32/v120.33 development line is legacy/rejected and is no longer an active identity source.
+- Vendored the exact canonical master assets under `branding/ig-cleaner-pro/`.
+- Android launcher/header derive from the canonical layered geometry.
+- Desktop favicon, rail/header and About use the canonical app icon/mark/lockup.
+- Removed duplicate flat brand asset paths that could supersede the canonical directory.
+- `docs/BRAND.md` now matches the master identity contract.
+
+### Android Focus autonomy
+- Native Focus now exposes Create Focus on Android.
+- Supported modules: Review, Mutuals, Followers-you-don't-follow and Pending Requests.
+- Supported sizes: 20 / 30 / 40.
+- Creation refreshes cloud lists + workspace/profile review state before selecting candidates.
+- Reviewed, protected, active-snooze and active/prepared-batch usernames are excluded.
+- Android freezes the selected usernames into Supabase `focus_batches` + `focus_batch_items`.
+- Android-created batches are visible to Desktop through the same shared tables.
+- Opening a prepared batch promotes it to active; completing it preserves the existing Android review/audit flow.
+- Safety rule: if review history has not been restored to cloud, Android refuses to create a misleading Focus batch.
+
+### Current validation
+- GitHub Actions run 37554819078: SUCCESS on current product code through v120.34 runtime/version alignment.
+- Desktop inline JavaScript syntax: SUCCESS.
+- Android `:app:assembleDebug`: SUCCESS.
+- Embedded Workspace asset check: SUCCESS.
+- Physical-device rendering and an actual Android-created Focus round trip remain manual validation gates; they are not claimed as completed.
+- v120.34 has NOT been published yet.
