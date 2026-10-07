@@ -1,80 +1,97 @@
-# IG Cleaner Pro — Desktop + Android + Supabase Sync
+# Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current Android work line: **v120.29 beta**.
+Current candidate: **v120.34 stable release candidate** on `release/v120.34`.
 
 ## Product model
 
-IG Cleaner is one product with two interaction surfaces:
+Instagram Cleaner Pro is one product with two interaction surfaces:
 
-- **Desktop:** the full single-file IG Cleaner workspace.
-- **Android:** the full Desktop workspace packaged inside the app **plus** native mobile Focus, Audit and Account surfaces.
+- **Desktop:** the full IG Cleaner workspace.
+- **Android:** native Home / Review / Focus / Activity / Profile plus the packaged Desktop engine for advanced tools and shared account/session behavior.
 
-The Android app is not intended to be a reduced companion anymore. The Workspace tab exposes the same Desktop engine/modules; native screens only replace workflows where mobile interaction should differ.
+Android is not a reduced companion. It consumes the same synchronized people lists and review state and can now create Focus batches independently.
 
-## Shared sync semantics
+## What synchronizes
 
-Supabase stores synchronized **metadata/state**, not the raw Instagram export:
+Supabase stores private per-user workflow state and normalized list snapshots:
 
 - device identity / last-seen;
+- complete `following`, `followers` and `pending` normalized list snapshots;
 - frozen Focus batches and batch items;
 - audit events;
-- projected per-profile review state.
+- projected per-profile review/protected/snooze state;
+- workspace state needed to preserve historical review decisions.
 
-Rules:
-- opening a profile and reviewing a profile are separate events;
-- review history is append-only through audit events;
-- current review projection uses the newest review timestamp;
-- every event preserves source device (`desktop` / `android`);
-- Audit never rewrites the original review time;
-- Focus prepared on Desktop keeps its exact frozen username order when consumed on Android;
-- Android reviews must appear on Desktop after sync, and vice versa.
+The original Instagram ZIP/JSON/HTML export is not uploaded as a backup. Import parsing remains local; only normalized app state needed for cross-device operation is synchronized.
 
-## Authentication
+## Android Focus autonomy
 
-End users see only:
+Android v120.34 can create Focus batches without opening Windows/Desktop first.
 
-1. email;
-2. **Enviar código**;
-3. OTP from email;
-4. **Entrar**.
+Supported modules:
+- Review / no te siguen;
+- Mutuals;
+- Followers que tú no sigues;
+- Pending Requests.
 
-The Supabase Project URL and publishable key are application configuration. They are not user-facing fields.
+Supported sizes:
+- Focus 20;
+- Focus 30;
+- Focus 40.
+
+Creation refreshes list snapshots and review state, excludes reviewed/protected/actively-snoozed profiles and usernames already in an active/prepared batch, then freezes the selected usernames in `focus_batches` + `focus_batch_items`.
+
+If historical review state has not reached the cloud, Android refuses to create a misleading batch instead of treating every raw relationship as unresolved.
+
+## Authentication / session ownership
+
+Android uses one account/session model shared with the embedded Workspace. Password is the primary sign-in method; OTP remains for first-time setup or recovery. Refreshed Workspace credentials bridge back into native storage so native Focus/Audit and Workspace do not fight over separate sessions.
 
 Never ship a service-role key, database password, SMTP credential, refresh token or other privileged secret.
 
-## Privacy boundary
+## Canonical product identity
 
-Instagram ZIP/JSON/HTML import is still processed locally in the client workflow. The current sync architecture is for review/workflow metadata.
+The official Instagram Cleaner Pro identity is the **three stacked layer/diamond planes with the restrained upper-right sparkle** from Michel's Lab standards.
 
-Raw Instagram export backup/upload is **not** part of the current sync contract.
+The former rounded-square blue/cyan `IG` monogram is legacy/rejected and must not become an active identity source again.
 
-## Android v120.29
+Canonical child assets live under:
+- `branding/ig-cleaner-pro/official-app-icon.svg`;
+- `branding/ig-cleaner-pro/official-mark.svg`;
+- `branding/ig-cleaner-pro/official-lockup.svg`.
 
-Android includes:
-- Workspace — packaged Desktop engine;
-- Focus — one-profile-at-a-time checklist;
-- Audit — cross-device review/open history;
-- Cuenta — OTP login and sync status.
+About uses the canonical Michel Duarte portrait and Michel's Lab production lockup as real vendored assets rather than an embedded/recompressed portrait.
 
-Workspace integration also provides:
-- Android file chooser for HTML/JSON/ZIP import inputs;
-- external Instagram-link handling;
-- mobile prevention/redirection of Desktop bulk-profile opening;
-- bridge for generated exports to Android Downloads;
-- session/device bootstrap into the embedded Desktop engine.
+## Current v120.34 validation
 
-## Current validation
+Final consolidated repository validation:
+- GitHub Actions run `37562844481`: **SUCCESS**.
+- Desktop contract, fixture parsing, canonical branding, privacy contract, Android Focus/inset regression contract and distribution manifest: **PASS**.
+- Android build + packaged Workspace: **PASS**.
+- Android companion run `37562748629`: **SUCCESS** after the current About/privacy changes.
+- The Desktop candidate contains the v120.30 full-state sync bridge, including legacy review normalization, `list_snapshots`, `workspace_state` and per-profile state merging.
 
-GitHub Actions run `37388962937` compiled `android-full-workspace-v120.29` successfully.
-
-Before v120.29 is released, the target-phone validation gate is:
+Manual/device validation is still required before calling the Android stable artifact production-ready:
 - cold launch;
-- full Workspace module rendering;
-- ZIP/file picker import;
-- OTP/session persistence;
-- Desktop ↔ Android Focus round-trip;
-- Android review projection back to Desktop;
-- Audit origin correctness;
-- HTML export to Downloads.
+- sign-in/session persistence;
+- real synced usernames in Review / Mutuals / Followers / Pending;
+- create Focus 20/30/40 on Android;
+- complete/reopen a Focus batch;
+- Android → Desktop review round-trip;
+- audit device origin;
+- physical rendering/insets.
 
-See `PROJECT_LOG.md` for the chronological implementation record.
+## Release rule
+
+The next release target is exactly **v120.34** and GitHub `prerelease` must be **false**.
+
+Authority: `release/distribution-manifest.json`.
+
+Publication is never automatic and requires explicit user authorization. A stable Android artifact must not be a debug/`.beta` package presented as stable; it must be a proper release artifact with signing continuity established, or Android publication remains blocked.
+
+The Desktop artifact is a bundle, not a lone HTML file, because About now uses external canonical identity assets:
+- `IG-Cleaner-Pro.html`;
+- `assets/michel_duarte_avatar.jpg`;
+- `assets/michels-lab/official-lockup.png`.
+
+See `PROJECT_LOG.md`, `docs/CURRENT_HANDOFF.md`, and `release/distribution-manifest.json` for current release evidence.

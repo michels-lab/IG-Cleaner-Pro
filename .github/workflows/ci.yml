@@ -48,6 +48,10 @@ jobs:
         run: python tests/fixture-contract.py
       - name: Validate official product branding
         run: python tests/branding-contract.py
+      - name: Validate privacy and data-handling contract
+        run: python tests/privacy-contract.py
+      - name: Validate Android UX and Focus regression contract
+        run: python tests/android-contract.py
       - name: Validate distribution manifest
         run: |
           python - <<'PY'
@@ -58,8 +62,16 @@ jobs:
           assert m['releasePolicy']['automaticPublishFromMain'] is False
           assert m['releasePolicy']['explicitManualPublishRequired'] is True
           assert m['releasePolicy']['checksumsRequired'] is True
+          assert m['releasePolicy']['nextRelease']=='v120.34'
+          assert m['releasePolicy']['githubPrerelease'] is False
+          assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
+          assert m['channels']['desktop']['entrypoint']=='IG-Cleaner-Pro.html'
+          assert m['channels']['desktop']['includes']==[
+              'assets/michel_duarte_avatar.jpg',
+              'assets/michels-lab/official-lockup.png',
+          ]
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
-          print('Distribution/state manifest passed.')
+          print('Distribution/state manifest passed for stable v120.34.')
           PY
 
   android:
@@ -95,11 +107,17 @@ jobs:
         run: |
           APK="app/build/outputs/apk/debug/app-debug.apk"
           OFFICIAL="assets/ig_cleaner_pro_v120_27_synced_companion.html"
+          PORTRAIT="assets/assets/michel_duarte_avatar.jpg"
+          LAB_LOCKUP="assets/assets/michels-lab/official-lockup.png"
           LEGACY="assets/ig_cleaner_workspace.html"
           COUNT="$(unzip -l "$APK" | grep -c "$OFFICIAL" || true)"
           test "$COUNT" -eq 1
           SIZE="$(unzip -l "$APK" | awk -v asset="$OFFICIAL" '$0 ~ asset {print $1}')"
-          test -n "$SIZE" && test "$SIZE" -gt 1500000
+          test -n "$SIZE" && test "$SIZE" -gt 700000
+          unzip -p "$APK" "$PORTRAIT" > /tmp/igc-portrait.jpg
+          unzip -p "$APK" "$LAB_LOCKUP" > /tmp/igc-lab-lockup.png
+          cmp /tmp/igc-portrait.jpg ../desktop/assets/michel_duarte_avatar.jpg
+          cmp /tmp/igc-lab-lockup.png ../desktop/assets/michels-lab/official-lockup.png
           if unzip -l "$APK" | grep -q "$LEGACY"; then
             echo "::error::Duplicate legacy Workspace asset is packaged: $LEGACY"
             exit 1

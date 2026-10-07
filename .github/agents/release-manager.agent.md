@@ -14,3 +14,19 @@ Never use skipped or stale CI as release evidence. Publication requires explicit
 
 For releases that touch UI/About/branding, treat the mandatory identity/About contract in `AGENTS.md` as part of release completeness. Do not present a build as visually reconciled if product identity, author/Michel's Lab hierarchy, canonical portrait, or icon + network-name social controls are knowingly missing/regressed.
 
+
+
+## Mandatory release-number reconciliation
+
+Before preparing or publishing any release:
+
+1. Read `release/distribution-manifest.json`.
+2. Query actual GitHub Releases, including prereleases.
+3. Inspect every active version-bearing file and release workflow.
+4. Treat `releasePolicy.nextRelease` as authoritative; never derive a release version from a branch name or old workflow.
+5. Require explicit user authorization for publication.
+6. Refuse a stable publication if the APK/package/version still identifies as beta or signing continuity is unresolved.
+7. Never publish from generic validation CI.
+8. Historical version-specific publishers are retired evidence only.
+
+Current prepared target: **v120.34**, normal/stable GitHub Release, not prerelease.

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -7,6 +8,11 @@ def read(path):
     p = ROOT / path
     assert p.exists(), f"Missing branding file: {path}"
     return p.read_text(encoding="utf-8")
+
+def git_blob_sha(path):
+    data = (ROOT / path).read_bytes()
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
 
 icon = read("branding/ig-cleaner-pro/official-app-icon.svg")
 mark = read("branding/ig-cleaner-pro/official-mark.svg")
@@ -36,25 +42,43 @@ for source in (launcher, internal):
 assert '#071A30' in bg
 assert '@drawable/ic_launcher_foreground' in adaptive
 assert '@drawable/ig_brand_splash' in theme
-assert 'app:logo="@drawable/ig_official_mark"' in toolbar
-assert 'app:title="IG Cleaner Pro"' in toolbar
+assert 'android:src="@drawable/ic_launcher_foreground"' in toolbar
+assert 'android:text="Instagram Cleaner Pro"' in toolbar
 assert 'android:id="@+id/workspaceLoadingBrand"' in workspace
 assert 'android:src="@drawable/ig_official_mark"' in workspace
-assert '.setIcon(R.drawable.ig_official_mark)' in main
+assert 'R.id.actionAbout' in main
 assert '<string name="app_name">IG Cleaner Pro</string>' in strings
 
 html = read("desktop/ig_cleaner_pro_v120_27_synced_companion.html")
 for token in (
-    'id="igcOfficialFavicon"',
-    'id="igcBrandSplash"',
-    'id="igc-official-brand-css"',
+    '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,',
+    'id="igc-official-brand-v12034"',
     'class="aboutOfficialLockup"',
-    '<b>IG Cleaner Pro</b>',
+    '<b>Instagram Cleaner Pro</b>',
+    'aria-label="Instagram Cleaner Pro logo"',
     'data:image/svg+xml,'
 ):
     assert token in html, f"Desktop official-brand token missing: {token}"
 
 assert '<div class="igc-brand-mark">IG</div>' not in html
 assert '<div class="aboutMarkBox"><div class="igcMonogram">' not in html
+
+# About must use immutable canonical assets rather than embedding/recompressing them.
+assert git_blob_sha("desktop/assets/michel_duarte_avatar.jpg") == "18fe1a68722850c3d8f918dc0799f46ffeb6dbaf"
+assert git_blob_sha("desktop/assets/michels-lab/official-lockup.png") == "7fd48093968b31ddacd3098f5b15d962de580652"
+assert 'data:image/jpeg;base64' not in html
+assert 'src="assets/michel_duarte_avatar.jpg"' in html
+assert 'src="assets/michels-lab/official-lockup.png"' in html
+assert 'igc-v12030-supabase-sync-js' in html
+assert 'normalizeLegacyReviewState' in html
+assert 'pushWorkspaceState' in html
+assert 'list_snapshots' in html
+
+# All user-visible release identity must agree with the governed v120.34 target.
+assert '<title>Instagram Cleaner Pro v120.34</title>' in html
+assert 'Engine v119 · UI v120.34' in html
+assert 'Instagram Cleaner Pro · UI v120.34' in html
+assert 'UI v120.26' not in html
+assert 'UI v120.27' not in html
 
 print("Official IG Cleaner Pro branding contract passed.")

@@ -799,3 +799,53 @@ Repository instructions now explicitly route logo, launcher, splash/startup and 
 
 The required interpretation is structural integration rather than sticker placement: replace active legacy identity, adapt canonical geometry to the existing product design language, preserve unrelated behavior, validate the build, and keep release publication separate unless explicitly authorized.
 
+
+
+## 2026-10-06 — v120.34 canonical candidate consolidation
+
+### Release/version reconciliation
+- Consolidated active work onto `release/v120.34`; this branch is based on current `main` and is the authoritative v120.34 candidate.
+- Next release target is exactly `v120.34`; GitHub prerelease must be false.
+- No v120.34 release has been published from this work.
+- Publication remains explicitly gated; validation workflows do not publish.
+
+### Canonical identity / About
+- Confirmed the master identity is stacked layers + upper-right sparkle; the old rounded-square IG monogram is legacy/rejected.
+- Child SVG identity copies match the master canonical assets.
+- Vendored the canonical Michel Duarte portrait byte-for-byte at `desktop/assets/michel_duarte_avatar.jpg` (git blob SHA `18fe1a68722850c3d8f918dc0799f46ffeb6dbaf`).
+- Vendored the finalized Michel's Lab About lockup byte-for-byte at `desktop/assets/michels-lab/official-lockup.png` (git blob SHA `7fd48093968b31ddacd3098f5b15d962de580652`).
+- Removed the embedded base64 portrait from Desktop About and linked the canonical assets instead.
+- Unified visible Desktop release identity from stale UI 120.26/120.27 labels to UI v120.34.
+- Desktop distribution is now a ZIP/bundle so the external canonical About assets are never omitted.
+
+### Android repair and Focus autonomy
+- Restored missing Android resource/dependency parity required by the current native shell.
+- Android build again compiles with Home / Review / Focus / Activity / Profile resources.
+- Restored native Android Focus creation for Review, Mutuals, Followers-you-don't-follow and Pending Requests.
+- Android supports Focus 20 / 30 / 40, freezes the selected usernames in shared Supabase batch tables and refuses unsafe creation when historical review state has not synchronized.
+
+### CI evidence
+- Run `37561825709`: Desktop contract **SUCCESS** and Android build + embedded Workspace **SUCCESS**.
+- Run `37559946743`: Android companion **SUCCESS**.
+- Validation after the Android Focus-autonomy restoration is required before this candidate is handed off as final.
+- Physical-device/round-trip testing is still a manual gate and is not claimed as completed.
+
+### Release safety
+- The historical v120.34 publisher from the divergent `release-v120.34` branch builds a debug/`.beta` APK while labeling the GitHub release stable; that workflow is not acceptable as the final stable publisher.
+- A stable Android v120.34 publication requires a real release artifact with signing continuity; otherwise Android stable publication remains blocked.
+
+
+## 2026-10-06 — v120.34 final candidate validation
+
+- Reconciled the candidate onto `release/v120.34`; the divergent `release-v120.34` line is marked superseded and must not publish.
+- Restored Android native Focus creation for Review, Mutuals, Followers-you-don't-follow and Pending in sizes 20/30/40.
+- Restored the v120.30 Desktop sync bridge, including legacy-review normalization, list snapshots and complete workspace review-state publishing. This directly protects already-reviewed profiles from reappearing as unresolved merely because Android has only raw relationship lists.
+- Preserved the Android system-bar inset hotfix so Samsung gesture/3-button navigation does not clip the bottom navigation.
+- Replaced the embedded About portrait with the exact canonical Michel Duarte asset and added the finalized Michel's Lab production lockup.
+- Added a centralized local-first privacy surface/documentation and explicit retention/deletion boundary.
+- Added CI regression contracts for canonical branding/About assets, full sync bridge, privacy/data handling, Android Focus autonomy and navigation insets.
+- Final consolidated CI run `37562844481`: **SUCCESS** across Desktop contract, sanitized fixture, branding, privacy, Android UX/Focus contract, distribution manifest, Android build and embedded Workspace verification.
+- Android companion runs after the relevant functional changes also passed, including `37562748629`, `37562402633` and `37562024494`.
+- Manual physical-device/Desktop round-trip remains pending and is not represented as completed.
+- v120.34 has **not** been published by this work.
+- Stable Android publication remains blocked until a real release artifact/signing path is established; do not relabel a debug `.beta` APK as stable.

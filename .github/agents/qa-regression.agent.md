@@ -21,3 +21,6 @@ If assigned only to audit, report findings with severity, evidence and exact acc
 
 For UI/About changes, treat identity/About regression as a real defect: verify recognizable canonical logo geometry, product-derived cleanup visual language, product → author → Michel's Lab hierarchy, canonical portrait usage, and social controls that visibly show both network icon and network name.
 
+
+
+For release/version audits, compare `release/distribution-manifest.json`, GitHub Releases, app package/version identity and active workflows. Any automatic publication path outside the governed release flow is a release-blocking regression.

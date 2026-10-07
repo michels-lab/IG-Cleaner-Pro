@@ -36,6 +36,35 @@ public final class SyncApi {
     public String getAccessToken() { return accessToken == null ? "" : accessToken; }
     public String getRefreshToken() { return refreshToken == null ? "" : refreshToken; }
     public boolean hasSession() { return accessToken != null && !accessToken.isBlank(); }
+    public boolean nativeSessionIsNewer() { return prefs.getBoolean("native_newer", false); }
+    public void markSessionBridgedToWeb() { prefs.edit().putBoolean("native_newer", false).apply(); }
+
+    public synchronized void adoptWebSession(String rawJson) {
+        try {
+            if (rawJson == null || rawJson.isBlank() || "null".equals(rawJson.trim())) {
+                logout();
+                return;
+            }
+            JSONObject session = new JSONObject(rawJson);
+            String nextAccess = session.optString("access_token", "");
+            String nextRefresh = session.optString("refresh_token", "");
+            if (nextAccess.isBlank()) return;
+            accessToken = nextAccess;
+            if (!nextRefresh.isBlank()) refreshToken = nextRefresh;
+            JSONObject user = session.optJSONObject("user");
+            if (user != null && !user.optString("email", "").isBlank()) {
+                email = user.optString("email").trim();
+            }
+            prefs.edit()
+                    .putString("access", accessToken)
+                    .putString("refresh", refreshToken == null ? "" : refreshToken)
+                    .putString("email", email == null ? "" : email)
+                    .putBoolean("native_newer", false)
+                    .apply();
+        } catch (Exception ignored) {
+            // Keep the last known-good native session if the WebView sends malformed data.
+        }
+    }
 
     public JSONObject webSession() {
         JSONObject out = new JSONObject();
@@ -76,10 +105,39 @@ public final class SyncApi {
         if (!hasSession()) throw new IOException("Supabase no devolvió una sesión.");
     }
 
+    public void signInWithPassword(String value, String password) throws Exception {
+        setEmail(value);
+        if (email.isBlank()) throw new IllegalArgumentException("Escribe tu correo.");
+        String pass = password == null ? "" : password;
+        if (pass.isBlank()) throw new IllegalArgumentException("Escribe tu contraseña.");
+
+        JSONObject result = requestObject("POST", "/auth/v1/token?grant_type=password",
+                new JSONObject()
+                        .put("email", email)
+                        .put("password", pass),
+                false, null);
+        saveSession(result);
+        if (!hasSession()) throw new IOException("No se pudo iniciar sesión.");
+    }
+
+    public void updatePassword(String password) throws Exception {
+        String pass = password == null ? "" : password;
+        if (pass.length() < 8) throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres.");
+        if (!hasSession()) throw new IllegalStateException("Verifica primero tu correo.");
+        requestObject("PUT", "/auth/v1/user",
+                new JSONObject().put("password", pass),
+                true, null);
+    }
+
+    public void verifyOtpAndSetPassword(String code, String password) throws Exception {
+        verifyOtp(code);
+        updatePassword(password);
+    }
+
     public void logout() {
         accessToken = "";
         refreshToken = "";
-        prefs.edit().remove("access").remove("refresh").apply();
+        prefs.edit().remove("access").remove("refresh").remove("native_newer").apply();
     }
 
     public JSONArray get(String tableQuery) throws Exception {
@@ -112,7 +170,11 @@ public final class SyncApi {
         refreshToken = result.optString("refresh_token", refreshToken == null ? "" : refreshToken);
         JSONObject user = result.optJSONObject("user");
         if (user != null && !user.optString("email").isBlank()) setEmail(user.optString("email"));
-        prefs.edit().putString("access", accessToken).putString("refresh", refreshToken).apply();
+        prefs.edit()
+                .putString("access", accessToken)
+                .putString("refresh", refreshToken)
+                .putBoolean("native_newer", true)
+                .apply();
     }
 
     private boolean refreshSession() {
@@ -124,7 +186,9 @@ public final class SyncApi {
             saveSession(result);
             return hasSession();
         } catch (Exception ignored) {
-            logout();
+            // Do not destroy the remembered session on a transient auth/network failure.
+            // The Web workspace may still own a newer rotated refresh token and will bridge
+            // it back into native storage as soon as it refreshes successfully.
             return false;
         }
     }

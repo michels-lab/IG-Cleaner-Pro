@@ -4,7 +4,12 @@
   "repository": "realmichelduarte/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro.html",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.34.zip",
+      "entrypoint": "IG-Cleaner-Pro.html",
+      "includes": [
+        "assets/michel_duarte_avatar.jpg",
+        "assets/michels-lab/official-lockup.png"
+      ],
       "transport": "github-release",
       "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration"
     },
@@ -27,6 +32,18 @@
     "automaticPublishFromMain": false,
     "explicitManualPublishRequired": true,
     "checksumsRequired": true,
-    "deviceValidationRequiredForAndroidProduction": true
+    "deviceValidationRequiredForAndroidProduction": true,
+    "nextRelease": "v120.34",
+    "githubPrerelease": false,
+    "minimumPreviousNormalRelease": "v120.29",
+    "retiredAutomaticOrVersionSpecificTargets": [
+      "v120.27",
+      "v120.28",
+      "v120.29",
+      "v120.30",
+      "v120.31",
+      "v120.32",
+      "v120.33"
+    ]
   }
 }
