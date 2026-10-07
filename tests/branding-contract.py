@@ -51,11 +51,11 @@ assert '<string name="app_name">IG Cleaner Pro</string>' in strings
 
 html = read("desktop/ig_cleaner_pro_v120_27_synced_companion.html")
 for token in (
-    'id="igcOfficialFavicon"',
-    'id="igcBrandSplash"',
-    'id="igc-official-brand-css"',
+    '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,',
+    'id="igc-official-brand-v12034"',
     'class="aboutOfficialLockup"',
-    '<b>IG Cleaner Pro</b>',
+    '<b>Instagram Cleaner Pro</b>',
+    'aria-label="Instagram Cleaner Pro logo"',
     'data:image/svg+xml,'
 ):
     assert token in html, f"Desktop official-brand token missing: {token}"
@@ -77,7 +77,7 @@ assert 'list_snapshots' in html
 # All user-visible release identity must agree with the governed v120.34 target.
 assert '<title>Instagram Cleaner Pro v120.34</title>' in html
 assert 'Engine v119 · UI v120.34' in html
-assert 'IG Cleaner Pro · UI v120.34' in html
+assert 'Instagram Cleaner Pro · UI v120.34' in html
 assert 'UI v120.26' not in html
 assert 'UI v120.27' not in html
 
