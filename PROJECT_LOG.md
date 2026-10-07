@@ -884,3 +884,43 @@ Validation status:
 - Signed `assembleRelease` smoke test with ephemeral CI keystore — PASS.
 - Release APK package identity verified as `com.michelslab.igcleaner` / `12034` / `120.34` — PASS.
 - Real-phone validation remains separate and must not be claimed from CI.
+
+
+## 2026-10-07 — v120.34 signed Android release closeout
+
+Release state:
+- **v120.34** is published as a normal GitHub release (`prerelease=false`).
+- Final publisher run `37574744462` completed **SUCCESS**.
+- Stable Android artifact: `IG-Cleaner-Pro-Android-v120.34.apk`.
+- Stable Desktop artifact: `IG-Cleaner-Pro-Desktop-v120.34.zip`.
+- Checksums, privacy document and official product logo are attached to the same release.
+
+Production signing:
+- package: `com.michelslab.igcleaner`;
+- versionCode/versionName: `12034 / 120.34`;
+- alias: `ig-cleaner-pro`;
+- certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`;
+- certificate validity: `9999-12-31`;
+- GitHub Actions signing secrets configured and successfully consumed;
+- private signing material remains outside Git.
+
+Release verification:
+- production keystore restoration — PASS;
+- signer identity verification — PASS;
+- signed `assembleRelease` — PASS;
+- stable package/version verification — PASS;
+- exact signer fingerprint verification — PASS;
+- release bundle verification — PASS;
+- GitHub release publication — PASS;
+- Android asset presence verification — PASS.
+
+CI note:
+- two earlier publisher attempts failed only because the verification script assumed an older `apksigner` output label/field layout.
+- PR #16 and PR #18 corrected the verifier.
+- the APK and FINAL-9999 signing identity themselves were valid; the final publisher passed end-to-end.
+
+Governance:
+- v120.34 is closed as the current stable baseline.
+- next development/release target is **v120.35**.
+- v120.34 authorization must not be reused for v120.35.
+- physical-device validation remains separate from repository/CI evidence.
