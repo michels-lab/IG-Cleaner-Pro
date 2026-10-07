@@ -1,6 +1,6 @@
 # IG Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current Android work line: **v120.33 beta**.
+Current Android work line: **v120.34 beta**.
 
 ## Product model
 
@@ -27,7 +27,7 @@ The original Instagram ZIP/JSON/HTML file itself is **not** uploaded as a backup
 
 ## List-source rule
 
-For v120.30, Desktop is the canonical publisher of the complete lists.
+For v120.34, Desktop is the canonical publisher of the complete lists.
 
 1. Import/process the Instagram export on Desktop.
 2. Sign in to **Cuenta** and run Sync (automatic sync also runs while the app is open).
@@ -65,7 +65,7 @@ Project URL and publishable key remain application configuration. Never ship a s
 
 ## Supabase tables
 
-v120.30 uses:
+v120.34 uses:
 
 - `devices`
 - `audit_events`
@@ -97,12 +97,12 @@ Workspace integration also provides:
 
 - Live Supabase migration `add_full_list_snapshots_v120_30` applied successfully.
 - `public.list_snapshots` verified with RLS enabled.
-- GitHub Actions run `37391428384` completed **SUCCESS** on `android-full-sync-v120.30`.
+- GitHub Actions run `37391428384` completed **SUCCESS** on `android-full-sync-v120.34`.
 - `:app:assembleDebug` completed successfully.
 - CI's **Verify embedded Workspace asset** gate also passed.
 - The remaining gate is on-device functional validation: publish populated lists from the updated Desktop, sync Android, verify the real usernames appear in Review/Mutuals/Followers/Pending, and verify session persistence after app close/reopen.
 
-Do not merge/release v120.30 until that device round-trip is confirmed.
+Do not merge/release v120.34 until that device round-trip is confirmed.
 
 
 ## v120.32 Android product layer
@@ -118,7 +118,7 @@ Password sign-in uses Supabase Auth. On first-time setup or recovery, the user r
 Security note: client EXECUTE privileges were revoked from public.rls_auto_enable(). Supabase leaked-password protection should also be enabled in the project Auth settings.
 
 
-## v120.33 hotfix guarantees
+## v120.34 hotfix guarantees
 
 - The Android bottom navigation owns the navigation-bar inset instead of applying that inset to the whole root view. This prevents Home/Review/Focus/Activity/Profile labels and indicators from being clipped by Samsung gesture or 3-button navigation.
 - Desktop publishes review state immediately after review/protect/snooze decisions through a debounced state push.
@@ -129,8 +129,34 @@ Security note: client EXECUTE privileges were revoked from public.rls_auto_enabl
 - CI checks every executable inline Desktop JavaScript block with `node --check` before building Android.
 
 
-### v120.33 authentication and truthful loading states
+### v120.34 authentication and truthful loading states
 
 Desktop uses the same password-first account model as Android. OTP is shown only for first-time setup or password recovery, where it verifies the email before a new password is saved.
 
-Android distinguishes raw relationship data from synchronized review state. If Following/Followers are present but no Desktop `workspace_state` or newer `profile_state` exists yet, Home shows the relationship lists but does **not** claim that every non-mutual account is an unresolved review. Once Desktop v120.33 publishes review history, the true unresolved count is shown automatically.
+Android distinguishes raw relationship data from synchronized review state. If Following/Followers are present but no Desktop `workspace_state` or newer `profile_state` exists yet, Home shows the relationship lists but does **not** claim that every non-mutual account is an unresolved review. Once Desktop v120.34 publishes review history, the true unresolved count is shown automatically.
+
+
+## Android-created Focus in v120.34
+
+Android no longer requires Windows/Desktop to prepare every Focus batch.
+
+From the native Focus screen the user can create:
+- Review / not-following-back Focus 20, 30 or 40;
+- Mutuals Focus 20, 30 or 40;
+- Followers-you-don't-follow Focus 20, 30 or 40;
+- Pending Requests Focus 20, 30 or 40.
+
+The Android creator refreshes `list_snapshots`, `workspace_state` and `profile_state`, excludes reviewed/protected/actively-snoozed profiles and usernames already present in an active/prepared batch, freezes the selected usernames in `focus_batches` + `focus_batch_items`, and records Android as the source device. Desktop can then see the same batch through the shared Supabase tables.
+
+If historical review state has not reached the cloud yet, Android refuses to create a potentially incorrect batch instead of treating every raw relationship as unresolved.
+
+## Governed release line
+
+The next allowed release is exactly **v120.34**.
+
+- Source of truth: `.michelslab/release-policy.json`.
+- Channel: stable GitHub release.
+- GitHub `prerelease`: **false**.
+- Validation workflows do not publish.
+- Publication requires `.michelslab/release-request.json` with explicit user authorization.
+- Historical v120.27/v120.28 publisher workflows are disabled and cannot publish those versions.
