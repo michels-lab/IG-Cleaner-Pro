@@ -9,9 +9,9 @@ Continue from:
 
 `release/v120.34`
 
-Current branch head after documentation/governance updates:
+Current validated implementation head before this handoff-only documentation update:
 
-`d9d1bf13467bfb5a9b8b17eb1a50bfb11b5651c9`
+`da08628a068dde4e2716fe622741037ad0d68a02`
 
 The divergent branch `release-v120.34` is historical/superseded and **must not be used for publication**.
 
@@ -46,6 +46,12 @@ A historical publisher on `release-v120.34` is unsafe for stable Android publica
 - Michel's Lab lockup git blob SHA: `7fd48093968b31ddacd3098f5b15d962de580652`
 - Embedded base64 portrait was removed.
 
+### Desktop ↔ Android review-state continuity
+- Restored the full `igc-v12030-supabase-sync-js` bridge to the Desktop candidate.
+- Restored `normalizeLegacyReviewState()`, `pushWorkspaceState()`, `list_snapshots` and `workspace_state` synchronization.
+- Historical Desktop-reviewed profiles can be normalized and published instead of being silently treated as unresolved on Android.
+- CI now fails if this sync bridge disappears again.
+
 ### Android repair
 - Restored resource/dependency parity for the current native shell.
 - Fixed missing `bg_badge`, Home/Review/Focus/Activity/Profile navigation resources and SwipeRefreshLayout dependency.
@@ -68,25 +74,32 @@ Sizes:
 
 The creator refreshes synchronized relationship/review state, excludes reviewed/protected/active-snooze/already-batched usernames, freezes the selection in Supabase, and refuses unsafe creation if historical review state is unavailable.
 
+### Privacy surface
+- Added `docs/PRIVACY.md` as the centralized local-first/data-handling contract.
+- Desktop About now exposes a dedicated **Privacidad** dialog.
+- The UI explicitly distinguishes raw local Instagram exports from normalized synchronized state and does not falsely claim a one-click cloud-data deletion control.
+- Added a CI privacy contract.
+
 ### Shared governance
 - Michel's Lab shared child-agent contract synced to **2026-10-06.5** in `AGENTS.md` and `.github/copilot-instructions.md`.
 
 ## Verified CI evidence
 
-After the v120.34 repair:
-- GitHub Actions run `37561825709` — **SUCCESS**
-  - Desktop contract — PASS
+Final repository validation for the consolidated candidate:
+- GitHub Actions run `37562844481` — **SUCCESS**
+  - Desktop HTML/persistent-state contract — PASS
   - sanitized Instagram fixture — PASS
-  - canonical branding contract — PASS
+  - canonical product/About branding — PASS
+  - privacy/data-handling contract — PASS
+  - Android Focus/inset regression contract — PASS
   - distribution manifest — PASS
   - Android build — PASS
-  - embedded Workspace verification — PASS
-- GitHub Actions run `37559946743` — Android companion — **SUCCESS**
-- After restoring native Android Focus creation:
-  - run `37562024462` — full CI — **SUCCESS**
-  - run `37562024494` — Android companion — **SUCCESS**
+  - embedded Workspace/package verification — PASS
+- GitHub Actions run `37562748629` — Android companion with privacy/About changes — **SUCCESS**.
+- GitHub Actions run `37562402633` — Android companion with restored full Desktop sync bridge — **SUCCESS**.
+- GitHub Actions runs `37562024462` / `37562024494` — full CI + companion after restoring Android-created Focus — **SUCCESS**.
 
-Evidence status: **verified in CI**.
+Evidence status: **verified in repository CI**. Physical-device/provider behavior remains a separate manual gate.
 
 ## Manual validation still pending
 
