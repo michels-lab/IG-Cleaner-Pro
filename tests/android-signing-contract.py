@@ -44,6 +44,7 @@ assert signing["certificateSha256"] == "99C1DD7B0ED32B758AFAD253A774D85DC7A44819
 assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
 assert "Signer #1 certificate SHA-256 digest:" not in workflow
+assert "{print $NF; exit}" in workflow
 
 android = manifest["channels"]["android"]
 assert android["artifact"] == "IG-Cleaner-Pro-Android-v120.34.apk"
