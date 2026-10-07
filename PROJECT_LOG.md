@@ -878,5 +878,9 @@ Secret boundary:
 - Required repository secret names are `IGC_ANDROID_KEYSTORE_B64`, `IGC_ANDROID_KEYSTORE_PASSWORD`, `IGC_ANDROID_KEY_ALIAS`, and `IGC_ANDROID_KEY_PASSWORD`.
 
 Validation status:
-- Repository/CI validation is pending the signing PR run.
+- GitHub Actions run `37568540656` — **SUCCESS**.
+- Desktop/state/branding/privacy/signing contracts — PASS.
+- Android debug build + embedded Workspace verification — PASS.
+- Signed `assembleRelease` smoke test with ephemeral CI keystore — PASS.
+- Release APK package identity verified as `com.michelslab.igcleaner` / `12034` / `120.34` — PASS.
 - Real-phone validation remains separate and must not be claimed from CI.
