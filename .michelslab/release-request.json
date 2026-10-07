@@ -6,6 +6,6 @@
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "publisher_retry": 2,
-  "publisher_retry_reason": "apksigner output parser compatibility fix merged in PR #16"
+  "publisher_retry": 3,
+  "publisher_retry_reason": "final apksigner digest field parser fix merged in PR #18"
 }
