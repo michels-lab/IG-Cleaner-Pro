@@ -17,6 +17,7 @@ on:
       - 'release/**'
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/release-v12034.yml'
   pull_request:
     paths:
       - 'desktop/**'
@@ -26,6 +27,7 @@ on:
       - 'release/**'
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/release-v12034.yml'
 
 permissions:
   contents: read
@@ -52,6 +54,8 @@ jobs:
         run: python tests/privacy-contract.py
       - name: Validate Android UX and Focus regression contract
         run: python tests/android-contract.py
+      - name: Validate Android production-signing contract
+        run: python tests/android-signing-contract.py
       - name: Validate distribution manifest
         run: |
           python - <<'PY'
@@ -64,12 +68,15 @@ jobs:
           assert m['releasePolicy']['checksumsRequired'] is True
           assert m['releasePolicy']['nextRelease']=='v120.34'
           assert m['releasePolicy']['githubPrerelease'] is False
+          assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
           assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
           assert m['channels']['desktop']['entrypoint']=='IG-Cleaner-Pro.html'
           assert m['channels']['desktop']['includes']==[
               'assets/michel_duarte_avatar.jpg',
               'assets/michels-lab/official-lockup.png',
           ]
+          assert m['channels']['android']['artifact']=='IG-Cleaner-Pro-Android-v120.34.apk'
+          assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
           print('Distribution/state manifest passed for stable v120.34.')
           PY
@@ -120,5 +127,43 @@ jobs:
           cmp /tmp/igc-lab-lockup.png ../desktop/assets/michels-lab/official-lockup.png
           if unzip -l "$APK" | grep -q "$LEGACY"; then
             echo "::error::Duplicate legacy Workspace asset is packaged: $LEGACY"
+            exit 1
+          fi
+      - name: Smoke-test production signing plumbing with ephemeral CI key
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          export IGC_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/igc-ci-release.jks"
+          export IGC_ANDROID_KEYSTORE_PASSWORD="$(openssl rand -hex 24)"
+          export IGC_ANDROID_KEY_ALIAS="ig-cleaner-pro-ci"
+          export IGC_ANDROID_KEY_PASSWORD="$(openssl rand -hex 24)"
+
+          keytool -genkeypair \
+            -keystore "$IGC_ANDROID_KEYSTORE_PATH" \
+            -storetype JKS \
+            -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" \
+            -keypass "$IGC_ANDROID_KEY_PASSWORD" \
+            -alias "$IGC_ANDROID_KEY_ALIAS" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 30 \
+            -dname "CN=IG Cleaner CI, OU=CI, O=Michel's Lab, C=MX"
+
+          gradle :app:assembleRelease
+
+          APK="app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -f "$APK"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          "$AAPT" dump badging "$APK" | tee /tmp/igc-release-badging.txt
+          grep -q "package: name='com.michelslab.igcleaner'" /tmp/igc-release-badging.txt
+          grep -q "versionCode='12034'" /tmp/igc-release-badging.txt
+          grep -q "versionName='120.34'" /tmp/igc-release-badging.txt
+          if grep -q "com.michelslab.igcleaner.beta" /tmp/igc-release-badging.txt; then
+            echo "::error::Release signing smoke test produced beta application id."
             exit 1
           fi
