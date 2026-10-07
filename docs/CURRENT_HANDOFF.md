@@ -149,12 +149,12 @@ Do **not** publish v120.35 until Michel explicitly authorizes a release. Develop
 
 PR **#20** remains open, mergeable and intentionally Draft.
 
-GitHub Actions run **37696174790**, including retry attempt **2** on 2026-10-07, still created all three jobs and terminated them before any runner step or log existed:
+GitHub Actions run **37702842845** on head `e5a49aa55053599636a7c55d91df7b39df7207b9`, triggered by marking PR #20 Ready for review, created all three jobs and terminated them before any runner step or log existed:
 - Desktop local-app contract — pre-run failure;
 - Android build + embedded Workspace — pre-run failure;
 - Supabase RLS isolation — pre-run failure.
 
-The jobs expose no executable steps/log blobs, so this is not evidence of an application/test assertion failure. GitHub's public status page reports Actions operational after today's service incidents, but the repository runner-start failure remains unresolved and its exact account/platform cause is not exposed through the available connector APIs.
+Every failed job reports `steps: []` and no log blob exists, so this is not evidence of an application/test assertion failure. GitHub's public status page reports Actions operational after today's service incidents, but the repository runner-start failure remains unresolved and its exact account/platform cause is not exposed through the available connector APIs. PR #20 was returned to Draft immediately after this probe. Draft PR jobs are now server-side skipped, preventing further runner/minute waste until the gate is intentionally retried.
 
 Direct evidence on the exact current branch:
 - Desktop inline JavaScript syntax: **16/16 PASS**;
