@@ -42,8 +42,8 @@ for source in (launcher, internal):
 assert '#071A30' in bg
 assert '@drawable/ic_launcher_foreground' in adaptive
 assert '@drawable/ig_brand_splash' in theme
-assert 'app:logo="@drawable/ig_official_mark"' in toolbar
-assert 'app:title="IG Cleaner Pro"' in toolbar
+assert 'android:src="@drawable/ic_launcher_foreground"' in toolbar
+assert 'android:text="Instagram Cleaner Pro"' in toolbar
 assert 'android:id="@+id/workspaceLoadingBrand"' in workspace
 assert 'android:src="@drawable/ig_official_mark"' in workspace
 assert 'R.id.actionAbout' in main
