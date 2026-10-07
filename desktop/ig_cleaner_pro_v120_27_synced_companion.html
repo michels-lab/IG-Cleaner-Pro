@@ -12854,6 +12854,8 @@ async function deliverPrivacyJson(fileName,payload){
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 window.igcPrivacyExportCloudData=async function(){
+  if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
+  S.busy=true;
   try{
     await ensureAuth();
     privacyDataStatus('Preparando export de datos sincronizados…');
@@ -12876,14 +12878,19 @@ window.igcPrivacyExportCloudData=async function(){
     privacyDataStatus(`Export listo · ${Object.values(counts).reduce((a,b)=>a+b,0)} filas sincronizadas.`,'ok');
   }catch(e){
     privacyDataStatus(`No se pudo exportar: ${e.message||e}`,'error');
+  }finally{
+    S.busy=false;
+    renderStats();
   }
 };
 window.igcPrivacyDeleteCloudData=async function(){
+  if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
   try{
     await ensureAuth();
     if(!confirm('Esto borrará TODOS los datos sincronizados de esta cuenta en la nube. Tus exports originales y respaldos locales independientes no se borrarán. ¿Continuar?'))return;
     const typed=prompt('Confirmación final: escribe BORRAR NUBE');
     if(String(typed||'').trim().toUpperCase()!=='BORRAR NUBE'){privacyDataStatus('Borrado cancelado.');return}
+    S.busy=true;
     privacyDataStatus('Borrando datos sincronizados…');
     const order=['focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
     for(const table of order){
@@ -12896,6 +12903,9 @@ window.igcPrivacyDeleteCloudData=async function(){
     status('Datos de nube borrados · sesión cerrada. Tus datos locales permanecen intactos.','warn');
   }catch(e){
     privacyDataStatus(`No se pudo borrar la nube: ${e.message||e}`,'error');
+  }finally{
+    S.busy=false;
+    renderStats();
   }
 };
 function iso(v){return new Date(Number(v||Date.now())).toISOString()}
