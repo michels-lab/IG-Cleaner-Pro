@@ -94,11 +94,23 @@ jobs:
           assert m['channels']['android']['artifactTemplate']=='IG-Cleaner-Pro-Android-v{version}.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
-          assert r['version']=='120.34'
-          assert r['status']=='published'
-          assert r['authorized'] is False
-          assert r['published_run']==37574744462
-          print('Distribution/state manifest passed: stable v120.34 closed, next v120.35.')
+          current=m['releasePolicy']['currentStableRelease']
+          next_release=m['releasePolicy']['nextRelease']
+          assert current=='v120.34'
+          assert next_release=='v120.35'
+          if r['authorized']:
+              assert r['status'] in ('requested','authorized')
+              assert r['tag']==next_release
+              assert r['version']==next_release.removeprefix('v')
+              assert r['requested_channel']=='stable'
+              assert r['github_prerelease'] is False
+          else:
+              assert r['status']=='published'
+              assert r['tag']==current
+              assert r['version']==current.removeprefix('v')
+              assert r['published_run']==37574744462
+              assert r['published_commit']
+          print('Distribution/state manifest passed: stable v120.34, governed next v120.35.')
           PY
 
   supabase-rls:
