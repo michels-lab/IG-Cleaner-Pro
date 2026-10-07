@@ -870,8 +870,8 @@ Implementation:
 
 Production signing identity:
 - alias: `ig-cleaner-pro`
-- certificate SHA-256: `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`
-- valid until: 2126-10-08 (100-year signing certificate; effectively permanent for the product lifecycle)
+- certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`
+- valid until: 9999-12-31 (practical non-expiring maximum)
 
 Secret boundary:
 - No production keystore bytes or signing passwords are stored in Git.
