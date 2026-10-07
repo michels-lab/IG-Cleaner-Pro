@@ -16,7 +16,8 @@ for token in (
     "IGC_ANDROID_KEY_ALIAS",
     "IGC_ANDROID_KEY_PASSWORD",
     'create("release")',
-    'it.name == "assembleRelease"',
+    "releaseTaskRequested",
+    'contains("assembleRelease"',
     "Production Android signing is required",
 ):
     assert token in gradle, f"Release signing Gradle contract missing: {token}"
