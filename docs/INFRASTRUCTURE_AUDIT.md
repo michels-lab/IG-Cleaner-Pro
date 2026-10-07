@@ -31,20 +31,24 @@ Cross-device sync moves normalized list snapshots plus workflow state such as wh
 The app must not silently broaden this boundary from review metadata to raw social-export storage.
 
 ## Android distribution state
-- GitHub release **v120.34** exists as a normal release.
+- GitHub release **v120.34** is published as a normal release (`prerelease=false`).
+- Final publisher run **37574744462** completed **SUCCESS**.
+- The stable Android artifact `IG-Cleaner-Pro-Android-v120.34.apk` is attached to the release.
 - The Android implementation is versionCode **12034** / versionName **120.34**.
 - Debug builds remain `com.michelslab.igcleaner.beta` / `120.34-beta`.
-- Stable release builds use `com.michelslab.igcleaner` and now require the persistent production signing identity recorded in `release/android-signing.json`.
-- The production certificate SHA-256 is `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`.
-- Required secret names and operational procedure are documented in `docs/ANDROID_SIGNING.md`; no private signing material is stored in Git.
-- The stable release workflow verifies package/version/signature before attaching `IG-Cleaner-Pro-Android-v120.34.apk`.
+- Stable builds use `com.michelslab.igcleaner` and the persistent production signing identity recorded in `release/android-signing.json`.
+- Production certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`.
+- Certificate validity: **9999-12-31**.
+- The four Android signing secrets are configured in GitHub Actions and were successfully consumed by the final publisher.
+- No private signing material is stored in Git.
+- The release workflow verifies package/version/signature before publication.
 - Physical-device validation remains a separate evidence gate and must not be inferred from CI.
 
 ## Remaining infrastructure work
-1. Load the four Android signing values into GitHub Actions Secrets and run the signed v120.34 publication path.
-2. Install/test the signed APK on the target phone and record cold-launch, persistence, Focus and round-trip evidence.
-3. Add centralized in-product privacy/delete/export controls for synchronized metadata.
-4. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
+1. Install/test the signed APK on the target phone and record cold-launch, persistence, Focus and round-trip evidence.
+2. Add centralized in-product privacy/delete/export controls for synchronized metadata.
+3. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
+4. Generalize the release publisher for v120.35+ instead of keeping version-specific release automation.
 5. Keep sanitized fixtures in Git; never commit real Instagram exports or secrets/signing material.
 
 Canonical privacy reference: `docs/PRIVACY.md`.
@@ -74,5 +78,5 @@ Implemented the missing deterministic repository gates:
 
 Persistent browser state is now formally treated as a compatibility surface. Existing localStorage keys and IndexedDB `ig_cleaner_pro_history` version 1 may not be renamed/reset without an explicit migration and regression evidence.
 
-Version-specific release workflows were separated from ordinary `main` validation so CI success cannot silently publish a release. Android production/Play remains blocked on real-device validation.
+Version-specific release workflows were separated from ordinary `main` validation so CI success cannot silently publish a release. Android GitHub distribution is now live with persistent production signing. Google Play publication remains separate and still requires real-device/store validation.
 
