@@ -917,7 +917,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.34");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.35");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
