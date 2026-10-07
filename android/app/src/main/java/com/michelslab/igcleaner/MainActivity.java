@@ -92,7 +92,7 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12034;
+    private static final int FILE_CHOOSER_REQUEST = 12035;
     private static final String[] SYNC_TABLES = new String[]{
             "devices",
             "audit_events",
@@ -618,7 +618,7 @@ public final class MainActivity extends AppCompatActivity {
             }
             workspaceSectionTitle.setText(syncedReviewStateAvailable ? "Continue review" : "Restore review history");
             workspaceSectionSubtitle.setText(!syncedReviewStateAvailable
-                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.34 once to restore the real pending count."
+                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.35 once to restore the real pending count."
                     : (unresolvedReview == 0
                         ? "Your main cleanup queue is clear."
                         : unresolvedReview + " profiles still need a decision. Tap one to open Instagram."));
@@ -1452,7 +1452,7 @@ public final class MainActivity extends AppCompatActivity {
                     .put("status", "prepared")
                     .put("created_device", "android")
                     .put("created_at", now)
-                    .put("source_signature", "android-v120.34:" + module + ":" + requestedSize)
+                    .put("source_signature", "android-v120.35:" + module + ":" + requestedSize)
                     .put("updated_at", now);
             api.upsert("focus_batches", "user_id,id", new JSONArray().put(batch));
 
