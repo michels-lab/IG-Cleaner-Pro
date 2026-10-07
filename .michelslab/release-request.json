@@ -1,0 +1,9 @@
+{
+  "version": "120.34",
+  "tag": "v120.34",
+  "authorized": true,
+  "authorization_source": "Explicit user authorization in ChatGPT: 'Dale release' on 2026-10-06",
+  "android_stable_artifact": "withheld-no-production-signing",
+  "requested_channel": "stable",
+  "github_prerelease": false
+}
