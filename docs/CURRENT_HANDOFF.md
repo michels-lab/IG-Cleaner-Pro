@@ -24,8 +24,8 @@ Debug remains:
 
 Persistent signing identity:
 - alias: `ig-cleaner-pro`
-- certificate SHA-256: `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`
-- valid until: **2126-10-08**
+- certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`
+- valid until: **9999-12-31**
 - public metadata: `release/android-signing.json`
 
 Private keystore/passwords must never be committed. Required GitHub Actions secret names:
