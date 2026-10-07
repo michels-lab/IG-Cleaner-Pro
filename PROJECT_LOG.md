@@ -884,3 +884,29 @@ Validation status:
 - Signed `assembleRelease` smoke test with ephemeral CI keystore — PASS.
 - Release APK package identity verified as `com.michelslab.igcleaner` / `12034` / `120.34` — PASS.
 - Real-phone validation remains separate and must not be claimed from CI.
+
+## 2026-10-06 — v120.34 Android signer-verifier false red repaired
+
+Release evidence isolated a CI-only verification defect after the persistent production signing identity was loaded successfully.
+
+Observed evidence:
+- Governed publisher run `37572910407`, attempt 2: production keystore identity verification passed and `:app:assembleRelease` built the signed stable APK successfully.
+- The generated APK reported package `com.michelslab.igcleaner`, versionCode `12034`, versionName `120.34`, and certificate SHA-256 `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`.
+- Package verification still failed because the workflow parser expected the legacy `Signer #1 certificate SHA-256 digest:` field layout while current Android Build Tools emitted `V3.0 Signer: certificate SHA-256 digest:`.
+- PR #16 broadened the label match but still selected field `$2`, which is not the digest on the current V3.0 line.
+- Authorized publisher retry run `37574230057` reproduced the same failure at `Verify signed Android package`, confirming the release artifact/build/signing path itself was not the failing component.
+
+Correction in PR #17:
+- added `tools/extract_apksigner_certificate_sha256.py` as the single parser used by the governed publisher;
+- parser matches the certificate digest label independent of the signer prefix, accepts plain or colon-delimited SHA-256 text, normalizes to lowercase hex, and does not accept a public-key digest as a certificate digest;
+- `tests/android-signing-contract.py` now executes that parser against legacy, current V3.0 and colon-delimited fixtures instead of relying on a token-only workflow assertion;
+- exact equality against the public production certificate fingerprint remains mandatory.
+
+Validation:
+- PR #17 CI run `37574407138` — **SUCCESS**.
+- Desktop/local-app contracts, Android production-signing semantic contract and distribution manifest — PASS.
+- Real Android debug build + embedded Workspace — PASS.
+- Ephemeral release-signing plumbing smoke test — PASS.
+
+No app behavior, package ID, version, production signing identity or release authorization changed. Physical-phone validation remains a separate evidence gate.
+
