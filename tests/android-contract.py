@@ -7,6 +7,8 @@ main = (ROOT / "android/app/src/main/java/com/michelslab/igcleaner/MainActivity.
 gradle = (ROOT / "android/app/build.gradle.kts").read_text(encoding="utf-8")
 nav = (ROOT / "android/app/src/main/res/menu/bottom_nav.xml").read_text(encoding="utf-8")
 layout = (ROOT / "android/app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
+account = (ROOT / "android/app/src/main/res/layout/screen_account.xml").read_text(encoding="utf-8")
+sync_api = (ROOT / "android/app/src/main/java/com/michelslab/igcleaner/SyncApi.java").read_text(encoding="utf-8")
 account_layout = (ROOT / "android/app/src/main/res/layout/screen_account.xml").read_text(encoding="utf-8")
 sync_api = (ROOT / "android/app/src/main/java/com/michelslab/igcleaner/SyncApi.java").read_text(encoding="utf-8")
 
