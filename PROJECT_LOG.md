@@ -1,6 +1,6 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
-_Last updated: 2026-09-30_
+_Last updated: 2026-10-07_
 
 This file is the **functional contract** for IG Cleaner Pro. UI redesigns, refactors, performance work, and future releases must preserve the capabilities listed here unless Michel Armando Duarte Flores explicitly requests their removal.
 
@@ -965,3 +965,12 @@ Validation status:
 - Implementation complete on branch `development/v120.35-infra-privacy`.
 - Full current-head PR CI is required before merge.
 - Physical-device validation of Android privacy/download flows remains separate evidence.
+
+
+### RLS performance hardening
+- Applied Supabase migration `optimize_rls_policies_v12035` to all seven synchronized tables.
+- Policies are now explicitly `TO authenticated` and compare ownership using `(select auth.uid()) = user_id`.
+- Data semantics did not change; no application rows were deleted or rewritten.
+- Supabase Performance Advisor: **28 Auth RLS Initialization Plan warnings → 0**.
+- Live transactional smoke after migration: authenticated user 1 saw exactly 1 own temporary row and 0 foreign temporary rows; transaction rolled back.
+- Remaining advisor items are unrelated to row isolation: leaked-password protection is disabled in Auth, and one unused-index notice is informational.
