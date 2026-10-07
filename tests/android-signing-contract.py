@@ -8,6 +8,7 @@ gradle = (ROOT / "android/app/build.gradle.kts").read_text(encoding="utf-8")
 workflow = (ROOT / ".github/workflows/release-v12034.yml").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "release/distribution-manifest.json").read_text(encoding="utf-8"))
 signing = json.loads((ROOT / "release/android-signing.json").read_text(encoding="utf-8"))
+# Stable signer certificate is intentionally long-lived through 2126.
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 for token in (
