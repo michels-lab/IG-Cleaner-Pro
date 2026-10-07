@@ -1,6 +1,6 @@
 # Android Production Signing — IG Cleaner Pro
 
-Updated: **2026-10-06**
+Updated: **2026-10-07**
 
 ## Stable signing identity
 
@@ -40,7 +40,7 @@ Debug:
 
 Release:
 - application ID: `com.michelslab.igcleaner`
-- version: `120.34`
+- active development version: `120.35`
 - `assembleRelease` / `bundleRelease` fail immediately if production signing variables are missing.
 - release publication verifies package ID, versionCode/versionName and signer certificate fingerprint before attaching the APK.
 
@@ -56,8 +56,8 @@ Never commit:
 
 ## Release policy
 
-For normal IG Cleaner Pro GitHub releases, include the latest validated Android APK whenever the persistent signing requirements are satisfied. v120.34 established this as the production baseline. Its release artifact is:
+For normal IG Cleaner Pro GitHub releases, include the latest validated Android APK whenever the persistent signing requirements are satisfied. v120.34 established the production baseline.
 
-`IG-Cleaner-Pro-Android-v120.34.apk`
+Future releases use the generic governed publisher at `.github/workflows/release.yml`. Artifact names are derived from the authorized version, for example `IG-Cleaner-Pro-Android-v120.35.apk`.
 
-Physical-device behavior remains a separate validation claim from build/signature verification.
+The signing key/fingerprint does **not** change when the app version changes. Physical-device behavior remains a separate validation claim from build/signature verification.
