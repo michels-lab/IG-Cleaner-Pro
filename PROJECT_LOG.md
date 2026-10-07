@@ -985,3 +985,33 @@ Validation status:
 - Live Supabase post-migration cross-user check: user 2 affected 0 user-1 rows across all seven synchronized tables for UPDATE attempts; temporary rows were transactionally rolled back.
 - Supabase Performance Advisor after migration: 0 Auth RLS Initialization Plan warnings; one informational unused-index notice remains.
 - Merge remains blocked until same-SHA executable CI/build evidence is available.
+
+
+## 2026-10-07 — v120.35 direct validation while GitHub runners are unavailable
+
+GitHub Actions:
+- PR #20 head CI run `37696174790` failed before any runner step executed.
+- retry attempt 2 reproduced the same pre-run failure for Desktop, Android and Supabase jobs;
+- job payloads contain no steps and job log blobs do not exist;
+- therefore this is treated as a runner/platform/account execution blocker, not as a failed product assertion;
+- PR #20 remains Draft and must not merge until executable same-SHA CI passes.
+
+Direct exact-branch validation:
+- all 16 inline Desktop scripts parse successfully;
+- 0 duplicate static DOM IDs;
+- v120.35 identity, privacy, generic publisher and RLS contract sweep passes;
+- targeted corrected sweep: 11/11 PASS;
+- Android Java/Gradle delimiter structure passes;
+- modified Android XML structure passes.
+
+Live Supabase RLS behavioral evidence:
+- rollback-only transaction seeded user 1 and user 2 data across all seven synchronized tables;
+- authenticated user 2 saw exactly one own seeded row in every table;
+- UPDATE attempts against user 1 affected 0 rows in all seven tables;
+- DELETE attempts against user 1 affected 0 rows in all seven tables;
+- authenticated own-row INSERT succeeded;
+- transaction rolled back, leaving no test rows behind.
+
+Advisor state after the optimized RLS migration:
+- Security Advisor: no RLS exposure finding; one unrelated warning remains for leaked-password protection disabled;
+- Performance Advisor: 0 Auth RLS Initialization Plan warnings; only the informational unused `audit_events_user_device_idx` notice remains.
