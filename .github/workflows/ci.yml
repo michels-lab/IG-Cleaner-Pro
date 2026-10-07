@@ -80,6 +80,7 @@ jobs:
           assert m['releasePolicy']['currentStableRelease']=='v120.34'
           assert m['releasePolicy']['nextRelease']=='v120.35'
           assert m['releasePolicy']['lastPublishedRun']==37574744462
+          assert m['releasePolicy']['genericPublisher']=='.github/workflows/release.yml'
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
           assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
@@ -89,6 +90,8 @@ jobs:
               'assets/michels-lab/official-lockup.png',
           ]
           assert m['channels']['android']['artifact']=='IG-Cleaner-Pro-Android-v120.34.apk'
+          assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
+          assert m['channels']['android']['artifactTemplate']=='IG-Cleaner-Pro-Android-v{version}.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
           assert r['version']=='120.34'
