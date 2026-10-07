@@ -3,7 +3,7 @@ name: Build IG Cleaner Companion
 on:
   workflow_dispatch:
   push:
-    branches: ["android-*", "release-*"]
+    branches: ["android-*", "release-*", "release/**"]
     paths:
       - "android/**"
       - ".github/workflows/android-companion.yml"
