@@ -56,6 +56,8 @@ jobs:
           desktop=manifest["channels"]["desktop"]["artifactTemplate"].replace("{version}",version)
           android=manifest["channels"]["android"]["artifactTemplate"].replace("{version}",version)
           expected_code=int(version.replace(".",""))
+          assert signing["versionName"] == version, "Signing metadata versionName does not match release request"
+          assert signing["versionCode"] == expected_code, "Signing metadata versionCode does not match release request"
 
           gradle=pathlib.Path("android/app/build.gradle.kts").read_text()
           assert f'versionName = "{version}"' in gradle
@@ -89,6 +91,7 @@ jobs:
           python3 tests/android-contract.py
           python3 tests/android-signing-contract.py
           python3 tests/release-publisher-contract.py
+          python3 tests/rls-contract.py
 
       - name: Install Android SDK packages
         env:
