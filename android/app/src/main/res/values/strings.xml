@@ -4,5 +4,5 @@
     <string name="nav_audit">Activity</string>
     <string name="nav_account">Profile</string>
     <string name="about_title">Instagram Cleaner Pro</string>
-    <string name="about_body">v120.33 Beta\nMichel’s Lab\n\nDesktop visual language, native Android Home/Review/Focus/Activity/Profile, password-first authentication, cached list restoration and cross-device synchronization.</string>
+    <string name="about_body">v120.34 Beta\nMichel’s Lab\n\nDesktop visual language, native Android Home/Review/Focus/Activity/Profile, password-first authentication, cached list restoration and cross-device synchronization.</string>
 </resources>
