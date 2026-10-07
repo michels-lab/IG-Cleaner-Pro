@@ -849,3 +849,38 @@ The required interpretation is structural integration rather than sticker placem
 - Manual physical-device/Desktop round-trip remains pending and is not represented as completed.
 - v120.34 has **not** been published by this work.
 - Stable Android publication remains blocked until a real release artifact/signing path is established; do not relabel a debug `.beta` APK as stable.
+
+
+## 2026-10-06 — Persistent Android production signing
+
+Decision:
+- Stable Android releases use one persistent signing identity for `com.michelslab.igcleaner`.
+- Debug builds remain isolated as `com.michelslab.igcleaner.beta`.
+- Normal IG Cleaner Pro GitHub releases must include the latest validated signed Android APK once signing requirements are configured.
+
+Implementation:
+- Added environment-backed production signing in `android/app/build.gradle.kts`.
+- Release tasks fail before packaging if the four production signing inputs are missing.
+- Added `release/android-signing.json` with the public certificate identity/fingerprint.
+- Added `docs/ANDROID_SIGNING.md` with backup and GitHub Secrets procedure.
+- Added `tests/android-signing-contract.py`.
+- CI now smoke-tests `assembleRelease` using an ephemeral disposable CI keystore.
+- The v120.34 release workflow now builds, verifies and attaches `IG-Cleaner-Pro-Android-v120.34.apk` after validating package ID, version and signer fingerprint.
+- Added `*.jks` / `*.keystore` exclusions so private signing material cannot be accidentally committed through normal workflows.
+
+Production signing identity:
+- alias: `ig-cleaner-pro`
+- certificate SHA-256: `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`
+- valid until: 2126-10-08 (100-year signing certificate; effectively permanent for the product lifecycle)
+
+Secret boundary:
+- No production keystore bytes or signing passwords are stored in Git.
+- Required repository secret names are `IGC_ANDROID_KEYSTORE_B64`, `IGC_ANDROID_KEYSTORE_PASSWORD`, `IGC_ANDROID_KEY_ALIAS`, and `IGC_ANDROID_KEY_PASSWORD`.
+
+Validation status:
+- GitHub Actions run `37568540656` — **SUCCESS**.
+- Desktop/state/branding/privacy/signing contracts — PASS.
+- Android debug build + embedded Workspace verification — PASS.
+- Signed `assembleRelease` smoke test with ephemeral CI keystore — PASS.
+- Release APK package identity verified as `com.michelslab.igcleaner` / `12034` / `120.34` — PASS.
+- Real-phone validation remains separate and must not be claimed from CI.

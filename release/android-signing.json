@@ -1,0 +1,16 @@
+{
+  "schema": "ig-cleaner-android-signing-v1",
+  "packageId": "com.michelslab.igcleaner",
+  "versionCode": 12034,
+  "versionName": "120.34",
+  "keyAlias": "ig-cleaner-pro",
+  "certificateSha256": "6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43",
+  "certificateValidUntil": "2126-10-08T03:55:18Z",
+  "requiredGitHubSecrets": [
+    "IGC_ANDROID_KEYSTORE_B64",
+    "IGC_ANDROID_KEYSTORE_PASSWORD",
+    "IGC_ANDROID_KEY_ALIAS",
+    "IGC_ANDROID_KEY_PASSWORD"
+  ],
+  "keystorePolicy": "private-backup-only-never-commit"
+}

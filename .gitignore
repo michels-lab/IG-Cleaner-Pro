@@ -1,3 +1,8 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# Android production signing material must never be committed.
+*.jks
+*.keystore
+android/signing.properties

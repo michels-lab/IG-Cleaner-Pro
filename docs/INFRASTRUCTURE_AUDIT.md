@@ -31,20 +31,21 @@ Cross-device sync moves normalized list snapshots plus workflow state such as wh
 The app must not silently broaden this boundary from review metadata to raw social-export storage.
 
 ## Android distribution state
-- v120.28 is the current published Android beta release.
-- v120.29 full-workspace Android is build-valid on branch `android-full-workspace-v120.29`.
-- GitHub Actions run `37388962937` passed.
-- v120.29 is not considered released/production-ready until target-phone validation completes.
+- GitHub release **v120.34** exists as a normal release.
+- The Android implementation is versionCode **12034** / versionName **120.34**.
+- Debug builds remain `com.michelslab.igcleaner.beta` / `120.34-beta`.
+- Stable release builds use `com.michelslab.igcleaner` and now require the persistent production signing identity recorded in `release/android-signing.json`.
+- The production certificate SHA-256 is `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`.
+- Required secret names and operational procedure are documented in `docs/ANDROID_SIGNING.md`; no private signing material is stored in Git.
+- The stable release workflow verifies package/version/signature before attaching `IG-Cleaner-Pro-Android-v120.34.apk`.
+- Physical-device validation remains a separate evidence gate and must not be inferred from CI.
 
 ## Remaining infrastructure work
-1. Complete v120.29 target-phone validation and publish the release only after the real-device gate passes.
-2. Add deterministic Desktop/browser regression CI for ZIP/HTML/JSON import and evidence semantics.
-3. Define a durable update path for both Desktop HTML and Android app while preserving local state.
-4. Add centralized in-product privacy/delete/export controls for synchronized metadata.
-5. Document database schema/version migrations and local browser/Android storage migrations.
-6. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
-7. Reconcile About/version identity across Desktop, Android and GitHub Releases.
-8. Keep sanitized fixtures in Git; never commit real Instagram exports or secrets.
+1. Load the four Android signing values into GitHub Actions Secrets and run the signed v120.34 publication path.
+2. Install/test the signed APK on the target phone and record cold-launch, persistence, Focus and round-trip evidence.
+3. Add centralized in-product privacy/delete/export controls for synchronized metadata.
+4. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
+5. Keep sanitized fixtures in Git; never commit real Instagram exports or secrets/signing material.
 
 Canonical privacy reference: `docs/PRIVACY.md`.
 
