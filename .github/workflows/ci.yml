@@ -205,9 +205,13 @@ jobs:
           test -x "$AAPT"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           "$AAPT" dump badging "$APK" | tee /tmp/igc-release-badging.txt
+          EXPECTED_CODE="$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -n 1)"
+          EXPECTED_NAME="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$EXPECTED_CODE"
+          test -n "$EXPECTED_NAME"
           grep -q "package: name='com.michelslab.igcleaner'" /tmp/igc-release-badging.txt
-          grep -q "versionCode='12034'" /tmp/igc-release-badging.txt
-          grep -q "versionName='120.34'" /tmp/igc-release-badging.txt
+          grep -q "versionCode='$EXPECTED_CODE'" /tmp/igc-release-badging.txt
+          grep -q "versionName='$EXPECTED_NAME'" /tmp/igc-release-badging.txt
           if grep -q "com.michelslab.igcleaner.beta" /tmp/igc-release-badging.txt; then
             echo "::error::Release signing smoke test produced beta application id."
             exit 1
