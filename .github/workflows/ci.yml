@@ -18,6 +18,7 @@ on:
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-v12034.yml'
+      - '.michelslab/release-request.json'
   pull_request:
     paths:
       - 'desktop/**'
@@ -28,6 +29,7 @@ on:
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-v12034.yml'
+      - '.michelslab/release-request.json'
 
 permissions:
   contents: read
@@ -62,11 +64,14 @@ jobs:
           import json
           from pathlib import Path
           m=json.loads(Path('release/distribution-manifest.json').read_text())
+          r=json.loads(Path('.michelslab/release-request.json').read_text())
           assert m['schema']=='ig-cleaner-distribution-v1'
           assert m['releasePolicy']['automaticPublishFromMain'] is False
           assert m['releasePolicy']['explicitManualPublishRequired'] is True
           assert m['releasePolicy']['checksumsRequired'] is True
-          assert m['releasePolicy']['nextRelease']=='v120.34'
+          assert m['releasePolicy']['currentStableRelease']=='v120.34'
+          assert m['releasePolicy']['nextRelease']=='v120.35'
+          assert m['releasePolicy']['lastPublishedRun']==37574744462
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
           assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
@@ -78,7 +83,11 @@ jobs:
           assert m['channels']['android']['artifact']=='IG-Cleaner-Pro-Android-v120.34.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
-          print('Distribution/state manifest passed for stable v120.34.')
+          assert r['version']=='120.34'
+          assert r['status']=='published'
+          assert r['authorized'] is False
+          assert r['published_run']==37574744462
+          print('Distribution/state manifest passed: stable v120.34 closed, next v120.35.')
           PY
 
   android:
