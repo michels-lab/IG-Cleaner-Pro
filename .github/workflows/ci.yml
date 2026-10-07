@@ -60,6 +60,12 @@ jobs:
           assert m['releasePolicy']['checksumsRequired'] is True
           assert m['releasePolicy']['nextRelease']=='v120.34'
           assert m['releasePolicy']['githubPrerelease'] is False
+          assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
+          assert m['channels']['desktop']['entrypoint']=='IG-Cleaner-Pro.html'
+          assert m['channels']['desktop']['includes']==[
+              'assets/michel_duarte_avatar.jpg',
+              'assets/michels-lab/official-lockup.png',
+          ]
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
           print('Distribution/state manifest passed for stable v120.34.')
           PY
