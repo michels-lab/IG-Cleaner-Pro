@@ -924,3 +924,44 @@ Governance:
 - next development/release target is **v120.35**.
 - v120.34 authorization must not be reused for v120.35.
 - physical-device validation remains separate from repository/CI evidence.
+
+
+## 2026-10-07 — v120.35 infrastructure, RLS and synchronized-data privacy
+
+Stable baseline:
+- v120.34 remains the current published stable release.
+- v120.35 is development only until explicit release authorization is given.
+- FINAL-9999 Android signing identity is unchanged.
+
+Generic release publisher:
+- Added `.github/workflows/release.yml` as the canonical governed publisher for v120.35+.
+- Version/tag come from `.michelslab/release-request.json`.
+- Dynamic Desktop/Android artifact names come from manifest templates.
+- The publisher validates explicit authorization, next-release target, Desktop/Android version parity, regression contracts, production signer fingerprint, stable package identity and normal/non-prerelease channel.
+- Historical `.github/workflows/release-v12034.yml` remains manual/closed.
+
+Supabase RLS:
+- Added `supabase/tests/rls_isolation.sql` with 35 pgTAP assertions across all seven sync tables.
+- Added `tests/rls-contract.py` and a dedicated CI job that starts local Supabase, applies `supabase/schema.sql`, runs the cross-user RLS suite and stops the stack.
+- The live Supabase project was also checked transactionally with two temporary JWT subjects; user 2 saw only its own temporary device row. Transaction rolled back.
+- Live policy inventory confirms CRUD policies are constrained by `auth.uid() = user_id`.
+- Supabase security advisor returned no RLS exposure finding. A separate Auth warning remains for leaked-password protection being disabled.
+
+Cloud data export/delete:
+- Desktop Privacy now exposes **Exportar datos de nube** and **Borrar datos de nube**.
+- Android Account now exposes **Export synchronized cloud data** and **Delete synchronized cloud data**.
+- Export reads every RLS-visible row from devices, audit_events, focus_batches, focus_batch_items, profile_state, list_snapshots and workspace_state, with pagination, into `ig-cleaner-cloud-export-v1` JSON.
+- Delete removes synchronized rows in FK-safe order under the authenticated user's RLS session.
+- Cloud deletion does not delete the original Instagram ZIP/JSON/HTML export or independent Vault/file backups.
+- Both clients sign out after cloud deletion so automatic sync cannot immediately re-upload remaining local state.
+
+Version identity:
+- Desktop visible UI: v120.35.
+- Android versionCode/versionName: 12035 / 120.35.
+- Android package stays `com.michelslab.igcleaner`; debug stays isolated with `.beta`.
+- Desktop legacy filename/localStorage identifiers are preserved because they are compatibility identifiers, not visible release identity.
+
+Validation status:
+- Implementation complete on branch `development/v120.35-infra-privacy`.
+- Full current-head PR CI is required before merge.
+- Physical-device validation of Android privacy/download flows remains separate evidence.
