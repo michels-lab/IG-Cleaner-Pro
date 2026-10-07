@@ -32,6 +32,7 @@ for token in (
     "apksigner",
     "aapt",
     "IG-Cleaner-Pro-Android-v120.34.apk",
+    "/certificate SHA-256 digest:/",
 ):
     assert token in workflow, f"Stable Android release workflow contract missing: {token}"
 
@@ -42,6 +43,7 @@ assert signing["keyAlias"] == "ig-cleaner-pro"
 assert signing["certificateSha256"] == "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33"
 assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
+assert "Signer #1 certificate SHA-256 digest:" not in workflow
 
 android = manifest["channels"]["android"]
 assert android["artifact"] == "IG-Cleaner-Pro-Android-v120.34.apk"
