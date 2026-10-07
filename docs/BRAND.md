@@ -1,18 +1,32 @@
 # Instagram Cleaner Pro — Brand
 
-The blue/cyan **IG** monogram is the official product mark for Instagram Cleaner Pro.
+The official product identity is the **three stacked layer/diamond planes + restrained upper-right sparkle** defined by Michel's Lab standards.
 
-## Official usage
+## Canonical assets
 
-Use this identity consistently in:
-- Android launcher icon and in-app header;
-- Desktop app rail/header and favicon;
-- About surfaces;
-- release assets and future store/listing artwork.
+Local vendored copies:
+- `branding/ig-cleaner-pro/official-app-icon.svg`
+- `branding/ig-cleaner-pro/official-mark.svg`
+- `branding/ig-cleaner-pro/official-lockup.svg`
 
-The preferred product name is **Instagram Cleaner Pro**. The shorter **IG Cleaner Pro** may be used where space is constrained.
+Master authority:
+`realmichelduarte/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro/`
 
-## Core visual tokens
+The older rounded-square **IG monogram is legacy/rejected** and must not be used on active launcher, header, favicon, splash or About surfaces.
+
+## Surface usage
+
+- Android launcher/adaptive icon: derive from `official-app-icon.svg`.
+- Compact Android/Desktop header identity: `official-mark.svg`.
+- Desktop favicon: derive from `official-app-icon.svg`.
+- About/splash/large brand surfaces: `official-lockup.svg` or a product-native composition preserving the canonical stacked-layer geometry.
+- Product name: **Instagram Cleaner Pro**. `IG Cleaner Pro` is acceptable only when space is constrained.
+
+## Design language
+
+The layered geometry may inform card stacking, Focus/review hierarchy, selected/completed states and depth. The sparkle is a restrained clean/reviewed/completion accent. Branding must feel integrated rather than pasted on.
+
+## Core UI tokens
 
 - Background: `#060910`
 - Canvas: `#090E17`
@@ -27,5 +41,3 @@ The preferred product name is **Instagram Cleaner Pro**. The shorter **IG Cleane
 - Green: `#63D1A7`
 - Red: `#FF7184`
 - Violet: `#AA8CFF`
-
-Do not replace the official mark with the previous circle/check icon or the old IGC monogram.
