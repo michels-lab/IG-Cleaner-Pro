@@ -70,9 +70,17 @@ Repository CI can verify:
 
 Repository CI does **not** prove physical phone behavior. Cold launch, persistence, real-account Focus, state round-trip and file/export behavior remain real-device validation items.
 
+## Verified signing evidence
+
+GitHub Actions run `37568540656` — **SUCCESS**:
+- Desktop/state/branding/privacy/signing contracts — PASS.
+- Android debug build and embedded Workspace — PASS.
+- Production-signing plumbing smoke test using an ephemeral CI key — PASS.
+- Signed release APK identity verified as `com.michelslab.igcleaner`, versionCode `12034`, versionName `120.34`.
+
 ## Next steps
 
-1. Merge the signing PR only after current CI is green.
+1. Merge PR #14 into `main`.
 2. Add the four production signing values to GitHub Actions Secrets.
 3. Trigger the governed v120.34 publisher to attach the signed APK.
 4. Install the signed APK on the target phone and record device evidence.
