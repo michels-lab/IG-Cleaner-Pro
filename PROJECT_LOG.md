@@ -974,3 +974,14 @@ Validation status:
 - Supabase Performance Advisor: **28 Auth RLS Initialization Plan warnings → 0**.
 - Live transactional smoke after migration: authenticated user 1 saw exactly 1 own temporary row and 0 foreign temporary rows; transaction rolled back.
 - Remaining advisor items are unrelated to row isolation: leaked-password protection is disabled in Auth, and one unused-index notice is informational.
+
+
+### v120.35 current-head validation state
+- PR #20 head validation was requested repeatedly on GitHub Actions.
+- GitHub Actions did **not** execute any workflow steps on the current head: Desktop, Android and Supabase jobs terminated before runner steps/logs existed. Re-running failed jobs produced the same zero-step result. This is an external runner/Actions blocker, not a passing or failing application test result.
+- CI trigger policy was hardened to avoid duplicate `push` + `pull_request` runs on development branches and now uses concurrency cancellation for superseded PR runs.
+- Current-head Desktop static validation via repository content: 16 inline scripts parsed successfully, 0 duplicate static DOM IDs, required v120.35/privacy/sync tokens present.
+- Current-head Android structural validation: `MainActivity.java`, `SyncApi.java`, Gradle Kotlin and modified XML resources have balanced lexical/tag structure; this is **not** a substitute for `assembleDebug`.
+- Live Supabase post-migration cross-user check: user 2 affected 0 user-1 rows across all seven synchronized tables for UPDATE attempts; temporary rows were transactionally rolled back.
+- Supabase Performance Advisor after migration: 0 Auth RLS Initialization Plan warnings; one informational unused-index notice remains.
+- Merge remains blocked until same-SHA executable CI/build evidence is available.
