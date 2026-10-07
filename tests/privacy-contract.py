@@ -12,9 +12,17 @@ for token in (
     'id="aboutPrivacyBtn"',
     'id="privacyOverlay"',
     'id="privacyClose"',
+    'id="privacyExportCloud"',
+    'id="privacyDeleteCloud"',
+    'window.igcPrivacyExportCloudData',
+    'window.igcPrivacyDeleteCloudData',
+    "IGC_SYNC_TABLES",
+    "BORRAR NUBE",
+    "user_id=not.is.null",
+    "S.session=null",
+    "ig-cleaner-cloud-export-v1",
     'El export original de Instagram (ZIP/JSON/HTML) se procesa localmente',
     'localStorage y IndexedDB',
-    'todavía no declara implementado un único botón para borrar todos los datos sincronizados',
 ):
     assert token in html, f"Privacy surface token missing: {token}"
 
@@ -23,12 +31,15 @@ for token in (
     "list_snapshots",
     "workspace_state",
     "profile_state",
+    "Export synchronized cloud data",
+    "Delete synchronized cloud data",
+    "signs out",
     "Vault",
-    "not yet claimed as implemented",
 ):
     assert token in privacy, f"Privacy documentation token missing: {token}"
 
 assert "IG-Cleaner-Pro-Desktop-v120.34.zip" in migration
 assert "IG-Cleaner-Pro-Desktop-v120.34.zip" in manifest
+assert "IG-Cleaner-Pro-Desktop-v{version}.zip" in manifest
 
 print("Privacy/data-handling contract passed.")
