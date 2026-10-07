@@ -11,14 +11,16 @@
         "assets/michels-lab/official-lockup.png"
       ],
       "transport": "github-release",
-      "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration"
+      "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration",
+      "artifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.zip"
     },
     "android": {
       "artifact": "IG-Cleaner-Pro-Android-v120.34.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
-      "productionTransport": "google-play-after-device-validation"
+      "productionTransport": "google-play-after-device-validation",
+      "artifactTemplate": "IG-Cleaner-Pro-Android-v{version}.apk"
     }
   },
   "browserState": {
@@ -50,6 +52,7 @@
     ],
     "currentStableRelease": "v120.34",
     "lastPublishedRun": 37574744462,
-    "lastPublishedCommit": "d8cf449ef8c7f3d71d9bac3acaa951b3beaf98ce"
+    "lastPublishedCommit": "d8cf449ef8c7f3d71d9bac3acaa951b3beaf98ce",
+    "genericPublisher": ".github/workflows/release.yml"
   }
 }
