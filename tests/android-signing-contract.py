@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import importlib.util
 import json
 from pathlib import Path
 
@@ -32,7 +33,7 @@ for token in (
     "apksigner",
     "aapt",
     "IG-Cleaner-Pro-Android-v120.34.apk",
-    "/certificate SHA-256 digest:/",
+    "tools/extract_apksigner_certificate_sha256.py",
 ):
     assert token in workflow, f"Stable Android release workflow contract missing: {token}"
 
@@ -43,7 +44,31 @@ assert signing["keyAlias"] == "ig-cleaner-pro"
 assert signing["certificateSha256"] == "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33"
 assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
-assert "Signer #1 certificate SHA-256 digest:" not in workflow
+assert "awk -F': ' '/certificate SHA-256 digest:/{print $2; exit}'" not in workflow
+
+parser_path = ROOT / "tools/extract_apksigner_certificate_sha256.py"
+spec = importlib.util.spec_from_file_location("apksigner_cert_parser", parser_path)
+parser = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(parser)
+
+expected_lower = signing["certificateSha256"].lower()
+colonized = ":".join(expected_lower[i : i + 2] for i in range(0, len(expected_lower), 2))
+samples = (
+    f"Signer #1 certificate SHA-256 digest: {expected_lower}\n",
+    f"V3.0 Signer: certificate SHA-256 digest: {expected_lower}\n",
+    f"V3.0 Signer: certificate SHA-256 digest: {colonized}\n"
+    f"V3.0 Signer: public key SHA-256 digest: {'0' * 64}\n",
+)
+for sample in samples:
+    assert parser.extract_certificate_sha256(sample) == expected_lower
+
+try:
+    parser.extract_certificate_sha256("V3.0 Signer: public key SHA-256 digest: " + ("0" * 64))
+except ValueError:
+    pass
+else:
+    raise AssertionError("Parser accepted public-key digest without a certificate digest")
 
 android = manifest["channels"]["android"]
 assert android["artifact"] == "IG-Cleaner-Pro-Android-v120.34.apk"
