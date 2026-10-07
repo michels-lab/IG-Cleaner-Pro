@@ -124,10 +124,10 @@ begin
     execute format('drop policy if exists igc_insert_own on public.%I',t);
     execute format('drop policy if exists igc_update_own on public.%I',t);
     execute format('drop policy if exists igc_delete_own on public.%I',t);
-    execute format('create policy igc_select_own on public.%I for select using (auth.uid() = user_id)',t);
-    execute format('create policy igc_insert_own on public.%I for insert with check (auth.uid() = user_id)',t);
-    execute format('create policy igc_update_own on public.%I for update using (auth.uid() = user_id) with check (auth.uid() = user_id)',t);
-    execute format('create policy igc_delete_own on public.%I for delete using (auth.uid() = user_id)',t);
+    execute format('create policy igc_select_own on public.%I for select to authenticated using ((select auth.uid()) = user_id)',t);
+    execute format('create policy igc_insert_own on public.%I for insert to authenticated with check ((select auth.uid()) = user_id)',t);
+    execute format('create policy igc_update_own on public.%I for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id)',t);
+    execute format('create policy igc_delete_own on public.%I for delete to authenticated using ((select auth.uid()) = user_id)',t);
   end loop;
 end $$;
 
