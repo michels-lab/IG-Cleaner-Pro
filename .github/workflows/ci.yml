@@ -5,10 +5,6 @@ on:
   push:
     branches:
       - main
-      - 'android-*'
-      - 'development/**'
-      - 'fix/**'
-      - 'release/**'
     paths:
       - 'desktop/**'
       - 'branding/**'
@@ -34,6 +30,10 @@ on:
       - '.github/workflows/release-v12034.yml'
       - '.github/workflows/release.yml'
       - '.michelslab/release-request.json'
+
+concurrency:
+  group: igc-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
