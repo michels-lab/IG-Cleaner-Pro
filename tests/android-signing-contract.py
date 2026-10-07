@@ -8,7 +8,7 @@ gradle = (ROOT / "android/app/build.gradle.kts").read_text(encoding="utf-8")
 workflow = (ROOT / ".github/workflows/release-v12034.yml").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "release/distribution-manifest.json").read_text(encoding="utf-8"))
 signing = json.loads((ROOT / "release/android-signing.json").read_text(encoding="utf-8"))
-# Stable signer certificate is intentionally long-lived through 2126.
+# Stable signer certificate is intentionally valid through year 9999 (practical non-expiring maximum).
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 for token in (
@@ -39,8 +39,8 @@ assert signing["packageId"] == "com.michelslab.igcleaner"
 assert signing["versionCode"] == 12034
 assert signing["versionName"] == "120.34"
 assert signing["keyAlias"] == "ig-cleaner-pro"
-assert signing["certificateSha256"] == "6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43"
-assert signing["certificateValidUntil"] == "2126-10-08T03:55:18Z"
+assert signing["certificateSha256"] == "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33"
+assert signing["certificateValidUntil"] == "9999-12-31T04:00:39Z"
 assert signing["keystorePolicy"] == "private-backup-only-never-commit"
 
 android = manifest["channels"]["android"]

@@ -4,8 +4,8 @@
   "versionCode": 12034,
   "versionName": "120.34",
   "keyAlias": "ig-cleaner-pro",
-  "certificateSha256": "6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43",
-  "certificateValidUntil": "2126-10-08T03:55:18Z",
+  "certificateSha256": "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33",
+  "certificateValidUntil": "9999-12-31T04:00:39Z",
   "requiredGitHubSecrets": [
     "IGC_ANDROID_KEYSTORE_B64",
     "IGC_ANDROID_KEYSTORE_PASSWORD",
