@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 workflow=(ROOT/".github/workflows/release.yml").read_text(encoding="utf-8")
 manifest=json.loads((ROOT/"release/distribution-manifest.json").read_text(encoding="utf-8"))
+request=json.loads((ROOT/".michelslab/release-request.json").read_text(encoding="utf-8"))
 
 assert "v120.34" not in workflow, "Generic publisher must not be tied to v120.34"
 for token in (
@@ -25,5 +26,10 @@ for token in (
 assert manifest["channels"]["desktop"]["artifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.zip"
 assert manifest["channels"]["android"]["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
 assert manifest["releasePolicy"]["genericPublisher"]==".github/workflows/release.yml"
+assert manifest["releasePolicy"]["currentStableRelease"]=="v120.34"
+assert manifest["releasePolicy"]["nextRelease"]=="v120.35"
+assert request["version"]=="120.34"
+assert request["status"]=="published"
+assert request["authorized"] is False
 
 print("Generic release publisher contract passed.")
