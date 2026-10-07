@@ -1,82 +1,114 @@
 # IG Cleaner Pro — Infrastructure & Privacy Audit
 
-Last reviewed: **2026-10-06**
+Last reviewed: **2026-10-07**
 
 ## Current architecture
-- **Local-first import + opt-in authenticated sync metadata.**
-- Instagram export ZIP/JSON/HTML files are parsed locally in Desktop/Android Workspace.
-- Raw Instagram export contents are not part of the current Supabase sync contract.
-- Supabase is used for cross-device workflow metadata/state.
-- Android v120.34 packages the Desktop engine for advanced tools and provides native Home / Review / Focus / Activity / Profile surfaces.
 
-## Supabase implementation
-Current synchronized domain:
-- devices;
-- Focus batches;
-- Focus batch items;
-- audit/review events;
-- projected profile review state.
+- Local-first Instagram export processing.
+- Optional authenticated Supabase synchronization for normalized app state.
+- Desktop + Android share the same synchronized relationship/review domain.
+- Stable v120.34 is published with persistent Android production signing.
+- v120.35 is the active development target.
 
-Authentication:
-- email OTP;
-- user-facing clients use only the publishable key;
-- Row Level Security is required on exposed user tables;
-- privileged/service-role/database/SMTP credentials must never be shipped in the clients.
+The original Instagram ZIP/JSON/HTML export is not uploaded as a cloud backup.
 
-## Privacy boundary
-The primary privacy property remains: **the raw Instagram export stays on the user's device unless a separate future upload/backup feature is explicitly designed and enabled.**
+## Synchronized Supabase domain
 
-Cross-device sync moves normalized list snapshots plus workflow state such as which profile was opened/reviewed, when, from which device, review/protection/snooze state, and which Focus batch it belongs to.
+Project: `ig-cleaner-sync`
 
-The app must not silently broaden this boundary from review metadata to raw social-export storage.
+Tables:
+- `devices`
+- `audit_events`
+- `focus_batches`
+- `focus_batch_items`
+- `profile_state`
+- `list_snapshots`
+- `workspace_state`
 
-## Android distribution state
-- GitHub release **v120.34** is published as a normal release (`prerelease=false`).
-- Final publisher run **37574744462** completed **SUCCESS**.
-- The stable Android artifact `IG-Cleaner-Pro-Android-v120.34.apk` is attached to the release.
-- The Android implementation is versionCode **12034** / versionName **120.34**.
-- Debug builds remain `com.michelslab.igcleaner.beta` / `120.34-beta`.
-- Stable builds use `com.michelslab.igcleaner` and the persistent production signing identity recorded in `release/android-signing.json`.
-- Production certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`.
-- Certificate validity: **9999-12-31**.
-- The four Android signing secrets are configured in GitHub Actions and were successfully consumed by the final publisher.
-- No private signing material is stored in Git.
-- The release workflow verifies package/version/signature before publication.
-- Physical-device validation remains a separate evidence gate and must not be inferred from CI.
+All seven public tables have Row Level Security enabled.
 
-## Remaining infrastructure work
-1. Install/test the signed APK on the target phone and record cold-launch, persistence, Focus and round-trip evidence.
-2. Add centralized in-product privacy/delete/export controls for synchronized metadata.
-3. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
-4. Generalize the release publisher for v120.35+ instead of keeping version-specific release automation.
-5. Keep sanitized fixtures in Git; never commit real Instagram exports or secrets/signing material.
+The live policies constrain CRUD operations with `auth.uid() = user_id`. The repository schema remains the declarative source used by local CI.
+
+## Automated RLS evidence
+
+v120.35 adds:
+- `supabase/tests/rls_isolation.sql`
+- `tests/rls-contract.py`
+- CI job **Supabase RLS isolation**
+
+The pgTAP suite contains 35 behavioral assertions across all seven tables:
+- RLS enabled;
+- cross-user SELECT isolation;
+- cross-user UPDATE denial;
+- cross-user DELETE denial;
+- own-user INSERT allowed.
+
+CI boots a local Supabase stack, applies `supabase/schema.sql`, then runs the suite with `supabase test db`.
+
+A separate transactional smoke test against the live project created two temporary user-owned device rows, switched authenticated JWT subjects and confirmed the active user saw only its own test row. The transaction was rolled back.
+
+Current Supabase security advisor state on 2026-10-07:
+- no RLS exposure finding was returned;
+- one unrelated warning remains: **Leaked Password Protection Disabled** in Supabase Auth. This is an Auth-hardening setting, not an RLS failure.
+
+## Privacy controls
+
+v120.35 adds centralized synchronized-data controls to both clients.
+
+Desktop:
+- Exportar datos de nube
+- Borrar datos de nube
+
+Android:
+- Export synchronized cloud data
+- Delete synchronized cloud data
+
+Export reads all RLS-visible rows from the seven synchronized tables and writes `ig-cleaner-cloud-export-v1` JSON.
+
+Delete removes the current authenticated user's synchronized rows in foreign-key-safe order and then signs out. It does not remove the original Instagram export or independent local Vault/file backups.
+
+## Android production signing
+
+Stable package:
+- `com.michelslab.igcleaner`
+
+Persistent signer:
+- alias `ig-cleaner-pro`
+- SHA-256 `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`
+- valid through 9999-12-31
+
+Private keystore/password material is never committed. GitHub Actions secrets supply signing material to ephemeral release runners.
+
+v120.35 Android identity:
+- versionCode 12035
+- versionName 120.35
+
+## Release infrastructure
+
+Current published stable: **v120.34**  
+Next target: **v120.35**
+
+v120.34's version-specific publisher is historical/manual.
+
+Future stable releases use:
+- `.github/workflows/release.yml`
+- dynamic version/tag authorization from `.michelslab/release-request.json`
+- artifact templates from `release/distribution-manifest.json`
+- the same persistent Android signing identity.
+
+The generic publisher still requires explicit release authorization and never treats a normal merge to `main` as permission to publish.
+
+## Remaining evidence / work
+
+Repository-side items from the prior audit are implemented in the v120.35 candidate:
+- generic stable publisher — implemented;
+- automated cross-user RLS tests — implemented;
+- centralized cloud export/delete controls — implemented.
+
+Still outstanding:
+1. Full CI must pass on the v120.35 PR before merge.
+2. Real-device validation of the new Android privacy controls and normal v120.35 app behavior.
+3. The Supabase Auth warning for leaked-password protection may be hardened separately if desired.
+4. v120.35 must not be published until explicit user release authorization.
 
 Canonical privacy reference: `docs/PRIVACY.md`.
-
-## Secret rule
-Allowed in shipped clients:
-- public Supabase Project URL;
-- Supabase publishable key.
-
-Not allowed in shipped clients or Git:
-- service-role/secret Supabase keys;
-- database password;
-- SMTP password/API key;
-- refresh/access tokens;
-- signing passwords/private signing keys;
-- private GitHub credentials.
-
-## 2026-10-06 — CI / update / migration hardening
-
-Implemented the missing deterministic repository gates:
-- unified Desktop + Android CI;
-- sanitized ZIP fixture validation;
-- Desktop syntax/workflow/state compatibility contract;
-- distribution manifest with browser-state schema 1;
-- explicit migration/rollback rules;
-- explicit-release publication policy.
-
-Persistent browser state is now formally treated as a compatibility surface. Existing localStorage keys and IndexedDB `ig_cleaner_pro_history` version 1 may not be renamed/reset without an explicit migration and regression evidence.
-
-Version-specific release workflows were separated from ordinary `main` validation so CI success cannot silently publish a release. Android GitHub distribution is now live with persistent production signing. Google Play publication remains separate and still requires real-device/store validation.
-
