@@ -76,3 +76,16 @@ Persistent browser state is now formally treated as a compatibility surface. Exi
 
 Version-specific release workflows were separated from ordinary `main` validation so CI success cannot silently publish a release. Android production/Play remains blocked on real-device validation.
 
+## 2026-10-06 — Android signer-output parser hardening
+
+The governed v120.34 publisher exposed an Android Build Tools compatibility issue in release verification, not in APK signing itself.
+
+- Production keystore identity and signed APK construction passed.
+- Current `apksigner --print-certs` output uses a `V3.0 Signer: certificate SHA-256 digest:` prefix; the historical verifier depended on older field positioning.
+- Release verification now delegates certificate SHA-256 extraction to `tools/extract_apksigner_certificate_sha256.py`.
+- The parser is covered semantically against legacy/current output and distinguishes certificate digest from public-key digest.
+- Exact equality with `release/android-signing.json` remains required before publication.
+- PR #17 validation run `37574407138` passed Desktop contracts, Android build, embedded Workspace verification and production-signing plumbing.
+
+This is a release-verification compatibility repair. It does not change the signing key, package identity, user data boundary, Supabase behavior or device-validation requirements.
+
