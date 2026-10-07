@@ -46,7 +46,7 @@ assert 'app:logo="@drawable/ig_official_mark"' in toolbar
 assert 'app:title="IG Cleaner Pro"' in toolbar
 assert 'android:id="@+id/workspaceLoadingBrand"' in workspace
 assert 'android:src="@drawable/ig_official_mark"' in workspace
-assert '.setIcon(R.drawable.ig_official_mark)' in main
+assert 'R.id.actionAbout' in main
 assert '<string name="app_name">IG Cleaner Pro</string>' in strings
 
 html = read("desktop/ig_cleaner_pro_v120_27_synced_companion.html")
