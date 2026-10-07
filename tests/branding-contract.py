@@ -69,9 +69,13 @@ assert git_blob_sha("desktop/assets/michels-lab/official-lockup.png") == "7fd480
 assert 'data:image/jpeg;base64' not in html
 assert 'src="assets/michel_duarte_avatar.jpg"' in html
 assert 'src="assets/michels-lab/official-lockup.png"' in html
+assert 'igc-v12030-supabase-sync-js' in html
+assert 'normalizeLegacyReviewState' in html
+assert 'pushWorkspaceState' in html
+assert 'list_snapshots' in html
 
 # All user-visible release identity must agree with the governed v120.34 target.
-assert '<title>IG Cleaner Pro v120.34 — Synced Companion</title>' in html
+assert '<title>Instagram Cleaner Pro v120.34</title>' in html
 assert 'Engine v119 · UI v120.34' in html
 assert 'IG Cleaner Pro · UI v120.34' in html
 assert 'UI v120.26' not in html
