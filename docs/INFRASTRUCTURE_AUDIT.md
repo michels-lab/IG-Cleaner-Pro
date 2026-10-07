@@ -45,7 +45,7 @@ The pgTAP suite contains 35 behavioral assertions across all seven tables:
 
 CI boots a local Supabase stack, applies `supabase/schema.sql`, then runs the suite with `supabase test db`.
 
-A separate transactional smoke test against the live project created two temporary user-owned device rows, switched authenticated JWT subjects and confirmed the active user saw only its own test row. The transaction was rolled back.
+A separate rollback-only transactional test against the live project seeded two users across all seven synchronized tables. Under user 2's authenticated JWT subject, each seeded table exposed only user 2's row; attempts to UPDATE or DELETE user 1's rows affected 0 rows on all seven tables; an own-user INSERT succeeded. The entire test transaction was rolled back.
 
 Current Supabase advisor state on 2026-10-07:
 - no RLS exposure finding was returned;
