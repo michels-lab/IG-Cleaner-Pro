@@ -147,16 +147,30 @@ Do **not** publish v120.35 until Michel explicitly authorizes a release. Develop
 
 ## Current validation blocker
 
-PR **#20** is open and mergeable, but same-SHA GitHub Actions execution is currently blocked externally: all three CI jobs are being created and then terminated before any runner step or log exists. A retry behaved identically.
+PR **#20** remains open, mergeable and intentionally Draft.
 
-Direct evidence completed on the current branch:
+GitHub Actions run **37696174790**, including retry attempt **2** on 2026-10-07, still created all three jobs and terminated them before any runner step or log existed:
+- Desktop local-app contract — pre-run failure;
+- Android build + embedded Workspace — pre-run failure;
+- Supabase RLS isolation — pre-run failure.
+
+The jobs expose no executable steps/log blobs, so this is not evidence of an application/test assertion failure. GitHub's public status page reports Actions operational after today's service incidents, but the repository runner-start failure remains unresolved and its exact account/platform cause is not exposed through the available connector APIs.
+
+Direct evidence on the exact current branch:
 - Desktop inline JavaScript syntax: **16/16 PASS**;
 - duplicate static DOM IDs: **0**;
-- v120.35/privacy/sync static contract sweep: PASS;
+- v120.35/version/privacy/release/RLS static sweep: **PASS**;
+- corrected targeted governance/privacy/RLS sweep: **11/11 PASS**;
 - Android Java/Gradle delimiter structure: PASS;
-- modified Android XML tag structure: PASS;
+- modified Android XML structure: PASS;
 - live Supabase optimized RLS migration: APPLIED;
-- live cross-user UPDATE isolation across seven tables: **0 foreign rows affected**;
-- Performance Advisor Auth RLS initialization warnings: **28 → 0**.
+- live two-user RLS sweep across all seven synchronized tables:
+  - each user sees only **1 own row** per seeded table;
+  - foreign UPDATE affected **0 rows** on all seven tables;
+  - foreign DELETE affected **0 rows** on all seven tables;
+  - own authenticated INSERT succeeded;
+  - test transaction rolled back;
+- Supabase Security Advisor: no RLS exposure finding; one separate Auth warning for leaked-password protection being disabled;
+- Supabase Performance Advisor: **0 Auth RLS Initialization Plan warnings**; one informational unused-index notice remains.
 
 These checks do not replace Android `assembleDebug` / embedded Workspace packaging or the full same-SHA CI run. Do not merge PR #20 until executable CI resumes and passes.
