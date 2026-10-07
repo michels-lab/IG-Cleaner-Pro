@@ -25,6 +25,12 @@ Repository → Settings → Secrets and variables → Actions must contain:
 
 The release workflow restores the keystore only inside the ephemeral GitHub Actions runner.
 
+## Operational status
+
+- The four repository secrets are configured.
+- Final stable publisher run **37574744462** successfully restored the production keystore, verified the FINAL-9999 fingerprint, built the signed APK, verified package/version, and attached `IG-Cleaner-Pro-Android-v120.34.apk` to the normal v120.34 GitHub release.
+- The v120.34 signing path is therefore no longer pending; it is the established production-signing baseline for future Android updates.
+
 ## Build behavior
 
 Debug:
@@ -50,7 +56,7 @@ Never commit:
 
 ## Release policy
 
-For normal IG Cleaner Pro GitHub releases, include the latest validated Android APK whenever the persistent signing requirements are satisfied. The release artifact name for v120.34 is:
+For normal IG Cleaner Pro GitHub releases, include the latest validated Android APK whenever the persistent signing requirements are satisfied. v120.34 established this as the production baseline. Its release artifact is:
 
 `IG-Cleaner-Pro-Android-v120.34.apk`
 
