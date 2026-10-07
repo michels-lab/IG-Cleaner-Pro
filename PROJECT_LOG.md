@@ -1015,3 +1015,26 @@ Live Supabase RLS behavioral evidence:
 Advisor state after the optimized RLS migration:
 - Security Advisor: no RLS exposure finding; one unrelated warning remains for leaked-password protection disabled;
 - Performance Advisor: 0 Auth RLS Initialization Plan warnings; only the informational unused `audit_events_user_device_idx` notice remains.
+
+
+## 2026-10-07 — v120.35 release-contract fix and CI minute protection
+
+Release-contract regression found and fixed:
+- the generic publisher itself was version-agnostic, but `tests/release-publisher-contract.py` and the CI manifest check still required the old closed v120.34 request state;
+- an explicit v120.35 authorization would therefore have caused validation to fail at release time;
+- contracts are now state-aware: they accept either the closed current-stable request or an explicitly authorized request that exactly matches `releasePolicy.nextRelease`;
+- Android signing contract now derives the expected candidate version/code from `releasePolicy.nextRelease`;
+- privacy contract derives the current stable Desktop artifact from the distribution manifest instead of hardcoding v120.34;
+- simulated closed v120.34 request + authorized v120.35 request validation: PASS.
+
+CI usage hardening:
+- heavy Desktop / Android / Supabase jobs are skipped while a PR is Draft;
+- `ready_for_review` explicitly triggers the full CI gate;
+- this prevents long-lived Draft PR edits from repeatedly consuming GitHub-hosted runner minutes.
+
+Final runner probe:
+- PR #20 was marked Ready for review on head `e5a49aa55053599636a7c55d91df7b39df7207b9`;
+- run `37702842845` created Desktop, Android and Supabase jobs;
+- all three terminated before any step started and expose `steps: []`;
+- PR #20 was returned to Draft;
+- merge remains blocked pending a real same-SHA runner execution.
