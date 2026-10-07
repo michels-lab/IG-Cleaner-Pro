@@ -5,7 +5,7 @@ This document defines the safe update path for Desktop/local-Web and Android. It
 ## Distribution
 
 ### Desktop / local-Web
-The canonical Desktop artifact is a self-contained HTML file distributed through a GitHub Release with a SHA-256 checksum. A Desktop update must never require uploading the user's Instagram export or browser state.
+The canonical v120.34 Desktop artifact is the bundle declared in `release/distribution-manifest.json`: `IG-Cleaner-Pro-Desktop-v120.34.zip`, containing the HTML entrypoint plus the canonical About identity assets. A Desktop update must never require uploading the user's Instagram export or browser state.
 
 Before any update that changes persistent state, the user must be able to export a full backup from Vault. Replacing the HTML file must preserve the browser origin when state continuity is expected; opening the app from a different origin, path, or browser profile can create a separate local-storage context.
 
@@ -52,3 +52,8 @@ Repository CI validates:
 - distribution manifest/release policy.
 
 Device-only behavior (OTP persistence, Android to Desktop round trip, Downloads export, production signing and Play updates) remains a separate real-device gate.
+
+
+## Privacy reference
+
+See `docs/PRIVACY.md` for the current local-first boundary, synchronized-data scope, retention/deletion limitations and backup expectations.
