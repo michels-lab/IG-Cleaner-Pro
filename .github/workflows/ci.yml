@@ -18,6 +18,7 @@ on:
       - '.github/workflows/release.yml'
       - '.michelslab/release-request.json'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'desktop/**'
       - 'branding/**'
@@ -40,6 +41,7 @@ permissions:
 
 jobs:
   desktop-contract:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Desktop local-app contract
     runs-on: ubuntu-latest
     steps:
@@ -114,6 +116,7 @@ jobs:
           PY
 
   supabase-rls:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Supabase RLS isolation
     runs-on: ubuntu-latest
     steps:
@@ -144,6 +147,7 @@ jobs:
         run: supabase stop --no-backup
 
   android:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Android build + embedded Workspace
     runs-on: ubuntu-latest
     defaults:
