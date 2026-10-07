@@ -1,0 +1,175 @@
+name: Governed release v120.34
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["release-v120.34"]
+    paths:
+      - ".michelslab/release-request.json"
+
+permissions:
+  contents: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.gate.outputs.authorized }}
+      version: ${{ steps.gate.outputs.version }}
+      tag: ${{ steps.gate.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: gate
+        name: Verify governed release request
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, re, os
+          policy = json.loads(pathlib.Path(".michelslab/release-policy.json").read_text())
+          request = json.loads(pathlib.Path(".michelslab/release-request.json").read_text())
+          version = policy["next_release"]
+          tag = policy["next_tag"]
+
+          assert version == "120.34", f"Unexpected governed version: {version}"
+          assert tag == "v120.34", f"Unexpected governed tag: {tag}"
+          assert policy.get("channel") == "stable"
+          assert policy.get("prerelease") is False
+          assert request["version"] == version
+          assert request["tag"] == tag
+
+          gradle = pathlib.Path("android/app/build.gradle.kts").read_text()
+          assert 'versionCode = 12034' in gradle
+          assert 'versionName = "120.34"' in gradle
+
+          html = pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+          assert "Engine v119 · UI v120.34" in html
+          assert "Instagram Cleaner Pro" in html
+
+          logo = pathlib.Path("branding/ig-cleaner-pro/official-app-icon.svg").read_text()
+          assert "M170 650 500 510 842 650 505 815Z" in logo
+          assert "translate(\"770 250\")" in logo
+
+          out = pathlib.Path(os.environ["GITHUB_OUTPUT"])
+          with out.open("a") as f:
+              f.write(f"authorized={str(bool(request.get('authorized'))).lower()}\n")
+              f.write(f"version={version}\n")
+              f.write(f"tag={tag}\n")
+
+          if not request.get("authorized"):
+              print("Release v120.34 is prepared but publication is NOT authorized.")
+          else:
+              assert request.get("authorization_source"), "authorized release requires authorization_source"
+              print("Release v120.34 publication is explicitly authorized.")
+          PY
+
+  publish:
+    needs: gate
+    if: needs.gate.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Validate Desktop JavaScript
+        working-directory: .
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, subprocess, tempfile, sys
+          html = pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script([^>]*)>(.*?)</script>", html, flags=re.I|re.S)
+          checked = 0
+          for i, (attrs, code) in enumerate(scripts):
+              m = re.search(r'type=["\']([^"\']+)["\']', attrs, flags=re.I)
+              if m and "javascript" not in m.group(1).lower() and "ecmascript" not in m.group(1).lower():
+                  continue
+              if not code.strip():
+                  continue
+              path = pathlib.Path(tempfile.gettempdir()) / f"igc-inline-{i}.js"
+              path.write_text(code, encoding="utf-8")
+              result = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout)
+                  print(result.stderr)
+                  sys.exit(result.returncode)
+              checked += 1
+          print(f"Validated {checked} inline JavaScript blocks.")
+          PY
+
+      - name: Build Android test APK
+        run: gradle :app:assembleDebug
+
+      - name: Verify embedded Desktop workspace
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          ASSET="assets/ig_cleaner_pro_v120_27_synced_companion.html"
+          unzip -l "$APK" | grep "$ASSET"
+          SIZE="$(unzip -l "$APK" | awk -v asset="$ASSET" '$0 ~ asset {print $1}')"
+          test -n "$SIZE" && test "$SIZE" -gt 1500000
+
+      - name: Prepare release artifacts
+        working-directory: .
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/Instagram-Cleaner-Pro-v120.34-Android-beta.apk"
+          cp desktop/ig_cleaner_pro_v120_27_synced_companion.html "dist/Instagram-Cleaner-Pro-v120.34-Desktop.html"
+          cp branding/ig-cleaner-pro/official-app-icon.svg "dist/Instagram-Cleaner-Pro-v120.34-logo.svg"
+          (
+            cd dist
+            sha256sum               Instagram-Cleaner-Pro-v120.34-Android-beta.apk               Instagram-Cleaner-Pro-v120.34-Desktop.html               Instagram-Cleaner-Pro-v120.34-logo.svg               > SHA256SUMS.txt
+          )
+
+      - name: Publish normal GitHub release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<'EOF'
+          Instagram Cleaner Pro v120.34
+
+          - Normal GitHub release; not a prerelease.
+          - Canonical stacked-layers + sparkle product identity restored from Michel's Lab standards.
+          - Android can create Focus 20/30/40 directly from synchronized Review, Mutuals, Followers and Requests data.
+          - Android-created Focus batches are stored in Supabase and are visible to Desktop.
+          - Historical review/protected/snoozed state synchronization and mobile navigation-inset fixes from the v120.33 development line are included.
+          - Release/version publication is governed by .michelslab/release-policy.json and an explicit authorization request.
+
+          Android direct APK remains the existing beta-package direct-test channel; GitHub release status itself is stable/non-prerelease.
+          EOF
+
+          if gh release view v120.34 >/dev/null 2>&1; then
+            gh release edit v120.34               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+            gh release upload v120.34 dist/* --clobber
+          else
+            gh release create v120.34 dist/*               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+          fi
+
+      - name: Verify published channel
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/v120.34 --jq .prerelease)" = "false"
+          gh release view v120.34 --json tagName,isPrerelease,isDraft,url
