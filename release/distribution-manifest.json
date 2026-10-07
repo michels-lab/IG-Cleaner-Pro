@@ -14,8 +14,10 @@
       "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration"
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.34.apk",
       "transport": "github-release",
+      "signingMetadata": "release/android-signing.json",
+      "stableArtifactRequiresPersistentSigning": true,
       "productionTransport": "google-play-after-device-validation"
     }
   },
@@ -33,6 +35,7 @@
     "explicitManualPublishRequired": true,
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
+    "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
     "nextRelease": "v120.34",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
