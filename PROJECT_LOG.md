@@ -833,3 +833,19 @@ The required interpretation is structural integration rather than sticker placem
 ### Release safety
 - The historical v120.34 publisher from the divergent `release-v120.34` branch builds a debug/`.beta` APK while labeling the GitHub release stable; that workflow is not acceptable as the final stable publisher.
 - A stable Android v120.34 publication requires a real release artifact with signing continuity; otherwise Android stable publication remains blocked.
+
+
+## 2026-10-06 — v120.34 final candidate validation
+
+- Reconciled the candidate onto `release/v120.34`; the divergent `release-v120.34` line is marked superseded and must not publish.
+- Restored Android native Focus creation for Review, Mutuals, Followers-you-don't-follow and Pending in sizes 20/30/40.
+- Restored the v120.30 Desktop sync bridge, including legacy-review normalization, list snapshots and complete workspace review-state publishing. This directly protects already-reviewed profiles from reappearing as unresolved merely because Android has only raw relationship lists.
+- Preserved the Android system-bar inset hotfix so Samsung gesture/3-button navigation does not clip the bottom navigation.
+- Replaced the embedded About portrait with the exact canonical Michel Duarte asset and added the finalized Michel's Lab production lockup.
+- Added a centralized local-first privacy surface/documentation and explicit retention/deletion boundary.
+- Added CI regression contracts for canonical branding/About assets, full sync bridge, privacy/data handling, Android Focus autonomy and navigation insets.
+- Final consolidated CI run `37562844481`: **SUCCESS** across Desktop contract, sanitized fixture, branding, privacy, Android UX/Focus contract, distribution manifest, Android build and embedded Workspace verification.
+- Android companion runs after the relevant functional changes also passed, including `37562748629`, `37562402633` and `37562024494`.
+- Manual physical-device/Desktop round-trip remains pending and is not represented as completed.
+- v120.34 has **not** been published by this work.
+- Stable Android publication remains blocked until a real release artifact/signing path is established; do not relabel a debug `.beta` APK as stable.
