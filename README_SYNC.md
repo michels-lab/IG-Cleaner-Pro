@@ -64,11 +64,12 @@ About uses the canonical Michel Duarte portrait and Michel's Lab production lock
 
 ## Current v120.34 validation
 
-Verified in GitHub Actions:
-- Desktop contract, fixture parsing, canonical branding and distribution manifest: **PASS** on run `37561825709`.
-- Android build + packaged Workspace: **PASS** on run `37561825709`.
-- Android companion build: **PASS** on run `37559946743`.
-- A new validation is running after restoring Android-created Focus on commit `11d7ca27b655833b71e8435038d840891db46af8`.
+Final consolidated repository validation:
+- GitHub Actions run `37562844481`: **SUCCESS**.
+- Desktop contract, fixture parsing, canonical branding, privacy contract, Android Focus/inset regression contract and distribution manifest: **PASS**.
+- Android build + packaged Workspace: **PASS**.
+- Android companion run `37562748629`: **SUCCESS** after the current About/privacy changes.
+- The Desktop candidate contains the v120.30 full-state sync bridge, including legacy review normalization, `list_snapshots`, `workspace_state` and per-profile state merging.
 
 Manual/device validation is still required before calling the Android stable artifact production-ready:
 - cold launch;
