@@ -1,13 +1,13 @@
 # IG Cleaner Pro — Infrastructure & Privacy Audit
 
-Last reviewed: **2026-10-05**
+Last reviewed: **2026-10-06**
 
 ## Current architecture
 - **Local-first import + opt-in authenticated sync metadata.**
 - Instagram export ZIP/JSON/HTML files are parsed locally in Desktop/Android Workspace.
 - Raw Instagram export contents are not part of the current Supabase sync contract.
 - Supabase is used for cross-device workflow metadata/state.
-- Android v120.29 packages the official Desktop engine and also provides native Focus/Audit/Account surfaces.
+- Android v120.34 packages the Desktop engine for advanced tools and provides native Home / Review / Focus / Activity / Profile surfaces.
 
 ## Supabase implementation
 Current synchronized domain:
@@ -26,7 +26,7 @@ Authentication:
 ## Privacy boundary
 The primary privacy property remains: **the raw Instagram export stays on the user's device unless a separate future upload/backup feature is explicitly designed and enabled.**
 
-Cross-device sync currently moves workflow metadata such as which profile was opened/reviewed, when, from which device, and which Focus batch it belongs to.
+Cross-device sync moves normalized list snapshots plus workflow state such as which profile was opened/reviewed, when, from which device, review/protection/snooze state, and which Focus batch it belongs to.
 
 The app must not silently broaden this boundary from review metadata to raw social-export storage.
 
@@ -45,6 +45,8 @@ The app must not silently broaden this boundary from review metadata to raw soci
 6. Add automated RLS isolation tests proving one authenticated user cannot read another user's rows.
 7. Reconcile About/version identity across Desktop, Android and GitHub Releases.
 8. Keep sanitized fixtures in Git; never commit real Instagram exports or secrets.
+
+Canonical privacy reference: `docs/PRIVACY.md`.
 
 ## Secret rule
 Allowed in shipped clients:
