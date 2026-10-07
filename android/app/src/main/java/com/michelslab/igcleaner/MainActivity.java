@@ -92,7 +92,7 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12033;
+    private static final int FILE_CHOOSER_REQUEST = 12034;
 
     private View mobileWorkspaceView;
     private RecyclerView workspaceProfileList;
@@ -609,7 +609,7 @@ public final class MainActivity extends AppCompatActivity {
             }
             workspaceSectionTitle.setText(syncedReviewStateAvailable ? "Continue review" : "Restore review history");
             workspaceSectionSubtitle.setText(!syncedReviewStateAvailable
-                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.33 once to restore the real pending count."
+                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.34 once to restore the real pending count."
                     : (unresolvedReview == 0
                         ? "Your main cleanup queue is clear."
                         : unresolvedReview + " profiles still need a decision. Tap one to open Instagram."));
@@ -903,7 +903,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.33");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.34");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
