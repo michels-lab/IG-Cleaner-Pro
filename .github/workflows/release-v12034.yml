@@ -1,10 +1,6 @@
-name: Publish governed v120.34
+name: Historical publisher v120.34 (closed)
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - ".michelslab/release-request.json"
   workflow_dispatch:
 
 permissions:
@@ -38,7 +34,8 @@ jobs:
           signing = json.loads(pathlib.Path("release/android-signing.json").read_text())
           policy = manifest["releasePolicy"]
 
-          assert policy["nextRelease"] == "v120.34"
+          assert policy["currentStableRelease"] == "v120.34"
+          assert policy["nextRelease"] == "v120.35"
           assert policy["githubPrerelease"] is False
           assert policy["explicitManualPublishRequired"] is True
           assert policy["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
