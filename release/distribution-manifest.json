@@ -36,7 +36,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.34",
+    "nextRelease": "v120.35",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -47,6 +47,9 @@
       "v120.31",
       "v120.32",
       "v120.33"
-    ]
+    ],
+    "currentStableRelease": "v120.34",
+    "lastPublishedRun": 37574744462,
+    "lastPublishedCommit": "d8cf449ef8c7f3d71d9bac3acaa951b3beaf98ce"
   }
 }
