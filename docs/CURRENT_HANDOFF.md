@@ -143,3 +143,20 @@ Repository/CI can prove code, build, package, RLS and signing contracts. It cann
 ## Release rule
 
 Do **not** publish v120.35 until Michel explicitly authorizes a release. Development/merge approval is not release authorization.
+
+
+## Current validation blocker
+
+PR **#20** is open and mergeable, but same-SHA GitHub Actions execution is currently blocked externally: all three CI jobs are being created and then terminated before any runner step or log exists. A retry behaved identically.
+
+Direct evidence completed on the current branch:
+- Desktop inline JavaScript syntax: **16/16 PASS**;
+- duplicate static DOM IDs: **0**;
+- v120.35/privacy/sync static contract sweep: PASS;
+- Android Java/Gradle delimiter structure: PASS;
+- modified Android XML tag structure: PASS;
+- live Supabase optimized RLS migration: APPLIED;
+- live cross-user UPDATE isolation across seven tables: **0 foreign rows affected**;
+- Performance Advisor Auth RLS initialization warnings: **28 → 0**.
+
+These checks do not replace Android `assembleDebug` / embedded Workspace packaging or the full same-SHA CI run. Do not merge PR #20 until executable CI resumes and passes.
