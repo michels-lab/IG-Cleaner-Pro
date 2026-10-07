@@ -35,7 +35,7 @@ The app must not silently broaden this boundary from review metadata to raw soci
 - The Android implementation is versionCode **12034** / versionName **120.34**.
 - Debug builds remain `com.michelslab.igcleaner.beta` / `120.34-beta`.
 - Stable release builds use `com.michelslab.igcleaner` and now require the persistent production signing identity recorded in `release/android-signing.json`.
-- The production certificate SHA-256 is `2E47E4438DAC3E3ED5CFF36E31689BE21EE27B08CCF2A40E0E7209CC57D72A14`.
+- The production certificate SHA-256 is `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`.
 - Required secret names and operational procedure are documented in `docs/ANDROID_SIGNING.md`; no private signing material is stored in Git.
 - The stable release workflow verifies package/version/signature before attaching `IG-Cleaner-Pro-Android-v120.34.apk`.
 - Physical-device validation remains a separate evidence gate and must not be inferred from CI.
