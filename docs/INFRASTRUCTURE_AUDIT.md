@@ -27,7 +27,7 @@ Tables:
 
 All seven public tables have Row Level Security enabled.
 
-The live policies constrain CRUD operations with `auth.uid() = user_id`. The repository schema remains the declarative source used by local CI.
+The live policies constrain CRUD operations to the authenticated owner with `(select auth.uid()) = user_id`. Policies are explicitly scoped `TO authenticated`. The repository schema remains the declarative source used by local CI.
 
 ## Automated RLS evidence
 
@@ -47,9 +47,11 @@ CI boots a local Supabase stack, applies `supabase/schema.sql`, then runs the su
 
 A separate transactional smoke test against the live project created two temporary user-owned device rows, switched authenticated JWT subjects and confirmed the active user saw only its own test row. The transaction was rolled back.
 
-Current Supabase security advisor state on 2026-10-07:
+Current Supabase advisor state on 2026-10-07:
 - no RLS exposure finding was returned;
-- one unrelated warning remains: **Leaked Password Protection Disabled** in Supabase Auth. This is an Auth-hardening setting, not an RLS failure.
+- the prior **28 Auth RLS Initialization Plan** performance warnings were eliminated by the v120.35 policy migration;
+- one informational unused-index notice remains for `audit_events_user_device_idx`;
+- one unrelated security warning remains: **Leaked Password Protection Disabled** in Supabase Auth. This is an Auth-hardening setting, not an RLS failure.
 
 ## Privacy controls
 
@@ -88,7 +90,7 @@ v120.35 Android identity:
 Current published stable: **v120.34**  
 Next target: **v120.35**
 
-v120.34's version-specific publisher is historical/manual.
+v120.34's version-specific publisher is a retired non-publishing stub.
 
 Future stable releases use:
 - `.github/workflows/release.yml`
