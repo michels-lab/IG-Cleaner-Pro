@@ -53,6 +53,8 @@ Update `PROJECT_LOG.md` with meaningful fixes, regressions, decisions and valida
 
 Do not bump versions or publish releases unless explicitly assigned.
 
+For release/version work, `.michelslab/release-policy.json` is the repository source of truth for the next allowed version/channel. `.michelslab/release-request.json` is the publication authorization gate. A normal release is not a prerelease. Never infer or backslide to an older version from historical workflows, branch names, tags, or stale metadata.
+
 
 ## Intelligent brand adoption
 
