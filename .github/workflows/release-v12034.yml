@@ -1,0 +1,119 @@
+name: Publish governed v120.34
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".michelslab/release-request.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify explicit release authorization
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          manifest = json.loads(pathlib.Path("release/distribution-manifest.json").read_text())
+          request = json.loads(pathlib.Path(".michelslab/release-request.json").read_text())
+          policy = manifest["releasePolicy"]
+
+          assert policy["nextRelease"] == "v120.34"
+          assert policy["githubPrerelease"] is False
+          assert policy["explicitManualPublishRequired"] is True
+          assert request["version"] == "120.34"
+          assert request["tag"] == "v120.34"
+          assert request["authorized"] is True
+          assert request.get("authorization_source")
+          assert request.get("android_stable_artifact") == "withheld-no-production-signing"
+
+          gradle = pathlib.Path("android/app/build.gradle.kts").read_text()
+          assert 'versionCode = 12034' in gradle
+          assert 'versionName = "120.34"' in gradle
+          assert 'applicationIdSuffix = ".beta"' in gradle
+
+          html = pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+          assert "Engine v119 · UI v120.34" in html
+          assert "normalizeLegacyReviewState" in html
+          assert "pushWorkspaceState" in html
+          assert "list_snapshots" in html
+          assert 'src="assets/michel_duarte_avatar.jpg"' in html
+          assert 'src="assets/michels-lab/official-lockup.png"' in html
+          PY
+
+      - name: Run release contracts
+        run: |
+          node tests/desktop-contract.test.cjs
+          python3 tests/fixture-contract.py
+          python3 tests/branding-contract.py
+          python3 tests/privacy-contract.py
+          python3 tests/android-contract.py
+
+      - name: Build Desktop release bundle
+        run: |
+          rm -rf dist package
+          mkdir -p package/assets/michels-lab dist
+          cp desktop/ig_cleaner_pro_v120_27_synced_companion.html package/IG-Cleaner-Pro.html
+          cp desktop/assets/michel_duarte_avatar.jpg package/assets/michel_duarte_avatar.jpg
+          cp desktop/assets/michels-lab/official-lockup.png package/assets/michels-lab/official-lockup.png
+          cp branding/ig-cleaner-pro/official-app-icon.svg dist/Instagram-Cleaner-Pro-v120.34-logo.svg
+          cp docs/PRIVACY.md dist/Instagram-Cleaner-Pro-v120.34-PRIVACY.md
+          (cd package && zip -r ../dist/IG-Cleaner-Pro-Desktop-v120.34.zip .)
+          (cd dist && sha256sum IG-Cleaner-Pro-Desktop-v120.34.zip Instagram-Cleaner-Pro-v120.34-logo.svg Instagram-Cleaner-Pro-v120.34-PRIVACY.md > SHA256SUMS.txt)
+
+      - name: Verify Desktop bundle contents
+        run: |
+          unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip
+          unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "IG-Cleaner-Pro.html"
+          unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "assets/michel_duarte_avatar.jpg"
+          unzip -l dist/IG-Cleaner-Pro-Desktop-v120.34.zip | grep "assets/michels-lab/official-lockup.png"
+
+      - name: Publish normal GitHub release v120.34
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > release-notes.md <<'EOF'
+          # Instagram Cleaner Pro v120.34
+
+          Normal GitHub release (**not a prerelease**).
+
+          Highlights:
+          - Android-side Focus creation logic for Review, Mutuals, Followers-you-don't-follow and Pending, with Focus 20/30/40.
+          - Restored full Desktop ↔ Android state synchronization, including historical-review normalization, list snapshots and workspace state.
+          - Canonical Instagram Cleaner Pro stacked-layers + sparkle identity.
+          - Canonical Michel Duarte portrait and finalized Michel's Lab About branding.
+          - Local-first privacy surface and documented synchronized-data boundary.
+          - Android bottom-navigation inset protection for Samsung gesture/3-button navigation.
+          - Regression contracts covering sync, branding, privacy, Focus autonomy and Android insets.
+
+          ## Desktop
+          Use **IG-Cleaner-Pro-Desktop-v120.34.zip**. Keep the HTML and its `assets/` folder together.
+
+          ## Android
+          A stable v120.34 APK is intentionally **not attached** to this release because the repository does not yet have production signing continuity. The current CI APK uses the `.beta` debug package and is not being mislabeled as stable.
+
+          Validated implementation evidence includes GitHub Actions run **37562844481** (full repository CI: success) plus companion builds from the same v120.34 work line.
+
+          SHA-256 checksums are in **SHA256SUMS.txt**.
+          EOF
+
+          if gh release view v120.34 >/dev/null 2>&1; then
+            gh release edit v120.34               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+            gh release upload v120.34 dist/* --clobber
+          else
+            gh release create v120.34 dist/*               --target "$GITHUB_SHA"               --title "Instagram Cleaner Pro v120.34"               --notes-file release-notes.md               --latest
+          fi
+
+      - name: Verify published release channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/v120.34 --jq .prerelease)" = "false"
+          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/v120.34 --jq .draft)" = "false"
+          gh release view v120.34 --json tagName,isPrerelease,isDraft,url
