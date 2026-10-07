@@ -8,8 +8,8 @@ IG Cleaner Pro uses one persistent Android production signing identity for the s
 
 - Package: `com.michelslab.igcleaner`
 - Key alias: `ig-cleaner-pro`
-- Certificate SHA-256: `6FB7720E669ADFD36159A2E9781E15824526DC263900999A500BAB38A7B67D43`
-- Certificate validity: through **2126-10-08** (100-year certificate; effectively permanent for the product lifecycle)
+- Certificate SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`
+- Certificate validity: through **9999-12-31** (practical non-expiring maximum for this signing identity)
 - Metadata authority: `release/android-signing.json`
 
 The private keystore and its passwords are **not stored in Git**.
