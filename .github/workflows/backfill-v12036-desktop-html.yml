@@ -1,0 +1,105 @@
+name: Backfill standalone HTML on v120.36
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/backfill-v12036-desktop-html.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: backfill-igc-desktop-html-v12036
+  cancel-in-progress: false
+jobs:
+  attach-standalone-html:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: v120.36
+      HTML_ASSET: IG-Cleaner-Pro-Desktop-v120.36.html
+      ZIP_ASSET: IG-Cleaner-Pro-Desktop-v120.36.zip
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download existing stable release without rebuilding or modifying APK
+        run: |
+          set -euo pipefail
+          test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "false"
+          test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease)" = "false"
+          mkdir -p dist original-package
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dist
+          test -f "dist/$ZIP_ASSET"
+          test -f "dist/IG-Cleaner-Pro-Android-v120.36.apk"
+          test -f "dist/SHA256SUMS.txt"
+          (cd dist && sha256sum --check SHA256SUMS.txt)
+          unzip -q "dist/$ZIP_ASSET" -d original-package
+      - name: Produce independent HTML with exact bytes of released original images
+        run: |
+          python3 tools/build_standalone_desktop_html.py \
+            --source original-package/IG-Cleaner-Pro.html \
+            --assets-root original-package \
+            --output "dist/$HTML_ASSET" \
+            --version 120.36
+      - name: Smoke exact backfilled HTML in offline local browser
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install --with-deps chromium
+          node tests/desktop-standalone-smoke.cjs "dist/$HTML_ASSET"
+      - name: Regenerate comprehensive checksums (keep existing artifacts untouched)
+        run: |
+          set -euo pipefail
+          rm dist/SHA256SUMS.txt
+          (cd dist && sha256sum -- *.apk *.zip *.png *.md *.html > SHA256SUMS.txt)
+          (cd dist && sha256sum --check SHA256SUMS.txt)
+      - name: Attach standalone HTML and updated SHA256SUMS to existing v120.36 release
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "dist/$HTML_ASSET" dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body > /tmp/igc-existing-release-notes.md
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("/tmp/igc-existing-release-notes.md")
+          text=p.read_text(encoding="utf-8")
+          text=text.replace(
+              "Use **IG-Cleaner-Pro-Desktop-v120.36.zip** and keep the HTML with its  folder.",
+              "**Recommended:** **IG-Cleaner-Pro-Desktop-v120.36.html** (open directly, no ZIP needed). "
+              "Optional: **IG-Cleaner-Pro-Desktop-v120.36.zip** with its original assets folder."
+          )
+          p.write_text(text, encoding="utf-8")
+          PY
+          if ! grep -q 'standalone Desktop HTML' /tmp/igc-existing-release-notes.md; then
+            cat >> /tmp/igc-existing-release-notes.md <<'EOF'
+
+          ## Desktop — standalone HTML (recommended)
+
+          Download **IG-Cleaner-Pro-Desktop-v120.36.html** and open it directly in your browser.
+          All three official branding images are embedded in the HTML itself: no ZIP extraction
+          and no accompanying assets folder are required. The **Desktop ZIP remains available**
+          for the full unmodified asset bundle. Android APK is unchanged.
+
+          Replacing the HTML file or opening it at a different file path/browser profile may
+          create a distinct local storage context. Export your Vault backup before switching
+          versions or paths if preserving local review history matters.
+          EOF
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --notes-file /tmp/igc-existing-release-notes.md
+          fi
+      - name: Verify published HTML/checksums from the actual GitHub release
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq '.assets[].name' | grep -qx "$HTML_ASSET"
+          mkdir -p verified-download
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$HTML_ASSET" --dir verified-download
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern SHA256SUMS.txt --dir verified-download
+          cmp "dist/$HTML_ASSET" "verified-download/$HTML_ASSET"
+          cmp dist/SHA256SUMS.txt verified-download/SHA256SUMS.txt
+          grep -F "$HTML_ASSET" verified-download/SHA256SUMS.txt
+          echo 'PASS: standalone HTML independently downloadable with verified checksums.'

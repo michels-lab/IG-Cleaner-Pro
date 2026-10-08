@@ -20,6 +20,10 @@ for token in (
     'gh release create',
     'gh release upload',
     'SHA256SUMS.txt',
+    'tools/build_standalone_desktop_html.py',
+    'desktop_html_artifact',
+    'gh release view "$TAG"',
+    'tests/standalone-desktop-contract.py',
 ):
     assert token in workflow, f"Generic release publisher token missing: {token}"
 
@@ -39,6 +43,11 @@ android=manifest["channels"]["android"]
 policy=manifest["releasePolicy"]
 
 assert desktop["artifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.zip"
+assert desktop["primaryArtifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.html"
+assert desktop["primaryFormat"]=="html"
+assert desktop["standaloneOffline"] is True
+assert desktop["zipSecondary"] is True
+assert desktop["primaryArtifact"]==f"IG-Cleaner-Pro-Desktop-{manifest['releasePolicy']['currentStableRelease']}.html"
 assert android["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
 assert policy["genericPublisher"]==".github/workflows/release.yml"
 assert policy["explicitManualPublishRequired"] is True

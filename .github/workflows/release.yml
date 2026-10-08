@@ -128,6 +128,9 @@ jobs:
 
           desktop=manifest["channels"]["desktop"]["artifactTemplate"].replace("{version}",version)
           android=manifest["channels"]["android"]["artifactTemplate"].replace("{version}",version)
+          desktop_html=manifest["channels"]["desktop"]["primaryArtifactTemplate"].replace("{version}",version)
+          assert desktop_html == f"IG-Cleaner-Pro-Desktop-v{version}.html"
+          assert manifest["channels"]["desktop"]["standaloneOffline"] is True
           expected_code=int(version.replace(".",""))
           assert signing["versionName"] == version, "Signing metadata versionName does not match release request"
           assert signing["versionCode"] == expected_code, "Signing metadata versionCode does not match release request"
@@ -152,6 +155,7 @@ jobs:
               f.write(f"tag={tag}\n")
               f.write(f"version_code={expected_code}\n")
               f.write(f"desktop_artifact={desktop}\n")
+              f.write(f"desktop_html_artifact={desktop_html}\n")
               f.write(f"android_artifact={android}\n")
           PY
 
@@ -164,6 +168,7 @@ jobs:
           python3 tests/android-contract.py
           python3 tests/android-signing-contract.py
           python3 tests/release-publisher-contract.py
+          python3 tests/standalone-desktop-contract.py
           python3 tests/rls-contract.py
 
       - name: Install Android SDK packages
@@ -234,6 +239,11 @@ jobs:
           cp docs/PRIVACY.md "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-PRIVACY.md"
           cp android/app/build/outputs/apk/release/app-release.apk "dist/${{ steps.release.outputs.android_artifact }}"
           (cd package && zip -r "../dist/${{ steps.release.outputs.desktop_artifact }}" .)
+          python3 tools/build_standalone_desktop_html.py \
+            --source package/IG-Cleaner-Pro.html \
+            --assets-root package \
+            --output "dist/${{ steps.release.outputs.desktop_html_artifact }}" \
+            --version "${{ steps.release.outputs.version }}"
           (cd dist && sha256sum * > SHA256SUMS.txt)
 
       - name: Verify release bundle contents
@@ -242,6 +252,8 @@ jobs:
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michel_duarte_avatar.jpg"
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michels-lab/official-lockup.png"
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/ig-cleaner-pro/official-app-icon.png"
+          test -f "dist/${{ steps.release.outputs.desktop_html_artifact }}"
+          test "$(grep -o 'data:image/' "dist/${{ steps.release.outputs.desktop_html_artifact }}" | wc -l)" -ge 3
           test -f "dist/${{ steps.release.outputs.android_artifact }}"
 
       - name: Build release notes
@@ -252,7 +264,9 @@ jobs:
           Normal GitHub release (**not a prerelease**).
 
           ## Desktop
-          Use **${{ steps.release.outputs.desktop_artifact }}** and keep the HTML with its `assets/` folder.
+          **Recommended direct download:** **${{ steps.release.outputs.desktop_html_artifact }}** — one standalone HTML file with product, author, and Michel's Lab images embedded; open directly in your browser, no extraction required.
+
+          **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
 
           ## Android
           Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
@@ -286,4 +300,5 @@ jobs:
           test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/$TAG --jq .draft)" = "false"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.android_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_artifact }}"
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_html_artifact }}"
           gh release view "$TAG" --json tagName,isPrerelease,isDraft,url

@@ -5,7 +5,7 @@ This document defines the safe update path for Desktop/local-Web and Android. It
 ## Distribution
 
 ### Desktop / local-Web
-The canonical Desktop artifact is the bundle declared in `release/distribution-manifest.json`, using the template `IG-Cleaner-Pro-Desktop-v{version}.zip` with the **current stable version taken from the manifest** (currently v120.36). It contains the HTML entrypoint plus the canonical About identity assets. A Desktop update must never require uploading the user's Instagram export or browser state.
+The **primary Desktop release artifact is the standalone HTML** declared in `release/distribution-manifest.json`: `IG-Cleaner-Pro-Desktop-v{version}.html` (currently v120.36). Download and open it directly: the original application icon, author portrait and Michel's Lab logo are embedded as data URIs, so no extraction or additional assets folder is needed. The ZIP (`IG-Cleaner-Pro-Desktop-v{version}.zip`) remains an **optional full package** containing the HTML entrypoint and original independent assets. Both belong on the same GitHub release beside the signed Android APK and must be listed in `SHA256SUMS.txt`. A Desktop update must never require uploading the user's Instagram export or browser state.
 
 Before any update that changes persistent state, the user must be able to export a full backup from Vault. Replacing the HTML file must preserve the browser origin when state continuity is expected; opening the app from a different origin, path, or browser profile can create a separate local-storage context.
 
