@@ -130,8 +130,8 @@ jobs:
         run: |
           rm -f supabase/config.toml
           supabase init
-      - name: Start local Supabase
-        run: supabase start
+      - name: Start local Supabase (database + minimal API only)
+        run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - name: Apply IG Cleaner sync schema
         run: |
           if ! command -v psql >/dev/null 2>&1; then
