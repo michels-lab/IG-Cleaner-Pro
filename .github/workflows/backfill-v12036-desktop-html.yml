@@ -61,6 +61,17 @@ jobs:
           gh release upload "$TAG" "dist/$HTML_ASSET" dist/SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" --clobber
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body > /tmp/igc-existing-release-notes.md
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("/tmp/igc-existing-release-notes.md")
+          text=p.read_text(encoding="utf-8")
+          text=text.replace(
+              "Use **IG-Cleaner-Pro-Desktop-v120.36.zip** and keep the HTML with its  folder.",
+              "**Recommended:** **IG-Cleaner-Pro-Desktop-v120.36.html** (open directly, no ZIP needed). "
+              "Optional: **IG-Cleaner-Pro-Desktop-v120.36.zip** with its original assets folder."
+          )
+          p.write_text(text, encoding="utf-8")
+          PY
           if ! grep -q 'standalone Desktop HTML' /tmp/igc-existing-release-notes.md; then
             cat >> /tmp/igc-existing-release-notes.md <<'EOF'
 
