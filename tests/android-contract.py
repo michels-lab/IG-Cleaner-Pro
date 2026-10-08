@@ -100,13 +100,17 @@ assert '"@+id/actionTools"' not in (ROOT / "android/app/src/main/res/menu/top_ap
 assert 'R.id.actionTools' not in main, "Removed Advanced tools must not open a generic workspace"
 top_menu = (ROOT / "android/app/src/main/res/menu/top_app_bar.xml").read_text(encoding="utf-8")
 assert 'android:showAsAction="always|withText"' in top_menu
+assert '@+id/appBrandTitle' in layout
+assert 'activeAboutDialog' in main
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
 assert instrumentation.is_file(), "Must have a runnable About screenshot test"
 testcode = instrumentation.read_text(encoding="utf-8")
-for token in ("UiDevice.getInstance", "requireResource(\"aboutPortraitImage\"",
-              "requireResource(\"aboutStudioImage\"",
-              "requireResource(link, 140, 66)", "aboutInstagram",
-              "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
+for token in ("getGlobalVisibleRect", "requireVisibleView(dialog.findViewById(R.id.aboutProductImage)",
+              "requireVisibleView(dialog.findViewById(R.id.aboutStudioImage)",
+              "requireVisibleView(dialog.findViewById(R.id.aboutPortraitImage)",
+              "requireVisibleView(dialog.findViewById(res),id,140,66)",
+              "findTextView(bar,\"About\")",
+              "aboutInstagram", "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
               "screenshot(\"about\",\"author\")",
               "screenshot(\"about\",\"studio\")",
               "screenshot(\"about\",\"socials\")"):
