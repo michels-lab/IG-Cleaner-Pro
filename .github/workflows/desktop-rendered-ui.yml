@@ -37,6 +37,14 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run real compact and wide Desktop visual tests
         run: node tests/desktop-visual-smoke.cjs
+      - name: Build and smoke standalone Desktop HTML, offline images and links
+        run: |
+          python3 tools/build_standalone_desktop_html.py \
+            --source desktop/ig_cleaner_pro_v120_27_synced_companion.html \
+            --assets-root desktop \
+            --output artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html \
+            --version "$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
+          node tests/desktop-standalone-smoke.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - uses: actions/upload-artifact@v4
         if: always()
         with:
