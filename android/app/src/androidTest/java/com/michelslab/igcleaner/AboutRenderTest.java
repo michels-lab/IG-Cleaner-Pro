@@ -91,6 +91,8 @@ public class AboutRenderTest {
                 requireNative(activity.findViewById(R.id.content), "Home workspace", 190, 180);
             });
             requireText("Instagram Cleaner Pro");
+            // About must be visibly labeled in the top toolbar, not hidden in overflow.
+            requireText("About");
             screenshot("home","initial");
         }
     }
@@ -104,13 +106,14 @@ public class AboutRenderTest {
                 assertTrue("Could not open real About dialog",
                     toolbar.getMenu().performIdentifierAction(R.id.actionAbout,0));
             });
-            requireText("Michel Duarte");
+            requireText("Michel Armando Duarte Flores");
             requireText("Michel’s Lab");
             requireText("TOOLS WITH IDENTITY.");
 
             // Only check actual visible rectangles: a resource present in XML or
             // attached to an invisible 0dp panel does NOT satisfy this test.
-            requireResource("aboutPortraitImage", 60, 70);
+            requireResource("aboutProductImage", 80, 100);
+            requireResource("aboutPortraitImage", 190, 320);
             requireResource("aboutStudioImage", 80, 60);
             screenshot("about","author");
             screenshot("about","studio");
@@ -118,7 +121,7 @@ public class AboutRenderTest {
             for (String link : new String[] {
                 "aboutInstagram","aboutFacebook","aboutLinkedin","aboutGithub","aboutEmail"
             }) {
-                // 39dp buttons at 320dpi should expose nearly 78px of height.
+                // The full-height vertical social list must be visible without scrolling.
                 // 70%-visible Email (55px) must fail, as in the v120.36 regression.
                 requireResource(link, 140, 66);
             }
