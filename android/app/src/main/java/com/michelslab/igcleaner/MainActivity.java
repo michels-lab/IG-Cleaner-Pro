@@ -208,17 +208,11 @@ public final class MainActivity extends AppCompatActivity {
         });
         ViewCompat.requestApplyInsets(root);
 
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.actionSync) {
-                syncNow();
-                return true;
-            }
-            if (item.getItemId() == R.id.actionAbout) {
-                showAbout();
-                return true;
-            }
-            return false;
-        });
+        // Explicit top-header controls: About never enters a three-dot overflow menu.
+        View aboutAction = findViewById(R.id.headerAboutButton);
+        View syncAction = findViewById(R.id.headerSyncButton);
+        aboutAction.setOnClickListener(view -> showAbout());
+        syncAction.setOnClickListener(view -> syncNow());
 
         bottomNav.setOnItemSelectedListener(item -> {
             bottomNav.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
