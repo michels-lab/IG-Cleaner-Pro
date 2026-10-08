@@ -1,5 +1,16 @@
 # Current Handoff — Instagram Cleaner Pro
 
+## Current shipped version — v120.37 (published; authoritative)
+
+- **Normal GitHub stable release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.37 — published 2026-10-08T22:12:02Z; `draft=false` and `prerelease=false`.
+- **Matched releases:** signed production Android `IG-Cleaner-Pro-Android-v120.37.apk`, offline standalone Desktop `IG-Cleaner-Pro-Desktop-v120.37.html`, optional full Desktop `IG-Cleaner-Pro-Desktop-v120.37.zip`, product logo, privacy notice and `SHA256SUMS.txt`.
+- **Production signing:** original FINAL-9999 cert SHA-256 `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33` verified with Android v2/v3 signatures; unchanged stable package `com.michelslab.igcleaner`.
+- **Released exact commit:** `15177fee95358a891619266dc90a523d13b8aaef`; publisher run https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37851259478 — all gates `release-request-gate`, `rendered-ui-qa`, `publish` **SUCCESS**.
+- **Accepted corrected About code:** PR #39 and version candidate PR #40 merged before publication. App/Michel's Lab logos side by side at top, developer info below, large portrait + vertical social links; Android native persistent About and Sync, no unused Advanced tools; Desktop permanent About in top command bar.
+- **Automated verification:** actual installed Android emulator compact/wide Home/About; Desktop Chromium Home/About; product branding, signed Android package, standalone HTML, Supabase CI. **Samsung physical update, genuine Instagram ZIP and live authenticated Desktop↔Android sync are still pending post-release acceptance** in issue #24, not claimed as passed.
+- **Next governed candidate:** v120.38, **not authorized**. Do not publish or rebuild v120.37 from a new commit. Earlier handoff content is historical and must not override this heading.
+
+
 ## v120.37 release candidate — user authorized after fixes
 
 - User requested v120.37 release after finishing pending UI bugs. PR #39 is merged into main (commit `ab02b0d2db9923ad8cb79bb88e1ce669f34c3050`) following actual native Android UI and Desktop Chromium screenshot proof. New candidate bumps Android/Desktop 120.37 and signing metadata but does not change state schema. Run same-SHA QA again on main; only then authorize/publish normal signed APK and primary standalone HTML. Keep v120.36 as current stable until GitHub confirms v120.37.
