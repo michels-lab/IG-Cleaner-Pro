@@ -1073,3 +1073,14 @@ Final runner probe:
 - Release workflow retains separate explicit publication authorization; no v120.35 GitHub Release was published by this work.
 - PR #20 merged after exact-head Desktop, Android and Supabase CI passed (run 37716560654); main merge commit `fd45720e09d6fe7cb399f0eafe0928d97d40f592`.
 - Actual phone UX, live authenticated Desktop↔Android round trip, real ZIP imports, cloud export/download and cloud delete must still be validated on target devices; do not claim those device checks complete.
+
+
+## 2026-10-08 — v120.35 production GitHub Release published
+
+- Explicit user instruction **“dale release”** authorized v120.35 normal/stable GitHub publication on 2026-10-08.
+- Generic publisher GitHub Actions run **37737077156** ended **SUCCESS** on release source commit `0e4b0c3d5b803436fd453c23e51dce1505871d8a`.
+- Published normal release `v120.35` (`prerelease=false`) with signed production Android APK, Desktop ZIP, canonical logo SVG, privacy notice and `SHA256SUMS.txt`.
+- Production Android certificate identity was verified by the publisher; package `com.michelslab.igcleaner`, version `120.35`, persistent FINAL-9999 signer.
+- Release request authorization consumed (`authorized=false`, `status=published`), distribution manifest current stable changed to `v120.35`, next governed candidate advanced to `v120.36`.
+- The generic publisher now safely skips already-published/unauthorized request changes to avoid accidental duplicate publication. CI contracts made version-aware instead of relying on former hardcoded v120.34.
+- Pending real-phone acceptance is tracked in issue #24, including update-over-v120.34, ZIP import, Focus, sync and cloud controls. Not tested by GitHub CI, and no Google Play release claimed.
