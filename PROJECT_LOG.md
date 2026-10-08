@@ -1132,3 +1132,10 @@ The user explicitly prefers to inspect apps **after release** rather than waitin
 - Fix: primary Desktop artifact `IG-Cleaner-Pro-Desktop-v{version}.html`, bundled self-contained from validated HTML + exact official icon/author/lockup bytes as data URIs; retain ZIP as optional, preserve signed Android APK. Add real offline Chromium smoke, source/manifest/publisher CI contract and SHA256 coverage. Update release notes and verify GitHub asset presence.
 - Backfill v120.36 using a one-time GitHub workflow that extracts the *already released* validated Desktop ZIP, creates/offline-tests the standalone HTML, attaches only HTML + regenerated checksum manifest, and keeps existing signed APK/ZIP and their bytes unchanged. Do not claim backfill completed until workflow ends successfully and the live GitHub release has the downloadable HTML.
 - Release protocol now requires direct HTML for this app and master standard for all local-browser Desktop apps. Historical v120.36 ZIP is intentionally retained for compatibility.
+
+## 2026-10-08 — v120.36 post-release support and issue triage
+
+- Confirmed normal GitHub v120.36 release has signed APK, standalone offline Desktop HTML, optional ZIP, official logo, privacy file and checksums. Direct HTML was backfilled after the earlier ZIP-only release; signing and Android APK were not rebuilt.
+- Updated public README's erroneous v120.20 and backend-free claims to the v120.36 source-of-truth: local raw export processing, optional Supabase-derived-data sync, Android signing continuity, release assets and remaining physical-device boundary.
+- Resolved historical P1 logo (#30) and cross-platform Home/About runtime visual QA (#28) using the evidence already merged into v120.36; did not claim completion of the physical Samsung acceptance issue (#24).
+- Carried forward issue #24 to target v120.36 as **post-release device acceptance**, not a human pre-release blocker. Stable release remains v120.36; v120.37 is not authorized.
