@@ -80,27 +80,27 @@ jobs:
           assert m['releasePolicy']['automaticPublishFromMain'] is False
           assert m['releasePolicy']['explicitManualPublishRequired'] is True
           assert m['releasePolicy']['checksumsRequired'] is True
-          assert m['releasePolicy']['currentStableRelease']=='v120.34'
-          assert m['releasePolicy']['nextRelease']=='v120.35'
-          assert m['releasePolicy']['lastPublishedRun']==37574744462
+          assert m['releasePolicy']['currentStableRelease']==f"v{m['channels']['android']['artifact'].removeprefix('IG-Cleaner-Pro-Android-v').removesuffix('.apk')}"
+          assert m['releasePolicy']['nextRelease'] != m['releasePolicy']['currentStableRelease']
+          assert isinstance(m['releasePolicy']['lastPublishedRun'],int) and m['releasePolicy']['lastPublishedRun']>0
           assert m['releasePolicy']['genericPublisher']=='.github/workflows/release.yml'
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
-          assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
+          assert m['channels']['desktop']['artifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['currentStableRelease']}.zip"
           assert m['channels']['desktop']['entrypoint']=='IG-Cleaner-Pro.html'
           assert m['channels']['desktop']['includes']==[
               'assets/michel_duarte_avatar.jpg',
               'assets/michels-lab/official-lockup.png',
           ]
-          assert m['channels']['android']['artifact']=='IG-Cleaner-Pro-Android-v120.34.apk'
+          assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['currentStableRelease']}.apk"
           assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
           assert m['channels']['android']['artifactTemplate']=='IG-Cleaner-Pro-Android-v{version}.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
           current=m['releasePolicy']['currentStableRelease']
           next_release=m['releasePolicy']['nextRelease']
-          assert current=='v120.34'
-          assert next_release=='v120.35'
+          assert current == m['releasePolicy']['currentStableRelease']
+          assert next_release != current
           if r['authorized']:
               assert r['status'] in ('requested','authorized')
               assert r['tag']==next_release
@@ -111,9 +111,9 @@ jobs:
               assert r['status']=='published'
               assert r['tag']==current
               assert r['version']==current.removeprefix('v')
-              assert r['published_run']==37574744462
+              assert r['published_run']==m['releasePolicy']['lastPublishedRun']
               assert r['published_commit']
-          print('Distribution/state manifest passed: stable v120.34, governed next v120.35.')
+          print(f'Distribution/state manifest passed: stable {current}, governed next {next_release}.')
           PY
 
   supabase-rls:

@@ -29,6 +29,6 @@ Before preparing or publishing any release:
 7. Never publish from generic validation CI.
 8. Historical version-specific publishers are retired evidence only.
 
-Current published stable: **v120.34**. Next governed publication target: **v120.35**; merging development does not authorize a release.
+Current published stable: **v120.35**. Next governed publication target: **v120.36**; merging development does not authorize a release.
 
 Before release approval, read the current master About/Product Identity standards and `brand/developer-profile.json`. Require evidence for Desktop and Android About showing product-first identity, canonical portrait and Michel's Lab lockup paired side by side when space permits, exact visible **`TOOLS WITH IDENTITY.`** slogan, responsive narrow layout, and social platform icons + visible names/canonical destinations. Reconcile canonical asset hashes. If rendered About/device behavior is unverified, preserve that as an open release gate; do not infer completion from strings alone.

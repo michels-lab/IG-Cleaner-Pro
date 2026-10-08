@@ -65,9 +65,9 @@ Do not bump versions or publish releases unless explicitly assigned.
 - A normal/stable release must publish with GitHub `prerelease=false`; never silently substitute a prerelease.
 - Do not publish an Android stable artifact whose installed package/version identity still says beta or whose signing continuity is not established.
 - Once persistent Android signing is configured, every normal IG Cleaner Pro GitHub release must include the latest validated signed Android APK unless the user explicitly requests a desktop-only release.
-- Current stable release: **v120.34**. Current next publication target from the manifest: **v120.35**.
+- Current stable release: **v120.35**. Current next publication target from the manifest: **v120.36**.
 - Use `.github/workflows/release.yml` as the generic governed publisher for v120.35+; do not create a new version-specific publisher unless a concrete compatibility exception requires it.
-- A merge/version bump is never release authorization. v120.35 is not published until the user explicitly authorizes publication.
+- A merge/version bump never authorizes a release. v120.35 has been published using explicit authorization, which is now consumed; v120.36 will require a fresh authorization.
 
 ## Intelligent brand adoption
 
