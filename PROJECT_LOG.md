@@ -1084,3 +1084,12 @@ Final runner probe:
 - Release request authorization consumed (`authorized=false`, `status=published`), distribution manifest current stable changed to `v120.35`, next governed candidate advanced to `v120.36`.
 - The generic publisher now safely skips already-published/unauthorized request changes to avoid accidental duplicate publication. CI contracts made version-aware instead of relying on former hardcoded v120.34.
 - Pending real-phone acceptance is tracked in issue #24, including update-over-v120.34, ZIP import, Focus, sync and cloud controls. Not tested by GitHub CI, and no Google Play release claimed.
+
+## 2026-10-08 — P0 Android About blank-region hotfix in progress (v120.36)
+
+- User provided actual v120.35 Samsung screenshot showing product header and title but a large blank author/studio/social block. Root cause identified in `MainActivity.showAbout()`: at `screenWidthDp < 390`, `aboutPairRow` switches to VERTICAL while its children retained horizontal-only `layout_width=0dp` and `layout_weight=1`; their content was not visible.
+- PR #29 repairs layout by assigning both identity panels `MATCH_PARENT` width and `WRAP_CONTENT` height, removing leftover weighted parameters and adding clear spacing. Names stable child IDs. Previous Android XML source-token tests passed despite failure.
+- New real Android About UI instrumentation asserts nonzero measured dimensions/image drawables/reachable social button; emulator screenshots capture author/studio/socials at compact and wide resolutions, with screenshot/APK/source digest coverage validator.
+- New release approval job depends on exact-source Android render screenshots and a GitHub `visual-release-approval` protected required-human-reviewer environment. A missing protection rule fails closed. Actual GitHub Environment configuration and reviewer approval are external and must be verified; do not claim it is configured.
+- Cleared incorrect `AGENTS.md`-local app-maintainer reference to retired `IG` monogram. Selected logo is first proposal (profile cards / cyan orbit / gold sparkle), NOT the second circular filter proposal. Full-resolution original must be imported into master without changes before activating it. Existing app logo intentionally unchanged while source-import is pending.
+- No new release was requested or published by this work. v120.35 remains stable; v120.36 is an unapproved candidate. Emulated UI and physical phone review remain distinct requirements, and Focus/ZIP/counters/sync device acceptance is still open in issue #24.

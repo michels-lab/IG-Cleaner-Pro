@@ -2072,7 +2072,22 @@ public final class MainActivity extends AppCompatActivity {
         View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
         LinearLayout aboutPairRow = about.findViewById(R.id.aboutPairRow);
         if (getResources().getConfiguration().screenWidthDp < 390) {
+            // Weighted horizontal columns start at 0dp width. When stacking
+            // them vertically, those same params hid the entire About section.
             aboutPairRow.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout author = about.findViewById(R.id.aboutAuthorColumn);
+            LinearLayout studio = about.findViewById(R.id.aboutStudioColumn);
+            LinearLayout.LayoutParams authorParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams studioParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            studioParams.topMargin = Math.round(12f * getResources().getDisplayMetrics().density);
+            author.setLayoutParams(authorParams);
+            studio.setLayoutParams(studioParams);
+            author.setPadding(0, author.getPaddingTop(), 0, author.getPaddingBottom());
+            studio.setPadding(0, studio.getPaddingTop(), 0, studio.getPaddingBottom());
         }
         TextView aboutVersion = about.findViewById(R.id.aboutVersion);
         try {

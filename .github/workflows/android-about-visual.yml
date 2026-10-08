@@ -1,0 +1,71 @@
+name: Android About rendered UI
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'branding/**'
+      - 'desktop/**'
+      - 'tests/**'
+      - 'tools/android_about_visual_evidence.py'
+      - '.github/workflows/android-about-visual.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'branding/**'
+      - 'desktop/**'
+      - 'tests/**'
+      - '.michelslab/release-request.json'
+      - '.github/workflows/android-about-visual.yml'
+      - 'tools/android_about_visual_evidence.py'
+permissions:
+  contents: read
+concurrency:
+  group: igc-android-about-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture-actual-android-about:
+    name: Install Android APK; render About at compact and wide sizes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enable KVM for Android emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Build debug candidate and run real UI screenshot test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: bash tools/run_android_about_ui.sh
+      - name: Validate binary-backed screenshots and write evidence manifest
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/android_about_visual_evidence.py \
+            --screenshots artifacts/visual/android/igc-ui-capture \
+            --apk android/app/build/outputs/apk/debug/app-debug.apk \
+            --sha "$GITHUB_SHA" \
+            --out artifacts/visual/manifest.json
+      - name: Bind screenshot artifact to actual installed debug APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/visual/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ig-cleaner-real-android-about-${{ github.sha }}
+          path: artifacts/visual/
+          retention-days: 30
+          if-no-files-found: warn

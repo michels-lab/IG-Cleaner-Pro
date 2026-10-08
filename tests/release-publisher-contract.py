@@ -23,6 +23,17 @@ for token in (
 ):
     assert token in workflow, f"Generic release publisher token missing: {token}"
 
+# GitHub must not publish a visually changed app on mere source/build success.
+for token in (
+    'visual-release-approval:',
+    'environment: visual-release-approval',
+    'required_reviewers',
+    'needs: [release-request-gate, visual-release-approval]',
+    'tools/verify_android_visual_release_evidence.py',
+    '--commit "$GITHUB_SHA"',
+):
+    assert token in workflow, f"Release P0 missing protected visual approval: {token}"
+
 desktop=manifest["channels"]["desktop"]
 android=manifest["channels"]["android"]
 policy=manifest["releasePolicy"]

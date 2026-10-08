@@ -86,4 +86,26 @@ for asset in (
 ):
     assert (ROOT / asset).is_file(), f"Missing canonical About asset: {asset}"
 
+# Regression P0 (v120.35): narrow-screen About panels were kept at 0dp wide
+# when the horizontal weighted row switched to vertical. This was invisible in
+# prior source-token tests and escaped into the published Android APK.
+for id in ("aboutAuthorColumn", "aboutStudioColumn", "aboutPortraitImage", "aboutStudioImage"):
+    assert f'@+id/{id}' in about, f"Native About view ID missing: {id}"
+for token in (
+    "LinearLayout.LayoutParams.MATCH_PARENT,",
+    "LinearLayout.LayoutParams.WRAP_CONTENT",
+    "author.setLayoutParams(authorParams)",
+    "studio.setLayoutParams(studioParams)",
+    "studioParams.topMargin",
+):
+    assert token in main, f"Responsive About zero-width regression: {token}"
+instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
+assert instrumentation.is_file(), "Must have a runnable About screenshot test"
+testcode = instrumentation.read_text(encoding="utf-8")
+for token in ("assertMeasured(R.id.aboutAuthorColumn", "assertMeasured(R.id.aboutStudioColumn",
+              "assertMeasured(R.id.aboutPortraitImage", "assertMeasured(R.id.aboutStudioImage",
+              "assertMeasured(R.id.aboutEmail", "screenshot(\"author\")",
+              "screenshot(\"studio\")", "screenshot(\"socials\")"):
+    assert token in testcode, f"Missing actual About render test assertion: {token}"
+
 print("Android UX/Focus/privacy/About regression contract passed.")
