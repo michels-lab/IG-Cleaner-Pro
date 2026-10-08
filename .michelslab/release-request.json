@@ -1,11 +1,14 @@
 {
   "version": "120.37",
   "tag": "v120.37",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Explicit user instructions in ChatGPT on 2026-10-08: 'dale release' followed by 'pero primero termina los pendientes'. PR #39 and PR #40 fixes, Android emulator UI/CI, Desktop visual tests and Supabase RLS completed before publication.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "requested",
-  "previous_stable_release": "v120.36"
+  "status": "published",
+  "previous_stable_release": "v120.36",
+  "published_run": 37851259478,
+  "published_commit": "15177fee95358a891619266dc90a523d13b8aaef",
+  "completed_at_utc": "2026-10-08T22:12:02Z"
 }

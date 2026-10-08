@@ -1164,3 +1164,11 @@ The user explicitly prefers to inspect apps **after release** rather than waitin
 
 - PR #39 merged on `ab02b0d2db9923ad8cb79bb88e1ce669f34c3050` after Android native emulator Home/About screenshot workflow, Desktop real Chromium screenshots, production-signing build, Desktop contract and Supabase RLS checks passed on exact candidate SHA. The native toolbar is no longer an adaptive overflow menu: About and Sync occupy dedicated visible controls; Advanced tools was removed fully.
 - User explicitly instructed `dale release` and then `pero primero termina los pendientes`. Pending UI fixes were finished and CI passed before preparing **v120.37**. Increment both Desktop and Android version, signing/public metadata and release notes together while preserving package ID, FINAL-9999 signer and storage state. Keep the prior normal GitHub v120.36 published until the new publisher confirms real signed APK + offline HTML + ZIP + checksums; no success claim before then.
+
+## 2026-10-08 — v120.37 published, signed, parity checked and authorization consumed
+
+- Following user's explicit `dale release` and `pero primero termina los pendientes`, completed and merged functional/layout PR #39 and versioned PR #40 before sending final `.michelslab/release-request.json` authorization.
+- Exact release source `15177fee95358a891619266dc90a523d13b8aaef`; `release.yml` run `37851259478` completed all three jobs **SUCCESS** (release request gate, same-commit Android and Desktop rendered UI proof, signed production publisher).
+- The publisher verified unchanged FINAL-9999 certificate digest `99c1dd7b0ed32b758afad253a774d85dc7a4481990342b5d09b54b9dcca84f33`, Android v2/v3 signing, stable package/version, published normal GitHub release `v120.37` (not prerelease) at 2026-10-08T22:12:02Z.
+- Live GitHub Release assets confirmed: `IG-Cleaner-Pro-Android-v120.37.apk`, `IG-Cleaner-Pro-Desktop-v120.37.html`, `IG-Cleaner-Pro-Desktop-v120.37.zip`, official logo PNG, privacy notice, `SHA256SUMS.txt`.
+- Closed v120.37 release request (published / `authorized=false`), reconciled distribution manifest stable v120.37 and next v120.38, updated user-facing README/handoff. Preserve real-device Instagram ZIP, Focus and cloud roundtrip acceptance in issue #24 as post-release follow-up; not a manually blocking gate.
