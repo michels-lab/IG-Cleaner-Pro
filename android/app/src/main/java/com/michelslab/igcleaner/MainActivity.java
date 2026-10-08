@@ -2069,11 +2069,26 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showAbout() {
+        View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
+        bindAboutLink(about, R.id.aboutInstagram, "https://www.instagram.com/realmichelduarte/");
+        bindAboutLink(about, R.id.aboutFacebook, "https://www.facebook.com/realmichelduarte");
+        bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
+        bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
         new MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.about_title))
-                .setMessage(getString(R.string.about_body))
-                .setPositiveButton("Cerrar", null)
+                .setView(about)
+                .setPositiveButton("Close", null)
                 .show();
+    }
+
+    private void bindAboutLink(View about, int buttonId, String url) {
+        View button = about.findViewById(buttonId);
+        button.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (ActivityNotFoundException error) {
+                Toast.makeText(this, "No app available to open link", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void touchDevice() throws Exception {
