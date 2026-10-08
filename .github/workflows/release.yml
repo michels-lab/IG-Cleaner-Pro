@@ -26,7 +26,7 @@ jobs:
               request = json.load(f)
           enabled = request.get("authorized") is True and request.get("status") in ("requested", "authorized")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write("publish=" + ("true" if enabled else "false") + "\\n")
+              out.write("publish=" + ("true" if enabled else "false") + "\n")
           print("Release authorization active:", enabled)
           PY
 
