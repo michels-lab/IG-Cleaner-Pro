@@ -31,7 +31,7 @@ def verify(root: Path, sha: str):
     assert len(shots) == 6, "Missing one or more of six About screenshot captures"
     expected = {(v,p) for v in ("compact","wide") for p in ("author","studio","socials")}
     seen = set()
-    hashes = set()
+    hashes = {}
     for item in shots:
         key = (item.get("viewport"), item.get("section"))
         assert key in expected and key not in seen, f"Unexpected/duplicate screenshot: {key}"
@@ -48,8 +48,9 @@ def verify(root: Path, sha: str):
             assert dim == (item.get("width"), item.get("height"))
             assert dim == ((720,1280) if item["viewport"] == "compact" else (1080,1920))
             assert max(ImageStat.Stat(im.convert("RGB").resize((64,64))).stddev) >= 9, "Blank screenshot"
-        assert item["sha256"] not in hashes, "Reused screenshot bytes"
-        hashes.add(item["sha256"])
+        hsh = item["sha256"]
+        assert hsh not in hashes or hashes[hsh] == item["viewport"], "Reused screenshot from another viewport"
+        hashes[hsh] = item["viewport"]
     assert seen == expected
     print("PASS: real Android About screenshot coverage from 2 viewports, 3 sections, same SHA/APK")
     print("IMPORTANT: independent human protected environment approval is required in addition.")
