@@ -11,7 +11,28 @@ permissions:
   contents: write
 
 jobs:
+  release-request-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.gate.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ignore already-published release requests
+        id: gate
+        run: |
+          python3 - <<'PY'
+          import json, os
+          with open(".michelslab/release-request.json", encoding="utf-8") as f:
+              request = json.load(f)
+          enabled = request.get("authorized") is True and request.get("status") in ("requested", "authorized")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("publish=" + ("true" if enabled else "false") + "\\n")
+          print("Release authorization active:", enabled)
+          PY
+
   publish:
+    needs: release-request-gate
+    if: needs.release-request-gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
     env:
       IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
