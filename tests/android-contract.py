@@ -96,10 +96,13 @@ for id in ("aboutPairRow", "aboutProductImage", "aboutStudioImage",
     assert f'@+id/{id}' in about, f"About composition missing: {id}"
 assert 'android:layout_width="132dp" android:layout_height="216dp"' in about
 assert 'android:orientation="horizontal"' in about
-assert '"@+id/actionTools"' not in (ROOT / "android/app/src/main/res/menu/top_app_bar.xml").read_text(encoding="utf-8")
+assert not (ROOT / "android/app/src/main/res/menu/top_app_bar.xml").exists(), "Obsolete overflow menu must be removed"
 assert 'R.id.actionTools' not in main, "Removed Advanced tools must not open a generic workspace"
-top_menu = (ROOT / "android/app/src/main/res/menu/top_app_bar.xml").read_text(encoding="utf-8")
-assert 'android:showAsAction="always|withText"' in top_menu
+assert 'app:menu="@menu/top_app_bar"' not in layout
+assert '@+id/headerAboutButton' in layout and '@+id/headerSyncButton' in layout
+assert 'android:text="About"' in layout
+assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
+assert 'syncAction.setOnClickListener(view -> syncNow())' in main
 assert '@+id/appBrandTitle' in layout
 assert 'activeAboutDialog' in main
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
