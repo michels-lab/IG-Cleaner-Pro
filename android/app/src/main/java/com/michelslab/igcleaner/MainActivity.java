@@ -2108,10 +2108,21 @@ public final class MainActivity extends AppCompatActivity {
         bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
         bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
         bindAboutLink(about, R.id.aboutEmail, "mailto:realmichelduarte@gmail.com");
-        new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog aboutDialog = new MaterialAlertDialogBuilder(this)
                 .setView(about)
                 .setPositiveButton("Close", null)
                 .show();
+        // Keep the action footer inside the same navy gradient as the
+        // product/author content instead of Material's disconnected grey bar.
+        if (aboutDialog.getWindow() != null) {
+            aboutDialog.getWindow().setBackgroundDrawableResource(R.drawable.bg_about_canvas);
+        }
+        android.widget.Button closeButton =
+                aboutDialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
+        if (closeButton != null) {
+            closeButton.setTextColor(
+                    androidx.core.content.ContextCompat.getColor(this, R.color.ig_cyan));
+        }
     }
 
     private void bindAboutLink(View about, int buttonId, String url) {

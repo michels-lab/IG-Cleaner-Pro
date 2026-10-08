@@ -30,7 +30,7 @@
                 android:layout_width="52dp"
                 android:layout_height="52dp"
                 android:contentDescription="Instagram Cleaner Pro"
-                android:src="@drawable/ic_launcher_foreground"
+                android:src="@drawable/ig_official_app_icon"
                 android:scaleType="fitCenter"/>
 
             <LinearLayout
@@ -62,7 +62,7 @@
         android:layout_height="28dp"
         android:gravity="center_vertical"
         android:paddingHorizontal="18dp"
-        android:background="@color/ig_canvas"
+        android:background="@drawable/bg_header"
         android:text="READY"
         android:textColor="@color/ig_dim"
         android:textSize="9sp"
@@ -83,7 +83,7 @@
         android:paddingTop="4dp"
         android:paddingBottom="6dp"
         android:clipToPadding="false"
-        android:background="@color/ig_canvas"
+        android:background="@drawable/bg_header"
         app:itemIconTint="@color/nav_item_color"
         app:itemTextColor="@color/nav_item_color"
         app:itemBackground="@drawable/nav_item_background"

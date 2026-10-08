@@ -4,5 +4,5 @@
         android:width="180dp"
         android:height="180dp"
         android:gravity="center"
-        android:drawable="@drawable/ig_official_mark"/>
+        android:drawable="@drawable/ig_official_app_icon"/>
 </layer-list>

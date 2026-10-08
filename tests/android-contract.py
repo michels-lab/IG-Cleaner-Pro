@@ -63,7 +63,7 @@ assert '"DELETE"' in sync_api
 # Native About must not regress to a text-only dialog.
 about = (ROOT / "android/app/src/main/res/layout/dialog_about.xml").read_text(encoding="utf-8")
 for token in (
-    "@drawable/ig_official_mark",
+    "@drawable/ig_official_app_icon",
     "@drawable/ig_about_portrait",
     "@drawable/ig_about_studio",
     "TOOLS WITH IDENTITY.",
@@ -102,10 +102,17 @@ for token in (
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
 assert instrumentation.is_file(), "Must have a runnable About screenshot test"
 testcode = instrumentation.read_text(encoding="utf-8")
-for token in ("assertMeasured(R.id.aboutAuthorColumn", "assertMeasured(R.id.aboutStudioColumn",
-              "assertMeasured(R.id.aboutPortraitImage", "assertMeasured(R.id.aboutStudioImage",
-              "assertMeasured(R.id.aboutEmail", "screenshot(\"author\")",
-              "screenshot(\"studio\")", "screenshot(\"socials\")"):
+for token in ("UiDevice.getInstance", "requireResource(\"aboutPortraitImage\"",
+              "requireResource(\"aboutStudioImage\"",
+              "requireResource(link, 140, 66)", "aboutInstagram",
+              "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
+              "screenshot(\"about\",\"author\")",
+              "screenshot(\"about\",\"studio\")",
+              "screenshot(\"about\",\"socials\")"):
     assert token in testcode, f"Missing actual About render test assertion: {token}"
 
 print("Android UX/Focus/privacy/About regression contract passed.")
+
+# Real Home screens must now be checked in the packaged Android runtime.
+assert 'realHomeRendersNavigationAndWorkspace' in testcode
+assert 'screenshot("home","initial")' in testcode and 'R.id.bottomNav' in testcode

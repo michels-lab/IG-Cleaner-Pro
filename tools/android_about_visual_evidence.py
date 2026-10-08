@@ -49,7 +49,26 @@ def create_manifest(folder: Path, apk: Path, sha: str):
                 capture_method='installed-android-emulator',
                 candidate_artifact_sha256=digest(apk)
             ))
-    assert len(shots)==6
+    for viewport in ('compact', 'wide'):
+        path = folder / f'home-{viewport}-initial.png'
+        assert path.is_file() and path.stat().st_size > 3000, f'P0: missing real Home screenshot: {path}'
+        with Image.open(path) as im:
+            im.verify()
+        with Image.open(path) as im:
+            w, h = im.size
+            expected = (720,1280) if viewport == 'compact' else (1080,1920)
+            assert (w,h) == expected, f'Invalid Home viewport {w}x{h}'
+            assert max(ImageStat.Stat(im.convert('RGB').resize((64,64))).stddev) >= 9, 'Blank Home screenshot'
+        hsh = digest(path)
+        assert hsh not in seen or seen[hsh] == viewport, 'Home screenshot reused across viewport sizes'
+        seen[hsh] = viewport
+        shots.append(dict(
+            platform='android', surface='home', viewport=viewport, section='initial',
+            path=path.name, width=w, height=h, sha256=hsh,
+            capture_method='installed-android-emulator',
+            candidate_artifact_sha256=digest(apk)
+        ))
+    assert len(shots)==8
     return dict(
         schema='michelslab-rendered-ui-v1',
         source_commit=sha,
@@ -71,5 +90,5 @@ if __name__ == '__main__':
     doc=create_manifest(a.screenshots,a.apk,a.sha)
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(doc,indent=2)+'\n',encoding='utf-8')
-    print('PASS: 6 actual captured About screenshots, compact+wide, nonblank and APK-hash bound')
+    print('PASS: 8 real Home+About screenshots, compact+wide, nonblank and APK-hash bound')
     print('Human review and physical Samsung verification remain PENDING.')

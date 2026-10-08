@@ -1,5 +1,23 @@
 # Current Handoff — Instagram Cleaner Pro
 
+Updated: 2026-10-08; trigger: LIMÓN.
+
+## v120.36 — approved logo and visual QA candidate
+
+- User expressly instructed **correct remaining problems and release v120.36**. Preparing from PR #35; do not claim a release until Github Releases contains signed APK + Desktop ZIP and all checks pass.
+- PR #29 fixed the Android About zero-width author/studio panel. PR #31 redesigned compact About to keep both identities + five social links completely visible; real emulator screenshot test rejected a 70%-visible Email button and passed after correction.
+- PR #32 removed the pre-release human reviewer bottleneck as explicitly requested, retaining fail-closed automatic QA. PR #33 prepared Android/Desktop v120.36 version.
+- PR #35 imports the **exact original** 1,559,781-byte first chosen profile-card/cyan-orbit/gold-sparkle PNG into IG Cleaner and adds derived lossless launcher/Desktop/release assets. Same original is activated in the Michel's Lab master manifest through PR #30.
+- Android **Home and About** now have actual installed-app compact/wide screenshots with APK and source SHA. Desktop **Home and About** have actual Chromium compact/wide screenshots, native asset checks and exact HTML hash. Governed publisher verifies both on exact release-request source SHA.
+- Keep production signing identity FINAL-9999 and stable package `com.michelslab.igcleaner`. Do not silently re-key or change app ID.
+- Remaining **physical phone** validation of update-over-old-signed-release, Focus, Instagram export ZIP import and live cloud sync is [issue #24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24), distinct from CI.
+- Public stable was v120.35 before this release work; next release target is v120.36. After publication reconcile release manifest and consume authorization, then append final job and asset proof. Never infer that GitHub release succeeded just because CI did.
+- Permanent source log: `PROJECT_LOG.md`. Last published signed cert SHA-256: `99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33`.
+
+## Historic handoff archive
+
+# Current Handoff — Instagram Cleaner Pro
+
 Updated: **2026-10-08**
 Trigger: **LIMÓN**
 

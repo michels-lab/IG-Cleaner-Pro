@@ -1,0 +1,46 @@
+name: Desktop rendered UI
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'branding/**'
+      - 'tests/**'
+      - '.github/workflows/desktop-rendered-ui.yml'
+      - '.michelslab/release-request.json'
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - 'branding/**'
+      - 'tests/**'
+      - '.github/workflows/desktop-rendered-ui.yml'
+      - '.michelslab/release-request.json'
+permissions:
+  contents: read
+concurrency:
+  group: igc-desktop-render-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  desktop-chromium-render:
+    name: Launch distributable HTML; screenshot Home and About
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install --with-deps chromium
+      - name: Run real compact and wide Desktop visual tests
+        run: node tests/desktop-visual-smoke.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ig-cleaner-real-desktop-ui-${{ github.sha }}
+          path: artifacts/desktop-visual/
+          retention-days: 30
+          if-no-files-found: warn

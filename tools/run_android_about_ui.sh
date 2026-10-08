@@ -21,7 +21,7 @@ for viewport in compact wide; do
     adb logcat -d -t 200 | tail -100 || true
     exit 1
   fi
-  if ! grep -Eq 'OK \(1 test\)' "artifacts/visual/android/instrumentation-$viewport.txt"; then
+  if ! grep -Eq 'OK \(2 tests\)' "artifacts/visual/android/instrumentation-$viewport.txt"; then
     echo "::error::Android UI instrumentation did not report success for $viewport"
     adb logcat -d -t 200 | tail -100 || true
     exit 1
@@ -29,5 +29,5 @@ for viewport in compact wide; do
 done
 
 adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/ artifacts/visual/android/
-test "$(find artifacts/visual/android/igc-ui-capture -name 'about-*.png' | wc -l)" -eq 6
-echo 'SUCCESS: six instrumented Android About screenshots captured'
+test "$(find artifacts/visual/android/igc-ui-capture -name '*.png' | wc -l)" -eq 8
+echo 'SUCCESS: eight instrumented Android Home and About screenshots captured'

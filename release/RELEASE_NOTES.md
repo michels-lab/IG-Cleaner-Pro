@@ -1,10 +1,12 @@
-## v120.36 — Android About visibility and release quality
+## v120.36 — About fix, new logo and real visual QA
 
-- Fixed the native Android About regression where the author and Michel's Lab content were hidden by zero-width stacked identity panels.
-- Redesigned compact About to show both identities, the **TOOLS WITH IDENTITY.** slogan, and all five social/contact links together without scrolling. Kept the existing official app mark pending the separately approved high-resolution replacement asset.
-- Added an installed-APK Android emulator test at compact/wide resolutions. It verifies actual measured image/view dimensions, fully visible contact links on opening, and archives six real screenshots bound to candidate SHA and APK digest.
-- Introduced mandatory automated rendered-UI validation before a governed stable release; no manual approval queue is required because the user reviews released builds afterward.
-- Updated Android and Desktop development version to **120.36**; kept the production package `com.michelslab.igcleaner` and existing FINAL-9999 signing certificate unchanged.
-- Existing local-first data preservation, Focus/state migration and Supabase RLS behavior remain unchanged; real-phone upgrade, Instagram ZIP and cloud sync acceptance stay tracked separately.
+- Rebuilt the native Android About view: corrected invisible zero-width panels and made Michel Duarte, Michel's Lab, **TOOLS WITH IDENTITY.** and all five social buttons visible on compact phones without scrolling.
+- Replaced the old stacked-layers product logo with the user's approved first concept: overlapping contact cards, cyan orbit and gold sparkle. Preserved the unmodified **1254×1254 PNG** in both master and child repositories (SHA-256 `f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8`).
+- Integrated lossless launcher sizes, Android toolbar/About/splash/workspace imagery, Desktop favicon/rail/About icon, and production ZIP/release PNG artwork. The original official Michel's Lab branding and source portrait remain unchanged.
+- Android UI instrumentation now launches the installed debug APK and captures **Home and About at compact and wide screen sizes**; captures are bound to source SHA, APK digest and actual PNG bytes.
+- Desktop Chromium UI tests launch the distributable HTML, open/close About, validate portrait/studio logo and social links, and capture **six Home/About images** at compact/wide sizes.
+- The governed stable publisher now requires successful, same-commit Android and Desktop real rendered UI screenshot evidence before publishing, without a manual pre-release approval queue. The user reviews the release afterward.
+- Android and Desktop application identity updated to **v120.36**, keeping production Android package `com.michelslab.igcleaner` and the same FINAL-9999 signing certificate.
+- Preserves local Instagram ZIP import and review/Focus/state migration logic, account cloud privacy/delete controls and seven-table Supabase RLS isolation; fixture, contractual and database automated tests still run.
 
-**Release status:** development candidate only. Do not claim v120.36 is already published. The user-selected new app logo remains pending exact original PNG import and platform migration.
+**Boundaries:** Android emulator and Desktop automated tests are NOT a physical-Samsung update-path, real Instagram export, real Supabase account connectivity or Google Play acceptance test; that remains separately documented. The release publisher must report actual GitHub success before claiming v120.36 is published.

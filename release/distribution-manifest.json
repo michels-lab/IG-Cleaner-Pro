@@ -8,11 +8,13 @@
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
-        "assets/michels-lab/official-lockup.png"
+        "assets/michels-lab/official-lockup.png",
+        "assets/ig-cleaner-pro/official-app-icon.png"
       ],
       "transport": "github-release",
       "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration",
-      "artifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.zip"
+      "artifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.zip",
+      "productIconSha256": "341c65177dc044d08e5c295a01df38846a3ad168f074135b8adca03715b28fea"
     },
     "android": {
       "artifact": "IG-Cleaner-Pro-Android-v120.35.apk",
@@ -20,7 +22,8 @@
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
       "productionTransport": "google-play-after-device-validation",
-      "artifactTemplate": "IG-Cleaner-Pro-Android-v{version}.apk"
+      "artifactTemplate": "IG-Cleaner-Pro-Android-v{version}.apk",
+      "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     }
   },
   "browserState": {
@@ -53,6 +56,7 @@
     "currentStableRelease": "v120.35",
     "lastPublishedRun": 37737077156,
     "lastPublishedCommit": "0e4b0c3d5b803436fd453c23e51dce1505871d8a",
-    "genericPublisher": ".github/workflows/release.yml"
+    "genericPublisher": ".github/workflows/release.yml",
+    "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
   }
 }
