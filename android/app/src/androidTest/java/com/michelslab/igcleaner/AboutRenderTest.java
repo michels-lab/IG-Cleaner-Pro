@@ -147,9 +147,12 @@ public class AboutRenderTest {
                     assertTrue("Social links must be beside, not under a tiny portrait: "+id,
                             social.left >= portrait.right-10);
                 }
-                assertTrue("Removed Advanced tools must not return",
-                        activity.findViewById(R.id.toolbar).getMenu().findItem(
-                                activity.getResources().getIdentifier("actionTools","id",activity.getPackageName()))==null);
+                MaterialToolbar toolbar = activity.findViewById(R.id.toolbar);
+                assertNotNull("Native toolbar missing", toolbar);
+                assertEquals("Only Sync and About belong in the global top menu", 2,
+                        toolbar.getMenu().size());
+                assertNotNull("Sync must be preserved", toolbar.getMenu().findItem(R.id.actionSync));
+                assertNotNull("About must be preserved", toolbar.getMenu().findItem(R.id.actionAbout));
             });
             screenshot("about","author");
             screenshot("about","studio");
