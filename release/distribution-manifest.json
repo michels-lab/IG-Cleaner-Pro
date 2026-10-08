@@ -14,7 +14,17 @@
       "transport": "github-release",
       "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration",
       "artifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.zip",
-      "productIconSha256": "341c65177dc044d08e5c295a01df38846a3ad168f074135b8adca03715b28fea"
+      "productIconSha256": "341c65177dc044d08e5c295a01df38846a3ad168f074135b8adca03715b28fea",
+      "primaryFormat": "html",
+      "standaloneOffline": true,
+      "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.36.html",
+      "zipSecondary": true,
+      "standaloneEmbeds": [
+        "assets/michel_duarte_avatar.jpg",
+        "assets/michels-lab/official-lockup.png",
+        "assets/ig-cleaner-pro/official-app-icon.png"
+      ]
     },
     "android": {
       "artifact": "IG-Cleaner-Pro-Android-v120.36.apk",
