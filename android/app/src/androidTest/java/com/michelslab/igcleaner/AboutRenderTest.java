@@ -18,6 +18,7 @@ import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -83,8 +84,17 @@ public class AboutRenderTest {
             assertMeasured(R.id.aboutPortraitImage, 70, 80);
             assertMeasured(R.id.aboutStudioImage, 110, 70);
 
-            onView(withId(R.id.aboutAuthorColumn)).inRoot(isDialog()).perform(scrollTo());
+            // Previous green test scrolled to Email, yet its captured pixels
+            // still showed zero social links. All five must be visible on entry.
+            for (int linkId : new int[] {
+                    R.id.aboutInstagram, R.id.aboutFacebook, R.id.aboutLinkedin,
+                    R.id.aboutGithub, R.id.aboutEmail
+            }) {
+                onView(withId(linkId)).inRoot(isDialog())
+                        .check(matches(isCompletelyDisplayed()));
+            }
             screenshot("author");
+            onView(withId(R.id.aboutAuthorColumn)).inRoot(isDialog()).perform(scrollTo());
             onView(withId(R.id.aboutStudioColumn)).inRoot(isDialog()).perform(scrollTo());
             screenshot("studio");
             onView(withId(R.id.aboutEmail)).inRoot(isDialog()).perform(scrollTo());
