@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import com.google.android.material.appbar.MaterialToolbar;
 
@@ -40,11 +41,13 @@ public class AboutRenderTest {
                 rect.width() >= minimumWidth);
         assertTrue(name + " clipped vertically: " + rect,
                 rect.height() >= minimumHeight);
-        android.util.DisplayMetrics dm = InstrumentationRegistry.getInstrumentation()
-                .getTargetContext().getResources().getDisplayMetrics();
-        assertTrue(name + " outside screen: " + rect,
-                rect.left >= 0 && rect.top >= 0 && rect.right <= dm.widthPixels &&
-                rect.bottom <= dm.heightPixels);
+        // UiDevice reports physical screen bounds, while app DisplayMetrics can
+        // exclude status/navigation insets and falsely mark visible dialogs offscreen.
+        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        assertTrue(name + " outside physical screen: " + rect,
+                rect.left >= 0 && rect.top >= 0 &&
+                rect.right <= device.getDisplayWidth() &&
+                rect.bottom <= device.getDisplayHeight());
         if (view instanceof ImageView)
             assertNotNull(name + " missing real drawable", ((ImageView)view).getDrawable());
         return rect;
