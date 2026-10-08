@@ -266,7 +266,7 @@ jobs:
           ## Desktop
           **Recommended direct download:** **${{ steps.release.outputs.desktop_html_artifact }}** — one standalone HTML file with product, author, and Michel's Lab images embedded; open directly in your browser, no extraction required.
 
-          **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original `assets/` folder.
+          **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
 
           ## Android
           Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
