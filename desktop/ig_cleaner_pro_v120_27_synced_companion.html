@@ -2315,92 +2315,95 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
 .v116-file-name{font-family:var(--mono);font-size:11px;color:#fff;word-break:break-all}.v116-detect-note{color:var(--muted);font-size:11px}.v116-extra-summary{margin-top:12px;display:grid;gap:8px}.v116-extra-card{padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035)}.v116-extra-card b{color:#fff}.v116-extra-card .meta{color:var(--muted);font-size:11px;margin-top:4px}.v116-extra-card .examples{font-family:var(--mono);font-size:10px;color:#cbd6f3;margin-top:7px;line-height:1.5;word-break:break-word}
 </style>
 <style id="igc-about-css">
-/* About / Developer — approved Michel's Lab composition adapted for IG Cleaner Pro */
-.aboutOverlay{
-  position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;
-  padding:28px;background:rgba(2,8,20,.76);backdrop-filter:blur(14px);
-}
+
+/* Canonical About composition v2.1; product and studio paired on top,
+   full developer identity followed by large portrait + vertical social list. */
+.aboutOverlay{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;
+ padding:14px;background:rgba(2,7,14,.86);backdrop-filter:blur(14px)}
 .aboutOverlay.open{display:flex}
-.aboutShell{
-  width:min(1140px,96vw);max-height:92vh;overflow:auto;position:relative;
-  border:1px solid rgba(110,156,219,.36);border-radius:32px;
-  background:
-    linear-gradient(180deg,rgba(18,48,98,.20),rgba(10,27,57,.14)),
-    radial-gradient(circle at 14% 16%,rgba(114,189,255,.12),transparent 20%),
-    radial-gradient(circle at 88% 12%,rgba(61,115,207,.18),transparent 24%),
-    radial-gradient(circle at 78% 82%,rgba(15,54,120,.16),transparent 30%),
-    linear-gradient(145deg,rgba(7,24,53,.98),rgba(5,19,42,.985) 56%,rgba(8,30,67,.985));
-  color:#eef6ff;box-shadow:0 36px 90px rgba(0,0,0,.56);padding:26px;
-}
-.aboutShell:before{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.30;border-radius:inherit;
-  background-image:
-    radial-gradient(circle at 10% 20%,#fff 0 1px,transparent 1.6px),
-    radial-gradient(circle at 30% 80%,#fff 0 1px,transparent 1.5px),
-    radial-gradient(circle at 72% 26%,#fff 0 1px,transparent 1.5px),
-    radial-gradient(circle at 88% 68%,#fff 0 1px,transparent 1.5px),
-    radial-gradient(circle at 56% 62%,#fff 0 1px,transparent 1.3px);
-  background-size:160px 160px,190px 190px,210px 210px,175px 175px,230px 230px;
-}
-.aboutClose{
-  position:absolute;right:18px;top:18px;z-index:3;width:40px;height:40px;border-radius:12px;
-  border:1px solid rgba(154,191,235,.28);background:rgba(4,15,35,.78);color:#e8f3ff;
-  font-size:21px;line-height:1;display:grid;place-items:center;cursor:pointer;
-}
-.aboutClose:hover{border-color:#e5b84f;color:#ffd875}
-.aboutHero{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.18fr) minmax(280px,.82fr);gap:28px;align-items:center;padding:6px 10px 20px}
-.aboutEyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#efbd52;font-weight:800}
-.aboutHero h2{margin:8px 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:1.05;color:#fff}
-.aboutLead{font-size:20px;color:#f0bf53;margin:0 0 12px}
-.aboutCopy{max-width:700px;color:#c9d9eb;line-height:1.64;font-size:14px;margin:0}
-.aboutQuote{display:flex;align-items:center;gap:14px;margin-top:18px;color:#f0bd4f;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic}
-.aboutQuote:before,.aboutQuote:after{content:"";height:1px;background:linear-gradient(90deg,transparent,#dba63b);flex:1;max-width:100px}
-.aboutQuote:after{background:linear-gradient(90deg,#dba63b,transparent)}
-.aboutProductMark{
-  display:grid;place-items:center;text-align:center;min-height:200px;padding:18px;
-  border:1px solid rgba(121,173,230,.28);border-radius:24px;
-  background:linear-gradient(135deg,rgba(9,36,77,.62),rgba(6,25,55,.48));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
-}
-.aboutMarkBox{width:120px;height:120px;border-radius:30px;border:2px solid #e6b745;display:grid;place-items:center;background:linear-gradient(145deg,rgba(26,67,116,.84),rgba(6,23,51,.92));box-shadow:0 0 32px rgba(222,172,58,.12) inset,0 18px 45px rgba(0,0,0,.25);position:relative;overflow:hidden}
-.igcMonogram{font-family:Georgia,'Times New Roman',serif;font-weight:900;font-size:40px;letter-spacing:-.06em;color:#eaf4ff;text-shadow:0 7px 20px rgba(0,0,0,.35)}
-.igcMonogram span{color:#f3c24f}
-.igcMarkLine{position:absolute;left:20px;right:20px;height:3px;border-radius:999px;background:linear-gradient(90deg,#75e4ff,#f3c24f,#a78bfa);bottom:24px;box-shadow:0 0 15px rgba(117,228,255,.22)}
-.aboutProductName{font-family:Georgia,'Times New Roman',serif;color:#f3c24f;font-weight:800;font-size:20px;letter-spacing:.06em;margin-top:14px}
-.aboutProductSub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#d5e1ef;margin-top:3px}
-.aboutDeveloperCard,.aboutConnectCard{position:relative;z-index:1;border:1px solid rgba(121,173,230,.30);border-radius:22px;background:linear-gradient(135deg,rgba(9,36,77,.72),rgba(6,25,55,.58));box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
-.aboutDeveloperCard{display:grid;grid-template-columns:240px 1fr 220px;gap:22px;align-items:start;padding:20px 22px;margin-bottom:12px}
-.aboutAvatar{
-  width:220px;height:304px;border-radius:28px;border:2px solid rgba(241,193,77,.92);overflow:hidden;
-  background:linear-gradient(145deg,#254d7f,#0a1d3d 55%,#050d1c);
-  box-shadow:0 12px 30px rgba(0,0,0,.28),0 0 0 1px rgba(255,213,111,.18) inset;
-  position:relative;display:grid;place-items:center;justify-self:start;
-}
-.aboutPortraitImg{width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:rgba(4,12,26,.55)}
-.aboutPortraitFallback{display:none;position:absolute;inset:0;place-items:center;font-family:Georgia,'Times New Roman',serif;font-size:72px;font-weight:800;color:#f1c14d;background:radial-gradient(circle at 30% 20%,#2a5589,#0d2248 60%,#071226)}
+.aboutShell{width:min(850px,96vw);max-height:calc(100dvh - 20px);overflow:auto;position:relative;
+ box-sizing:border-box;border:1px solid rgba(111,187,227,.40);border-radius:22px;
+ background:radial-gradient(circle at 85% 5%,rgba(70,137,212,.14),transparent 45%),linear-gradient(145deg,#102239,#0a1726 60%,#07111d);
+ color:#eef6ff;box-shadow:0 32px 84px rgba(0,0,0,.64);padding:20px}
+.aboutClose{position:absolute;top:10px;right:10px;width:32px;height:32px;z-index:4;display:grid;place-items:center;
+ border:1px solid rgba(129,186,220,.35);border-radius:10px;background:#101f31;color:#f1f7ff;font-size:20px;cursor:pointer}
+.aboutClose:hover,.aboutClose:focus-visible{border-color:#87e2ed;color:#87e2ed}
+.aboutBrandRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:12px;padding:0 30px 14px 0;
+ border-bottom:1px solid rgba(126,179,217,.27)}
+.aboutProductMark,.aboutBrandMini{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;gap:3px;padding:4px;background:transparent;border:0;box-shadow:none}
+.aboutBrandRow .aboutOfficialLockup{display:block;width:92px;height:85px;object-fit:contain;max-width:100%}
+.aboutStudioLogo{display:block;width:165px;height:85px;object-fit:contain;max-width:100%}
+.aboutProductName,.aboutBrandName{font-size:13px;font-weight:850;color:#f1f8ff;margin:0}
+.aboutBrandTag{font-size:10px;font-weight:850;letter-spacing:.07em;color:#f0c87a}
+.aboutDeveloperCard{display:block;margin:0;padding:13px 0 0;background:transparent;border:0;box-shadow:none}
+.aboutIdentity{text-align:left;margin-bottom:12px}
+.aboutRole{font-size:10px;font-weight:850;letter-spacing:.10em;color:#83dfe9}
+.aboutName{font-family:inherit;font-size:clamp(17px,2.5vw,24px);line-height:1.16;font-weight:850;margin:5px 0;color:#fff}
+.aboutBio{color:#afc4d9;font-size:11px;line-height:1.45}
+.aboutVersion{display:inline-block;margin:6px 0 0;padding:3px 7px;border-radius:8px;color:#eac67c;
+ border:1px solid rgba(235,192,96,.22);font-size:10px}
+.aboutProfileRow{display:grid;grid-template-columns:minmax(150px,205px) minmax(0,1fr);gap:16px;align-items:stretch}
+.aboutAvatar{width:100%;height:255px;position:relative;overflow:hidden;border-radius:15px;
+ border:1px solid rgba(227,193,122,.54);background:#14253a}
+.aboutPortraitImg{display:block;width:100%;height:100%;object-fit:cover;object-position:center 22%}
+.aboutPortraitFallback{display:none;position:absolute;inset:0;place-items:center;font-size:64px;color:#e9ca7f}
 .aboutAvatar.fallback .aboutPortraitFallback{display:grid}
-.aboutRole{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#efbd52;font-weight:800}
-.aboutName{font-family:Georgia,'Times New Roman',serif;font-size:29px;line-height:1.05;margin:6px 0 8px;color:#fff}
-.aboutBio{color:#c9d9eb;font-size:14px;line-height:1.58}
-.aboutBrandMini{border:1px solid rgba(121,173,230,.24);border-radius:18px;padding:18px 16px;background:rgba(5,18,41,.36);text-align:center}
-.aboutStudioLogo{display:block;width:min(100%,190px);height:auto;max-height:72px;object-fit:contain;margin:2px auto 12px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.24))}
-.aboutBrandMini .aboutBrandLabel{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#f1c14d;font-weight:800;margin-bottom:10px}
-.aboutBrandMini .aboutBrandName{font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.05;color:#fff;margin-bottom:6px}
-.aboutBrandMini .aboutBrandTag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#c4d3e5;line-height:1.5}
-.aboutConnectCard{padding:14px 16px 16px}
-.aboutConnectTitle{font-size:17px;font-weight:800;margin-bottom:3px}
-.aboutConnectSub{font-size:12px;color:#b7c9dd;margin-bottom:12px}
-.aboutSocials{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.aboutSocial{display:grid;grid-template-columns:40px minmax(0,1fr);gap:9px;align-items:center;text-decoration:none;color:#eef6ff;border:1px solid rgba(133,179,229,.28);border-radius:14px;padding:8px;background:rgba(4,18,42,.48);transition:.16s}
-.aboutSocial:hover{transform:translateY(-2px);border-color:#e6b745;background:rgba(11,35,72,.76)}
-.aboutIcon{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-weight:900;font-size:16px;color:white;background:linear-gradient(145deg,#243d62,#15233b);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-.aboutIcon.ig{background:radial-gradient(circle at 68% 72%,#ffdc80 0 13%,#fcaf45 14% 23%,#f77737 24% 39%,#e1306c 40% 58%,#c13584 59% 74%,#833ab4 75%)}
-.aboutIcon.fb{background:#1877f2;font-size:24px;font-family:Arial}.aboutIcon.in{background:#0a66c2;font-size:18px}.aboutIcon.gh{background:#0a0c10}.aboutIcon.mail{background:linear-gradient(145deg,#6e8099,#35445a);font-size:20px}
-.aboutSocial b{font-size:11px;display:block;white-space:nowrap}.aboutSocial span{font-size:9px;color:#b9cbe0;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aboutMetaActions{position:relative;z-index:1;display:flex;gap:7px;justify-content:flex-end;margin-top:10px}.aboutMetaActions .btn{font-size:10px}
-.aboutFooter{position:relative;z-index:1;display:flex;justify-content:space-between;gap:18px;align-items:center;padding:14px 4px 0;color:#90a8c3;font-size:11px}
-.aboutFooter .motto{border-left:2px solid #e4b448;padding-left:15px}
-.aboutVersion{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(229,184,79,.35);border-radius:999px;padding:4px 8px;color:#e9c56d;margin-left:8px}
+.aboutConnectCard{padding:0;min-width:0;border:0;box-shadow:none;background:transparent}
+.aboutConnectTitle{font-size:13px;font-weight:850;margin-bottom:7px;color:#e7f4ff}
+.aboutSocials{display:grid;grid-template-columns:1fr;gap:4px}
+.aboutSocial{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:10px;
+ box-sizing:border-box;min-height:39px;padding:4px 9px;text-decoration:none;color:#f4f9ff;
+ border:1px solid rgba(122,170,207,.30);border-radius:10px;background:rgba(32,64,94,.37)}
+.aboutSocial:hover,.aboutSocial:focus-visible{border-color:#83dfe9;background:rgba(43,88,126,.6)}
+.aboutIcon{width:27px;height:27px;border-radius:7px;display:grid;place-items:center;color:white;background:#1d3857}
+.aboutIcon svg{width:16px;height:16px}
+.aboutIcon.ig{background:radial-gradient(circle at 65% 70%,#ffdc80,#e1306c 58%,#833ab4)}
+.aboutIcon.fb{background:#1877f2}.aboutIcon.in{background:#0a66c2}.aboutIcon.gh{background:#0a0c10}
+.aboutIcon.mail{background:#39536e}
+.aboutSocial b{font-size:11px;font-weight:850;display:block;white-space:nowrap}
+.aboutSocial span{display:block;font-size:9px;color:#aac1d9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aboutMetaActions{display:flex;justify-content:flex-end;gap:6px;margin-top:11px}
+.aboutMetaActions .btn{font-size:10px;padding:6px 9px}
+.aboutFooter{font-size:10px;color:#8ca3bd;margin-top:7px}
+.igc-shell .igc-header-about{display:inline-flex!important;flex:none;white-space:nowrap;
+ align-items:center;justify-content:center;min-width:72px;visibility:visible!important;opacity:1!important;
+ border-color:rgba(113,215,255,.45)!important;color:#effaff!important}
+@media(max-width:780px){
+ .igc-shell{height:100dvh!important;min-height:0!important;grid-template-rows:auto minmax(0,1fr)!important}
+ body{overflow:hidden!important}
+ .igc-stage{min-height:0!important}
+ .igc-workspace{overflow:auto!important}
+ .igc-commandbar{flex-wrap:nowrap!important;gap:7px!important;padding:9px 12px!important}
+ .igc-context{min-width:0;flex:1}
+ .igc-context h1{font-size:16px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .igc-command-actions{display:none!important}
+}
+@media(max-width:580px){
+ .aboutOverlay{padding:7px}
+ .aboutShell{width:100%;padding:11px;border-radius:16px;max-height:calc(100dvh - 14px)}
+ .aboutBrandRow{padding:0 30px 7px 0;gap:6px}
+ .aboutBrandRow .aboutOfficialLockup,.aboutStudioLogo{height:68px;width:95px}
+ .aboutProductName,.aboutBrandName{font-size:10px}
+ .aboutBrandTag{font-size:8px;letter-spacing:0}
+ .aboutDeveloperCard{padding-top:8px}
+ .aboutIdentity{margin-bottom:8px}
+ .aboutRole{font-size:8px;letter-spacing:.035em}
+ .aboutName{font-size:17px;margin:3px 0}
+ .aboutBio{font-size:10px}
+ .aboutVersion{font-size:9px;padding:2px 5px}
+ .aboutProfileRow{grid-template-columns:minmax(110px,36%) minmax(0,1fr);gap:8px}
+ .aboutAvatar{height:214px;border-radius:11px}
+ .aboutConnectTitle{font-size:11px;margin-bottom:4px}
+ .aboutSocials{gap:3px}
+ .aboutSocial{grid-template-columns:24px minmax(0,1fr);gap:5px;min-height:37px;padding:3px 5px}
+ .aboutIcon{width:24px;height:24px}
+ .aboutIcon svg{width:15px;height:15px}
+ .aboutSocial b{font-size:10px}
+ .aboutSocial span{font-size:8px}
+ .aboutMetaActions{margin-top:7px}
+ .aboutFooter{font-size:9px}
+}
 .legalOverlay,.privacyOverlay,.versionOverlay{position:fixed;inset:0;z-index:2147483640;background:rgba(3,9,17,.76);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:24px}
 .legalOverlay.open,.privacyOverlay.open,.versionOverlay.open{display:flex}
 .legalDialog,.privacyDialog,.versionDialog{width:min(700px,100%);max-height:min(86vh,860px);overflow:auto;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:0 28px 90px rgba(0,0,0,.55);padding:20px}
@@ -2411,47 +2414,8 @@ thead th.col-user{z-index:7;background:rgba(18,24,39,.98)}
 .versionGrid .detailBlock{min-height:78px;border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--surface2)}
 .versionGrid .detailBlock span{display:block;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;margin-bottom:4px}
 .versionGrid .detailBlock b,.versionGrid .detailBlock div{font-size:11px;line-height:1.5;word-break:break-word}.versionGrid .detailBlock b{color:#fff}
-@media(max-width:950px){
-  .aboutHero{grid-template-columns:1fr}.aboutProductMark{display:none}.aboutDeveloperCard{grid-template-columns:190px 1fr}.aboutAvatar{width:170px;height:235px}.aboutBrandMini{grid-column:1/-1}.aboutSocials{grid-template-columns:1fr 1fr}.aboutFooter{flex-direction:column;align-items:flex-start}.aboutFooter .motto{border-left:0;padding-left:0}.aboutShell{padding:20px}
-}
-@media(max-width:620px){.versionGrid{grid-template-columns:1fr}}
-@media(max-width:580px){.aboutOverlay{padding:10px}.aboutDeveloperCard{grid-template-columns:1fr;text-align:center}.aboutAvatar{width:min(100%,240px);height:auto;aspect-ratio:1109/1536;margin:auto}.aboutSocials{grid-template-columns:1fr}.aboutHero h2{font-size:28px}}
 
-/* Compact About must expose author + Lab + five social controls on first opening. */
-@media(max-width:580px){
-  .aboutOverlay{padding:8px}
-  .aboutShell{width:100%;max-height:calc(100dvh - 16px);padding:12px;border-radius:18px}
-  .aboutClose{right:10px;top:10px;width:30px;height:30px;border-radius:9px;font-size:18px}
-  .aboutHero{display:grid;grid-template-columns:minmax(0,1fr) 86px;gap:8px;padding:1px 26px 8px 0;align-items:center}
-  .aboutEyebrow{font-size:9px;letter-spacing:.11em}
-  .aboutHero h2{font-size:16px;line-height:1.15;margin:3px 0}
-  .aboutLead,.aboutCopy,.aboutQuote,.aboutProductSub{display:none}
-  .aboutProductMark{display:grid;min-height:86px;padding:5px;border-radius:12px}
-  .aboutShell .aboutProductMark img.aboutOfficialLockup{display:block;width:60px;min-width:0;max-width:60px;height:60px;max-height:60px;object-fit:contain;margin:auto}
-  .aboutDeveloperCard{display:grid;grid-template-columns:60px minmax(0,1fr) 94px;gap:7px;align-items:center;text-align:left;padding:8px;margin-bottom:7px;border-radius:14px}
-  .aboutAvatar{width:60px;height:78px;aspect-ratio:auto;border-radius:10px;margin:0}
-  .aboutPortraitImg{object-fit:cover}
-  .aboutRole{display:none}
-  .aboutName{font-size:14px;margin:2px 0 4px}
-  .aboutBio{font-size:10px;line-height:1.25;max-height:28px;overflow:hidden}
-  .aboutBrandMini{grid-column:auto;padding:5px 3px;border-radius:10px}
-  .aboutBrandMini .aboutBrandLabel{font-size:8px;margin-bottom:3px;letter-spacing:.04em}
-  .aboutStudioLogo{width:82px;height:30px;margin:0 auto 3px}
-  .aboutBrandMini .aboutBrandTag{font-size:8px;letter-spacing:0;line-height:1.15}
-  .aboutConnectCard{padding:8px;border-radius:14px}
-  .aboutConnectTitle{font-size:12px;margin-bottom:5px}
-  .aboutConnectSub{display:none}
-  .aboutSocials{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-  .aboutSocial{grid-template-columns:26px minmax(0,1fr);gap:5px;padding:5px;min-height:38px;border-radius:9px}
-  .aboutIcon{width:26px;height:26px;border-radius:7px}
-  .aboutIcon svg{width:16px;height:16px}
-  .aboutSocial b{font-size:10px}
-  .aboutSocial span{font-size:8px}
-  .aboutMetaActions{margin-top:6px}
-  .aboutMetaActions .btn{font-size:9px}
-  .aboutFooter{padding-top:6px;gap:2px;font-size:9px}
-  .aboutFooter .motto{display:none}
-}
+@media(max-width:620px){.versionGrid{grid-template-columns:1fr}}
 
 </style>
 
@@ -2521,8 +2485,6 @@ table{border-collapse:separate!important;border-spacing:0!important}thead th{bac
 .safe-focus-list,.focus-review-list{max-height:none!important;height:100%!important;overflow:auto!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;padding:16px 18px 24px!important;display:grid!important;align-content:start!important;gap:8px!important}
 .safe-focus-row,.focus-review-row{grid-template-columns:minmax(0,1fr) auto!important;padding:11px 12px!important;border-radius:15px!important;background:rgba(255,255,255,.025)!important;border:1px solid var(--igc-line)!important;transition:border-color .12s ease,background .12s ease!important}.safe-focus-row:hover,.focus-review-row:hover{background:rgba(93,156,255,.045)!important;border-color:rgba(113,215,255,.22)!important}.safe-focus-row .link,.focus-review-row .link{align-self:center;border:1px solid var(--igc-line);border-radius:10px;padding:7px 10px;text-decoration:none;background:#101b29}
 .igc-focus-ident{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;min-width:0}.igc-avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#17304a,#1f4e75);border:1px solid rgba(113,215,255,.18);color:#9fe1ff;font-weight:950;font-size:13px}.igc-focus-ident b{font-size:12px!important}.igc-focus-ident small{font-size:9px!important;line-height:1.45!important;color:#8294ab!important;margin-top:3px!important;white-space:normal!important}
-/* About stays premium and dark */
-.aboutOverlay{background:rgba(2,6,12,.86)!important}.aboutShell{border-color:rgba(113,215,255,.18)!important;background:radial-gradient(circle at 16% 0,rgba(76,147,255,.12),transparent 34%),linear-gradient(145deg,#0e1927,#09111c)!important}
 /* Active batch dock no longer floats over content */
 .active-batch-dock{right:22px!important;bottom:18px!important;border-radius:16px!important;background:#0d1724!important;border-color:rgba(113,215,255,.19)!important;box-shadow:0 16px 40px rgba(0,0,0,.36)!important}
 @media(max-width:1180px){.igc-launch-grid{grid-template-columns:1fr 1fr}#page-list.active,#page-followersMutual.active,#page-pendingRequests.active{grid-template-columns:1fr}.live-sidepanel,.section-live-panel{position:static!important;max-height:none!important;order:-1}}
@@ -2705,7 +2667,7 @@ table{border-collapse:separate!important;border-spacing:0!important}thead th{bac
 <style id="igc-official-brand-v12034">
 .igc-brand-mark{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(7,26,48,.72);border:1px solid rgba(113,215,255,.16);box-shadow:0 12px 30px rgba(17,94,174,.18),inset 0 1px 0 rgba(255,255,255,.035);overflow:hidden}
 .igc-brand-mark img{width:42px;height:42px;display:block;object-fit:contain}
-.aboutOfficialLockup{width:min(158px,46vw);max-height:158px;object-fit:contain;height:auto;display:block;filter:drop-shadow(0 18px 34px rgba(0,0,0,.22))}
+
 </style>
 <style id="igc-v12036-premium-visual">
 /* Michel's Lab / IG Cleaner Pro · cohesive premium surfaces, no layout rewrites */
@@ -2776,79 +2738,6 @@ body{
 .igc-shell .title{color:#b7cce2!important;letter-spacing:.105em}
 .igc-shell .stat b{color:#f6faff}
 .igc-shell a{accent-color:#78e3f3}
-/* About is part of the product, not a detached blue/gold microsite */
-.aboutOverlay{backdrop-filter:blur(15px);background:rgba(1,8,18,.81)}
-.aboutShell{
-  width:min(920px,96vw)!important;max-height:92vh!important;padding:clamp(12px,2vw,24px)!important;
-  border-radius:26px!important;border-color:rgba(130,190,232,.43)!important;
-  background:radial-gradient(circle at 91% 4%,rgba(76,141,226,.16),transparent 32%),
-    linear-gradient(145deg,#132a41,#0b1b2d 53%,#081625)!important;
-  box-shadow:0 36px 88px rgba(0,4,13,.62),inset 0 1px rgba(255,255,255,.07)!important;
-}
-.aboutShell:before{opacity:.10!important}
-.aboutHero{gap:15px!important;padding:3px 3px 13px!important;grid-template-columns:minmax(0,1fr) minmax(180px,.56fr)!important}
-.aboutEyebrow{color:#86e4f2!important;font-size:10px!important;letter-spacing:.13em!important}
-.aboutHero h2{font-family:var(--sans)!important;font-size:clamp(22px,2.7vw,30px)!important;font-weight:850!important}
-.aboutLead{font-size:14px!important;color:#f4c977!important;margin-bottom:6px!important}
-.aboutCopy{font-size:12px!important;line-height:1.5!important;color:#becfe0!important}
-.aboutQuote{margin-top:10px!important;font-size:13px!important;color:#d6b678!important}
-.aboutProductMark{min-height:120px!important;padding:12px!important;border-radius:19px!important;
-  border-color:rgba(126,191,233,.35)!important;
-  background:linear-gradient(120deg,rgba(38,82,121,.65),rgba(14,36,60,.73))!important}
-.aboutMarkBox{width:82px!important;height:82px!important;border-radius:21px!important;border-width:1px!important}
-.aboutProductName{font:800 13px/1.25 var(--sans)!important;margin-top:7px!important;color:#f3f8ff!important}
-.aboutProductSub{font-size:9px!important;color:#acc2d7!important}
-.aboutDeveloperCard,.aboutConnectCard{
-  border:1px solid rgba(140,193,225,.32)!important;border-radius:20px!important;
-  background:linear-gradient(125deg,rgba(30,64,93,.82),rgba(12,31,51,.9))!important;
-  box-shadow:inset 0 1px rgba(255,255,255,.05)!important;
-}
-.aboutDeveloperCard{grid-template-columns:118px minmax(0,1fr) 195px!important;
-  align-items:center!important;gap:14px!important;padding:13px 15px!important;margin-bottom:9px!important}
-.aboutAvatar{width:112px!important;height:142px!important;border-radius:18px!important;
-  border:1px solid rgba(244,201,119,.7)!important}
-.aboutName,.aboutBrandMini .aboutBrandName{
-  font-family:var(--sans)!important;font-size:20px!important;letter-spacing:-.025em!important;
-}
-.aboutRole,.aboutBrandMini .aboutBrandLabel{color:#f4c977!important;font-size:10px!important}
-.aboutBio{font-size:11px!important;line-height:1.45!important;color:#bfcfe1!important}
-.aboutBrandMini{padding:10px!important;border-color:rgba(142,194,225,.28)!important;border-radius:14px!important;
-  background:rgba(10,27,44,.65)!important}
-.aboutStudioLogo{max-height:49px!important;margin-bottom:6px!important}
-.aboutBrandMini .aboutBrandTag{color:#f4c977!important;font-size:9px!important;letter-spacing:.08em!important}
-.aboutConnectCard{padding:11px 13px!important}
-.aboutConnectTitle{font-size:14px!important;margin-bottom:4px!important}
-.aboutConnectSub{font-size:10px!important;margin-bottom:8px!important}
-.aboutSocials{gap:6px!important}
-.aboutSocial{padding:6px!important;min-height:44px!important;border-radius:12px!important;
-  border-color:rgba(142,193,223,.33)!important;
-  background:linear-gradient(130deg,rgba(30,63,93,.77),rgba(14,34,56,.93))!important}
-.aboutSocial:hover{transform:translateY(-1px)!important;
-  background:linear-gradient(135deg,rgba(47,93,133,.83),rgba(19,47,73,.95))!important;
-  border-color:#87dfee!important}
-.aboutIcon{width:31px!important;height:31px!important;border-radius:9px!important}
-.aboutIcon svg{width:17px!important;height:17px!important}
-.aboutSocial b{font-size:10px!important}
-.aboutSocial span{font-size:9px!important}
-.aboutFooter{padding-top:7px!important}
-.aboutClose{border-color:rgba(139,191,226,.4)!important;background:rgba(15,35,56,.95)!important}
-@media (max-width:760px){
-  .aboutShell{width:100%!important;max-height:94vh!important;border-radius:20px!important}
-  .aboutHero{grid-template-columns:1fr!important}
-  .aboutProductMark{min-height:105px!important}
-  .aboutDeveloperCard{grid-template-columns:80px minmax(0,1fr)!important;
-    align-items:center!important;gap:10px!important;padding:10px!important}
-  .aboutAvatar{width:76px!important;height:100px!important}
-  .aboutBrandMini{grid-column:1/-1!important;display:grid!important;grid-template-columns:64px 1fr!important;
-    gap:3px 9px!important;text-align:left!important;align-items:center!important}
-  .aboutStudioLogo{grid-row:1/4!important;width:60px!important;max-height:44px!important}
-  .aboutBrandMini .aboutBrandName{font-size:15px!important}
-  .aboutBrandMini .aboutBrandTag{font-size:9px!important}
-  .aboutSocials{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  .aboutSocial{grid-template-columns:28px minmax(0,1fr)!important;min-height:40px!important}
-  .aboutIcon{width:27px!important;height:27px!important}
-  .aboutFooter .motto,.aboutQuote{display:none!important}
-}
 @media (prefers-reduced-motion:reduce){
   .igc-shell *, .aboutShell *{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
@@ -2856,7 +2745,7 @@ body{
 
 </head>
 <body>
-<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><button class="navbtn" id="aboutDeveloperBtn" title="About" type="button"><span class="igc-nav-icon">ⓘ</span><span class="igc-nav-label">About</span></button><div class="igc-engine-badge">Engine v119 · UI v120.36</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Decide qué revisar, abre una tanda y vuelve aquí a confirmar.</p></div><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Importar</button><button class="igc-command-btn quiet" onclick="document.getElementById('aboutDeveloperBtn').click()" type="button">Acerca de</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>Una lectura rápida de tus tres flujos principales antes de empezar una tanda.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>¿Qué quieres hacer ahora?</h3><p>Empieza por una sesión de revisión o entra directo al módulo que necesitas.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Abre una tanda de Review sobre cuentas que tú sigues.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Limpiar following</b><small>Trabaja sobre las cuentas que sigues con filtros y estados.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>Followers que también sigues, con su propio Focus, historial y sesión.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>Personas que te siguen pero tú no sigues, en un workspace independiente.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Solicitudes pendientes</b><small>Revisa solicitudes que siguen sin resolverse.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Abre relaciones que cambiaron desde el ZIP anterior o desde tu última revisión.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
+<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><div class="igc-engine-badge">Engine v119 · UI v120.36</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Decide qué revisar, abre una tanda y vuelve aquí a confirmar.</p></div><button class="igc-command-btn igc-header-about" id="aboutDeveloperBtn" title="About" type="button" aria-haspopup="dialog">ⓘ About</button><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Importar</button><button class="igc-command-btn quiet" onclick="document.getElementById('aboutDeveloperBtn').click()" type="button">Acerca de</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>Una lectura rápida de tus tres flujos principales antes de empezar una tanda.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>¿Qué quieres hacer ahora?</h3><p>Empieza por una sesión de revisión o entra directo al módulo que necesitas.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Abre una tanda de Review sobre cuentas que tú sigues.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Limpiar following</b><small>Trabaja sobre las cuentas que sigues con filtros y estados.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>Followers que también sigues, con su propio Focus, historial y sesión.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>Personas que te siguen pero tú no sigues, en un workspace independiente.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Solicitudes pendientes</b><small>Revisa solicitudes que siguen sin resolverse.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Abre relaciones que cambiaron desde el ZIP anterior o desde tu última revisión.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
 <div class="title">🧭 Dashboard por módulo</div>
 <div class="note">
       Vista rápida separada por flujo: limpieza de following, pending requests y seguidores que sigo. No usa notas manuales: solo estados, decisiones rápidas, progreso y siguiente acción recomendada.
@@ -12183,51 +12072,43 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
 <div aria-hidden="true" class="aboutOverlay" id="aboutDeveloperOverlay">
 <section aria-labelledby="aboutDeveloperTitle" aria-modal="true" class="aboutShell" role="dialog">
 <button aria-label="Cerrar" class="aboutClose" id="aboutDeveloperClose">×</button>
-<div class="aboutHero">
-<div>
-<div class="aboutEyebrow">Acerca del proyecto</div>
-<h2 id="aboutDeveloperTitle">Acerca de Instagram Cleaner Pro</h2>
-<div class="aboutLead">Análisis local, seguro y trazable de exports de Instagram.</div>
-<p class="aboutCopy">Instagram Cleaner Pro compara followers y following, organiza revisiones y conserva tus decisiones sin iniciar sesión en Instagram. Si activas sincronización, las listas normalizadas y el estado de revisión se guardan de forma privada en tu cuenta de Supabase para mantener Desktop y Android al día.</p>
-<div class="aboutQuote">El export original permanece local. Tú decides cada acción y qué estado sincronizas entre tus dispositivos.</div>
-</div>
-<div aria-label="IG Cleaner Pro mark" class="aboutProductMark">
-<img class="aboutOfficialLockup" alt="Instagram Cleaner Pro" src="assets/ig-cleaner-pro/official-app-icon.png"/>
-<div class="aboutProductSub">Local Instagram export analysis</div>
-</div>
+<div class="aboutBrandRow" aria-label="Instagram Cleaner Pro and Michel's Lab identities">
+  <div aria-label="Instagram Cleaner Pro logo" class="aboutProductMark">
+    <img class="aboutOfficialLockup" alt="Instagram Cleaner Pro logo" src="assets/ig-cleaner-pro/official-app-icon.png"/>
+    <div class="aboutProductName">Instagram Cleaner Pro</div>
+  </div>
+  <div class="aboutBrandMini" aria-label="Michel's Lab logo">
+    <img alt="Michel's Lab official lockup" class="aboutStudioLogo" src="assets/michels-lab/official-lockup.png"/>
+    <div class="aboutBrandName">Michel's Lab</div>
+    <div class="aboutBrandTag">TOOLS WITH IDENTITY.</div>
+  </div>
 </div>
 <div class="aboutDeveloperCard">
-<div aria-label="Michel Duarte developer portrait" class="aboutAvatar" id="aboutAvatarFrame">
-<img alt="Michel Duarte portrait" class="aboutPortraitImg" id="aboutPortraitImg" referrerpolicy="no-referrer" src="assets/michel_duarte_avatar.jpg"/>
-<div aria-hidden="true" class="aboutPortraitFallback">M</div>
-</div>
-<div>
-<div class="aboutRole">Desarrollador / Creador</div>
-<div class="aboutName">Michel Duarte</div>
-<div class="aboutBio">Ingeniero en Materiales e investigador en ingeniería metalúrgica.<br/>Creando herramientas prácticas para análisis, automatización y organización de datos.</div>
-</div>
-<div class="aboutBrandMini">
-<div class="aboutBrandLabel">Michel's Lab</div>
-<img alt="Michel's Lab official lockup" class="aboutStudioLogo" src="assets/michels-lab/official-lockup.png"/>
-<div class="aboutBrandTag">TOOLS WITH IDENTITY.</div>
-</div>
-</div>
-<div class="aboutConnectCard">
-<div class="aboutConnectTitle">Conecta conmigo</div>
-<div class="aboutConnectSub">Sigue el trabajo, mira actualizaciones o escríbeme.</div>
-<div class="aboutSocials">
+  <div class="aboutIdentity">
+    <div class="aboutRole">ABOUT THE DEVELOPER · INDEPENDENT SOFTWARE DEVELOPER</div>
+    <h2 id="aboutDeveloperTitle" class="aboutName">Michel Armando Duarte Flores</h2>
+    <div class="aboutBio">Materials Engineer · Metallurgical Engineering Research</div>
+    <div class="aboutVersion">Instagram Cleaner Pro · UI v120.36</div>
+  </div>
+  <div class="aboutProfileRow">
+    <div aria-label="Michel Duarte developer portrait" class="aboutAvatar" id="aboutAvatarFrame">
+      <img alt="Michel Duarte portrait" class="aboutPortraitImg" id="aboutPortraitImg" referrerpolicy="no-referrer" src="assets/michel_duarte_avatar.jpg"/>
+      <div aria-hidden="true" class="aboutPortraitFallback">M</div>
+    </div>
+    <div class="aboutConnectCard">
+      <div class="aboutConnectTitle">Connect with Michel</div>
+      <div class="aboutSocials">
 <a class="aboutSocial" href="https://www.instagram.com/realmichelduarte/" rel="noopener" target="_blank"><div class="aboutIcon ig"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm5.5-3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></div><div><b>Instagram</b><span>@realmichelduarte</span></div></a>
 <a class="aboutSocial" href="https://www.facebook.com/realmichelduarte" rel="noopener" target="_blank"><div class="aboutIcon fb"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M15 8h-2V6c0-.55.45-1 1-1h2V2h-3a4 4 0 0 0-4 4v2H7v4h2v10h4V12h2l1-4z"/></svg></div><div><b>Facebook</b><span>realmichelduarte</span></div></a>
 <a class="aboutSocial" href="https://www.linkedin.com/in/realmichelduart/" rel="noopener" target="_blank"><div class="aboutIcon in"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM3 9h4v12H3zM10 9h4v1.6c.7-1.1 1.9-1.8 3.5-1.8 3.1 0 4.5 2 4.5 5V21h-4v-6.3c0-1.5-.5-2.3-1.8-2.3-1.4 0-2.2 1-2.2 2.5V21h-4z"/></svg></div><div><b>LinkedIn</b><span>/in/realmichelduart</span></div></a>
 <a class="aboutSocial" href="https://github.com/realmichelduarte" rel="noopener" target="_blank"><div class="aboutIcon gh"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 .7C5.75.7.7 5.75.7 12c0 5 3.24 9.23 7.73 10.73.56.1.77-.24.77-.54v-2.13c-3.14.69-3.8-1.33-3.8-1.33-.51-1.3-1.26-1.64-1.26-1.64-1.03-.7.08-.69.08-.69 1.14.08 1.75 1.18 1.75 1.18 1.01 1.73 2.65 1.23 3.3.94.1-.73.4-1.23.72-1.52-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.17-3.03-.12-.29-.51-1.44.11-3 0 0 .95-.31 3.11 1.16a10.8 10.8 0 0 1 5.66 0c2.16-1.47 3.1-1.16 3.1-1.16.63 1.56.24 2.71.12 3 .73.79 1.16 1.8 1.16 3.03 0 4.33-2.64 5.28-5.15 5.56.41.35.77 1.05.77 2.12v3.14c0 .3.2.65.78.54A11.3 11.3 0 0 0 23.3 12C23.3 5.75 18.24.7 12 .7z"/></svg></div><div><b>GitHub</b><span>realmichelduarte</span></div></a>
 <a class="aboutSocial" href="mailto:realmichelduarte@gmail.com"><div class="aboutIcon mail"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2 9 6 9-6H3zm18 10V9.4l-9 6-9-6V17h18z"/></svg></div><div><b>Email</b><span>realmichelduarte@gmail.com</span></div></a>
-</div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="aboutMetaActions"><button class="btn" id="aboutPrivacyBtn">Privacidad</button><button class="btn" id="aboutLegalBtn">Legal</button><button class="btn" id="aboutVersionBtn">Versión</button></div>
-<div class="aboutFooter">
-<div>© 2026 Michel Armando Duarte Flores / Michel's Lab. All rights reserved. <span class="aboutVersion">Instagram Cleaner Pro · UI v120.36</span></div>
-<div class="motto">Datos locales. Decisiones claras.</div>
-</div>
+<div class="aboutFooter">© 2026 Michel Armando Duarte Flores / Michel's Lab · All rights reserved.</div>
 </section>
 </div>
 <div aria-hidden="true" class="legalOverlay" id="legalOverlay">
