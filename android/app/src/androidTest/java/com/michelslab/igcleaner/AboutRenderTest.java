@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.scrollTo;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -28,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class AboutRenderTest {
     private void assertMeasured(int id, int minWidth, int minHeight) {
-        onView(withId(id)).check((view, error) -> {
+        onView(withId(id)).inRoot(isDialog()).check((view, error) -> {
             if (error != null) throw error;
             assertNotNull("The About view must exist", view);
             assertTrue("About view " + id + " has zero/clipped width: " + view.getWidth(),
@@ -82,12 +83,12 @@ public class AboutRenderTest {
             assertMeasured(R.id.aboutPortraitImage, 70, 80);
             assertMeasured(R.id.aboutStudioImage, 110, 70);
 
-            onView(withId(R.id.aboutAuthorColumn)).perform(scrollTo());
+            onView(withId(R.id.aboutAuthorColumn)).inRoot(isDialog()).perform(scrollTo());
             screenshot("author");
-            onView(withId(R.id.aboutStudioColumn)).perform(scrollTo());
+            onView(withId(R.id.aboutStudioColumn)).inRoot(isDialog()).perform(scrollTo());
             screenshot("studio");
-            onView(withId(R.id.aboutEmail)).perform(scrollTo());
-            onView(withId(R.id.aboutEmail)).check(matches(isDisplayed()));
+            onView(withId(R.id.aboutEmail)).inRoot(isDialog()).perform(scrollTo());
+            onView(withId(R.id.aboutEmail)).inRoot(isDialog()).check(matches(isDisplayed()));
             screenshot("socials");
         }
     }
