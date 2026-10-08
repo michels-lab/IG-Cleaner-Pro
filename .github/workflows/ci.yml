@@ -91,6 +91,7 @@ jobs:
           assert m['channels']['desktop']['includes']==[
               'assets/michel_duarte_avatar.jpg',
               'assets/michels-lab/official-lockup.png',
+              'assets/ig-cleaner-pro/official-app-icon.png',
           ]
           assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['currentStableRelease']}.apk"
           assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
