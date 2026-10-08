@@ -5,12 +5,12 @@ This document defines the safe update path for Desktop/local-Web and Android. It
 ## Distribution
 
 ### Desktop / local-Web
-The canonical v120.35 Desktop artifact is the bundle declared in `release/distribution-manifest.json`: `IG-Cleaner-Pro-Desktop-v120.35.zip`, containing the HTML entrypoint plus the canonical About identity assets. A Desktop update must never require uploading the user's Instagram export or browser state.
+The canonical Desktop artifact is the bundle declared in `release/distribution-manifest.json`, using the template `IG-Cleaner-Pro-Desktop-v{version}.zip` with the **current stable version taken from the manifest** (currently v120.36). It contains the HTML entrypoint plus the canonical About identity assets. A Desktop update must never require uploading the user's Instagram export or browser state.
 
 Before any update that changes persistent state, the user must be able to export a full backup from Vault. Replacing the HTML file must preserve the browser origin when state continuity is expected; opening the app from a different origin, path, or browser profile can create a separate local-storage context.
 
 ### Android
-GitHub Releases distribute the signed stable Android v120.35 APK directly. Google Play distribution is separate and requires target-device/update-path validation; publication on GitHub is not Google Play publication.
+GitHub Releases distribute the signed stable Android APK directly; read the current stable version from `release/distribution-manifest.json` (currently v120.36). Google Play distribution is separate and requires target-device/update-path validation; publication on GitHub is not Google Play publication.
 
 Publishing is explicit. CI/build success by itself does not authorize a release.
 

@@ -41,8 +41,10 @@ for token in (
     assert token in privacy, f"Privacy documentation token missing: {token}"
 
 stable_desktop = manifest["channels"]["desktop"]["artifact"]
-assert stable_desktop in migration
-assert stable_desktop.startswith("IG-Cleaner-Pro-Desktop-v") and stable_desktop.endswith(".zip")
+current = manifest["releasePolicy"]["currentStableRelease"]
+assert stable_desktop == f"IG-Cleaner-Pro-Desktop-{current}.zip"
+assert "release/distribution-manifest.json" in migration
+assert "IG-Cleaner-Pro-Desktop-v{version}.zip" in migration
 assert manifest["channels"]["desktop"]["artifactTemplate"] == "IG-Cleaner-Pro-Desktop-v{version}.zip"
 
 print("Privacy/data-handling contract passed.")
