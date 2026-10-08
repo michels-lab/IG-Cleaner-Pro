@@ -1038,3 +1038,9 @@ Final runner probe:
 - all three terminated before any step started and expose `steps: []`;
 - PR #20 was returned to Draft;
 - merge remains blocked pending a real same-SHA runner execution.
+
+## 2026-10-07 — Master-first About governance synchronization
+
+- Verified current master `michels-lab/Michel-Software-Standards` `standards/ABOUT_STANDARD.md`, `standards/PRODUCT_IDENTITY_STANDARD.md`, `AGENTS.md` and `brand/developer-profile.json` require exact `TOOLS WITH IDENTITY.` studio slogan and paired author/studio About composition (side by side where width permits; responsive stack on narrow screens).
+- Updated local `AGENTS.md` plus app-maintainer, QA-regression and release-manager agent contracts to require fresh master reads before About work and rendered Desktop/Android verification.
+- This change is **instructions only**: it does not alter UI assets, About implementation, app versions or published releases. Visible About layout/social icons/Android device acceptance remain unverified and open.
