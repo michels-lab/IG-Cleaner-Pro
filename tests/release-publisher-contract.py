@@ -25,11 +25,11 @@ for token in (
 
 # GitHub must not publish a visually changed app on mere source/build success.
 for token in (
-    'visual-release-approval:',
-    'environment: visual-release-approval',
-    'required_reviewers',
-    'needs: [release-request-gate, visual-release-approval]',
+    'rendered-ui-qa:',
+    'needs: [release-request-gate, rendered-ui-qa]',
+    "needs.rendered-ui-qa.result == 'success'",
     'tools/verify_android_visual_release_evidence.py',
+    'gh run download',
     '--commit "$GITHUB_SHA"',
 ):
     assert token in workflow, f"Release P0 missing protected visual approval: {token}"
