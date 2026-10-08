@@ -74,10 +74,10 @@ assert 'normalizeLegacyReviewState' in html
 assert 'pushWorkspaceState' in html
 assert 'list_snapshots' in html
 
-# All user-visible release identity must agree with the governed v120.34 target.
-assert '<title>Instagram Cleaner Pro v120.34</title>' in html
-assert 'Engine v119 · UI v120.34' in html
-assert 'Instagram Cleaner Pro · UI v120.34' in html
+# All user-visible development identity must agree with the governed next release.
+assert '<title>Instagram Cleaner Pro v120.35</title>' in html
+assert 'Engine v119 · UI v120.35' in html
+assert 'Instagram Cleaner Pro · UI v120.35' in html
 assert 'UI v120.26' not in html
 assert 'UI v120.27' not in html
 
