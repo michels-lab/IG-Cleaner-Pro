@@ -1,46 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Single composition: parallel product/studio logos, developer identity, large portrait + vertical social links. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
- android:layout_width="match_parent" android:layout_height="wrap_content" android:fillViewport="false"
- android:background="@drawable/bg_about_canvas">
- <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
- android:padding="12dp">
-  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_premium_hero">
-   <ImageView android:layout_width="44dp" android:layout_height="44dp" android:src="@drawable/ig_official_app_icon" android:contentDescription="ig_official_mark" android:scaleType="fitCenter"/>
-   <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="9dp">
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INSTAGRAM CLEANER PRO" android:textColor="@color/ig_text" android:textSize="16sp" android:textStyle="bold"/>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/aboutVersion" android:text="SORT • DECLUTTER • FOCUS" android:textColor="@color/ig_cyan" android:textSize="11sp" />
+ android:id="@+id/aboutScroll" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:fillViewport="false" android:background="@drawable/bg_about_canvas">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:orientation="vertical" android:padding="11dp">
+  <LinearLayout android:id="@+id/aboutPairRow" android:layout_width="match_parent"
+   android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical"
+   android:padding="8dp" android:background="@drawable/bg_premium_hero">
+   <LinearLayout android:id="@+id/aboutProductColumn" android:layout_width="0dp" android:layout_weight="1"
+    android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
+    <ImageView android:id="@+id/aboutProductImage" android:layout_width="94dp" android:layout_height="77dp"
+     android:src="@drawable/ig_official_app_icon" android:contentDescription="Instagram Cleaner Pro logo" android:scaleType="fitCenter"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+     android:gravity="center" android:text="INSTAGRAM CLEANER PRO" android:textColor="@color/ig_text"
+     android:textStyle="bold" android:textSize="10sp" android:maxLines="1" android:autoSizeTextType="uniform"
+     android:autoSizeMinTextSize="8sp" android:autoSizeMaxTextSize="10sp"/>
+   </LinearLayout>
+   <View android:layout_width="1dp" android:layout_height="83dp"
+    android:background="@color/ig_border_strong" android:layout_marginHorizontal="6dp"/>
+   <LinearLayout android:id="@+id/aboutStudioColumn" android:layout_width="0dp" android:layout_weight="1"
+    android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
+    <ImageView android:id="@+id/aboutStudioImage" android:layout_width="match_parent" android:layout_height="77dp"
+     android:src="@drawable/ig_about_studio" android:contentDescription="Michel's Lab logo" android:scaleType="fitCenter"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+     android:gravity="center" android:text="TOOLS WITH IDENTITY." android:textColor="@color/ig_gold"
+     android:textStyle="bold" android:textSize="10sp"/>
    </LinearLayout>
   </LinearLayout>
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/aboutSubtitle" android:text="Local-first Instagram relationship cleanup and review." android:textColor="@color/ig_muted" android:textSize="12sp" android:layout_marginTop="4dp"/>
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ABOUT THE AUTHOR · MICHEL’S LAB" android:textColor="@color/ig_cyan" android:textSize="11sp" android:textStyle="bold" android:layout_marginTop="8dp" android:layout_marginBottom="5dp"/>
-  <LinearLayout android:id="@+id/aboutPairRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
-   android:gravity="top" android:background="@drawable/bg_premium_panel">
-   <LinearLayout android:id="@+id/aboutAuthorColumn" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="7dp">
-    <ImageView android:layout_width="60dp" android:layout_height="70dp" android:id="@+id/aboutPortraitImage" android:src="@drawable/ig_about_portrait" android:contentDescription="ig_about_portrait" android:scaleType="fitCenter"/>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Michel Duarte" android:textColor="@color/ig_text" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="3dp"/>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Developer · Materials engineer" android:textColor="@color/ig_muted" android:textSize="11sp" />
+  <TextView android:id="@+id/aboutVersion" android:layout_width="match_parent"
+   android:layout_height="wrap_content" android:layout_marginTop="6dp"
+   android:text="SORT • DECLUTTER • FOCUS" android:textColor="@color/ig_cyan" android:textSize="10sp"/>
+  <LinearLayout android:id="@+id/aboutDeveloperInfo" android:layout_width="match_parent"
+   android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="10dp">
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="ABOUT THE DEVELOPER" android:textColor="@color/ig_cyan" android:textSize="10sp" android:textStyle="bold"/>
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Michel Armando Duarte Flores" android:textColor="@color/ig_text" android:textSize="17sp" android:textStyle="bold"
+    android:layout_marginTop="3dp"/>
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Independent Software Developer · Materials Engineer"
+    android:textColor="@color/ig_muted" android:textSize="11sp" android:layout_marginTop="2dp"/>
+  </LinearLayout>
+  <LinearLayout android:id="@+id/aboutPortraitSocialRow" android:layout_width="match_parent"
+   android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="top"
+   android:layout_marginTop="11dp">
+   <ImageView android:id="@+id/aboutPortraitImage" android:layout_width="132dp" android:layout_height="216dp"
+    android:src="@drawable/ig_about_portrait" android:contentDescription="Michel Duarte portrait"
+    android:scaleType="centerCrop" android:background="@drawable/bg_premium_panel"/>
+   <LinearLayout android:id="@+id/aboutSocialGrid" android:layout_width="0dp" android:layout_weight="1"
+    android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="8dp">
+      <com.google.android.material.button.MaterialButton
+       android:id="@+id/aboutInstagram" style="@style/Widget.Material3.Button.OutlinedButton"
+       android:layout_width="match_parent" android:layout_height="40dp" android:minWidth="0dp" android:minHeight="40dp"
+       android:layout_marginBottom="3dp" android:insetTop="0dp" android:insetBottom="0dp"
+       android:gravity="center_vertical" android:paddingStart="7dp" android:paddingEnd="3dp"
+       android:text="Instagram" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text"
+       app:icon="@drawable/ig_about_instagram" app:iconSize="18dp" app:iconTint="@null" app:iconGravity="textStart"
+       app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
+      <com.google.android.material.button.MaterialButton
+       android:id="@+id/aboutFacebook" style="@style/Widget.Material3.Button.OutlinedButton"
+       android:layout_width="match_parent" android:layout_height="40dp" android:minWidth="0dp" android:minHeight="40dp"
+       android:layout_marginBottom="3dp" android:insetTop="0dp" android:insetBottom="0dp"
+       android:gravity="center_vertical" android:paddingStart="7dp" android:paddingEnd="3dp"
+       android:text="Facebook" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text"
+       app:icon="@drawable/ig_about_facebook" app:iconSize="18dp" app:iconTint="@null" app:iconGravity="textStart"
+       app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
+      <com.google.android.material.button.MaterialButton
+       android:id="@+id/aboutLinkedin" style="@style/Widget.Material3.Button.OutlinedButton"
+       android:layout_width="match_parent" android:layout_height="40dp" android:minWidth="0dp" android:minHeight="40dp"
+       android:layout_marginBottom="3dp" android:insetTop="0dp" android:insetBottom="0dp"
+       android:gravity="center_vertical" android:paddingStart="7dp" android:paddingEnd="3dp"
+       android:text="LinkedIn" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text"
+       app:icon="@drawable/ig_about_linkedin" app:iconSize="18dp" app:iconTint="@null" app:iconGravity="textStart"
+       app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
+      <com.google.android.material.button.MaterialButton
+       android:id="@+id/aboutGithub" style="@style/Widget.Material3.Button.OutlinedButton"
+       android:layout_width="match_parent" android:layout_height="40dp" android:minWidth="0dp" android:minHeight="40dp"
+       android:layout_marginBottom="3dp" android:insetTop="0dp" android:insetBottom="0dp"
+       android:gravity="center_vertical" android:paddingStart="7dp" android:paddingEnd="3dp"
+       android:text="GitHub" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text"
+       app:icon="@drawable/ig_about_github" app:iconSize="18dp" app:iconTint="@null" app:iconGravity="textStart"
+       app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
+      <com.google.android.material.button.MaterialButton
+       android:id="@+id/aboutEmail" style="@style/Widget.Material3.Button.OutlinedButton"
+       android:layout_width="match_parent" android:layout_height="40dp" android:minWidth="0dp" android:minHeight="40dp"
+       android:layout_marginBottom="3dp" android:insetTop="0dp" android:insetBottom="0dp"
+       android:gravity="center_vertical" android:paddingStart="7dp" android:paddingEnd="3dp"
+       android:text="Email" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text"
+       app:icon="@drawable/ig_about_email" app:iconSize="18dp" app:iconTint="@null" app:iconGravity="textStart"
+       app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
    </LinearLayout>
-   <LinearLayout android:id="@+id/aboutStudioColumn" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="7dp">
-    <ImageView android:layout_width="112dp" android:layout_height="58dp" android:id="@+id/aboutStudioImage" android:src="@drawable/ig_about_studio" android:contentDescription="ig_about_studio" android:scaleType="fitCenter"/>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Michel’s Lab" android:textColor="@color/ig_text" android:textSize="14sp" android:textStyle="bold" android:layout_marginTop="3dp"/>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="TOOLS WITH IDENTITY." android:textColor="@color/ig_gold" android:textSize="12sp" android:textStyle="bold"/>
-   </LinearLayout>
   </LinearLayout>
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/aboutConnectTitle" android:text="CONNECT" android:textColor="@color/ig_cyan" android:textSize="11sp" android:textStyle="bold" android:layout_marginTop="7dp"/>
-  <LinearLayout android:id="@+id/aboutSocialGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="3dp">
-   <com.google.android.material.button.MaterialButton android:id="@+id/aboutInstagram" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp" android:minHeight="36dp" android:layout_marginEnd="3dp" android:layout_marginStart="3dp" android:insetTop="0dp" android:insetBottom="0dp" android:text="Instagram" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text" app:icon="@drawable/ig_about_instagram" app:iconSize="16dp" app:iconTint="@null" app:iconGravity="textStart" app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
-   <com.google.android.material.button.MaterialButton android:id="@+id/aboutFacebook" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp" android:minHeight="36dp" android:layout_marginEnd="3dp" android:layout_marginStart="3dp" android:insetTop="0dp" android:insetBottom="0dp" android:text="Facebook" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text" app:icon="@drawable/ig_about_facebook" app:iconSize="16dp" app:iconTint="@null" app:iconGravity="textStart" app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
-  </LinearLayout>
-  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-   <com.google.android.material.button.MaterialButton android:id="@+id/aboutLinkedin" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp" android:minHeight="36dp" android:layout_marginEnd="3dp" android:layout_marginStart="3dp" android:insetTop="0dp" android:insetBottom="0dp" android:text="LinkedIn" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text" app:icon="@drawable/ig_about_linkedin" app:iconSize="16dp" app:iconTint="@null" app:iconGravity="textStart" app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
-   <com.google.android.material.button.MaterialButton android:id="@+id/aboutGithub" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp" android:minHeight="36dp" android:layout_marginEnd="3dp" android:layout_marginStart="3dp" android:insetTop="0dp" android:insetBottom="0dp" android:text="GitHub" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text" app:icon="@drawable/ig_about_github" app:iconSize="16dp" app:iconTint="@null" app:iconGravity="textStart" app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
-  </LinearLayout>
-  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
-   <com.google.android.material.button.MaterialButton android:id="@+id/aboutEmail" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp" android:minHeight="36dp" android:layout_marginEnd="3dp" android:layout_marginStart="3dp" android:insetTop="0dp" android:insetBottom="0dp" android:text="Email" android:textSize="11sp" android:textAllCaps="false" android:textColor="@color/ig_text" app:icon="@drawable/ig_about_email" app:iconSize="16dp" app:iconTint="@null" app:iconGravity="textStart" app:strokeColor="@color/ig_border_strong" app:backgroundTint="@color/ig_surface_2"/>
-   <Space android:layout_width="0dp" android:layout_weight="1" android:layout_height="1dp"/>
-  </LinearLayout>
-  </LinearLayout>
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/aboutCopyright" android:text="© 2026 Michel Duarte / Michel’s Lab. All rights reserved." android:textColor="@color/ig_muted" android:textSize="10sp" android:layout_marginTop="5dp"/>
+  <TextView android:id="@+id/aboutCopyright" android:layout_width="match_parent"
+   android:layout_height="wrap_content" android:layout_marginTop="8dp"
+   android:text="© 2026 Michel Duarte / Michel’s Lab. All rights reserved."
+   android:textColor="@color/ig_muted" android:textSize="9sp"/>
  </LinearLayout>
 </ScrollView>
