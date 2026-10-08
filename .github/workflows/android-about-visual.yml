@@ -51,28 +51,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
-          script: |
-            set -eu
-            gradle -p android :app:assembleDebug :app:assembleDebugAndroidTest
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            mkdir -p artifacts/visual/android
-            for viewport in compact wide; do
-              if [ "$viewport" = compact ]; then
-                adb shell wm size 720x1280
-                adb shell wm density 320
-              else
-                adb shell wm size 1080x1920
-                adb shell wm density 320
-              fi
-              sleep 3
-              adb shell am instrument -w -r -e viewport "$viewport" \
-                com.michelslab.igcleaner.beta.test/androidx.test.runner.AndroidJUnitRunner \
-                | tee "artifacts/visual/android/instrumentation-$viewport.txt"
-              grep -Eq 'OK \(1 test\)' "artifacts/visual/android/instrumentation-$viewport.txt"
-            done
-            adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/ artifacts/visual/android/
-            test "$(find artifacts/visual/android/igc-ui-capture -name 'about-*.png' | wc -l)" -eq 6
+          script: bash tools/run_android_about_ui.sh
       - name: Validate binary-backed screenshots and write evidence manifest
         run: |
           python -m pip install Pillow==11.3.0
