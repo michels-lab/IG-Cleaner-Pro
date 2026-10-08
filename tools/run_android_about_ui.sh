@@ -29,5 +29,5 @@ for viewport in compact wide; do
 done
 
 adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/ artifacts/visual/android/
-test "$(find artifacts/visual/android/igc-ui-capture -name 'about-*.png' | wc -l)" -eq 6
-echo 'SUCCESS: six instrumented Android About screenshots captured'
+test "$(find artifacts/visual/android/igc-ui-capture -name 'about-*.png' | wc -l)" -eq 8
+echo 'SUCCESS: eight instrumented Android About screenshots captured'
