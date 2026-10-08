@@ -3,14 +3,16 @@
 Updated: **2026-10-08**
 Trigger: **LIMÓN**
 
-## Open v120.36 P0 remediation (not released)
+## v120.36 ready in main — not yet published
 
-- PR #29 `fix/v12036-android-about-visual-qa` corrects v120.35 Android About's zero-width author/studio columns when the row changes orientation below 390dp.
-- Added installed-app Android instrumentation assertions + screenshot capture of About author, studio and social controls at compact/wide emulator resolutions. Do not claim PASS before the same-commit screenshot workflow completes and evidence is visually inspected.
-- The governed release publisher requires **automated** `rendered-ui-qa`, including exact-commit emulator capture proof and SHA-bound screenshots. In line with the user's explicit workflow preference, human inspection is post-publication and is NOT a manual workflow blocker. Missing automated proof still fails closed.
-- The user chose the first alternative **profile-card + cyan orbit + gold sparkle** logo. The master contains the decision and a thumbnail; the unmodified original 1254px PNG has **not** been uploaded as a canonical GitHub blob. Do not substitute thumbnail or silently switch active assets. The original local candidate's SHA-256 is `f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8`.
-- Next release remains `v120.36` **not yet authorized**. Phone QA for imports, Focus, counters, cloud sync and update path remains open as issue #24.
-
+- **Current main HEAD:** `b99b2357295d124fa783fa555f9793e87028899a`; Android `versionName=120.36`, `versionCode=12036`; matching Desktop development version and unchanged FINAL-9999 certificate.
+- **PR #29 (merged):** fixed zero-width native Android About author/Michel's Lab panels; implemented installed-APK Espresso actual-view and screenshot tests.
+- **PR #31 (merged):** redesigned compact About as two side-by-side identity sections and five contact links in two columns. A strict complete-visibility assertion rejected clipped Email (70% visible); after correction, **both compact and wide emulator tests passed**. Actual screenshot archive: [About v120.36 visual QA](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37808417135). All five contact links are visible in the initial compact screenshot.
+- **PR #32 (merged):** release publishing requires **automated** exact-commit `rendered-ui-qa` and APK screenshot integrity checks. No manual/protected human-review queue is required, consistent with the user's instruction to inspect the finished release afterward.
+- **PR #33 (merged):** Android and Desktop dev version, signing metadata and release notes prepared for v120.36. [Desktop/Android/Supabase CI](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37810464858) and [Android emulator About QA](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37810464913) are both **SUCCESS**.
+- **Current public stable:** v120.35. **Next governed publication candidate:** v120.36, `authorized=false`; no release requested or published as part of these PRs.
+- **Remaining:** exact original Option 1 logo PNG not yet uploaded to master; approved 64px preview is not suitable as official production asset ([issue #30](https://github.com/michels-lab/IG-Cleaner-Pro/issues/30)). Real Samsung upgrade/Focus/import/cloud roundtrip acceptance remains [issue #24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24); broader Home/Desktop screenshot coverage remains [issue #28](https://github.com/michels-lab/IG-Cleaner-Pro/issues/28).
+- Do not claim logo migration, physical-phone validation or GitHub v120.36 release as done until evidence exists.
 
 ## Current authoritative release state
 
