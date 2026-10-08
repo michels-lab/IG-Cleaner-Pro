@@ -27,24 +27,22 @@ This is a **core IG Cleaner Pro product contract**, not optional branding polish
 
 ### Product-wide visual system
 
-The approved stacked-layers + sparkle logo geometry is the foundation of the app's visual system. Preserve the defining silhouette, proportions and spatial relationships. Color, monochrome/inverted treatment, glow, glass, outline, translucency, material and motion may adapt to theme/context.
+The approved first-option overlapping contact-card + cyan orbit + gold sparkle logo geometry is the foundation of the app's visual system. Preserve the defining silhouette, proportions and spatial relationships. Color, monochrome/inverted treatment, glow, glass, outline, translucency, material and motion may adapt to theme/context.
 
 Do not satisfy branding by pasting the source SVG into unrelated screens. Translate the mark's visual DNA into cards, batches, focus/review hierarchy, selected/completed states, audit/review emphasis, separators, highlights and motion where appropriate. Cleanup workflow clarity, local-first privacy and state semantics remain hard constraints.
 
-### About hierarchy
+### About hierarchy — user's confirmed layout (2026-10-08)
 
-About MUST be intentionally designed in this order:
+The accepted About is **one cohesive composition**, not three competing cards and not a row pairing the author's tiny portrait with the Michel's Lab logo.
 
-1. **Product identity first** — approved IG Cleaner Pro mark/lockup, product name, real current version and product-facing composition derived from the app identity.
-2. **About the author** — current canonical Michel Duarte portrait, **Michel Duarte**, and appropriate developer copy.
-3. **Michel's Lab parent brand** — official Michel's Lab mark/lockup shown as the studio/ecosystem identity without overpowering IG Cleaner Pro.
-4. **Social profiles** — each visible network link shows the recognizable network icon **and** the visible network name together, using canonical URLs from the master `brand/developer-profile.json`.
+1. **Top row:** the current approved **Instagram Cleaner Pro logo and Michel's Lab logo side by side** at comparable size, both plainly visible (no decorative empty panel). Show `TOOLS WITH IDENTITY.` beside/below the parent mark.
+2. **Below both logos:** the developer's name and role/information, clearly legible.
+3. **Below developer information:** a **large canonical Michel Duarte portrait** and a **vertical list** of five social links (Instagram, Facebook, LinkedIn, GitHub, Email) at its side; on genuinely too-narrow screens the list may wrap below, but never turn the portrait into a postage-stamp thumbnail.
+4. Every social link has a recognizable network icon plus its visible name; preserve canonical URLs, copyright and relevant legal/privacy/version actions. Keep all five links in the initial viewport on supported compact and desktop QA sizes.
+5. **About access is persistent**: a visible *labeled* About action in the fixed Desktop top header, and an explicit always-visible Android top bar button not owned by the adaptive menu, across every workspace. Not a sidebar footer or Home-only shortcut. Remove redundant indirect About actions when they create misleading duplicates.
+6. **Advanced tools was rejected by the user** in IG Cleaner Pro. Do not recreate its Android toolbar action, menu label, or the generic `showWorkspaceScreen("", "Advanced tools")` shortcut. Preserve real workspace tools in their relevant modules.
 
-Do not finish About with text-only social links or icon-only social buttons. Accessibility labels/tooltips supplement the visible network name; they do not replace it.
-
-Treat this hierarchy and the product-wide logo-derived design language as part of product completeness. Visual work must not regress it.
-
-Follow `standards/PRODUCT_IDENTITY_STANDARD.md` and `standards/ABOUT_STANDARD.md` in `michels-lab/Michel-Software-Standards`.
+The superseded master "author portrait next to Michel's Lab panel" *default* must not override these specific product instructions. Rework the actual structure; do not introduce a final cascading CSS override layer or use static source assertions as substitutes for runtime screenshots. Preserve the approved first logo and existing portrait bytes.
 
 ## Validation
 
@@ -70,9 +68,9 @@ Do not bump versions or publish releases unless explicitly assigned.
 - A normal/stable release must publish with GitHub `prerelease=false`; never silently substitute a prerelease.
 - Do not publish an Android stable artifact whose installed package/version identity still says beta or whose signing continuity is not established.
 - Once persistent Android signing is configured, every normal IG Cleaner Pro GitHub release must include the latest validated signed Android APK unless the user explicitly requests a desktop-only release.
-- Current stable release: **v120.35**. Current next publication target from the manifest: **v120.36**.
+- Current stable release: **v120.36**. Current next publication target from the manifest: **v120.37**.
 - Use `.github/workflows/release.yml` as the generic governed publisher for v120.35+; do not create a new version-specific publisher unless a concrete compatibility exception requires it.
-- A merge/version bump never authorizes a release. v120.35 has been published using explicit authorization, which is now consumed; v120.36 will require a fresh authorization.
+- A merge/version bump never authorizes a release. v120.36 has been published using explicit authorization, now consumed; v120.37 requires a new instruction.
 
 ## Intelligent brand adoption
 
@@ -84,7 +82,7 @@ When the user asks to update/adopt the app logo, icon, splash, startup or About:
 - replace the real active platform identity references instead of layering the new logo over legacy/generic branding;
 - use the app icon for launcher/executable/favicon derivatives, the mark for compact identity, and the lockup for larger splash/About surfaces when appropriate;
 - treat the logo geometry as design language where useful, but do not repeat the literal logo across screens;
-- build About in the hierarchy Product → Author → Michel's Lab → Social;
+- build About using this product's explicit top paired app/studio logos → developer identity → large portrait with vertical socials composition;
 - use the canonical Michel Duarte portrait and Michel's Lab mark in About;
 - preserve unrelated product behavior;
 - update this repository's project/audit log and validate current build/CI;

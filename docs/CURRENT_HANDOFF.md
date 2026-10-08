@@ -2,9 +2,20 @@
 
 ## Current shipped version — v120.36 (released)
 
+- **Latest PR #39 unresolved test corrected in candidate:** Android `37849453228` proved actual About content layout passes but showed *About is not visible in Home toolbar*. Removed entire adaptive menu; explicit fixed header About and Sync buttons wired directly. Must rerun installed-app visual QA on latest SHA before merge. User authorized v120.37 **after finishing pending fixes**, not as permission to bypass UI gates.
+
+- **QA finding for unreleased About correction:** candidate's first Android UI runner `37833416640` failed on API-35 UIAutomator window text lookup (both About full name AND Home app title missing to the accessibility locator). Main CI and Desktop Chromium passed. Candidate test now uses native dialog + actual on-screen geometry/drawables; rerun required. No merge/release claim until exact latest SHA's screenshots succeed.
+
+- **UI correction in development (unreleased):** user's October 8 screenshot rejected the v120.36 About hierarchy. Requirements: official app and studio logos paired at top, developer information below, large canonical portrait with one vertical list of five icons+names beside it, visible About in permanent top bar, and removal of useless Android Advanced tools menu/handler. Candidate branch `docs/v12036-post-release-triage-20261008`, not a release. Do not report candidate fixed until real Android/Chromium UI tests pass; no v120.37 authorization.
+
 - **Published normal GitHub release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.36 (2026-10-08T19:00:43Z).
 - **Signed Android:** `IG-Cleaner-Pro-Android-v120.36.apk`; **Desktop:** `IG-Cleaner-Pro-Desktop-v120.36.zip`; original chosen app logo, release artwork and SHA256SUMS included.
 - **Published commit:** `335cc84a3c5a823314f5283d3543a9fdf58174d3`; publish run: https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37827876157 — SUCCESS. Real Android Home+About and Desktop Chromium Home+About screenshot quality gates PASS, Android signing certificate identity PASS and release asset checks PASS. Premium native + Desktop navy/cyan/gold design and About improvements integrated.
+
+- **Post-release support / exact download:** GitHub v120.36 now includes the primary standalone `IG-Cleaner-Pro-Desktop-v120.36.html` in addition to ZIP; this was backfilled without rebuilding or re-signing the Android APK. The public README and live issue queue have been reconciled with this shipped state.
+- **P1 historical QA and logo items:** #28 and #30 are now satisfied by merged v120.36 exact-original-logo assets and enforced Android/Chromium Home+About screenshot gates. Close with implementation evidence rather than treating stale original checkboxes as incomplete. The historical instruction for protected human review has been superseded by the user's explicit post-release review policy.
+- **Outstanding non-automated acceptance:** issue #24 is re-targeted to v120.36; install/update on actual Samsung, genuine Instagram ZIP and Focus behavior, and real Supabase account Desktop↔Android sync remain outstanding. Do not mistake this for a pre-publication gate; GitHub release already exists. No v120.37 authorization.
+
 - **Next version:** v120.37 is NOT authorized. User review of the actual release on their Samsung and actual Instagram ZIP/Focus/cloud cross-device roundtrip are still outstanding, not represented as PASS.
 - Historical handoff notes below may describe v120.35 or pre-release stages; the shipped-state facts in this heading take precedence.
 

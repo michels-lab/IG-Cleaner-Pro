@@ -67,7 +67,7 @@ for token in (
     "@drawable/ig_about_portrait",
     "@drawable/ig_about_studio",
     "TOOLS WITH IDENTITY.",
-    "Michel Duarte",
+    "Michel Armando Duarte Flores",
     "Michel’s Lab",
     "@+id/aboutInstagram",
     "@+id/aboutFacebook",
@@ -75,10 +75,13 @@ for token in (
     "@+id/aboutGithub",
     "@+id/aboutEmail",
     "@+id/aboutPairRow",
+    "@+id/aboutProductImage",
+    "@+id/aboutDeveloperInfo",
+    "@+id/aboutPortraitSocialRow",
     "@+id/aboutVersion",
 ):
     assert token in about, f"Native About contract missing: {token}"
-for token in ("R.layout.dialog_about", "bindAboutLink(", "Intent.ACTION_VIEW", "screenWidthDp < 390", "getPackageManager().getPackageInfo"):
+for token in ("R.layout.dialog_about", "bindAboutLink(", "Intent.ACTION_VIEW", "getPackageManager().getPackageInfo"):
     assert token in main, f"Native About behavior missing: {token}"
 for asset in (
     "android/app/src/main/res/drawable-nodpi/ig_about_portrait.jpg",
@@ -86,26 +89,31 @@ for asset in (
 ):
     assert (ROOT / asset).is_file(), f"Missing canonical About asset: {asset}"
 
-# Regression P0 (v120.35): narrow-screen About panels were kept at 0dp wide
-# when the horizontal weighted row switched to vertical. This was invisible in
-# prior source-token tests and escaped into the published Android APK.
-for id in ("aboutAuthorColumn", "aboutStudioColumn", "aboutPortraitImage", "aboutStudioImage"):
-    assert f'@+id/{id}' in about, f"Native About view ID missing: {id}"
-for token in (
-    "LinearLayout.LayoutParams.MATCH_PARENT,",
-    "LinearLayout.LayoutParams.WRAP_CONTENT",
-    "author.setLayoutParams(authorParams)",
-    "studio.setLayoutParams(studioParams)",
-    "studioParams.topMargin",
-):
-    assert token in main, f"Responsive About zero-width regression: {token}"
+# Protect the user's actual layout contract, not the obsolete tiny portrait
+# + square studio card from v120.36.
+for id in ("aboutPairRow", "aboutProductImage", "aboutStudioImage",
+           "aboutDeveloperInfo", "aboutPortraitSocialRow", "aboutPortraitImage", "aboutSocialGrid"):
+    assert f'@+id/{id}' in about, f"About composition missing: {id}"
+assert 'android:layout_width="132dp" android:layout_height="216dp"' in about
+assert 'android:orientation="horizontal"' in about
+assert not (ROOT / "android/app/src/main/res/menu/top_app_bar.xml").exists(), "Obsolete overflow menu must be removed"
+assert 'R.id.actionTools' not in main, "Removed Advanced tools must not open a generic workspace"
+assert 'app:menu="@menu/top_app_bar"' not in layout
+assert '@+id/headerAboutButton' in layout and '@+id/headerSyncButton' in layout
+assert 'android:text="About"' in layout
+assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
+assert 'syncAction.setOnClickListener(view -> syncNow())' in main
+assert '@+id/appBrandTitle' in layout
+assert 'activeAboutDialog' in main
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
 assert instrumentation.is_file(), "Must have a runnable About screenshot test"
 testcode = instrumentation.read_text(encoding="utf-8")
-for token in ("UiDevice.getInstance", "requireResource(\"aboutPortraitImage\"",
-              "requireResource(\"aboutStudioImage\"",
-              "requireResource(link, 140, 66)", "aboutInstagram",
-              "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
+for token in ("getGlobalVisibleRect", "requireVisibleView(dialog.findViewById(R.id.aboutProductImage)",
+              "requireVisibleView(dialog.findViewById(R.id.aboutStudioImage)",
+              "requireVisibleView(dialog.findViewById(R.id.aboutPortraitImage)",
+              "requireVisibleView(dialog.findViewById(res),id,140,66)",
+              "R.id.headerAboutButton",
+              "aboutInstagram", "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
               "screenshot(\"about\",\"author\")",
               "screenshot(\"about\",\"studio\")",
               "screenshot(\"about\",\"socials\")"):

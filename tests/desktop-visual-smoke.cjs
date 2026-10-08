@@ -27,7 +27,13 @@ const {chromium} = require("playwright");
       const fileUrl=pathToFileURL(entry).href;
       await page.goto(fileUrl,{waitUntil:"domcontentloaded",timeout:60000});
       await page.locator("#igcAppShell").waitFor({state:"visible"});
-      assert(await page.locator("#aboutDeveloperBtn").isVisible(), "About navigation must be accessible");
+      const headerAbout=page.locator(".igc-commandbar > #aboutDeveloperBtn");
+      assert(await headerAbout.isVisible(), "About must be visible in the permanent top header");
+      const initialBounds=await headerAbout.boundingBox();
+      assert(initialBounds && initialBounds.x>=0 && initialBounds.x+initialBounds.width<=viewport.width,
+        "Header About is clipped outside the viewport: "+JSON.stringify(initialBounds));
+      await page.locator(".igc-workspace").evaluate(el=>el.scrollTop=el.scrollHeight);
+      assert(await headerAbout.isVisible(), "About disappeared after scrolling workspace");
       async function capture(surface, section) {
         const name=`${surface}-${viewport.name}-${section}.png`;
         const file=path.join(destination,name);
@@ -45,7 +51,19 @@ const {chromium} = require("playwright");
       await page.locator("#aboutDeveloperBtn").click();
       const modal=page.locator("#aboutDeveloperOverlay");
       await modal.waitFor({state:"visible"});
-      assert(await page.locator(".aboutDeveloperCard").isVisible(), "Author card absent");
+      assert(await page.locator(".aboutDeveloperCard").isVisible(), "Developer panel absent");
+      assert.equal(await page.locator(".aboutBrandRow > div").count(), 2, "Brand logos must be adjacent");
+      const brandLogos=await page.locator(".aboutBrandRow img").evaluateAll(ims=>ims.map(img=>{
+        const r=img.getBoundingClientRect(); return {top:r.top,left:r.left,width:r.width,height:r.height};
+      }));
+      assert.equal(brandLogos.length,2);
+      assert(Math.abs(brandLogos[0].top-brandLogos[1].top)<25,
+        "App and Michel's Lab logos are not aligned horizontally");
+      const face=await page.locator(".aboutPortraitImg").boundingBox();
+      assert(face&&face.height>=180,"Developer portrait must be large and readable");
+      const socialsBox=await page.locator(".aboutSocials").boundingBox();
+      assert(socialsBox && socialsBox.x>face.x+face.width-5,
+        "Social links must form a list alongside the portrait");
       assert(await page.locator(".aboutBrandMini").isVisible(), "Michel's Lab card absent");
       assert(await page.locator(".aboutBrandTag").innerText() === "TOOLS WITH IDENTITY.", "Brand slogan mismatch");
       assert.equal(await page.locator(".aboutSocial").count(),5,"All five socials must be present");
@@ -89,6 +107,9 @@ const {chromium} = require("playwright");
       }
       await capture("about","initial");
       const links=page.locator(".aboutSocial");
+      const boxes=await links.evaluateAll(xs=>xs.map(e=>e.getBoundingClientRect().top));
+      assert(boxes.every((y,i)=>i===0||y>boxes[i-1]),
+        "Social links should be one vertical list, never a tile grid");
       await links.last().scrollIntoViewIfNeeded();
       for(let k=0;k<5;k++){
         const url=await links.nth(k).getAttribute("href");

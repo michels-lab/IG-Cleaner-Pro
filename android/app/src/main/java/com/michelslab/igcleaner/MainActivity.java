@@ -208,21 +208,11 @@ public final class MainActivity extends AppCompatActivity {
         });
         ViewCompat.requestApplyInsets(root);
 
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.actionSync) {
-                syncNow();
-                return true;
-            }
-            if (item.getItemId() == R.id.actionTools) {
-                showWorkspaceScreen("", "Advanced tools");
-                return true;
-            }
-            if (item.getItemId() == R.id.actionAbout) {
-                showAbout();
-                return true;
-            }
-            return false;
-        });
+        // Explicit top-header controls: About never enters a three-dot overflow menu.
+        View aboutAction = findViewById(R.id.headerAboutButton);
+        View syncAction = findViewById(R.id.headerSyncButton);
+        aboutAction.setOnClickListener(view -> showAbout());
+        syncAction.setOnClickListener(view -> syncNow());
 
         bottomNav.setOnItemSelectedListener(item -> {
             bottomNav.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
@@ -2068,34 +2058,15 @@ public final class MainActivity extends AppCompatActivity {
         }, true);
     }
 
+    // Keep the active native About window addressable for real-view geometry QA.
+    // Clear it on dismiss to avoid retaining a closed dialog.
+    androidx.appcompat.app.AlertDialog activeAboutDialog;
+
     private void showAbout() {
         View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
-        LinearLayout aboutPairRow = about.findViewById(R.id.aboutPairRow);
-        if (getResources().getConfiguration().screenWidthDp < 320) {
-            // Weighted horizontal columns start at 0dp width. When stacking
-            // them vertically, those same params hid the entire About section.
-            aboutPairRow.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout author = about.findViewById(R.id.aboutAuthorColumn);
-            LinearLayout studio = about.findViewById(R.id.aboutStudioColumn);
-            LinearLayout.LayoutParams authorParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            LinearLayout.LayoutParams studioParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            studioParams.topMargin = Math.round(12f * getResources().getDisplayMetrics().density);
-            author.setLayoutParams(authorParams);
-            studio.setLayoutParams(studioParams);
-            author.setPadding(0, author.getPaddingTop(), 0, author.getPaddingBottom());
-            studio.setPadding(0, studio.getPaddingTop(), 0, studio.getPaddingBottom());
-        }
-        // On compact devices, preserve the most useful About content above
-        // the fold: both identities and all five official contact destinations.
-        if (getResources().getConfiguration().screenWidthDp < 390) {
-            about.findViewById(R.id.aboutSubtitle).setVisibility(View.GONE);
-            about.findViewById(R.id.aboutCopyright).setVisibility(View.GONE);
-            about.findViewById(R.id.aboutConnectTitle).setVisibility(View.GONE);
-        }
+        // Brand logos stay side by side at every supported width; the large
+        // developer portrait and five links share the body without nested cards.
+        // No fold-hiding or 0dp weighted column changes on compact devices.
         TextView aboutVersion = about.findViewById(R.id.aboutVersion);
         try {
             String installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -2108,10 +2079,12 @@ public final class MainActivity extends AppCompatActivity {
         bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
         bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
         bindAboutLink(about, R.id.aboutEmail, "mailto:realmichelduarte@gmail.com");
-        androidx.appcompat.app.AlertDialog aboutDialog = new MaterialAlertDialogBuilder(this)
+        activeAboutDialog = new MaterialAlertDialogBuilder(this)
                 .setView(about)
                 .setPositiveButton("Close", null)
                 .show();
+        androidx.appcompat.app.AlertDialog aboutDialog = activeAboutDialog;
+        aboutDialog.setOnDismissListener(d -> activeAboutDialog = null);
         // Keep the action footer inside the same navy gradient as the
         // product/author content instead of Material's disconnected grey bar.
         if (aboutDialog.getWindow() != null) {
