@@ -2,6 +2,8 @@
 
 ## Current shipped version — v120.36 (released)
 
+- **UI correction in development (unreleased):** user's October 8 screenshot rejected the v120.36 About hierarchy. Requirements: official app and studio logos paired at top, developer information below, large canonical portrait with one vertical list of five icons+names beside it, visible About in permanent top bar, and removal of useless Android Advanced tools menu/handler. Candidate branch `docs/v12036-post-release-triage-20261008`, not a release. Do not report candidate fixed until real Android/Chromium UI tests pass; no v120.37 authorization.
+
 - **Published normal GitHub release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.36 (2026-10-08T19:00:43Z).
 - **Signed Android:** `IG-Cleaner-Pro-Android-v120.36.apk`; **Desktop:** `IG-Cleaner-Pro-Desktop-v120.36.zip`; original chosen app logo, release artwork and SHA256SUMS included.
 - **Published commit:** `335cc84a3c5a823314f5283d3543a9fdf58174d3`; publish run: https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37827876157 — SUCCESS. Real Android Home+About and Desktop Chromium Home+About screenshot quality gates PASS, Android signing certificate identity PASS and release asset checks PASS. Premium native + Desktop navy/cyan/gold design and About improvements integrated.
