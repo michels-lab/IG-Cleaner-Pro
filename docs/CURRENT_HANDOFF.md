@@ -1,5 +1,11 @@
 # Current Handoff — Instagram Cleaner Pro
 
+## v120.37 release candidate — user authorized after fixes
+
+- User requested v120.37 release after finishing pending UI bugs. PR #39 is merged into main (commit `ab02b0d2db9923ad8cb79bb88e1ce669f34c3050`) following actual native Android UI and Desktop Chromium screenshot proof. New candidate bumps Android/Desktop 120.37 and signing metadata but does not change state schema. Run same-SHA QA again on main; only then authorize/publish normal signed APK and primary standalone HTML. Keep v120.36 as current stable until GitHub confirms v120.37.
+
+
+
 ## Current shipped version — v120.36 (released)
 
 - **Latest PR #39 unresolved test corrected in candidate:** Android `37849453228` proved actual About content layout passes but showed *About is not visible in Home toolbar*. Removed entire adaptive menu; explicit fixed header About and Sync buttons wired directly. Must rerun installed-app visual QA on latest SHA before merge. User authorized v120.37 **after finishing pending fixes**, not as permission to bypass UI gates.
