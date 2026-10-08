@@ -21,6 +21,9 @@ on:
       - 'tools/android_about_visual_evidence.py'
 permissions:
   contents: read
+concurrency:
+  group: igc-android-about-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   capture-actual-android-about:
     name: Install Android APK; render About at compact and wide sizes
