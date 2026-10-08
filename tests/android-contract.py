@@ -73,9 +73,12 @@ for token in (
     "@+id/aboutFacebook",
     "@+id/aboutLinkedin",
     "@+id/aboutGithub",
+    "@+id/aboutEmail",
+    "@+id/aboutPairRow",
+    "@+id/aboutVersion",
 ):
     assert token in about, f"Native About contract missing: {token}"
-for token in ("R.layout.dialog_about", "bindAboutLink(", "Intent.ACTION_VIEW"):
+for token in ("R.layout.dialog_about", "bindAboutLink(", "Intent.ACTION_VIEW", "screenWidthDp < 390", "getPackageManager().getPackageInfo"):
     assert token in main, f"Native About behavior missing: {token}"
 for asset in (
     "android/app/src/main/res/drawable-nodpi/ig_about_portrait.jpg",

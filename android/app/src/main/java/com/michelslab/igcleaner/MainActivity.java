@@ -2070,6 +2070,17 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showAbout() {
         View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
+        LinearLayout aboutPairRow = about.findViewById(R.id.aboutPairRow);
+        if (getResources().getConfiguration().screenWidthDp < 390) {
+            aboutPairRow.setOrientation(LinearLayout.VERTICAL);
+        }
+        TextView aboutVersion = about.findViewById(R.id.aboutVersion);
+        try {
+            String installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            aboutVersion.setText("v" + installedVersion + " · SORT • DECLUTTER • FOCUS");
+        } catch (android.content.pm.PackageManager.NameNotFoundException error) {
+            aboutVersion.setText("SORT • DECLUTTER • FOCUS");
+        }
         bindAboutLink(about, R.id.aboutInstagram, "https://www.instagram.com/realmichelduarte/");
         bindAboutLink(about, R.id.aboutFacebook, "https://www.facebook.com/realmichelduarte");
         bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
