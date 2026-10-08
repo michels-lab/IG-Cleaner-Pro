@@ -36,7 +36,12 @@ def create_manifest(folder: Path, apk: Path, sha: str):
             expected = (720,1280) if viewport == 'compact' else (1080,1920)
             assert (w,h) == expected, f'{viewport} screenshot must use actual {expected} viewport; got {w,h}'
             hsh = digest(path)
-            # Different labeled sections can legitimately appear in one unchanged\n            # viewport when both panels are already visible; duplicates across\n            # viewport sizes remain prohibited.\n            assert hsh not in seen or seen[hsh] == viewport, f'Screenshot reused across viewport sizes: {path}'\n            seen[hsh] = viewport
+            # Different labeled sections may already appear in the same
+            # viewport; only cross-viewport screenshot reuse is forbidden.
+            assert hsh not in seen or seen[hsh] == viewport, (
+                f'Screenshot reused across viewport sizes: {path}'
+            )
+            seen[hsh] = viewport
             shots.append(dict(
                 platform='android', surface='about',
                 viewport=viewport, section=part,
