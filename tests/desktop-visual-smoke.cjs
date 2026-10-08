@@ -52,6 +52,24 @@ const {chromium} = require("playwright");
       const imgs=await page.locator("#aboutDeveloperOverlay img").evaluateAll(imgs =>
         imgs.map(im=>({alt:im.alt,loaded:im.complete && im.naturalWidth>0})));
       assert(imgs.length>=3 && imgs.every(im=>im.loaded), "Author/product/studio images must load in real browser");
+      if (viewport.name === "compact") {
+        const firstView = await page.evaluate(() => {
+          const selectors=[
+            ".aboutProductMark",".aboutAvatar",".aboutBrandMini",".aboutBrandTag",
+            ...Array.from({length:5},(_,i)=>`.aboutSocial:nth-child(${i+1})`)
+          ];
+          return selectors.map(selector=>{
+            const el=document.querySelector(selector);
+            const r=el?.getBoundingClientRect();
+            return {selector,visible:!!r&&r.width>0&&r.height>0
+                &&r.top>=0&&r.bottom<=window.innerHeight-4,
+                top:r?.top,bottom:r?.bottom};
+          });
+        });
+        assert(firstView.every(v=>v.visible),
+          "P0: compact About must show author, Lab/slogan and all five social links without scrolling: "+
+          JSON.stringify(firstView.filter(v=>!v.visible)));
+      }
       await capture("about","initial");
       const links=page.locator(".aboutSocial");
       await links.last().scrollIntoViewIfNeeded();
