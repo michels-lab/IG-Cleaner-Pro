@@ -100,7 +100,7 @@ jobs:
           assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['currentStableRelease']}.apk"
           assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
           assert m['channels']['desktop']['primaryArtifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.html'
-          assert m['channels']['desktop']['primaryArtifact']==f"IG-Cleaner-Pro-Desktop-${m['releasePolicy']['currentStableRelease']}.html"
+          assert m['channels']['desktop']['primaryArtifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['currentStableRelease']}.html"
           assert m['channels']['desktop']['primaryFormat']=='html'
           assert m['channels']['desktop']['standaloneOffline'] is True
           assert m['channels']['desktop']['zipSecondary'] is True
