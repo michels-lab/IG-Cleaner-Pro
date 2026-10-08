@@ -24,6 +24,9 @@
     <ImageView android:id="@+id/aboutStudioImage" android:layout_width="match_parent" android:layout_height="77dp"
      android:src="@drawable/ig_about_studio" android:contentDescription="Michel's Lab logo" android:scaleType="fitCenter"/>
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+     android:gravity="center" android:text="Michel’s Lab" android:textColor="@color/ig_text"
+     android:textSize="10sp" android:textStyle="bold"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
      android:gravity="center" android:text="TOOLS WITH IDENTITY." android:textColor="@color/ig_gold"
      android:textStyle="bold" android:textSize="10sp"/>
    </LinearLayout>
