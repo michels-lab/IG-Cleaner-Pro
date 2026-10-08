@@ -1,5 +1,24 @@
 # Current Handoff — Instagram Cleaner Pro
 
+Updated: **2026-10-08**
+Trigger: **LIMÓN**
+
+## Current authoritative release state
+
+- Published stable GitHub Release: **v120.35**, non-prerelease; five assets (signed Android APK, Desktop ZIP, logo, Privacy, SHA256SUMS).
+- Publisher run: **37737077156 — SUCCESS** on commit `0e4b0c3d5b803436fd453c23e51dce1505871d8a`.
+- FINAL-9999 Android signing continuity verified; package `com.michelslab.igcleaner`, versionCode `12035`, versionName `120.35`.
+- Generic publisher: `.github/workflows/release.yml`.
+- Release authorization was consumed and closed in governance; next governed release target: **v120.36**, not yet authorized.
+- v120.35 implementation merged to `main` via PR #20 and responsive About finalization via PR #23.
+- Physical-phone acceptance remains open as [issue #24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24). GitHub release is published; this does not constitute Google Play publication or physical-device validation.
+- Development and publication state must be independently checked against the manifest, current main SHA, current CI and GitHub Releases.
+
+---
+
+## Historical handoff (2026-10-07; preserved for audit)
+
+
 Updated: **2026-10-07**
 Trigger: **LIMÓN**
 
