@@ -2064,6 +2064,10 @@ public final class MainActivity extends AppCompatActivity {
         }, true);
     }
 
+    // Keep the active native About window addressable for real-view geometry QA.
+    // Clear it on dismiss to avoid retaining a closed dialog.
+    androidx.appcompat.app.AlertDialog activeAboutDialog;
+
     private void showAbout() {
         View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
         // Brand logos stay side by side at every supported width; the large
@@ -2081,10 +2085,12 @@ public final class MainActivity extends AppCompatActivity {
         bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
         bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
         bindAboutLink(about, R.id.aboutEmail, "mailto:realmichelduarte@gmail.com");
-        androidx.appcompat.app.AlertDialog aboutDialog = new MaterialAlertDialogBuilder(this)
+        activeAboutDialog = new MaterialAlertDialogBuilder(this)
                 .setView(about)
                 .setPositiveButton("Close", null)
                 .show();
+        androidx.appcompat.app.AlertDialog aboutDialog = activeAboutDialog;
+        aboutDialog.setOnDismissListener(d -> activeAboutDialog = null);
         // Keep the action footer inside the same navy gradient as the
         // product/author content instead of Material's disconnected grey bar.
         if (aboutDialog.getWindow() != null) {
