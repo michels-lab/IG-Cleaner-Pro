@@ -24,3 +24,5 @@ For UI/About changes, treat identity/About regression as a real defect: verify r
 
 
 For release/version audits, compare `release/distribution-manifest.json`, GitHub Releases, app package/version identity and active workflows. Any automatic publication path outside the governed release flow is a release-blocking regression.
+
+Mandatory About acceptance check: load current master `standards/ABOUT_STANDARD.md`, `standards/PRODUCT_IDENTITY_STANDARD.md` and canonical developer profile before review. Check real rendered Desktop and Android UI: product-first identity; paired author portrait/name/role and Michel's Lab lockup/name with exact **`TOOLS WITH IDENTITY.`** slogan side by side where width allows, responsive stacking on narrow viewports; correct portrait/mark asset identity; each social link has recognizable icon, visible network name and canonical destination. Treat missing slogan/layout or text glyphs masquerading as network icons as defects. Source-token checks alone are insufficient; explicitly mark unperformed visual/device checks pending.
