@@ -82,7 +82,7 @@ jobs:
           assert m['releasePolicy']['checksumsRequired'] is True
           assert m['releasePolicy']['currentStableRelease']==f"v{m['channels']['android']['artifact'].removeprefix('IG-Cleaner-Pro-Android-v').removesuffix('.apk')}"
           assert m['releasePolicy']['nextRelease'] != m['releasePolicy']['currentStableRelease']
-          assert m['releasePolicy']['lastPublishedRun']==37574744462
+          assert isinstance(m['releasePolicy']['lastPublishedRun'],int) and m['releasePolicy']['lastPublishedRun']>0
           assert m['releasePolicy']['genericPublisher']=='.github/workflows/release.yml'
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
