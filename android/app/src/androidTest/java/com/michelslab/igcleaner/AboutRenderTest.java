@@ -61,6 +61,34 @@ public class AboutRenderTest {
     }
 
     @Test
+    public void realHomeRendersNavigationAndWorkspace() throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            onView(withId(R.id.toolbar)).check(matches(isCompletelyDisplayed()));
+            onView(withId(R.id.bottomNav)).check(matches(isCompletelyDisplayed()));
+            onView(withId(R.id.globalStatus)).check(matches(isDisplayed()));
+            onView(withId(R.id.content)).check((view, error) -> {
+                if (error != null) throw error;
+                assertTrue("Home workspace is not measured", view.getWidth() >= 190
+                        && view.getHeight() >= 200);
+            });
+
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            Bitmap frame = InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
+            assertNotNull("Cannot capture real Home screen", frame);
+            String viewport = InstrumentationRegistry.getArguments().getString("viewport", "unknown");
+            File dir = new File(InstrumentationRegistry.getInstrumentation()
+                    .getTargetContext().getExternalFilesDir(null), "igc-ui-capture");
+            assertTrue(dir.isDirectory() || dir.mkdirs());
+            File target = new File(dir, "home-" + viewport + "-initial.png");
+            try (FileOutputStream out = new FileOutputStream(target)) {
+                assertTrue("Could not save Home capture", frame.compress(Bitmap.CompressFormat.PNG, 100, out));
+            }
+            frame.recycle();
+            assertTrue("Home screenshot unexpectedly blank/empty", target.length() > 3000);
+        }
+    }
+
+    @Test
     public void realAboutHasVisibleAuthorStudioAndReachableSocials() throws Exception {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {
