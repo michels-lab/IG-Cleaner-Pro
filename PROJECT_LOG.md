@@ -1044,3 +1044,12 @@ Final runner probe:
 - Verified current master `michels-lab/Michel-Software-Standards` `standards/ABOUT_STANDARD.md`, `standards/PRODUCT_IDENTITY_STANDARD.md`, `AGENTS.md` and `brand/developer-profile.json` require exact `TOOLS WITH IDENTITY.` studio slogan and paired author/studio About composition (side by side where width permits; responsive stack on narrow screens).
 - Updated local `AGENTS.md` plus app-maintainer, QA-regression and release-manager agent contracts to require fresh master reads before About work and rendered Desktop/Android verification.
 - This change is **instructions only**: it does not alter UI assets, About implementation, app versions or published releases. Visible About layout/social icons/Android device acceptance remain unverified and open.
+
+## 2026-10-07 — v120.35 CI and Desktop About closure work
+
+- Verified public `michels-lab/IG-Cleaner-Pro` and restored real development-branch GitHub Actions execution after pre-run runner failures.
+- Corrected stale v120.34 branding contract and privacy sign-out wording assertion; current Desktop and Android CI jobs subsequently executed successfully on run 37714614593, while Supabase failed during startup.
+- Root cause of Supabase startup failure: the `20261007_optimize_rls_policies.sql` migration referenced public sync tables before a clean local stack created them. Added `supabase/migrations/20261006_initialize_sync_schema.sql` to initialize tables first; same-head successful Supabase CI remains pending.
+- Updated Desktop About to display canonical `TOOLS WITH IDENTITY.` studio slogan, recognizable inline SVG icons for all five social controls, and master canonical URLs. Official portrait and Michel's Lab logo file bytes were not changed.
+- Added Desktop About branding contract checks for official slogan, canonical social links/icons and hierarchy.
+- Native Android `showAbout()` is still a plain message dialog. Full master-compliant native About, on-device visual acceptance, real ZIP import/Focus QA and authenticated Desktop↔Android round trip remain open. No release authorized or published.
