@@ -1063,3 +1063,13 @@ Final runner probe:
 **Preserved intentionally:** Michel Duarte personal developer/social identity remains under `realmichelduarte`. No release is authorized by this migration change.
 
 **Validation:** branch CI is required before merge.
+
+
+## 2026-10-07 — Native Android About implemented and PR #20 merged
+
+- Replaced Android's text-only About dialog with a native product-first panel, byte-identical canonical portrait and Michel's Lab studio lockup, visible `TOOLS WITH IDENTITY.` slogan, and Instagram/Facebook/LinkedIn/GitHub/Email icon-plus-name links.
+- The new Android native panel stacks its paired author/studio columns on narrow screens, and reads the installed application version rather than hardcoding the release name.
+- Desktop About now uses the canonical slogan and recognizable SVG social icons with standard canonical URLs.
+- Release workflow retains separate explicit publication authorization; no v120.35 GitHub Release was published by this work.
+- PR #20 merged after exact-head Desktop, Android and Supabase CI passed (run 37716560654); main merge commit `fd45720e09d6fe7cb399f0eafe0928d97d40f592`.
+- Actual phone UX, live authenticated Desktop↔Android round trip, real ZIP imports, cloud export/download and cloud delete must still be validated on target devices; do not claim those device checks complete.
