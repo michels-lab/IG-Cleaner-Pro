@@ -57,6 +57,8 @@ jobs:
         run: node tests/desktop-contract.test.cjs
       - name: Validate sanitized Instagram import fixture
         run: python tests/fixture-contract.py
+      - name: Validate first-class standalone Desktop HTML release contract
+        run: python tests/standalone-desktop-contract.py
       - name: Validate official product branding
         run: python tests/branding-contract.py
       - name: Validate coherent premium visual source contract
@@ -97,6 +99,11 @@ jobs:
           ]
           assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['currentStableRelease']}.apk"
           assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
+          assert m['channels']['desktop']['primaryArtifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.html'
+          assert m['channels']['desktop']['primaryArtifact']==f"IG-Cleaner-Pro-Desktop-${m['releasePolicy']['currentStableRelease']}.html"
+          assert m['channels']['desktop']['primaryFormat']=='html'
+          assert m['channels']['desktop']['standaloneOffline'] is True
+          assert m['channels']['desktop']['zipSecondary'] is True
           assert m['channels']['android']['artifactTemplate']=='IG-Cleaner-Pro-Android-v{version}.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
