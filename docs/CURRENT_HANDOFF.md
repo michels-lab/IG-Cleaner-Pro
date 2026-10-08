@@ -5,6 +5,11 @@
 - **Published normal GitHub release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.36 (2026-10-08T19:00:43Z).
 - **Signed Android:** `IG-Cleaner-Pro-Android-v120.36.apk`; **Desktop:** `IG-Cleaner-Pro-Desktop-v120.36.zip`; original chosen app logo, release artwork and SHA256SUMS included.
 - **Published commit:** `335cc84a3c5a823314f5283d3543a9fdf58174d3`; publish run: https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37827876157 — SUCCESS. Real Android Home+About and Desktop Chromium Home+About screenshot quality gates PASS, Android signing certificate identity PASS and release asset checks PASS. Premium native + Desktop navy/cyan/gold design and About improvements integrated.
+
+- **Post-release support / exact download:** GitHub v120.36 now includes the primary standalone `IG-Cleaner-Pro-Desktop-v120.36.html` in addition to ZIP; this was backfilled without rebuilding or re-signing the Android APK. The public README and live issue queue have been reconciled with this shipped state.
+- **P1 historical QA and logo items:** #28 and #30 are now satisfied by merged v120.36 exact-original-logo assets and enforced Android/Chromium Home+About screenshot gates. Close with implementation evidence rather than treating stale original checkboxes as incomplete. The historical instruction for protected human review has been superseded by the user's explicit post-release review policy.
+- **Outstanding non-automated acceptance:** issue #24 is re-targeted to v120.36; install/update on actual Samsung, genuine Instagram ZIP and Focus behavior, and real Supabase account Desktop↔Android sync remain outstanding. Do not mistake this for a pre-publication gate; GitHub release already exists. No v120.37 authorization.
+
 - **Next version:** v120.37 is NOT authorized. User review of the actual release on their Samsung and actual Instagram ZIP/Focus/cloud cross-device roundtrip are still outstanding, not represented as PASS.
 - Historical handoff notes below may describe v120.35 or pre-release stages; the shipped-state facts in this heading take precedence.
 
