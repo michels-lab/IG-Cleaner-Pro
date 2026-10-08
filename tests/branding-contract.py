@@ -51,7 +51,8 @@ for layout in (toolbar, workspace, about_android, splash):
 assert '@drawable/ig_brand_splash' in theme
 assert 'android:text="Instagram Cleaner Pro"' in toolbar
 assert 'android:id="@+id/workspaceLoadingBrand"' in workspace
-assert 'R.id.actionAbout' in main
+assert 'R.id.headerAboutButton' in main and 'R.id.headerSyncButton' in main
+assert 'android:text="About"' in toolbar
 assert '<string name="app_name">IG Cleaner Pro</string>' in strings
 
 html = read("desktop/ig_cleaner_pro_v120_27_synced_companion.html")
