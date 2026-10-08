@@ -1,5 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/actionSync" android:icon="@drawable/ic_sync" android:title="Sync now" android:showAsAction="always"/>
-    <item android:id="@+id/actionTools" android:title="Advanced tools" android:showAsAction="never"/>
-    <item android:id="@+id/actionAbout" android:icon="@drawable/ic_info" android:title="About" android:showAsAction="never"/>
+    <item android:id="@+id/actionSync" android:icon="@drawable/ic_sync"
+        android:title="Sync now" android:showAsAction="ifRoom"/>
+    <item android:id="@+id/actionAbout" android:title="About"
+        android:showAsAction="always|withText"/>
 </menu>
