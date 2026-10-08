@@ -81,4 +81,19 @@ assert 'Instagram Cleaner Pro · UI v120.35' in html
 assert 'UI v120.26' not in html
 assert 'UI v120.27' not in html
 
+# The master studio slogan and social identities are mandatory in the rendered About markup.
+assert 'class="aboutBrandTag">TOOLS WITH IDENTITY.' in html
+assert 'Ideas · Apps · Un mejor mañana' not in html
+for social in ('ig','fb','in','gh','mail'):
+    assert f'class="aboutIcon {social}"><svg' in html, f"Missing recognizable social SVG for {social}"
+for link in (
+    'https://www.instagram.com/realmichelduarte/',
+    'https://www.facebook.com/realmichelduarte',
+    'https://www.linkedin.com/in/realmichelduart/',
+    'https://github.com/realmichelduarte',
+):
+    assert f'href="{link}"' in html, f"Noncanonical About social link: {link}"
+assert html.index('class="aboutOfficialLockup"') < html.index('class="aboutDeveloperCard"')
+assert html.index('class="aboutDeveloperCard"') < html.index('class="aboutSocials"')
+
 print("Official IG Cleaner Pro branding contract passed.")
