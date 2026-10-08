@@ -507,7 +507,7 @@ The current local-only architecture is an intentional privacy property: Instagra
 
 Added the repository-level Michel's Lab governance declaration:
 
-- `.michelslab/project.yml` identifies `realmichelduarte/Michel-Software-Standards` as the shared standards authority.
+- `.michelslab/project.yml` identifies `michels-lab/Michel-Software-Standards` as the shared standards authority.
 - `MICHELS_LAB_PROJECT.md` documents the human-readable reporting contract.
 - App-specific implementation evidence remains in this repository.
 - Reusable/cross-app decisions are promoted to the master standards repository.
@@ -744,7 +744,7 @@ No release publication was authorized or performed.
 
 ## 2026-10-06 — Official IG Cleaner Pro product identity adoption
 
-Implemented the Michel's Lab canonical **Option 3 — stacked layers + sparkle** identity from `realmichelduarte/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro`.
+Implemented the Michel's Lab canonical **Option 3 — stacked layers + sparkle** identity from `michels-lab/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro`.
 
 Adopted surfaces:
 - vendored canonical app-icon, mark and lockup SVGs under `branding/ig-cleaner-pro/`;
@@ -1053,3 +1053,13 @@ Final runner probe:
 - Updated Desktop About to display canonical `TOOLS WITH IDENTITY.` studio slogan, recognizable inline SVG icons for all five social controls, and master canonical URLs. Official portrait and Michel's Lab logo file bytes were not changed.
 - Added Desktop About branding contract checks for official slogan, canonical social links/icons and hierarchy.
 - Native Android `showAbout()` is still a plain message dialog. Full master-compliant native About, on-device visual acceptance, real ZIP import/Focus QA and authenticated Desktop↔Android round trip remain open. No release authorized or published.
+
+## 2026-10-07 — Repository transferred to Michel's Lab organization
+
+**Change:** repository ownership moved from `michels-lab/IG-Cleaner-Pro` to `michels-lab/IG-Cleaner-Pro`.
+
+**Active references updated:** `.michelslab` governance, agent/Copilot authority and the distribution manifest now use the organization-owned repository and `michels-lab/Michel-Software-Standards`.
+
+**Preserved intentionally:** Michel Duarte personal developer/social identity remains under `realmichelduarte`. No release is authorized by this migration change.
+
+**Validation:** branch CI is required before merge.

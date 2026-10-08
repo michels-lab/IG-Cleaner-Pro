@@ -1,15 +1,15 @@
 version: 1
 studio: "Michel's Lab"
 project: "IG Cleaner Pro"
-repository: "realmichelduarte/IG-Cleaner-Pro"
+repository: "michels-lab/IG-Cleaner-Pro"
 role: "application"
 
 governance:
-  standards_repository: "realmichelduarte/Michel-Software-Standards"
+  standards_repository: "michels-lab/Michel-Software-Standards"
   reporting_mode: "polled_by_master"
   source_of_truth:
-    shared_rules: "realmichelduarte/Michel-Software-Standards"
-    project_implementation: "realmichelduarte/IG-Cleaner-Pro"
+    shared_rules: "michels-lab/Michel-Software-Standards"
+    project_implementation: "michels-lab/IG-Cleaner-Pro"
 
 reporting:
   project_logs:

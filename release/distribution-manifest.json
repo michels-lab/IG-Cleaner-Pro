@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-distribution-v1",
   "product": "IG Cleaner Pro",
-  "repository": "realmichelduarte/IG-Cleaner-Pro",
+  "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
       "artifact": "IG-Cleaner-Pro-Desktop-v120.34.zip",
