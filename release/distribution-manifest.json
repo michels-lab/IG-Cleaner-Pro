@@ -14,7 +14,7 @@
       "transport": "github-release",
       "statePolicy": "preserve-origin-and-import-backup-before-destructive-migration",
       "artifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.zip",
-      "productIconSha256": "(verified by tests/branding-contract.py)"
+      "productIconSha256": "341c65177dc044d08e5c295a01df38846a3ad168f074135b8adca03715b28fea"
     },
     "android": {
       "artifact": "IG-Cleaner-Pro-Android-v120.35.apk",
