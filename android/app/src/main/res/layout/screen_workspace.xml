@@ -22,7 +22,7 @@
             android:layout_width="112dp"
             android:layout_height="112dp"
             android:contentDescription="@string/brand_logo_description"
-            android:src="@drawable/ig_official_mark"/>
+            android:src="@drawable/ig_official_app_icon"/>
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/workspaceLoading"
