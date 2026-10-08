@@ -92,7 +92,16 @@ public final class MainActivity extends AppCompatActivity {
     private WebView workspaceWebView;
     private ProgressBar workspaceLoading;
     private ValueCallback<Uri[]> filePathCallback;
-    private static final int FILE_CHOOSER_REQUEST = 12034;
+    private static final int FILE_CHOOSER_REQUEST = 12035;
+    private static final String[] SYNC_TABLES = new String[]{
+            "devices",
+            "audit_events",
+            "focus_batches",
+            "focus_batch_items",
+            "profile_state",
+            "list_snapshots",
+            "workspace_state"
+    };
 
     private View mobileWorkspaceView;
     private RecyclerView workspaceProfileList;
@@ -609,7 +618,7 @@ public final class MainActivity extends AppCompatActivity {
             }
             workspaceSectionTitle.setText(syncedReviewStateAvailable ? "Continue review" : "Restore review history");
             workspaceSectionSubtitle.setText(!syncedReviewStateAvailable
-                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.34 once to restore the real pending count."
+                    ? "Your relationship lists are synced, but Desktop has not published its review history yet. Sync Desktop v120.35 once to restore the real pending count."
                     : (unresolvedReview == 0
                         ? "Your main cleanup queue is clear."
                         : unresolvedReview + " profiles still need a decision. Tap one to open Instagram."));
@@ -778,6 +787,8 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton sync = view.findViewById(R.id.syncNow);
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
+        MaterialButton exportCloudData = view.findViewById(R.id.exportCloudData);
+        MaterialButton deleteCloudData = view.findViewById(R.id.deleteCloudData);
         MaterialButton logout = view.findViewById(R.id.logout);
         TextView accountEmail = view.findViewById(R.id.accountEmail);
         TextView label = view.findViewById(R.id.deviceLabel);
@@ -871,6 +882,9 @@ public final class MainActivity extends AppCompatActivity {
                     .show();
         });
 
+        exportCloudData.setOnClickListener(v -> exportSyncedCloudData());
+        deleteCloudData.setOnClickListener(v -> confirmDeleteSyncedCloudData());
+
         logout.setOnClickListener(v -> {
             clearWorkspaceCache();
             api.logout();
@@ -903,7 +917,7 @@ public final class MainActivity extends AppCompatActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.34");
+        settings.setUserAgentString(settings.getUserAgentString() + " IGCleanerAndroid/120.35");
 
         workspaceWebView.setBackgroundColor(getColor(R.color.ig_bg));
         workspaceWebView.addJavascriptInterface(new WorkspaceBridge(), "AndroidBridge");
@@ -1026,42 +1040,158 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String saveBytesToDownloads(String fileName, String mimeType, byte[] bytes) throws Exception {
+        String safeName = (fileName == null || fileName.isBlank())
+                ? "ig_cleaner_export_" + System.currentTimeMillis()
+                : fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, safeName);
+            values.put(MediaStore.Downloads.MIME_TYPE,
+                    mimeType == null || mimeType.isBlank() ? "application/octet-stream" : mimeType);
+            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/IG Cleaner");
+            Uri outUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (outUri == null) throw new IllegalStateException("No se pudo crear la descarga.");
+            try (OutputStream stream = getContentResolver().openOutputStream(outUri)) {
+                if (stream == null) throw new IllegalStateException("No se pudo abrir la descarga.");
+                stream.write(bytes);
+            }
+            return "Descargas/IG Cleaner/" + safeName;
+        }
+
+        File dir = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "IG Cleaner");
+        if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("No se pudo crear la carpeta.");
+        File out = new File(dir, safeName);
+        try (FileOutputStream stream = new FileOutputStream(out)) {
+            stream.write(bytes);
+        }
+        return out.getAbsolutePath();
+    }
+
     private void saveWorkspaceExport(String fileName, String mimeType, String dataUrl) {
         runAsync(() -> {
             int comma = dataUrl.indexOf(',');
             String payload = comma >= 0 ? dataUrl.substring(comma + 1) : dataUrl;
             byte[] bytes = android.util.Base64.decode(payload, android.util.Base64.DEFAULT);
-            String safeName = (fileName == null || fileName.isBlank())
-                    ? "ig_cleaner_export_" + System.currentTimeMillis() + ".html"
-                    : fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+            String savedLabel = saveBytesToDownloads(
+                    fileName == null || fileName.isBlank()
+                            ? "ig_cleaner_export_" + System.currentTimeMillis() + ".html"
+                            : fileName,
+                    mimeType == null || mimeType.isBlank() ? "text/html" : mimeType,
+                    bytes);
 
-            String savedLabel;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Downloads.DISPLAY_NAME, safeName);
-                values.put(MediaStore.Downloads.MIME_TYPE,
-                        mimeType == null || mimeType.isBlank() ? "text/html" : mimeType);
-                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/IG Cleaner");
-                Uri outUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                if (outUri == null) throw new IllegalStateException("No se pudo crear la descarga.");
-                try (OutputStream stream = getContentResolver().openOutputStream(outUri)) {
-                    if (stream == null) throw new IllegalStateException("No se pudo abrir la descarga.");
-                    stream.write(bytes);
-                }
-                savedLabel = "Descargas/IG Cleaner/" + safeName;
-            } else {
-                File dir = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "IG Cleaner");
-                if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("No se pudo crear la carpeta.");
-                File out = new File(dir, safeName);
-                try (FileOutputStream stream = new FileOutputStream(out)) {
-                    stream.write(bytes);
-                }
-                savedLabel = out.getAbsolutePath();
+            mainHandler.post(() -> Snackbar.make(content,
+                    "Exportado: " + savedLabel, Snackbar.LENGTH_LONG).show());
+        }, true);
+    }
+
+    private JSONArray fetchAllCloudRows(String table) throws Exception {
+        JSONArray all = new JSONArray();
+        int offset = 0;
+        while (true) {
+            JSONArray page = api.get(table + "?select=*&limit=1000&offset=" + offset);
+            for (int i = 0; i < page.length(); i++) all.put(page.get(i));
+            if (page.length() < 1000) break;
+            offset += page.length();
+        }
+        return all;
+    }
+
+    private void exportSyncedCloudData() {
+        if (!api.hasSession()) {
+            Snackbar.make(content, "Sign in first.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+        setGlobalStatus("EXPORTING • synchronized cloud data");
+        runAsync(() -> {
+            JSONObject root = new JSONObject()
+                    .put("schema", "ig-cleaner-cloud-export-v1")
+                    .put("exportedAt", Instant.now().toString())
+                    .put("account", api.getEmail())
+                    .put("device", new JSONObject()
+                            .put("id", deviceId)
+                            .put("type", "android")
+                            .put("label", deviceLabel()))
+                    .put("note", "Contains only synchronized IG Cleaner Pro data. It does not contain the original Instagram export.");
+
+            JSONObject tables = new JSONObject();
+            JSONObject counts = new JSONObject();
+            int total = 0;
+            for (String table : SYNC_TABLES) {
+                JSONArray rows = fetchAllCloudRows(table);
+                tables.put(table, rows);
+                counts.put(table, rows.length());
+                total += rows.length();
+            }
+            root.put("counts", counts);
+            root.put("tables", tables);
+
+            String fileName = "IG-Cleaner-Pro-cloud-export-" + System.currentTimeMillis() + ".json";
+            String savedLabel = saveBytesToDownloads(
+                    fileName,
+                    "application/json",
+                    root.toString(2).getBytes(StandardCharsets.UTF_8));
+            int finalTotal = total;
+            mainHandler.post(() -> {
+                setGlobalStatus("EXPORTED • " + finalTotal + " synchronized rows");
+                Snackbar.make(content, "Cloud export: " + savedLabel, Snackbar.LENGTH_LONG).show();
+            });
+        }, true);
+    }
+
+    private void confirmDeleteSyncedCloudData() {
+        if (!api.hasSession()) {
+            Snackbar.make(content, "Sign in first.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Delete synchronized cloud data?")
+                .setMessage("This deletes the cloud copy for this IG Cleaner account. Your original Instagram export and independent local backups are not deleted.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Continue", (firstDialog, firstWhich) ->
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle("Final confirmation")
+                                .setMessage("Delete all synchronized lists, review state, Focus batches, audit events and device rows? The app will sign out afterward so auto-sync cannot immediately upload them again.")
+                                .setNegativeButton("Cancel", null)
+                                .setPositiveButton("Delete cloud", (secondDialog, secondWhich) ->
+                                        deleteSyncedCloudData())
+                                .show())
+                .show();
+    }
+
+    private void deleteSyncedCloudData() {
+        setGlobalStatus("DELETING • synchronized cloud data");
+        runAsync(() -> {
+            String[] deleteOrder = new String[]{
+                    "focus_batch_items",
+                    "focus_batches",
+                    "profile_state",
+                    "audit_events",
+                    "list_snapshots",
+                    "workspace_state",
+                    "devices"
+            };
+            for (String table : deleteOrder) {
+                api.delete(table + "?user_id=not.is.null");
             }
 
-            String finalSavedLabel = savedLabel;
-            mainHandler.post(() -> Snackbar.make(content,
-                    "Exportado: " + finalSavedLabel, Snackbar.LENGTH_LONG).show());
+            clearWorkspaceCache();
+            syncedFollowing = new JSONArray();
+            syncedFollowers = new JSONArray();
+            syncedPending = new JSONArray();
+            syncedWorkspaceState = new JSONObject();
+            syncedReviewStateAvailable = false;
+            api.logout();
+
+            mainHandler.post(() -> {
+                setGlobalStatus("CLOUD DATA DELETED • signed out");
+                showNativeAccountScreen();
+                Snackbar.make(content,
+                        "Synchronized cloud data deleted. Local independent backups were not removed.",
+                        Snackbar.LENGTH_LONG).show();
+            });
         }, true);
     }
 
@@ -1322,7 +1452,7 @@ public final class MainActivity extends AppCompatActivity {
                     .put("status", "prepared")
                     .put("created_device", "android")
                     .put("created_at", now)
-                    .put("source_signature", "android-v120.34:" + module + ":" + requestedSize)
+                    .put("source_signature", "android-v120.35:" + module + ":" + requestedSize)
                     .put("updated_at", now);
             api.upsert("focus_batches", "user_id,id", new JSONArray().put(batch));
 
@@ -1939,11 +2069,27 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void showAbout() {
+        View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
+        bindAboutLink(about, R.id.aboutInstagram, "https://www.instagram.com/realmichelduarte/");
+        bindAboutLink(about, R.id.aboutFacebook, "https://www.facebook.com/realmichelduarte");
+        bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
+        bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
+        bindAboutLink(about, R.id.aboutEmail, "mailto:realmichelduarte@gmail.com");
         new MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.about_title))
-                .setMessage(getString(R.string.about_body))
-                .setPositiveButton("Cerrar", null)
+                .setView(about)
+                .setPositiveButton("Close", null)
                 .show();
+    }
+
+    private void bindAboutLink(View about, int buttonId, String url) {
+        View button = about.findViewById(buttonId);
+        button.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (ActivityNotFoundException error) {
+                Toast.makeText(this, "No app available to open link", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void touchDevice() throws Exception {

@@ -159,6 +159,12 @@ public final class SyncApi {
         raw("PATCH", "/rest/v1/" + tableQuery, body.toString(), true, headers);
     }
 
+    public void delete(String tableQuery) throws Exception {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Prefer", "return=minimal");
+        raw("DELETE", "/rest/v1/" + tableQuery, null, true, headers);
+    }
+
     private void load() {
         email = prefs.getString("email", "");
         accessToken = prefs.getString("access", "");

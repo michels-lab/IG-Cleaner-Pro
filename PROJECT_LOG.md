@@ -1,6 +1,6 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
-_Last updated: 2026-09-30_
+_Last updated: 2026-10-07_
 
 This file is the **functional contract** for IG Cleaner Pro. UI redesigns, refactors, performance work, and future releases must preserve the capabilities listed here unless Michel Armando Duarte Flores explicitly requests their removal.
 
@@ -507,7 +507,7 @@ The current local-only architecture is an intentional privacy property: Instagra
 
 Added the repository-level Michel's Lab governance declaration:
 
-- `.michelslab/project.yml` identifies `realmichelduarte/Michel-Software-Standards` as the shared standards authority.
+- `.michelslab/project.yml` identifies `michels-lab/Michel-Software-Standards` as the shared standards authority.
 - `MICHELS_LAB_PROJECT.md` documents the human-readable reporting contract.
 - App-specific implementation evidence remains in this repository.
 - Reusable/cross-app decisions are promoted to the master standards repository.
@@ -744,7 +744,7 @@ No release publication was authorized or performed.
 
 ## 2026-10-06 — Official IG Cleaner Pro product identity adoption
 
-Implemented the Michel's Lab canonical **Option 3 — stacked layers + sparkle** identity from `realmichelduarte/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro`.
+Implemented the Michel's Lab canonical **Option 3 — stacked layers + sparkle** identity from `michels-lab/Michel-Software-Standards/shared-assets/product-logos/ig-cleaner-pro`.
 
 Adopted surfaces:
 - vendored canonical app-icon, mark and lockup SVGs under `branding/ig-cleaner-pro/`;
@@ -926,9 +926,137 @@ Governance:
 - physical-device validation remains separate from repository/CI evidence.
 
 
+## 2026-10-07 — v120.35 infrastructure, RLS and synchronized-data privacy
+
+Stable baseline:
+- v120.34 remains the current published stable release.
+- v120.35 is development only until explicit release authorization is given.
+- FINAL-9999 Android signing identity is unchanged.
+
+Generic release publisher:
+- Added `.github/workflows/release.yml` as the canonical governed publisher for v120.35+.
+- Version/tag come from `.michelslab/release-request.json`.
+- Dynamic Desktop/Android artifact names come from manifest templates.
+- The publisher validates explicit authorization, next-release target, Desktop/Android version parity, regression contracts, production signer fingerprint, stable package identity and normal/non-prerelease channel.
+- Historical `.github/workflows/release-v12034.yml` remains manual/closed.
+
+Supabase RLS:
+- Added `supabase/tests/rls_isolation.sql` with 35 pgTAP assertions across all seven sync tables.
+- Added `tests/rls-contract.py` and a dedicated CI job that starts local Supabase, applies `supabase/schema.sql`, runs the cross-user RLS suite and stops the stack.
+- The live Supabase project was also checked transactionally with two temporary JWT subjects; user 2 saw only its own temporary device row. Transaction rolled back.
+- Live policy inventory confirms CRUD policies are constrained by `auth.uid() = user_id`.
+- Supabase security advisor returned no RLS exposure finding. A separate Auth warning remains for leaked-password protection being disabled.
+
+Cloud data export/delete:
+- Desktop Privacy now exposes **Exportar datos de nube** and **Borrar datos de nube**.
+- Android Account now exposes **Export synchronized cloud data** and **Delete synchronized cloud data**.
+- Export reads every RLS-visible row from devices, audit_events, focus_batches, focus_batch_items, profile_state, list_snapshots and workspace_state, with pagination, into `ig-cleaner-cloud-export-v1` JSON.
+- Delete removes synchronized rows in FK-safe order under the authenticated user's RLS session.
+- Cloud deletion does not delete the original Instagram ZIP/JSON/HTML export or independent Vault/file backups.
+- Both clients sign out after cloud deletion so automatic sync cannot immediately re-upload remaining local state.
+
+Version identity:
+- Desktop visible UI: v120.35.
+- Android versionCode/versionName: 12035 / 120.35.
+- Android package stays `com.michelslab.igcleaner`; debug stays isolated with `.beta`.
+- Desktop legacy filename/localStorage identifiers are preserved because they are compatibility identifiers, not visible release identity.
+
+Validation status:
+- Implementation complete on branch `development/v120.35-infra-privacy`.
+- Full current-head PR CI is required before merge.
+- Physical-device validation of Android privacy/download flows remains separate evidence.
+
+
+### RLS performance hardening
+- Applied Supabase migration `optimize_rls_policies_v12035` to all seven synchronized tables.
+- Policies are now explicitly `TO authenticated` and compare ownership using `(select auth.uid()) = user_id`.
+- Data semantics did not change; no application rows were deleted or rewritten.
+- Supabase Performance Advisor: **28 Auth RLS Initialization Plan warnings → 0**.
+- Live transactional smoke after migration: authenticated user 1 saw exactly 1 own temporary row and 0 foreign temporary rows; transaction rolled back.
+- Remaining advisor items are unrelated to row isolation: leaked-password protection is disabled in Auth, and one unused-index notice is informational.
+
+
+### v120.35 current-head validation state
+- PR #20 head validation was requested repeatedly on GitHub Actions.
+- GitHub Actions did **not** execute any workflow steps on the current head: Desktop, Android and Supabase jobs terminated before runner steps/logs existed. Re-running failed jobs produced the same zero-step result. This is an external runner/Actions blocker, not a passing or failing application test result.
+- CI trigger policy was hardened to avoid duplicate `push` + `pull_request` runs on development branches and now uses concurrency cancellation for superseded PR runs.
+- Current-head Desktop static validation via repository content: 16 inline scripts parsed successfully, 0 duplicate static DOM IDs, required v120.35/privacy/sync tokens present.
+- Current-head Android structural validation: `MainActivity.java`, `SyncApi.java`, Gradle Kotlin and modified XML resources have balanced lexical/tag structure; this is **not** a substitute for `assembleDebug`.
+- Live Supabase post-migration cross-user check: user 2 affected 0 user-1 rows across all seven synchronized tables for UPDATE attempts; temporary rows were transactionally rolled back.
+- Supabase Performance Advisor after migration: 0 Auth RLS Initialization Plan warnings; one informational unused-index notice remains.
+- Merge remains blocked until same-SHA executable CI/build evidence is available.
+
+
+## 2026-10-07 — v120.35 direct validation while GitHub runners are unavailable
+
+GitHub Actions:
+- PR #20 head CI run `37696174790` failed before any runner step executed.
+- retry attempt 2 reproduced the same pre-run failure for Desktop, Android and Supabase jobs;
+- job payloads contain no steps and job log blobs do not exist;
+- therefore this is treated as a runner/platform/account execution blocker, not as a failed product assertion;
+- PR #20 remains Draft and must not merge until executable same-SHA CI passes.
+
+Direct exact-branch validation:
+- all 16 inline Desktop scripts parse successfully;
+- 0 duplicate static DOM IDs;
+- v120.35 identity, privacy, generic publisher and RLS contract sweep passes;
+- targeted corrected sweep: 11/11 PASS;
+- Android Java/Gradle delimiter structure passes;
+- modified Android XML structure passes.
+
+Live Supabase RLS behavioral evidence:
+- rollback-only transaction seeded user 1 and user 2 data across all seven synchronized tables;
+- authenticated user 2 saw exactly one own seeded row in every table;
+- UPDATE attempts against user 1 affected 0 rows in all seven tables;
+- DELETE attempts against user 1 affected 0 rows in all seven tables;
+- authenticated own-row INSERT succeeded;
+- transaction rolled back, leaving no test rows behind.
+
+Advisor state after the optimized RLS migration:
+- Security Advisor: no RLS exposure finding; one unrelated warning remains for leaked-password protection disabled;
+- Performance Advisor: 0 Auth RLS Initialization Plan warnings; only the informational unused `audit_events_user_device_idx` notice remains.
+
+
+## 2026-10-07 — v120.35 release-contract fix and CI minute protection
+
+Release-contract regression found and fixed:
+- the generic publisher itself was version-agnostic, but `tests/release-publisher-contract.py` and the CI manifest check still required the old closed v120.34 request state;
+- an explicit v120.35 authorization would therefore have caused validation to fail at release time;
+- contracts are now state-aware: they accept either the closed current-stable request or an explicitly authorized request that exactly matches `releasePolicy.nextRelease`;
+- Android signing contract now derives the expected candidate version/code from `releasePolicy.nextRelease`;
+- privacy contract derives the current stable Desktop artifact from the distribution manifest instead of hardcoding v120.34;
+- simulated closed v120.34 request + authorized v120.35 request validation: PASS.
+
+CI usage hardening:
+- heavy Desktop / Android / Supabase jobs are skipped while a PR is Draft;
+- `ready_for_review` explicitly triggers the full CI gate;
+- this prevents long-lived Draft PR edits from repeatedly consuming GitHub-hosted runner minutes.
+
+Final runner probe:
+- PR #20 was marked Ready for review on head `e5a49aa55053599636a7c55d91df7b39df7207b9`;
+- run `37702842845` created Desktop, Android and Supabase jobs;
+- all three terminated before any step started and expose `steps: []`;
+- PR #20 was returned to Draft;
+- merge remains blocked pending a real same-SHA runner execution.
+
+## 2026-10-07 — Master-first About governance synchronization
+
+- Verified current master `michels-lab/Michel-Software-Standards` `standards/ABOUT_STANDARD.md`, `standards/PRODUCT_IDENTITY_STANDARD.md`, `AGENTS.md` and `brand/developer-profile.json` require exact `TOOLS WITH IDENTITY.` studio slogan and paired author/studio About composition (side by side where width permits; responsive stack on narrow screens).
+- Updated local `AGENTS.md` plus app-maintainer, QA-regression and release-manager agent contracts to require fresh master reads before About work and rendered Desktop/Android verification.
+- This change is **instructions only**: it does not alter UI assets, About implementation, app versions or published releases. Visible About layout/social icons/Android device acceptance remain unverified and open.
+
+## 2026-10-07 — v120.35 CI and Desktop About closure work
+
+- Verified public `michels-lab/IG-Cleaner-Pro` and restored real development-branch GitHub Actions execution after pre-run runner failures.
+- Corrected stale v120.34 branding contract and privacy sign-out wording assertion; current Desktop and Android CI jobs subsequently executed successfully on run 37714614593, while Supabase failed during startup.
+- Root cause of Supabase startup failure: the `20261007_optimize_rls_policies.sql` migration referenced public sync tables before a clean local stack created them. Added `supabase/migrations/20261006_initialize_sync_schema.sql` to initialize tables first; same-head successful Supabase CI remains pending.
+- Updated Desktop About to display canonical `TOOLS WITH IDENTITY.` studio slogan, recognizable inline SVG icons for all five social controls, and master canonical URLs. Official portrait and Michel's Lab logo file bytes were not changed.
+- Added Desktop About branding contract checks for official slogan, canonical social links/icons and hierarchy.
+- Native Android `showAbout()` is still a plain message dialog. Full master-compliant native About, on-device visual acceptance, real ZIP import/Focus QA and authenticated Desktop↔Android round trip remain open. No release authorized or published.
+
 ## 2026-10-07 — Repository transferred to Michel's Lab organization
 
-**Change:** repository ownership moved from `realmichelduarte/IG-Cleaner-Pro` to `michels-lab/IG-Cleaner-Pro`.
+**Change:** repository ownership moved from `michels-lab/IG-Cleaner-Pro` to `michels-lab/IG-Cleaner-Pro`.
 
 **Active references updated:** `.michelslab` governance, agent/Copilot authority and the distribution manifest now use the organization-owned repository and `michels-lab/Michel-Software-Standards`.
 

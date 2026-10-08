@@ -1,0 +1,7 @@
+- Added a generic governed GitHub release publisher for v120.35+; future versions no longer need a new version-specific workflow.
+- Added automated Supabase pgTAP Row Level Security isolation coverage across all seven synchronized tables.
+- Added Desktop controls to export all synchronized cloud data to JSON and delete the authenticated user's synchronized cloud rows.
+- Added matching native Android synchronized-data export/delete controls in Account.
+- Cloud deletion signs out afterward to prevent automatic sync from immediately repopulating the cloud from local state.
+- Preserved the local-first boundary: the original Instagram ZIP/JSON/HTML export and independent Vault/file backups are not deleted by cloud cleanup.
+- Advanced Desktop and Android development identity to v120.35 while preserving the FINAL-9999 Android production signing identity.

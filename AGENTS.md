@@ -65,7 +65,9 @@ Do not bump versions or publish releases unless explicitly assigned.
 - A normal/stable release must publish with GitHub `prerelease=false`; never silently substitute a prerelease.
 - Do not publish an Android stable artifact whose installed package/version identity still says beta or whose signing continuity is not established.
 - Once persistent Android signing is configured, every normal IG Cleaner Pro GitHub release must include the latest validated signed Android APK unless the user explicitly requests a desktop-only release.
-- Current prepared target: **v120.34**. It is not published until the user explicitly authorizes publication.
+- Current stable release: **v120.34**. Current next publication target from the manifest: **v120.35**.
+- Use `.github/workflows/release.yml` as the generic governed publisher for v120.35+; do not create a new version-specific publisher unless a concrete compatibility exception requires it.
+- A merge/version bump is never release authorization. v120.35 is not published until the user explicitly authorizes publication.
 
 ## Intelligent brand adoption
 
@@ -206,3 +208,7 @@ After a merge, release, tag or provider mutation, re-read authoritative state be
 - Publish SHA-256 for direct Windows binaries. Authenticode/code signing, when available, must happen before final checksum publication. Without a publisher certificate, do not hide or misrepresent Windows Unknown publisher/SmartScreen behavior.
 - FoamLens and Michel's Life are the current Windows release references; Michel's Life also demonstrates optional Authenticode and a separate Microsoft Store MSIX path.
 <!-- MICHELSLAB_SHARED_CONTRACT_END id=child-agent-core -->
+
+## Mandatory About implementation gate — master first
+
+Before any About/branding implementation or approval, read the **current** `michels-lab/Michel-Software-Standards` `AGENTS.md`, `standards/ABOUT_STANDARD.md`, `standards/PRODUCT_IDENTITY_STANDARD.md`, `brand/developer-profile.json`, and identity asset manifests. Do not rely only on a prior chat, a copied local contract, or a historical template. The default paired About layout (when width permits) places the canonical Michel Duarte portrait/name/role on the left and official Michel's Lab logo/name with visible exact slogan **`TOOLS WITH IDENTITY.`** on the right, after the product hero. On narrow screens stack these two while preserving their visual relationship. Social links require recognizable icons **and** readable network names using canonical URLs. QA must validate the rendered Desktop **and** Android About surfaces and verify canonical asset hashes; text-token checks alone do not constitute visual verification. Record evidence in `PROJECT_LOG.md` before calling this gate complete.

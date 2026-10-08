@@ -21,3 +21,5 @@ Fundamental identity requirement: any visual/About work must follow `AGENTS.md`:
 
 
 Before changing version-bearing files, read `release/distribution-manifest.json`. App-maintainer work must not choose or publish a release version independently.
+
+Mandatory master-first About workflow: inspect the current `michels-lab/Michel-Software-Standards` About/Product Identity standards and `brand/developer-profile.json` before coding. In the author/studio section, use the canonical portrait/name/role and official Michel's Lab lockup/name plus exact **`TOOLS WITH IDENTITY.`** slogan side by side where space permits (responsive stacking on narrow screens). Preserve app-first product hero, canonical assets, network icon + visible name and URLs. Implement on affected Desktop/Android screens; document evidence, not just source tokens.

@@ -5,37 +5,44 @@ on:
   push:
     branches:
       - main
-      - 'android-*'
       - 'development/**'
-      - 'fix/**'
-      - 'release/**'
     paths:
       - 'desktop/**'
       - 'branding/**'
       - 'android/**'
       - 'tests/**'
+      - 'supabase/**'
       - 'release/**'
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-v12034.yml'
+      - '.github/workflows/release.yml'
       - '.michelslab/release-request.json'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'desktop/**'
       - 'branding/**'
       - 'android/**'
       - 'tests/**'
+      - 'supabase/**'
       - 'release/**'
       - 'docs/UPDATE_AND_STATE_MIGRATION.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-v12034.yml'
+      - '.github/workflows/release.yml'
       - '.michelslab/release-request.json'
+
+concurrency:
+  group: igc-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   desktop-contract:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Desktop local-app contract
     runs-on: ubuntu-latest
     steps:
@@ -58,6 +65,10 @@ jobs:
         run: python tests/android-contract.py
       - name: Validate Android production-signing contract
         run: python tests/android-signing-contract.py
+      - name: Validate generic release publisher
+        run: python tests/release-publisher-contract.py
+      - name: Validate Supabase RLS isolation contract
+        run: python tests/rls-contract.py
       - name: Validate distribution manifest
         run: |
           python - <<'PY'
@@ -72,6 +83,7 @@ jobs:
           assert m['releasePolicy']['currentStableRelease']=='v120.34'
           assert m['releasePolicy']['nextRelease']=='v120.35'
           assert m['releasePolicy']['lastPublishedRun']==37574744462
+          assert m['releasePolicy']['genericPublisher']=='.github/workflows/release.yml'
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
           assert m['channels']['desktop']['artifact']=='IG-Cleaner-Pro-Desktop-v120.34.zip'
@@ -81,16 +93,62 @@ jobs:
               'assets/michels-lab/official-lockup.png',
           ]
           assert m['channels']['android']['artifact']=='IG-Cleaner-Pro-Android-v120.34.apk'
+          assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
+          assert m['channels']['android']['artifactTemplate']=='IG-Cleaner-Pro-Android-v{version}.apk'
           assert m['channels']['android']['stableArtifactRequiresPersistentSigning'] is True
           assert m['browserState']['indexedDb']=={'name':'ig_cleaner_pro_history','version':1}
-          assert r['version']=='120.34'
-          assert r['status']=='published'
-          assert r['authorized'] is False
-          assert r['published_run']==37574744462
-          print('Distribution/state manifest passed: stable v120.34 closed, next v120.35.')
+          current=m['releasePolicy']['currentStableRelease']
+          next_release=m['releasePolicy']['nextRelease']
+          assert current=='v120.34'
+          assert next_release=='v120.35'
+          if r['authorized']:
+              assert r['status'] in ('requested','authorized')
+              assert r['tag']==next_release
+              assert r['version']==next_release.removeprefix('v')
+              assert r['requested_channel']=='stable'
+              assert r['github_prerelease'] is False
+          else:
+              assert r['status']=='published'
+              assert r['tag']==current
+              assert r['version']==current.removeprefix('v')
+              assert r['published_run']==37574744462
+              assert r['published_commit']
+          print('Distribution/state manifest passed: stable v120.34, governed next v120.35.')
           PY
 
+  supabase-rls:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Supabase RLS isolation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Initialize local Supabase config
+        run: |
+          rm -f supabase/config.toml
+          supabase init
+      - name: Start local Supabase (database + minimal API only)
+        run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Apply IG Cleaner sync schema
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          PGPASSWORD=postgres psql \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/schema.sql
+      - name: Run cross-user RLS tests
+        run: supabase test db supabase/tests/rls_isolation.sql
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
+
   android:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Android build + embedded Workspace
     runs-on: ubuntu-latest
     defaults:
@@ -169,9 +227,13 @@ jobs:
           test -x "$AAPT"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           "$AAPT" dump badging "$APK" | tee /tmp/igc-release-badging.txt
+          EXPECTED_CODE="$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -n 1)"
+          EXPECTED_NAME="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$EXPECTED_CODE"
+          test -n "$EXPECTED_NAME"
           grep -q "package: name='com.michelslab.igcleaner'" /tmp/igc-release-badging.txt
-          grep -q "versionCode='12034'" /tmp/igc-release-badging.txt
-          grep -q "versionName='120.34'" /tmp/igc-release-badging.txt
+          grep -q "versionCode='$EXPECTED_CODE'" /tmp/igc-release-badging.txt
+          grep -q "versionName='$EXPECTED_NAME'" /tmp/igc-release-badging.txt
           if grep -q "com.michelslab.igcleaner.beta" /tmp/igc-release-badging.txt; then
             echo "::error::Release signing smoke test produced beta application id."
             exit 1

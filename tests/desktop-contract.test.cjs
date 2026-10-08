@@ -13,6 +13,8 @@ function requireToken(token, why) {
 }
 
 for (const [token, why] of [
+  ['<title>Instagram Cleaner Pro v120.35</title>', 'Desktop title must match active development version'],
+  ['Engine v119 · UI v120.35', 'Desktop visible UI version must match active development version'],
   ['function readFile(file)', 'Desktop must read local files'],
   ["r.readAsText(file,'utf-8')", 'Desktop must parse the full selected file'],
   ['function extractFromJSON(data,source)', 'JSON importer must exist'],

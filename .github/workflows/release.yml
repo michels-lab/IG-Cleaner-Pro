@@ -1,0 +1,214 @@
+name: Publish governed stable release
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".michelslab/release-request.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
+      IGC_ANDROID_KEY_ALIAS: ${{ secrets.IGC_ANDROID_KEY_ALIAS }}
+      IGC_ANDROID_KEY_PASSWORD: ${{ secrets.IGC_ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Resolve and verify release request
+        id: release
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, re, os
+          manifest=json.loads(pathlib.Path("release/distribution-manifest.json").read_text())
+          request=json.loads(pathlib.Path(".michelslab/release-request.json").read_text())
+          signing=json.loads(pathlib.Path("release/android-signing.json").read_text())
+          policy=manifest["releasePolicy"]
+
+          version=str(request.get("version","")).strip()
+          tag=str(request.get("tag","")).strip()
+          assert re.fullmatch(r"\d+\.\d+", version), "Release version must look like 120.35"
+          assert tag == f"v{version}", "Release tag must exactly match version"
+          assert request.get("authorized") is True, "Release request is not explicitly authorized"
+          assert request.get("status") in ("requested","authorized"), "Release request is not in a publishable state"
+          assert request.get("requested_channel") == "stable"
+          assert request.get("github_prerelease") is False
+          assert policy["nextRelease"] == tag
+          assert policy["githubPrerelease"] is False
+          assert policy["explicitManualPublishRequired"] is True
+          assert policy["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
+          assert signing["packageId"] == "com.michelslab.igcleaner"
+
+          desktop=manifest["channels"]["desktop"]["artifactTemplate"].replace("{version}",version)
+          android=manifest["channels"]["android"]["artifactTemplate"].replace("{version}",version)
+          expected_code=int(version.replace(".",""))
+          assert signing["versionName"] == version, "Signing metadata versionName does not match release request"
+          assert signing["versionCode"] == expected_code, "Signing metadata versionCode does not match release request"
+
+          gradle=pathlib.Path("android/app/build.gradle.kts").read_text()
+          assert f'versionName = "{version}"' in gradle
+          assert f"versionCode = {expected_code}" in gradle
+          assert 'applicationIdSuffix = ".beta"' in gradle
+          assert "Production Android signing is required" in gradle
+
+          html=pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+          assert f"UI v{version}" in html
+          assert "normalizeLegacyReviewState" in html
+          assert "pushWorkspaceState" in html
+          assert "list_snapshots" in html
+          assert 'src="assets/michel_duarte_avatar.jpg"' in html
+          assert 'src="assets/michels-lab/official-lockup.png"' in html
+
+          out=os.environ["GITHUB_OUTPUT"]
+          with open(out,"a",encoding="utf-8") as f:
+              f.write(f"version={version}\n")
+              f.write(f"tag={tag}\n")
+              f.write(f"version_code={expected_code}\n")
+              f.write(f"desktop_artifact={desktop}\n")
+              f.write(f"android_artifact={android}\n")
+          PY
+
+      - name: Run release contracts
+        run: |
+          node tests/desktop-contract.test.cjs
+          python3 tests/fixture-contract.py
+          python3 tests/branding-contract.py
+          python3 tests/privacy-contract.py
+          python3 tests/android-contract.py
+          python3 tests/android-signing-contract.py
+          python3 tests/release-publisher-contract.py
+          python3 tests/rls-contract.py
+
+      - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore production Android keystore
+        env:
+          IGC_ANDROID_KEYSTORE_B64: ${{ secrets.IGC_ANDROID_KEYSTORE_B64 }}
+        run: |
+          test -n "$IGC_ANDROID_KEYSTORE_B64"
+          test -n "$IGC_ANDROID_KEYSTORE_PASSWORD"
+          test -n "$IGC_ANDROID_KEY_ALIAS"
+          test -n "$IGC_ANDROID_KEY_PASSWORD"
+          IGC_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/ig-cleaner-pro-release.jks"
+          echo "$IGC_ANDROID_KEYSTORE_B64" | base64 --decode > "$IGC_ANDROID_KEYSTORE_PATH"
+          chmod 600 "$IGC_ANDROID_KEYSTORE_PATH"
+          echo "IGC_ANDROID_KEYSTORE_PATH=$IGC_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify production signing identity
+        run: |
+          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"])')"
+          ACTUAL="$(keytool -list -v -keystore "$IGC_ANDROID_KEYSTORE_PATH" -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" -alias "$IGC_ANDROID_KEY_ALIAS" | awk -F'SHA256: ' '/SHA256:/{gsub(/:/,"",$2); print $2; exit}')"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Build signed Android release
+        run: gradle -p android :app:assembleRelease
+
+      - name: Verify signed Android package
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK"
+          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+          "$AAPT" dump badging "$APK" | tee /tmp/badging.txt
+
+          grep -q "package: name='com.michelslab.igcleaner'" /tmp/badging.txt
+          grep -q "versionCode='${{ steps.release.outputs.version_code }}'" /tmp/badging.txt
+          grep -q "versionName='${{ steps.release.outputs.version }}'" /tmp/badging.txt
+          ! grep -q "com.michelslab.igcleaner.beta" /tmp/badging.txt
+
+          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"].lower())')"
+          ACTUAL="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/apksigner.txt | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Build release bundle
+        run: |
+          rm -rf dist package
+          mkdir -p package/assets/michels-lab dist
+          cp desktop/ig_cleaner_pro_v120_27_synced_companion.html package/IG-Cleaner-Pro.html
+          cp desktop/assets/michel_duarte_avatar.jpg package/assets/michel_duarte_avatar.jpg
+          cp desktop/assets/michels-lab/official-lockup.png package/assets/michels-lab/official-lockup.png
+          cp branding/ig-cleaner-pro/official-app-icon.svg "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-logo.svg"
+          cp docs/PRIVACY.md "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-PRIVACY.md"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/${{ steps.release.outputs.android_artifact }}"
+          (cd package && zip -r "../dist/${{ steps.release.outputs.desktop_artifact }}" .)
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+
+      - name: Verify release bundle contents
+        run: |
+          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "IG-Cleaner-Pro.html"
+          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michel_duarte_avatar.jpg"
+          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michels-lab/official-lockup.png"
+          test -f "dist/${{ steps.release.outputs.android_artifact }}"
+
+      - name: Build release notes
+        run: |
+          cat > release-notes.md <<EOF
+          # Instagram Cleaner Pro v${{ steps.release.outputs.version }}
+
+          Normal GitHub release (**not a prerelease**).
+
+          ## Desktop
+          Use **${{ steps.release.outputs.desktop_artifact }}** and keep the HTML with its `assets/` folder.
+
+          ## Android
+          Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
+
+          SHA-256 checksums are included in **SHA256SUMS.txt**.
+          EOF
+          if [ -f release/RELEASE_NOTES.md ]; then
+            printf "\n## Changes\n\n" >> release-notes.md
+            cat release/RELEASE_NOTES.md >> release-notes.md
+          fi
+
+      - name: Publish normal GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.release.outputs.tag }}"
+          TITLE="Instagram Cleaner Pro v${{ steps.release.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
+          fi
+
+      - name: Verify published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.release.outputs.tag }}"
+          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/$TAG --jq .prerelease)" = "false"
+          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/$TAG --jq .draft)" = "false"
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.android_artifact }}"
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_artifact }}"
+          gh release view "$TAG" --json tagName,isPrerelease,isDraft,url

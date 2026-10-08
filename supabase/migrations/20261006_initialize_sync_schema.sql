@@ -1,3 +1,5 @@
+-- Create IG Cleaner sync schema before the 20261007 RLS optimization migration.
+-- Mirrors declarative schema.sql. Safe on a fresh local Supabase instance.
 -- IG Cleaner Pro v120.35 — Supabase sync schema
 -- Run once in Supabase SQL Editor. Tables are private per authenticated user via RLS.
 
