@@ -70,6 +70,23 @@ const {chromium} = require("playwright");
           "P0: compact About must show author, Lab/slogan and all five social links without scrolling: "+
           JSON.stringify(firstView.filter(v=>!v.visible)));
       }
+      if (viewport.name === "compact") {
+        const geometry=await page.evaluate(()=>{
+          const mark=document.querySelector(".aboutProductMark")?.getBoundingClientRect();
+          const image=document.querySelector(".aboutOfficialLockup")?.getBoundingClientRect();
+          const close=document.querySelector("#aboutDeveloperClose")?.getBoundingClientRect();
+          const shell=document.querySelector(".aboutShell")?.getBoundingClientRect();
+          if(!mark||!image||!close||!shell)return {valid:false,reason:"missing geometry"};
+          const contained=image.left>=mark.left && image.right<=mark.right &&
+              image.top>=mark.top && image.bottom<=mark.bottom;
+          const overlap=image.left < close.right && image.right > close.left &&
+              image.top < close.bottom && image.bottom > close.top;
+          const withinShell=mark.left>=shell.left && mark.right<=shell.right;
+          return {valid:contained&&!overlap&&withinShell,contained,overlap,withinShell,
+              mark:{x:mark.x,width:mark.width},image:{x:image.x,width:image.width}};
+        });
+        assert(geometry.valid, "P0: compact product logo spills/overlaps close action: "+JSON.stringify(geometry));
+      }
       await capture("about","initial");
       const links=page.locator(".aboutSocial");
       await links.last().scrollIntoViewIfNeeded();
