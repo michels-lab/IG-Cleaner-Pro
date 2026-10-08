@@ -115,4 +115,4 @@ print("Android UX/Focus/privacy/About regression contract passed.")
 
 # Real Home screens must now be checked in the packaged Android runtime.
 assert 'realHomeRendersNavigationAndWorkspace' in testcode
-assert 'home-' in testcode and 'R.id.bottomNav' in testcode
+assert 'screenshot("home","initial")' in testcode and 'R.id.bottomNav' in testcode
