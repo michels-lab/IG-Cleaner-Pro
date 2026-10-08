@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/ig_surface"
+    app:cardBackgroundColor="@color/ig_surface_2"
     app:cardCornerRadius="16dp"
     app:strokeColor="@color/ig_border"
     app:strokeWidth="1dp">
