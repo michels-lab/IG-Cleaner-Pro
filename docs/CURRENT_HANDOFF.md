@@ -2,6 +2,8 @@
 
 ## Current shipped version — v120.36 (released)
 
+- **QA finding for unreleased About correction:** candidate's first Android UI runner `37833416640` failed on API-35 UIAutomator window text lookup (both About full name AND Home app title missing to the accessibility locator). Main CI and Desktop Chromium passed. Candidate test now uses native dialog + actual on-screen geometry/drawables; rerun required. No merge/release claim until exact latest SHA's screenshots succeed.
+
 - **UI correction in development (unreleased):** user's October 8 screenshot rejected the v120.36 About hierarchy. Requirements: official app and studio logos paired at top, developer information below, large canonical portrait with one vertical list of five icons+names beside it, visible About in permanent top bar, and removal of useless Android Advanced tools menu/handler. Candidate branch `docs/v12036-post-release-triage-20261008`, not a release. Do not report candidate fixed until real Android/Chromium UI tests pass; no v120.37 authorization.
 
 - **Published normal GitHub release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.36 (2026-10-08T19:00:43Z).
