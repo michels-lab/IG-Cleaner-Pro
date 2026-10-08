@@ -2071,7 +2071,7 @@ public final class MainActivity extends AppCompatActivity {
     private void showAbout() {
         View about = LayoutInflater.from(this).inflate(R.layout.dialog_about, null, false);
         LinearLayout aboutPairRow = about.findViewById(R.id.aboutPairRow);
-        if (getResources().getConfiguration().screenWidthDp < 390) {
+        if (getResources().getConfiguration().screenWidthDp < 320) {
             // Weighted horizontal columns start at 0dp width. When stacking
             // them vertically, those same params hid the entire About section.
             aboutPairRow.setOrientation(LinearLayout.VERTICAL);
@@ -2088,6 +2088,12 @@ public final class MainActivity extends AppCompatActivity {
             studio.setLayoutParams(studioParams);
             author.setPadding(0, author.getPaddingTop(), 0, author.getPaddingBottom());
             studio.setPadding(0, studio.getPaddingTop(), 0, studio.getPaddingBottom());
+        }
+        // On compact devices, preserve the most useful About content above
+        // the fold: both identities and all five official contact destinations.
+        if (getResources().getConfiguration().screenWidthDp < 390) {
+            about.findViewById(R.id.aboutSubtitle).setVisibility(View.GONE);
+            about.findViewById(R.id.aboutCopyright).setVisibility(View.GONE);
         }
         TextView aboutVersion = about.findViewById(R.id.aboutVersion);
         try {
