@@ -35,7 +35,7 @@ for token in (
     "profile_state",
     "Export synchronized cloud data",
     "Delete synchronized cloud data",
-    "signs out",
+    "signs the app out",
     "Vault",
 ):
     assert token in privacy, f"Privacy documentation token missing: {token}"
