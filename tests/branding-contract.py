@@ -19,7 +19,7 @@ original = ROOT / "branding/ig-cleaner-pro/approved-option-1-original.png"
 assert original.is_file()
 assert len(original.read_bytes()) == 1559781
 assert hashlib.sha256(original.read_bytes()).hexdigest() == "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
-assert original.read_bytes()[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+assert original.read_bytes()[:8] == bytes([137,80,78,71,13,10,26,10])
 for role in ("official-app-icon.png", "official-mark.png", "official-lockup.png"):
     file = ROOT / "branding/ig-cleaner-pro" / role
     assert file.read_bytes() == original.read_bytes(), f"{role} is not the canonical unmodified original"
