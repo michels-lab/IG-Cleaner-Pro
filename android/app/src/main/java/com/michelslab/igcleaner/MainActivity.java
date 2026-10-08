@@ -2074,6 +2074,7 @@ public final class MainActivity extends AppCompatActivity {
         bindAboutLink(about, R.id.aboutFacebook, "https://www.facebook.com/realmichelduarte");
         bindAboutLink(about, R.id.aboutLinkedin, "https://www.linkedin.com/in/realmichelduart/");
         bindAboutLink(about, R.id.aboutGithub, "https://github.com/realmichelduarte");
+        bindAboutLink(about, R.id.aboutEmail, "mailto:realmichelduarte@gmail.com");
         new MaterialAlertDialogBuilder(this)
                 .setView(about)
                 .setPositiveButton("Close", null)
