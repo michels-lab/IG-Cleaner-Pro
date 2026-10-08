@@ -225,11 +225,12 @@ jobs:
       - name: Build release bundle
         run: |
           rm -rf dist package
-          mkdir -p package/assets/michels-lab dist
+          mkdir -p package/assets/michels-lab package/assets/ig-cleaner-pro dist
           cp desktop/ig_cleaner_pro_v120_27_synced_companion.html package/IG-Cleaner-Pro.html
           cp desktop/assets/michel_duarte_avatar.jpg package/assets/michel_duarte_avatar.jpg
           cp desktop/assets/michels-lab/official-lockup.png package/assets/michels-lab/official-lockup.png
-          cp branding/ig-cleaner-pro/official-app-icon.svg "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-logo.svg"
+          cp desktop/assets/ig-cleaner-pro/official-app-icon.png package/assets/ig-cleaner-pro/official-app-icon.png
+          cp branding/ig-cleaner-pro/official-app-icon-1024.png "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-logo.png"
           cp docs/PRIVACY.md "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-PRIVACY.md"
           cp android/app/build/outputs/apk/release/app-release.apk "dist/${{ steps.release.outputs.android_artifact }}"
           (cd package && zip -r "../dist/${{ steps.release.outputs.desktop_artifact }}" .)
@@ -240,6 +241,7 @@ jobs:
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "IG-Cleaner-Pro.html"
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michel_duarte_avatar.jpg"
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michels-lab/official-lockup.png"
+          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/ig-cleaner-pro/official-app-icon.png"
           test -f "dist/${{ steps.release.outputs.android_artifact }}"
 
       - name: Build release notes
