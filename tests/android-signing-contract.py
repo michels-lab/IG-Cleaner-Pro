@@ -11,7 +11,7 @@ signing = json.loads((ROOT / "release/android-signing.json").read_text(encoding=
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
 import re
-build_version_match = re.search(r'versionName = "([0-9]+\\.[0-9]+)"', gradle)
+build_version_match = re.search(r'versionName = "([0-9]+\.[0-9]+)"', gradle)
 assert build_version_match, "Android Gradle build version missing"
 build_version = build_version_match.group(1)
 expected_code=int(build_version.replace(".",""))
