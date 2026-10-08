@@ -2094,6 +2094,7 @@ public final class MainActivity extends AppCompatActivity {
         if (getResources().getConfiguration().screenWidthDp < 390) {
             about.findViewById(R.id.aboutSubtitle).setVisibility(View.GONE);
             about.findViewById(R.id.aboutCopyright).setVisibility(View.GONE);
+            about.findViewById(R.id.aboutConnectTitle).setVisibility(View.GONE);
         }
         TextView aboutVersion = about.findViewById(R.id.aboutVersion);
         try {
