@@ -46,5 +46,5 @@ for selector in (".aboutShell", ".aboutDeveloperCard", ".aboutBrandMini", ".abou
 
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
 test = instrumentation.read_text(encoding="utf-8")
-assert "isCompletelyDisplayed" in test and "aboutEmail" in test
+assert 'requireResource(link, 140, 66)' in test and '"aboutEmail"' in test
 print("PASS: premium visual source contract; real rendered Android/Desktop UI gate is separate.")
