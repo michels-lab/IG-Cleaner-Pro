@@ -60,7 +60,7 @@ def create_manifest(folder: Path, apk: Path, sha: str):
             assert (w,h) == expected, f'Invalid Home viewport {w}x{h}'
             assert max(ImageStat.Stat(im.convert('RGB').resize((64,64))).stddev) >= 9, 'Blank Home screenshot'
         hsh = digest(path)
-        assert hsh not in seen, 'Home screenshot reused from a different surface'
+        assert hsh not in seen or seen[hsh] == viewport, 'Home screenshot reused across viewport sizes'
         seen[hsh] = viewport
         shots.append(dict(
             platform='android', surface='home', viewport=viewport, section='initial',

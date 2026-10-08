@@ -59,6 +59,8 @@ jobs:
         run: python tests/fixture-contract.py
       - name: Validate official product branding
         run: python tests/branding-contract.py
+      - name: Validate coherent premium visual source contract
+        run: python tests/premium-visual-contract.py
       - name: Validate privacy and data-handling contract
         run: python tests/privacy-contract.py
       - name: Validate Android UX and Focus regression contract
