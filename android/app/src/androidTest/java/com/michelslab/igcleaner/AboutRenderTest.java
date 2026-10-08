@@ -95,10 +95,10 @@ public class AboutRenderTest {
                 requireVisibleView(activity.findViewById(R.id.appBrandTitle),"App title",100,20);
                 assertTrue("App title changed", "Instagram Cleaner Pro".contentEquals(
                         ((TextView) activity.findViewById(R.id.appBrandTitle)).getText()));
-                View aboutLabel = findTextView(bar,"About");
-                requireVisibleView(aboutLabel,"About permanent top action",40,32);
-                assertNotNull("About top action must exist",bar.getMenu().findItem(R.id.actionAbout));
-                assertTrue("About item hidden in menu",bar.getMenu().findItem(R.id.actionAbout).isVisible());
+                View aboutButton = activity.findViewById(R.id.headerAboutButton);
+                requireVisibleView(aboutButton,"About permanent top action",95,65);
+                assertTrue("About control must be clickable",aboutButton.isClickable());
+                requireVisibleView(activity.findViewById(R.id.headerSyncButton),"Sync global action",60,60);
             });
             screenshot("home","initial");
         }
@@ -108,10 +108,9 @@ public class AboutRenderTest {
     public void realAboutHasVisibleAuthorStudioAndReachableSocials() throws Exception {
         try(ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {
-                MaterialToolbar bar = activity.findViewById(R.id.toolbar);
-                assertNotNull("Native toolbar absent",bar);
-                assertTrue("Could not open real About dialog",
-                        bar.getMenu().performIdentifierAction(R.id.actionAbout,0));
+                View aboutButton = activity.findViewById(R.id.headerAboutButton);
+                requireVisibleView(aboutButton,"About action before opening",95,65);
+                assertTrue("Could not click real About button",aboutButton.performClick());
             });
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
             scenario.onActivity(activity -> {
@@ -149,10 +148,12 @@ public class AboutRenderTest {
                 }
                 MaterialToolbar toolbar = activity.findViewById(R.id.toolbar);
                 assertNotNull("Native toolbar missing", toolbar);
-                assertEquals("Only Sync and About belong in the global top menu", 2,
+                assertEquals("Obsolete adaptive/Advanced tools menu must be absent", 0,
                         toolbar.getMenu().size());
-                assertNotNull("Sync must be preserved", toolbar.getMenu().findItem(R.id.actionSync));
-                assertNotNull("About must be preserved", toolbar.getMenu().findItem(R.id.actionAbout));
+                assertNotNull("About must remain in native chrome",
+                        activity.findViewById(R.id.headerAboutButton));
+                assertNotNull("Sync must remain in native chrome",
+                        activity.findViewById(R.id.headerSyncButton));
             });
             screenshot("about","author");
             screenshot("about","studio");
