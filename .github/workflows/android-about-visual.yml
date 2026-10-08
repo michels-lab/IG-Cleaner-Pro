@@ -1,0 +1,87 @@
+name: Android About rendered UI
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'branding/**'
+      - 'desktop/**'
+      - 'tests/**'
+      - 'tools/android_about_visual_evidence.py'
+      - '.github/workflows/android-about-visual.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'branding/**'
+      - 'desktop/**'
+      - 'tests/**'
+      - '.michelslab/release-request.json'
+      - '.github/workflows/android-about-visual.yml'
+      - 'tools/android_about_visual_evidence.py'
+permissions:
+  contents: read
+jobs:
+  capture-actual-android-about:
+    name: Install Android APK; render About at compact and wide sizes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enable KVM for Android emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Build debug candidate and run real UI screenshot test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: |
+            set -euo pipefail
+            gradle -p android :app:assembleDebug :app:assembleDebugAndroidTest
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            mkdir -p artifacts/visual/android
+            for viewport in compact wide; do
+              if [ "$viewport" = compact ]; then
+                adb shell wm size 720x1280
+                adb shell wm density 320
+              else
+                adb shell wm size 1080x1920
+                adb shell wm density 320
+              fi
+              sleep 3
+              adb shell am instrument -w -r -e viewport "$viewport" \
+                com.michelslab.igcleaner.beta.test/androidx.test.runner.AndroidJUnitRunner \
+                | tee "artifacts/visual/android/instrumentation-$viewport.txt"
+              grep -Eq 'OK \(1 test\)' "artifacts/visual/android/instrumentation-$viewport.txt"
+            done
+            adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/ artifacts/visual/android/
+            test "$(find artifacts/visual/android/igc-ui-capture -name 'about-*.png' | wc -l)" -eq 6
+      - name: Validate binary-backed screenshots and write evidence manifest
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/android_about_visual_evidence.py \
+            --screenshots artifacts/visual/android/igc-ui-capture \
+            --apk android/app/build/outputs/apk/debug/app-debug.apk \
+            --sha "$GITHUB_SHA" \
+            --out artifacts/visual/manifest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ig-cleaner-real-android-about-${{ github.sha }}
+          path: artifacts/visual/
+          retention-days: 30
+          if-no-files-found: warn
