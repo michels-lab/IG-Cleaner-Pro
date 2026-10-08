@@ -7,7 +7,7 @@ Trigger: **LIMÓN**
 
 - PR #29 `fix/v12036-android-about-visual-qa` corrects v120.35 Android About's zero-width author/studio columns when the row changes orientation below 390dp.
 - Added installed-app Android instrumentation assertions + screenshot capture of About author, studio and social controls at compact/wide emulator resolutions. Do not claim PASS before the same-commit screenshot workflow completes and evidence is visually inspected.
-- The governed release publisher now requires `visual-release-approval`, including a protected required-reviewer environment and matching-commit emulator capture proof. An unprotected environment fails closed; manual admin reviewer setup is required.
+- The governed release publisher requires **automated** `rendered-ui-qa`, including exact-commit emulator capture proof and SHA-bound screenshots. In line with the user's explicit workflow preference, human inspection is post-publication and is NOT a manual workflow blocker. Missing automated proof still fails closed.
 - The user chose the first alternative **profile-card + cyan orbit + gold sparkle** logo. The master contains the decision and a thumbnail; the unmodified original 1254px PNG has **not** been uploaded as a canonical GitHub blob. Do not substitute thumbnail or silently switch active assets. The original local candidate's SHA-256 is `f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8`.
 - Next release remains `v120.36` **not yet authorized**. Phone QA for imports, Focus, counters, cloud sync and update path remains open as issue #24.
 
