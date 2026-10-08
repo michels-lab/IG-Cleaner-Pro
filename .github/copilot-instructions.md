@@ -1,5 +1,10 @@
 # Copilot instructions — IG Cleaner Pro
 
+
+## Desktop About placement (mandatory)
+
+Every desktop application must display a clearly labeled, usable **About** action in its **fixed top application header** from initial launch and in every workspace. It must remain visible when the window is compact/high-DPI, the body is scrolled or a sidebar is collapsed; footer-only, Home-only, offscreen or hidden-overflow About is forbidden. Keep the header outside the scroll container and validate its actual rendered visibility and click bounds. Source of truth: `michels-lab/Michel-Software-Standards/standards/BRAND_NATIVE_INTERFACE_STANDARD.md`.
+
 Read `AGENTS.md`, `PROJECT_LOG.md` and the relevant infrastructure/handoff documentation before editing.
 
 Preserve the canonical Desktop engine and established cleanup workflows. Mobile-specific UX is allowed, but required feature parity must not be removed.
