@@ -112,7 +112,7 @@ for token in ("getGlobalVisibleRect", "requireVisibleView(dialog.findViewById(R.
               "requireVisibleView(dialog.findViewById(R.id.aboutStudioImage)",
               "requireVisibleView(dialog.findViewById(R.id.aboutPortraitImage)",
               "requireVisibleView(dialog.findViewById(res),id,140,66)",
-              "findTextView(bar,\"About\")",
+              "R.id.headerAboutButton",
               "aboutInstagram", "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
               "screenshot(\"about\",\"author\")",
               "screenshot(\"about\",\"studio\")",
