@@ -1,6 +1,6 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current candidate: **v120.34 stable release candidate** on `release/v120.34`.
+Current published stable: **v120.35**. Historical v120.34 instructions below describe the prior release process.
 
 ## Product model
 
@@ -83,7 +83,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next release target is exactly **v120.34** and GitHub `prerelease` must be **false**.
+The next governed release target is **v120.36** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
 
 Authority: `release/distribution-manifest.json`.
 
