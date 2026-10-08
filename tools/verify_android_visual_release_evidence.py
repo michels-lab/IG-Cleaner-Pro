@@ -28,8 +28,8 @@ def verify(root: Path, sha: str):
     h = digest(apk)
     assert doc.get("artifact_sha256", {}).get("android") == h, "APK differs from captured candidate"
     shots = doc.get("screenshots", [])
-    assert len(shots) == 6, "Missing one or more of six About screenshot captures"
-    expected = {(v,p) for v in ("compact","wide") for p in ("author","studio","socials")}
+    assert len(shots) == 8, "Missing Home/6 About screenshots"
+    expected = {(v,p) for v in ("compact","wide") for p in ("author","studio","socials","initial")}
     seen = set()
     hashes = {}
     for item in shots:
@@ -37,6 +37,7 @@ def verify(root: Path, sha: str):
         assert key in expected and key not in seen, f"Unexpected/duplicate screenshot: {key}"
         seen.add(key)
         assert item.get("capture_method") == "installed-android-emulator"
+        assert item.get("surface") == ("home" if item["section"] == "initial" else "about")
         assert item.get("candidate_artifact_sha256") == h, "Screenshot not tied to installed APK"
         p = root / "android" / "igc-ui-capture" / item["path"]
         assert p.is_file(), f"Screenshot missing from artifact: {p}"
@@ -52,8 +53,8 @@ def verify(root: Path, sha: str):
         assert hsh not in hashes or hashes[hsh] == item["viewport"], "Reused screenshot from another viewport"
         hashes[hsh] = item["viewport"]
     assert seen == expected
-    print("PASS: real Android About screenshot coverage from 2 viewports, 3 sections, same SHA/APK")
-    print("IMPORTANT: independent human protected environment approval is required in addition.")
+    print("PASS: real Android Home+About screenshot coverage from 2 viewports, 4 sections, same SHA/APK")
+    print("User reviews the finished release; phone hardware acceptance remains separate.")
 
 
 if __name__ == "__main__":
