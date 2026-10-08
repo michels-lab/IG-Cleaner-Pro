@@ -60,4 +60,27 @@ for token in ("exportCloudData", "deleteCloudData"):
 assert 'public void delete(String tableQuery)' in sync_api
 assert '"DELETE"' in sync_api
 
-print("Android UX/Focus/privacy regression contract passed.")
+# Native About must not regress to a text-only dialog.
+about = (ROOT / "android/app/src/main/res/layout/dialog_about.xml").read_text(encoding="utf-8")
+for token in (
+    "@drawable/ig_official_mark",
+    "@drawable/ig_about_portrait",
+    "@drawable/ig_about_studio",
+    "TOOLS WITH IDENTITY.",
+    "Michel Duarte",
+    "Michel’s Lab",
+    "@+id/aboutInstagram",
+    "@+id/aboutFacebook",
+    "@+id/aboutLinkedin",
+    "@+id/aboutGithub",
+):
+    assert token in about, f"Native About contract missing: {token}"
+for token in ("R.layout.dialog_about", "bindAboutLink(", "Intent.ACTION_VIEW"):
+    assert token in main, f"Native About behavior missing: {token}"
+for asset in (
+    "android/app/src/main/res/drawable-nodpi/ig_about_portrait.jpg",
+    "android/app/src/main/res/drawable-nodpi/ig_about_studio.png",
+):
+    assert (ROOT / asset).is_file(), f"Missing canonical About asset: {asset}"
+
+print("Android UX/Focus/privacy/About regression contract passed.")
