@@ -60,7 +60,27 @@ jobs:
         run: |
           python3 -m pip install Pillow==11.3.0
           python3 tools/verify_android_visual_release_evidence.py --artifact visual-evidence --sha "$GITHUB_SHA"
-          echo "Automated About UI evidence verified. User reviews published release; physical-phone acceptance is separate."
+          echo "Android Home+About screenshots verified on actual installed debug APK; phone hardware acceptance remains separate."
+      - name: Download exact-commit Desktop Home/About Chromium screenshot proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID=""
+          for attempt in $(seq 1 45); do
+            RUN_ID="$(gh run list --workflow desktop-rendered-ui.yml --commit "$GITHUB_SHA" --limit 50 --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success") | .databaseId] | first // empty')"
+            if [ -n "$RUN_ID" ]; then break; fi
+            sleep 20
+          done
+          test -n "$RUN_ID" || { echo "::error::No successful exact-commit Desktop browser visual run"; exit 1; }
+          mkdir -p desktop-visual-evidence
+          gh run download "$RUN_ID" --name "ig-cleaner-real-desktop-ui-${GITHUB_SHA}" --dir desktop-visual-evidence
+      - name: Verify exact release HTML against captured Desktop Home/About
+        run: |
+          python3 tools/verify_desktop_visual_release_evidence.py \
+            --artifact desktop-visual-evidence \
+            --html desktop/ig_cleaner_pro_v120_27_synced_companion.html \
+            --sha "$GITHUB_SHA"
 
   publish:
     needs: [release-request-gate, rendered-ui-qa]
