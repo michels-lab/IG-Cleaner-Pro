@@ -63,7 +63,7 @@ assert '"DELETE"' in sync_api
 # Native About must not regress to a text-only dialog.
 about = (ROOT / "android/app/src/main/res/layout/dialog_about.xml").read_text(encoding="utf-8")
 for token in (
-    "@drawable/ig_official_mark",
+    "@drawable/ig_official_app_icon",
     "@drawable/ig_about_portrait",
     "@drawable/ig_about_studio",
     "TOOLS WITH IDENTITY.",
