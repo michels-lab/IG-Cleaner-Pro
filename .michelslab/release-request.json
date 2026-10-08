@@ -1,11 +1,14 @@
 {
   "version": "120.36",
   "tag": "v120.36",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Explicit user authorization in ChatGPT on 2026-10-08: 'termina despues integralo y dale release'",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "requested",
-  "previous_stable_release": "v120.35"
+  "status": "published",
+  "previous_stable_release": "v120.35",
+  "published_run": 37827876157,
+  "published_commit": "335cc84a3c5a823314f5283d3543a9fdf58174d3",
+  "completed_at_utc": "2026-10-08T19:00:43Z"
 }

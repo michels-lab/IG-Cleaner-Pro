@@ -1,5 +1,13 @@
 # Current Handoff — Instagram Cleaner Pro
 
+## Current shipped version — v120.36 (released)
+
+- **Published normal GitHub release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.36 (2026-10-08T19:00:43Z).
+- **Signed Android:** `IG-Cleaner-Pro-Android-v120.36.apk`; **Desktop:** `IG-Cleaner-Pro-Desktop-v120.36.zip`; original chosen app logo, release artwork and SHA256SUMS included.
+- **Published commit:** `335cc84a3c5a823314f5283d3543a9fdf58174d3`; publish run: https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/37827876157 — SUCCESS. Real Android Home+About and Desktop Chromium Home+About screenshot quality gates PASS, Android signing certificate identity PASS and release asset checks PASS. Premium native + Desktop navy/cyan/gold design and About improvements integrated.
+- **Next version:** v120.37 is NOT authorized. User review of the actual release on their Samsung and actual Instagram ZIP/Focus/cloud cross-device roundtrip are still outstanding, not represented as PASS.
+- Historical handoff notes below may describe v120.35 or pre-release stages; the shipped-state facts in this heading take precedence.
+
 Updated: 2026-10-08; trigger: LIMÓN.
 
 ## v120.36 — approved logo and visual QA candidate
