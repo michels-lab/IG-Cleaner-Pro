@@ -109,3 +109,7 @@ for token in ("assertMeasured(R.id.aboutAuthorColumn", "assertMeasured(R.id.abou
     assert token in testcode, f"Missing actual About render test assertion: {token}"
 
 print("Android UX/Focus/privacy/About regression contract passed.")
+
+# Real Home screens must now be checked in the packaged Android runtime.
+assert 'realHomeRendersNavigationAndWorkspace' in testcode
+assert 'home-' in testcode and 'R.id.bottomNav' in testcode
