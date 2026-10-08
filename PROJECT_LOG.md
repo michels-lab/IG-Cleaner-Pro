@@ -924,3 +924,14 @@ Governance:
 - next development/release target is **v120.35**.
 - v120.34 authorization must not be reused for v120.35.
 - physical-device validation remains separate from repository/CI evidence.
+
+
+## 2026-10-07 — Repository transferred to Michel's Lab organization
+
+**Change:** repository ownership moved from `realmichelduarte/IG-Cleaner-Pro` to `michels-lab/IG-Cleaner-Pro`.
+
+**Active references updated:** `.michelslab` governance, agent/Copilot authority and the distribution manifest now use the organization-owned repository and `michels-lab/Michel-Software-Standards`.
+
+**Preserved intentionally:** Michel Duarte personal developer/social identity remains under `realmichelduarte`. No release is authorized by this migration change.
+
+**Validation:** branch CI is required before merge.
