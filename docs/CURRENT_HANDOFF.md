@@ -1,5 +1,11 @@
 # Current Handoff — Instagram Cleaner Pro
 
+## Current unreleased Android Focus parity candidate — 2026-10-09
+
+- Branch `feat/android-focus-rich-context-double-check-history-20261009` adds full synced follow dates/review history to native Focus, Double Check 30 without repeating profiles across Desktop/Android, last batch by module including Desktop audit-only legacy Double Check events, and per-cycle progress.
+- Reuses existing Supabase `workspace_state` table with independent state_key `focus_double_check_cycle`; no SQL schema changes, no destructive state changes, no automatic release. Test instrumented phone dimensions and real cloud roundtrip after source QA. Existing v120.37 remains stable.
+- Desktop sync's Double Check epoch and seen-set must stay interoperable; native opened is not reviewed until explicit batch finish. Preserve original exported follow dates, report missing as unknown.
+
 ## Current shipped version — v120.37 (published; authoritative)
 
 - **Normal GitHub stable release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.37 — published 2026-10-08T22:12:02Z; `draft=false` and `prerelease=false`.
