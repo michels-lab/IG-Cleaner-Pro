@@ -1303,7 +1303,8 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("Buscando Focus…");
         runAsync(() -> {
             touchDevice();
-            JSONArray batches = api.get("focus_batches?select=*&status=in.(prepared,active)&order=created_at.desc&limit=30");
+            // One history stream serves active batches plus last batch per module.
+            JSONArray batches = api.get("focus_batches?select=*&order=created_at.desc&limit=300");
             mainHandler.post(() -> {
                 if (!"focus".equals(currentScreen) || focusView == null) return;
                 renderBatches(batches);
@@ -1325,17 +1326,60 @@ public final class MainActivity extends AppCompatActivity {
         batchContainer.removeAllViews();
 
         batchContainer.addView(createFocusBuilderCard());
+        batchContainer.addView(createFocusHistoryCard(batches));
 
-        if (batches.length() == 0) {
+        JSONArray activeBatches = new JSONArray();
+        for (int i = 0; i < batches.length(); i++) {
+            JSONObject batch = batches.optJSONObject(i);
+            if (batch != null && ("prepared".equals(batch.optString("status")) ||
+                    "active".equals(batch.optString("status")))) activeBatches.put(batch);
+        }
+        if (activeBatches.length() == 0) {
             addEmptyCard(batchContainer, "No hay tandas activas",
                     "Puedes crear Foco 20/30/40 directamente en Android. Se guardará en tu cuenta y Desktop podrá verla.");
             return;
         }
 
-        for (int i = 0; i < batches.length(); i++) {
-            JSONObject batch = batches.optJSONObject(i);
+        for (int i = 0; i < activeBatches.length(); i++) {
+            JSONObject batch = activeBatches.optJSONObject(i);
             if (batch != null) batchContainer.addView(createBatchCard(batch));
         }
+    }
+
+    private View createFocusHistoryCard(JSONArray batches) {
+        MaterialCardView card = new MaterialCardView(this);
+        card.setCardBackgroundColor(getColor(R.color.ig_surface_2));
+        card.setStrokeColor(getColor(R.color.ig_border));
+        card.setStrokeWidth(dp(1));
+        card.setRadius(dp(16));
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setPadding(dp(13), dp(10), dp(13), dp(10));
+        inner.addView(text("ÚLTIMA TANDA POR SECCIÓN", 11, R.color.ig_cyan, true));
+        String[] modules = {"main", "mutual", "followers", "pending", "double"};
+        String[] labels = {"REVIEW · no te siguen", "MUTUALS", "FOLLOWERS", "PENDING", "DOUBLE CHECK"};
+        for (int j = 0; j < modules.length; j++) {
+            JSONObject recent = null;
+            for (int i = 0; i < batches.length(); i++) {
+                JSONObject batch = batches.optJSONObject(i);
+                if (batch == null) continue;
+                boolean isDouble = batch.optString("source_signature", "").startsWith("double_check:")
+                        || batch.optString("label", "").toLowerCase(Locale.ROOT).contains("double check");
+                if ("double".equals(modules[j]) ? isDouble
+                        : !isDouble && modules[j].equals(batch.optString("module", ""))) {
+                    recent = batch;
+                    break;
+                }
+            }
+            inner.addView(text(labels[j], 11, R.color.ig_text, true));
+            inner.addView(text(FocusInsights.batchHistory(this, recent), 11, R.color.ig_muted, false));
+        }
+        card.addView(inner);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, dp(12));
+        card.setLayoutParams(params);
+        return card;
     }
 
     private View createFocusBuilderCard() {
@@ -1368,6 +1412,18 @@ public final class MainActivity extends AppCompatActivity {
         inner.addView(title);
         inner.addView(body);
         inner.addView(create);
+        MaterialButton doubleCheck = new MaterialButton(this);
+        doubleCheck.setText("Double Check 30 · No te siguen");
+        doubleCheck.setAllCaps(false);
+        doubleCheck.setCornerRadius(dp(14));
+        LinearLayout.LayoutParams doubleLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        doubleLp.setMargins(0, dp(7), 0, 0);
+        doubleCheck.setLayoutParams(doubleLp);
+        doubleCheck.setOnClickListener(v -> createDoubleCheckBatch(false));
+        inner.addView(doubleCheck);
+        inner.addView(text("Ciclo independiente · hasta 30 distintos por tanda · confirma la revisión al final.",
+                11, R.color.ig_muted, false));
         card.addView(inner);
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -1603,13 +1659,18 @@ public final class MainActivity extends AppCompatActivity {
 
     private JSONObject nativeFocusCandidate(String username, JSONObject source, String module,
                                             String contextText, boolean isFollower, boolean iFollow) throws Exception {
+        JSONObject followerRecord = jsonArrayByUsername(syncedFollowers).get(username);
+        JSONObject followingRecord = jsonArrayByUsername(syncedFollowing).get(username);
         JSONObject row = new JSONObject()
                 .put("relation", contextText)
                 .put("relationGood", "mutual".equals(module))
                 .put("followsBack", "mutual".equals(module))
                 .put("isFollower", isFollower)
                 .put("iFollow", iFollow)
-                .put("dateMain", source == null ? 0 : source.optLong("timestamp", 0));
+                .put("dateMain", source == null ? 0 : source.optLong("timestamp", 0))
+                .put("dateOther", ("mutual".equals(module) || "followers".equals(module))
+                        ? (followingRecord == null ? 0 : followingRecord.optLong("timestamp", 0))
+                        : (followerRecord == null ? 0 : followerRecord.optLong("timestamp", 0)));
 
         JSONObject context = new JSONObject()
                 .put("context", contextText)
@@ -1702,6 +1763,9 @@ public final class MainActivity extends AppCompatActivity {
                 batch.put("status", "active");
             }
             String batchId = encode(batch.optString("id"));
+            // Refresh current relationship dates and review history for both
+            // frozen Desktop batches and Android-created batches.
+            refreshFocusSourceData();
             JSONArray items = api.get("focus_batch_items?select=*&batch_id=eq." + batchId + "&order=position.asc");
             currentItems = items;
 
@@ -1761,7 +1825,12 @@ public final class MainActivity extends AppCompatActivity {
             String username = item.optString("username");
             boolean checked = opened.contains(username);
             JSONObject cx = item.optJSONObject("context");
-            String detail = contextText(cx);
+            String module = currentBatch == null ? "main" : currentBatch.optString("module", "main");
+            String detail = FocusInsights.detail(this, item, module,
+                    jsonArrayByUsername(syncedFollowing),
+                    jsonArrayByUsername(syncedFollowers),
+                    jsonArrayByUsername(syncedPending),
+                    syncedWorkspaceState);
             String badge;
             if (remotelyReviewed.contains(username)) {
                 badge = "REVISADO " + cap(reviewedDevice.get(username));
