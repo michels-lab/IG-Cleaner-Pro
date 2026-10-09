@@ -10672,6 +10672,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
       const restart=confirm(`Ya no quedan perfiles nuevos para ${label}. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
       if(restart){
         localStorage.removeItem(key);
+        if(mode==='double')localStorage.setItem('ig_cleaner_double_check_epoch',String(Date.now()));
         seen=new Set();
         rows=v96NoMeSigueRowsForRecheck(mode,false).slice(0,n);
       }
