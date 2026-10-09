@@ -1535,6 +1535,144 @@ public final class MainActivity extends AppCompatActivity {
         }, true);
     }
 
+    // One named cycle is shared by Android and Desktop. Keep it separate from
+    // canonical 'primary' workspace state so an Android batch cannot replace
+    // the saved review/protection history from Desktop.
+    private JSONObject fetchDoubleCheckCycle() throws Exception {
+        JSONArray rows = api.get("workspace_state?select=payload&state_key=eq.focus_double_check_cycle&limit=1");
+        JSONObject row = rows.optJSONObject(0);
+        JSONObject payload = row == null ? null : row.optJSONObject("payload");
+        return payload == null ? new JSONObject()
+                .put("epoch", 0L)
+                .put("seen", new JSONArray()) : payload;
+    }
+
+    private void persistDoubleCheckCycle(JSONObject cycle) throws Exception {
+        cycle.put("updatedAt", Instant.now().toString());
+        api.upsert("workspace_state", "user_id,state_key",
+                new JSONArray().put(new JSONObject()
+                        .put("state_key", "focus_double_check_cycle")
+                        .put("payload", cycle)
+                        .put("source_device", "android")
+                        .put("updated_at", Instant.now().toString())));
+    }
+
+    private void createDoubleCheckBatch(boolean restartCycle) {
+        setGlobalStatus("Double Check · preparando siguiente tanda…");
+        runAsync(() -> {
+            touchDevice();
+            refreshFocusSourceData();
+            if (!syncedReviewStateAvailable)
+                throw new IllegalStateException("Sincroniza primero la revisión de Desktop antes de Double Check.");
+
+            JSONObject cycle = fetchDoubleCheckCycle();
+            long epoch = cycle.optLong("epoch", 0L);
+            Set<String> seen = restartCycle ? new HashSet<>() :
+                    jsonStringSet(cycle.optJSONArray("seen"));
+            if (restartCycle) epoch = System.currentTimeMillis();
+            Map<String, JSONObject> following = jsonArrayByUsername(syncedFollowing);
+            Map<String, JSONObject> followers = jsonArrayByUsername(syncedFollowers);
+            Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+            JSONObject snoozed = syncedWorkspaceState.optJSONObject("snooze");
+            Set<String> inActiveBatch = activeFocusUsernames();
+            List<JSONObject> eligible = new ArrayList<>();
+            long nowMs = System.currentTimeMillis();
+            for (Map.Entry<String, JSONObject> entry : following.entrySet()) {
+                String user = entry.getKey();
+                if (followers.containsKey(user) || protectedUsers.contains(user)
+                        || inActiveBatch.contains(user)) continue;
+                if (snoozed != null && snoozed.optLong(user, 0L) > nowMs) continue;
+                eligible.add(nativeFocusCandidate(user, entry.getValue(), "main",
+                        "Double Check · no aparece en followers sincronizados", false, true));
+            }
+            // Like the Desktop Double Check cycle, older unfollowed-back accounts
+            // and accounts without a current confirmed review are revisited.
+            JSONObject reviewedMeta = syncedWorkspaceState.optJSONObject("reviewedMeta");
+            eligible.sort((a, b) -> {
+                String au = a.optString("username", "");
+                String bu = b.optString("username", "");
+                JSONObject am = reviewedMeta == null ? null : reviewedMeta.optJSONObject(au);
+                JSONObject bm = reviewedMeta == null ? null : reviewedMeta.optJSONObject(bu);
+                boolean aDone = am != null && am.optLong("reviewedAt", 0L) > 0L;
+                boolean bDone = bm != null && bm.optLong("reviewedAt", 0L) > 0L;
+                if (aDone != bDone) return aDone ? 1 : -1;
+                return compareFocusTimestamp(a.optJSONObject("source"), b.optJSONObject("source"), au, bu);
+            });
+            List<JSONObject> candidates = new ArrayList<>();
+            for (JSONObject candidate : eligible) {
+                if (!seen.contains(candidate.optString("username", ""))) candidates.add(candidate);
+            }
+            if (candidates.isEmpty()) {
+                boolean finished = !eligible.isEmpty() && !restartCycle;
+                mainHandler.post(() -> {
+                    if (finished) {
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle("Ciclo Double Check completado")
+                                .setMessage("Todos los perfiles actualmente elegibles ya pasaron por este ciclo. ¿Reiniciar y comenzar otra vez con tandas de 30?")
+                                .setNegativeButton("Conservar ciclo", null)
+                                .setPositiveButton("Reiniciar ciclo", (dialog, which) ->
+                                        createDoubleCheckBatch(true))
+                                .show();
+                    } else {
+                        Snackbar.make(content, "No hay perfiles elegibles para Double Check en este momento.", Snackbar.LENGTH_LONG).show();
+                    }
+                });
+                return;
+            }
+            int count = Math.min(30, candidates.size());
+            List<JSONObject> selected = candidates.subList(0, count);
+            String now = Instant.now().toString();
+            String batchId = "focus_double_android_" + System.currentTimeMillis() + "_" +
+                    UUID.randomUUID().toString().substring(0, 8);
+            String label = "Double Check 30 · No te siguen";
+            JSONObject batch = new JSONObject()
+                    .put("id", batchId)
+                    .put("module", "main")
+                    .put("label", label)
+                    .put("target_size", count)
+                    .put("status", "prepared")
+                    .put("created_device", "android")
+                    .put("created_at", now)
+                    .put("source_signature", "double_check:" + epoch)
+                    .put("updated_at", now);
+            JSONArray items = new JSONArray();
+            for (int i = 0; i < count; i++) {
+                JSONObject candidate = selected.get(i);
+                items.put(new JSONObject()
+                        .put("batch_id", batchId)
+                        .put("position", i + 1)
+                        .put("username", candidate.optString("username", ""))
+                        .put("status", "pending")
+                        .put("context", candidate.optJSONObject("context"))
+                        .put("updated_at", now));
+            }
+            api.upsert("focus_batches", "user_id,id", new JSONArray().put(batch));
+            api.upsert("focus_batch_items", "user_id,batch_id,username", items);
+            for (int i = 0; i < count; i++)
+                seen.add(selected.get(i).optString("username", ""));
+            JSONArray seenArray = new JSONArray();
+            for (String username : seen) seenArray.put(username);
+            persistDoubleCheckCycle(new JSONObject()
+                    .put("epoch", epoch)
+                    .put("seen", seenArray)
+                    .put("lastBatchId", batchId)
+                    .put("lastBatchAt", now));
+
+            insertEvent("", "batch_created", "main", batchId, label, count, "",
+                    new JSONObject().put("source", "double_check_not_following")
+                            .put("usernames", usernames(items))
+                            .put("cycle_epoch", epoch));
+
+            mainHandler.post(() -> {
+                if (!"focus".equals(currentScreen)) return;
+                Snackbar.make(content,
+                        "Double Check: " + count + " perfiles nuevos dentro del ciclo",
+                        Snackbar.LENGTH_LONG).show();
+                loadBatch(batch);
+            });
+        }, true);
+    }
+
     private void refreshFocusSourceData() throws Exception {
         JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
         JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
