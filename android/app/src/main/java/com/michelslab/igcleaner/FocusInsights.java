@@ -63,9 +63,13 @@ final class FocusInsights {
 
     private static String order(long following, long follower) {
         if (following <= 0L || follower <= 0L) return "";
-        if (following < follower) return "Tú lo seguiste primero";
-        if (follower < following) return "Te siguió primero";
-        return "Se siguieron al mismo tiempo";
+        if (following == follower) return "Se siguieron al mismo tiempo";
+        long days = Math.abs(following - follower) / 86400L;
+        long hours = Math.abs(following - follower) / 3600L;
+        String difference = days > 0L ? days + (days == 1L ? " día" : " días")
+                : hours > 0L ? hours + (hours == 1L ? " hora" : " horas") : "menos de una hora";
+        return (following < follower ? "Tú lo seguiste primero" : "Te siguió primero") +
+                " · diferencia de " + difference;
     }
 
     static String detail(Context ctx, JSONObject item, String module,
@@ -138,6 +142,17 @@ final class FocusInsights {
                 lines.add("Última revisión registrada: " +
                         dateTimeMillis(ctx, history.optLong("lastReviewed", 0L)));
         }
+        if (row != null) {
+            String riskLevel = row.optString("riskLevel", "");
+            int riskScore = row.optInt("riskScore", -1);
+            if (!riskLevel.isBlank())
+                lines.add("Riesgo calculado: " + riskLevel +
+                        (riskScore >= 0 ? " · " + riskScore + " puntos" : ""));
+        }
+        JSONObject provenance = "pending".equals(module) ? pendingRecord :
+                followingRecord != null ? followingRecord : followerRecord;
+        if (provenance != null && !provenance.optString("source", "").isBlank())
+            lines.add("Origen en export: " + provenance.optString("source"));
         if (rawContext != null) {
             String historical = rawContext.optString("change", rawContext.optString("history", ""));
             if (!historical.isBlank()) lines.add("Cambio histórico: " + historical);
