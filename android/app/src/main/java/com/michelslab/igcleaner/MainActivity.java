@@ -1634,7 +1634,7 @@ public final class MainActivity extends AppCompatActivity {
                         || inActiveBatch.contains(user)) continue;
                 if (snoozed != null && snoozed.optLong(user, 0L) > nowMs) continue;
                 eligible.add(nativeFocusCandidate(user, entry.getValue(), "main",
-                        "Double Check · no aparece en followers sincronizados", false, true));
+                        "Double Check · no aparece en followers sincronizados", false, true, following, followers));
             }
             // Like the Desktop Double Check cycle, older unfollowed-back accounts
             // and accounts without a current confirmed review are revisited.
@@ -1801,7 +1801,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (followers.containsKey(username) || excluded.contains(username)) continue;
                 if (isNativeFollowingResolved(username, source, done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Doesn't follow you back", false, true));
+                        "Doesn't follow you back", false, true, following, followers));
             }
         } else if ("mutual".equals(module)) {
             for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
@@ -1811,7 +1811,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (isNativeReviewedForMode(username, source, "followers",
                         done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "You follow each other", true, true));
+                        "You follow each other", true, true, following, followers));
             }
         } else if ("followers".equals(module)) {
             for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
@@ -1821,7 +1821,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (isNativeReviewedForMode(username, source, "followers",
                         done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Follower you don't follow back", true, false));
+                        "Follower you don't follow back", true, false, following, followers));
             }
         } else if ("pending".equals(module)) {
             for (int i = 0; i < syncedPending.length(); i++) {
@@ -1834,7 +1834,7 @@ public final class MainActivity extends AppCompatActivity {
                 boolean reviewed = meta != null && meta.optLong("reviewedAt", 0L) > 0L;
                 if (reviewed || snoozeUntil > now) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Pending follow request", false, true));
+                        "Pending follow request", false, true, following, followers));
             }
         }
 
@@ -1847,9 +1847,10 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private JSONObject nativeFocusCandidate(String username, JSONObject source, String module,
-                                            String contextText, boolean isFollower, boolean iFollow) throws Exception {
-        JSONObject followerRecord = jsonArrayByUsername(syncedFollowers).get(username);
-        JSONObject followingRecord = jsonArrayByUsername(syncedFollowing).get(username);
+                                            String contextText, boolean isFollower, boolean iFollow,
+                                            Map<String, JSONObject> following, Map<String, JSONObject> followers) throws Exception {
+        JSONObject followerRecord = followers.get(username);
+        JSONObject followingRecord = following.get(username);
         JSONObject row = new JSONObject()
                 .put("relation", contextText)
                 .put("relationGood", "mutual".equals(module))
@@ -2007,19 +2008,19 @@ public final class MainActivity extends AppCompatActivity {
         focusTitle.setText(label);
         focusSubtitle.setText("Toca un perfil → se abre Instagram → vuelve aquí y continúa.");
 
+        // Index synchronized relationship snapshots once per batch, not once per row.
+        Map<String, JSONObject> followingIndex = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followerIndex = jsonArrayByUsername(syncedFollowers);
+        Map<String, JSONObject> pendingIndex = jsonArrayByUsername(syncedPending);
         List<ProfileAdapter.ProfileRow> rows = new ArrayList<>();
         for (int i = 0; i < currentItems.length(); i++) {
             JSONObject item = currentItems.optJSONObject(i);
             if (item == null) continue;
             String username = item.optString("username");
             boolean checked = opened.contains(username);
-            JSONObject cx = item.optJSONObject("context");
             String module = currentBatch == null ? "main" : currentBatch.optString("module", "main");
             String detail = FocusInsights.detail(this, item, module,
-                    jsonArrayByUsername(syncedFollowing),
-                    jsonArrayByUsername(syncedFollowers),
-                    jsonArrayByUsername(syncedPending),
-                    syncedWorkspaceState);
+                    followingIndex, followerIndex, pendingIndex, syncedWorkspaceState);
             String badge;
             if (remotelyReviewed.contains(username)) {
                 badge = "REVISADO " + cap(reviewedDevice.get(username));
