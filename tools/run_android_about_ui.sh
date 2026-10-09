@@ -21,7 +21,7 @@ for viewport in compact wide; do
     adb logcat -d -t 200 | tail -100 || true
     exit 1
   fi
-  if ! grep -Eq 'OK \(2 tests\)' "artifacts/visual/android/instrumentation-$viewport.txt"; then
+  if ! grep -Eq 'OK \(5 tests\)' "artifacts/visual/android/instrumentation-$viewport.txt"; then
     echo "::error::Android UI instrumentation did not report success for $viewport"
     adb logcat -d -t 200 | tail -100 || true
     exit 1
