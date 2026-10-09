@@ -1480,8 +1480,10 @@ public final class MainActivity extends AppCompatActivity {
             total++;
             if (seen.contains(username)) visited++;
         }
+        // A frozen/created batch counts in the rotation; it is NOT proof that
+        // its profiles were actually opened or that review was confirmed.
         doubleCheckCycleStats.setText("Ciclo sincronizado: " + visited + " / " + total +
-                " vistos · " + Math.max(0, total - visited) + " restantes");
+                " incluidos en tandas · " + Math.max(0, total - visited) + " sin incluir");
     }
 
     private void showCreateFocusDialog() {
