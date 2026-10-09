@@ -1305,15 +1305,16 @@ public final class MainActivity extends AppCompatActivity {
             touchDevice();
             // One history stream serves active batches plus last batch per module.
             JSONArray batches = api.get("focus_batches?select=*&order=created_at.desc&limit=300");
+            JSONArray events = api.get("audit_events?select=*&action=in.(focus,batch_created,batch_completed)&order=event_at.desc&limit=300");
             mainHandler.post(() -> {
                 if (!"focus".equals(currentScreen) || focusView == null) return;
-                renderBatches(batches);
-                setGlobalStatus("Focus actualizado · " + batches.length() + " tanda(s)");
+                renderBatches(batches, events);
+                setGlobalStatus("Focus · historial sincronizado");
             });
         }, true);
     }
 
-    private void renderBatches(JSONArray batches) {
+    private void renderBatches(JSONArray batches, JSONArray events) {
         currentBatch = null;
         clearFocusState();
         focusTitle.setText("Focus");
@@ -1326,7 +1327,7 @@ public final class MainActivity extends AppCompatActivity {
         batchContainer.removeAllViews();
 
         batchContainer.addView(createFocusBuilderCard());
-        batchContainer.addView(createFocusHistoryCard(batches));
+        batchContainer.addView(createFocusHistoryCard(batches, events));
 
         JSONArray activeBatches = new JSONArray();
         for (int i = 0; i < batches.length(); i++) {
@@ -1346,7 +1347,7 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
-    private View createFocusHistoryCard(JSONArray batches) {
+    private View createFocusHistoryCard(JSONArray batches, JSONArray events) {
         MaterialCardView card = new MaterialCardView(this);
         card.setCardBackgroundColor(getColor(R.color.ig_surface_2));
         card.setStrokeColor(getColor(R.color.ig_border));
@@ -1368,6 +1369,32 @@ public final class MainActivity extends AppCompatActivity {
                 if ("double".equals(modules[j]) ? isDouble
                         : !isDouble && modules[j].equals(batch.optString("module", ""))) {
                     recent = batch;
+                    break;
+                }
+            }
+            // Older Desktop Double Check cycles emitted audit events rather
+            // than a focus_batches row; do not falsely claim "never used".
+            if ("double".equals(modules[j])) {
+                for (int k = 0; k < events.length(); k++) {
+                    JSONObject event = events.optJSONObject(k);
+                    if (event == null) continue;
+                    JSONObject meta = event.optJSONObject("meta");
+                    String source = meta == null ? "" : meta.optString("source", "");
+                    String label = event.optString("batch_label", "");
+                    if (!"double_check_not_following".equals(source) &&
+                            !label.toLowerCase(Locale.ROOT).contains("double check")) continue;
+                    String when = event.optString("event_at", "");
+                    if (recent != null && parseInstant(recent.optString("created_at", ""))
+                            .isAfter(parseInstant(when))) break;
+                    JSONObject legacy = new JSONObject();
+                    try {
+                        legacy.put("created_at", when)
+                                .put("target_size", event.optInt("batch_size",
+                                        meta == null ? 0 : meta.optInt("count", 0)))
+                                .put("created_device", event.optString("device_type", "desktop"))
+                                .put("status", "active");
+                    } catch (Exception ignored) {}
+                    recent = legacy;
                     break;
                 }
             }
