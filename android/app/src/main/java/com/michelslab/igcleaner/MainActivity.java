@@ -146,6 +146,7 @@ public final class MainActivity extends AppCompatActivity {
     private MaterialButton finishBatch;
     private MaterialButton refreshFocus;
     private ProfileAdapter focusAdapter;
+    private TextView doubleCheckCycleStats;
 
     private JSONObject currentBatch;
     private JSONArray currentItems = new JSONArray();
@@ -1303,12 +1304,15 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("Buscando Focus…");
         runAsync(() -> {
             touchDevice();
+            refreshFocusSourceData();
+            JSONObject doubleCycle = fetchDoubleCheckCycle();
             // One history stream serves active batches plus last batch per module.
             JSONArray batches = api.get("focus_batches?select=*&order=created_at.desc&limit=300");
             JSONArray events = api.get("audit_events?select=*&action=in.(focus,batch_created,batch_completed)&order=event_at.desc&limit=300");
             mainHandler.post(() -> {
                 if (!"focus".equals(currentScreen) || focusView == null) return;
                 renderBatches(batches, events);
+                renderDoubleCheckStats(doubleCycle);
                 setGlobalStatus("Focus · historial sincronizado");
             });
         }, true);
@@ -1449,6 +1453,8 @@ public final class MainActivity extends AppCompatActivity {
         doubleCheck.setLayoutParams(doubleLp);
         doubleCheck.setOnClickListener(v -> createDoubleCheckBatch(false));
         inner.addView(doubleCheck);
+        doubleCheckCycleStats = text("Consultando ciclo sincronizado…", 11, R.color.ig_cyan, false);
+        inner.addView(doubleCheckCycleStats);
         inner.addView(text("Ciclo independiente · hasta 30 distintos por tanda · confirma la revisión al final.",
                 11, R.color.ig_muted, false));
         card.addView(inner);
@@ -1458,6 +1464,24 @@ public final class MainActivity extends AppCompatActivity {
         lp.setMargins(0, 0, 0, dp(14));
         card.setLayoutParams(lp);
         return card;
+    }
+
+    private void renderDoubleCheckStats(JSONObject cycle) {
+        if (doubleCheckCycleStats == null) return;
+        Set<String> seen = jsonStringSet(cycle == null ? null : cycle.optJSONArray("seen"));
+        Map<String, JSONObject> following = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followers = jsonArrayByUsername(syncedFollowers);
+        Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+        JSONObject snoozed = syncedWorkspaceState.optJSONObject("snooze");
+        int total = 0, visited = 0;
+        for (String username : following.keySet()) {
+            if (followers.containsKey(username) || protectedUsers.contains(username)) continue;
+            if (snoozed != null && snoozed.optLong(username, 0L) > System.currentTimeMillis()) continue;
+            total++;
+            if (seen.contains(username)) visited++;
+        }
+        doubleCheckCycleStats.setText("Ciclo sincronizado: " + visited + " / " + total +
+                " vistos · " + Math.max(0, total - visited) + " restantes");
     }
 
     private void showCreateFocusDialog() {
@@ -2066,16 +2090,33 @@ public final class MainActivity extends AppCompatActivity {
 
     private void confirmFinishBatch() {
         if (currentItems.length() == 0 || opened.size() < currentItems.length()) return;
+        boolean doubleCheck = currentBatch != null &&
+                currentBatch.optString("source_signature", "").startsWith("double_check:");
+        if (doubleCheck) {
+            String[] decisions = {"Revisado / verificado", "Conservar", "Sospechoso, pero conservar"};
+            String[] codes = {"reviewed", "keep", "suspicious_keep"};
+            final int[] choice = {0};
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Confirmar Double Check")
+                    .setMessage("Abrir no equivale a revisar. Elige la decisión para los " +
+                            currentItems.length() + " perfiles de esta tanda.")
+                    .setSingleChoiceItems(decisions, 0, (dialog, which) -> choice[0] = which)
+                    .setNegativeButton("No pude revisar todavía", null)
+                    .setPositiveButton("Confirmar revisión", (dialog, which) ->
+                            finalizeBatch(codes[choice[0]]))
+                    .show();
+            return;
+        }
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Finalizar revisión")
                 .setMessage("¿Confirmas que revisaste los " + currentItems.length() +
                         " perfiles? Abrir un perfil y revisarlo son eventos distintos; esta confirmación marca la tanda como revisada.")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Sí, revisados", (dialog, which) -> finalizeBatch())
+                .setPositiveButton("Sí, revisados", (dialog, which) -> finalizeBatch("reviewed"))
                 .show();
     }
 
-    private void finalizeBatch() {
+    private void finalizeBatch(String decision) {
         setGlobalStatus("Guardando revisión…");
         runAsync(() -> {
             String now = Instant.now().toString();
@@ -2094,6 +2135,7 @@ public final class MainActivity extends AppCompatActivity {
                                 .put("status", "reviewed")
                                 .put("reviewed_at", now)
                                 .put("reviewed_device", "android")
+                                .put("decision", decision)
                                 .put("updated_at", now));
 
                 JSONObject state = new JSONObject()
@@ -2102,8 +2144,8 @@ public final class MainActivity extends AppCompatActivity {
                         .put("reviewed_at", now)
                         .put("reviewed_device", "android")
                         .put("reviewed_device_id", deviceId)
-                        .put("decision", "")
-                        .put("protected", false)
+                        .put("decision", decision)
+                        .put("protected", "keep".equals(decision) || "suspicious_keep".equals(decision))
                         .put("context", item.optJSONObject("context") == null
                                 ? new JSONObject()
                                 : item.optJSONObject("context"))
@@ -2112,7 +2154,7 @@ public final class MainActivity extends AppCompatActivity {
 
                 insertEvent(username, "reviewed", module, batchId,
                         currentBatch.optString("label", "Focus"),
-                        currentItems.length(), "",
+                        currentItems.length(), decision,
                         new JSONObject().put("via", "android_batch_finalize"));
             }
 
@@ -2125,7 +2167,7 @@ public final class MainActivity extends AppCompatActivity {
 
             insertEvent("", "batch_completed", module, batchId,
                     currentBatch.optString("label", "Focus"),
-                    currentItems.length(), "",
+                    currentItems.length(), decision,
                     new JSONObject().put("usernames", usernames(currentItems)));
 
             mainHandler.post(() -> {
