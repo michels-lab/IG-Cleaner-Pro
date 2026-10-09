@@ -33,7 +33,15 @@ final class FocusInsights {
     static String date(Context ctx, long seconds) {
         long ts = validSeconds(seconds);
         if (ts <= 0L) return "Sin fecha";
-        return DateFormat.getMediumDateFormat(ctx).format(new Date(ts * 1000L));
+        long days = Math.max(0L, (System.currentTimeMillis() / 1000L - ts) / 86400L);
+        String relative;
+        if (days == 0L) relative = "hoy";
+        else if (days == 1L) relative = "hace 1 día";
+        else if (days < 30L) relative = "hace " + days + " días";
+        else if (days < 365L) relative = "hace " + Math.max(1L, days / 30L) + " meses";
+        else relative = "hace " + (days / 365L) + " años";
+        return DateFormat.getMediumDateFormat(ctx).format(new Date(ts * 1000L)) +
+                " · " + relative;
     }
 
     private static String dateTime(Context ctx, String iso) {
