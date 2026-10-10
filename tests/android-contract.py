@@ -119,6 +119,24 @@ for token in ("getGlobalVisibleRect", "requireVisibleView(dialog.findViewById(R.
               "screenshot(\"about\",\"socials\")"):
     assert token in testcode, f"Missing actual About render test assertion: {token}"
 
+# Native Focus dates, history, Double Check and cycle must be runtime-testable.
+insights = (ROOT / "android/app/src/main/java/com/michelslab/igcleaner/FocusInsights.java").read_text(encoding="utf-8")
+focus_test_file = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/FocusInsightsTest.java"
+assert focus_test_file.is_file(), "Focus insight instrumented test absent"
+focus_test = focus_test_file.read_text(encoding="utf-8")
+for token in ("Lo seguiste:", "Te siguió:", "Solicitud enviada:", "Última revisión:",
+              "Historial:", "no verificable", "batchHistory", "NO VERIFICABLE"):
+    assert token in insights, f"Missing synchronized Focus field: {token}"
+for token in ("createDoubleCheckBatch", "fetchDoubleCheckCycle", "persistDoubleCheckCycle",
+              "focus_double_check_cycle", "renderDoubleCheckStats",
+              "createFocusHistoryCard", "FocusInsights.detail(this, item",
+              "Confirmar Double Check", "setSingleChoiceItems(decisions"):
+    assert token in main, f"Native Double Check/last-batch missing: {token}"
+for token in ("followingAndFollowerDatesHaveCorrectDirectionAndHistory",
+              "oldDesktopBatchDatesSurviveNewSnapshotAndUnknownsStayUnknown",
+              "pendingAndLastBatchUseOwnDatesAndSourceDevice"):
+    assert token in focus_test, f"Missing runtime Focus insight QA: {token}"
+assert "5 tests" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8")
 print("Android UX/Focus/privacy/About regression contract passed.")
 
 # Real Home screens must now be checked in the packaged Android runtime.

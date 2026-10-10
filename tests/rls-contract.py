@@ -27,12 +27,14 @@ for token in (
     assert token in schema, f"Optimized authenticated-only RLS policy missing: {token}"
 
 for token in (
-    "select plan(35)",
+    "select plan(41)",
     "set local role authenticated",
     "set local request.jwt.claim.sub",
     "cannot update user 1",
     "cannot delete user 1",
     "can insert own",
+    "focus_double_check_cycle",
+    "Double Check updates do not overwrite canonical primary review state",
 ):
     assert token in suite, f"RLS behavioral test token missing: {token}"
 

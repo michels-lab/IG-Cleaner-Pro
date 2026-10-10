@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(41);
 
 -- Two deterministic users; rows are rolled back after the suite.
 -- No auth.users rows are required because these tables intentionally store the
@@ -83,6 +83,46 @@ select lives_ok($$insert into public.focus_batch_items(user_id,batch_id,position
 select lives_ok($$insert into public.profile_state(user_id,username,module,reviewed_at,reviewed_device) values ('22222222-2222-4222-8222-222222222222','rls_u2_own_profile','main',now(),'android')$$,'user 2 can insert own profile state');
 select lives_ok($$insert into public.list_snapshots(user_id,list_name,payload,item_count) values ('22222222-2222-4222-8222-222222222222','followers','[]'::jsonb,0)$$,'user 2 can insert own list snapshot');
 select lives_ok($$insert into public.workspace_state(user_id,state_key,payload) values ('22222222-2222-4222-8222-222222222222','secondary','{}'::jsonb)$$,'user 2 can insert own workspace state');
+
+-- 36–41: simulated same-account Desktop/Android Focus cycle roundtrip.
+-- Both devices share one account-scoped key without mutating canonical
+-- review history; the other account must never read that key.
+set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+select lives_ok($dc$
+  insert into public.workspace_state(user_id,state_key,payload,source_device)
+  values ('11111111-1111-4111-8111-111111111111',
+          'focus_double_check_cycle',
+          '{"epoch":7,"seen":["alice"],"lastBatchId":"desktop-batch"}'::jsonb,
+          'desktop')
+$dc$, 'Desktop can publish the Double Check cycle in its own separate workspace state');
+
+select is((select payload->>'lastBatchId' from public.workspace_state
+  where state_key='focus_double_check_cycle'),
+  'desktop-batch', 'Android would read Desktop batch marker through same authenticated account');
+
+select lives_ok($dc$
+  insert into public.workspace_state(user_id,state_key,payload,source_device)
+  values ('11111111-1111-4111-8111-111111111111',
+          'focus_double_check_cycle',
+          '{"epoch":7,"seen":["alice","bob"],"lastBatchId":"android-batch"}'::jsonb,
+          'android')
+  on conflict (user_id,state_key)
+  do update set payload=excluded.payload,source_device=excluded.source_device
+$dc$, 'Android can update the shared cycle with its own additions');
+
+select is((select payload->'seen'->>1 from public.workspace_state
+  where state_key='focus_double_check_cycle'),
+  'bob', 'Desktop can read the Android cycle update without a duplicate state key');
+
+select is((select payload::text from public.workspace_state
+  where state_key='primary'),
+  '{}', 'Double Check updates do not overwrite canonical primary review state');
+
+set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+select is_empty($dc$
+  select state_key from public.workspace_state
+  where state_key='focus_double_check_cycle'
+$dc$,'An unrelated account cannot access another account Double Check cycle');
 
 select * from finish();
 rollback;

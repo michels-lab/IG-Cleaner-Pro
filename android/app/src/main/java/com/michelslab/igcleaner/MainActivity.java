@@ -146,6 +146,7 @@ public final class MainActivity extends AppCompatActivity {
     private MaterialButton finishBatch;
     private MaterialButton refreshFocus;
     private ProfileAdapter focusAdapter;
+    private TextView doubleCheckCycleStats;
 
     private JSONObject currentBatch;
     private JSONArray currentItems = new JSONArray();
@@ -1303,16 +1304,21 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("Buscando Focus…");
         runAsync(() -> {
             touchDevice();
-            JSONArray batches = api.get("focus_batches?select=*&status=in.(prepared,active)&order=created_at.desc&limit=30");
+            refreshFocusSourceData();
+            JSONObject doubleCycle = fetchDoubleCheckCycle();
+            // One history stream serves active batches plus last batch per module.
+            JSONArray batches = api.get("focus_batches?select=*&order=created_at.desc&limit=300");
+            JSONArray events = api.get("audit_events?select=*&action=in.(focus,batch_created,batch_completed)&order=event_at.desc&limit=300");
             mainHandler.post(() -> {
                 if (!"focus".equals(currentScreen) || focusView == null) return;
-                renderBatches(batches);
-                setGlobalStatus("Focus actualizado · " + batches.length() + " tanda(s)");
+                renderBatches(batches, events);
+                renderDoubleCheckStats(doubleCycle);
+                setGlobalStatus("Focus · historial sincronizado");
             });
         }, true);
     }
 
-    private void renderBatches(JSONArray batches) {
+    private void renderBatches(JSONArray batches, JSONArray events) {
         currentBatch = null;
         clearFocusState();
         focusTitle.setText("Focus");
@@ -1325,17 +1331,102 @@ public final class MainActivity extends AppCompatActivity {
         batchContainer.removeAllViews();
 
         batchContainer.addView(createFocusBuilderCard());
+        batchContainer.addView(createFocusHistoryCard(batches, events));
 
-        if (batches.length() == 0) {
+        JSONArray activeBatches = new JSONArray();
+        for (int i = 0; i < batches.length(); i++) {
+            JSONObject batch = batches.optJSONObject(i);
+            if (batch != null && ("prepared".equals(batch.optString("status")) ||
+                    "active".equals(batch.optString("status")))) activeBatches.put(batch);
+        }
+        if (activeBatches.length() == 0) {
             addEmptyCard(batchContainer, "No hay tandas activas",
                     "Puedes crear Foco 20/30/40 directamente en Android. Se guardará en tu cuenta y Desktop podrá verla.");
             return;
         }
 
-        for (int i = 0; i < batches.length(); i++) {
-            JSONObject batch = batches.optJSONObject(i);
+        for (int i = 0; i < activeBatches.length(); i++) {
+            JSONObject batch = activeBatches.optJSONObject(i);
             if (batch != null) batchContainer.addView(createBatchCard(batch));
         }
+    }
+
+    private View createFocusHistoryCard(JSONArray batches, JSONArray events) {
+        MaterialCardView card = new MaterialCardView(this);
+        card.setCardBackgroundColor(getColor(R.color.ig_surface_2));
+        card.setStrokeColor(getColor(R.color.ig_border));
+        card.setStrokeWidth(dp(1));
+        card.setRadius(dp(16));
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setPadding(dp(13), dp(10), dp(13), dp(10));
+        inner.addView(text("ÚLTIMA TANDA POR SECCIÓN", 11, R.color.ig_cyan, true));
+        String[] modules = {"main", "mutual", "followers", "pending", "double"};
+        String[] labels = {"REVIEW · no te siguen", "MUTUALS", "FOLLOWERS", "PENDING", "DOUBLE CHECK"};
+        for (int j = 0; j < modules.length; j++) {
+            JSONObject recent = null;
+            for (int i = 0; i < batches.length(); i++) {
+                JSONObject batch = batches.optJSONObject(i);
+                if (batch == null) continue;
+                boolean isDouble = batch.optString("source_signature", "").startsWith("double_check:")
+                        || batch.optString("label", "").toLowerCase(Locale.ROOT).contains("double check");
+                if ("double".equals(modules[j]) ? isDouble
+                        : !isDouble && modules[j].equals(batch.optString("module", ""))) {
+                    recent = batch;
+                    break;
+                }
+            }
+            // Desktop's unprepared Focus/Double Check operations may exist
+            // only as synchronized audit events. Apply to EVERY module, not
+            // just Double Check. Compare timestamps to avoid reporting an
+            // older audit event over a newer native/remote batch.
+            for (int k = 0; k < events.length(); k++) {
+                JSONObject event = events.optJSONObject(k);
+                if (event == null) continue;
+                JSONObject meta = event.optJSONObject("meta");
+                String source = meta == null ? "" : meta.optString("source", "");
+                String label = event.optString("batch_label", "");
+                String lower = label.toLowerCase(Locale.ROOT);
+                String mod = event.optString("module", "").toLowerCase(Locale.ROOT);
+                boolean doubleEvent = "double_check_not_following".equals(source)
+                        || lower.contains("double check") || lower.contains("doublecheck");
+                String eventSection;
+                if (doubleEvent) eventSection = "double";
+                else if (lower.contains("mutual") || mod.contains("mutual")) eventSection = "mutual";
+                else if (lower.contains("pending") || lower.contains("request")
+                        || mod.contains("pending")) eventSection = "pending";
+                else if (lower.contains("followers") || mod.contains("follower")) eventSection = "followers";
+                else if ("main".equals(mod) || "review".equals(mod) || "list".equals(mod)
+                        || lower.contains("no me sigue") || lower.contains("foco"))
+                    eventSection = "main";
+                else continue;
+                if (!modules[j].equals(eventSection)) continue;
+                String when = event.optString("event_at", "");
+                if (recent != null && parseInstant(recent.optString("created_at", ""))
+                        .isAfter(parseInstant(when))) break;
+                JSONObject legacy = new JSONObject();
+                try {
+                    boolean completed = "batch_completed".equals(event.optString("action", ""));
+                    legacy.put("created_at", when)
+                            .put("target_size", event.optInt("batch_size",
+                                    meta == null ? 0 : meta.optInt("count", 0)))
+                            .put("label", label)
+                            .put("created_device", event.optString("device_type", "desktop"))
+                            .put("status", completed ? "completed" : "activity");
+                    if (completed) legacy.put("completed_at", when);
+                } catch (Exception ignored) {}
+                recent = legacy;
+                break;
+            }
+            inner.addView(text(labels[j], 11, R.color.ig_text, true));
+            inner.addView(text(FocusInsights.batchHistory(this, recent), 11, R.color.ig_muted, false));
+        }
+        card.addView(inner);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, dp(12));
+        card.setLayoutParams(params);
+        return card;
     }
 
     private View createFocusBuilderCard() {
@@ -1368,6 +1459,20 @@ public final class MainActivity extends AppCompatActivity {
         inner.addView(title);
         inner.addView(body);
         inner.addView(create);
+        MaterialButton doubleCheck = new MaterialButton(this);
+        doubleCheck.setText("Double Check 30 · No te siguen");
+        doubleCheck.setAllCaps(false);
+        doubleCheck.setCornerRadius(dp(14));
+        LinearLayout.LayoutParams doubleLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        doubleLp.setMargins(0, dp(7), 0, 0);
+        doubleCheck.setLayoutParams(doubleLp);
+        doubleCheck.setOnClickListener(v -> createDoubleCheckBatch(false));
+        inner.addView(doubleCheck);
+        doubleCheckCycleStats = text("Consultando ciclo sincronizado…", 11, R.color.ig_cyan, false);
+        inner.addView(doubleCheckCycleStats);
+        inner.addView(text("Ciclo independiente · hasta 30 distintos por tanda · confirma la revisión al final.",
+                11, R.color.ig_muted, false));
         card.addView(inner);
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -1375,6 +1480,26 @@ public final class MainActivity extends AppCompatActivity {
         lp.setMargins(0, 0, 0, dp(14));
         card.setLayoutParams(lp);
         return card;
+    }
+
+    private void renderDoubleCheckStats(JSONObject cycle) {
+        if (doubleCheckCycleStats == null) return;
+        Set<String> seen = jsonStringSet(cycle == null ? null : cycle.optJSONArray("seen"));
+        Map<String, JSONObject> following = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followers = jsonArrayByUsername(syncedFollowers);
+        Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+        JSONObject snoozed = syncedWorkspaceState.optJSONObject("snooze");
+        int total = 0, visited = 0;
+        for (String username : following.keySet()) {
+            if (followers.containsKey(username) || protectedUsers.contains(username)) continue;
+            if (snoozed != null && snoozed.optLong(username, 0L) > System.currentTimeMillis()) continue;
+            total++;
+            if (seen.contains(username)) visited++;
+        }
+        // A frozen/created batch counts in the rotation; it is NOT proof that
+        // its profiles were actually opened or that review was confirmed.
+        doubleCheckCycleStats.setText("Ciclo sincronizado: " + visited + " / " + total +
+                " incluidos en tandas · " + Math.max(0, total - visited) + " sin incluir");
     }
 
     private void showCreateFocusDialog() {
@@ -1479,6 +1604,147 @@ public final class MainActivity extends AppCompatActivity {
         }, true);
     }
 
+    // One named cycle is shared by Android and Desktop. Keep it separate from
+    // canonical 'primary' workspace state so an Android batch cannot replace
+    // the saved review/protection history from Desktop.
+    private JSONObject fetchDoubleCheckCycle() throws Exception {
+        JSONArray rows = api.get("workspace_state?select=payload&state_key=eq.focus_double_check_cycle&limit=1");
+        JSONObject row = rows.optJSONObject(0);
+        JSONObject payload = row == null ? null : row.optJSONObject("payload");
+        return payload == null ? new JSONObject()
+                .put("epoch", 0L)
+                .put("seen", new JSONArray()) : payload;
+    }
+
+    private void persistDoubleCheckCycle(JSONObject cycle) throws Exception {
+        cycle.put("updatedAt", Instant.now().toString());
+        api.upsert("workspace_state", "user_id,state_key",
+                new JSONArray().put(new JSONObject()
+                        .put("state_key", "focus_double_check_cycle")
+                        .put("payload", cycle)
+                        .put("source_device", "android")
+                        .put("updated_at", Instant.now().toString())));
+    }
+
+    private void createDoubleCheckBatch(boolean restartCycle) {
+        setGlobalStatus("Double Check · preparando siguiente tanda…");
+        runAsync(() -> {
+            touchDevice();
+            refreshFocusSourceData();
+            if (!syncedReviewStateAvailable)
+                throw new IllegalStateException("Sincroniza primero la revisión de Desktop antes de Double Check.");
+            JSONObject followersEvidence = syncedWorkspaceState.optJSONObject("followersEvidence");
+            if (followersEvidence != null && followersEvidence.optBoolean("partial", false))
+                throw new IllegalStateException("Followers proviene de HTML parcial: las ausencias no demuestran que NO te siguen. Importa un export completo antes de Double Check.");
+
+            JSONObject cycle = fetchDoubleCheckCycle();
+            long epoch = cycle.optLong("epoch", 0L);
+            Set<String> seen = restartCycle ? new HashSet<>() :
+                    jsonStringSet(cycle.optJSONArray("seen"));
+            if (restartCycle) epoch = System.currentTimeMillis();
+            Map<String, JSONObject> following = jsonArrayByUsername(syncedFollowing);
+            Map<String, JSONObject> followers = jsonArrayByUsername(syncedFollowers);
+            Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
+            JSONObject snoozed = syncedWorkspaceState.optJSONObject("snooze");
+            Set<String> inActiveBatch = activeFocusUsernames();
+            List<JSONObject> eligible = new ArrayList<>();
+            long nowMs = System.currentTimeMillis();
+            for (Map.Entry<String, JSONObject> entry : following.entrySet()) {
+                String user = entry.getKey();
+                if (followers.containsKey(user) || protectedUsers.contains(user)
+                        || inActiveBatch.contains(user)) continue;
+                if (snoozed != null && snoozed.optLong(user, 0L) > nowMs) continue;
+                eligible.add(nativeFocusCandidate(user, entry.getValue(), "main",
+                        "Double Check · no aparece en followers sincronizados", false, true, following, followers));
+            }
+            // Like the Desktop Double Check cycle, older unfollowed-back accounts
+            // and accounts without a current confirmed review are revisited.
+            JSONObject reviewedMeta = syncedWorkspaceState.optJSONObject("reviewedMeta");
+            eligible.sort((a, b) -> {
+                String au = a.optString("username", "");
+                String bu = b.optString("username", "");
+                JSONObject am = reviewedMeta == null ? null : reviewedMeta.optJSONObject(au);
+                JSONObject bm = reviewedMeta == null ? null : reviewedMeta.optJSONObject(bu);
+                boolean aDone = am != null && am.optLong("reviewedAt", 0L) > 0L;
+                boolean bDone = bm != null && bm.optLong("reviewedAt", 0L) > 0L;
+                if (aDone != bDone) return aDone ? 1 : -1;
+                return compareFocusTimestamp(a.optJSONObject("source"), b.optJSONObject("source"), au, bu);
+            });
+            List<JSONObject> candidates = new ArrayList<>();
+            for (JSONObject candidate : eligible) {
+                if (!seen.contains(candidate.optString("username", ""))) candidates.add(candidate);
+            }
+            if (candidates.isEmpty()) {
+                boolean finished = !eligible.isEmpty() && !restartCycle;
+                mainHandler.post(() -> {
+                    if (finished) {
+                        new MaterialAlertDialogBuilder(this)
+                                .setTitle("Ciclo Double Check completado")
+                                .setMessage("Todos los perfiles actualmente elegibles ya pasaron por este ciclo. ¿Reiniciar y comenzar otra vez con tandas de 30?")
+                                .setNegativeButton("Conservar ciclo", null)
+                                .setPositiveButton("Reiniciar ciclo", (dialog, which) ->
+                                        createDoubleCheckBatch(true))
+                                .show();
+                    } else {
+                        Snackbar.make(content, "No hay perfiles elegibles para Double Check en este momento.", Snackbar.LENGTH_LONG).show();
+                    }
+                });
+                return;
+            }
+            int count = Math.min(30, candidates.size());
+            List<JSONObject> selected = candidates.subList(0, count);
+            String now = Instant.now().toString();
+            String batchId = "focus_double_android_" + System.currentTimeMillis() + "_" +
+                    UUID.randomUUID().toString().substring(0, 8);
+            String label = "Double Check 30 · No te siguen";
+            JSONObject batch = new JSONObject()
+                    .put("id", batchId)
+                    .put("module", "main")
+                    .put("label", label)
+                    .put("target_size", count)
+                    .put("status", "prepared")
+                    .put("created_device", "android")
+                    .put("created_at", now)
+                    .put("source_signature", "double_check:" + epoch)
+                    .put("updated_at", now);
+            JSONArray items = new JSONArray();
+            for (int i = 0; i < count; i++) {
+                JSONObject candidate = selected.get(i);
+                items.put(new JSONObject()
+                        .put("batch_id", batchId)
+                        .put("position", i + 1)
+                        .put("username", candidate.optString("username", ""))
+                        .put("status", "pending")
+                        .put("context", candidate.optJSONObject("context"))
+                        .put("updated_at", now));
+            }
+            api.upsert("focus_batches", "user_id,id", new JSONArray().put(batch));
+            api.upsert("focus_batch_items", "user_id,batch_id,username", items);
+            for (int i = 0; i < count; i++)
+                seen.add(selected.get(i).optString("username", ""));
+            JSONArray seenArray = new JSONArray();
+            for (String username : seen) seenArray.put(username);
+            persistDoubleCheckCycle(new JSONObject()
+                    .put("epoch", epoch)
+                    .put("seen", seenArray)
+                    .put("lastBatchId", batchId)
+                    .put("lastBatchAt", now));
+
+            insertEvent("", "batch_created", "main", batchId, label, count, "",
+                    new JSONObject().put("source", "double_check_not_following")
+                            .put("usernames", usernames(items))
+                            .put("cycle_epoch", epoch));
+
+            mainHandler.post(() -> {
+                if (!"focus".equals(currentScreen)) return;
+                Snackbar.make(content,
+                        "Double Check: " + count + " perfiles nuevos dentro del ciclo",
+                        Snackbar.LENGTH_LONG).show();
+                loadBatch(batch);
+            });
+        }, true);
+    }
+
     private void refreshFocusSourceData() throws Exception {
         JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
         JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
@@ -1550,13 +1816,16 @@ public final class MainActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
 
         if ("main".equals(module)) {
+            JSONObject evidence = syncedWorkspaceState.optJSONObject("followersEvidence");
+            if (evidence != null && evidence.optBoolean("partial", false))
+                throw new IllegalStateException("Review no puede inferir no-follow-back desde Followers HTML parcial. Importa una lista completa en Desktop.");
             for (Map.Entry<String, JSONObject> entry : following.entrySet()) {
                 String username = entry.getKey();
                 JSONObject source = entry.getValue();
                 if (followers.containsKey(username) || excluded.contains(username)) continue;
                 if (isNativeFollowingResolved(username, source, done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Doesn't follow you back", false, true));
+                        "Doesn't follow you back", false, true, following, followers));
             }
         } else if ("mutual".equals(module)) {
             for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
@@ -1566,7 +1835,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (isNativeReviewedForMode(username, source, "followers",
                         done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "You follow each other", true, true));
+                        "You follow each other", true, true, following, followers));
             }
         } else if ("followers".equals(module)) {
             for (Map.Entry<String, JSONObject> entry : followers.entrySet()) {
@@ -1576,7 +1845,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (isNativeReviewedForMode(username, source, "followers",
                         done, protectedUsers, snooze, reviewedMeta)) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Follower you don't follow back", true, false));
+                        "Follower you don't follow back", true, false, following, followers));
             }
         } else if ("pending".equals(module)) {
             for (int i = 0; i < syncedPending.length(); i++) {
@@ -1589,7 +1858,7 @@ public final class MainActivity extends AppCompatActivity {
                 boolean reviewed = meta != null && meta.optLong("reviewedAt", 0L) > 0L;
                 if (reviewed || snoozeUntil > now) continue;
                 out.add(nativeFocusCandidate(username, source, module,
-                        "Pending follow request", false, true));
+                        "Pending follow request", false, true, following, followers));
             }
         }
 
@@ -1602,14 +1871,20 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private JSONObject nativeFocusCandidate(String username, JSONObject source, String module,
-                                            String contextText, boolean isFollower, boolean iFollow) throws Exception {
+                                            String contextText, boolean isFollower, boolean iFollow,
+                                            Map<String, JSONObject> following, Map<String, JSONObject> followers) throws Exception {
+        JSONObject followerRecord = followers.get(username);
+        JSONObject followingRecord = following.get(username);
         JSONObject row = new JSONObject()
                 .put("relation", contextText)
                 .put("relationGood", "mutual".equals(module))
                 .put("followsBack", "mutual".equals(module))
                 .put("isFollower", isFollower)
                 .put("iFollow", iFollow)
-                .put("dateMain", source == null ? 0 : source.optLong("timestamp", 0));
+                .put("dateMain", source == null ? 0 : source.optLong("timestamp", 0))
+                .put("dateOther", ("mutual".equals(module) || "followers".equals(module))
+                        ? (followingRecord == null ? 0 : followingRecord.optLong("timestamp", 0))
+                        : (followerRecord == null ? 0 : followerRecord.optLong("timestamp", 0)));
 
         JSONObject context = new JSONObject()
                 .put("context", contextText)
@@ -1702,6 +1977,9 @@ public final class MainActivity extends AppCompatActivity {
                 batch.put("status", "active");
             }
             String batchId = encode(batch.optString("id"));
+            // Refresh current relationship dates and review history for both
+            // frozen Desktop batches and Android-created batches.
+            refreshFocusSourceData();
             JSONArray items = api.get("focus_batch_items?select=*&batch_id=eq." + batchId + "&order=position.asc");
             currentItems = items;
 
@@ -1754,14 +2032,19 @@ public final class MainActivity extends AppCompatActivity {
         focusTitle.setText(label);
         focusSubtitle.setText("Toca un perfil → se abre Instagram → vuelve aquí y continúa.");
 
+        // Index synchronized relationship snapshots once per batch, not once per row.
+        Map<String, JSONObject> followingIndex = jsonArrayByUsername(syncedFollowing);
+        Map<String, JSONObject> followerIndex = jsonArrayByUsername(syncedFollowers);
+        Map<String, JSONObject> pendingIndex = jsonArrayByUsername(syncedPending);
         List<ProfileAdapter.ProfileRow> rows = new ArrayList<>();
         for (int i = 0; i < currentItems.length(); i++) {
             JSONObject item = currentItems.optJSONObject(i);
             if (item == null) continue;
             String username = item.optString("username");
             boolean checked = opened.contains(username);
-            JSONObject cx = item.optJSONObject("context");
-            String detail = contextText(cx);
+            String module = currentBatch == null ? "main" : currentBatch.optString("module", "main");
+            String detail = FocusInsights.detail(this, item, module,
+                    followingIndex, followerIndex, pendingIndex, syncedWorkspaceState);
             String badge;
             if (remotelyReviewed.contains(username)) {
                 badge = "REVISADO " + cap(reviewedDevice.get(username));
@@ -1832,16 +2115,33 @@ public final class MainActivity extends AppCompatActivity {
 
     private void confirmFinishBatch() {
         if (currentItems.length() == 0 || opened.size() < currentItems.length()) return;
+        boolean doubleCheck = currentBatch != null &&
+                currentBatch.optString("source_signature", "").startsWith("double_check:");
+        if (doubleCheck) {
+            String[] decisions = {"Revisado / verificado", "Conservar", "Sospechoso, pero conservar"};
+            String[] codes = {"reviewed", "keep", "suspicious_keep"};
+            final int[] choice = {0};
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Confirmar Double Check")
+                    .setMessage("Abrir no equivale a revisar. Elige la decisión para los " +
+                            currentItems.length() + " perfiles de esta tanda.")
+                    .setSingleChoiceItems(decisions, 0, (dialog, which) -> choice[0] = which)
+                    .setNegativeButton("No pude revisar todavía", null)
+                    .setPositiveButton("Confirmar revisión", (dialog, which) ->
+                            finalizeBatch(codes[choice[0]]))
+                    .show();
+            return;
+        }
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Finalizar revisión")
                 .setMessage("¿Confirmas que revisaste los " + currentItems.length() +
                         " perfiles? Abrir un perfil y revisarlo son eventos distintos; esta confirmación marca la tanda como revisada.")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Sí, revisados", (dialog, which) -> finalizeBatch())
+                .setPositiveButton("Sí, revisados", (dialog, which) -> finalizeBatch("reviewed"))
                 .show();
     }
 
-    private void finalizeBatch() {
+    private void finalizeBatch(String decision) {
         setGlobalStatus("Guardando revisión…");
         runAsync(() -> {
             String now = Instant.now().toString();
@@ -1860,6 +2160,7 @@ public final class MainActivity extends AppCompatActivity {
                                 .put("status", "reviewed")
                                 .put("reviewed_at", now)
                                 .put("reviewed_device", "android")
+                                .put("decision", decision)
                                 .put("updated_at", now));
 
                 JSONObject state = new JSONObject()
@@ -1868,8 +2169,8 @@ public final class MainActivity extends AppCompatActivity {
                         .put("reviewed_at", now)
                         .put("reviewed_device", "android")
                         .put("reviewed_device_id", deviceId)
-                        .put("decision", "")
-                        .put("protected", false)
+                        .put("decision", decision)
+                        .put("protected", "keep".equals(decision) || "suspicious_keep".equals(decision))
                         .put("context", item.optJSONObject("context") == null
                                 ? new JSONObject()
                                 : item.optJSONObject("context"))
@@ -1878,7 +2179,7 @@ public final class MainActivity extends AppCompatActivity {
 
                 insertEvent(username, "reviewed", module, batchId,
                         currentBatch.optString("label", "Focus"),
-                        currentItems.length(), "",
+                        currentItems.length(), decision,
                         new JSONObject().put("via", "android_batch_finalize"));
             }
 
@@ -1891,7 +2192,7 @@ public final class MainActivity extends AppCompatActivity {
 
             insertEvent("", "batch_completed", module, batchId,
                     currentBatch.optString("label", "Focus"),
-                    currentItems.length(), "",
+                    currentItems.length(), decision,
                     new JSONObject().put("usernames", usernames(currentItems)));
 
             mainHandler.post(() -> {
@@ -2053,7 +2354,12 @@ public final class MainActivity extends AppCompatActivity {
             touchDevice();
             mainHandler.post(() -> {
                 setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
-                if ("focus".equals(currentScreen) && currentBatch == null) loadBatches();
+                if ("focus".equals(currentScreen)) {
+                    // Sync must refresh real Focus dates/history even while a
+                    // batch is open, not merely show a misleading status.
+                    if (currentBatch == null) loadBatches();
+                    else loadBatch(currentBatch);
+                }
             });
         }, true);
     }

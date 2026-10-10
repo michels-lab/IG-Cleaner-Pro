@@ -44,6 +44,10 @@ The accepted About is **one cohesive composition**, not three competing cards an
 
 The superseded master "author portrait next to Michel's Lab panel" *default* must not override these specific product instructions. Rework the actual structure; do not introduce a final cascading CSS override layer or use static source assertions as substitutes for runtime screenshots. Preserve the approved first logo and existing portrait bytes.
 
+### Focus parity across Android and Desktop
+
+Android Focus and Double Check must expose meaningful synchronized data: exact and relative dates (followed/follower), relationship direction, verified/unknown source context, review decisions/history and last Focus batch per module including device/status. Double Check 30 rotates usernames without repeats within a cross-device epoch stored in `workspace_state` with `state_key=focus_double_check_cycle`, separately from authoritative `primary` review history. Preserve frozen usernames and the distinction opened ≠ reviewed. Do not assume missing timestamps mean recent follows or missing followers in partial HTML conclusively imply unfollow. Require real emulator runtime tests for date directions/unknowns and true UI acceptance before publication.
+
 ## Validation
 
 Inspect current CI/workflows and run the strongest relevant current-commit checks. Desktop/local-Web changes must validate import/state migration and the affected interaction flow. Android changes must build the real app path and keep device-only parity/sync/export behavior explicitly open until actually tested.

@@ -10594,6 +10594,7 @@ function v96SeenSet(key){
 }
 function v96SaveSeenSet(key,set){
   localStorage.setItem(key,JSON.stringify([...set]));
+  if(key===LS_DOUBLE_CHECK_SEEN)window.igcQueueDoubleCheckCycle?.();
 }
 function v96NoMeSigueRowsForRecheck(mode='recheck',includeSeen=false){
   const key=mode==='double'?LS_DOUBLE_CHECK_SEEN:LS_RECHECK_SEEN;
@@ -10671,6 +10672,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
       const restart=confirm(`Ya no quedan perfiles nuevos para ${label}. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
       if(restart){
         localStorage.removeItem(key);
+        if(mode==='double')localStorage.setItem('ig_cleaner_double_check_epoch',String(Date.now()));
         seen=new Set();
         rows=v96NoMeSigueRowsForRecheck(mode,false).slice(0,n);
       }
@@ -10730,8 +10732,10 @@ function resetRecheckCycle(show=true){
 }
 function resetDoubleCheckCycle(show=true){
   localStorage.removeItem(LS_DOUBLE_CHECK_SEEN);
+  localStorage.setItem('ig_cleaner_double_check_epoch',String(Date.now()));
+  window.igcQueueDoubleCheckCycle?.();
   renderDoubleCheckStats?.();
-  if(show)msg('Ciclo Double Check reiniciado.', 's');
+  if(show)msg('Ciclo Double Check reiniciado en Desktop y Android.', 's');
 }
 
 </script>
@@ -13196,6 +13200,10 @@ async function pushWorkspaceState(){
     pendingReviewedMeta:pendingReviewedMeta||{},
     pendingSnooze:pendingSnoozeMap||{},
     profileHistory:profileHistory||{},
+    // Preserve Desktop's strict partial-HTML evidence gate on Android: absence
+    // from a partial followers HTML export is NOT proof of no follow-back.
+    followersEvidence:{partial:!!(window.V119_HTML?.active && window.V119_HTML?.partial),
+      source:window.V119_HTML?.source||'',savedAt:Date.now()},
     updatedAt:Date.now()
   };
   await rest('workspace_state?on_conflict=user_id,state_key',{
@@ -13241,8 +13249,46 @@ async function pullProfileState(){
   S.stats.statesDown=(rows||[]).length;
   return {rows:(rows||[]).length,changed};
 }
+// Double Check cycle is independent from canonical primary state: Android
+// can update the cycle without replacing Desktop's complete review history.
+// Reconcile epoch first, then union usernames only within the SAME cycle.
+const IGC_DOUBLE_CYCLE_KEY='ig_cleaner_double_check_epoch';
+async function pullDoubleCheckCycle(){
+  const rows=await rest('workspace_state?select=payload&state_key=eq.focus_double_check_cycle&limit=1',{method:'GET'});
+  const remote=rows?.[0]?.payload;
+  if(!remote)return;
+  const localEpoch=Number(localStorage.getItem(IGC_DOUBLE_CYCLE_KEY)||0);
+  const remoteEpoch=Number(remote.epoch||0);
+  let local=[];try{local=JSON.parse(localStorage.getItem(LS_DOUBLE_CHECK_SEEN)||'[]')||[]}catch{}
+  const seenRemote=Array.isArray(remote.seen)?remote.seen:[];
+  const seen=remoteEpoch>localEpoch?seenRemote:remoteEpoch<localEpoch?local:[...new Set([...local,...seenRemote])];
+  localStorage.setItem(IGC_DOUBLE_CYCLE_KEY,String(Math.max(localEpoch,remoteEpoch)));
+  localStorage.setItem(LS_DOUBLE_CHECK_SEEN,JSON.stringify([...new Set(seen.map(cleanUsername).filter(Boolean))]));
+  try{renderDoubleCheckStats?.()}catch{}
+}
+async function pushDoubleCheckCycle(){
+  let seen=[];try{seen=JSON.parse(localStorage.getItem(LS_DOUBLE_CHECK_SEEN)||'[]')||[]}catch{}
+  const epoch=Number(localStorage.getItem(IGC_DOUBLE_CYCLE_KEY)||0);
+  await rest('workspace_state?on_conflict=user_id,state_key',{method:'POST',
+    headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify([{state_key:'focus_double_check_cycle',
+      payload:{epoch,seen:[...new Set(seen.map(cleanUsername).filter(Boolean))],updatedAt:new Date().toISOString()},
+      source_device:'desktop',updated_at:new Date().toISOString()}])});
+}
+let doubleCyclePushTimer=null;
+window.igcQueueDoubleCheckCycle=function(){
+  clearTimeout(doubleCyclePushTimer);
+  doubleCyclePushTimer=setTimeout(async()=>{
+    if(!S.session?.access_token)return;
+    if(S.busy){window.igcQueueDoubleCheckCycle();return}
+    S.busy=true;
+    try{await ensureAuth();await pullDoubleCheckCycle();await pushDoubleCheckCycle()}
+    catch(e){console.warn('Double Check cloud cycle',e)}
+    finally{S.busy=false}
+  },850);
+};
 async function touchDevice(){const d=currentDevice();await rest('devices?on_conflict=user_id,device_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{device_id:d.id,device_type:d.type,label:d.label,last_seen:new Date().toISOString()}])})}
-async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};

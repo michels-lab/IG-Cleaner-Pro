@@ -53,6 +53,16 @@ for (const token of [
   'function renderRecentActivity()'
 ]) requireToken(token, 'Required product workflow missing');
 
+for (const token of [
+  'async function pullDoubleCheckCycle()',
+  'async function pushDoubleCheckCycle()',
+  'window.igcQueueDoubleCheckCycle=function()',
+  "state_key:'focus_double_check_cycle'",
+  'followersEvidence:{partial:!!(window.V119_HTML?.active && window.V119_HTML?.partial)',
+  "window.igcQueueDoubleCheckCycle?.()",
+  'ig_cleaner_double_check_epoch'
+]) requireToken(token, 'Desktop + Android Double Check cycle sync missing');
+
 const staticHtml = html.replace(/<script[\s\S]*?<\/script>/gi, '');
 const ids = [...staticHtml.matchAll(/\sid=["']([^"']+)["']/gi)].map(m => m[1]);
 const seen = new Set(), duplicates = new Set();
