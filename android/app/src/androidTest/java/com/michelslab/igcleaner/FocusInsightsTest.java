@@ -100,5 +100,13 @@ public final class FocusInsightsTest {
         assertTrue(history.contains("Completada"));
         assertTrue(history.contains("desktop"));
         assertTrue(history.contains("Finalizada:"));
+        String desktopEvent = FocusInsights.batchHistory(ctx,
+                new JSONObject().put("status","activity")
+                        .put("label","Double Check 30 · Review")
+                        .put("created_device","desktop")
+                        .put("created_at","2026-10-08T14:30:00Z"));
+        assertTrue(desktopEvent.contains("Double Check 30"));
+        assertTrue(desktopEvent.contains("Actividad registrada"));
+        assertFalse(desktopEvent.contains("0 perfiles"));
     }
 }
