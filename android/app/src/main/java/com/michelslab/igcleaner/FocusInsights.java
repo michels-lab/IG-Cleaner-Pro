@@ -183,10 +183,14 @@ final class FocusInsights {
             case "active" -> "En curso";
             case "prepared" -> "Preparada";
             case "cancelled" -> "Cancelada";
+            case "activity" -> "Actividad registrada";
             default -> status;
         };
+        String label = batch.optString("label", "");
+        int size = batch.optInt("target_size", 0);
         return "Última tanda: " + dateTime(ctx, batch.optString("created_at", "")) +
-                " · " + batch.optInt("target_size", 0) + " perfiles" +
+                (label.isBlank() ? "" : " · " + label) +
+                (size > 0 ? " · " + size + " perfiles" : "") +
                 " · " + state +
                 " · " + batch.optString("created_device", "dispositivo desconocido") +
                 ("completed".equals(status) ? "\nFinalizada: " +
