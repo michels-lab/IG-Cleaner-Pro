@@ -1,3 +1,8 @@
+## v120.38 release candidate — user authorized 2026-10-09 (pending publication)
+
+- User explicitly requested **"dale release"** after PR #42 integration. The release branch `release/ig-cleaner-v12038-20261009` advances native Android and standalone Desktop together to **120.38** (Android stable `com.michelslab.igcleaner`, `versionCode=12038`; original FINAL-9999 certificate). Current stable **remains v120.37** until verified public release publication.
+- Publication uses the existing governed `.github/workflows/release.yml`, exact-main-commit Android + Desktop rendered screenshots, CI/41 Supabase RLS tests, signing identity check and full asset verification; no mandatory human approval. After publication reconcile manifest/README/release request. Physical Samsung and real account acceptance remain open.
+
 # Current Handoff — Instagram Cleaner Pro
 
 ## Android Focus parity integrated in main — 2026-10-09 (unreleased)
