@@ -4,13 +4,13 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.37 — stable GitHub release (October 8, 2026).** [Get v120.37](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.37).
+**v120.38 — stable GitHub release (October 9, 2026).** [Get v120.38](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.38).
 
 | Platform | Primary release file | Notes |
 | --- | --- | --- |
-| Desktop (Windows/macOS/Linux browser) | `IG-Cleaner-Pro-Desktop-v120.37.html` | Open locally in a modern browser; single self-contained offline HTML includes official branding. |
-| Android | `IG-Cleaner-Pro-Android-v120.37.apk` | Signed release APK; Android package `com.michelslab.igcleaner`. |
-| Desktop optional full bundle | `IG-Cleaner-Pro-Desktop-v120.37.zip` | Includes separate assets; direct HTML is the preferred simple download. |
+| Desktop (Windows/macOS/Linux browser) | `IG-Cleaner-Pro-Desktop-v120.38.html` | Open locally in a modern browser; single self-contained offline HTML includes official branding. |
+| Android | `IG-Cleaner-Pro-Android-v120.38.apk` | Signed release APK; Android package `com.michelslab.igcleaner`. |
+| Desktop optional full bundle | `IG-Cleaner-Pro-Desktop-v120.38.zip` | Includes separate assets; direct HTML is the preferred simple download. |
 
 Desktop and Android belong to the same product and preserve historical review and Focus workflows. Release CI verified Desktop Chromium Home/About rendering, Android-emulator Home/About, artifact integrity and Android signing. **Physical Samsung installation, real Instagram ZIP import, Focus batches and cloud round-trip remain unverified on the user's device**; see [device acceptance #24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24).
 
@@ -30,7 +30,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Do not publish v120.37 without a new explicit release instruction.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Do not publish v120.38 without a new explicit release instruction.**
 
 ## Identity and licensing
 
