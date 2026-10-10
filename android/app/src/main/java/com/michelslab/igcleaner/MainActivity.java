@@ -373,6 +373,7 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("SYNCING • restoring latest state");
         if (workspaceSyncProgress != null) workspaceSyncProgress.setVisibility(View.VISIBLE);
 
+        final String loadingInstagram = api.getInstagramProfile();
         runAsync(() -> {
             try {
                 touchDevice();
@@ -381,7 +382,7 @@ public final class MainActivity extends AppCompatActivity {
                 JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
 
                 JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
-                syncedReviewStateAvailable = stateRow != null || profileStates.length() > 0;
+                boolean reviewAvailable = stateRow != null || profileStates.length() > 0;
                 JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
                 if (state == null) state = new JSONObject();
                 long snapshotUpdatedAt = stateRow == null
@@ -406,6 +407,8 @@ public final class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                if (!loadingInstagram.equals(api.getInstagramProfile())) return;
+                syncedReviewStateAvailable = reviewAvailable;
                 syncedFollowing = following;
                 syncedFollowers = followers;
                 syncedPending = pending;
@@ -878,6 +881,12 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void changeInstagramProfile(String key, String label) {
+        // Serialize the account switch behind in-flight native network writes.
+        // Otherwise a Focus operation prepared for A could finish under B.
+        io.execute(() -> mainHandler.post(() -> applyInstagramProfileChange(key, label)));
+    }
+
+    private void applyInstagramProfileChange(String key, String label) {
         if (key.equals(api.getInstagramProfile())) {
             api.setInstagramProfile(key, label);
             setGlobalStatus("INSTAGRAM • " + label);
