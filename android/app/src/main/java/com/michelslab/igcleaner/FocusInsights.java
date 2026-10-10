@@ -106,7 +106,12 @@ final class FocusInsights {
             String sequence = order(followingAt, followerAt);
             if (!sequence.isBlank()) lines.add(sequence);
             if (followingRecord != null && followerRecord != null) lines.add("Relación: mutual (según listas sincronizadas)");
-            else if (followingRecord != null) lines.add("Relación: no aparece entre tus followers sincronizados");
+            else if (followingRecord != null) {
+                JSONObject evidence = workspaceState == null ? null : workspaceState.optJSONObject("followersEvidence");
+                if (evidence != null && evidence.optBoolean("partial", false))
+                    lines.add("Relación: NO VERIFICABLE · ausencia en HTML parcial");
+                else lines.add("Relación: no aparece entre tus followers sincronizados");
+            }
             else if (followerRecord != null) lines.add("Relación: follower (según listas sincronizadas)");
             else lines.add("Relación actual: no verificable con los datos disponibles");
         }
