@@ -69,6 +69,14 @@ public final class FocusInsightsTest {
         assertTrue(unknown.contains("no verificable"));
         assertFalse(unknown.contains("1970"));
         assertFalse(unknown.contains("Tú lo seguiste primero"));
+        Map<String, JSONObject> partialFollowing = new HashMap<>();
+        partialFollowing.put("beta", new JSONObject().put("timestamp", 1730000000L));
+        JSONObject partialState = new JSONObject().put("followersEvidence",
+                new JSONObject().put("partial", true));
+        String partial = FocusInsights.detail(ctx, missing, "main", partialFollowing,
+                new HashMap<>(), new HashMap<>(), partialState);
+        assertTrue("Partial HTML absence is not verified no-follow-back",
+                partial.contains("NO VERIFICABLE"));
     }
 
     @Test
