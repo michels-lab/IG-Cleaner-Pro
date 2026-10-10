@@ -264,6 +264,38 @@
                     android:textColor="@color/ig_muted"
                     android:textSize="11sp"/>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="INSTAGRAM PROFILES"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/ig_cyan"/>
+
+                <TextView
+                    android:id="@+id/activeInstagramProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Datos anteriores"
+                    android:textColor="@color/ig_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectInstagramProfile"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Manage Instagram profiles"
+                    android:textAllCaps="false"
+                    android:textColor="@color/ig_cyan"
+                    app:strokeColor="@color/ig_border_strong"
+                    app:cornerRadius="14dp"/>
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/syncNow"
                     android:layout_width="match_parent"
