@@ -1,5 +1,13 @@
 # Current Handoff — Instagram Cleaner Pro
 
+## Authorized v120.38 publication candidate — 2026-10-09
+
+- User explicitly requested release. `release/ig-cleaner-v120.38-candidate-20261009` aligns native Android + Desktop runtime version 120.38 and original production signing metadata; release notes and version contracts updated.
+- The manifest still records v120.37 as current until **actual GitHub v120.38 publication verification**; its nextRelease is v120.38. The publication authorization is staged separately after merging tested candidate, to trigger exact-commit Android and Desktop visual runners plus the generic governed publisher. Do not bypass release CI.
+- Required deliverables: stable signed `IG-Cleaner-Pro-Android-v120.38.apk`, primary offline `IG-Cleaner-Pro-Desktop-v120.38.html`, optional `IG-Cleaner-Pro-Desktop-v120.38.zip`, privacy/logo/checksums. Keep production cert identical to v120.37. No Google Play publishing implied.
+- Pending: exact release-candidate CI, publication and post-publication metadata closeout. User's real Samsung and genuine sync/ZIP acceptance remains separately open in #24.
+
+
 ## Android Focus parity integrated in main — 2026-10-09 (unreleased)
 
 - **PR #42 merged** at `9447ae29bb7fe758f7791c0a7be23ebd9fc28841` after exact-head all-green CI `38008299846`, Desktop real Chromium `38008299836`, Android installed emulator `38008299843` (5 tests at compact+wide; nonblank APK-bound screenshots, artifact `11652775546`). PostgreSQL RLS suite passed **41** assertions, including Desktop/Android account-scoped Double Check read/write and isolation.
