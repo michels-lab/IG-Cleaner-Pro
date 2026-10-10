@@ -1,8 +1,14 @@
 # Current Handoff — Instagram Cleaner Pro
 
-## Current unreleased Android Focus parity candidate — 2026-10-09
+## Android Focus parity integrated in main — 2026-10-09 (unreleased)
 
-- Branch `feat/android-focus-rich-context-double-check-history-20261009` adds full synced follow dates/review history to native Focus, Double Check 30 without repeating profiles across Desktop/Android, last batch by module including Desktop audit-only legacy Double Check events, and per-cycle progress.
+- **PR #42 merged** at `9447ae29bb7fe758f7791c0a7be23ebd9fc28841` after exact-head all-green CI `38008299846`, Desktop real Chromium `38008299836`, Android installed emulator `38008299843` (5 tests at compact+wide; nonblank APK-bound screenshots, artifact `11652775546`). PostgreSQL RLS suite passed **41** assertions, including Desktop/Android account-scoped Double Check read/write and isolation.
+- Status: code in `main`, **not shipped**. Stable v120.37 unchanged; v120.38 is **not authorized**. Do not claim genuine Instagram ZIP or live Samsung cloud sync tested until user acceptance.
+- On Android, Focus shows follow/follower exact+relative dates, sequence, last review/decision/history; Double Check 30 rotates usernames across PC/phone with explicit confirmation separate from open; last section batches include Desktop audit-only history; partial-HTML uncertainty is enforced across platforms; Sync refreshes active Focus details.
+
+## Historical development handoff — 2026-10-09
+
+- Integrated branch `feat/android-focus-rich-context-double-check-history-20261009` adds full synced follow dates/review history to native Focus, Double Check 30 without repeating profiles across Desktop/Android, last batch by module including Desktop audit-only legacy Double Check events, and per-cycle progress.
 - Reuses existing Supabase `workspace_state` table with independent state_key `focus_double_check_cycle`; no SQL schema changes, no destructive state changes, no automatic release. Test instrumented phone dimensions and real cloud roundtrip after source QA. Existing v120.37 remains stable.
 - Desktop sync's Double Check epoch and seen-set must stay interoperable; native opened is not reviewed until explicit batch finish. Preserve original exported follow dates, report missing as unknown.
 
