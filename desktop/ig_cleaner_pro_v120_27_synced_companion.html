@@ -13200,6 +13200,10 @@ async function pushWorkspaceState(){
     pendingReviewedMeta:pendingReviewedMeta||{},
     pendingSnooze:pendingSnoozeMap||{},
     profileHistory:profileHistory||{},
+    // Preserve Desktop's strict partial-HTML evidence gate on Android: absence
+    // from a partial followers HTML export is NOT proof of no follow-back.
+    followersEvidence:{partial:!!(window.V119_HTML?.active && window.V119_HTML?.partial),
+      source:window.V119_HTML?.source||'',savedAt:Date.now()},
     updatedAt:Date.now()
   };
   await rest('workspace_state?on_conflict=user_id,state_key',{
