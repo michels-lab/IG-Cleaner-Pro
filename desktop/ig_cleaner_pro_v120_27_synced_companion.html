@@ -12968,7 +12968,7 @@ async function verifyOtp(){cfgFromUi();const token=String(document.getElementByI
 async function verifyOtpAndSetPassword(){await verifyOtp();const password=String(document.getElementById('igcSyncNewPassword')?.value||'');if(password.length<8)throw new Error('La contraseña debe tener al menos 8 caracteres.');await jfetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});return true}
 async function refresh(){if(!S.session?.refresh_token)return false;try{const d=await jfetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:JSON.stringify({refresh_token:S.session.refresh_token})});if(d?.access_token){S.session=d;saveSession();return true}}catch(e){console.warn('refresh session',e)}return false}
 async function ensureAuth(){if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta primero.');return true}
-async function rest(path,opt={}){try{return await jfetch('/rest/v1/'+path,opt)}catch(e){if((e.status===401||e.status===403)&&await refresh())return await jfetch('/rest/v1/'+path,opt);throw e}}
+async function rest(path,opt={}){const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);path=scoped.path;opt=scoped.opt;try{return await jfetch('/rest/v1/'+path,opt)}catch(e){if((e.status===401||e.status===403)&&await refresh())return await jfetch('/rest/v1/'+path,opt);throw e}}
 const IGC_SYNC_TABLES=['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state'];
 function privacyDataStatus(text,type=''){
   const el=document.getElementById('privacyDataStatus');
@@ -13365,7 +13365,66 @@ window.igcQueueDoubleCheckCycle=function(){
   },850);
 };
 async function touchDevice(){const d=currentDevice();await rest('devices?on_conflict=user_id,device_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{device_id:d.id,device_type:d.type,label:d.label,last_seen:new Date().toISOString()}])})}
-async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+let instagramRegistryLoaded=false;
+async function refreshInstagramAccounts(){
+ let rows;
+ try{rows=await rest('instagram_accounts?select=account_key,username,label,updated_at&order=created_at.asc',{method:'GET'})}
+ catch(error){
+  if(window.IGC_INSTAGRAM_PROFILES.active!=='legacy')throw new Error('Primero aplica la migración multi-Instagram en Supabase.');
+  status('La sincronización clásica continúa; los perfiles múltiples requieren la nueva base de datos.','warn');
+  return false;
+ }
+ const profiles=Array.isArray(rows)?rows:[];
+ if(!profiles.some(x=>x.account_key==='legacy')){
+  await rest('instagram_accounts?on_conflict=user_id,account_key',{
+   method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},
+   body:JSON.stringify([{account_key:'legacy',label:'Datos anteriores'}])
+  });
+  profiles.unshift({account_key:'legacy',label:'Datos anteriores'});
+ }
+ const selected=window.IGC_INSTAGRAM_PROFILES.active;
+ if(selected!=='legacy'&&!profiles.some(x=>x.account_key===selected)){
+  window.IGC_INSTAGRAM_PROFILES.switch('legacy');
+  throw new Error('La identidad activa no pertenece a tu cuenta; volviendo a los datos anteriores.');
+ }
+ window.IGC_INSTAGRAM_PROFILES._verified=true;
+ window.IGC_INSTAGRAM_PROFILES.setAccounts(profiles);
+ instagramRegistryLoaded=true;
+ return true;
+}
+window.igcAddInstagramProfile=async function(){
+ try{
+  if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta para añadir un Instagram.');
+  const raw=prompt('Perfil nuevo de Instagram: escribe el @usuario.');if(raw===null)return;
+  const username=String(raw).replace(/^@/,'').trim().toLowerCase();
+  if(!/^[a-z0-9._]{1,30}$/.test(username))throw new Error('Usuario inválido (máximo 30 caracteres).');
+  await ensureAuth();
+  if(!await refreshInstagramAccounts())throw new Error('Primero aplica la migración multi-Instagram.');
+  if(window.IGC_INSTAGRAM_PROFILES.accounts.some(x=>x.username===username))throw new Error('Este Instagram ya está registrado.');
+  const key='ig_'+crypto.randomUUID().replace(/-/g,'');
+  await rest('instagram_accounts?on_conflict=user_id,account_key',{
+   method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+   body:JSON.stringify([{account_key:key,username,label:'@'+username}])
+  });
+  await refreshInstagramAccounts();
+  window.IGC_INSTAGRAM_PROFILES.switch(key);
+ }catch(error){status('No se creó el perfil: '+String(error.message||error),'warn');alert(String(error.message||error));window.IGC_INSTAGRAM_PROFILES.render()}
+};
+window.igcRenameLegacyInstagramProfile=async function(){
+ try{
+  if(!S.session?.access_token)throw new Error('Inicia sesión primero.');
+  const raw=prompt('Asigna el @usuario de tus datos anteriores.');if(raw===null)return;
+  const username=String(raw).replace(/^@/,'').trim().toLowerCase();
+  if(!/^[a-z0-9._]{1,30}$/.test(username))throw new Error('Usuario inválido.');
+  await ensureAuth();if(!await refreshInstagramAccounts())throw new Error('Primero aplica la migración multi-Instagram.');
+  await rest('instagram_accounts?account_key=eq.legacy',{
+   method:'PATCH',headers:{Prefer:'return=minimal'},
+   body:JSON.stringify({username,label:'@'+username,updated_at:new Date().toISOString()})
+  });
+  await refreshInstagramAccounts();
+ }catch(error){status(String(error.message||error),'warn');alert(String(error.message||error))}
+};
+async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
@@ -13379,6 +13438,7 @@ window.igcQueueStateSync=function(reason='state'){
     S.busy=true;
     try{
       await ensureAuth();
+      await refreshInstagramAccounts();
       normalizeLegacyReviewState();
       const pushed=await pushProfileState();
       await pushWorkspaceState();
