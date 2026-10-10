@@ -66,10 +66,54 @@ public class AboutRenderTest {
         return null;
     }
 
+    private boolean hasRealAppPixels(Bitmap frame) {
+        // Sample below the status bar and above gesture navigation, across
+        // the actual app content. A transient fullscreen navy compositor
+        // canvas is near-uniform; Home/About has brand marks, labels/cards
+        // and multiple distinct pixel colors in the central content.
+        int w = frame.getWidth();
+        int h = frame.getHeight();
+        int baseline = frame.getPixel(w / 2, h / 2);
+        int varied = 0;
+        int samples = 0;
+        java.util.HashSet<Integer> colors = new java.util.HashSet<>();
+        for (int gy = 0; gy < 24; gy++) {
+            int y = (int) (h * (0.12 + 0.73 * (gy + 0.5) / 24.0));
+            for (int gx = 0; gx < 16; gx++) {
+                int x = (int) (w * (0.04 + 0.92 * (gx + 0.5) / 16.0));
+                int color = frame.getPixel(x, y);
+                colors.add(color);
+                int delta = Math.abs(android.graphics.Color.red(color) - android.graphics.Color.red(baseline))
+                        + Math.abs(android.graphics.Color.green(color) - android.graphics.Color.green(baseline))
+                        + Math.abs(android.graphics.Color.blue(color) - android.graphics.Color.blue(baseline));
+                if (delta >= 24) varied++;
+                samples++;
+            }
+        }
+        return colors.size() >= 18 && varied >= samples / 20;
+    }
+
     private void screenshot(String surface, String label) throws Exception {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-        Bitmap frame = InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
-        assertNotNull("Emulator failed to capture real " + surface + " screen", frame);
+        // A cold emulator can return a compositor screenshot containing only
+        // status/navigation bars even after the Activity view hierarchy becomes
+        // VISIBLE. Never accept that frame as evidence of a rendered Home.
+        // Wait for an actual non-blank app content frame, rather than lowering
+        // the screenshot QA threshold in the downstream evidence validator.
+        Bitmap frame = null;
+        for (int attempt = 0; attempt < 12; attempt++) {
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            Bitmap candidate = InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().takeScreenshot();
+            if (candidate != null && hasRealAppPixels(candidate)) {
+                frame = candidate;
+                break;
+            }
+            if (candidate != null) candidate.recycle();
+            Thread.sleep(350L);
+        }
+        assertNotNull("Emulator never rendered real " + surface +
+                " app pixels after 12 compositor captures", frame);
         String viewport = InstrumentationRegistry.getArguments().getString("viewport", "unknown");
         File dir = new File(InstrumentationRegistry.getInstrumentation().getTargetContext()
                 .getExternalFilesDir(null), "igc-ui-capture");
