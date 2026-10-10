@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(59);
+select plan(60);
 
 -- Two deterministic users; rows are rolled back after the suite.
 -- No auth.users rows are required because these tables intentionally store the
@@ -125,7 +125,7 @@ select is_empty($dc$
 $dc$,'An unrelated account cannot access another account Double Check cycle');
 
 
--- 42–59: same app login can store independent Instagram profiles; user RLS holds.
+-- 42–60: same app login can store independent Instagram profiles; user RLS holds.
 select ok((select relrowsecurity from pg_class where oid='public.instagram_accounts'::regclass),
  'Instagram profile registry has RLS');
 select ok((select relrowsecurity from pg_class where oid='public.instagram_list_snapshots'::regclass),
