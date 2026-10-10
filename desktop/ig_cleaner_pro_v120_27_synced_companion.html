@@ -2808,7 +2808,7 @@ window.IGC_INSTAGRAM_PROFILES={
   if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(key)))throw Error('Identidad inválida');
   if(key!==this.active&&key!=='legacy'&&!this.accounts.some(a=>a.account_key===key))throw Error('Perfil ajeno a tu cuenta');
   igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
-  try{window.AndroidBridge?.selectInstagramProfile?.(key)}catch(_){}
+  try{const account=this.accounts.find(a=>a.account_key===key);window.AndroidBridge?.selectInstagramProfile?.(key,account?.username?'@'+account.username:'Datos anteriores')}catch(_){}
   location.reload();
  },
  scopeRest(path,opt={}){
