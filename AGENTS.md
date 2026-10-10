@@ -48,6 +48,10 @@ The superseded master "author portrait next to Michel's Lab panel" *default* mus
 
 Android Focus and Double Check must expose meaningful synchronized data: exact and relative dates (followed/follower), relationship direction, verified/unknown source context, review decisions/history and last Focus batch per module including device/status. Double Check 30 rotates usernames without repeats within a cross-device epoch stored in `workspace_state` with `state_key=focus_double_check_cycle`, separately from authoritative `primary` review history. Preserve frozen usernames and the distinction opened ≠ reviewed. Do not assume missing timestamps mean recent follows or missing followers in partial HTML conclusively imply unfollow. Require real emulator runtime tests for date directions/unknowns and true UI acceptance before publication.
 
+### Multiple Instagram identities under one login
+
+The IG Cleaner sign-in is NOT the Instagram profile identity. An authenticated user can own many independent Instagram workspaces; scope *all* following/followers/pending, review/protection/snooze, Focus, Double Check cycle, audit and historical snapshot operations by both Auth user and Instagram `account_key`. The opaque `account_key` is immutable and must not be guessed from the Instagram handle (handles can change). Keep the v120.38 `legacy` storage and Supabase tables byte-for-byte; never destructively migrate or delete old data to introduce profile selection. Use `docs/MULTI_INSTAGRAM_WORKSPACES.md` and the dedicated additive migration. Require strict owner RLS, cross-Instagram duplicate-username/batch tests and actual Desktop+Android runtime checks before merging; no release without explicit instruction.
+
 ## Validation
 
 Inspect current CI/workflows and run the strongest relevant current-commit checks. Desktop/local-Web changes must validate import/state migration and the affected interaction flow. Android changes must build the real app path and keep device-only parity/sync/export behavior explicitly open until actually tested.
