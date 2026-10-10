@@ -27,7 +27,7 @@ for token in (
     assert token in schema, f"Optimized authenticated-only RLS policy missing: {token}"
 
 for token in (
-    "select plan(59)",
+    "select plan(60)",
     "set local role authenticated",
     "set local request.jwt.claim.sub",
     "cannot update user 1",
