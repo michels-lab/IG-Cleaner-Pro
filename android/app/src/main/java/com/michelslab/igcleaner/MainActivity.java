@@ -100,7 +100,14 @@ public final class MainActivity extends AppCompatActivity {
             "focus_batch_items",
             "profile_state",
             "list_snapshots",
-            "workspace_state"
+            "workspace_state",
+            "instagram_accounts",
+            "instagram_audit_events",
+            "instagram_focus_batches",
+            "instagram_focus_batch_items",
+            "instagram_profile_state",
+            "instagram_list_snapshots",
+            "instagram_workspace_state"
     };
 
     private View mobileWorkspaceView;
@@ -540,7 +547,8 @@ public final class MainActivity extends AppCompatActivity {
 
     private String cacheSuffix() {
         String email = api.getEmail() == null ? "" : api.getEmail().trim().toLowerCase(Locale.ROOT);
-        return Integer.toHexString(email.hashCode());
+        String owner = Integer.toHexString(email.hashCode());
+        return "legacy".equals(api.getInstagramProfile()) ? owner : owner + "_" + api.getInstagramProfile();
     }
 
     private int countPendingUnresolved(JSONObject pendingReviewed, JSONObject pendingSnooze) {
@@ -776,6 +784,8 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton useCode = view.findViewById(R.id.useCode);
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
+        MaterialButton selectInstagramProfile = view.findViewById(R.id.selectInstagramProfile);
+        TextView activeInstagramProfileLabel = view.findViewById(R.id.activeInstagramProfile);
         MaterialButton sync = view.findViewById(R.id.syncNow);
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
         MaterialButton exportCloudData = view.findViewById(R.id.exportCloudData);
@@ -790,6 +800,8 @@ public final class MainActivity extends AppCompatActivity {
         connectedCard.setVisibility(connected ? View.VISIBLE : View.GONE);
         accountEmail.setText(api.getEmail());
         label.setText(deviceLabel() + " · session remembered on this device");
+        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel());
+        selectInstagramProfile.setOnClickListener(v -> showInstagramProfileManager());
 
         passwordSignIn.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
@@ -1081,7 +1093,7 @@ public final class MainActivity extends AppCompatActivity {
         JSONArray all = new JSONArray();
         int offset = 0;
         while (true) {
-            JSONArray page = api.get(table + "?select=*&limit=1000&offset=" + offset);
+            JSONArray page = api.getUnscoped(table + "?select=*&limit=1000&offset=" + offset);
             for (int i = 0; i < page.length(); i++) all.put(page.get(i));
             if (page.length() < 1000) break;
             offset += page.length();
@@ -1156,6 +1168,13 @@ public final class MainActivity extends AppCompatActivity {
         setGlobalStatus("DELETING • synchronized cloud data");
         runAsync(() -> {
             String[] deleteOrder = new String[]{
+                    "instagram_focus_batch_items",
+                    "instagram_focus_batches",
+                    "instagram_profile_state",
+                    "instagram_audit_events",
+                    "instagram_list_snapshots",
+                    "instagram_workspace_state",
+                    "instagram_accounts",
                     "focus_batch_items",
                     "focus_batches",
                     "profile_state",
@@ -1165,7 +1184,7 @@ public final class MainActivity extends AppCompatActivity {
                     "devices"
             };
             for (String table : deleteOrder) {
-                api.delete(table + "?user_id=not.is.null");
+                api.deleteUnscoped(table + "?user_id=not.is.null");
             }
 
             clearWorkspaceCache();
@@ -2509,7 +2528,10 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void setBrandContext(String value) {
-        if (brandContext != null) brandContext.setText((value == null || value.isBlank()) ? "MICHEL'S LAB" : value);
+        if (brandContext != null) {
+            String section = (value == null || value.isBlank()) ? "MICHEL'S LAB" : value;
+            brandContext.setText(section + " · " + api.getInstagramProfileLabel());
+        }
     }
 
     private void setGlobalStatus(String value) {
