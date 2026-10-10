@@ -1617,6 +1617,9 @@ public final class MainActivity extends AppCompatActivity {
             refreshFocusSourceData();
             if (!syncedReviewStateAvailable)
                 throw new IllegalStateException("Sincroniza primero la revisión de Desktop antes de Double Check.");
+            JSONObject followersEvidence = syncedWorkspaceState.optJSONObject("followersEvidence");
+            if (followersEvidence != null && followersEvidence.optBoolean("partial", false))
+                throw new IllegalStateException("Followers proviene de HTML parcial: las ausencias no demuestran que NO te siguen. Importa un export completo antes de Double Check.");
 
             JSONObject cycle = fetchDoubleCheckCycle();
             long epoch = cycle.optLong("epoch", 0L);
@@ -1797,6 +1800,9 @@ public final class MainActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
 
         if ("main".equals(module)) {
+            JSONObject evidence = syncedWorkspaceState.optJSONObject("followersEvidence");
+            if (evidence != null && evidence.optBoolean("partial", false))
+                throw new IllegalStateException("Review no puede inferir no-follow-back desde Followers HTML parcial. Importa una lista completa en Desktop.");
             for (Map.Entry<String, JSONObject> entry : following.entrySet()) {
                 String username = entry.getKey();
                 JSONObject source = entry.getValue();
