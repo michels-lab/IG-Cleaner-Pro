@@ -7538,6 +7538,8 @@ function exportCSV(mode){
 function exportFullBackup(){
   const backup={
     version:'v13',
+    instagramAccountKey:window.IGC_INSTAGRAM_PROFILES?.active||'legacy',
+    instagramUsername:window.IGC_INSTAGRAM_PROFILES?.accounts.find(x=>x.account_key===window.IGC_INSTAGRAM_PROFILES?.active)?.username||'',
     exportedAt:new Date().toISOString(),
     protected:[...protectedSet],
     reviewed:[...doneSet],
@@ -7578,6 +7580,14 @@ function importFullBackup(input){
   reader.onload=()=>{
     try{
       const data=JSON.parse(reader.result);
+      const incoming=typeof data.instagramAccountKey==='string'?data.instagramAccountKey:'legacy';
+      const active=window.IGC_INSTAGRAM_PROFILES?.active||'legacy';
+      if(incoming!==active){
+        throw new Error('Este respaldo pertenece a otro Instagram ('+incoming+'), mientras tienes seleccionado '+active+'. Cambia al perfil correspondiente antes de importarlo.');
+      }
+      if(!Object.hasOwn(data,'instagramAccountKey')&&active!=='legacy'){
+        throw new Error('Este respaldo anterior no identifica un Instagram. Impórtalo primero en Datos anteriores; no puede asignarse automáticamente a otro perfil.');
+      }
       if(Array.isArray(data.protected))protectedSet=new Set(data.protected.map(cleanUsername).filter(Boolean));
       if(Array.isArray(data.reviewed))doneSet=new Set(data.reviewed.map(cleanUsername).filter(Boolean));
       reviewedMeta=(data.reviewedMeta && typeof data.reviewedMeta==='object')?data.reviewedMeta:{};
