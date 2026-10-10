@@ -1,6 +1,15 @@
 # Current Handoff — Instagram Cleaner Pro
 
-## Authorized v120.38 publication candidate — 2026-10-09
+## Latest published stable — v120.38 (2026-10-09, definitive)
+
+- GitHub stable: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.38. Published at `2026-10-10T00:47:55Z`; `draft=false`, `prerelease=false`. Original publication commit `589d67230e62a7f1ad2cf21bc75a5348bcf4b93a`, publisher run `38010213161`: release authorization gate, exact-commit rendered UI proof and production signed publish **ALL SUCCESS**.
+- Six verified release assets: production Android `IG-Cleaner-Pro-Android-v120.38.apk` (7,855,994 bytes, SHA256 `0a56756316a3c58837570fc0c58c771261869407053824f8c7e2dce9540c63a9`); single offline Desktop `IG-Cleaner-Pro-Desktop-v120.38.html` (3,254,813 bytes, SHA256 `1ce5867726190daaaeef7c3258806caf7d3a5c18655581556f7ac79f57a9e7af`); optional `IG-Cleaner-Pro-Desktop-v120.38.zip`, official logo, privacy notice and `SHA256SUMS.txt`.
+- Android package remains `com.michelslab.igcleaner`, `versionName=120.38`, `versionCode=12038`, original persistent FINAL-9999 SHA256 certificate unchanged. Includes native Focus follow-date/history parity, Double Check 30 and per-module last-batch; Desktop receives synchronized cycle support.
+- Post-publication closeout: manifest currentStableRelease=`v120.38`, nextRelease=`v120.39`, latest publication run and source commit stored; request `authorized=false`, status `published` (consumed). No next release authorized.
+- Real Samsung update, genuine Instagram export, all native Focus interactions and authenticated Supabase Desktop↔Android user data acceptance are **NOT** covered by automated CI; issue #24 remains for post-release acceptance. User visual review is after release. GitHub release is **not** Google Play publication.
+
+
+## Historical v120.38 publication candidate — 2026-10-09
 
 - User explicitly requested release. `release/ig-cleaner-v120.38-candidate-20261009` aligns native Android + Desktop runtime version 120.38 and original production signing metadata; release notes and version contracts updated.
 - The manifest still records v120.37 as current until **actual GitHub v120.38 publication verification**; its nextRelease is v120.38. The publication authorization is staged separately after merging tested candidate, to trigger exact-commit Android and Desktop visual runners plus the generic governed publisher. Do not bypass release CI.
@@ -8,7 +17,7 @@
 - Pending: exact release-candidate CI, publication and post-publication metadata closeout. User's real Samsung and genuine sync/ZIP acceptance remains separately open in #24.
 
 
-## Android Focus parity integrated in main — 2026-10-09 (unreleased)
+## Historical pre-release Android Focus parity — 2026-10-09
 
 - **PR #42 merged** at `9447ae29bb7fe758f7791c0a7be23ebd9fc28841` after exact-head all-green CI `38008299846`, Desktop real Chromium `38008299836`, Android installed emulator `38008299843` (5 tests at compact+wide; nonblank APK-bound screenshots, artifact `11652775546`). PostgreSQL RLS suite passed **41** assertions, including Desktop/Android account-scoped Double Check read/write and isolation.
 - Status: code in `main`, **not shipped**. Stable v120.37 unchanged; v120.38 is **not authorized**. Do not claim genuine Instagram ZIP or live Samsung cloud sync tested until user acceptance.
@@ -20,7 +29,7 @@
 - Reuses existing Supabase `workspace_state` table with independent state_key `focus_double_check_cycle`; no SQL schema changes, no destructive state changes, no automatic release. Test instrumented phone dimensions and real cloud roundtrip after source QA. Existing v120.37 remains stable.
 - Desktop sync's Double Check epoch and seen-set must stay interoperable; native opened is not reviewed until explicit batch finish. Preserve original exported follow dates, report missing as unknown.
 
-## Current shipped version — v120.37 (published; authoritative)
+## Historical shipped version — v120.37 (superseded by v120.38)
 
 - **Normal GitHub stable release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.37 — published 2026-10-08T22:12:02Z; `draft=false` and `prerelease=false`.
 - **Matched releases:** signed production Android `IG-Cleaner-Pro-Android-v120.37.apk`, offline standalone Desktop `IG-Cleaner-Pro-Desktop-v120.37.html`, optional full Desktop `IG-Cleaner-Pro-Desktop-v120.37.zip`, product logo, privacy notice and `SHA256SUMS.txt`.
