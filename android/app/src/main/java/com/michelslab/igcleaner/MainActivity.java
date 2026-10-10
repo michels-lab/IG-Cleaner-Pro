@@ -1376,31 +1376,47 @@ public final class MainActivity extends AppCompatActivity {
                     break;
                 }
             }
-            // Older Desktop Double Check cycles emitted audit events rather
-            // than a focus_batches row; do not falsely claim "never used".
-            if ("double".equals(modules[j])) {
-                for (int k = 0; k < events.length(); k++) {
-                    JSONObject event = events.optJSONObject(k);
-                    if (event == null) continue;
-                    JSONObject meta = event.optJSONObject("meta");
-                    String source = meta == null ? "" : meta.optString("source", "");
-                    String label = event.optString("batch_label", "");
-                    if (!"double_check_not_following".equals(source) &&
-                            !label.toLowerCase(Locale.ROOT).contains("double check")) continue;
-                    String when = event.optString("event_at", "");
-                    if (recent != null && parseInstant(recent.optString("created_at", ""))
-                            .isAfter(parseInstant(when))) break;
-                    JSONObject legacy = new JSONObject();
-                    try {
-                        legacy.put("created_at", when)
-                                .put("target_size", event.optInt("batch_size",
-                                        meta == null ? 0 : meta.optInt("count", 0)))
-                                .put("created_device", event.optString("device_type", "desktop"))
-                                .put("status", "active");
-                    } catch (Exception ignored) {}
-                    recent = legacy;
-                    break;
-                }
+            // Desktop's unprepared Focus/Double Check operations may exist
+            // only as synchronized audit events. Apply to EVERY module, not
+            // just Double Check. Compare timestamps to avoid reporting an
+            // older audit event over a newer native/remote batch.
+            for (int k = 0; k < events.length(); k++) {
+                JSONObject event = events.optJSONObject(k);
+                if (event == null) continue;
+                JSONObject meta = event.optJSONObject("meta");
+                String source = meta == null ? "" : meta.optString("source", "");
+                String label = event.optString("batch_label", "");
+                String lower = label.toLowerCase(Locale.ROOT);
+                String mod = event.optString("module", "").toLowerCase(Locale.ROOT);
+                boolean doubleEvent = "double_check_not_following".equals(source)
+                        || lower.contains("double check") || lower.contains("doublecheck");
+                String eventSection;
+                if (doubleEvent) eventSection = "double";
+                else if (lower.contains("mutual") || mod.contains("mutual")) eventSection = "mutual";
+                else if (lower.contains("pending") || lower.contains("request")
+                        || mod.contains("pending")) eventSection = "pending";
+                else if (lower.contains("followers") || mod.contains("follower")) eventSection = "followers";
+                else if ("main".equals(mod) || "review".equals(mod) || "list".equals(mod)
+                        || lower.contains("no me sigue") || lower.contains("foco"))
+                    eventSection = "main";
+                else continue;
+                if (!modules[j].equals(eventSection)) continue;
+                String when = event.optString("event_at", "");
+                if (recent != null && parseInstant(recent.optString("created_at", ""))
+                        .isAfter(parseInstant(when))) break;
+                JSONObject legacy = new JSONObject();
+                try {
+                    boolean completed = "batch_completed".equals(event.optString("action", ""));
+                    legacy.put("created_at", when)
+                            .put("target_size", event.optInt("batch_size",
+                                    meta == null ? 0 : meta.optInt("count", 0)))
+                            .put("label", label)
+                            .put("created_device", event.optString("device_type", "desktop"))
+                            .put("status", completed ? "completed" : "activity");
+                    if (completed) legacy.put("completed_at", when);
+                } catch (Exception ignored) {}
+                recent = legacy;
+                break;
             }
             inner.addView(text(labels[j], 11, R.color.ig_text, true));
             inner.addView(text(FocusInsights.batchHistory(this, recent), 11, R.color.ig_muted, false));
@@ -2338,7 +2354,12 @@ public final class MainActivity extends AppCompatActivity {
             touchDevice();
             mainHandler.post(() -> {
                 setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
-                if ("focus".equals(currentScreen) && currentBatch == null) loadBatches();
+                if ("focus".equals(currentScreen)) {
+                    // Sync must refresh real Focus dates/history even while a
+                    // batch is open, not merely show a misleading status.
+                    if (currentBatch == null) loadBatches();
+                    else loadBatch(currentBatch);
+                }
             });
         }, true);
     }
