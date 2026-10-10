@@ -88,19 +88,19 @@ select lives_ok($$insert into public.workspace_state(user_id,state_key,payload) 
 -- Both devices share one account-scoped key without mutating canonical
 -- review history; the other account must never read that key.
 set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
-select lives_ok($
+select lives_ok($dc$
   insert into public.workspace_state(user_id,state_key,payload,source_device)
   values ('11111111-1111-4111-8111-111111111111',
           'focus_double_check_cycle',
           '{"epoch":7,"seen":["alice"],"lastBatchId":"desktop-batch"}'::jsonb,
           'desktop')
-$, 'Desktop can publish the Double Check cycle in its own separate workspace state');
+$dc$, 'Desktop can publish the Double Check cycle in its own separate workspace state');
 
 select is((select payload->>'lastBatchId' from public.workspace_state
   where state_key='focus_double_check_cycle'),
   'desktop-batch', 'Android would read Desktop batch marker through same authenticated account');
 
-select lives_ok($
+select lives_ok($dc$
   insert into public.workspace_state(user_id,state_key,payload,source_device)
   values ('11111111-1111-4111-8111-111111111111',
           'focus_double_check_cycle',
@@ -108,7 +108,7 @@ select lives_ok($
           'android')
   on conflict (user_id,state_key)
   do update set payload=excluded.payload,source_device=excluded.source_device
-$, 'Android can update the shared cycle with its own additions');
+$dc$, 'Android can update the shared cycle with its own additions');
 
 select is((select payload->'seen'->>1 from public.workspace_state
   where state_key='focus_double_check_cycle'),
@@ -119,10 +119,10 @@ select is((select payload::text from public.workspace_state
   '{}', 'Double Check updates do not overwrite canonical primary review state');
 
 set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
-select is_empty($
+select is_empty($dc$
   select state_key from public.workspace_state
   where state_key='focus_double_check_cycle'
-$,'An unrelated account cannot access another account Double Check cycle');
+$dc$,'An unrelated account cannot access another account Double Check cycle');
 
 select * from finish();
 rollback;
