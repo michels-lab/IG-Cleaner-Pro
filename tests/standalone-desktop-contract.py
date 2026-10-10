@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory() as temp:
         p=root/rel
         p.parent.mkdir(parents=True,exist_ok=True)
         p.write_bytes(b"test-asset-binary")
-    fake="v120.37 "+' '.join(f'<img src="{rel}">' for rel in module.REQUIRED_ASSETS)
+    fake="v120.38 "+' '.join(f'<img src="{rel}">' for rel in module.REQUIRED_ASSETS)
     html,embed=module.convert(fake,root)
     assert len(embed)==3 and html.count("data:image/")==3
     (root/module.REQUIRED_ASSETS[0]).unlink()
