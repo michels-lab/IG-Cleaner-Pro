@@ -2759,6 +2759,14 @@ var igcRawProfileStorage=window.localStorage;
 var IGC_INSTAGRAM_PROFILE_KEY='igc_multi_profile_active';
 var igcActiveInstagramProfile=igcRawProfileStorage.getItem(IGC_INSTAGRAM_PROFILE_KEY)||'legacy';
 if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(igcActiveInstagramProfile))igcActiveInstagramProfile='legacy';
+try {
+ const nativeKey=window.AndroidBridge&&typeof window.AndroidBridge.getInstagramProfile==='function'?window.AndroidBridge.getInstagramProfile():null;
+ if(nativeKey&&/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(nativeKey))){
+  igcActiveInstagramProfile=String(nativeKey);
+  igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,igcActiveInstagramProfile);
+ }
+}catch(_){}
+
 var igcSharedProfileKeys=new Set([IGC_INSTAGRAM_PROFILE_KEY,'igc_multi_profile_registry_cache',
 'igc_v12027_supabase_config','igc_v12027_supabase_session','igc_v12026_device_identity']);
 function igcScopedStorageKey(key){
@@ -2799,9 +2807,12 @@ window.IGC_INSTAGRAM_PROFILES={
  switch(key){
   if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(key)))throw Error('Identidad inválida');
   if(key!==this.active&&key!=='legacy'&&!this.accounts.some(a=>a.account_key===key))throw Error('Perfil ajeno a tu cuenta');
-  igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);location.reload();
+  igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
+  try{window.AndroidBridge?.selectInstagramProfile?.(key)}catch(_){}
+  location.reload();
  },
  scopeRest(path,opt={}){
+  if(opt.globalAccountData===true)return {path,opt};
   const m=/^([a-z_]+)(\?.*)?$/.exec(path),base=new Set(['audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state']);
   if(this.active==='legacy'||!m||!base.has(m[1]))return {path,opt};
   if(!this.verified)throw Error('El perfil de Instagram debe verificarse antes de sincronizar');
@@ -12969,7 +12980,7 @@ async function verifyOtpAndSetPassword(){await verifyOtp();const password=String
 async function refresh(){if(!S.session?.refresh_token)return false;try{const d=await jfetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:JSON.stringify({refresh_token:S.session.refresh_token})});if(d?.access_token){S.session=d;saveSession();return true}}catch(e){console.warn('refresh session',e)}return false}
 async function ensureAuth(){if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta primero.');return true}
 async function rest(path,opt={}){const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);path=scoped.path;opt=scoped.opt;try{return await jfetch('/rest/v1/'+path,opt)}catch(e){if((e.status===401||e.status===403)&&await refresh())return await jfetch('/rest/v1/'+path,opt);throw e}}
-const IGC_SYNC_TABLES=['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state'];
+const IGC_SYNC_TABLES=['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state','instagram_accounts','instagram_audit_events','instagram_focus_batches','instagram_focus_batch_items','instagram_profile_state','instagram_list_snapshots','instagram_workspace_state'];
 function privacyDataStatus(text,type=''){
   const el=document.getElementById('privacyDataStatus');
   if(!el)return;
@@ -12979,7 +12990,7 @@ function privacyDataStatus(text,type=''){
 async function fetchAllCloudRows(table){
   const all=[];let offset=0;
   while(true){
-    const rows=await rest(`${table}?select=*&limit=1000&offset=${offset}`,{method:'GET'});
+    const rows=await rest(`${table}?select=*&limit=1000&offset=${offset}`,{method:'GET',globalAccountData:true});
     if(!Array.isArray(rows))break;
     all.push(...rows);
     if(rows.length<1000)break;
@@ -13039,9 +13050,9 @@ window.igcPrivacyDeleteCloudData=async function(){
     if(String(typed||'').trim().toUpperCase()!=='BORRAR NUBE'){privacyDataStatus('Borrado cancelado.');return}
     S.busy=true;
     privacyDataStatus('Borrando datos sincronizados…');
-    const order=['focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
+    const order=['instagram_focus_batch_items','instagram_focus_batches','instagram_profile_state','instagram_audit_events','instagram_list_snapshots','instagram_workspace_state','instagram_accounts','focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
     for(const table of order){
-      await rest(`${table}?user_id=not.is.null`,{method:'DELETE',headers:{Prefer:'return=minimal'}});
+      await rest(`${table}?user_id=not.is.null`,{method:'DELETE',globalAccountData:true,headers:{Prefer:'return=minimal'}});
     }
     dataMeta={};saveDataMeta();
     S.stats={eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0};
