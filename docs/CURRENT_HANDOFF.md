@@ -1,3 +1,12 @@
+## Current shipped version — v120.38 (published, verified; 2026-10-09)
+
+- **Stable GitHub Release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.38 — published 2026-10-10T00:47:55Z, `draft=false`, `prerelease=false`. Exact release commit `589d67230e62a7f1ad2cf21bc75a5348bcf4b93a`; publisher run https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38010213161 finished **SUCCESS**.
+- **Published assets verified uploaded:** signed production `IG-Cleaner-Pro-Android-v120.38.apk` (7,855,994 bytes); primary offline `IG-Cleaner-Pro-Desktop-v120.38.html` (3,254,813 bytes); optional `IG-Cleaner-Pro-Desktop-v120.38.zip` (1,393,218 bytes); logo PNG, PRIVACY.md, and SHA256SUMS.txt.
+- **Exact-commit required evidence PASSED:** Android real installed API35 emulator compact/wide Home/About `38010213267`, Desktop Chromium real compact/wide Home/About `38010213135`, full CI `38010213180` including Android build and 41 Supabase RLS tests, publisher real production keystore/signing and asset checks `38010213161`. Package `com.michelslab.igcleaner` `versionCode=12038` `versionName=120.38`, unchanged FINAL-9999 certificate SHA-256.
+- Feature content: native Android Focus shows full relationship dates/history; Double Check 30 uses Desktop/Android shared cycle; latest activity per section; HTML partial-coverage safety and refreshed active batches. Desktop stays on the same v120.38.
+- Manifest and consumed release-request closeout target **v120.39** next. No v120.39 authorization. **Do not republish v120.38** from a docs-only closeout change; governed release gate remains disabled.
+- **Post-release physical acceptance** issue #24: Samsung installed/update identity, user's real Instagram export/Focus and authenticated Desktop ↔ Android roundtrip still unverified by automation. No Google Play publishing implied.
+
 # Current Handoff — Instagram Cleaner Pro
 
 ## Authorized v120.38 publication candidate — 2026-10-09
