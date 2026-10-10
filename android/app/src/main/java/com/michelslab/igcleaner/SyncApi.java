@@ -39,6 +39,16 @@ public final class SyncApi {
     }
 
     public String getInstagramProfile() { return activeInstagramProfile; }
+    public String getInstagramProfileLabel() {
+        String label = prefs.getString("instagram_profile_label_" + profileOwnerKey(), "");
+        return label == null || label.isBlank() ? ("legacy".equals(activeInstagramProfile) ? "Datos anteriores" : "Instagram") : label;
+    }
+    public void setInstagramProfile(String key, String label) {
+        setInstagramProfile(key);
+        prefs.edit().putString("instagram_profile_label_" + profileOwnerKey(),
+                label == null || label.isBlank() ? "Instagram" : label).apply();
+    }
+
     public void setInstagramProfile(String key) {
         String normalized = key == null ? "legacy" : key.trim().toLowerCase(Locale.ROOT);
         if (!normalized.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
