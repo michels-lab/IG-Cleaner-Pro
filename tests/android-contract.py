@@ -125,7 +125,7 @@ focus_test_file = ROOT / "android/app/src/androidTest/java/com/michelslab/igclea
 assert focus_test_file.is_file(), "Focus insight instrumented test absent"
 focus_test = focus_test_file.read_text(encoding="utf-8")
 for token in ("Lo seguiste:", "Te siguió:", "Solicitud enviada:", "Última revisión:",
-              "Historial:", "no verificable", "batchHistory"):
+              "Historial:", "no verificable", "batchHistory", "NO VERIFICABLE"):
     assert token in insights, f"Missing synchronized Focus field: {token}"
 for token in ("createDoubleCheckBatch", "fetchDoubleCheckCycle", "persistDoubleCheckCycle",
               "focus_double_check_cycle", "renderDoubleCheckStats",
