@@ -87,13 +87,13 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next governed release target is **v120.38** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
+The next governed release target is **v120.39** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
 
 Authority: `release/distribution-manifest.json`.
 
 Publication is never automatic and requires explicit user authorization. A stable Android artifact must not be a debug/`.beta` package presented as stable; it must be a proper release artifact with signing continuity established, or Android publication remains blocked.
 
-The Desktop artifact is a bundle, not a lone HTML file, because About now uses external canonical identity assets:
+The **primary Desktop artifact is a single standalone offline HTML** that embeds the canonical About identity images; an **optional secondary ZIP bundle** includes these original files separately:
 - `IG-Cleaner-Pro.html`;
 - `assets/michel_duarte_avatar.jpg`;
 - `assets/michels-lab/official-lockup.png`.

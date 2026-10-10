@@ -9,7 +9,7 @@
 
 # Current Handoff — Instagram Cleaner Pro
 
-## Authorized v120.38 publication candidate — 2026-10-09
+## Archived v120.38 publication candidate — 2026-10-09 (superseded by published release above)
 
 - User explicitly requested release. `release/ig-cleaner-v120.38-candidate-20261009` aligns native Android + Desktop runtime version 120.38 and original production signing metadata; release notes and version contracts updated.
 - The manifest still records v120.37 as current until **actual GitHub v120.38 publication verification**; its nextRelease is v120.38. The publication authorization is staged separately after merging tested candidate, to trigger exact-commit Android and Desktop visual runners plus the generic governed publisher. Do not bypass release CI.
@@ -17,7 +17,7 @@
 - Pending: exact release-candidate CI, publication and post-publication metadata closeout. User's real Samsung and genuine sync/ZIP acceptance remains separately open in #24.
 
 
-## Android Focus parity integrated in main — 2026-10-09 (unreleased)
+## Archived pre-release Android Focus parity — 2026-10-09
 
 - **PR #42 merged** at `9447ae29bb7fe758f7791c0a7be23ebd9fc28841` after exact-head all-green CI `38008299846`, Desktop real Chromium `38008299836`, Android installed emulator `38008299843` (5 tests at compact+wide; nonblank APK-bound screenshots, artifact `11652775546`). PostgreSQL RLS suite passed **41** assertions, including Desktop/Android account-scoped Double Check read/write and isolation.
 - Status: code in `main`, **not shipped**. Stable v120.37 unchanged; v120.38 is **not authorized**. Do not claim genuine Instagram ZIP or live Samsung cloud sync tested until user acceptance.
@@ -29,7 +29,7 @@
 - Reuses existing Supabase `workspace_state` table with independent state_key `focus_double_check_cycle`; no SQL schema changes, no destructive state changes, no automatic release. Test instrumented phone dimensions and real cloud roundtrip after source QA. Existing v120.37 remains stable.
 - Desktop sync's Double Check epoch and seen-set must stay interoperable; native opened is not reviewed until explicit batch finish. Preserve original exported follow dates, report missing as unknown.
 
-## Current shipped version — v120.37 (published; authoritative)
+## Historical shipped version — v120.37 (superseded; not current stable)
 
 - **Normal GitHub stable release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.37 — published 2026-10-08T22:12:02Z; `draft=false` and `prerelease=false`.
 - **Matched releases:** signed production Android `IG-Cleaner-Pro-Android-v120.37.apk`, offline standalone Desktop `IG-Cleaner-Pro-Desktop-v120.37.html`, optional full Desktop `IG-Cleaner-Pro-Desktop-v120.37.zip`, product logo, privacy notice and `SHA256SUMS.txt`.
