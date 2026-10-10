@@ -1,3 +1,11 @@
+## Active work — multiple Instagram profiles under one IG Cleaner account (PR #50)
+
+- **Status: code candidate; not merged, not released, not yet deployed to production Supabase.** https://github.com/michels-lab/IG-Cleaner-Pro/pull/50
+- Additive `instagram_accounts` registry + six per-IG tables with composite PK/RLS; old stable v120.38 tables and keys preserved as `legacy`. Desktop localStorage and IndexedDB namespace nonlegacy profiles; native Android picker scopes queries and cache. Normal one-account Auth credentials remain shared.
+- New user export and review data must never silently overwrite another Instagram. Full local backup now records account_key and rejects mismatched import; ZIP import confirms target profile. Account-wide cloud export and deletion include old and new profile tables.
+- QA required before merge: 60 Supabase RLS assertions and additive migration test, Desktop source+real Chromium and Android build+8 emulator instrumentation tests at compact/wide. No live-user Supabase migration yet; evaluate after candidate is valid.
+- Original v120.38 release remains untouched; any v120.39 release requires explicit user authorization. Product contract: [docs/MULTI_INSTAGRAM_WORKSPACES.md](MULTI_INSTAGRAM_WORKSPACES.md).
+
 ## Current shipped version — v120.38 (published, verified; 2026-10-09)
 
 - **Stable GitHub Release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.38 — published 2026-10-10T00:47:55Z, `draft=false`, `prerelease=false`. Exact release commit `589d67230e62a7f1ad2cf21bc75a5348bcf4b93a`; publisher run https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38010213161 finished **SUCCESS**.
