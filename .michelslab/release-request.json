@@ -1,14 +1,11 @@
 {
-  "version": "120.37",
-  "tag": "v120.37",
-  "authorized": false,
-  "authorization_source": "Explicit user instructions in ChatGPT on 2026-10-08: 'dale release' followed by 'pero primero termina los pendientes'. PR #39 and PR #40 fixes, Android emulator UI/CI, Desktop visual tests and Supabase RLS completed before publication.",
+  "version": "120.38",
+  "tag": "v120.38",
+  "authorized": true,
+  "authorization_source": "Explicit user instruction 2026-10-09: 'dale release' for IG Cleaner Pro. Merged feature PR #42, documentation #43, candidate #45. Exact PR candidate QA passed: general CI 38009873793, installed Android Home/About + Focus emulator UI 38009873744, Desktop Chromium 38009873821. User visual review is after publication; stable Android APK and Desktop offline HTML must ship together.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.36",
-  "published_run": 37851259478,
-  "published_commit": "15177fee95358a891619266dc90a523d13b8aaef",
-  "completed_at_utc": "2026-10-08T22:12:02Z"
+  "status": "requested",
+  "previous_stable_release": "v120.37"
 }
