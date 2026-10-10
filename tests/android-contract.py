@@ -49,7 +49,7 @@ for token in (
     "deleteSyncedCloudData",
     "fetchAllCloudRows",
     "saveBytesToDownloads",
-    'api.delete(table + "?user_id=not.is.null")',
+    'api.deleteUnscoped(table + "?user_id=not.is.null")',
     "api.logout()",
 ):
     assert token in main, f"Android synced-data privacy contract missing: {token}"
@@ -59,6 +59,16 @@ for token in ("exportCloudData", "deleteCloudData"):
 
 assert 'public void delete(String tableQuery)' in sync_api
 assert '"DELETE"' in sync_api
+for token in ("scopeQuery(String query, String profile)", '"instagram_" + table',
+              'activeInstagramProfile', 'account_key=eq.', 'setInstagramProfile'):
+    assert token in sync_api, f"Android multi-Instagram scoped transport missing: {token}"
+for token in ("showInstagramProfileManager", "addInstagramProfile",
+              "labelLegacyInstagramProfile", "changeInstagramProfile",
+              "api.getUnscoped", "api.deleteUnscoped", "instagram_accounts"):
+    assert token in main, f"Android multi-Instagram workspace management missing: {token}"
+for token in ("@+id/selectInstagramProfile", "@+id/activeInstagramProfile"):
+    assert token in account_layout, f"Android active Instagram selection UI missing: {token}"
+
 
 # Native About must not regress to a text-only dialog.
 about = (ROOT / "android/app/src/main/res/layout/dialog_about.xml").read_text(encoding="utf-8")
