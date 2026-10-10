@@ -24,9 +24,9 @@ Supabase stores private per-user workflow state and normalized list snapshots:
 
 The original Instagram ZIP/JSON/HTML export is not uploaded as a backup. Import parsing remains local; only normalized app state needed for cross-device operation is synchronized.
 
-## Unreleased 2026-10-09 Focus information and Double Check parity
+## v120.38 release candidate — Focus information and Double Check parity
 
-Android Focus now has native access to both follow dates, relationship direction, last review and decision, profile history and source context. Double Check 30 can be created natively for Review / no-follow-back, with a shared `workspace_state` cycle key (`focus_double_check_cycle`) containing an epoch and frozen seen-usernames; it does not overwrite `primary` review data. A native per-module summary shows the latest Review, Mutuals, Followers, Pending or Double Check batch time, size, status and originating device; previous Desktop Double Check audit events are also recognized. This development change is unreleased and awaits exact-commit CI, emulator and actual account acceptance. Existing stable v120.37 remains the version to download.
+Android Focus now has native access to both follow dates, relationship direction, last review and decision, profile history and source context. Double Check 30 can be created natively for Review / no-follow-back, with a shared `workspace_state` cycle key (`focus_double_check_cycle`) containing an epoch and frozen seen-usernames; it does not overwrite `primary` review data. A native per-module summary shows the latest Review, Mutuals, Followers, Pending or Double Check batch time, size, status and originating device; previous Desktop Double Check audit events are also recognized. The Focus parity change is already merged; **v120.38 release is explicitly authorized** with automated build/emulator/desktop/Supabase validation required. v120.37 remains downloadable until the new GitHub release is confirmed; physical Samsung/real-account acceptance remains post-release.
 
 ## Android Focus autonomy
 
