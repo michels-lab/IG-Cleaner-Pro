@@ -12526,6 +12526,12 @@ async function applyZipCore(groups,zipName){
 }
 window.igcHandleZipInput=async function(file){
   if(!file||ZIP_STATE.busy)return;
+  const identity=window.IGC_INSTAGRAM_PROFILES;
+  if(identity&&identity.active!=='legacy'){
+    const account=identity.accounts.find(x=>x.account_key===identity.active);
+    if(!identity.verified){msg('Confirma primero el perfil de Instagram mediante sincronización.','w');return false}
+    if(!confirm('¿Importar '+String(file.name||'este ZIP')+' en '+(account?.username?'@'+account.username:'el Instagram seleccionado')+'? No se mezclarán las listas de otros perfiles.'))return false;
+  }
   if(!/\.zip$/i.test(file.name||'')){zipError('Selecciona el archivo .zip completo que entrega Instagram.');return}
   ZIP_STATE.busy=true;ZIP_STATE.file=file;ZIP_STATE.entries=[];ZIP_STATE.groups={};
   q('igcZipSummary').innerHTML='';q('igcZipNote').textContent='';
@@ -12874,7 +12880,7 @@ function renderImportDelta(){ensurePanels();const host=document.getElementById('
 window.igcV125ShowImportDelta=k=>{if(!H.importDelta)return;const label=compareLabels[k]||k;showList(label,H.importDelta[k]||[],H.importDelta.partial&&['followersLost','noBackAdded','mutualsLost'].includes(k)?'Ausencia no concluyente por HTML parcial':'Cambio desde el ZIP anterior')};
 // Keep profile/audit/snapshot UI fresh on navigation and import without changing parser behavior.
 const oldShow=window.showPage;if(typeof oldShow==='function')window.showPage=function(id){const r=oldShow.apply(this,arguments);if(id==='compare')setTimeout(refreshSnaps,0);if(id==='diag')setTimeout(()=>igcV125RunAudit(),0);if(id==='upload')setTimeout(renderImportDelta,0);return r};
-const oldZip=window.igcHandleZipInput;if(typeof oldZip==='function')window.igcHandleZipInput=async function(file){const r=await oldZip.apply(this,arguments);await saveCurrent(file?.name||'','zip');renderImportDelta();igcV125RunAudit();perfStatus();return r};
+const oldZip=window.igcHandleZipInput;if(typeof oldZip==='function')window.igcHandleZipInput=async function(file){const r=await oldZip.apply(this,arguments);if(r===false)return false;await saveCurrent(file?.name||'','zip');renderImportDelta();igcV125RunAudit();perfStatus();return r};
 const oldManual=window.processFiles;if(typeof oldManual==='function')window.processFiles=async function(){const r=await oldManual.apply(this,arguments);perfStatus();igcV125RunAudit();return r};
 const oldSaveInternal=window.saveInternalSnapshot;if(typeof oldSaveInternal==='function')window.saveInternalSnapshot=function(){const r=oldSaveInternal.apply(this,arguments);setTimeout(()=>{const s=legacySnapshot(internalSnapshot,'manual snapshot');if(s)saveSnap(s)},0);return r};
 async function migrate(){try{const all=await dbAll();if(!all.length){const seeds=[];if(internalSnapshot)seeds.push(legacySnapshot(internalSnapshot,'legacy internal'));if(lastZipRelationSnapshot)seeds.push(legacySnapshot(lastZipRelationSnapshot,'legacy last ZIP'));for(const s of seeds.filter(Boolean))await saveSnap(s)}}catch{}await refreshSnaps()}
