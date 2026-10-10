@@ -58,6 +58,7 @@ for (const token of [
   'async function pushDoubleCheckCycle()',
   'window.igcQueueDoubleCheckCycle=function()',
   "state_key:'focus_double_check_cycle'",
+  'followersEvidence:{partial:!!(window.V119_HTML?.active && window.V119_HTML?.partial)',
   "window.igcQueueDoubleCheckCycle?.()",
   'ig_cleaner_double_check_epoch'
 ]) requireToken(token, 'Desktop + Android Double Check cycle sync missing');
