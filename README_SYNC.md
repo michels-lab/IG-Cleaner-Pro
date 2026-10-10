@@ -1,6 +1,6 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current published stable: **v120.37**. Historical v120.34 instructions below describe the prior release process.
+Current published stable: **v120.38**. Historical v120.34 instructions below describe the prior release process.
 
 ## Product model
 
@@ -24,9 +24,9 @@ Supabase stores private per-user workflow state and normalized list snapshots:
 
 The original Instagram ZIP/JSON/HTML export is not uploaded as a backup. Import parsing remains local; only normalized app state needed for cross-device operation is synchronized.
 
-## v120.38 candidate — Focus information and Double Check parity
+## Released v120.38 — Focus information and Double Check parity
 
-Android Focus now has native access to both follow dates, relationship direction, last review and decision, profile history and source context. Double Check 30 can be created natively for Review / no-follow-back, with a shared `workspace_state` cycle key (`focus_double_check_cycle`) containing an epoch and frozen seen-usernames; it does not overwrite `primary` review data. A native per-module summary shows the latest Review, Mutuals, Followers, Pending or Double Check batch time, size, status and originating device; previous Desktop Double Check audit events are also recognized. This development change is unreleased and awaits exact-commit CI, emulator and actual account acceptance. Existing stable v120.37 remains the version to download.
+Android Focus now has native access to both follow dates, relationship direction, last review and decision, profile history and source context. Double Check 30 can be created natively for Review / no-follow-back, with a shared `workspace_state` cycle key (`focus_double_check_cycle`) containing an epoch and frozen seen-usernames; it does not overwrite `primary` review data. A native per-module summary shows the latest Review, Mutuals, Followers, Pending or Double Check batch time, size, status and originating device; previous Desktop Double Check audit events are also recognized. The feature is included in the published stable v120.38; exact-commit Android emulator and Desktop Chromium UI QA, Android signing and Supabase RLS passed. Actual Samsung/real Instagram ZIP and live authenticated Desktop↔Android account acceptance remain separate.
 
 ## Android Focus autonomy
 
