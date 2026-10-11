@@ -1,3 +1,9 @@
+## 2026-10-11 — Owner confirmed OTP signup works after provider-side fixes
+
+- **User-reported live acceptance:** owner configured Google Gmail SMTP within Supabase Auth (previous screenshots showed `smtp.gmail.com:465`, `michelslab.dev@gmail.com` username, 60-second interval), saved the settings, installed both `{{ .Token }}` email templates from the repository and then confirmed they **received the six-digit code and successfully registered a new IG Cleaner account**. This resolves the previously demonstrated inability to complete the requested code-based new-user registration *for that tested path*.
+- **Evidence boundary:** user performed the provider actions directly. We did not see the final authenticated email headers, read confidential OTP/passwords, run separate email delivery from the plugin, prove Inbox instead of Spam, check an additional device, or verify cross-login isolation/recovery. These stay explicitly open in [issue #73](https://github.com/michels-lab/IG-Cleaner-Pro/issues/73) and #24.
+- No new source release or further Supabase API modification is required for the now-functional hosted OTP path. Published stable remains **v120.41**, governed next **v120.42**, unauthorized until a new explicit release request.
+
 ## 2026-10-11 — Confirmed official Michel's Lab Gmail identity and practical SMTP route
 
 - User clarified sender identity is **`michelslab.dev@gmail.com`**, a Gmail mailbox; company **does not own `michelslab.dev` domain**. Earlier placeholder `no-reply@michelslab.dev` must not be used without domain ownership and authentication.
