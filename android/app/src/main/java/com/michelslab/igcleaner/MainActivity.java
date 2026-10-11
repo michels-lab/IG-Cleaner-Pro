@@ -1194,6 +1194,7 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
         MaterialButton exportCloudData = view.findViewById(R.id.exportCloudData);
         MaterialButton deleteCloudData = view.findViewById(R.id.deleteCloudData);
+        MaterialButton switchAccount = view.findViewById(R.id.switchAccount);
         MaterialButton logout = view.findViewById(R.id.logout);
         TextView accountEmail = view.findViewById(R.id.accountEmail);
         TextView label = view.findViewById(R.id.deviceLabel);
@@ -1315,6 +1316,41 @@ public final class MainActivity extends AppCompatActivity {
         exportCloudData.setOnClickListener(v -> exportSyncedCloudData());
         deleteCloudData.setOnClickListener(v -> confirmDeleteSyncedCloudData());
 
+        switchAccount.setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
+                .setTitle("Switch account")
+                .setMessage("Sign out of " + api.getEmail()
+                        + " and sign in with a different IG Cleaner email? Your Instagram profiles, local history and cloud backups will not be deleted. You will need the other account's password.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Switch account", (dialog, which) -> {
+                    switchAccount.setEnabled(false);
+                    logout.setEnabled(false);
+                    setGlobalStatus("SWITCHING • signing out safely");
+                    // Serialize behind any in-flight native sync so an earlier request
+                    // cannot complete after the owner changes.
+                    runAsync(() -> {
+                        api.logout();
+                        api.setEmail("");
+                        mainHandler.post(() -> {
+                            syncedFollowing = new JSONArray();
+                            syncedFollowers = new JSONArray();
+                            syncedPending = new JSONArray();
+                            syncedWorkspaceState = new JSONObject();
+                            syncedReviewStateAvailable = false;
+                            currentBatch = null;
+                            currentItems = new JSONArray();
+                            itemByUsername.clear();
+                            opened.clear();
+                            remotelyReviewed.clear();
+                            reviewedDevice.clear();
+                            auditEventByUsername.clear();
+                            auditOpened.clear();
+                            // Keep per-owner caches and original ZIP/local review history.
+                            setGlobalStatus("SIGN IN • choose another account");
+                            showNativeAccountScreen();
+                        });
+                    }, true);
+                }).show());
+
         logout.setOnClickListener(v -> {
             clearWorkspaceCache();
             api.logout();
@@ -1413,9 +1449,15 @@ public final class MainActivity extends AppCompatActivity {
             String sessionBridge = "";
             if (api.hasSession()) {
                 String quoted = JSONObject.quote(session);
+                String owner = JSONObject.quote(api.getEmail().trim().toLowerCase(Locale.ROOT));
                 sessionBridge = nativeSessionNewer
                         ? "localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");"
-                        : "if(!localStorage.getItem('igc_v12027_supabase_session'))localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");";
+                        : "try{var previous=JSON.parse(localStorage.getItem('igc_v12027_supabase_session')||'null');"
+                        + "if(!previous||String(previous.user&&previous.user.email||'').trim().toLowerCase()!==" + owner + ")"
+                        + "localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");"
+                        + "}catch(_){localStorage.setItem('igc_v12027_supabase_session'," + quoted + ");}";
+            } else {
+                sessionBridge = "localStorage.removeItem('igc_v12027_supabase_session');";
             }
             String targetPage = workspaceTargetPage == null ? "" : workspaceTargetPage;
             String js = "(function(){"

@@ -192,4 +192,57 @@ assert.match(html,/window\.IGC_INSTAGRAM_PROFILES\.setCloudStatus/,'Desktop must
 assert.match(html,/Conéctate en Cuenta con el mismo correo/,'Signed-out users need actionable instructions to recover cloud accounts');
 assert.match(html,/const profiles=rows;/,'Do not silently downgrade invalid cloud registry to a one-item legacy view');
 assert.match(html,/registry\.setCloudStatus\(profiles\.length\+/,'Successful registry fetch must show the remote account count');
+// IG Cleaner *login* switching is separate from Instagram workspace switching.
+const switchButton = /onclick="igcSyncSwitchAccount\(\)">Cambiar usuario<\/button>/;
+assert.match(html,switchButton,'Desktop must present Switch account next to Sign out');
+const switchSource=html.match(/window\.igcSyncSwitchAccount=function\(\)\{([\s\S]*?)\n\};/);
+assert(switchSource,'Desktop account-switch handler must exist');
+assert.match(switchSource[1],/location\.reload\(\)/,'Switch must restart into a different owner scope');
+const keptState = new Map([['legacy-history','original'],['ig_alice-history','alice'],['ig_bob-history','bob']]);
+const trace={reload:0,bridge:0,sessionSaves:0,configSaves:0};
+const switchEnv={
+ window:{}, S:{session:{access_token:'secret-A'},cfg:{email:'alice@example.test'},busy:false},
+ dataMeta:{last:'A'}, statePushTimer:null,
+ status:()=>{}, clearTimeout:()=>{},
+ confirm:()=>true, saveSession:()=>{trace.sessionSaves++}, notifyHostSession:force=>{
+    assert.equal(force,true);trace.bridge++},
+ saveCfg:()=>{trace.configSaves++}, saveDataMeta:()=>{},
+ document:{getElementById:()=>null},
+ location:{reload:()=>{trace.reload++}}
+};
+vm.createContext(switchEnv);
+vm.runInContext('window.igcSyncSwitchAccount=function(){'+switchSource[1]+'\n};',switchEnv);
+switchEnv.window.igcSyncSwitchAccount();
+assert.equal(switchEnv.S.session,null,'Old auth token must not remain active');
+assert.equal(switchEnv.S.cfg.email,'','Switching accounts must not prefill previous email');
+assert.equal(trace.reload,1,'Owner reload must be triggered once');
+assert.equal(trace.bridge,1,'Native auth must be explicitly invalidated');
+assert.equal(trace.sessionSaves,1);
+assert.equal(trace.configSaves,1);
+assert.deepEqual([...keptState.values()],['original','alice','bob'],
+ 'Switch must leave existing Instagram data untouched');
+switchEnv.S.busy=true;
+switchEnv.window.igcSyncSwitchAccount();
+assert.equal(trace.reload,1,'In-flight sync must block owner switch');
+switchEnv.S.busy=false;
+switchEnv.confirm=()=>false;
+switchEnv.window.igcSyncSwitchAccount();
+assert.equal(trace.reload,1,'Cancelled switch must leave owner unchanged');
+assert.match(html,/nativeOwnerAvailable/,'Android native owner must trump a stale WebView config');
+assert.match(html,/notifyHostSession\(forceLogout=false\)/,
+ 'Embedded HTML must not sign out native while it is bootstrapping');
+assert.match(xml,/@\+id\/switchAccount/,'Android Account needs a visible Switch account button');
+assert.match(nativeActivity,/switchAccount\.setOnClickListener/,'Android button needs a real handler');
+assert.match(nativeActivity,/api\.logout\(\);\s*api\.setEmail\(""\)/,
+ 'Android Switch account must clear token and account identity');
+assert.match(nativeActivity,/switchAccount\.setEnabled\(false\);\s*logout\.setEnabled\(false\)/,
+ 'Double click or concurrent logout must not race account switch');
+assert.match(nativeActivity,/String\s+owner\s*=\s*JSONObject\.quote\(api\.getEmail\(\)/,
+ 'Android WebView must verify session owner on bootstrap');
+const androidAuth=fs.readFileSync(path.join(root,
+ 'android/app/src/main/java/com/michelslab/igcleaner/SyncApi.java'),'utf8');
+const signIn=androidAuth.match(/public void signInWithPassword\([\s\S]*?\n    \}/)?.[0]||'';
+assert(signIn.indexOf('setEmail(requestedEmail)')>signIn.indexOf('requestObject("POST"'),
+ 'Failed Android login must not move an existing account into a foreign namespace');
+
 console.log('Multi-Instagram local storage, audit DB, REST write isolation and registry contracts passed.');

@@ -138,18 +138,22 @@ public final class SyncApi {
     }
 
     public void signInWithPassword(String value, String password) throws Exception {
-        setEmail(value);
-        if (email.isBlank()) throw new IllegalArgumentException("Escribe tu correo.");
+        String requestedEmail = value == null ? "" : value.trim();
+        if (requestedEmail.isBlank()) throw new IllegalArgumentException("Escribe tu correo.");
         String pass = password == null ? "" : password;
         if (pass.isBlank()) throw new IllegalArgumentException("Escribe tu contraseña.");
 
+        // Never change owner namespace or retain another user's token after a
+        // failed sign-in. Commit the identity only on a valid Auth response.
         JSONObject result = requestObject("POST", "/auth/v1/token?grant_type=password",
                 new JSONObject()
-                        .put("email", email)
+                        .put("email", requestedEmail)
                         .put("password", pass),
                 false, null);
+        if (result.optString("access_token", "").isBlank())
+            throw new IOException("No se pudo iniciar sesión.");
+        setEmail(requestedEmail);
         saveSession(result);
-        if (!hasSession()) throw new IOException("No se pudo iniciar sesión.");
     }
 
     public void updatePassword(String password) throws Exception {

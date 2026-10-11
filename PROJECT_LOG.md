@@ -1,3 +1,12 @@
+## 2026-10-11 — Account switching across Desktop and Android (PR candidate; no release)
+
+- Added **Switch account / Cambiar usuario** beside existing Sign out in IG Cleaner Auth account screens. This switches the IG Cleaner *login* (email), not the selected Instagram workspace under that login. Sign out keeps the remembered login email; Switch account explicitly resets email and credentials, then presents a fresh login. No remembered passwords, new Auth service or migration.
+- Desktop switch refuses while active sync is running, asks for confirmation, invalidates session/Android bridge explicitly, clears only shared sync metadata and email hint, then reloads into the signed-out owner namespace. Other users' Instagram registry, legacy/local reviews, IndexedDB and cloud data are not deleted.
+- Android switch serializes logout behind existing native IO, resets in-memory lists, Focus/audit selections, clears account email and tokens, and returns to native login. Existing owner/profile-scoped persistent caches are preserved (unlike normal existing Sign out). Email identity changes now occur only after successful password Auth responses.
+- Embedded Android WebView sanitizes an old different-owner session early, uses the actual native identity (including signed-out) as the local owner, never clears a newer native Auth session from an uninitialized web page, and restores native-authenticated session on bridge bootstrap.
+- Added behavioral guard to existing multi-Instagram contract testing Desktop switch, busy/cancel paths, native UI & session isolation. Physical Samsung real two-login/ZIP round-trip acceptance still pending under #24.
+- **Status:** branch `feat/switch-ig-cleaner-account-20261011`; source changes, automation validations pending exact PR head. Public stable **v120.40** remains unchanged; **v120.41 is paused** following user's request to wait. No release, version bump, production cloud mutation or destructive cleanup authorized.
+
 # IG Cleaner Pro — Project Log & Functional Contract
 
 ## 2026-10-11 — Desktop account list and full @handle display corrected; merged, unreleased
