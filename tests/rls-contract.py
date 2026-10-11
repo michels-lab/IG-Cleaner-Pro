@@ -27,7 +27,7 @@ for token in (
     assert token in schema, f"Optimized authenticated-only RLS policy missing: {token}"
 
 for token in (
-    "select plan(60)",
+    "select plan(78)",
     "set local role authenticated",
     "set local request.jwt.claim.sub",
     "cannot update user 1",
@@ -36,6 +36,8 @@ for token in (
     "focus_double_check_cycle",
     "Two separate follower lists exist under same app login",
     "Both accounts keep distinct review history",
+    "Owner can atomically delete named Instagram B",
+    "Account B cannot delete an Instagram profile belonging to account A",
     "Different app login cannot see another user follower lists",
     "Double Check updates do not overwrite canonical primary review state",
 ):
@@ -57,4 +59,7 @@ for scoped in ("instagram_accounts","instagram_audit_events","instagram_focus_ba
     assert scoped in (ROOT/"supabase/migrations/20261009_multi_instagram_workspaces.sql").read_text(), f"Missing additive migration: {scoped}"
 assert "account_key" in schema
 assert "legacy" in schema
+assert "security invoker" in schema
+assert "igc_delete_instagram_profile" in schema
+assert (ROOT/"supabase/migrations/20261010_delete_instagram_profiles.sql").is_file()
 print("Supabase multi-Instagram + RLS isolation contract passed.")

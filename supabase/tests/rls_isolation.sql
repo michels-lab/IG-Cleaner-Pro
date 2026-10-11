@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(60);
+select plan(78);
 
 -- Two deterministic users; rows are rolled back after the suite.
 -- No auth.users rows are required because these tables intentionally store the
@@ -182,6 +182,62 @@ select is_empty($mi$select account_key from public.instagram_list_snapshots$mi$,
 select is_empty($mi$update public.instagram_profile_state set decision='hacked'
  where user_id='11111111-1111-4111-8111-111111111111' returning 1$mi$,
  'Different app login cannot change a saved Instagram review');
+
+
+-- 61–78: atomic per-Instagram delete preserves legacy and the sibling workspaces.
+select ok((select not prosecdef from pg_proc
+ where oid='public.igc_delete_instagram_profile(text,text)'::regprocedure),
+ 'Profile deletion executes as authenticated invoker, not a privileged definer');
+select throws_ok(
+ $del$select public.igc_delete_instagram_profile('ig_profile_a_123','profile_a')$del$,
+ 'P0001','Este perfil no existe en tu cuenta',
+ 'Account B cannot delete an Instagram profile belonging to account A');
+
+set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+select throws_ok(
+ $del$select public.igc_delete_instagram_profile('legacy','profile_legacy')$del$,
+ 'P0001','Los datos anteriores no se pueden eliminar desde perfiles',
+ 'No app login may delete its original legacy account through the named-profile RPC');
+select throws_ok(
+ $del$select public.igc_delete_instagram_profile('ig_profile_a_123','wrong_username')$del$,
+ 'P0001','El nombre de Instagram cambió. Actualiza la lista antes de eliminar',
+ 'Mismatched confirmation blocks deletion');
+select is((select count(*) from public.instagram_profile_state
+ where account_key='ig_profile_a_123'),1::bigint,'Confirmation failure kept reviews');
+select lives_ok(
+ $del$insert into public.instagram_focus_batch_items
+  (user_id,account_key,batch_id,position,username)
+  values ('11111111-1111-4111-8111-111111111111','ig_profile_b_123','same-focus-id',1,'b_fan')$del$,
+ 'Seed focus item to prove parent-child order');
+select lives_ok(
+ $del$select public.igc_delete_instagram_profile('ig_profile_b_123','profile_b')$del$,
+ 'Owner can atomically delete named Instagram B with lists, reviews and Focus');
+select is((select count(*) from public.instagram_accounts
+ where account_key='ig_profile_b_123'),0::bigint,'Deleted B registry entry');
+select is((select count(*) from public.instagram_list_snapshots
+ where account_key='ig_profile_b_123'),0::bigint,'Deleted only B lists');
+select is((select count(*) from public.instagram_profile_state
+ where account_key='ig_profile_b_123'),0::bigint,'Deleted only B reviews');
+select is((select count(*) from public.instagram_focus_batches
+ where account_key='ig_profile_b_123'),0::bigint,'Deleted B Focus batches');
+select is((select count(*) from public.instagram_focus_batch_items
+ where account_key='ig_profile_b_123'),0::bigint,'Deleted B Focus batch items');
+select is((select count(*) from public.instagram_list_snapshots
+ where account_key='ig_profile_a_123'),1::bigint,'Sibling A list stays intact');
+select is((select count(*) from public.instagram_profile_state
+ where account_key='ig_profile_a_123'),1::bigint,'Sibling A reviews stay intact');
+select is((select count(*) from public.instagram_accounts
+ where account_key='legacy'),1::bigint,'Original legacy Instagram registry preserved');
+select is((select count(*) from public.list_snapshots
+ where list_name='following'),1::bigint,'Legacy pre-v120.39 following snapshots preserved');
+select lives_ok(
+ $del$insert into public.instagram_accounts(user_id,account_key,username)
+   values ('11111111-1111-4111-8111-111111111111','ig_recreated_b_123','profile_b')$del$,
+ 'Removed handle is released for safe assignment back to legacy');
+select throws_ok(
+ $del$select public.igc_delete_instagram_profile('ig_profile_b_123','profile_b')$del$,
+ 'P0001','Este perfil no existe en tu cuenta',
+ 'Deletion is protected from stale retries and wrong profile keys');
 
 select * from finish();
 rollback;

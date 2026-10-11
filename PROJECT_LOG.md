@@ -1,5 +1,10 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-10 — Instagram profile delete controls (candidate)
+
+Desktop and Android gain a confirmed remove-profile action for named Instagram workspaces. The original Datos anteriores workspace stays protected. The new authenticated, owner-scoped database function removes a named profile and its own synchronized rows in one transaction; failures roll back. Client-side safeguards require typed confirmation and restrict local cleanup to the selected profile. Added migration and test coverage. No new release published. See docs/MULTI_INSTAGRAM_WORKSPACES.md and PR #59.
+
+
 ## 2026-10-10 — Android profile selector hides data recovery choice (fix candidate, not released)
 
 - User reported **no “Datos anteriores” entry** in Android profile manager after creating a blank Instagram workspace; attempting to assign the old @handle fails with a database unique-value constraint.
