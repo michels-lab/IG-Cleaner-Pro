@@ -1,5 +1,14 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-11 — Desktop account list and full @handle display corrected; merged, unreleased
+
+- **Merged:** [PR #67](https://github.com/michels-lab/IG-Cleaner-Pro/pull/67), squash `6a7049702f284c2cae378d7aaecff31f5f3a0a80`, exact tested head `1a476fdbb1b6d85497d332086ae2d7ad2bb00421`. Previous PR #66 superseded because cross-app visual QA was merged concurrently.
+- **Root causes:** ① Desktop `select` shared a flex row with four actions and could shrink to “Dat”; responsive @max780 further collapsed the entire Instagram section to zero width. ② Desktop initially showed only cached `legacy` and fetched additional identities via authenticated full sync without a visible explanation of missing account/session or cloud fetch error.
+- **Shipped-to-source fix:** long @usernames wrap fully inside dedicated active-account card; full-width dropdown; labeled two-column action grid with manual `Actualizar perfiles`; compact viewport reserves nonzero account-rail width; signed-out/failed cloud request shown explicitly and authenticated refresh displays total available profiles. Named/unnamed workspace storage keys, original legacy lists, Supabase functions, Android native code and signing unchanged.
+- **Validation:** all five exact-head GitHub checks passed: Desktop contract/owner isolation, real standalone HTML/Chromium compact+wide account geometry and About, Android embedded build, installed Android API35 UI, and 99 pgTAP owner/RLS tests. Real browser actively asserts complete 30-character handle, second choice visible, no squeeze/overlap, five buttons and login instruction.
+- **Publication:** Public stable remains `v120.40`; merged fix is **not yet in a downloadable release**. `v120.41` Desktop+Android coordinated publication requires **explicit fresh user approval**. Real user desktop signed-in cloud result and Samsung⇄PC two-profile acceptance remain unverified pending user use of the next release. Do not claim installed PC is proven signed out based on screenshot alone.
+
+
 ## 2026-10-11 — Desktop switcher: incomplete account list and cropped @handle (candidate)
 
 - User screenshot of v120.40 shows the dropdown limited to the locally cached `Datos anteriores` choice and text reduced to “Dat”; Android appears corrected.
