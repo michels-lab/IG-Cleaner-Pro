@@ -22,5 +22,11 @@ One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Inst
 - A missing migration on Desktop legacy fails soft; new profiles fail closed. Any account mismatch, missing registration or unconfirmed legacy backup must not silently populate a different Instagram profile.
 - Never upload the production signing key, Auth service role credentials or private Instagram export for testing. Real user data and phone hardware are not exercised by CI.
 
+## UI parity and text rendering QA
+
+- Desktop: a profile picker appears alongside the workspace identity; `\\n\\n` previously displayed above the product sidebar because malformed literal escape text separated two `<style>` blocks, now removed from HTML source and covered by real Chromium assertions.
+- Android: the native Profile screen manages Instagram identities; the current identity in the always-visible top toolbar is tappable for quick switching in **every section**. The About button is not replaced or moved. Active Focus and list caches are invalidated when changing identities; each account retains its own cloud and local scope.
+- An Android instrumentation regression previously failed because the fixtures `ig_one_123`/`ig_two_456` did not satisfy the actual account_key minimum length. Updated to valid opaque-format fixture keys; all runtime checks must be rerun on the resulting commit.
+
 ## Status
 At creation: **PR #50 development**, not merged, not published, production migration not applied. v120.38 remains published stable; next governed version v120.39 requires a new user request. Update this section from actual CI evidence, not intention.
