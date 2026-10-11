@@ -1,5 +1,14 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-11 — Desktop switcher: incomplete account list and cropped @handle (candidate)
+
+- User screenshot of v120.40 shows the dropdown limited to the locally cached `Datos anteriores` choice and text reduced to “Dat”; Android appears corrected.
+- Diagnosed the HTML rail using a shared flex row for account `select` and 4 actions; cloud registry fetch depended on a valid Desktop sync session and failed without visible recovery guidance.
+- Candidate corrective design: full multiline active identity label; 100%-width selector; separate explicitly labeled action grid; manual profile-registry refresh without full state sync; visible cloud count and login/network error status. This does not mutate any saved identities or lists.
+- Regression: browser layouts at 390px/1360px check active long handle, second account, button geometry, and signed-out status; Node contract checks exact profile name and refresh path.
+- This is **unreleased** source work for next v120.41; previous stable v120.40 remains published. Do not claim the user PC session has been diagnosed as signed out without verifying their local login.
+
+
 ## 2026-10-11 — Coordinated IG Cleaner Pro v120.40 published and verified
 
 - User explicitly authorized release of v120.40 for Desktop+Android after merged profile recovery/delete improvements. Release preparation [PR #63](https://github.com/michels-lab/IG-Cleaner-Pro/pull/63) merged to exact publication commit `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`.
