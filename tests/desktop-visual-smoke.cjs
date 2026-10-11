@@ -27,6 +27,51 @@ const {chromium} = require("playwright");
       const fileUrl=pathToFileURL(entry).href;
       await page.goto(fileUrl,{waitUntil:"domcontentloaded",timeout:60000});
       await page.locator("#igcAppShell").waitFor({state:"visible"});
+      // Regression for screenshot where "Datos anteriores" was cropped to "Dat":
+      // the active label must wrap in full, the selector has its own complete
+      // row, and account actions cannot steal its horizontal width.
+      await page.waitForFunction(() =>
+        document.getElementById('igcInstagramCloudStatus')?.textContent?.includes('Cuenta'));
+      const fullHandle='full_instagram_identity_987654';
+      const identityGeometry=await page.evaluate(handle=>{
+        const registry=window.IGC_INSTAGRAM_PROFILES;
+        registry.setAccounts([
+          {account_key:'legacy',username:handle,label:'Datos anteriores'},
+          {account_key:'ig_preview_second123',username:'another_instagram_account_long'}
+        ]);
+        const full=document.getElementById('igcInstagramActiveFullName');
+        const picker=document.getElementById('igcInstagramIdentity');
+        const row=document.querySelector('.igc-profile-select-row');
+        const buttons=document.querySelector('.igc-profile-actions');
+        const status=document.getElementById('igcInstagramCloudStatus');
+        const fullRect=full.getBoundingClientRect();
+        const pickerRect=picker.getBoundingClientRect();
+        const rowRect=row.getBoundingClientRect();
+        const buttonsRect=buttons.getBoundingClientRect();
+        return {
+          selected:full.textContent,options:[...picker.options].map(o=>o.textContent),
+          clipped:full.scrollWidth>full.clientWidth+2,
+          fullVisible:fullRect.width>100&&fullRect.height>14,
+          pickerWidth:pickerRect.width,rowWidth:rowRect.width,
+          pickerBottom:pickerRect.bottom,buttonsTop:buttonsRect.top,
+          buttonCount:buttons.querySelectorAll('button').length,
+          status:status.textContent
+        };
+      },fullHandle);
+      assert.equal(identityGeometry.selected,'@'+fullHandle+' · Datos anteriores',
+        'P0: full active Instagram name is not shown');
+      assert(identityGeometry.options.some(n=>n.includes('another_instagram_account_long')),
+        'Another Instagram workspace is missing from visible switcher choices');
+      assert(identityGeometry.fullVisible&&!identityGeometry.clipped,
+        'P0: active Instagram profile name is cropped: '+JSON.stringify(identityGeometry));
+      assert(identityGeometry.pickerWidth>=identityGeometry.rowWidth-4,
+        'P0: account buttons are stealing width from Instagram selector: '+JSON.stringify(identityGeometry));
+      assert(identityGeometry.pickerBottom<=identityGeometry.buttonsTop+2,
+        'P0: account buttons overlap/drop into selector row: '+JSON.stringify(identityGeometry));
+      assert.equal(identityGeometry.buttonCount,5,'Profile controls must remain accessible');
+      assert(identityGeometry.status.includes('Cuenta'),
+        'Signed-out Desktop should clearly ask users to connect their cloud account');
+
       // Real Chromium parses stray backslash-n outside <style> as visible
       // text nodes and lifts them above the shell. Source/PNG checks alone
       // previously missed this exact regression.
