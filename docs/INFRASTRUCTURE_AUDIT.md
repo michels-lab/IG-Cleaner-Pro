@@ -1,3 +1,9 @@
+## 2026-10-11 — Candidate upgrade of cross-app UI evidence gate
+
+- Public stable is v120.40; no new release is authorized by this QA work. The platform-specific emulator/Chromium Home+About evidence is retained and is now additionally checked by Michel's Lab's canonical `visual_release_gate.py` using source/real artifact SHA-256 and two viewports.
+- Desktop screenshots will be taken from the self-contained distributable HTML (not the unbundled source). Android emulator screenshots remain bound to its installed debug APK; production signed APK, real Samsung and post-release owner review are distinct evidence levels.
+- This is implementation in a branch pending exact-head CI; new tests and release workflow checks are designed to fail closed without image/manifest evidence.
+
 ## Updated production state — v120.39 (2026-10-10 Mexico)
 
 - Current published stable: **v120.39**, signed Android APK and Desktop standalone HTML + ZIP. Next authorized target in the governed manifest: **v120.40** (not authorized yet).

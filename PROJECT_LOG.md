@@ -1,5 +1,13 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-11 — Integrate Michel's Lab rendered UI evidence gate (candidate)
+
+- The master cross-app QA identified P0 missing `tools/visual_release_gate.py` and CI invocation in IG Cleaner. Existing Android installed-emulator and Desktop Chromium Home/About screenshot suites were already present and must not be duplicated.
+- Branch `fix/master-rendered-ui-gate-20261011` vendors the unchanged master validator and introduces a strict format adapter bound to existing real screenshots, two distinct viewports, source SHA and tested artifact digest. Reused screenshot/image/commit tampering fails closed. Original platform-specific evidence and checks remain authoritative.
+- Desktop visual smoke now captures the actual packaged standalone HTML instead of unbundled source HTML; release QA rebuilds that distributable from the same commit and verifies its SHA-256. Android proof remains explicitly bound to installed emulator **debug** APK and does not certify the separately signed production APK or physical Samsung.
+- Generic `release.yml` independently revalidates master screenshots before any publication; human review remains post-release and no version/release request was modified. Added adapter contract tests and workflow path triggers.
+- **State:** implementation submitted for PR and exact-head CI validation; not yet merged or published. Physical phone review and any complete production-signed APK runtime equivalence remain separate work.
+
 ## 2026-10-11 — Coordinated IG Cleaner Pro v120.40 published and verified
 
 - User explicitly authorized release of v120.40 for Desktop+Android after merged profile recovery/delete improvements. Release preparation [PR #63](https://github.com/michels-lab/IG-Cleaner-Pro/pull/63) merged to exact publication commit `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`.
