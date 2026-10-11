@@ -1,3 +1,10 @@
+## Pending live Supabase Auth/Brevo mail configuration — 2026-10-11
+
+- Screenshot confirms **user-visible signup P0**: IG Cleaner prompts for a numeric verification code, but default Supabase **Confirm sign up** sends a confirmation link redirected to `localhost:3000`; mail sender shows an unbranded Brevo fallback and Spam. Front-end code expects `/auth/v1/verify` `type=email`. Production email deliverability/confirmation is therefore not yet end-to-end verified.
+- Working branch `fix/auth-email-six-digit-otp-branding-20261011`: versioned `supabase/email-templates/confirmation.html` and `magic_link.html` with `{{ .Token }}`, guarded CLI helper `tools/configure_auth_email_templates.py`, offline CI assertions and [operational setup guide](../docs/AUTH_EMAIL_SETUP.md). Do not claim this applies the templates to hosted Supabase.
+- **Operational blocker:** connected Supabase API exposes DB/edge/project but no Auth config SMTP/template update; no Brevo integration available. Auth dashboard owner must paste both templates, verify remote config via management-token helper if available, choose real verified sender, and check Site URL; code-only OTP does not need localhost redirect. No backend user records should be migrated/deleted.
+- Release: stable remains v120.41; source/docs update alone must not authorize or publish v120.42. Track real new-user email+password and sender tests before closeout.
+
 ## Official v120.41 stable release complete — 2026-10-11
 
 - [GitHub v120.41](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.41) is published normal stable with all six expected assets; exact `main` publication SHA `1f711badcbc902e61beb7e382a49fe55f87fe9a1`, governed [workflow 38125964658](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38125964658) SUCCESS. Desktop standalone HTML (3,283,790 B), optional ZIP (1,401,875 B), and signed Android APK (7,879,580 B) carry matching v120.41 identity and persistent production certificate.
