@@ -1118,6 +1118,8 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton selectInstagramProfile = view.findViewById(R.id.selectInstagramProfile);
+        MaterialButton editInstagramUsername = view.findViewById(R.id.editInstagramUsername);
+        MaterialButton backupInstagramProfile = view.findViewById(R.id.backupInstagramProfile);
         MaterialButton deleteInstagramProfile = view.findViewById(R.id.deleteInstagramProfile);
         TextView activeInstagramProfileLabel = view.findViewById(R.id.activeInstagramProfile);
         MaterialButton sync = view.findViewById(R.id.syncNow);
@@ -1134,8 +1136,29 @@ public final class MainActivity extends AppCompatActivity {
         connectedCard.setVisibility(connected ? View.VISIBLE : View.GONE);
         accountEmail.setText(api.getEmail());
         label.setText(deviceLabel() + " · session remembered on this device");
-        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel());
+        String selectedProfile = api.getInstagramProfile();
+        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\\nCargando estadísticas…");
+        if (connected) {
+            runAsync(() -> {
+                JSONArray summaries = api.getInstagramProfileSummaries();
+                JSONObject activeSummary = profileForKey(summaries, selectedProfile);
+                mainHandler.post(() -> {
+                    if (!"account_native".equals(currentScreen)
+                            || !selectedProfile.equals(api.getInstagramProfile())) return;
+                    String name = activeSummary == null ? api.getInstagramProfileLabel()
+                            : instagramProfileName(activeSummary);
+                    api.setInstagramProfile(selectedProfile, name);
+                    activeInstagramProfileLabel.setText(name + "\\n" + instagramProfileMetrics(activeSummary));
+                    setBrandContext("PROFILE");
+                });
+            }, true);
+        }
         selectInstagramProfile.setOnClickListener(v -> showInstagramProfileManager());
+        editInstagramUsername.setEnabled(connected);
+        editInstagramUsername.setOnClickListener(v -> editSelectedInstagramUsername());
+        backupInstagramProfile.setEnabled(connected);
+        backupInstagramProfile.setOnClickListener(v -> exportSelectedInstagramProfileBackup(
+                api.getInstagramProfile(), api.getInstagramProfileLabel(), null));
         deleteInstagramProfile.setEnabled(connected && !"legacy".equals(api.getInstagramProfile()));
         deleteInstagramProfile.setOnClickListener(v -> confirmDeleteInstagramProfile());
 
