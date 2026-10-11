@@ -1,8 +1,8 @@
 {
   "schema": "ig-cleaner-android-signing-v1",
   "packageId": "com.michelslab.igcleaner",
-  "versionCode": 12038,
-  "versionName": "120.38",
+  "versionCode": 12039,
+  "versionName": "120.39",
   "keyAlias": "ig-cleaner-pro",
   "certificateSha256": "99C1DD7B0ED32B758AFAD253A774D85DC7A4481990342B5D09B54B9DCCA84F33",
   "certificateValidUntil": "9999-12-31T04:00:39Z",
