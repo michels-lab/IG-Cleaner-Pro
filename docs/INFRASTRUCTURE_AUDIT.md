@@ -1,3 +1,9 @@
+## Updated production state — v120.39 (2026-10-10 Mexico)
+
+- Current published stable: **v120.39**, signed Android APK and Desktop standalone HTML + ZIP. Next authorized target in the governed manifest: **v120.40** (not authorized yet).
+- Existing source v120.38 data remains at `legacy` (unchanged tables); the additive seven-table owner+Instagram scoped RLS migration is live in project `ig-cleaner-sync`. Exact-candidate CI passed **60** behavioral RLS tests, and governed release run `38112617481` verified the real production signing certificate and normal stable assets. Original export ZIP/JSON/HTML stays local.
+- Release request consumed after verified publication, with no manual prepublication approval gate; user's actual Samsung and two-account authenticated cloud roundtrip are tracked separately in issue #24. The below audit captures historical 2026-10-07 and prepublication findings (including old version labels) and is retained for evidence.
+
 # IG Cleaner Pro — Infrastructure & Privacy Audit
 
 Last reviewed: **2026-10-07**

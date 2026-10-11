@@ -1,12 +1,12 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current published stable: **v120.38**. Historical v120.34 instructions below describe the prior release process.
+Current published stable: **v120.39**. Historical v120.34 instructions below describe the prior release process.
 
-## Multiple Instagram profiles under one app login — integrated, not yet released
+## Multiple Instagram profiles under one app login — shipped in v120.39
 
-The next development feature supports **one Supabase Auth login with several isolated Instagram data workspaces**. Each named @Instagram profile keeps independent Following, Followers, Pending, saved reviews/protection/snooze, Focus/Double Check cycle, batches, audit activity and historical snapshots. Desktop and native Android can select/create profiles, while the pre-existing v120.38 data remains at the special `legacy` identity without moving or deleting previous records. New profiles use composite `(user_id,account_key,...)` keys and owner RLS; the same user being followed by two Instagram profiles does **not** merge their review states.
+Since v120.39, **one Supabase Auth login supports several isolated Instagram data workspaces**. Each named @Instagram profile keeps independent Following, Followers, Pending, saved reviews/protection/snooze, Focus/Double Check cycle, batches, audit activity and historical snapshots. Desktop and native Android can select/create profiles, while the pre-existing v120.38 data remains at the special `legacy` identity without moving or deleting previous records. New profiles use composite `(user_id,account_key,...)` keys and owner RLS; the same user being followed by two Instagram profiles does **not** merge their review states.
 
-**Code integrated; app binaries not yet released.** PRs #50 and #53 passed Desktop Chromium, installed Android emulator and 60 Supabase RLS tests. The additive migration has already been applied to production `ig-cleaner-sync`, with existing legacy data preserved. New profiles also keep their local selector, reviews and IndexedDB separate between different IG Cleaner login emails on the same device. Full acceptance and post-deployment limitations are documented in [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md). Stable downloadable version remains **v120.38**; v120.39 is not authorized.
+**Published:** official stable v120.39 GitHub Release includes Desktop standalone HTML, Desktop ZIP and original-production-certificate signed Android APK. PRs #50 and #53 passed Desktop Chromium, installed Android emulator and 60 Supabase RLS tests. The additive migration is already live on production `ig-cleaner-sync`; old `legacy` data stays intact. New profiles keep the selector, reviews and IndexedDB isolated between different IG Cleaner sign-in owners on the same device. Exact-publication run `38112617481` passed signed APK and Desktop evidence gates. Physical Samsung and real two-Instagram ZIP/cloud roundtrip are still pending post-release acceptance; see [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md) and issue #24.
 
 ## Product model
 
@@ -93,7 +93,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next governed release target is **v120.39** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
+The next governed release target is **v120.40** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
 
 Authority: `release/distribution-manifest.json`.
 

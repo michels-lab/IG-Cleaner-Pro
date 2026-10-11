@@ -1,4 +1,10 @@
-# Multi-Instagram workspaces (merged, unreleased — PRs #50 and #53)
+# Multi-Instagram workspaces (published in v120.39 — PRs #50 and #53)
+
+## Public release status — 2026-10-10
+
+Published [stable v120.39](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.39): signed Android APK, self-contained Desktop HTML, optional ZIP and checksums. Governed release run `38112617481` completed successfully against `4170696589c22dc669deac10ca1a0ceddd88bfea` with exact-SHA installed Android emulator, Desktop Chromium, 60 Supabase assertions, production signing and bundle verification. Prior v120.38 remains downloadable; all old `legacy` tables and local review states are preserved. Real Samsung installation, genuine two-profile ZIP imports and authenticated cross-device data roundtrip are still open under issue #24.
+
+The sections below document the pre-publication design/deployment chronology and intentionally retain their historic dates.
 
 ## Product and identity boundaries
 One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Instagram data workspaces**. An Instagram workspace is **not** a separate Instagram login and does not need Instagram credentials or the Instagram API.
@@ -33,7 +39,7 @@ One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Inst
 - **Merged into main:** PR #50, squash `66f43cb38b3f0a046a819d196b6859dd04a521a1`.
 - **Automated tests passed:** general CI `38105541087` (including **60** per-user and per-Instagram pgTAP assertions), native emulator `38105541099` and Desktop Chromium `38105541095`. Android Profile and header switcher present; real Chromium guard against visible literal `\\n\\n` passed.
 - **Production Supabase additive migration applied:** `multi_instagram_workspace_isolation_v1`. Seven new RLS-protected, composite-keyed tables created. The three legacy `list_snapshots` rows remained unchanged (three before and three after); new account registry and list snapshots initially empty.
-- **Still unreleased:** stable GitHub download remains v120.38 and does not contain this change. v120.39 needs a new explicit user request. Actual Samsung update, two genuine Instagram ZIP imports and live login roundtrip need device acceptance; do not claim they passed.
+- **Historical pre-publication status (as of the initial PR merge):** at that moment stable v120.38 did not contain this feature. The v120.39 release has since been published as recorded above. Actual Samsung update, two genuine Instagram ZIP imports and live login roundtrip still require device acceptance.
 
 ## Final per-app-login isolation (2026-10-10)
 
