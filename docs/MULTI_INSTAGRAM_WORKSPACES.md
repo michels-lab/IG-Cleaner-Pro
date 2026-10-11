@@ -1,3 +1,11 @@
+## Identity recovery, metrics and backups (merged for upcoming v120.40)
+
+- **Add:** if the typed @username belongs to a previously existing identity, show a choice between associating **Datos anteriores** and starting a genuinely empty named Instagram. The original `legacy` key stays immutable.
+- **Edit:** the chosen Instagram @username can be changed without migrating lists, reviews, Focus, dates, keys or local storage. If legacy needs a handle already occupied by a mistakenly created named profile, the user must explicitly approve **only handle reassignment**. The old named identity remains accessible as “Sin asignar” with its own untouched cloud data. Server-side stale-value checks detect cross-device races.
+- **Stats:** account-filtered single-RPC summary displays Following, Followers, Pending, reviews and latest saved list snapshot; empty cloud data is displayed as zero, not a statement about independently stored local exports.
+- **Backups:** selected account can export a JSON of its synchronized cloud tables only; Android saves to Downloads and Desktop offers a file download. Deleting a named profile first offers such a backup, then requires a separate typed confirmation. A blank @username is not grounds for deleting or merging a workspace automatically. Cloud JSON export is **not** an implemented one-click restore; independent ZIP/local backups remain essential.
+- Server migration `supabase/migrations/20261011_profile_identity_and_summaries.sql` is applied to production; tests exercise both branches, isolation and stale updates. Five CI jobs passed and source merged [#61](https://github.com/michels-lab/IG-Cleaner-Pro/pull/61). **No public v120.40 APK/HTML yet.**
+
 # Multi-Instagram workspaces (published in v120.39 — PRs #50 and #53)
 
 ## Named Instagram profile removal — candidate for next version (not released)
