@@ -1,3 +1,10 @@
+## Published release — v120.40 (2026-10-11)
+
+- **Status: shipped** as the stable [GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.40); workflow [38119945272](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38119945272) SUCCESS, exact published source `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`, signed normal Android package and standalone Desktop HTML with identical version plus ZIP and checksums; no prerelease.
+- Android APK SHA-256 `1b107ba0ed05a8b83f54a96c03fcc069c2b243ee4f6a647b0ed7ea867b2744db`; standalone HTML SHA-256 `da49a4df6b0e9585ab43cdfe6dbf093a22c4943380c4a82199c44242812004d4`. Certificate continuity verified in governed publisher; exact-commit emulator and Chromium screenshots verified.
+- Contains #58 selector fix, #59 confirmed removal, #61 metadata-only duplicate handle recovery, smart account addition, editable Instagram names, owner-scoped counts and single-profile JSON backups. Live Supabase RPCs already deployed. **No user cloud data changed by release.**
+- **Open:** Samsung real-install/session and genuine two ZIPs plus sync acceptance [#24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24); user-instance recovery scenario [#57](https://github.com/michels-lab/IG-Cleaner-Pro/issues/57). Auth sync backup JSON is not a native one-click restore file. Next stable v120.41 requires new user authorization.
+
 ## 2026-10-11 — Profile management complete in main; v120.40 app release still pending
 
 - [PR #61](https://github.com/michels-lab/IG-Cleaner-Pro/pull/61) merged to `main` at `01235bfbfe1ab2f7f5c582e08571d18c995ba256` after **five exact-head CI checks succeeded** on `ddbfeda1dfbebdbe6e81349a4b8208e058e3fff9`: Desktop source contract, rendered Chromium, Android build, installed Android emulator compact/wide rendering, and **99 PostgreSQL RLS/behavior assertions**.
