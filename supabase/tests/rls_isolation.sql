@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(78);
+select plan(99);
 
 -- Two deterministic users; rows are rolled back after the suite.
 -- No auth.users rows are required because these tables intentionally store the
@@ -238,6 +238,60 @@ select throws_ok(
  $del$select public.igc_delete_instagram_profile('ig_profile_b_123','profile_b')$del$,
  'P0001','Este perfil no existe en tu cuenta',
  'Deletion is protected from stale retries and wrong profile keys');
+
+
+-- 79–100: metadata-only reassignment and summary isolation (no list migration).
+select ok((select not prosecdef from pg_proc where oid=
+  'public.igc_set_instagram_username(text,text,text,text)'::regprocedure),
+ 'Handle reassignment is SECURITY INVOKER (no privileged bypass)');
+select ok((select not prosecdef from pg_proc where oid=
+  'public.igc_instagram_profile_summaries()'::regprocedure),
+ 'Per-profile summary is SECURITY INVOKER');
+select ok(not has_function_privilege('anon','public.igc_set_instagram_username(text,text,text,text)','execute'),
+ 'Unauthenticated cannot reassign a handle');
+select ok(not has_function_privilege('anon','public.igc_instagram_profile_summaries()','execute'),
+ 'Unauthenticated cannot query cross-profile summary');
+set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+select is_empty($stats$select account_key from public.igc_instagram_profile_summaries()$stats$,
+ 'Other user sees zero profile summaries');
+select throws_ok($stats$select public.igc_set_instagram_username('legacy','stolen',null,null)$stats$,
+ 'P0001','El perfil ya no existe. Actualiza la lista',
+ 'Other user cannot rename original user legacy account');
+
+set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+select is((select following_count from public.igc_instagram_profile_summaries()
+ where account_key='legacy'),0::bigint,'Legacy summary reads old list snapshots');
+select is((select followers_count from public.igc_instagram_profile_summaries()
+ where account_key='ig_profile_a_123'),1::bigint,'Named summary counts its own follower list');
+select is((select review_count from public.igc_instagram_profile_summaries()
+ where account_key='ig_profile_a_123'),1::bigint,'Named summary counts its own reviews');
+select is((select followers_count from public.igc_instagram_profile_summaries()
+ where account_key='ig_recreated_b_123'),0::bigint,'New empty Instagram remains separate');
+select throws_ok($stats$select public.igc_set_instagram_username('ig_profile_a_123','profile_b','profile_a',null)$stats$,
+ 'P0001','Ese @usuario ya está asociado al perfil ig_recreated_b_123. No se modificaron datos',
+ 'Named profile cannot steal another identity');
+select throws_ok($stats$select public.igc_set_instagram_username('legacy','profile_b','profile_legacy',null)$stats$,
+ 'P0001','Ese @usuario ya está asociado al perfil ig_recreated_b_123. No se modificaron datos',
+ 'Legacy duplicate needs explicit transfer approval');
+select throws_ok($stats$select public.igc_set_instagram_username('legacy','profile_b','wrong_old','ig_recreated_b_123')$stats$,
+ 'P0001','El @usuario cambió en otro dispositivo. Actualiza e inténtalo de nuevo',
+ 'Stale handle update fails without altering anyone');
+select lives_ok($stats$select public.igc_set_instagram_username('legacy','profile_b','profile_legacy','ig_recreated_b_123')$stats$,
+ 'Explicit recovery transfers only handle to legacy');
+select is((select username from public.instagram_accounts where account_key='legacy'),
+ 'profile_b','Legacy now owns reclaimed @username');
+select is((select username from public.instagram_accounts where account_key='ig_recreated_b_123'),
+ null::text,'Disassociated duplicate workspace still exists without username');
+select is((select count(*) from public.instagram_accounts where account_key='ig_recreated_b_123'),
+ 1::bigint,'Disassociated account registry stays accessible');
+select is((select count(*) from public.list_snapshots where list_name='following'),
+ 1::bigint,'Legacy historical list never moved during handle recovery');
+select is((select count(*) from public.instagram_list_snapshots where account_key='ig_profile_a_123'),
+ 1::bigint,'Sibling account list untouched during handle recovery');
+select lives_ok($stats$select public.igc_set_instagram_username('ig_profile_a_123','renamed_a','profile_a',null)$stats$,
+ 'Ordinary named profile supports non-destructive handle rename');
+select is((select username from public.instagram_accounts where account_key='ig_profile_a_123'),
+ 'renamed_a','Renamed named profile retains immutable account key');
 
 select * from finish();
 rollback;
