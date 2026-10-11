@@ -3747,6 +3747,28 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn red" onclick="selectStatsCritical()">Seleccionar prioridad crítica</button>
 <button class="btn purple" onclick="selectStatsHighRiskFollowers()">Ver followers riesgo alto</button>
 </div>
+</div><div class="panel" id="igcProfileCountsPanel">
+<div class="title">◎ Profile Counts — Instagram visible</div>
+<p class="note">Consulta los seguidores y seguidos de cada cuenta de tu Following. El robot abre perfiles en un navegador local con tu sesión, sin API de Meta ni contraseña dentro de IG Cleaner. Algunos perfiles pueden no mostrar datos o bloquear consultas automáticas.</p>
+<div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
+<div class="btnrow">
+<button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
+<label class="btn" style="cursor:pointer">② Importar resultados CSV<input id="igcCountsImport" type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
+<button class="btn" type="button" onclick="igcCountsExportResults()">Exportar resultados CSV</button>
+<button class="btn" type="button" onclick="igcCountsRender()">Actualizar lista</button>
+</div>
+<p class="note">En Windows ejecuta <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --per-hour 50</code> (Playwright requerido) y luego importa resultados.csv. El robot pausa si Instagram solicita verificación; 50/h es un límite, no una garantía. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
+<input type="search" id="igcCountsQuery" placeholder="Buscar @usuario" style="min-width:160px;flex:1" oninput="igcCountsRender()">
+<select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pendientes</option><option value="ok">Con datos</option><option value="other">Sin datos / error</option></select>
+</div>
+<div style="overflow:auto;max-height:520px">
+<table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
+<thead><tr><th>@Usuario</th><th>Seguidores</th><th>Siguiendo</th><th>Consultado</th><th>Estado</th></tr></thead>
+<tbody id="igcCountsRows"><tr><td colspan="5">Carga Following para comenzar.</td></tr></tbody>
+</table>
+</div>
+<div class="note" id="igcCountsFootnote"></div>
 </div><div class="panel">
 <div class="title">🧠 Conclusión del perfil</div>
 <div class="profile-conclusion" id="profileConclusion">
@@ -12767,7 +12789,43 @@ function r24ReportHtml(sections){
 </style></head><body><main class="shell"><header class="hero"><span class="eyebrow">IG CLEANER PRO · PORTABLE STATUS REPORT</span><h1>Estado de relaciones y revisión</h1><p>Generado el ${r24Esc(generated.toLocaleString('es-MX',{dateStyle:'long',timeStyle:'short'}))}. Los enlaces abren directamente el perfil de Instagram; este archivo no necesita IG Cleaner para funcionar.</p><div class="summary"><div><b>${total}</b><span>perfiles en listas</span></div><div><b>${reviewed}</b><span>revisados vigentes</span></div><div><b>${pending}</b><span>pendientes / recheck</span></div></div><nav class="nav">${nav}</nav></header><div class="tools"><input id="search" type="search" placeholder="Buscar @usuario, decisión, contexto, cambio…"><select id="status"><option value="all">Todos los estados</option><option value="pending">No revisados</option><option value="reviewed">Revisados</option><option value="recheck">Revisar de nuevo</option></select></div>${body}<div class="footer">IG Cleaner Pro · Michel's Lab · snapshot local exportado desde tu navegador</div></main><script>
 (()=>{const q=document.getElementById('search'),s=document.getElementById('status');function apply(){const term=(q.value||'').trim().toLowerCase(),status=s.value;document.querySelectorAll('.report-section').forEach(sec=>{let n=0;sec.querySelectorAll('tbody tr[data-search]').forEach(tr=>{const ok=(!term||tr.dataset.search.includes(term))&&(status==='all'||tr.dataset.status===status);tr.hidden=!ok;if(ok)n++});const c=sec.querySelector('.visible-count');if(c)c.textContent=n})}q.addEventListener('input',apply);s.addEventListener('change',apply)})();
 <\/script>
-\n\n</body></html>`;
+\n\n<style id="igc-profile-counts-style">
+#igcProfileCountsPanel .note{line-height:1.6;max-width:100%}
+#igcProfileCountsPanel .igc-counts-stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+#igcProfileCountsPanel .igc-counts-stats span{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;border-radius:10px}
+#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+#igcProfileCountsPanel .igc-counts-table a{color:var(--accent)}
+#igcProfileCountsPanel .igc-counts-table th{position:sticky;top:0;background:var(--surface)}
+#igcProfileCountsPanel .igc-counts-table td:nth-child(2),#igcProfileCountsPanel .igc-counts-table td:nth-child(3){text-align:right}
+@media(max-width:620px){#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 5px;font-size:11px}}
+</style>
+<script id="igc-profile-counts-ui">
+(function(){
+'use strict';
+const SCHEMA='ig-cleaner-profile-counts-v1',COLUMNS=['username','followers','following','checked_at','source','status','approximate'],USER=/^[a-zA-Z0-9._]{1,30}$/;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function context(){const p=window.IGC_INSTAGRAM_PROFILES;return {owner:String(p?.owner||'signed_out'),account:String(p?.active||'legacy')}}
+function key(){const p=context();return 'igc_profile_counts_v1__'+encodeURIComponent(p.owner)+'__'+encodeURIComponent(p.account)}
+function normalize(u){const v=String(u||'').trim().replace(/^@/,'').toLowerCase();return USER.test(v)?v:''}
+function members(){const seen=new Set();return (typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw:[]).map(r=>normalize(r.username)).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
+function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
+function csvCell(value){let s=String(value??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+function csvString(rows){return '\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n'}
+function download(name,rows){const url=URL.createObjectURL(new Blob([csvString(rows)],{type:'text/csv;charset=utf-8;'}));const link=document.createElement('a');link.href=url;link.download=name;link.style.display='none';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+function filename(kind){return 'ig-cleaner-'+kind+'-'+context().account.replace(/[^a-z0-9_-]/gi,'_')+'.csv'}
+function parseCSV(text){const rows=[],row=[];let field='',quoted=false;text=String(text||'').replace(/^\uFEFF/,'');for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"')quoted=true;else if(c===','){row.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row.slice());row.length=0;field=''}else field+=c}if(quoted)throw Error('CSV entrecomillado incompleto');if(field||row.length){row.push(field);rows.push(row)}return rows}
+function validCount(v){const s=String(v??'').trim();return s===''?'':(/^\d{1,15}$/.test(s)&&Number.isSafeInteger(Number(s))?s:null)}
+function setMessage(msg,bad=false){const node=document.getElementById('igcCountsFootnote');if(node){node.textContent=msg;node.style.color=bad?'var(--red)':'var(--muted)'}}
+window.igcCountsExportQueue=function(){const users=members();if(!users.length){setMessage('Primero importa o sincroniza tu lista Following en este Instagram.',true);return}download(filename('cola'),[['username','profile_url'],...users.map(u=>[u,'https://www.instagram.com/'+u+'/'])]);setMessage('Exportada la cola de '+users.length+' perfiles para el navegador robot.')};
+window.igcCountsExportResults=function(){const all=read(),users=members();download(filename('resultados'),[COLUMNS,...users.map(u=>{const r=all[u]||{};return [u,r.followers??'',r.following??'',r.checked_at??'',r.source??'',r.status??'pending',r.approximate??'false']})]);setMessage('Exportados '+users.length+' perfiles; los datos no obtenidos quedan vacíos.')};
+window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV requiere username, followers, following, checked_at y status.');const allowed=new Set(members());if(!allowed.size)throw Error('Primero carga Following en el Instagram activo.');const current=read();let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};imported++}write(current);igcCountsRender();setMessage('Guardados '+imported+' resultados. Omitidos '+ignored+' (perfiles ajenos, inválidos o antiguos).')}catch(err){setMessage('No se pudo importar: '+err.message,true)}finally{input.value=''}};
+window.igcCountsRender=function(){const body=document.getElementById('igcCountsRows'),sum=document.getElementById('igcCountsSummary');if(!body||!sum)return;const users=members(),stored=read(),measured=users.filter(u=>stored[u]?.status==='ok').length,failed=users.filter(u=>stored[u]&&stored[u].status!=='ok').length;sum.replaceChildren();for(const label of [users.length+' perfiles en Following',measured+' con datos',(users.length-measured-failed)+' pendientes',failed+' sin datos / error']){const el=document.createElement('span');el.textContent=label;sum.appendChild(el)}const q=String(document.getElementById('igcCountsQuery')?.value||'').toLowerCase(),filter=document.getElementById('igcCountsFilter')?.value||'all',chosen=users.filter(u=>{const s=stored[u]?.status||'pending';return u.includes(q)&&(filter==='all'||(filter==='pending'&&s==='pending')||(filter==='ok'&&s==='ok')||(filter==='other'&&s!=='ok'&&s!=='pending'))});const max=250;body.innerHTML=chosen.slice(0,max).map(u=>{const r=stored[u]||{},status=r.status||'pending',stamp=r.checked_at?new Date(r.checked_at):null,date=stamp&&!Number.isNaN(stamp.getTime())?stamp.toLocaleString('es-MX'):'—',fmt=n=>(n===undefined||n===null||n==='')?'—':Number(n).toLocaleString('es-MX'),suffix=r.approximate?' ≈':'';return '<tr><td><a href="https://www.instagram.com/'+u+'/" target="_blank" rel="noopener noreferrer">@'+esc(u)+'</a></td><td>'+esc(fmt(r.followers))+suffix+'</td><td>'+esc(fmt(r.following))+suffix+'</td><td>'+esc(date)+'</td><td>'+esc(status)+'</td></tr>'}).join('')||'<tr><td colspan="5">Sin perfiles con estos filtros.</td></tr>';setMessage(chosen.length>max?'Mostrando '+max+' de '+chosen.length+' resultados. Exporta CSV para verlos todos.':'Datos separados por usuario de IG Cleaner y por Instagram activo, guardados localmente.')};
+const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats')window.igcCountsRender();return result};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
+})();
+</script>
+</body></html>`;
 }
 window.igcExportPortableHtmlReport=function(){
   const sections=r24Snapshot(),total=sections.reduce((n,s)=>n+s.rows.length,0);
