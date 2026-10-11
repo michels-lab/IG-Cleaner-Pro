@@ -1,5 +1,15 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-11 — Coordinated IG Cleaner Pro v120.40 published and verified
+
+- User explicitly authorized release of v120.40 for Desktop+Android after merged profile recovery/delete improvements. Release preparation [PR #63](https://github.com/michels-lab/IG-Cleaner-Pro/pull/63) merged to exact publication commit `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`.
+- **Five PR checks passed:** Desktop local contract and Chromium Home/About, Android Gradle build and installed emulator Home/About in compact and wide view, and 99 Supabase RLS tests. Production release workflow [run 38119945272](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38119945272) **SUCCESS** on exact commit `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`; proof tied to exact-release commit was downloaded and verified by the release process.
+- GitHub [v120.40](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.40) published as stable (`draft=false`, `prerelease=false`) 2026-10-11 07:06:17 UTC, assets confirmed: `IG-Cleaner-Pro-Android-v120.40.apk` (7,876,223 bytes; SHA-256 `1b107ba0ed05a8b83f54a96c03fcc069c2b243ee4f6a647b0ed7ea867b2744db`) and standalone `IG-Cleaner-Pro-Desktop-v120.40.html` (3,277,081 bytes; SHA-256 `da49a4df6b0e9585ab43cdfe6dbf093a22c4943380c4a82199c44242812004d4`), optional Desktop ZIP and SHA256SUMS.txt. Publisher checks production signer against original certificate and Android versionCode 12040; no beta package.
+- Main published features: reliable original Dados anteriores selector; smart legacy assignment and non-destructive duplicate @username resolution; named profile editing, independent metrics and cloud JSON backup; named/unnamed profile confirmed deletion; account scoping and Supabase RLS.
+- After publication, release request marked `published`/`authorized=false`, currentStableRelease `v120.40`, nextRelease `v120.41` (requires new permission). No additional publisher invoked.
+- **Still requires physical Samsung user acceptance**: upgrade existing v120.39, preservation of genuine locally held Instagram ZIPs, two-account imports and Android↔Desktop auth/state roundtrip, release update and About screenshot. Emulator/CI cannot prove these. [#24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24). Issue [#57](https://github.com/michels-lab/IG-Cleaner-Pro/issues/57) is fixed in production build but user-specific live duplicate recovery acceptance remains unverified.
+
+
 ## 2026-10-11 — Smart Instagram recovery, rename, summaries, individual backup
 
 - Added and merged [PR #61](https://github.com/michels-lab/IG-Cleaner-Pro/pull/61), head `ddbfeda1dfbebdbe6e81349a4b8208e058e3fff9`, main `01235bfbfe1ab2f7f5c582e08571d18c995ba256`.
