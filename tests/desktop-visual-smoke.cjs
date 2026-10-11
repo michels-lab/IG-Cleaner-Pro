@@ -9,7 +9,10 @@ const {chromium} = require("playwright");
 
 (async () => {
   const root = path.resolve(__dirname, "..");
-  const entry = path.join(root, "desktop/ig_cleaner_pro_v120_27_synced_companion.html");
+  const entry = process.env.IGC_VISUAL_HTML
+    ? path.resolve(process.env.IGC_VISUAL_HTML)
+    : path.join(root, "desktop/ig_cleaner_pro_v120_27_synced_companion.html");
+  assert(fs.existsSync(entry), "Exact built candidate HTML is missing");
   const destination = path.join(root, "artifacts/desktop-visual");
   fs.mkdirSync(destination, {recursive:true});
   const sha = process.env.GITHUB_SHA || process.env.IGC_SOURCE_SHA;
