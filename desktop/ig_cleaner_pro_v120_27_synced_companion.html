@@ -2783,10 +2783,15 @@ try{
 // Identity registry and new-profile local data are isolated by app-login owner.
 // The original "legacy" browser keys are untouched for backwards compatibility.
 function igcOwnerFingerprint(){
- let email='';
- try{email=String(window.AndroidBridge?.getInstagramOwnerEmail?.()||'')}catch(_){}
- if(!email)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_session')||'null')?.user?.email||'')}catch(_){}
- if(!email)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_config')||'{}')?.email||'')}catch(_){}
+ let email='',nativeOwnerAvailable=false;
+ try{
+  nativeOwnerAvailable=!!(window.AndroidBridge&&typeof window.AndroidBridge.getInstagramOwnerEmail==='function');
+  if(nativeOwnerAvailable)email=String(window.AndroidBridge.getInstagramOwnerEmail()||'');
+ }catch(_){}
+ // A deliberately signed-out native account must not inherit the last web
+ // user's identity merely because obsolete session/config keys remain.
+ if(!email&&!nativeOwnerAvailable)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_session')||'null')?.user?.email||'')}catch(_){}
+ if(!email&&!nativeOwnerAvailable)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_config')||'{}')?.email||'')}catch(_){}
  email=email.trim().toLowerCase();
  let h=2166136261>>>0;
  for(let i=0;i<email.length;i++){h^=email.charCodeAt(i);h=Math.imul(h,16777619)}
@@ -13068,7 +13073,12 @@ try{dataMeta=JSON.parse(localStorage.getItem(DATA_META)||'{}')||{}}catch{dataMet
 
 function escx(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function saveCfg(){try{localStorage.setItem(CFG,JSON.stringify({email:S.cfg.email||'',auto:true}))}catch{}}
-function notifyHostSession(){try{if(window.AndroidBridge&&typeof window.AndroidBridge.syncSession==='function')window.AndroidBridge.syncSession(JSON.stringify(S.session||null))}catch{}}
+function notifyHostSession(forceLogout=false){try{
+ // Native can be authenticating its new owner while the embedded HTML loads.
+ // Never let an uninitialized signed-out web page revoke that native session.
+ if(!S.session?.access_token&&!forceLogout)return;
+ if(window.AndroidBridge&&typeof window.AndroidBridge.syncSession==='function')window.AndroidBridge.syncSession(JSON.stringify(S.session||null));
+}catch{}}
 function saveSession(){try{S.session?localStorage.setItem(SES,JSON.stringify(S.session)):localStorage.removeItem(SES)}catch{}notifyHostSession()}
 function saveDataMeta(){try{localStorage.setItem(DATA_META,JSON.stringify(dataMeta||{}))}catch{}}
 function status(text,type=''){const el=document.getElementById('igcSyncStatus');if(el){el.className='igc-sync-status '+type;el.textContent=text}renderStats()}
@@ -13159,7 +13169,7 @@ window.igcPrivacyDeleteCloudData=async function(){
     }
     dataMeta={};saveDataMeta();
     S.stats={eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0};
-    S.session=null;saveSession();renderAuthUi();schedule();
+    S.session=null;saveSession();notifyHostSession(true);renderAuthUi();schedule();
     privacyDataStatus('Datos sincronizados borrados. Sesión cerrada para evitar una resincronización automática.','ok');
     status('Datos de nube borrados · sesión cerrada. Tus datos locales permanecen intactos.','warn');
   }catch(e){
@@ -13705,13 +13715,14 @@ window.igcRefreshInstagramProfiles=async function(){
  }
 };
 window.igcSyncNow=()=>syncNow(true);
-window.igcSyncDisconnect=function(){S.session=null;saveSession();renderAuthUi();window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión cerrada. Solo se muestran perfiles guardados localmente; inicia sesión en Cuenta para consultar el resto.','error');status('Sesión cerrada. Tus datos locales permanecen intactos.','warn')};
+window.igcSyncDisconnect=function(){S.session=null;saveSession();notifyHostSession(true);renderAuthUi();window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión cerrada. Solo se muestran perfiles guardados localmente; inicia sesión en Cuenta para consultar el resto.','error');status('Sesión cerrada. Tus datos locales permanecen intactos.','warn')};
 window.igcSyncSwitchAccount=function(){
  if(S.busy){status('Termina la sincronización actual antes de cambiar de usuario.','warn');return;}
  if(!confirm('Cambiar usuario cerrará esta sesión. Tus perfiles de Instagram, revisiones y respaldos no se borrarán. Para entrar con otra cuenta necesitarás su correo y contraseña. ¿Continuar?'))return;
  clearTimeout(statePushTimer);
  S.session=null;
  saveSession();
+ notifyHostSession(true);
  S.cfg.email='';
  saveCfg();
  dataMeta={};
