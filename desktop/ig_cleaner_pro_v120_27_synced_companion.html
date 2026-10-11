@@ -2756,7 +2756,21 @@ body{
 <script id="igc-instagram-profile-isolation">
 /* Additive per-Instagram namespaces; legacy storage remains byte-for-byte. */
 var igcRawProfileStorage=window.localStorage;
-var IGC_INSTAGRAM_PROFILE_KEY='igc_multi_profile_active';
+// Identity registry and new-profile local data are isolated by app-login owner.
+// The original "legacy" browser keys are untouched for backwards compatibility.
+function igcOwnerFingerprint(){
+ let email='';
+ try{email=String(window.AndroidBridge?.getInstagramOwnerEmail?.()||'')}catch(_){}
+ if(!email)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_session')||'null')?.user?.email||'')}catch(_){}
+ if(!email)try{email=String(JSON.parse(igcRawProfileStorage.getItem('igc_v12027_supabase_config')||'{}')?.email||'')}catch(_){}
+ email=email.trim().toLowerCase();
+ let h=2166136261>>>0;
+ for(let i=0;i<email.length;i++){h^=email.charCodeAt(i);h=Math.imul(h,16777619)}
+ return email?'u_'+(h>>>0).toString(36)+'_'+email.length:'signed_out';
+}
+var IGC_INSTAGRAM_OWNER=igcOwnerFingerprint();
+var IGC_INSTAGRAM_PROFILE_KEY='igc_multi_profile_active_'+IGC_INSTAGRAM_OWNER;
+var IGC_INSTAGRAM_REGISTRY_KEY='igc_multi_profile_registry_cache_'+IGC_INSTAGRAM_OWNER;
 var igcActiveInstagramProfile=igcRawProfileStorage.getItem(IGC_INSTAGRAM_PROFILE_KEY)||'legacy';
 if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(igcActiveInstagramProfile))igcActiveInstagramProfile='legacy';
 try {
@@ -2767,11 +2781,11 @@ try {
  }
 }catch(_){}
 
-var igcSharedProfileKeys=new Set([IGC_INSTAGRAM_PROFILE_KEY,'igc_multi_profile_registry_cache',
+var igcSharedProfileKeys=new Set([IGC_INSTAGRAM_PROFILE_KEY,IGC_INSTAGRAM_REGISTRY_KEY,
 'igc_v12027_supabase_config','igc_v12027_supabase_session','igc_v12026_device_identity']);
 function igcScopedStorageKey(key){
  key=String(key);
- return igcActiveInstagramProfile==='legacy'||igcSharedProfileKeys.has(key)?key:'igc_profile__'+igcActiveInstagramProfile+'__'+key;
+ return igcActiveInstagramProfile==='legacy'||igcSharedProfileKeys.has(key)?key:'igc_profile__'+IGC_INSTAGRAM_OWNER+'__'+igcActiveInstagramProfile+'__'+key;
 }
 var igcProfileStorage=new Proxy(igcRawProfileStorage,{get:function(store,prop){
  if(prop==='getItem')return key=>store.getItem(igcScopedStorageKey(key));
@@ -2783,7 +2797,7 @@ var igcProfileStorage=new Proxy(igcRawProfileStorage,{get:function(store,prop){
 const localStorage=igcProfileStorage;
 const indexedDB=new Proxy(window.indexedDB,{get:function(db,prop){
  if(prop==='open')return function(name,version){
-  const n=String(name),key=igcActiveInstagramProfile==='legacy'||!n.startsWith('ig_cleaner_')?n:'igc_profile__'+igcActiveInstagramProfile+'__'+n;
+  const n=String(name),key=igcActiveInstagramProfile==='legacy'||!n.startsWith('ig_cleaner_')?n:'igc_profile__'+IGC_INSTAGRAM_OWNER+'__'+igcActiveInstagramProfile+'__'+n;
   return version===undefined?db.open(key):db.open(key,version);
  };
  const v=Reflect.get(db,prop,db);return typeof v==='function'?v.bind(db):v;
@@ -2792,8 +2806,8 @@ window.IGC_INSTAGRAM_PROFILES={
  get active(){return igcActiveInstagramProfile},
  _verified:false,
  get verified(){return this._verified===true||this.active==='legacy'},
- get accounts(){try{return JSON.parse(igcRawProfileStorage.getItem('igc_multi_profile_registry_cache')||'[]')}catch{return[]}},
- setAccounts(rows){igcRawProfileStorage.setItem('igc_multi_profile_registry_cache',JSON.stringify(rows||[]));this.render()},
+ get accounts(){try{return JSON.parse(igcRawProfileStorage.getItem(IGC_INSTAGRAM_REGISTRY_KEY)||'[]')}catch{return[]}},
+ setAccounts(rows){igcRawProfileStorage.setItem(IGC_INSTAGRAM_REGISTRY_KEY,JSON.stringify(rows||[]));this.render()},
  render(){
   const picker=document.getElementById('igcInstagramIdentity');if(!picker)return;
   const profiles=[{account_key:'legacy',label:'Datos anteriores'},...this.accounts.filter(a=>a.account_key!=='legacy')];
