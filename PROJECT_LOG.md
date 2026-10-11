@@ -1,3 +1,8 @@
+## 2026-10-11 — IG Cleaner account switch merged; release remains paused
+
+- [PR #69](https://github.com/michels-lab/IG-Cleaner-Pro/pull/69) merged to `main` as `f66f9489fa468c45def86f4ee6845a5df3f84113` after all **five exact PR-head GitHub checks succeeded**: Desktop local contract, actual packaged Desktop Chromium visual, Android build/embedded workspace, installed Android emulator compact/wide About UI, Supabase RLS isolation. Correct distinction between app Auth user switch vs per-login Instagram workspace selector; preserves stored per-user data.
+- Published GitHub stable remains **v120.40**; `release-request.json` still has `authorized=false`. User paused **v120.41** release; merging PR #69 did not authorize or publish a new Android/desktop artifact. Main push CI re-runs independently; real Samsung multi-login acceptance remains pending #24.
+
 ## 2026-10-11 — Account switching across Desktop and Android (PR candidate; no release)
 
 - Added **Switch account / Cambiar usuario** beside existing Sign out in IG Cleaner Auth account screens. This switches the IG Cleaner *login* (email), not the selected Instagram workspace under that login. Sign out keeps the remembered login email; Switch account explicitly resets email and credentials, then presents a fresh login. No remembered passwords, new Auth service or migration.
