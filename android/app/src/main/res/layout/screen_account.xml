@@ -297,6 +297,18 @@
                     app:cornerRadius="14dp"/>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/deleteInstagramProfile"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Eliminar Instagram seleccionado"
+                    android:textAllCaps="false"
+                    android:textColor="@color/ig_red"
+                    app:strokeColor="@color/ig_red"
+                    app:cornerRadius="14dp"/>
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/syncNow"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
