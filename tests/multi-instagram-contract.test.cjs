@@ -45,6 +45,13 @@ assert.equal(raw.getItem('igc_v12027_supabase_session'),'SAME_LOGIN','One accoun
 const p=ctx.window.IGC_INSTAGRAM_PROFILES;
 p.setAccounts([{account_key:'ig_first_123',username:'first.person'}]);
 assert.equal(p.accounts.length,1);
+assert.equal(p.displayName({account_key:'legacy',username:'full_legacy_username_123456'}),'@full_legacy_username_123456 · Datos anteriores',
+ 'Never shorten the full active original username');
+assert.equal(p.displayName({account_key:'ig_one_abcdefgh',username:'long_instagram_identity_example'}),'@long_instagram_identity_example',
+ 'Never shorten new Instagram usernames');
+assert.match(p.displayName({account_key:'ig_aabbccdd1234',label:'Sin asignar'}),/Sin asignar · dd1234$/,
+ 'Unnamed profiles need an unmistakable account key suffix');
+
 const keepLegacy=raw.getItem('ig_v13_done');
 const keepSibling=raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_second_456__ig_v13_done');
 p.purgeLocalWorkspace('ig_first_123');
@@ -175,4 +182,14 @@ assert.match(schema,/set username=null/,
 assert.match(schema,/security invoker/g,
  'All new identity functions should obey account-owner RLS');
 
+
+assert.match(html,/id="igcInstagramActiveFullName"/,'Active account must show a separate full-length identity');
+assert.match(html,/\.igc-profile-select-row/,'Profile selector must occupy a dedicated full-width row');
+assert.match(html,/\.igc-profile-actions/,'Profile action buttons must have their own row');
+assert.match(html,/id="igcRefreshInstagramButton"/,'Users must have a direct account-registry refresh control');
+assert.match(html,/window\.igcRefreshInstagramProfiles=async function/,'Profile refresh must work separately from full data sync');
+assert.match(html,/window\.IGC_INSTAGRAM_PROFILES\.setCloudStatus/,'Desktop must surface cloud auth or network failures in the profile selector');
+assert.match(html,/Conéctate en Cuenta con el mismo correo/,'Signed-out users need actionable instructions to recover cloud accounts');
+assert.match(html,/const profiles=rows;/,'Do not silently downgrade invalid cloud registry to a one-item legacy view');
+assert.match(html,/registry\.setCloudStatus\(profiles\.length\+/,'Successful registry fetch must show the remote account count');
 console.log('Multi-Instagram local storage, audit DB, REST write isolation and registry contracts passed.');
