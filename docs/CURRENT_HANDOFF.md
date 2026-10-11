@@ -1,4 +1,10 @@
-## Active work — multiple Instagram profiles under one IG Cleaner account (PR #50)
+## Multi-Instagram data workspaces integrated (PR #50, 2026-10-10)
+
+- **In main, but not in a published APK/HTML yet.** PR #50 merged as `66f43cb38b3f0a046a819d196b6859dd04a521a1`. Live Supabase `ig-cleaner-sync` additive migration `multi_instagram_workspace_isolation_v1` applied; 7 new RLS-protected tables, 7 composite primary keys and original 3 list-snapshot rows preserved.
+- Exact-head QA PASS: CI `38105541087` (60 pgTAP assertions), Android emulator `38105541099`, Desktop Chromium `38105541095`. Android has Profile and persistent header Instagram switcher; Desktop stray literal `\\n\\n` rendered above the sidebar fixed at source, with real Chromium regression assertion.
+- **Stable download remains v120.38**, next permitted version v120.39 only on explicit user request. Physical device/account ZIP and authenticated two-Instagram Desktop↔Android acceptance remain open.
+
+## Historical multi-Instagram development candidate (PR #50)
 
 - **Status: code candidate; not merged, not released, not yet deployed to production Supabase.** https://github.com/michels-lab/IG-Cleaner-Pro/pull/50
 - Additive `instagram_accounts` registry + six per-IG tables with composite PK/RLS; old stable v120.38 tables and keys preserved as `legacy`. Desktop localStorage and IndexedDB namespace nonlegacy profiles; native Android picker scopes queries and cache. Normal one-account Auth credentials remain shared.
