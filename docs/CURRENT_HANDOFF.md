@@ -1,3 +1,9 @@
+## Live OTP signup working after user-applied hosted configuration — 2026-10-11
+
+- After saving Gmail SMTP in Supabase Auth and replacing Confirm sign up/Magic Link with code-only `{{ .Token }}` templates, user confirmed they **received the numeric OTP and successfully created a new IG Cleaner account**. Treat as real owner-reported live signup PASS for that attempt, rather than merely source-level testing.
+- User actions were in provider dashboard; connector did not change/read sensitive SMTP settings or account data. Actual delivered `From` address, Inbox/Spam status, first-time flow on the second platform, recovery/resend/expiry and cross-user profile isolation still need acceptance; leave [issue #73](https://github.com/michels-lab/IG-Cleaner-Pro/issues/73) open for those checks.
+- Installed app stable **v120.41** unchanged; no new APK, Desktop release or v120.42 authorization requested.
+
 ## Confirmed Michel's Lab sender identity — 2026-10-11
 
 - User confirmed **`michelslab.dev@gmail.com`** is the ONLY current official Gmail mailbox. **No registered `michelslab.dev` domain.** Do not configure non-existent `no-reply@michelslab.dev`, and do not leave a personal `realmichelduarte` sender as the product's mail identity.
