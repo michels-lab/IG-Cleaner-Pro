@@ -1,3 +1,9 @@
+## Desktop profile list/full-name correction complete in source (2026-10-11)
+
+- [PR #67](https://github.com/michels-lab/IG-Cleaner-Pro/pull/67) merged at `6a7049702f284c2cae378d7aaecff31f5f3a0a80`; **all five exact-head checks passed** on `1a476fdbb1b6d85497d332086ae2d7ad2bb00421`, including actual compact/wide Chromium screenshots and native Android emulator.
+- New full-wrap active Instagram identity, reserved full-width select, separated text-labeled actions, independent **Actualizar perfiles**, explicit auth/cloud-error warnings and count. Responsive compact horizontal rail no longer shrinks to zero. Fixes user screenshot of truncated “Dat” and provides diagnosis when only cached Datos anteriores appears.
+- **Not released:** v120.40 APK/HTML remains stable and unchanged. The source fix is included in the next v120.41 candidate and requires explicit synchronized Desktop+Android release authorization. No real profile data modified. User should use the same IG Cleaner account email on both devices when loading the cloud registry; real signed-in Desktop results are still to be checked.
+
 ## Desktop profile switcher audit (2026-10-11) — correction in progress, not yet shipped
 
 - **User evidence:** screenshot of Desktop v120.40 shows only “Datos anteriores” and severely truncated selector text (“Dat”) in the left rail; user reports Android seems correct. Production cloud previously showed a legacy identity plus an unassigned second named workspace, with original list/review history intact.
