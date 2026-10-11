@@ -1,14 +1,11 @@
 {
-  "version": "120.38",
-  "tag": "v120.38",
-  "authorized": false,
-  "authorization_source": "Explicit user instruction 2026-10-09: 'dale release' for IG Cleaner Pro. Merged feature PR #42, documentation #43, candidate #45. Exact PR candidate QA passed: general CI 38009873793, installed Android Home/About + Focus emulator UI 38009873744, Desktop Chromium 38009873821. User visual review is after publication; stable Android APK and Desktop offline HTML must ship together.",
+  "version": "120.39",
+  "tag": "v120.39",
+  "authorized": true,
+  "authorization_source": "User instruction 2026-10-10: 'pues hazlo' in direct reply to the v120.39 coordinated release preparation/publication plan. PR #55 merged at ffe09d14d887d501b73cd2f95bed3af7532acd84 after all 5 exact-candidate checks SUCCESS (Desktop contract, Android embedded Workspace build, 60 Supabase RLS assertions, Android real emulator Home/About/Focus screenshots and Desktop Chromium real render). The normal stable release includes signed unchanged-production-certificate Android APK plus Desktop offline standalone HTML and optional ZIP. Review on user's Samsung takes place after GitHub publication.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.37",
-  "published_run": 38010213161,
-  "published_commit": "589d67230e62a7f1ad2cf21bc75a5348bcf4b93a",
-  "completed_at_utc": "2026-10-10T00:47:55Z"
+  "status": "requested",
+  "previous_stable_release": "v120.38"
 }
