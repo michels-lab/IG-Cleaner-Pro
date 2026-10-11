@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.40.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.41.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.40.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.41.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,7 +27,7 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.40.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.41.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
@@ -51,7 +51,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.41",
+    "nextRelease": "v120.42",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -63,9 +63,9 @@
       "v120.32",
       "v120.33"
     ],
-    "currentStableRelease": "v120.40",
-    "lastPublishedRun": 38119945272,
-    "lastPublishedCommit": "7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a",
+    "currentStableRelease": "v120.41",
+    "lastPublishedRun": 38125964658,
+    "lastPublishedCommit": "1f711badcbc902e61beb7e382a49fe55f87fe9a1",
     "genericPublisher": ".github/workflows/release.yml",
     "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
   }
