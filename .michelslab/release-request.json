@@ -1,14 +1,11 @@
 {
-  "version": "120.39",
-  "tag": "v120.39",
-  "authorized": false,
-  "authorization_source": "User instruction 2026-10-10: 'pues hazlo' in direct reply to the v120.39 coordinated release preparation/publication plan. PR #55 merged at ffe09d14d887d501b73cd2f95bed3af7532acd84 after all 5 exact-candidate checks SUCCESS (Desktop contract, Android embedded Workspace build, 60 Supabase RLS assertions, Android real emulator Home/About/Focus screenshots and Desktop Chromium real render). The normal stable release includes signed unchanged-production-certificate Android APK plus Desktop offline standalone HTML and optional ZIP. Review on user's Samsung takes place after GitHub publication.",
+  "version": "120.40",
+  "tag": "v120.40",
+  "authorized": true,
+  "authorization_source": "User instruction 2026-10-11: 'hazlo' in direct response to the proposed coordinated v120.40 Android+Desktop release after completion of profile recovery, rename, metrics, backup and safe deletion work. PR #61 merged at 01235bfbfe1ab2f7f5c582e08571d18c995ba256, with all five exact-head validations including 99 Supabase RLS assertions, signed-version metadata preservation and Android emulator plus Desktop browser UI checks. User requests release; physical Samsung acceptance remains post-release.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.38",
-  "published_run": 38112617481,
-  "published_commit": "4170696589c22dc669deac10ca1a0ceddd88bfea",
-  "completed_at_utc": "2026-10-11T04:51:14Z"
+  "status": "requested",
+  "previous_stable_release": "v120.39"
 }
