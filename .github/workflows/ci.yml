@@ -139,7 +139,9 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pin the verified current upstream release: resolving "latest"
+          # dynamically hit GitHub's anonymous release API rate limit.
+          version: 2.120.0
       - name: Initialize local Supabase config
         run: |
           rm -f supabase/config.toml
