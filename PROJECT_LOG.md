@@ -1,5 +1,14 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-10 — Android profile selector hides data recovery choice (fix candidate, not released)
+
+- User reported **no “Datos anteriores” entry** in Android profile manager after creating a blank Instagram workspace; attempting to assign the old @handle fails with a database unique-value constraint.
+- Root cause in `MainActivity.showInstagramProfileManager()`: the Material alert builder chained `setMessage(...)` with `setItems(labels,...)`, hiding the selectable items list. `legacy` was already explicitly prepended and is untouched.
+- Surgical fix: give the picker a direct “Seleccionar Instagram” title and remove its incompatible `setMessage`; preserve `setItems`, the original `legacy` slot, new account slots, Add/Assign/Cancel buttons, and all persistent data.
+- Add a regression contract to `tests/multi-instagram-contract.test.cjs` checking the legacy-first choice and absence of the incompatible message.
+- Released stable **v120.39 is unchanged** until a separately authorized, synchronized Desktop/Android publication. Physical Android acceptance still required; issue #57 tracks the distinct preexisting duplicate-handle reassignment UX defect.
+
+
 _Last updated: 2026-10-07_
 
 This file is the **functional contract** for IG Cleaner Pro. UI redesigns, refactors, performance work, and future releases must preserve the capabilities listed here unless Michel Armando Duarte Flores explicitly requests their removal.
