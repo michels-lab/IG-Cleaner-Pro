@@ -67,6 +67,13 @@ for (const token of [
 // body content, rendering raw "\\n\\n" above the sidebar on Chromium.
 assert(!html.includes('\\n\\\\n<style'), 'Literal backslash-n before CSS renders as visible UI text');
 assert(!html.includes('</style>\\\\n\\n<style'), 'Literal backslash-n after CSS renders as visible UI text');
+for (const token of [
+  "IGC_INSTAGRAM_OWNER=igcOwnerFingerprint()",
+  "getInstagramOwnerEmail",
+  "IGC_INSTAGRAM_REGISTRY_KEY",
+  "igc_profile__'+IGC_INSTAGRAM_OWNER+'__'"
+]) requireToken(token, "Per-login Instagram local-state isolation missing");
+
 const staticHtml = html.replace(/<script[\s\S]*?<\/script>/gi, '');
 const ids = [...staticHtml.matchAll(/\sid=["']([^"']+)["']/gi)].map(m => m[1]);
 const seen = new Set(), duplicates = new Set();
