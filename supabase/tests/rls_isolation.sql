@@ -240,7 +240,7 @@ select throws_ok(
  'Deletion is protected from stale retries and wrong profile keys');
 
 
--- 79–100: metadata-only reassignment and summary isolation (no list migration).
+-- 79–99: metadata-only reassignment and summary isolation (no list migration).
 select ok((select not prosecdef from pg_proc where oid=
   'public.igc_set_instagram_username(text,text,text,text)'::regprocedure),
  'Handle reassignment is SECURITY INVOKER (no privileged bypass)');
