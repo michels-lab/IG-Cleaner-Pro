@@ -1,3 +1,8 @@
+## 2026-10-11 — v120.41 stable publishing evidence
+
+- Release `v120.41` published as a normal stable GitHub release at `1f711badcbc902e61beb7e382a49fe55f87fe9a1` via workflow 38125964658 (SUCCESS). Existing owner/RLS and export privacy boundaries unchanged; no live database migrations or user-data transformations. Signed Android APK verified with original long-lived certificate; self-contained Desktop HTML and optional ZIP uploaded alongside SHA256 checksums. Main-commit Android emulator and Chromium screenshot evidence verified by shared gate; physical Samsung/real credentials not tested.
+- Consumed authorization and advanced manifest current stable v120.41 / next v120.42. This is release governance reconciliation, not an additional publication.
+
 ## 2026-10-11 — Candidate upgrade of cross-app UI evidence gate
 
 - Public stable is v120.40; no new release is authorized by this QA work. The platform-specific emulator/Chromium Home+About evidence is retained and is now additionally checked by Michel's Lab's canonical `visual_release_gate.py` using source/real artifact SHA-256 and two viewports.
