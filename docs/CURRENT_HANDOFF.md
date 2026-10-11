@@ -1,3 +1,9 @@
+## Latest: multiple Instagram profiles complete in main (2026-10-10)
+
+- Main code: first implementation [PR #50](https://github.com/michels-lab/IG-Cleaner-Pro/pull/50) and final per-login isolation [PR #53](https://github.com/michels-lab/IG-Cleaner-Pro/pull/53), merged at `83d8273568cc3625766145cfff86e0d171a7025f`.
+- All exact-head checks PASS: CI `38108180395` (including 60 Supabase pgTAP assertions), Android installed emulator `38108180430`, Desktop real Chromium `38108180542`. Chromium tested switching between two named Instagram workspaces, restoring original review state, and hiding another app login's account registry. Verified no visible `\\n\\n` text above Desktop shell.
+- Production Supabase `ig-cleaner-sync` already has the additive migration, all 7 new tables RLS-protected; legacy data unchanged. **No release published**: v120.38 remains the latest downloadable; new code awaits explicit authorization of v120.39. Physical Samsung, authentic ZIP from both Instagram profiles and authenticated Desktop↔Android cross-device data roundtrip remain pending.
+
 ## Multi-Instagram data workspaces integrated (PR #50, 2026-10-10)
 
 - **In main, but not in a published APK/HTML yet.** PR #50 merged as `66f43cb38b3f0a046a819d196b6859dd04a521a1`. Live Supabase `ig-cleaner-sync` additive migration `multi_instagram_workspace_isolation_v1` applied; 7 new RLS-protected tables, 7 composite primary keys and original 3 list-snapshot rows preserved.
