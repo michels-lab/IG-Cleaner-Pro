@@ -42,7 +42,7 @@ assert(source.includes('id="igcCountsImport"'),'Import control missing');
  const input={files:[{text:async()=>csv}],value:'attached'};
  await ctx.window.igcCountsImportFile(input);
  assert.equal(input.value,'');
- assert.match(elements.igcCountsRows.innerHTML,/1\.234/);
+ assert.match(elements.igcCountsRows.innerHTML,/1,234/);
  assert(summary.some(s=>s.includes('1 con datos')));
  const onlyKey=Array.from(store.keys())[0];
  assert(onlyKey.includes('owner_A')&&onlyKey.includes('ig_A'));
