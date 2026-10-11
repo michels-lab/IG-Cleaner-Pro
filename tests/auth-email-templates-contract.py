@@ -27,6 +27,8 @@ for key, content in payload.items():
         assert "Michel's Lab" in content, key
         assert "Instagram Cleaner Pro" in content, key
         assert "expires" in content.lower(), key
+        assert "six-digit" not in content.lower(), "Template must not assume OTP length"
+        assert "eight-digit" not in content.lower(), "Template must not assume OTP length"
     else:
         assert "IG Cleaner" in content, key
 assert module.PROJECT_REF == "ilmztedebwdzgnlrvwxy"
@@ -48,4 +50,4 @@ result = subprocess.run(
 assert result.returncode != 0
 assert "--confirm-project" in result.stderr
 
-print("PASS: Confirm signup & magic-link templates render one OTP, no localhost links, and production patch is guarded.")
+print("PASS: Confirm signup & magic-link templates render a length-agnostic OTP, no localhost links, and production patch is guarded.")

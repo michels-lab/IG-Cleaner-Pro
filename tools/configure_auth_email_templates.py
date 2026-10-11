@@ -35,7 +35,7 @@ def desired():
     for key in ("mailer_templates_confirmation_content", "mailer_templates_magic_link_content"):
         html = payload[key]
         if html.count("{{ .Token }}") != 1:
-            raise ValueError(key + " must contain exactly one six-digit OTP token")
+            raise ValueError(key + " must contain exactly one OTP token")
         if "{{ .ConfirmationURL }}" in html or "localhost:3000" in html:
             raise ValueError(key + " must not contain magic link or localhost fallback")
         if "Michel's Lab" not in html or "Instagram Cleaner Pro" not in html:
@@ -79,7 +79,7 @@ def main():
     args = parser.parse_args()
     required = desired()
     if args.mode == "local":
-        print("PASS: both six-digit branded OTP email templates are locally valid")
+        print("PASS: both length-agnostic branded OTP email templates are locally valid")
         return
     if args.mode == "apply":
         if args.confirm_project != PROJECT_REF:
@@ -96,7 +96,7 @@ def main():
     if mismatched:
         print("NOT CONFIGURED: fields still differ: " + ", ".join(mismatched))
         raise SystemExit(2)
-    print("VERIFIED: both Auth email templates are live and contain six-digit OTP codes")
+    print("VERIFIED: both Auth email templates are live and contain length-agnostic OTP codes")
     print("SMTP sender name/address and Site URL are separate settings; not modified here.")
 
 
