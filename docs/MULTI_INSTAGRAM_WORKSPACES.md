@@ -1,5 +1,14 @@
 # Multi-Instagram workspaces (published in v120.39 — PRs #50 and #53)
 
+## Named Instagram profile removal — candidate for next version (not released)
+
+- Both Desktop (× beside INSTAGRAM) and Android (Profile → **Eliminar Instagram seleccionado**) can remove the *selected, named* `ig_<UUID>` workspace. `legacy` (“Datos anteriores”) cannot be removed through this feature, and its pre-v120.39 data is never touched.
+- Requires a signed-in IG Cleaner account, explicit warning about permanent removal and exact typed @username on Android / `ELIMINAR @username` on Desktop. Users should export a copy first if they may need deleted history later.
+- Both clients call a single `public.igc_delete_instagram_profile(p_account_key,p_expected_username)` **SECURITY INVOKER** transactional RPC. It verifies `auth.uid()` and the current username under a row lock, deletes all six account-scoped child tables in dependency order, then removes only the selected profile registry row. Any failure rolls back the whole transaction. `revoke ... PUBLIC, anon` and owner-bound RLS remain active. There is no multi-request partial-delete path.
+- Cloud deletion does **not** delete other Instagram identities, IG Cleaner login, the original Instagram export file, independent backups or pre-v120.39 legacy data. Android clears that profile's native cached lists; Desktop removes exactly that local profile's localStorage/IndexedDB namespace when available, never the legacy namespace. Other Desktop/WebView sessions scrub stale deleted namespaces when refreshing the authoritative account registry, and deny writes to deleted keys via database FKs.
+- Removing a mistaken *new empty* duplicate @username frees the handle for assigning it to **Datos anteriores** (the historical source). Deleting a profile *with valuable data* destroys its cloud reviews and lists, so confirm only after checking/exporting the correct workspace.
+- Deployment order: add the RPC migration to Supabase, confirm pgTAP owner/legacy/sibling checks, then distribute the Desktop/Android feature together in an explicitly authorized release. v120.39 stable is unchanged while this feature is being tested.
+
 ## Public release status — 2026-10-10
 
 Published [stable v120.39](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.39): signed Android APK, self-contained Desktop HTML, optional ZIP and checksums. Governed release run `38112617481` completed successfully against `4170696589c22dc669deac10ca1a0ceddd88bfea` with exact-SHA installed Android emulator, Desktop Chromium, 60 Supabase assertions, production signing and bundle verification. Prior v120.38 remains downloadable; all old `legacy` tables and local review states are preserved. Real Samsung installation, genuine two-profile ZIP imports and authenticated cross-device data roundtrip are still open under issue #24.
