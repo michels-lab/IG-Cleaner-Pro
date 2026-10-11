@@ -2,11 +2,11 @@
 
 Current published stable: **v120.38**. Historical v120.34 instructions below describe the prior release process.
 
-## Multiple Instagram profiles under one app login — unreleased PR #50
+## Multiple Instagram profiles under one app login — integrated, not yet released
 
 The next development feature supports **one Supabase Auth login with several isolated Instagram data workspaces**. Each named @Instagram profile keeps independent Following, Followers, Pending, saved reviews/protection/snooze, Focus/Double Check cycle, batches, audit activity and historical snapshots. Desktop and native Android can select/create profiles, while the pre-existing v120.38 data remains at the special `legacy` identity without moving or deleting previous records. New profiles use composite `(user_id,account_key,...)` keys and owner RLS; the same user being followed by two Instagram profiles does **not** merge their review states.
 
-**Not released or deployed:** new Supabase migration requires 60 ephemeral-database behavioral tests and Android/Desktop runtime QA before deployment. Production schema is unchanged until explicitly migrated. The full deployment, recovery and acceptance sequence is recorded in [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md) and PR #50. Stable version remains **v120.38**; v120.39 not authorized.
+**Code integrated; app binaries not yet released.** PRs #50 and #53 passed Desktop Chromium, installed Android emulator and 60 Supabase RLS tests. The additive migration has already been applied to production `ig-cleaner-sync`, with existing legacy data preserved. New profiles also keep their local selector, reviews and IndexedDB separate between different IG Cleaner login emails on the same device. Full acceptance and post-deployment limitations are documented in [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md). Stable downloadable version remains **v120.38**; v120.39 is not authorized.
 
 ## Product model
 
