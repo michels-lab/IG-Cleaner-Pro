@@ -57,6 +57,8 @@ jobs:
         run: node tests/desktop-contract.test.cjs
       - name: Verify multi-Instagram isolated account storage and scoped REST behavior
         run: node tests/multi-instagram-contract.test.cjs
+      - name: Verify code-only Supabase Auth email templates (offline; no production mutation)
+        run: python3 tests/auth-email-templates-contract.py
       - name: Validate sanitized Instagram import fixture
         run: python tests/fixture-contract.py
       - name: Validate first-class standalone Desktop HTML release contract
