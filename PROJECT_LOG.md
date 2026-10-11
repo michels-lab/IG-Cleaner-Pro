@@ -1,3 +1,9 @@
+## 2026-10-11 — User-authorized coordinated stable v120.41 release candidate
+
+- User explicitly instructed **dale release** following integrated account-switch PR #69 and Desktop profile-selector PR #67. Public current stable is v120.40, latest verified GitHub release target `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`; manifest next release is v120.41.
+- Prepare identical v120.41 identities for Desktop title/About UI and signed native Android versionCode 12041/versionName 120.41, updating exact-version tests and release notes. Preserve Android package `com.michelslab.igcleaner`, original permanent production certificate, all `legacy` state/storage, Supabase RLS tables and cloud identities.
+- Govenered `.michelslab/release-request.json` requests **normal stable v120.41** (`authorized=true`, `prerelease=false`) by this user's fresh request. Do not mark published until the exact main-commit action completes with verified signed APK, standalone Desktop HTML, ZIP, checksum, real emulator/Chromium screenshot proof and GitHub release assets. No pre-publication human review requirement; Samsung acceptance #24 remains post-release.
+
 ## 2026-10-11 — IG Cleaner account switch merged; release remains paused
 
 - [PR #69](https://github.com/michels-lab/IG-Cleaner-Pro/pull/69) merged to `main` as `f66f9489fa468c45def86f4ee6845a5df3f84113` after all **five exact PR-head GitHub checks succeeded**: Desktop local contract, actual packaged Desktop Chromium visual, Android build/embedded workspace, installed Android emulator compact/wide About UI, Supabase RLS isolation. Correct distinction between app Auth user switch vs per-login Instagram workspace selector; preserves stored per-user data.
