@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(41);
+select plan(60);
 
 -- Two deterministic users; rows are rolled back after the suite.
 -- No auth.users rows are required because these tables intentionally store the
@@ -123,6 +123,65 @@ select is_empty($dc$
   select state_key from public.workspace_state
   where state_key='focus_double_check_cycle'
 $dc$,'An unrelated account cannot access another account Double Check cycle');
+
+
+-- 42–60: same app login can store independent Instagram profiles; user RLS holds.
+select ok((select relrowsecurity from pg_class where oid='public.instagram_accounts'::regclass),
+ 'Instagram profile registry has RLS');
+select ok((select relrowsecurity from pg_class where oid='public.instagram_list_snapshots'::regclass),
+ 'Account-scoped lists have RLS');
+
+set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+select lives_ok($mi$insert into public.instagram_accounts(user_id,account_key,username)
+ values ('11111111-1111-4111-8111-111111111111','legacy','profile_legacy')$mi$,
+ 'Existing user may name the legacy workspace without moving its data');
+select lives_ok($mi$insert into public.instagram_accounts(user_id,account_key,username)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_a_123','profile_a')$mi$,
+ 'Single login can create Instagram profile A');
+select lives_ok($mi$insert into public.instagram_accounts(user_id,account_key,username)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_b_123','profile_b')$mi$,
+ 'Single login can create Instagram profile B');
+select lives_ok($mi$insert into public.instagram_list_snapshots(user_id,account_key,list_name,payload,item_count)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_a_123','followers','[{"username":"a_fan"}]'::jsonb,1)$mi$,
+ 'Instagram profile A saves its follower list');
+select lives_ok($mi$insert into public.instagram_list_snapshots(user_id,account_key,list_name,payload,item_count)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_b_123','followers','[{"username":"b_fan"}]'::jsonb,1)$mi$,
+ 'Instagram profile B saves its own list with same list_name');
+select results_eq($mi$select count(*)::bigint from public.instagram_list_snapshots
+ where list_name='followers'$mi$,array[2::bigint],
+ 'Two separate follower lists exist under same app login');
+select is((select payload->0->>'username' from public.instagram_list_snapshots
+ where account_key='ig_profile_a_123' and list_name='followers'), 'a_fan',
+ 'Switching to A never returns B follower data');
+select is((select payload->0->>'username' from public.instagram_list_snapshots
+ where account_key='ig_profile_b_123' and list_name='followers'), 'b_fan',
+ 'Switching to B never returns A follower data');
+select lives_ok($mi$insert into public.instagram_profile_state(user_id,account_key,username,module,reviewed_at,reviewed_device)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_a_123','shared_friend','main',now(),'desktop')$mi$,
+ 'Account A can review a username present in both Instagram accounts');
+select lives_ok($mi$insert into public.instagram_profile_state(user_id,account_key,username,module,reviewed_at,reviewed_device)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_b_123','shared_friend','main',now(),'android')$mi$,
+ 'Account B independently stores the same review key');
+select results_eq($mi$select count(*)::bigint from public.instagram_profile_state
+ where username='shared_friend'$mi$,array[2::bigint],
+ 'Both accounts keep distinct review history');
+select lives_ok($mi$insert into public.instagram_focus_batches(user_id,account_key,id,module,target_size)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_a_123','same-focus-id','main',20)$mi$,
+ 'Account A can have a frozen Focus batch');
+select lives_ok($mi$insert into public.instagram_focus_batches(user_id,account_key,id,module,target_size)
+ values ('11111111-1111-4111-8111-111111111111','ig_profile_b_123','same-focus-id','main',30)$mi$,
+ 'Account B can use same batch ID independently');
+select is((select target_size from public.instagram_focus_batches
+ where account_key='ig_profile_a_123' and id='same-focus-id'),20,
+ 'Account B batch does not overwrite Account A batch');
+set local request.jwt.claim.sub = '22222222-2222-4222-8222-222222222222';
+select is_empty($mi$select account_key from public.instagram_accounts$mi$,
+ 'Different app login cannot discover another user Instagram identities');
+select is_empty($mi$select account_key from public.instagram_list_snapshots$mi$,
+ 'Different app login cannot see another user follower lists');
+select is_empty($mi$update public.instagram_profile_state set decision='hacked'
+ where user_id='11111111-1111-4111-8111-111111111111' returning 1$mi$,
+ 'Different app login cannot change a saved Instagram review');
 
 select * from finish();
 rollback;

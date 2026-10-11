@@ -55,6 +55,8 @@ jobs:
           python-version: '3.12'
       - name: Validate Desktop HTML and persistent-state contract
         run: node tests/desktop-contract.test.cjs
+      - name: Verify multi-Instagram isolated account storage and scoped REST behavior
+        run: node tests/multi-instagram-contract.test.cjs
       - name: Validate sanitized Instagram import fixture
         run: python tests/fixture-contract.py
       - name: Validate first-class standalone Desktop HTML release contract

@@ -27,6 +27,24 @@ const {chromium} = require("playwright");
       const fileUrl=pathToFileURL(entry).href;
       await page.goto(fileUrl,{waitUntil:"domcontentloaded",timeout:60000});
       await page.locator("#igcAppShell").waitFor({state:"visible"});
+      // Real Chromium parses stray backslash-n outside <style> as visible
+      // text nodes and lifts them above the shell. Source/PNG checks alone
+      // previously missed this exact regression.
+      const unexpectedText = await page.evaluate(() => {
+        const shell = document.querySelector('#igcAppShell');
+        const beforeShell = [];
+        for (let node = document.body.firstChild; node && node !== shell; node = node.nextSibling) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            beforeShell.push(node.textContent.trim());
+          }
+        }
+        return {beforeShell, shellTop: shell.getBoundingClientRect().top};
+      });
+      assert.equal(unexpectedText.beforeShell.length, 0,
+        'Unexpected raw text above the sidebar: ' + JSON.stringify(unexpectedText.beforeShell));
+      assert(unexpectedText.shellTop >= -2 && unexpectedText.shellTop <= 2,
+        'App shell displaced by stray HTML text: ' + JSON.stringify(unexpectedText));
+
       const headerAbout=page.locator(".igc-commandbar > #aboutDeveloperBtn");
       assert(await headerAbout.isVisible(), "About must be visible in the permanent top header");
       const initialBounds=await headerAbout.boundingBox();

@@ -114,3 +114,10 @@ Still outstanding:
 4. v120.35 must not be published until explicit user release authorization.
 
 Canonical privacy reference: `docs/PRIVACY.md`.
+
+## 2026-10-09 — Planned multi-Instagram data isolation (PR #50, unreleased)
+
+The former synced dataset is keyed only to IG Cleaner Auth user, so multiple Instagram exports could overwrite `list_snapshots(user_id,list_name)`, `profile_state(user_id,username,module)` and Focus/audit histories. An **additive** schema defines a registry `instagram_accounts(user_id,account_key,username)` plus separately keyed scoped tables for six user-data domains. Original seven tables remain fully intact and accessible to stable v120.38. `legacy` maps to that previous dataset without copying it. New profile rows have unique `(user_id,account_key,...)` keys, registered-owner FK and RLS. All-account privacy export/delete must include the new tables.
+
+Implementation is in PR #50 and `supabase/migrations/20261009_multi_instagram_workspaces.sql`; tests define 60 pgTAP behavioral assertions plus Desktop and Android namespace checks. **This is not evidence of production deploy, user ZIP or real account synchronization.** Do not apply to live Supabase or publish until the candidate passes all tests. Detailed migration contract: [MULTI_INSTAGRAM_WORKSPACES.md](MULTI_INSTAGRAM_WORKSPACES.md).
+

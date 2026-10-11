@@ -49,7 +49,7 @@ for token in (
     "deleteSyncedCloudData",
     "fetchAllCloudRows",
     "saveBytesToDownloads",
-    'api.delete(table + "?user_id=not.is.null")',
+    'api.deleteUnscoped(table + "?user_id=not.is.null")',
     "api.logout()",
 ):
     assert token in main, f"Android synced-data privacy contract missing: {token}"
@@ -59,6 +59,16 @@ for token in ("exportCloudData", "deleteCloudData"):
 
 assert 'public void delete(String tableQuery)' in sync_api
 assert '"DELETE"' in sync_api
+for token in ("scopeQuery(String query, String profile)", '"instagram_" + table',
+              'activeInstagramProfile', 'account_key=eq.', 'setInstagramProfile'):
+    assert token in sync_api, f"Android multi-Instagram scoped transport missing: {token}"
+for token in ("showInstagramProfileManager", "addInstagramProfile",
+              "labelLegacyInstagramProfile", "changeInstagramProfile",
+              "api.getUnscoped", "api.deleteUnscoped", "instagram_accounts"):
+    assert token in main, f"Android multi-Instagram workspace management missing: {token}"
+for token in ("@+id/selectInstagramProfile", "@+id/activeInstagramProfile"):
+    assert token in account_layout, f"Android active Instagram selection UI missing: {token}"
+
 
 # Native About must not regress to a text-only dialog.
 about = (ROOT / "android/app/src/main/res/layout/dialog_about.xml").read_text(encoding="utf-8")
@@ -103,6 +113,10 @@ assert '@+id/headerAboutButton' in layout and '@+id/headerSyncButton' in layout
 assert 'android:text="About"' in layout
 assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
 assert 'syncAction.setOnClickListener(view -> syncNow())' in main
+assert 'brandContext.setOnClickListener(view -> showInstagramProfileManager())' in main, "Account switch must be available from native header"
+assert 'brandContext.setContentDescription("Cambiar perfil de Instagram: "' in main, "Account switch requires accessible name"
+assert 'android:id="@+id/brandContext"' in layout and 'android:focusable="true"' in layout, "Header profile switch must remain tappable"
+
 assert '@+id/appBrandTitle' in layout
 assert 'activeAboutDialog' in main
 instrumentation = ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java"
@@ -136,7 +150,7 @@ for token in ("followingAndFollowerDatesHaveCorrectDirectionAndHistory",
               "oldDesktopBatchDatesSurviveNewSnapshotAndUnknownsStayUnknown",
               "pendingAndLastBatchUseOwnDatesAndSourceDevice"):
     assert token in focus_test, f"Missing runtime Focus insight QA: {token}"
-assert "5 tests" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8")
+assert "8 tests" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8")
 print("Android UX/Focus/privacy/About regression contract passed.")
 
 # Real Home screens must now be checked in the packaged Android runtime.

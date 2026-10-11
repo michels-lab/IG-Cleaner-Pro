@@ -17,6 +17,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Locale;
 
 public final class SyncApi {
     private static final String BASE_URL = "https://ilmztedebwdzgnlrvwxy.supabase.co";
@@ -26,10 +28,36 @@ public final class SyncApi {
     private String accessToken;
     private String refreshToken;
     private String email;
+    private String activeInstagramProfile = "legacy";
+    private static final Set<String> SCOPED_IG_TABLES = Set.of(
+            "audit_events", "focus_batches", "focus_batch_items", "profile_state",
+            "list_snapshots", "workspace_state");
 
     public SyncApi(Context context) {
         prefs = context.getSharedPreferences("igc_sync", Context.MODE_PRIVATE);
         load();
+    }
+
+    public String getInstagramProfile() { return activeInstagramProfile; }
+    public String getInstagramProfileLabel() {
+        String label = prefs.getString("instagram_profile_label_" + profileOwnerKey(), "");
+        return label == null || label.isBlank() ? ("legacy".equals(activeInstagramProfile) ? "Datos anteriores" : "Instagram") : label;
+    }
+    public void setInstagramProfile(String key, String label) {
+        setInstagramProfile(key);
+        prefs.edit().putString("instagram_profile_label_" + profileOwnerKey(),
+                label == null || label.isBlank() ? "Instagram" : label).apply();
+    }
+
+    public void setInstagramProfile(String key) {
+        String normalized = key == null ? "legacy" : key.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
+            throw new IllegalArgumentException("Instagram account key inválido");
+        activeInstagramProfile = normalized;
+        prefs.edit().putString("instagram_profile_" + profileOwnerKey(), normalized).apply();
+    }
+    private String profileOwnerKey() {
+        return Integer.toHexString(getEmail().toLowerCase(Locale.ROOT).hashCode());
     }
 
     public String getEmail() { return email == null ? "" : email; }
@@ -53,7 +81,7 @@ public final class SyncApi {
             if (!nextRefresh.isBlank()) refreshToken = nextRefresh;
             JSONObject user = session.optJSONObject("user");
             if (user != null && !user.optString("email", "").isBlank()) {
-                email = user.optString("email").trim();
+                setEmail(user.optString("email").trim());
             }
             prefs.edit()
                     .putString("access", accessToken)
@@ -78,7 +106,11 @@ public final class SyncApi {
     }
 
     public void setEmail(String value) {
-        email = value == null ? "" : value.trim();
+        String next = value == null ? "" : value.trim();
+        boolean changed = email != null && !email.isBlank() && !email.equalsIgnoreCase(next);
+        email = next;
+        if (changed) activeInstagramProfile = "legacy";
+        activeInstagramProfile = prefs.getString("instagram_profile_" + profileOwnerKey(), "legacy");
         prefs.edit().putString("email", email).apply();
     }
 
@@ -137,29 +169,69 @@ public final class SyncApi {
     public void logout() {
         accessToken = "";
         refreshToken = "";
+        activeInstagramProfile = "legacy";
         prefs.edit().remove("access").remove("refresh").remove("native_newer").apply();
     }
 
+    public static String scopeQuery(String query, String profile) {
+        String key = profile == null ? "legacy" : profile;
+        if ("legacy".equals(key)) return query;
+        if (!key.matches("ig_[a-z0-9_-]{8,64}"))
+            throw new IllegalArgumentException("Invalid Instagram profile scope");
+        int separator = query.indexOf('?');
+        String table = separator < 0 ? query : query.substring(0, separator);
+        if (!SCOPED_IG_TABLES.contains(table)) return query;
+        String scoped = "instagram_" + table + (separator < 0 ? "" : query.substring(separator));
+        return scoped + (scoped.contains("?") ? "&" : "?") +
+                "account_key=eq." + URLEncoder.encode(key, StandardCharsets.UTF_8);
+    }
+
     public JSONArray get(String tableQuery) throws Exception {
-        String raw = raw("GET", "/rest/v1/" + tableQuery, null, true, null);
-        return raw.isBlank() ? new JSONArray() : new JSONArray(raw);
+        return getUnscoped(scopeQuery(tableQuery, activeInstagramProfile));
+    }
+
+    public JSONArray getUnscoped(String tableQuery) throws Exception {
+        String response = raw("GET", "/rest/v1/" + tableQuery, null, true, null);
+        return response.isBlank() ? new JSONArray() : new JSONArray(response);
     }
 
     public void upsert(String table, String conflict, JSONArray rows) throws Exception {
+        boolean scoped = !"legacy".equals(activeInstagramProfile) && SCOPED_IG_TABLES.contains(table);
+        if (scoped) {
+            table = "instagram_" + table;
+            String[] keys = conflict.split(",");
+            if (!conflict.contains("account_key")) {
+                StringBuilder rebuilt = new StringBuilder();
+                for (String key : keys) {
+                    if (rebuilt.length() > 0) rebuilt.append(',');
+                    rebuilt.append(key.trim());
+                    if ("user_id".equals(key.trim())) rebuilt.append(",account_key");
+                }
+                conflict = rebuilt.toString();
+            }
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i);
+                if (row != null) row.put("account_key", activeInstagramProfile);
+            }
+        }
         Map<String, String> headers = new HashMap<>();
         headers.put("Prefer", "resolution=merge-duplicates,return=minimal");
-        raw("POST",
-                "/rest/v1/" + table + "?on_conflict=" + URLEncoder.encode(conflict, StandardCharsets.UTF_8),
-                rows.toString(), true, headers);
+        raw("POST", "/rest/v1/" + table + "?on_conflict=" +
+                URLEncoder.encode(conflict, StandardCharsets.UTF_8), rows.toString(), true, headers);
     }
 
     public void patch(String tableQuery, JSONObject body) throws Exception {
         Map<String, String> headers = new HashMap<>();
         headers.put("Prefer", "return=minimal");
-        raw("PATCH", "/rest/v1/" + tableQuery, body.toString(), true, headers);
+        raw("PATCH", "/rest/v1/" + scopeQuery(tableQuery, activeInstagramProfile),
+                body.toString(), true, headers);
     }
 
     public void delete(String tableQuery) throws Exception {
+        deleteUnscoped(scopeQuery(tableQuery, activeInstagramProfile));
+    }
+
+    public void deleteUnscoped(String tableQuery) throws Exception {
         Map<String, String> headers = new HashMap<>();
         headers.put("Prefer", "return=minimal");
         raw("DELETE", "/rest/v1/" + tableQuery, null, true, headers);
@@ -169,6 +241,9 @@ public final class SyncApi {
         email = prefs.getString("email", "");
         accessToken = prefs.getString("access", "");
         refreshToken = prefs.getString("refresh", "");
+        activeInstagramProfile = prefs.getString("instagram_profile_" + profileOwnerKey(), "legacy");
+        if (!activeInstagramProfile.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
+            activeInstagramProfile = "legacy";
     }
 
     private void saveSession(JSONObject result) {
