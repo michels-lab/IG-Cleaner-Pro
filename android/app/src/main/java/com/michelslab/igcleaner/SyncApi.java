@@ -232,6 +232,26 @@ public final class SyncApi {
     }
 
     // One atomic, owner-RLS-protected server transaction; never accept a legacy key.
+    /** Atomic metadata-only identity update; profile keys and historical rows never move. */
+    public void setInstagramUsername(String key, String username, String expected, String transferFrom) throws Exception {
+        if (key == null || !key.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
+            throw new IllegalArgumentException("Perfil de Instagram inválido.");
+        if (username == null || !username.matches("[a-z0-9._]{1,30}"))
+            throw new IllegalArgumentException("@usuario inválido.");
+        JSONObject input = new JSONObject().put("p_account_key", key)
+                .put("p_new_username", username)
+                .put("p_expected_username", expected == null || expected.isBlank() ? JSONObject.NULL : expected)
+                .put("p_transfer_from_key", transferFrom == null ? JSONObject.NULL : transferFrom);
+        String result = raw("POST", "/rest/v1/rpc/igc_set_instagram_username",
+                input.toString(), true, null);
+        if (!"true".equals(result.trim()))
+            throw new IOException("La base de datos no confirmó el cambio de usuario.");
+    }
+
+    public JSONArray getInstagramProfileSummaries() throws Exception {
+        return getUnscoped("rpc/igc_instagram_profile_summaries");
+    }
+
     public void deleteInstagramProfile(String key, String expectedUsername) throws Exception {
         if (key == null || !key.matches("ig_[a-z0-9_-]{8,64}"))
             throw new IllegalArgumentException("No se puede borrar Datos anteriores.");
