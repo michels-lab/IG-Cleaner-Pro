@@ -137,6 +137,62 @@ const {chromium} = require("playwright");
       await capture("about","socials");
       await page.locator("#aboutDeveloperClose").click();
       assert(!(await modal.isVisible()),"About close action must work");
+      if (viewport.name === "wide") {
+        // Exercise real account switches and reload persistence without a real
+        // Instagram export or backend credentials. Same usernames must never
+        // inherit another Instagram identity's local review state.
+        const idA="ig_aaaaaaaa12345678", idB="ig_bbbbbbbb12345678";
+        await page.evaluate(() => {
+          window.localStorage.setItem('igc_v12027_supabase_config',JSON.stringify({email:'qa-owner-one@example.test',auto:false}));
+          window.location.reload();
+        });
+        await page.locator('#igcInstagramIdentity').waitFor({state:'visible'});
+        const firstOwner=await page.evaluate(() => window.IGC_INSTAGRAM_PROFILES.owner);
+        await page.evaluate(([a,b]) => {
+          window.IGC_INSTAGRAM_PROFILES.setAccounts([
+            {account_key:'legacy',label:'Datos anteriores'},
+            {account_key:a,username:'profile.one'},
+            {account_key:b,username:'profile.two'}
+          ]);
+          window.localStorage.setItem('ig_v13_done',JSON.stringify(['only_legacy']));
+          window.IGC_INSTAGRAM_PROFILES.switch(a);
+        },[idA,idB]);
+        await page.waitForFunction(([key]) => window.IGC_INSTAGRAM_PROFILES.active===key,[idA]);
+        const cleanA=await page.evaluate(() => ({
+          old:localStorage.getItem('ig_v13_done'),
+          selected:document.getElementById('igcInstagramIdentity')?.value
+        }));
+        assert.equal(cleanA.old,null,'New Instagram profile inherits legacy reviews');
+        assert.equal(cleanA.selected,idA,'Desktop selected identity did not update');
+        await page.evaluate(() => {
+          localStorage.setItem('ig_v13_done',JSON.stringify(['only_profile_one']));
+          window.IGC_INSTAGRAM_PROFILES.switch('ig_bbbbbbbb12345678');
+        });
+        await page.waitForFunction(([key]) => window.IGC_INSTAGRAM_PROFILES.active===key,[idB]);
+        const cleanB=await page.evaluate(() => localStorage.getItem('ig_v13_done'));
+        assert.equal(cleanB,null,'Instagram profile B inherited profile A reviews');
+        await page.evaluate(() => window.IGC_INSTAGRAM_PROFILES.switch('ig_aaaaaaaa12345678'));
+        await page.waitForFunction(([key]) => window.IGC_INSTAGRAM_PROFILES.active===key,[idA]);
+        const recoveredA=await page.evaluate(() => JSON.parse(localStorage.getItem('ig_v13_done')||'[]'));
+        assert.deepEqual(recoveredA,['only_profile_one'],'Profile A review history was lost on switching');
+        await page.evaluate(() => window.IGC_INSTAGRAM_PROFILES.switch('legacy'));
+        await page.waitForFunction(() => window.IGC_INSTAGRAM_PROFILES.active==='legacy');
+        const recoveredLegacy=await page.evaluate(() => JSON.parse(localStorage.getItem('ig_v13_done')||'[]'));
+        assert.deepEqual(recoveredLegacy,['only_legacy'],'Original legacy review history was changed');
+        await page.evaluate(() => {
+          window.localStorage.setItem('igc_v12027_supabase_config',JSON.stringify({email:'qa-owner-two@example.test',auto:false}));
+          window.location.reload();
+        });
+        await page.locator('#igcInstagramIdentity').waitFor({state:'visible'});
+        const otherOwner=await page.evaluate(() => ({
+          owner:window.IGC_INSTAGRAM_PROFILES.owner,
+          rows:window.IGC_INSTAGRAM_PROFILES.accounts,
+          active:window.IGC_INSTAGRAM_PROFILES.active
+        }));
+        assert.notEqual(firstOwner,otherOwner.owner,'Two app logins shared the same local registry');
+        assert.equal(otherOwner.rows.length,0,'Second app login can discover first login Instagram profiles');
+        assert.equal(otherOwner.active,'legacy','Second app login inherited selected Instagram');
+      }
       await context.close();
     }
   } finally {await browser.close();}
