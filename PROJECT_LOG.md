@@ -1,3 +1,9 @@
+## 2026-10-11 — Confirmed official Michel's Lab Gmail identity and practical SMTP route
+
+- User clarified sender identity is **`michelslab.dev@gmail.com`**, a Gmail mailbox; company **does not own `michelslab.dev` domain**. Earlier placeholder `no-reply@michelslab.dev` must not be used without domain ownership and authentication.
+- Brevo's official mail sender policy reassigns free Gmail senders to `@brevosend.com` (or transactional equivalents) since Gmail domains cannot be authenticated in Brevo; consequently using Brevo cannot guarantee an actual `@gmail.com` From identity. Setup guide changed from Brevo sender verification to conditional direct Gmail SMTP for small volumes: sender/username `michelslab.dev@gmail.com`, `smtp.gmail.com`, TLS port 465, dedicated Google app password after 2-step verification, sender display Michel's Lab · IG Cleaner Pro.
+- **No Google credentials requested or handled. No live SMTP/Supabase Auth configuration applied** (current tools lack the relevant provider settings action); production P0 issue #73 tracks end-to-end acceptance. Verified source OTP templates remain prepared, no APK release or user-data change.
+
 ## 2026-10-11 — Signup confirmation mismatch: OTP requested, magic link delivered (source prepared; hosted Auth pending)
 
 - **User evidence:** freshly requested registration email titled “Confirm your email address” contains clickable link and arrives in Spam as `IG Cleaner <realmichelduarte@12366255.brevosend.com>`; opening link attempts `localhost:3000/#error=access_denied&error_code=otp_expired` and gets ERR_CONNECTION_REFUSED. The app's existing native/Desktop `/auth/v1/otp` and `/auth/v1/verify` flows expect an email code.

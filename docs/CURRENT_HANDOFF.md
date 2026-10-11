@@ -1,3 +1,9 @@
+## Confirmed Michel's Lab sender identity — 2026-10-11
+
+- User confirmed **`michelslab.dev@gmail.com`** is the ONLY current official Gmail mailbox. **No registered `michelslab.dev` domain.** Do not configure non-existent `no-reply@michelslab.dev`, and do not leave a personal `realmichelduarte` sender as the product's mail identity.
+- Verified Brevo's official policy: free Gmail sender domains cannot be authenticated in Brevo, so Brevo rewrites the sender to a `@brevosend.com` / transactional provider domain; a branded display label cannot change this. If the actual From must remain `michelslab.dev@gmail.com`, a conditional low-volume option is Supabase's custom **Gmail SMTP** (`smtp.gmail.com:465`, exact sender+username Gmail, Google's dedicated app password after 2FA). App password entered by owner into Supabase UI only, never supplied to this chat or committed. Google warns against app passwords when OAuth is feasible, and personal Gmail is not a scalable transactional sender.
+- See [docs/AUTH_EMAIL_SETUP.md](AUTH_EMAIL_SETUP.md). **No production SMTP or hosted OTP template has been edited**; owner must enable 2FA, create app password (if eligible), configure SMTP and paste two previously committed OTP templates. Keep issue #73 open until an actual end-to-end new-user delivery confirms six digits, branded *real* Gmail From, and no localhost redirect. v120.41 remains published; no v120.42 release instruction.
+
 ## Pending live Supabase Auth/Brevo mail configuration — 2026-10-11
 
 - Screenshot confirms **user-visible signup P0**: IG Cleaner prompts for a numeric verification code, but default Supabase **Confirm sign up** sends a confirmation link redirected to `localhost:3000`; mail sender shows an unbranded Brevo fallback and Spam. Front-end code expects `/auth/v1/verify` `type=email`. Production email deliverability/confirmation is therefore not yet end-to-end verified.
