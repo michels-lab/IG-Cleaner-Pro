@@ -1,3 +1,11 @@
+## Candidate — Remove named Instagram profile safely (2026-10-10; not yet released)
+
+- User requested ability to delete extra Instagram profiles after accidentally registering original @handle as a blank new workspace. Add an explicit destructive control in Desktop INSTAGRAM and Android Profile while making **Datos anteriores (legacy)** non-deletable.
+- New additive SQL migration `supabase/migrations/20261010_delete_instagram_profiles.sql` defines a transactional, caller-RLS-scoped RPC requiring exact owner+profile key+current handle; child Focus/history/list/review rows removed first, then account registry. Cannot change original v120.38 tables. Both clients require typed confirmation and switch to legacy on successful deletion. Local namespaced state purged only for deleted key, including remote deletion reconciliation in Desktop/WebView.
+- `supabase/schema.sql` updated for fresh installs, and pgTAP/Node tests extended. CI and visual/Android emulator evidence required before merge. Production additive function deployment must be verified before authorizing v120.40 Desktop+Android publication.
+- Previously merged [PR #58](https://github.com/michels-lab/IG-Cleaner-Pro/pull/58) fixes Android picker showing only button labels; user data was verified present in legacy Supabase records. Existing published **v120.39 lacks both fixes**.
+- Preserve source-label collision in [issue #57](https://github.com/michels-lab/IG-Cleaner-Pro/issues/57) until it has a distinct non-destructive identity reassignment UX; deleting an empty mistakenly created profile is an opt-in workaround, never automatic.
+
 ## Candidate fix — Android selector did not display legacy row (2026-10-10, unreleased)
 
 - User confirmed that the native “Perfiles de Instagram” dialog shows “Asignar datos anteriores” but **not** the “Datos anteriores (sin asignar)” row. `MainActivity.showInstagramProfileManager()` combined Material `setMessage` and `setItems`; the message suppresses the list.
