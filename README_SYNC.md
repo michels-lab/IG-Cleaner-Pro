@@ -1,5 +1,7 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
+> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Public stable remains v120.41.
+
 Current published stable: **v120.41** (GitHub release [v120.41](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.41), exact SHA `1f711badcbc902e61beb7e382a49fe55f87fe9a1`, successful governed workflow [38125964658](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38125964658)). Historical v120.34/v120.39 validation sections below describe prior releases.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
