@@ -13449,7 +13449,15 @@ async function refreshInstagramAccounts(){
   });
   profiles.unshift({account_key:'legacy',label:'Datos anteriores'});
  }
- const selected=window.IGC_INSTAGRAM_PROFILES.active;
+ const registry=window.IGC_INSTAGRAM_PROFILES;
+ // Another device may have deleted a workspace: never keep it resurrectable
+ // from a stale browser cache after the authoritative server registry refresh.
+ for(const previous of registry.accounts){
+  if(previous.account_key==='legacy'||profiles.some(x=>x.account_key===previous.account_key))continue;
+  try{await registry.purgeLocalWorkspace(previous.account_key)}
+  catch(error){console.warn('No se pudo limpiar por completo el perfil eliminado:',error);}
+ }
+ const selected=registry.active;
  if(selected!=='legacy'&&!profiles.some(x=>x.account_key===selected)){
   window.IGC_INSTAGRAM_PROFILES.switch('legacy');
   throw new Error('La identidad activa no pertenece a tu cuenta; volviendo a los datos anteriores.');
