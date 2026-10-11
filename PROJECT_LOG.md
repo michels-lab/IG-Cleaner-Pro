@@ -1,3 +1,9 @@
+## 2026-10-11 — Owner verified official Gmail sender and account switching; OTP copy mismatch identified
+
+- New real delivered email screenshot shows **Michel's Lab · IG Cleaner Pro <michelslab.dev@gmail.com>**, not the old Brevo sender; owner reports both sign-up completion and the **Switch account** function working. No OTP value or password is captured in GitHub notes.
+- The displayed OTP has **eight numeric digits**, even though both hosted email prose/template source describe a **six-digit** code. The app accepted the user's signup, so this is a **copy inconsistency**, not a broken registration method. Source Confirm sign up and Magic Link email templates now say **verification code** without a length promise; tests assert length-neutral messaging. A hosted Auth email-template update is necessary to reflect the revised source text live; our connected tools cannot save Supabase Auth email templates.
+- Authentication RLS/account isolation, multiple real Instagram ZIPs and cross-device account switching with preserved history remain separately tracked in issue #24. Production v120.41 remains official; no v120.42 authorization nor binary release.
+
 ## 2026-10-11 — Owner confirmed OTP signup works after provider-side fixes
 
 - **User-reported live acceptance:** owner configured Google Gmail SMTP within Supabase Auth (previous screenshots showed `smtp.gmail.com:465`, `michelslab.dev@gmail.com` username, 60-second interval), saved the settings, installed both `{{ .Token }}` email templates from the repository and then confirmed they **received the six-digit code and successfully registered a new IG Cleaner account**. This resolves the previously demonstrated inability to complete the requested code-based new-user registration *for that tested path*.
