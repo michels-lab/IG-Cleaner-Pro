@@ -8,6 +8,8 @@ on:
       - 'desktop/**'
       - 'tests/**'
       - 'tools/android_about_visual_evidence.py'
+      - 'tools/create_master_visual_manifest.py'
+      - 'tools/visual_release_gate.py'
       - '.github/workflows/android-about-visual.yml'
   push:
     branches: [main]
@@ -19,6 +21,8 @@ on:
       - '.michelslab/release-request.json'
       - '.github/workflows/android-about-visual.yml'
       - 'tools/android_about_visual_evidence.py'
+      - 'tools/create_master_visual_manifest.py'
+      - 'tools/visual_release_gate.py'
 permissions:
   contents: read
 concurrency:
