@@ -1358,6 +1358,11 @@ public final class MainActivity extends AppCompatActivity {
 
     private final class WorkspaceBridge {
         @JavascriptInterface
+        public String getInstagramOwnerEmail() {
+            return api.getEmail();
+        }
+
+        @JavascriptInterface
         public String getInstagramProfile() {
             return api.getInstagramProfile();
         }
