@@ -27,7 +27,7 @@ for token in (
     assert token in schema, f"Optimized authenticated-only RLS policy missing: {token}"
 
 for token in (
-    "select plan(78)",
+    "select plan(99)",
     "set local role authenticated",
     "set local request.jwt.claim.sub",
     "cannot update user 1",
@@ -37,6 +37,9 @@ for token in (
     "Two separate follower lists exist under same app login",
     "Both accounts keep distinct review history",
     "Owner can atomically delete named Instagram B",
+    "Explicit recovery transfers only handle to legacy",
+    "Other user sees zero profile summaries",
+    "Legacy historical list never moved during handle recovery",
     "Account B cannot delete an Instagram profile belonging to account A",
     "Different app login cannot see another user follower lists",
     "Double Check updates do not overwrite canonical primary review state",
@@ -59,6 +62,9 @@ for scoped in ("instagram_accounts","instagram_audit_events","instagram_focus_ba
     assert scoped in (ROOT/"supabase/migrations/20261009_multi_instagram_workspaces.sql").read_text(), f"Missing additive migration: {scoped}"
 assert "account_key" in schema
 assert "legacy" in schema
+assert "igc_set_instagram_username" in schema
+assert "igc_instagram_profile_summaries" in schema
+assert (ROOT/"supabase/migrations/20261011_profile_identity_and_summaries.sql").is_file()
 assert "security invoker" in schema
 assert "igc_delete_instagram_profile" in schema
 assert (ROOT/"supabase/migrations/20261010_delete_instagram_profiles.sql").is_file()

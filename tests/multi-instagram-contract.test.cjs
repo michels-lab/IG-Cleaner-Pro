@@ -94,7 +94,7 @@ const nativeActivity=fs.readFileSync(path.join(root,
 const picker=nativeActivity.match(/private void showInstagramProfileManager\(\) \{([\s\S]*?)\n    private void addInstagramProfile\(/);
 assert(picker,'Native multi-Instagram selector must be present');
 assert.match(picker[1],/new JSONArray\(\)\.put\(legacy\)/,'Original workspace must be first in native picker');
-assert.match(picker[1],/Datos anteriores \(sin asignar\)/,'Legacy row must have clear recovery label');
+assert.match(nativeActivity,/Datos anteriores \(sin asignar\)/,'Legacy row must have clear recovery label');
 assert.match(picker[1],/\.setItems\(labels,/,'Profile picker must render selectable accounts');
 assert.doesNotMatch(picker[1],/\.setMessage\(/,
  'Do not combine setMessage + setItems in MaterialAlertDialog; message hides profile rows');
@@ -124,4 +124,55 @@ assert.match(schema,/security invoker[\s\S]*?igc_delete\$/,
  'Database deletion RPC must respect owner RLS');
 assert.match(schema,/revoke all on function public\.igc_delete_instagram_profile/,
  'The RPC must revoke PUBLIC/anonymous execution');
+
+// Identity recovery and safe export parity regression (Desktop + Android).
+assert.match(html,/id="igcInstagramIdentitySummary"/,
+ 'Desktop profile selection should expose synchronized metrics');
+assert.match(html,/Following '[^\n]*?following_count/,
+ 'Desktop counts must be drawn from per-profile summary, not another workspace');
+assert.match(html,/rpc\/igc_instagram_profile_summaries/,
+ 'Desktop must fetch server-filtered profile statistics');
+assert.match(html,/window\.igcEditInstagramProfile=async function/,
+ 'Desktop needs a handle edit action for currently selected profile');
+assert.match(html,/window\.igcExportSelectedInstagramProfile=async function/,
+ 'Desktop needs an independent profile backup action');
+assert.match(html,/key===\x27legacy\x27\?\x27\x27:\x27\&account_key=eq\.\x27/,
+ 'Scoped export must target only the selected named workspace');
+assert.match(html,/p_transfer_from_key:transfer/,
+ 'Desktop must require a separate explicit identity transfer parameter');
+assert.match(html,/p_expected_username:target\.username\|\|null/,
+ 'Desktop handle changes must detect stale concurrent edits');
+assert.match(html,/getItem\(IGC_INSTAGRAM_REGISTRY_KEY\)/,
+ 'Profile registry must remain owner scoped');
+assert.match(nativeActivity,/setInstagramUsernameWithConfirmation\("legacy", username, true\)/,
+ 'Android smart add must offer legacy recovery rather than silently creating blank workspace');
+assert.match(nativeActivity,/api\.setInstagramUsername\(key, username, expected, transferFrom\)/,
+ 'Android must use the same atomic backend for metadata-only identity transfer');
+assert.match(nativeActivity,/getInstagramProfileSummaries\(\)/,
+ 'Android must show per-profile counts');
+assert.match(nativeActivity,/fetchInstagramProfileCloudRows\(/,
+ 'Android backup must read only the chosen Instagram workspace');
+assert.match(nativeActivity,/exportSelectedInstagramProfileBackup\(key, label,/,
+ 'Android must offer cloud backup before deleting');
+assert.match(nativeActivity,/username\.isBlank\(\)/,
+ 'Android must support unnamed orphaned profile keys');
+assert.match(xml,/@\+id\/editInstagramUsername/,
+ 'Android Profile must show edit username');
+assert.match(xml,/@\+id\/backupInstagramProfile/,
+ 'Android Profile must expose a separate backup action');
+assert.match(android,/rpc\/igc_set_instagram_username/,
+ 'Android must use backend atomic rename');
+assert.match(android,/rpc\/igc_instagram_profile_summaries/,
+ 'Android must use per-profile server stats');
+assert.match(schema,/create or replace function public\.igc_set_instagram_username/,
+ 'Schema must implement atomic owner identity change');
+assert.match(schema,/create or replace function public\.igc_instagram_profile_summaries/,
+ 'Schema must aggregate legacy and named counts independently');
+assert.match(schema,/v_old is distinct from p_expected_username/,
+ 'Concurrent stale updates must not rename the wrong account');
+assert.match(schema,/set username=null/,
+ 'Collision recovery must only unassign the human-readable handle');
+assert.match(schema,/security invoker/g,
+ 'All new identity functions should obey account-owner RLS');
+
 console.log('Multi-Instagram local storage, audit DB, REST write isolation and registry contracts passed.');

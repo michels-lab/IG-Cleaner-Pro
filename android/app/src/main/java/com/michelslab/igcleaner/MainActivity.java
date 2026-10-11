@@ -778,6 +778,40 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     // One Supabase login may own many separate Instagram datasets.
+    private static String instagramUsername(JSONObject row) {
+        if (row == null || row.isNull("username")) return "";
+        return row.optString("username", "").trim();
+    }
+
+    private static JSONObject profileForKey(JSONArray rows, String key) {
+        for (int i = 0; i < rows.length(); i++) {
+            JSONObject row = rows.optJSONObject(i);
+            if (row != null && key.equals(row.optString("account_key", ""))) return row;
+        }
+        return null;
+    }
+
+    private static String instagramProfileName(JSONObject row) {
+        String key = row.optString("account_key", "legacy");
+        String username = instagramUsername(row);
+        if (!username.isBlank()) return "@" + username;
+        return "legacy".equals(key)
+                ? "Datos anteriores (sin asignar)"
+                : row.optString("label", "Perfil sin @usuario");
+    }
+
+    private static String instagramProfileMetrics(JSONObject row) {
+        if (row == null) return "Sin estadísticas sincronizadas";
+        String detail = "Following " + String.format(Locale.ROOT, "%,d", row.optLong("following_count", 0))
+                + " · Followers " + String.format(Locale.ROOT, "%,d", row.optLong("followers_count", 0))
+                + " · Pending " + String.format(Locale.ROOT, "%,d", row.optLong("pending_count", 0))
+                + " · Revisiones " + String.format(Locale.ROOT, "%,d", row.optLong("review_count", 0));
+        String stamp = row.optString("last_sync_at", "");
+        if (!stamp.isBlank() && !"null".equals(stamp))
+            detail += "\nÚltimo snapshot: " + stamp.substring(0, Math.min(10, stamp.length()));
+        return detail;
+    }
+
     private void showInstagramProfileManager() {
         if (!api.hasSession()) {
             Snackbar.make(content, "Conéctate primero a tu cuenta de IG Cleaner.", Snackbar.LENGTH_LONG).show();
@@ -804,24 +838,23 @@ public final class MainActivity extends AppCompatActivity {
             }
             JSONArray all = new JSONArray().put(legacy);
             for (int i = 0; i < slots.length(); i++) all.put(slots.get(i));
+            JSONArray summaries = api.getInstagramProfileSummaries();
             String[] labels = new String[all.length()];
             for (int i = 0; i < all.length(); i++) {
                 JSONObject row = all.optJSONObject(i);
-                String name = row == null ? "" : row.optString("username", "");
-                labels[i] = name.isBlank() ? "Datos anteriores (sin asignar)" : "@" + name;
-                if (row != null && row.optString("account_key", "").equals(api.getInstagramProfile()))
-                    labels[i] += "  ✓";
+                String key = row.optString("account_key", "legacy");
+                labels[i] = instagramProfileName(row)
+                        + (key.equals(api.getInstagramProfile()) ? "  ✓" : "")
+                        + "\n" + instagramProfileMetrics(profileForKey(summaries, key));
             }
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                     .setTitle("Seleccionar Instagram")
-                    // Material AlertDialog cannot render a message and a list together:
-                    // the message view takes the content slot and hides setItems.
+                    // setMessage + setItems hides list rows in Material AlertDialog.
                     .setItems(labels, (dialog, which) -> {
                         JSONObject selected = all.optJSONObject(which);
                         if (selected == null) return;
                         String key = selected.optString("account_key", "legacy");
-                        String username = selected.optString("username", "");
-                        changeInstagramProfile(key, username.isBlank() ? "Datos anteriores" : "@" + username);
+                        changeInstagramProfile(key, instagramProfileName(selected));
                     })
                     .setPositiveButton("Añadir Instagram", (dialog, which) -> addInstagramProfile())
                     .setNeutralButton("Asignar datos anteriores", (dialog, which) -> labelLegacyInstagramProfile())
@@ -834,67 +867,210 @@ public final class MainActivity extends AppCompatActivity {
         TextInputEditText field = new TextInputEditText(this);
         field.setHint("@nombredeusuario");
         field.setSingleLine(true);
-        int pad = dp(18);
-        field.setPadding(pad, dp(12), pad, dp(12));
+        field.setPadding(dp(18), dp(12), dp(18), dp(12));
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Añadir perfil de Instagram")
-                .setMessage("Cada Instagram tendrá sus propios seguidores, revisiones, Focus y Double Check.")
+                .setTitle("Añadir Instagram")
+                .setMessage("Primero elige si este Instagram corresponde a Datos anteriores o si quieres un perfil completamente nuevo.")
                 .setView(field)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Crear", (dialog, which) -> {
-                    String handle = rawTextOf(field).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
-                    if (!handle.matches("[a-z0-9._]{1,30}")) {
-                        Snackbar.make(content, "Usuario de Instagram inválido.", Snackbar.LENGTH_LONG).show();
-                        return;
-                    }
-                    runAsync(() -> {
-                        String key = "ig_" + UUID.randomUUID().toString().replace("-", "");
-                        api.upsert("instagram_accounts", "user_id,account_key",
-                                new JSONArray().put(new JSONObject()
-                                        .put("account_key", key)
-                                        .put("username", handle)
-                                        .put("label", "@" + handle)));
-                        mainHandler.post(() -> changeInstagramProfile(key, "@" + handle));
-                    }, true);
-                }).show();
-    }
-
-    private void labelLegacyInstagramProfile() {
-        TextInputEditText field = new TextInputEditText(this);
-        field.setHint("@usuario_actual");
-        field.setSingleLine(true);
-        int pad = dp(18);
-        field.setPadding(pad, dp(12), pad, dp(12));
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Identificar datos existentes")
-                .setMessage("Solo cambia el nombre del espacio heredado. No elimina ni mueve datos.")
-                .setView(field)
-                .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Guardar", (dialog, which) -> {
+                .setPositiveButton("Continuar", (dialog, which) -> {
                     String username = rawTextOf(field).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
                     if (!username.matches("[a-z0-9._]{1,30}")) {
-                        Snackbar.make(content, "Usuario de Instagram inválido.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(content, "@usuario de Instagram inválido.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
                     runAsync(() -> {
-                        api.patch("instagram_accounts?account_key=eq.legacy",
-                                new JSONObject().put("username", username)
-                                        .put("label", "@" + username)
-                                        .put("updated_at", Instant.now().toString()));
+                        JSONArray registry = api.getUnscoped(
+                                "instagram_accounts?select=account_key,username,label");
+                        JSONObject existing = null;
+                        JSONObject legacy = profileForKey(registry, "legacy");
+                        for (int i = 0; i < registry.length(); i++) {
+                            JSONObject row = registry.optJSONObject(i);
+                            if (row != null && username.equals(instagramUsername(row))) existing = row;
+                        }
+                        JSONObject matched = existing;
+                        boolean legacyUnassigned = legacy == null || instagramUsername(legacy).isBlank();
                         mainHandler.post(() -> {
-                            if ("legacy".equals(api.getInstagramProfile()))
-                                api.setInstagramProfile("legacy", "@" + username);
-                            showNativeAccountScreen();
-                            Snackbar.make(content, "Datos anteriores asignados a @" + username, Snackbar.LENGTH_LONG).show();
+                            if (matched != null && "legacy".equals(matched.optString("account_key"))) {
+                                new MaterialAlertDialogBuilder(this).setTitle("Instagram ya registrado")
+                                        .setMessage("@" + username + " ya tiene asignados los datos anteriores.")
+                                        .setPositiveButton("Abrir datos anteriores",
+                                                (d, w) -> changeInstagramProfile("legacy", "@" + username))
+                                        .setNegativeButton("Cancelar", null).show();
+                            } else if (legacyUnassigned) {
+                                String[] choices = matched == null ? new String[]{
+                                    "Usar Datos anteriores (conservar las listas y revisiones)",
+                                    "Crear perfil NUEVO vacío"
+                                } : new String[]{
+                                    "Asociar @" + username + " a Datos anteriores (sin borrar el perfil creado)",
+                                    "Abrir el perfil nuevo existente"
+                                };
+                                new MaterialAlertDialogBuilder(this)
+                                        .setTitle("¿Qué datos corresponden a @" + username + "?")
+                                        .setItems(choices, (d, w) -> {
+                                            if (w == 0) setInstagramUsernameWithConfirmation("legacy", username, true);
+                                            else if (matched != null)
+                                                changeInstagramProfile(matched.optString("account_key"),
+                                                        "@" + username);
+                                            else createNamedInstagramProfile(username);
+                                        }).setNegativeButton("Cancelar", null).show();
+                            } else if (matched != null) {
+                                new MaterialAlertDialogBuilder(this).setTitle("Ya existe @" + username)
+                                        .setMessage("Este Instagram ya tiene un perfil. No se creó otro vacío.")
+                                        .setPositiveButton("Abrir",
+                                                (d, w) -> changeInstagramProfile(
+                                                        matched.optString("account_key"), "@" + username))
+                                        .setNegativeButton("Cancelar", null).show();
+                            } else createNamedInstagramProfile(username);
                         });
                     }, true);
                 }).show();
     }
 
+    private void createNamedInstagramProfile(String handle) {
+        runAsync(() -> {
+            String key = "ig_" + UUID.randomUUID().toString().replace("-", "");
+            api.upsert("instagram_accounts", "user_id,account_key",
+                    new JSONArray().put(new JSONObject()
+                            .put("account_key", key)
+                            .put("username", handle)
+                            .put("label", "@" + handle)));
+            mainHandler.post(() -> changeInstagramProfile(key, "@" + handle));
+        }, true);
+    }
+
+    private void labelLegacyInstagramProfile() {
+        editInstagramUsername("legacy");
+    }
+
+    private void editSelectedInstagramUsername() {
+        editInstagramUsername(api.getInstagramProfile());
+    }
+
+    private void editInstagramUsername(String key) {
+        TextInputEditText field = new TextInputEditText(this);
+        field.setHint("@usuario_actual");
+        field.setSingleLine(true);
+        field.setPadding(dp(18), dp(12), dp(18), dp(12));
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Editar Instagram")
+                .setMessage("Solo cambia el @usuario; no mueve listas, revisiones ni tandas entre perfiles.")
+                .setView(field)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    String username = rawTextOf(field).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
+                    if (!username.matches("[a-z0-9._]{1,30}")) {
+                        Snackbar.make(content, "Usuario inválido.", Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+                    setInstagramUsernameWithConfirmation(key, username, true);
+                }).show();
+    }
+
+    private void setInstagramUsernameWithConfirmation(String key, String username, boolean allowTransfer) {
+        runAsync(() -> {
+            JSONArray rows = api.getUnscoped(
+                    "instagram_accounts?select=account_key,username,label");
+            JSONObject target = profileForKey(rows, key);
+            if (target == null) throw new IllegalStateException("Perfil no encontrado. Actualiza la lista.");
+            String expected = instagramUsername(target);
+            JSONObject conflict = null;
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i);
+                if (row != null && username.equals(instagramUsername(row))
+                        && !key.equals(row.optString("account_key", ""))) conflict = row;
+            }
+            JSONObject collision = conflict;
+            if (collision != null && (!"legacy".equals(key) || !allowTransfer))
+                throw new IllegalStateException("@" + username + " ya corresponde a otro perfil; no se cambió nada.");
+            if (collision != null) {
+                String otherKey = collision.optString("account_key");
+                mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
+                        .setTitle("Recuperar @" + username + " en Datos anteriores")
+                        .setMessage("El @usuario está en otro perfil. Puedes asignarlo a Datos anteriores sin borrar ni mezclar listas. El otro perfil permanecerá accesible como 'Sin asignar' con todo su historial independiente.\n\n¿Reasignar solamente el nombre?")
+                        .setNegativeButton("Cancelar", null)
+                        .setPositiveButton("Reasignar @usuario", (dialog, which) ->
+                                persistInstagramUsername(key, username, expected, otherKey))
+                        .show());
+            } else persistInstagramUsername(key, username, expected, null);
+        }, true);
+    }
+
+    private void persistInstagramUsername(String key, String username, String expected, String transferFrom) {
+        runAsync(() -> {
+            api.setInstagramUsername(key, username, expected, transferFrom);
+            mainHandler.post(() -> {
+                setGlobalStatus("INSTAGRAM • @" + username + " · sin mover historial");
+                if (!key.equals(api.getInstagramProfile()) && "legacy".equals(key)) {
+                    // Switching source workspaces must clear all native in-memory lists,
+                    // not only update the cached label from a different Instagram.
+                    changeInstagramProfile("legacy", "@" + username);
+                } else {
+                    if (key.equals(api.getInstagramProfile()))
+                        api.setInstagramProfile(key, "@" + username);
+                    if ("account_native".equals(currentScreen)) showNativeAccountScreen();
+                }
+                Snackbar.make(content, "@" + username + " asignado sin borrar datos.", Snackbar.LENGTH_LONG).show();
+            });
+        }, true);
+    }
+
+    private JSONArray fetchInstagramProfileCloudRows(String table, String key) throws Exception {
+        JSONArray out = new JSONArray();
+        String scoped = "legacy".equals(key) ? table : "instagram_" + table;
+        String accountFilter = "legacy".equals(key) ? "" : "&account_key=eq." + key;
+        for (int offset = 0; ; offset += 1000) {
+            JSONArray rows = api.getUnscoped(scoped + "?select=*" + accountFilter
+                    + "&limit=1000&offset=" + offset);
+            for (int i = 0; i < rows.length(); i++) out.put(rows.get(i));
+            if (rows.length() < 1000) break;
+        }
+        return out;
+    }
+
+    private void exportSelectedInstagramProfileBackup(String key, String label, Runnable onSaved) {
+        if (!api.hasSession()) {
+            Snackbar.make(content, "Inicia sesión para exportar el respaldo.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+        setGlobalStatus("EXPORTANDO • respaldo de " + label);
+        runAsync(() -> {
+            JSONArray accountRows = api.getUnscoped(
+                    "instagram_accounts?select=*&account_key=eq." + key);
+            if (accountRows.length() != 1) throw new IllegalStateException("Perfil no encontrado; no se exportó nada.");
+            JSONObject tables = new JSONObject();
+            JSONObject counts = new JSONObject();
+            for (String table : new String[]{
+                    "list_snapshots", "profile_state", "audit_events",
+                    "focus_batches", "focus_batch_items", "workspace_state"}) {
+                JSONArray rows = fetchInstagramProfileCloudRows(table, key);
+                tables.put(table, rows);
+                counts.put(table, rows.length());
+            }
+            JSONObject payload = new JSONObject()
+                    .put("schema", "ig-cleaner-instagram-profile-cloud-export-v1")
+                    .put("exportedAt", Instant.now().toString())
+                    .put("owner", api.getEmail())
+                    .put("account_key", key)
+                    .put("account", accountRows.getJSONObject(0))
+                    .put("counts", counts).put("tables", tables)
+                    .put("note", "Solo datos sincronizados en la nube. Los datos locales sin sincronizar y el ZIP original requieren respaldo independiente.");
+            String saved = saveBytesToDownloads(
+                    "IG-Cleaner-Instagram-" + key + "-" + System.currentTimeMillis() + ".json",
+                    "application/json",
+                    payload.toString(2).getBytes(StandardCharsets.UTF_8));
+            mainHandler.post(() -> {
+                setGlobalStatus("RESPALDO GUARDADO • " + saved);
+                Snackbar.make(content, "Respaldo: " + saved, Snackbar.LENGTH_LONG).show();
+                if (onSaved != null) onSaved.run();
+            });
+        }, true);
+    }
+
     private void confirmDeleteInstagramProfile() {
         final String key = api.getInstagramProfile();
         if ("legacy".equals(key)) {
-            Snackbar.make(content, "Datos anteriores está protegido. Selecciona otro Instagram.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Datos anteriores está protegido.", Snackbar.LENGTH_LONG).show();
             return;
         }
         if (!api.hasSession()) {
@@ -903,46 +1079,59 @@ public final class MainActivity extends AppCompatActivity {
         }
         runAsync(() -> {
             JSONArray rows = api.getUnscoped(
-                    "instagram_accounts?select=account_key,username&account_key=eq." + key);
+                    "instagram_accounts?select=account_key,username,label&account_key=eq." + key);
             if (rows.length() != 1) throw new IllegalStateException("El perfil no existe. Actualiza los perfiles.");
-            String username = rows.getJSONObject(0).optString("username", "");
-            if (username.isBlank()) throw new IllegalStateException("Perfil sin usuario; no se puede confirmar el borrado.");
-            mainHandler.post(() -> {
-                TextInputEditText typedHandle = new TextInputEditText(this);
-                typedHandle.setHint("@" + username);
-                typedHandle.setSingleLine(true);
-                int pad = dp(18);
-                typedHandle.setPadding(pad, dp(12), pad, dp(12));
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Eliminar @" + username)
-                        .setMessage("Esta acción es permanente: elimina las listas, revisiones, Focus e historial sincronizados de ESTE perfil. No borra Datos anteriores ni otros Instagram. Exporta un respaldo antes si necesitas conservarlos.\n\nEscribe @" + username + " para confirmar.")
-                        .setView(typedHandle)
-                        .setNegativeButton("Cancelar", null)
-                        .setPositiveButton("Eliminar perfil", (dialog, which) -> {
-                            String confirmation = rawTextOf(typedHandle).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
-                            if (!username.equals(confirmation)) {
-                                Snackbar.make(content, "El usuario no coincide. No se borró nada.", Snackbar.LENGTH_LONG).show();
-                                return;
-                            }
-                            setGlobalStatus("ELIMINANDO • @" + username);
-                            runAsync(() -> {
-                                if (!key.equals(api.getInstagramProfile()))
-                                    throw new IllegalStateException("Cambiaste de Instagram. Vuelve a confirmar.");
-                                api.deleteInstagramProfile(key, username);
-                                clearWorkspaceCacheForProfile(key);
-                                mainHandler.post(() -> {
-                                    api.setInstagramProfile("legacy", "Datos anteriores");
-                                    setGlobalStatus("INSTAGRAM • Datos anteriores");
-                                    if (bottomNav.getSelectedItemId() != R.id.navHome)
-                                        bottomNav.setSelectedItemId(R.id.navHome);
-                                    else showMobileWorkspaceScreen("home");
-                                    Snackbar.make(content, "Perfil @" + username + " eliminado. Datos anteriores está intacto.", Snackbar.LENGTH_LONG).show();
-                                });
-                            }, true);
-                        })
-                        .show();
-            });
+            JSONObject row = rows.getJSONObject(0);
+            String username = instagramUsername(row);
+            String label = instagramProfileName(row);
+            mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
+                    .setTitle("Respaldo antes de eliminar " + label)
+                    .setItems(new String[]{
+                        "Guardar respaldo sincronizado y continuar",
+                        "Continuar sin respaldo (se perderá el historial sincronizado)"
+                    }, (dialog, which) -> {
+                        if (which == 0) exportSelectedInstagramProfileBackup(key, label,
+                                () -> showFinalInstagramDeleteConfirmation(key, username, label));
+                        else showFinalInstagramDeleteConfirmation(key, username, label);
+                    })
+                    .setNegativeButton("Cancelar", null).show());
         }, true);
+    }
+
+    private void showFinalInstagramDeleteConfirmation(String key, String username, String label) {
+        String required = username.isBlank()
+                ? "BORRAR " + key.substring(Math.max(0, key.length() - 6))
+                : "@" + username;
+        TextInputEditText typed = new TextInputEditText(this);
+        typed.setHint(required);
+        typed.setSingleLine(true);
+        typed.setPadding(dp(18), dp(12), dp(18), dp(12));
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Eliminar definitivamente " + label)
+                .setMessage("Borra listas, revisiones, Focus e historial sincronizados SOLO de este perfil. Datos anteriores y las demás cuentas no cambian.\\n\\nEscribe exactamente " + required + " para confirmar.")
+                .setView(typed)
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Eliminar perfil", (dialog, which) -> {
+                    if (!required.equals(rawTextOf(typed).trim())) {
+                        Snackbar.make(content, "Confirmación incorrecta. No se borró nada.", Snackbar.LENGTH_LONG).show();
+                        return;
+                    }
+                    runAsync(() -> {
+                        if (!key.equals(api.getInstagramProfile()))
+                            throw new IllegalStateException("Cambiaste de Instagram. Vuelve a confirmar.");
+                        api.deleteInstagramProfile(key, username);
+                        clearWorkspaceCacheForProfile(key);
+                        mainHandler.post(() -> {
+                            api.setInstagramProfile("legacy", "Datos anteriores");
+                            setGlobalStatus("INSTAGRAM • Datos anteriores");
+                            if (bottomNav.getSelectedItemId() != R.id.navHome)
+                                bottomNav.setSelectedItemId(R.id.navHome);
+                            else showMobileWorkspaceScreen("home");
+                            Snackbar.make(content, label + " eliminado. Datos anteriores está intacto.",
+                                    Snackbar.LENGTH_LONG).show();
+                        });
+                    }, true);
+                }).show();
     }
 
     private void changeInstagramProfile(String key, String label) {
@@ -997,6 +1186,8 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton selectInstagramProfile = view.findViewById(R.id.selectInstagramProfile);
+        MaterialButton editInstagramUsername = view.findViewById(R.id.editInstagramUsername);
+        MaterialButton backupInstagramProfile = view.findViewById(R.id.backupInstagramProfile);
         MaterialButton deleteInstagramProfile = view.findViewById(R.id.deleteInstagramProfile);
         TextView activeInstagramProfileLabel = view.findViewById(R.id.activeInstagramProfile);
         MaterialButton sync = view.findViewById(R.id.syncNow);
@@ -1013,8 +1204,29 @@ public final class MainActivity extends AppCompatActivity {
         connectedCard.setVisibility(connected ? View.VISIBLE : View.GONE);
         accountEmail.setText(api.getEmail());
         label.setText(deviceLabel() + " · session remembered on this device");
-        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel());
+        String selectedProfile = api.getInstagramProfile();
+        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\nCargando estadísticas…");
+        if (connected) {
+            runAsync(() -> {
+                JSONArray summaries = api.getInstagramProfileSummaries();
+                JSONObject activeSummary = profileForKey(summaries, selectedProfile);
+                mainHandler.post(() -> {
+                    if (!"account_native".equals(currentScreen)
+                            || !selectedProfile.equals(api.getInstagramProfile())) return;
+                    String name = activeSummary == null ? api.getInstagramProfileLabel()
+                            : instagramProfileName(activeSummary);
+                    api.setInstagramProfile(selectedProfile, name);
+                    activeInstagramProfileLabel.setText(name + "\n" + instagramProfileMetrics(activeSummary));
+                    setBrandContext("PROFILE");
+                });
+            }, true);
+        }
         selectInstagramProfile.setOnClickListener(v -> showInstagramProfileManager());
+        editInstagramUsername.setEnabled(connected);
+        editInstagramUsername.setOnClickListener(v -> editSelectedInstagramUsername());
+        backupInstagramProfile.setEnabled(connected);
+        backupInstagramProfile.setOnClickListener(v -> exportSelectedInstagramProfileBackup(
+                api.getInstagramProfile(), api.getInstagramProfileLabel(), null));
         deleteInstagramProfile.setEnabled(connected && !"legacy".equals(api.getInstagramProfile()));
         deleteInstagramProfile.setOnClickListener(v -> confirmDeleteInstagramProfile());
 
