@@ -1,3 +1,10 @@
+## Candidate fix — Android selector did not display legacy row (2026-10-10, unreleased)
+
+- User confirmed that the native “Perfiles de Instagram” dialog shows “Asignar datos anteriores” but **not** the “Datos anteriores (sin asignar)” row. `MainActivity.showInstagramProfileManager()` combined Material `setMessage` and `setItems`; the message suppresses the list.
+- Source-only correction on a branch removes `setMessage`, leaves `legacy` first and both profile identities intact, and adds a test regression to the existing multi-profile suite. No data is migrated, deleted, renamed, or automatically merged.
+- Remains **unpublished** until automated Android installed/emulator acceptance and a separate user release instruction. In released v120.39, Desktop INSTAGRAM selector still permits switching to legacy, provided the saved data is in that installation or synced to the same account.
+- Distinct @username collision bug tracked in issue #57. Do not delete either account and do not clear Android app storage during recovery.
+
 ## Current release — v120.39 stable published and verified (2026-10-10 Mexico / 2026-10-11 UTC)
 
 - **Published GitHub stable** [v120.39](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.39) on 2026-10-11T04:51:14Z; `draft=false`, `prerelease=false`, `latest=v120.39`. Exact publication commit `4170696589c22dc669deac10ca1a0ceddd88bfea` and governed publisher run [38112617481](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38112617481) **SUCCESS**, including verified release assets.
