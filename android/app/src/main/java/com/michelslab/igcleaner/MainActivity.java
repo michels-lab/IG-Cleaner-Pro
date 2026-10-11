@@ -807,8 +807,9 @@ public final class MainActivity extends AppCompatActivity {
                     labels[i] += "  ✓";
             }
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
-                    .setTitle("Perfiles de Instagram")
-                    .setMessage("Una cuenta de IG Cleaner; cada Instagram tiene sus propias listas, tandas e historial.")
+                    .setTitle("Seleccionar Instagram")
+                    // Material AlertDialog cannot render a message and a list together:
+                    // the message view takes the content slot and hides setItems.
                     .setItems(labels, (dialog, which) -> {
                         JSONObject selected = all.optJSONObject(which);
                         if (selected == null) return;
