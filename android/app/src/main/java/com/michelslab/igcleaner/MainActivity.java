@@ -540,8 +540,14 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void clearWorkspaceCache() {
+        clearWorkspaceCacheForProfile(api.getInstagramProfile());
+    }
+
+    private void clearWorkspaceCacheForProfile(String profileKey) {
+        if ("legacy".equals(profileKey)) return; // Never purge the original v120.38 workspace here.
         SharedPreferences cache = getSharedPreferences(CACHE_PREFS, MODE_PRIVATE);
-        String suffix = cacheSuffix();
+        String email = api.getEmail() == null ? "" : api.getEmail().trim().toLowerCase(Locale.ROOT);
+        String suffix = Integer.toHexString(email.hashCode()) + "_" + profileKey;
         cache.edit()
                 .remove("following_" + suffix)
                 .remove("followers_" + suffix)
@@ -885,6 +891,60 @@ public final class MainActivity extends AppCompatActivity {
                 }).show();
     }
 
+    private void confirmDeleteInstagramProfile() {
+        final String key = api.getInstagramProfile();
+        if ("legacy".equals(key)) {
+            Snackbar.make(content, "Datos anteriores está protegido. Selecciona otro Instagram.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+        if (!api.hasSession()) {
+            Snackbar.make(content, "Inicia sesión antes de eliminar un perfil.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+        runAsync(() -> {
+            JSONArray rows = api.getUnscoped(
+                    "instagram_accounts?select=account_key,username&account_key=eq." + key);
+            if (rows.length() != 1) throw new IllegalStateException("El perfil no existe. Actualiza los perfiles.");
+            String username = rows.getJSONObject(0).optString("username", "");
+            if (username.isBlank()) throw new IllegalStateException("Perfil sin usuario; no se puede confirmar el borrado.");
+            mainHandler.post(() -> {
+                TextInputEditText typedHandle = new TextInputEditText(this);
+                typedHandle.setHint("@" + username);
+                typedHandle.setSingleLine(true);
+                int pad = dp(18);
+                typedHandle.setPadding(pad, dp(12), pad, dp(12));
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Eliminar @" + username)
+                        .setMessage("Esta acción es permanente: elimina las listas, revisiones, Focus e historial sincronizados de ESTE perfil. No borra Datos anteriores ni otros Instagram. Exporta un respaldo antes si necesitas conservarlos.\n\nEscribe @" + username + " para confirmar.")
+                        .setView(typedHandle)
+                        .setNegativeButton("Cancelar", null)
+                        .setPositiveButton("Eliminar perfil", (dialog, which) -> {
+                            String confirmation = rawTextOf(typedHandle).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
+                            if (!username.equals(confirmation)) {
+                                Snackbar.make(content, "El usuario no coincide. No se borró nada.", Snackbar.LENGTH_LONG).show();
+                                return;
+                            }
+                            setGlobalStatus("ELIMINANDO • @" + username);
+                            runAsync(() -> {
+                                if (!key.equals(api.getInstagramProfile()))
+                                    throw new IllegalStateException("Cambiaste de Instagram. Vuelve a confirmar.");
+                                api.deleteInstagramProfile(key, username);
+                                clearWorkspaceCacheForProfile(key);
+                                mainHandler.post(() -> {
+                                    api.setInstagramProfile("legacy", "Datos anteriores");
+                                    setGlobalStatus("INSTAGRAM • Datos anteriores");
+                                    if (bottomNav.getSelectedItemId() != R.id.navHome)
+                                        bottomNav.setSelectedItemId(R.id.navHome);
+                                    else showMobileWorkspaceScreen("home");
+                                    Snackbar.make(content, "Perfil @" + username + " eliminado. Datos anteriores está intacto.", Snackbar.LENGTH_LONG).show();
+                                });
+                            }, true);
+                        })
+                        .show();
+            });
+        }, true);
+    }
+
     private void changeInstagramProfile(String key, String label) {
         // Serialize the account switch behind in-flight native network writes.
         // Otherwise a Focus operation prepared for A could finish under B.
@@ -937,6 +997,7 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton sendCode = view.findViewById(R.id.sendCode);
         MaterialButton verifyCode = view.findViewById(R.id.verifyCode);
         MaterialButton selectInstagramProfile = view.findViewById(R.id.selectInstagramProfile);
+        MaterialButton deleteInstagramProfile = view.findViewById(R.id.deleteInstagramProfile);
         TextView activeInstagramProfileLabel = view.findViewById(R.id.activeInstagramProfile);
         MaterialButton sync = view.findViewById(R.id.syncNow);
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
@@ -954,6 +1015,8 @@ public final class MainActivity extends AppCompatActivity {
         label.setText(deviceLabel() + " · session remembered on this device");
         activeInstagramProfileLabel.setText(api.getInstagramProfileLabel());
         selectInstagramProfile.setOnClickListener(v -> showInstagramProfileManager());
+        deleteInstagramProfile.setEnabled(connected && !"legacy".equals(api.getInstagramProfile()));
+        deleteInstagramProfile.setOnClickListener(v -> confirmDeleteInstagramProfile());
 
         passwordSignIn.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
