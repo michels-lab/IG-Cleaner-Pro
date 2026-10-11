@@ -20,7 +20,7 @@ const ctx={
 ctx.window.location=ctx.location;
 vm.createContext(ctx);
 function boot(active){
- raw.setItem('igc_multi_profile_active',active);
+ raw.setItem('igc_multi_profile_active_signed_out',active);
  vm.runInContext(match[1].replace('const localStorage=igcProfileStorage;','var localStorage=igcProfileStorage;')
      .replace('const indexedDB=new Proxy','var indexedDB=new Proxy'),ctx);
 }
@@ -29,18 +29,32 @@ vm.runInContext("localStorage.setItem('ig_v13_done','[\\\"legacy_friend\\\"]')",
 assert.equal(raw.getItem('ig_v13_done'),'["legacy_friend"]','Legacy keys must remain byte-for-byte');
 vm.runInContext("indexedDB.open('ig_cleaner_pro_history',1)",ctx);
 assert.equal(opened.at(-1).k,'ig_cleaner_pro_history');
-raw.setItem('igc_multi_profile_active','ig_first_123');
+raw.setItem('igc_multi_profile_active_'+ctx.IGC_INSTAGRAM_OWNER,'ig_first_123');
 vm.runInContext("igcActiveInstagramProfile='ig_first_123';window.IGC_INSTAGRAM_PROFILES._verified=true;localStorage.setItem('ig_v13_done','[\\\"alice\\\"]')",ctx);
 assert.equal(raw.getItem('ig_v13_done'),'["legacy_friend"]');
-assert.equal(raw.getItem('igc_profile__ig_first_123__ig_v13_done'),'["alice"]');
+assert.equal(raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_first_123__ig_v13_done'),'["alice"]');
 vm.runInContext("indexedDB.open('ig_cleaner_pro_history',1)",ctx);
-assert.equal(opened.at(-1).k,'igc_profile__ig_first_123__ig_cleaner_pro_history');
+assert.equal(opened.at(-1).k,'igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_first_123__ig_cleaner_pro_history');
 vm.runInContext("igcActiveInstagramProfile='ig_second_456';localStorage.setItem('ig_v13_done','[\\\"bob\\\"]')",ctx);
-assert.equal(raw.getItem('igc_profile__ig_second_456__ig_v13_done'),'["bob"]');
-assert.equal(raw.getItem('igc_profile__ig_first_123__ig_v13_done'),'["alice"]');
+assert.equal(raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_second_456__ig_v13_done'),'["bob"]');
+assert.equal(raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_first_123__ig_v13_done'),'["alice"]');
 vm.runInContext("localStorage.setItem('igc_v12027_supabase_session','SAME_LOGIN')",ctx);
 assert.equal(raw.getItem('igc_v12027_supabase_session'),'SAME_LOGIN','One account login must be shared');
 const p=ctx.window.IGC_INSTAGRAM_PROFILES;
+p.setAccounts([{account_key:'ig_first_123',username:'first.person'}]);
+assert.equal(p.accounts.length,1);
+// Two independent IG Cleaner email identities using the same browser storage
+// must not share the Instagram account registry or scoped review data.
+const secondBacking = {window:{localStorage:raw,indexedDB:db},document:ctx.document,
+ location:ctx.location,Set,Proxy,Reflect,JSON,Error,String,Array,encodeURIComponent,decodeURIComponent};
+raw.setItem('igc_v12027_supabase_config',JSON.stringify({email:'second-login@example.test'}));
+vm.createContext(secondBacking);
+vm.runInContext(match[1].replace('const localStorage=igcProfileStorage;','var localStorage=igcProfileStorage;')
+ .replace('const indexedDB=new Proxy','var indexedDB=new Proxy'),secondBacking);
+assert.notEqual(secondBacking.IGC_INSTAGRAM_OWNER,ctx.IGC_INSTAGRAM_OWNER);
+assert.equal(secondBacking.window.IGC_INSTAGRAM_PROFILES.accounts.length,0,
+ 'The second app login must not see the first login Instagram account registry');
+raw.removeItem('igc_v12027_supabase_config');
 assert.equal(p.scopeRest('list_snapshots?select=payload',{method:'GET'}).path,
  'instagram_list_snapshots?select=payload&account_key=eq.ig_second_456');
 const up=p.scopeRest('focus_batches?on_conflict=user_id,id',
