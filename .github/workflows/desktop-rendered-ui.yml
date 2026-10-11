@@ -35,9 +35,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.57.0
           npx playwright install --with-deps chromium
-      - name: Run real compact and wide Desktop visual tests
-        run: node tests/desktop-visual-smoke.cjs
-      - name: Build and smoke standalone Desktop HTML, offline images and links
+      - name: Build and smoke actual standalone Desktop HTML before capture
         run: |
           python3 tools/build_standalone_desktop_html.py \
             --source desktop/ig_cleaner_pro_v120_27_synced_companion.html \
@@ -45,6 +43,22 @@ jobs:
             --output artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html \
             --version "$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
           node tests/desktop-standalone-smoke.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
+      - name: Capture real compact and wide Desktop visual tests from built artifact
+        env:
+          IGC_VISUAL_HTML: artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
+        run: node tests/desktop-visual-smoke.cjs
+      - name: Validate master Home/About screenshot evidence
+        run: |
+          python3 -m pip install Pillow==11.3.0
+          python3 tools/create_master_visual_manifest.py \
+            --platform desktop \
+            --source-manifest artifacts/desktop-visual/manifest.json \
+            --artifact artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html \
+            --source-sha "$GITHUB_SHA" \
+            --out artifacts/desktop-visual/michelslab-manifest.json
+          python3 tools/visual_release_gate.py \
+            --manifest artifacts/desktop-visual/michelslab-manifest.json \
+            --source-sha "$GITHUB_SHA" --platforms desktop --surfaces home,about
       - uses: actions/upload-artifact@v4
         if: always()
         with:
