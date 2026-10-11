@@ -1000,13 +1000,16 @@ public final class MainActivity extends AppCompatActivity {
         runAsync(() -> {
             api.setInstagramUsername(key, username, expected, transferFrom);
             mainHandler.post(() -> {
-                if (key.equals(api.getInstagramProfile()))
-                    api.setInstagramProfile(key, "@" + username);
-                else if ("legacy".equals(key))
-                    api.setInstagramProfile("legacy", "@" + username);
                 setGlobalStatus("INSTAGRAM • @" + username + " · sin mover historial");
-                if ("account_native".equals(currentScreen)) showNativeAccountScreen();
-                else if ("legacy".equals(key)) showMobileWorkspaceScreen("home");
+                if (!key.equals(api.getInstagramProfile()) && "legacy".equals(key)) {
+                    // Switching source workspaces must clear all native in-memory lists,
+                    // not only update the cached label from a different Instagram.
+                    changeInstagramProfile("legacy", "@" + username);
+                } else {
+                    if (key.equals(api.getInstagramProfile()))
+                        api.setInstagramProfile(key, "@" + username);
+                    if ("account_native".equals(currentScreen)) showNativeAccountScreen();
+                }
                 Snackbar.make(content, "@" + username + " asignado sin borrar datos.", Snackbar.LENGTH_LONG).show();
             });
         }, true);
