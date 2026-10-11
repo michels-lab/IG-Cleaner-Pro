@@ -1,5 +1,10 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-10 — Safe Instagram profile deletion verified and merged
+
+PR #59 merged as `428c828a614db6a03901a8b4ba61a7ddf0bc1d8a` after all five exact-head checks passed (Android build, Android installed UI emulator, Desktop source and actual browser UI, Supabase 78 assertions). New production SQL function `igc_delete_instagram_profile` deployed with invoker permissions and owner RLS; anonymous execution denied. Production legacy data remained unchanged (33,927 saved list items; 7,764 review rows), and both user profile records were retained. **No release published**; current public version v120.39, next v120.40 pending explicit instruction. Separate duplicate-handle UX #57 remains open.
+
+
 ## 2026-10-10 — Instagram profile delete controls (candidate)
 
 Desktop and Android gain a confirmed remove-profile action for named Instagram workspaces. The original Datos anteriores workspace stays protected. The new authenticated, owner-scoped database function removes a named profile and its own synchronized rows in one transaction; failures roll back. Client-side safeguards require typed confirmation and restrict local cleanup to the selected profile. Added migration and test coverage. No new release published. See docs/MULTI_INSTAGRAM_WORKSPACES.md and PR #59.

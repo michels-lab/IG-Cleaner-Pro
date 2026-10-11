@@ -1,3 +1,11 @@
+## Profile deletion integrated, SQL live — 2026-10-10 Mexico (unreleased app UI)
+
+- [PR #59](https://github.com/michels-lab/IG-Cleaner-Pro/pull/59) merged at `428c828a614db6a03901a8b4ba61a7ddf0bc1d8a`. Desktop offers × next to INSTAGRAM, Android Profile offers “Eliminar Instagram seleccionado” for named workspaces; original legacy remains protected. Requires typed confirmation.
+- **All exact-head gates passed:** Desktop local contract; 78 Supabase pgTAP RLS assertions; Android Gradle build; real Desktop Chromium visual Home/About; installed Android API35 compact/wide instrumented visual test. Source QA commit `fd656bc87149e0be37a8f471827d6e477ac5dd0b`.
+- **Production migration successfully deployed** in `ig-cleaner-sync`: `atomic_named_instagram_profile_deletion_v1`, `public.igc_delete_instagram_profile(text,text)`. Verified `security_definer=false`, authenticated EXECUTE=true, anon EXECUTE=false. Legacy cloud snapshots unchanged: 3 rows / 33,927 list items; 7,764 review-state rows, 2 existing Instagram workspace registry rows and 0 new-profile list rows — no user data deleted during deployment.
+- **Published stable remains v120.39**. App UI/source fix and delete feature are staged for **v120.40**, requiring explicit release authorization for synchronized signed Android APK + standalone Desktop HTML. No release requested or published in this closeout. Actual user's phone and real multi-ZIP acceptance remain open in #24. The duplicate @username registration UX still requires direct correction (#57); deletion of a mistaken empty profile is manual, never automatic.
+- Unrelated Supabase Auth advisory: Leaked Password Protection remains disabled ([security setup](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)); no change to Auth settings in this feature.
+
 ## Candidate — Remove named Instagram profile safely (2026-10-10; not yet released)
 
 - User requested ability to delete extra Instagram profiles after accidentally registering original @handle as a blank new workspace. Add an explicit destructive control in Desktop INSTAGRAM and Android Profile while making **Datos anteriores (legacy)** non-deletable.
