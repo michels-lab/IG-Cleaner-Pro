@@ -1,12 +1,16 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-Current published stable: **v120.39**. Historical v120.34 instructions below describe the prior release process.
+Current published stable: **v120.41** (GitHub release [v120.41](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.41), exact SHA `1f711badcbc902e61beb7e382a49fe55f87fe9a1`, successful governed workflow [38125964658](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38125964658)). Historical v120.34/v120.39 validation sections below describe prior releases.
+
+## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
+
+Desktop **Cambiar usuario** and Android **Switch account** are distinct from changing an Instagram workspace; sign-in ownership, historic data and selected Instagram state remain isolated. The Desktop selector displays full Instagram handles and exposes an independent **Actualizar perfiles** action. The stable paired Desktop HTML and signed Android APK passed five exact-source automated checks, production certificate verification and runtime screenshot provenance. Physical Samsung two-login/ZIP tests remain open #24.
 
 ## Multiple Instagram profiles under one app login — shipped in v120.39
 
 Since v120.39, **one Supabase Auth login supports several isolated Instagram data workspaces**. Each named @Instagram profile keeps independent Following, Followers, Pending, saved reviews/protection/snooze, Focus/Double Check cycle, batches, audit activity and historical snapshots. Desktop and native Android can select/create profiles, while the pre-existing v120.38 data remains at the special `legacy` identity without moving or deleting previous records. New profiles use composite `(user_id,account_key,...)` keys and owner RLS; the same user being followed by two Instagram profiles does **not** merge their review states.
 
-**Published:** official stable v120.39 GitHub Release includes Desktop standalone HTML, Desktop ZIP and original-production-certificate signed Android APK. PRs #50 and #53 passed Desktop Chromium, installed Android emulator and 60 Supabase RLS tests. The additive migration is already live on production `ig-cleaner-sync`; old `legacy` data stays intact. New profiles keep the selector, reviews and IndexedDB isolated between different IG Cleaner sign-in owners on the same device. Exact-publication run `38112617481` passed signed APK and Desktop evidence gates. Physical Samsung and real two-Instagram ZIP/cloud roundtrip are still pending post-release acceptance; see [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md) and issue #24.
+**Originally published in v120.39:** official GitHub Release includes Desktop standalone HTML, Desktop ZIP and original-production-certificate signed Android APK. PRs #50 and #53 passed Desktop Chromium, installed Android emulator and 60 Supabase RLS tests. The additive migration is already live on production `ig-cleaner-sync`; old `legacy` data stays intact. New profiles keep the selector, reviews and IndexedDB isolated between different IG Cleaner sign-in owners on the same device. Exact-publication run `38112617481` passed signed APK and Desktop evidence gates. Physical Samsung and real two-Instagram ZIP/cloud roundtrip are still pending post-release acceptance; see [Multi-Instagram workspaces](docs/MULTI_INSTAGRAM_WORKSPACES.md) and issue #24.
 
 ## Product model
 
@@ -93,7 +97,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next governed release target is **v120.40** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
+The next governed release target is **v120.42** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
 
 Authority: `release/distribution-manifest.json`.
 

@@ -1,3 +1,15 @@
+## 2026-10-11 — Closeout QA infrastructure: pinned Supabase CLI
+
+- The post-publication documentation PR #71 RLS job initially failed **before running any database assertions**: `supabase/setup-cli@v1` with `version: latest` returned `Failed to resolve latest Supabase CLI release: rate limit exceeded`. This was a GitHub dependency-resolution failure, not a product security/test regression.
+- Replaced the unbounded `latest` lookup with the verified upstream latest stable **Supabase CLI v2.120.0** (GitHub release published 2026-10-06). Existing RLS database test content, schema, owner policies and runtime/release workflow remain unchanged. Re-run exact-head CI required; keep failure transparent until green. Public v120.41 already shipped successfully before this separate docs/CI issue.
+
+## 2026-10-11 — v120.41 stable Desktop + Android published, verified and reconciled
+
+- **Published:** [GitHub normal stable v120.41](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.41), `draft=false`, `prerelease=false`, 2026-10-11 08:50:34 UTC, exact source commit `1f711badcbc902e61beb7e382a49fe55f87fe9a1`. Governed publisher [run 38125964658](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38125964658) completed **SUCCESS**, including real installed-Android/Chromium visual screenshot evidence check tied to this release commit, Android production keystore and APK signer/version checks, independent HTML and ZIP creation and GitHub asset validation. Five exact-head PR #70 checks and all five exact release-source CI checks passed.
+- **GitHub assets checked:** `IG-Cleaner-Pro-Android-v120.41.apk` (**7,879,580 bytes**), `IG-Cleaner-Pro-Desktop-v120.41.html` (**3,283,790 bytes**), optional `IG-Cleaner-Pro-Desktop-v120.41.zip` (**1,401,875 bytes**), `SHA256SUMS.txt`, logo and PRIVACY.md. Standard package `com.michelslab.igcleaner`, versionCode **12041**, original persistent signing certificate. This is not Google Play distribution nor physical Samsung validation.
+- Release delivers merged PR #67 Desktop complete account names + independent authenticated cloud profile registry refresh and PR #69 separate **Switch account / Cambiar usuario** actions for IG Cleaner login on both platforms, protecting Instagram workspaces. No Supabase production migration, actual user-data mutation, or local data wipe occurred in this release.
+- Post-publication governance closes the consumed `authorized=false` request, updates `currentStableRelease=v120.41` and sets `nextRelease=v120.42`. No duplicate release; physical Samsung v120.40→v120.41 upgrade, own-account switching and genuine Instagram ZIP/sync round-trip remain pending issue #24.
+
 ## 2026-10-11 — User-authorized coordinated stable v120.41 release candidate
 
 - User explicitly instructed **dale release** following integrated account-switch PR #69 and Desktop profile-selector PR #67. Public current stable is v120.40, latest verified GitHub release target `7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a`; manifest next release is v120.41.

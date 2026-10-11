@@ -1,3 +1,9 @@
+## Official v120.41 stable release complete — 2026-10-11
+
+- [GitHub v120.41](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.41) is published normal stable with all six expected assets; exact `main` publication SHA `1f711badcbc902e61beb7e382a49fe55f87fe9a1`, governed [workflow 38125964658](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38125964658) SUCCESS. Desktop standalone HTML (3,283,790 B), optional ZIP (1,401,875 B), and signed Android APK (7,879,580 B) carry matching v120.41 identity and persistent production certificate.
+- Features: Desktop full Instagram names + independent cloud registry refresh (#67), Desktop/Android **Switch account** for the IG Cleaner login (#69); per-Instagram profiles and existing data remain scoped. Five exact release-commit CI checks green, embedded Android emulator + Desktop browser visual evidence verified; real Samsung and private-data two-login roundtrip still unverified #24.
+- Release request consumed `authorized=false`, current stable v120.41, next target v120.42; no further release authorized without new user instruction. Do not mistake GitHub APK publication for Google Play.
+
 ## Account switch integrated on main — 2026-10-11
 
 - [PR #69](https://github.com/michels-lab/IG-Cleaner-Pro/pull/69) merged at `f66f9489fa468c45def86f4ee6845a5df3f84113`. Desktop **Cambiar usuario** and Android **Switch account** appear beside Sign out and require a fresh login; original per-owner persisted Instagram workspaces/history kept. Desktop signed-out owner reload, serialized Android native logout/clear in-memory state, safe identity commit after successful Android password auth, stale WebView session isolation implemented.
