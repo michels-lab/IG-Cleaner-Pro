@@ -1,3 +1,9 @@
+## Account switch integrated on main — 2026-10-11
+
+- [PR #69](https://github.com/michels-lab/IG-Cleaner-Pro/pull/69) merged at `f66f9489fa468c45def86f4ee6845a5df3f84113`. Desktop **Cambiar usuario** and Android **Switch account** appear beside Sign out and require a fresh login; original per-owner persisted Instagram workspaces/history kept. Desktop signed-out owner reload, serialized Android native logout/clear in-memory state, safe identity commit after successful Android password auth, stale WebView session isolation implemented.
+- All five exact-head checks passed before merge, including Chromium real UI, emulator installed UI, Android build, Desktop behavioral contracts and RLS. Real owner/device switch remains to be exercised by Michel on his Samsung; do not describe CI as private-user acceptance.
+- Release **paused** at existing v120.40. Next policy target v120.41 requires a fresh user release instruction; no current authorization.
+
 ## Account switching feature candidate (2026-10-11)
 
 - Development branch `feat/switch-ig-cleaner-account-20261011` adds distinct **Switch account / Cambiar usuario** actions to Desktop and Android Account pages, independent from Instagram workspace selection. Switch invalidates credentials, clears only transient owner state, requests another IG Cleaner email/password, and preserves per-owner persisted data. Existing Sign out retained.
