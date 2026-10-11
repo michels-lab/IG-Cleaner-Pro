@@ -1,4 +1,4 @@
-# Multi-Instagram workspaces (development — PR #50)
+# Multi-Instagram workspaces (merged, unreleased — PR #50)
 
 ## Product and identity boundaries
 One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Instagram data workspaces**. An Instagram workspace is **not** a separate Instagram login and does not need Instagram credentials or the Instagram API.
@@ -28,5 +28,9 @@ One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Inst
 - Android: the native Profile screen manages Instagram identities; the current identity in the always-visible top toolbar is tappable for quick switching in **every section**. The About button is not replaced or moved. Active Focus and list caches are invalidated when changing identities; each account retains its own cloud and local scope.
 - An Android instrumentation regression previously failed because the fixtures `ig_one_123`/`ig_two_456` did not satisfy the actual account_key minimum length. Updated to valid opaque-format fixture keys; all runtime checks must be rerun on the resulting commit.
 
-## Status
-At creation: **PR #50 development**, not merged, not published, production migration not applied. v120.38 remains published stable; next governed version v120.39 requires a new user request. Update this section from actual CI evidence, not intention.
+## Status — 2026-10-10
+
+- **Merged into main:** PR #50, squash `66f43cb38b3f0a046a819d196b6859dd04a521a1`.
+- **Automated tests passed:** general CI `38105541087` (including **60** per-user and per-Instagram pgTAP assertions), native emulator `38105541099` and Desktop Chromium `38105541095`. Android Profile and header switcher present; real Chromium guard against visible literal `\\n\\n` passed.
+- **Production Supabase additive migration applied:** `multi_instagram_workspace_isolation_v1`. Seven new RLS-protected, composite-keyed tables created. The three legacy `list_snapshots` rows remained unchanged (three before and three after); new account registry and list snapshots initially empty.
+- **Still unreleased:** stable GitHub download remains v120.38 and does not contain this change. v120.39 needs a new explicit user request. Actual Samsung update, two genuine Instagram ZIP imports and live login roundtrip need device acceptance; do not claim they passed.

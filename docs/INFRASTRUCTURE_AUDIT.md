@@ -121,3 +121,8 @@ The former synced dataset is keyed only to IG Cleaner Auth user, so multiple Ins
 
 Implementation is in PR #50 and `supabase/migrations/20261009_multi_instagram_workspaces.sql`; tests define 60 pgTAP behavioral assertions plus Desktop and Android namespace checks. **This is not evidence of production deploy, user ZIP or real account synchronization.** Do not apply to live Supabase or publish until the candidate passes all tests. Detailed migration contract: [MULTI_INSTAGRAM_WORKSPACES.md](MULTI_INSTAGRAM_WORKSPACES.md).
 
+## 2026-10-10 — Production multi-Instagram migration applied, legacy rows preserved
+
+- Migration `supabase/migrations/20261009_multi_instagram_workspaces.sql` deployed to project `ig-cleaner-sync` as `multi_instagram_workspace_isolation_v1` after green exact-head CI (60 pgTAP assertions), Android emulator and Desktop browser tests.
+- Live post-deployment read-only verification: `public.list_snapshots` still has **3 rows** (3 before), `instagram_accounts` and new scoped `instagram_list_snapshots` empty until user adds profiles, all **7 new tables** RLS enabled and **7 composite primary keys** exist.
+- Database changes additive only; no legacy table mutation. Application code merged via PR #50; not yet delivered in a stable release. Preserve currently installed v120.38 behavior and user data; next release requires explicit consent.
