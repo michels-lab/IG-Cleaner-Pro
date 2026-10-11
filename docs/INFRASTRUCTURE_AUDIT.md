@@ -1,3 +1,9 @@
+## 2026-10-11 — Auth email template/SMTP configuration gap (production blocker)
+
+- Owner-reported Gmail **Confirm your email address** with link instead of expected OTP: redirect `localhost:3000` refused and `otp_expired`; Brevo fallback sender `realmichelduarte@12366255.brevosend.com` landed in Spam. Repo native/Desktop code calls `/auth/v1/otp` and expects six-digit `/verify` token, so hosted email templates must switch `{{ .ConfirmationURL }}` to `{{ .Token }}` for BOTH signup and magic-link flows.
+- Prepared reproducible canonical templates, guarded management API helper (requires private token and exact project confirmation), offline CI contract and dashboard implementation guide. Sender branding **requires validated sender account/domain**; do not claim `@michelslab.dev` unless actual DNS/domain ownership and SPF/DKIM/DMARC exist.
+- **Current provider status:** Supabase project `ilmztedebwdzgnlrvwxy` healthy; Auth template/SMTP settings NOT changed by our currently connected tools; no production user/data mutation. Manual provider settings or secure Management API access remains necessary, followed by two-account email OTP and deliverability acceptance. Existing release v120.41 remains published, no v120.42 authorization.
+
 ## 2026-10-11 — RLS runner setup failure and deterministic CLI pin
 
 - Documentation/manifest closeout PR #71 encountered an upstream GitHub API rate-limit error in `supabase/setup-cli@v1` while resolving `version: latest` before database initialization or tests. To avoid the unversioned endpoint, pin to verified official stable CLI `2.120.0` (released 2026-10-06). No production Supabase auth, RLS data or schema changed. Full PR validation must rerun on updated commit before merge.
