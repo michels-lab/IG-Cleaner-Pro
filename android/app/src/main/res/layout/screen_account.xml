@@ -397,6 +397,17 @@
                     app:strokeColor="@color/ig_red"/>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/switchAccount"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Switch account"
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="@color/ig_border_strong"/>
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/logout"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
