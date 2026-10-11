@@ -73,4 +73,17 @@ const android=fs.readFileSync(path.join(root,'android/app/src/main/java/com/mich
 assert(android.includes('scopeQuery(String query, String profile)'));
 assert(android.includes('account_key=eq.'));
 assert(android.includes('instagram_' + '" + table')); // scoped REST table mapping
+
+// Regression: Android MaterialAlertDialog.setMessage() and .setItems() compete
+// for the same content panel. The picker MUST show selectable workspace rows,
+// especially "Datos anteriores", rather than only the footer actions.
+const nativeActivity=fs.readFileSync(path.join(root,
+ 'android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java'),'utf8');
+const picker=nativeActivity.match(/private void showInstagramProfileManager\(\) \{([\s\S]*?)\n    private void addInstagramProfile\(/);
+assert(picker,'Native multi-Instagram selector must be present');
+assert.match(picker[1],/new JSONArray\(\)\.put\(legacy\)/,'Original workspace must be first in native picker');
+assert.match(picker[1],/Datos anteriores \(sin asignar\)/,'Legacy row must have clear recovery label');
+assert.match(picker[1],/\.setItems\(labels,/,'Profile picker must render selectable accounts');
+assert.doesNotMatch(picker[1],/\.setMessage\(/,
+ 'Do not combine setMessage + setItems in MaterialAlertDialog; message hides profile rows');
 console.log('Multi-Instagram local storage, audit DB, REST write isolation and registry contracts passed.');
