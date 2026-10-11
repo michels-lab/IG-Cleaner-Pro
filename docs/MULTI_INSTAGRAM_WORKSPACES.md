@@ -1,4 +1,4 @@
-# Multi-Instagram workspaces (merged, unreleased — PR #50)
+# Multi-Instagram workspaces (merged, unreleased — PRs #50 and #53)
 
 ## Product and identity boundaries
 One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Instagram data workspaces**. An Instagram workspace is **not** a separate Instagram login and does not need Instagram credentials or the Instagram API.
@@ -34,3 +34,11 @@ One IG Cleaner Pro login (Supabase Auth email/password) owns zero or more **Inst
 - **Automated tests passed:** general CI `38105541087` (including **60** per-user and per-Instagram pgTAP assertions), native emulator `38105541099` and Desktop Chromium `38105541095`. Android Profile and header switcher present; real Chromium guard against visible literal `\\n\\n` passed.
 - **Production Supabase additive migration applied:** `multi_instagram_workspace_isolation_v1`. Seven new RLS-protected, composite-keyed tables created. The three legacy `list_snapshots` rows remained unchanged (three before and three after); new account registry and list snapshots initially empty.
 - **Still unreleased:** stable GitHub download remains v120.38 and does not contain this change. v120.39 needs a new explicit user request. Actual Samsung update, two genuine Instagram ZIP imports and live login roundtrip need device acceptance; do not claim they passed.
+
+## Final per-app-login isolation (2026-10-10)
+
+- PR #53 [merged](https://github.com/michels-lab/IG-Cleaner-Pro/pull/53); exact SHA `9793e422a655a958e0f4096e4aa3ddd223551593` CI `38108180395`, native installed Android `38108180430`, Desktop Chromium `38108180542` all PASS.
+- Named Instagram workspaces and their selection registry are isolated by **app login owner on the same device** (owner/email fingerprint). The preexisting `legacy` storage keys remain untouched by design for non-destructive v120.38 compatibility, so legacy local data can still exist in a shared browser profile; use separate browser profiles for strong local privacy between people.
+- After sign-in or OTP recovery with another IG Cleaner login, Desktop reloads before sync under the new app login scope. The Android Workspace bridge uses the native app login email to scope storage and follows the native per-Instagram account selector.
+- Chromium acceptance checked `legacy → A → B → A → legacy` review persistence, account selection, and different app-login registry separation. It also verifies no raw visible text node appears before the shell and that About remains accessible. The source fix removed the prior stray literal `\\n\\n` display.
+- Real two-Instagram ZIP imports and cross-device authenticated sync with user's Samsung require physical/manual acceptance. This integrated code is not in the published APK/HTML until an explicitly authorized next version is released.
