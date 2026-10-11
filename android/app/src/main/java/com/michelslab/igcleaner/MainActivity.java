@@ -544,10 +544,10 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void clearWorkspaceCacheForProfile(String profileKey) {
-        if ("legacy".equals(profileKey)) return; // Never purge the original v120.38 workspace here.
         SharedPreferences cache = getSharedPreferences(CACHE_PREFS, MODE_PRIVATE);
         String email = api.getEmail() == null ? "" : api.getEmail().trim().toLowerCase(Locale.ROOT);
-        String suffix = Integer.toHexString(email.hashCode()) + "_" + profileKey;
+        String owner = Integer.toHexString(email.hashCode());
+        String suffix = "legacy".equals(profileKey) ? owner : owner + "_" + profileKey;
         cache.edit()
                 .remove("following_" + suffix)
                 .remove("followers_" + suffix)
