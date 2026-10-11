@@ -63,6 +63,10 @@ for (const token of [
   'ig_cleaner_double_check_epoch'
 ]) requireToken(token, 'Desktop + Android Double Check cycle sync missing');
 
+// HTML parsing moves non-whitespace text between <style> blocks into visible
+// body content, rendering raw "\\n\\n" above the sidebar on Chromium.
+assert(!html.includes('\\n\\\\n<style'), 'Literal backslash-n before CSS renders as visible UI text');
+assert(!html.includes('</style>\\\\n\\n<style'), 'Literal backslash-n after CSS renders as visible UI text');
 const staticHtml = html.replace(/<script[\s\S]*?<\/script>/gi, '');
 const ids = [...staticHtml.matchAll(/\sid=["']([^"']+)["']/gi)].map(m => m[1]);
 const seen = new Set(), duplicates = new Set();
