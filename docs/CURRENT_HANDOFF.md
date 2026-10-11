@@ -1,3 +1,10 @@
+## v120.39 release candidate — multiple Instagram workspaces (2026-10-10)
+
+- User asked to proceed after the v120.39 release proposal. Candidate branch `release/ig-cleaner-v120.39-multiinstagram-20261010` aligns Desktop UI/About v120.39 and Android native 120.39 (versionCode 12039) with the unchanged stable production certificate. No destructive storage changes; published v120.38 remains the current public download until verification.
+- Included already-merged PRs #50/#53/#54: owner+Instagram profile isolation, real Desktop Chromium switch regression, Android Profile/header switcher, additive deployed Supabase RLS schema, legacy compatibility and literal visible `\\n\\n` fix. Preserves native Focus/Double Check released in v120.38.
+- Required gates: candidate exact-SHA general CI, Android installed emulator and Desktop Chromium; after successful merge, one-shot authorized `.michelslab/release-request.json` change on main triggers the existing governed publisher, which itself requires new exact-SHA visual proof and verifies signed APK. Do not treat candidate as released.
+- Physical Samsung APK upgrade, authentic two Instagram ZIPs, actual live desktop↔Android sync and final user visual acceptance still pending in issue #24; review is post-publication.
+
 ## Latest: multiple Instagram profiles complete in main (2026-10-10)
 
 - Main code: first implementation [PR #50](https://github.com/michels-lab/IG-Cleaner-Pro/pull/50) and final per-login isolation [PR #53](https://github.com/michels-lab/IG-Cleaner-Pro/pull/53), merged at `83d8273568cc3625766145cfff86e0d171a7025f`.
