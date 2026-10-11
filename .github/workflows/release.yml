@@ -60,7 +60,10 @@ jobs:
         run: |
           python3 -m pip install Pillow==11.3.0
           python3 tools/verify_android_visual_release_evidence.py --artifact visual-evidence --sha "$GITHUB_SHA"
-          echo "Android Home+About screenshots verified on actual installed debug APK; phone hardware acceptance remains separate."
+          python3 tools/visual_release_gate.py \
+            --manifest visual-evidence/michelslab-manifest.json \
+            --source-sha "$GITHUB_SHA" --platforms android --surfaces home,about
+          echo "Android Home+About rendered evidence verified on installed debug APK; signed release APK and physical phone remain separate evidence levels."
       - name: Download exact-commit Desktop Home/About Chromium screenshot proof
         env:
           GH_TOKEN: ${{ github.token }}
@@ -75,12 +78,20 @@ jobs:
           test -n "$RUN_ID" || { echo "::error::No successful exact-commit Desktop browser visual run"; exit 1; }
           mkdir -p desktop-visual-evidence
           gh run download "$RUN_ID" --name "ig-cleaner-real-desktop-ui-${GITHUB_SHA}" --dir desktop-visual-evidence
-      - name: Verify exact release HTML against captured Desktop Home/About
+      - name: Rebuild exact standalone HTML and verify runtime Desktop Home/About
         run: |
+          python3 tools/build_standalone_desktop_html.py \
+            --source desktop/ig_cleaner_pro_v120_27_synced_companion.html \
+            --assets-root desktop \
+            --output desktop-visual-evidence/IG-Cleaner-Pro-standalone-rebuilt.html \
+            --version "$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
           python3 tools/verify_desktop_visual_release_evidence.py \
             --artifact desktop-visual-evidence \
-            --html desktop/ig_cleaner_pro_v120_27_synced_companion.html \
+            --html desktop-visual-evidence/IG-Cleaner-Pro-standalone-rebuilt.html \
             --sha "$GITHUB_SHA"
+          python3 tools/visual_release_gate.py \
+            --manifest desktop-visual-evidence/michelslab-manifest.json \
+            --source-sha "$GITHUB_SHA" --platforms desktop --surfaces home,about
 
   publish:
     needs: [release-request-gate, rendered-ui-qa]
