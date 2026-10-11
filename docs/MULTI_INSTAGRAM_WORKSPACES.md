@@ -9,6 +9,10 @@
 - Removing a mistaken *new empty* duplicate @username frees the handle for assigning it to **Datos anteriores** (the historical source). Deleting a profile *with valuable data* destroys its cloud reviews and lists, so confirm only after checking/exporting the correct workspace.
 - Deployment order: add the RPC migration to Supabase, confirm pgTAP owner/legacy/sibling checks, then distribute the Desktop/Android feature together in an explicitly authorized release. v120.39 stable is unchanged while this feature is being tested.
 
+## Status update: safe delete merged (2026-10-10)
+
+[PR #59](https://github.com/michels-lab/IG-Cleaner-Pro/pull/59) merged with five automated checks passing, including the 78 pgTAP assertions. The atomic invoker-role RPC migration `atomic_named_instagram_profile_deletion_v1` is deployed in production. Existing legacy data and other profiles were verified intact before/after. The UI feature is only in source, not yet in public **v120.39**; next version v120.40 requires separate release authorization. Do not mistake code merge for shipped APK/HTML.
+
 ## Public release status — 2026-10-10
 
 Published [stable v120.39](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.39): signed Android APK, self-contained Desktop HTML, optional ZIP and checksums. Governed release run `38112617481` completed successfully against `4170696589c22dc669deac10ca1a0ceddd88bfea` with exact-SHA installed Android emulator, Desktop Chromium, 60 Supabase assertions, production signing and bundle verification. Prior v120.38 remains downloadable; all old `legacy` tables and local review states are preserved. Real Samsung installation, genuine two-profile ZIP imports and authenticated cross-device data roundtrip are still open under issue #24.
