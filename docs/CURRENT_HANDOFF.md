@@ -1,3 +1,9 @@
+## Owner-verified sender + Switch account, eight-digit OTP copy correction — 2026-10-11
+
+- Owner's Gmail screenshot visibly confirms sender **`Michel's Lab · IG Cleaner Pro <michelslab.dev@gmail.com>`**, no Brevo fallback. User reports successful numeric-code signup and working **Switch account**. OTP length in actual email is **eight digits** while template text says six, so avoid describing this as a six-digit production OTP. Do not commit or echo the pictured temporary code.
+- Source templates for both Confirm sign up and Magic Link use length-agnostic **verification code** wording and CI verifies they cannot promise an unsupported code length. Live Supabase Auth templates must be re-saved with corresponding revised wording; source-only docs/test changes cannot modify hosted Auth SMTP/config. No new app release needed.
+- Retain separate issue #73 for copy deployment, remaining recovery/expiry test; issue #24 for full multi-login workspace/data isolation and Android/Desktop sync. Stable release remains v120.41.
+
 ## Live OTP signup working after user-applied hosted configuration — 2026-10-11
 
 - After saving Gmail SMTP in Supabase Auth and replacing Confirm sign up/Magic Link with code-only `{{ .Token }}` templates, user confirmed they **received the numeric OTP and successfully created a new IG Cleaner account**. Treat as real owner-reported live signup PASS for that attempt, rather than merely source-level testing.
