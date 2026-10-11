@@ -808,7 +808,7 @@ public final class MainActivity extends AppCompatActivity {
                 + " · Revisiones " + String.format(Locale.ROOT, "%,d", row.optLong("review_count", 0));
         String stamp = row.optString("last_sync_at", "");
         if (!stamp.isBlank() && !"null".equals(stamp))
-            detail += "\\nÚltimo snapshot: " + stamp.substring(0, Math.min(10, stamp.length()));
+            detail += "\nÚltimo snapshot: " + stamp.substring(0, Math.min(10, stamp.length()));
         return detail;
     }
 
@@ -845,7 +845,7 @@ public final class MainActivity extends AppCompatActivity {
                 String key = row.optString("account_key", "legacy");
                 labels[i] = instagramProfileName(row)
                         + (key.equals(api.getInstagramProfile()) ? "  ✓" : "")
-                        + "\\n" + instagramProfileMetrics(profileForKey(summaries, key));
+                        + "\n" + instagramProfileMetrics(profileForKey(summaries, key));
             }
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                     .setTitle("Seleccionar Instagram")
@@ -987,7 +987,7 @@ public final class MainActivity extends AppCompatActivity {
                 String otherKey = collision.optString("account_key");
                 mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle("Recuperar @" + username + " en Datos anteriores")
-                        .setMessage("El @usuario está en otro perfil. Puedes asignarlo a Datos anteriores sin borrar ni mezclar listas. El otro perfil permanecerá accesible como 'Sin asignar' con todo su historial independiente.\\n\\n¿Reasignar solamente el nombre?")
+                        .setMessage("El @usuario está en otro perfil. Puedes asignarlo a Datos anteriores sin borrar ni mezclar listas. El otro perfil permanecerá accesible como 'Sin asignar' con todo su historial independiente.\n\n¿Reasignar solamente el nombre?")
                         .setNegativeButton("Cancelar", null)
                         .setPositiveButton("Reasignar @usuario", (dialog, which) ->
                                 persistInstagramUsername(key, username, expected, otherKey))
@@ -1202,7 +1202,7 @@ public final class MainActivity extends AppCompatActivity {
         accountEmail.setText(api.getEmail());
         label.setText(deviceLabel() + " · session remembered on this device");
         String selectedProfile = api.getInstagramProfile();
-        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\\nCargando estadísticas…");
+        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\nCargando estadísticas…");
         if (connected) {
             runAsync(() -> {
                 JSONArray summaries = api.getInstagramProfileSummaries();
@@ -1213,7 +1213,7 @@ public final class MainActivity extends AppCompatActivity {
                     String name = activeSummary == null ? api.getInstagramProfileLabel()
                             : instagramProfileName(activeSummary);
                     api.setInstagramProfile(selectedProfile, name);
-                    activeInstagramProfileLabel.setText(name + "\\n" + instagramProfileMetrics(activeSummary));
+                    activeInstagramProfileLabel.setText(name + "\n" + instagramProfileMetrics(activeSummary));
                     setBrandContext("PROFILE");
                 });
             }, true);
