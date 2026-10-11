@@ -60,6 +60,17 @@ jobs:
             --apk android/app/build/outputs/apk/debug/app-debug.apk \
             --sha "$GITHUB_SHA" \
             --out artifacts/visual/manifest.json
+      - name: Check master screenshot evidence against installed debug APK
+        run: |
+          python3 tools/create_master_visual_manifest.py \
+            --platform android \
+            --source-manifest artifacts/visual/manifest.json \
+            --artifact android/app/build/outputs/apk/debug/app-debug.apk \
+            --source-sha "$GITHUB_SHA" \
+            --out artifacts/visual/michelslab-manifest.json
+          python3 tools/visual_release_gate.py \
+            --manifest artifacts/visual/michelslab-manifest.json \
+            --source-sha "$GITHUB_SHA" --platforms android --surfaces home,about
       - name: Bind screenshot artifact to actual installed debug APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/visual/app-debug.apk
       - uses: actions/upload-artifact@v4
