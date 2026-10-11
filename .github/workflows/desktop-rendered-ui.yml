@@ -6,6 +6,8 @@ on:
       - 'desktop/**'
       - 'branding/**'
       - 'tests/**'
+      - 'tools/create_master_visual_manifest.py'
+      - 'tools/visual_release_gate.py'
       - '.github/workflows/desktop-rendered-ui.yml'
       - '.michelslab/release-request.json'
   push:
@@ -14,6 +16,8 @@ on:
       - 'desktop/**'
       - 'branding/**'
       - 'tests/**'
+      - 'tools/create_master_visual_manifest.py'
+      - 'tools/visual_release_gate.py'
       - '.github/workflows/desktop-rendered-ui.yml'
       - '.michelslab/release-request.json'
 permissions:
