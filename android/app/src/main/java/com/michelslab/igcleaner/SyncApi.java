@@ -255,10 +255,12 @@ public final class SyncApi {
     public void deleteInstagramProfile(String key, String expectedUsername) throws Exception {
         if (key == null || !key.matches("ig_[a-z0-9_-]{8,64}"))
             throw new IllegalArgumentException("No se puede borrar Datos anteriores.");
-        if (expectedUsername == null || !expectedUsername.matches("[a-z0-9._]{1,30}"))
-            throw new IllegalArgumentException("Confirma el @usuario del perfil.");
+        if (expectedUsername != null && !expectedUsername.isBlank()
+                && !expectedUsername.matches("[a-z0-9._]{1,30}"))
+            throw new IllegalArgumentException("@usuario del perfil inválido.");
         JSONObject input = new JSONObject().put("p_account_key", key)
-                .put("p_expected_username", expectedUsername);
+                .put("p_expected_username", expectedUsername == null || expectedUsername.isBlank()
+                        ? JSONObject.NULL : expectedUsername);
         String result = raw("POST", "/rest/v1/rpc/igc_delete_instagram_profile",
                 input.toString(), true, null);
         if (!"true".equals(result.trim()))
