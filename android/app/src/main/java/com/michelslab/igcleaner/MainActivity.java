@@ -221,6 +221,10 @@ public final class MainActivity extends AppCompatActivity {
         View syncAction = findViewById(R.id.headerSyncButton);
         aboutAction.setOnClickListener(view -> showAbout());
         syncAction.setOnClickListener(view -> syncNow());
+        // A visible Instagram identity is also a global switcher: changing
+        // profiles should never require leaving a Focus/Review workflow just
+        // to hunt for the Profile tab. About stays independent and visible.
+        brandContext.setOnClickListener(view -> showInstagramProfileManager());
 
         bottomNav.setOnItemSelectedListener(item -> {
             bottomNav.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
@@ -2690,7 +2694,9 @@ public final class MainActivity extends AppCompatActivity {
     private void setBrandContext(String value) {
         if (brandContext != null) {
             String section = (value == null || value.isBlank()) ? "MICHEL'S LAB" : value;
-            brandContext.setText(section + " · " + api.getInstagramProfileLabel());
+            brandContext.setText(section + " · " + api.getInstagramProfileLabel() + "  ▾");
+            brandContext.setContentDescription("Cambiar perfil de Instagram: "
+                    + api.getInstagramProfileLabel());
         }
     }
 
