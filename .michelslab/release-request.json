@@ -1,14 +1,11 @@
 {
-  "version": "120.40",
-  "tag": "v120.40",
-  "authorized": false,
-  "authorization_source": "User instruction 2026-10-11: 'hazlo' in direct response to the proposed coordinated v120.40 Android+Desktop release after completion of profile recovery, rename, metrics, backup and safe deletion work. PR #61 merged at 01235bfbfe1ab2f7f5c582e08571d18c995ba256, with all five exact-head validations including 99 Supabase RLS assertions, signed-version metadata preservation and Android emulator plus Desktop browser UI checks. User requests release; physical Samsung acceptance remains post-release.",
+  "version": "120.41",
+  "tag": "v120.41",
+  "authorized": true,
+  "authorization_source": "User explicitly requested 'dale release' on 2026-10-11 after merged IG Cleaner PR #67 full Desktop Instagram selector/cloud refresh and PR #69 distinct Desktop/Android app login Switch account. Validations required on exact v120.41 candidate head; current published v120.40; stable production signed Android and standalone Desktop HTML must ship together. Physical Samsung user review remains after publication.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.39",
-  "published_run": 38119945272,
-  "published_commit": "7ec454cbc5852bb8e96b9bd7ff59830b5872bb5a",
-  "completed_at_utc": "2026-10-11T07:06:17Z"
+  "status": "requested",
+  "previous_stable_release": "v120.40"
 }
