@@ -9,7 +9,9 @@ const backing=new Map(),opened=[];
 const raw={
  getItem:k=>backing.has(k)?backing.get(k):null,
  setItem:(k,v)=>backing.set(String(k),String(v)),
- removeItem:k=>backing.delete(String(k))
+ removeItem:k=>backing.delete(String(k)),
+ key:i=>Array.from(backing.keys())[i]||null,
+ get length(){return backing.size}
 };
 const db={open:(k,v)=>{opened.push({k,v});return {name:k}}};
 const ctx={
@@ -43,6 +45,16 @@ assert.equal(raw.getItem('igc_v12027_supabase_session'),'SAME_LOGIN','One accoun
 const p=ctx.window.IGC_INSTAGRAM_PROFILES;
 p.setAccounts([{account_key:'ig_first_123',username:'first.person'}]);
 assert.equal(p.accounts.length,1);
+const keepLegacy=raw.getItem('ig_v13_done');
+const keepSibling=raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_second_456__ig_v13_done');
+p.purgeLocalWorkspace('ig_first_123');
+assert.equal(raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_first_123__ig_v13_done'),null,
+ 'Deleting one profile clears only its locally owned namespaced keys');
+assert.equal(raw.getItem('ig_v13_done'),keepLegacy,
+ 'Profile removal must never touch old legacy localStorage');
+assert.equal(raw.getItem('igc_profile__'+ctx.IGC_INSTAGRAM_OWNER+'__ig_second_456__ig_v13_done'),keepSibling,
+ 'Profile removal must not touch sibling workspace localStorage');
+
 // Two independent IG Cleaner email identities using the same browser storage
 // must not share the Instagram account registry or scoped review data.
 const secondBacking = {window:{localStorage:raw,indexedDB:db},document:ctx.document,
@@ -86,4 +98,30 @@ assert.match(picker[1],/Datos anteriores \(sin asignar\)/,'Legacy row must have 
 assert.match(picker[1],/\.setItems\(labels,/,'Profile picker must render selectable accounts');
 assert.doesNotMatch(picker[1],/\.setMessage\(/,
  'Do not combine setMessage + setItems in MaterialAlertDialog; message hides profile rows');
+
+const deletionBody=html.match(/window\.igcDeleteInstagramProfile=async function\(\)\{([\s\S]*?)\n\};/);
+assert(deletionBody,'Desktop exposes a real Delete Instagram action');
+assert.match(deletionBody[1],/key==='legacy'/,'Legacy deletion must be blocked in Desktop handler');
+assert.match(deletionBody[1],/ELIMINAR @/,'Desktop deletion requires exact typed confirmation');
+assert.match(deletionBody[1],/rpc\/igc_delete_instagram_profile/,
+ 'Desktop must call atomic server RPC rather than piecemeal client deletes');
+assert.match(html,/id="igcDeleteInstagramButton"/,
+ 'Delete control must be next to the account switcher');
+assert.match(html,/remove\.disabled=this\.active==='legacy'/,
+ 'Desktop must visually disable delete when original workspace selected');
+const xml=fs.readFileSync(path.join(root,'android/app/src/main/res/layout/screen_account.xml'),'utf8');
+assert.match(xml,/@\+id\/deleteInstagramProfile/,
+ 'Android Profile must show a dedicated account-deletion control');
+assert.match(nativeActivity,/confirmDeleteInstagramProfile\(\)/,
+ 'Android must expose named profile deletion');
+assert.match(nativeActivity,/deleteInstagramProfile\.setEnabled\(connected && !"legacy"\.equals/,
+ 'Android must visibly prohibit deleting original legacy');
+assert.match(nativeActivity,/api\.deleteInstagramProfile\(key, username\)/,
+ 'Android deletion must call atomic server function');
+assert.match(android,/\/rest\/v1\/rpc\/igc_delete_instagram_profile/,
+ 'Android must not implement partial sequential DELETEs');
+assert.match(schema,/security invoker[\s\S]*?igc_delete\$/,
+ 'Database deletion RPC must respect owner RLS');
+assert.match(schema,/revoke all on function public\.igc_delete_instagram_profile/,
+ 'The RPC must revoke PUBLIC/anonymous execution');
 console.log('Multi-Instagram local storage, audit DB, REST write isolation and registry contracts passed.');
