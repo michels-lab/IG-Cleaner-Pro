@@ -1,5 +1,13 @@
 # IG Cleaner Pro — Project Log & Functional Contract
 
+## 2026-10-11 — Smart Instagram recovery, rename, summaries, individual backup
+
+- Added and merged [PR #61](https://github.com/michels-lab/IG-Cleaner-Pro/pull/61), head `ddbfeda1dfbebdbe6e81349a4b8208e058e3fff9`, main `01235bfbfe1ab2f7f5c582e08571d18c995ba256`.
+- Desktop/Android: smart legacy choice instead of surprise new empty workspace, metadata-only conflict reassignment with explicit confirmation, immutable workspace keys, editable handle, accurate server-side per-Instagram list/review counts and last snapshot, owner-filtered JSON backup before optional destructive deletion, safe handling for unassigned accounts.
+- PostgreSQL: additive production migration `instagram_profile_identity_recovery_and_summaries_v1`, two invoker-only RPCs, authenticated execute, anonymous denied. All **99** pgTAP assertions, Android build/emulator, Desktop contracts/Chromium passed. No live customer records altered; original cloud lists/reviews retained (33,927 entries/7,764 states).
+- **State:** source integrated and tested, next release v120.40 awaiting explicit authorization. Published v120.39 unaffected. Keep issue #57 open until production Android/Desktop release; real Samsung/account ZIP roundtrip issue #24 remains pending.
+
+
 ## 2026-10-10 — Safe Instagram profile deletion verified and merged
 
 PR #59 merged as `428c828a614db6a03901a8b4ba61a7ddf0bc1d8a` after all five exact-head checks passed (Android build, Android installed UI emulator, Desktop source and actual browser UI, Supabase 78 assertions). New production SQL function `igc_delete_instagram_profile` deployed with invoker permissions and owner RLS; anonymous execution denied. Production legacy data remained unchanged (33,927 saved list items; 7,764 review rows), and both user profile records were retained. **No release published**; current public version v120.39, next v120.40 pending explicit instruction. Separate duplicate-handle UX #57 remains open.
