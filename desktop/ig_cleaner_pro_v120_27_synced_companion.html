@@ -2804,6 +2804,7 @@ const indexedDB=new Proxy(window.indexedDB,{get:function(db,prop){
 }});
 window.IGC_INSTAGRAM_PROFILES={
  get active(){return igcActiveInstagramProfile},
+ get owner(){return IGC_INSTAGRAM_OWNER},
  _verified:false,
  get verified(){return this._verified===true||this.active==='legacy'},
  get accounts(){try{return JSON.parse(igcRawProfileStorage.getItem(IGC_INSTAGRAM_REGISTRY_KEY)||'[]')}catch{return[]}},
