@@ -45,9 +45,18 @@ const {chromium}=require("playwright");
   const options=modal.locator("button");
   assert((await options.count())>=4,"Two logins, add and cancel expected");
   await options.filter({hasText:"second@example.test"}).click();
-  await page.waitForLoadState("domcontentloaded");
-  await page.locator("#igcAppShell").waitFor({state:"visible",timeout:15000});
+  // The account activation and reload are asynchronous. A Playwright click
+  // may return before navigation; the old DOM is still valid at that moment.
+  await page.waitForFunction(()=>{
+   try{return JSON.parse(localStorage.getItem("igc_v12027_supabase_session")||"null")?.user?.email==="second@example.test"}
+   catch{return false}
+  },null,{timeout:15000});
+  await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES?.owner&&
+      document.querySelector("#igcAppShell")?.offsetParent!==null,
+      null,{timeout:15000});
   await page.evaluate(()=>showPage("sync"));
+  await page.waitForFunction(()=>document.querySelector("#igcSyncAccount")?.textContent?.includes("second@example.test"),
+   null,{timeout:15000});
   assert.match(await page.locator("#igcSyncAccount").innerText(),/second@example\.test/,
     "Switch should move into the selected owner, not Sign out");
   const stored=await page.evaluate(()=>({
