@@ -84,6 +84,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   let value={};
   if(action==='start'){
    value={status:'starting',message:'Starting',total:1,progress:0};
+  } else if(action==='auto'){
+   value={status:'starting',message:'Auto-detecting Instagram login',total:0,progress:0};
+  } else if(action==='following'){
+   value={handle:'account.owner',complete:true,usernames:['public.user']};
   } else if(action==='load'){
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
@@ -109,7 +113,12 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   Date,Number,Array,Set,Map,JSON,Math,String,Error,encodeURIComponent
  };
  vm.createContext(bridgeCtx);vm.runInContext(match[1],bridgeCtx);
- assert.equal(robotElements.igcCountsRobotActions.style.display,'flex');
+ assert.equal(robotElements.igcCountsRobotActions.style.display,'none','No manual robot configuration should be shown');
+ assert.match(source,/igcCountsRobotAuto/,'App must start detection automatically');
+ await bridgeCtx.window.igcCountsRobotAuto();
+ const auto=requests.find(r=>r.url.endsWith('/auto'));
+ assert(auto,'Automatic detection must begin without any Start click');
+ assert.equal(JSON.parse(auto.options.body).account,'ig_A');
  await bridgeCtx.window.igcCountsRobotStart();
  const start=requests.find(r=>r.url.endsWith('/start'));
  assert(start,'Direct Start must submit a localhost POST');
@@ -137,6 +146,9 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert(dataKey,'Profile counts must be saved independent of pacing preferences');
  const bridgeSaved=JSON.parse(bridgeStore.get(dataKey));
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
+ const followingKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_discovered_v1__'));
+ assert(followingKey,'Visible Instagram Following should be imported without CSV');
+ assert.deepEqual(JSON.parse(bridgeStore.get(followingKey)).usernames,['public.user']);
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
  bridgeIdentity.active='ig_B';
  await bridgeCtx.window.igcCountsRobotPoll();
