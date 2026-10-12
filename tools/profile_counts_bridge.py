@@ -200,6 +200,7 @@ class Collector:
                     # logged-in profile in another tab. Check every browser tab,
                     # but never guess an identity from an arbitrary profile URL.
                     login_started = time.monotonic()
+                    needs_attention_sent = False
                     while not self.stop_signal.is_set():
                         pages = [p for p in browser.pages if not p.is_closed()]
                         if any(challenge_detected(p) for p in pages):
@@ -212,10 +213,12 @@ class Collector:
                         handle = next(iter(identified), None)
                         if handle:
                             break
-                        if time.monotonic() - login_started > 40:
+                        if time.monotonic() - login_started > 40 and not needs_attention_sent:
+                            # Keep Chrome open so the owner can finish logging in or
+                            # reload, rather than closing the window mid-auth.
                             self._update("needs_attention",
-                                         "Instagram is open but its logged-in profile cannot be identified. Use the Chrome window opened by Insta Cleaner, reload Instagram, and press Connect Instagram to retry.")
-                            return
+                                         "Instagram is open but its logged-in profile cannot be identified. Use the Chrome window opened by Insta Cleaner and reload Instagram. Detection continues automatically.")
+                            needs_attention_sent = True
                         self.stop_signal.wait(3)
                     if self.stop_signal.is_set():
                         self._update("paused", "Detenido antes de iniciar.")
