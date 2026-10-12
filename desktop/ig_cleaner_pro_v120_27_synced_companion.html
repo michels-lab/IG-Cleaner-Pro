@@ -13105,7 +13105,7 @@ const CFG='igc_v12027_supabase_config', SES='igc_v12027_supabase_session';
 const DATA_META='igc_v12030_list_sync_meta';
 const SUPABASE_URL='https://ilmztedebwdzgnlrvwxy.supabase.co', SUPABASE_KEY='sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1';
 const BATCH_LS='ig_v12024_prepared_focus_batches';
-const S={cfg:{email:'',auto:true},session:null,busy:false,lastSync:0,lastError:'',needsReauth:false,timer:null,stats:{eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0}};
+const S={cfg:{email:'',auto:true},session:null,busy:false,lastSync:0,lastError:'',needsReauth:false,lastRefreshError:'',timer:null,stats:{eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0}};
 let dataMeta={};
 try{S.cfg={...S.cfg,...JSON.parse(localStorage.getItem(CFG)||'{}')}}catch{}
 try{S.session=JSON.parse(localStorage.getItem(SES)||'null')}catch{}
@@ -13131,6 +13131,7 @@ async function signInPassword(){cfgFromUi();const password=String(document.getEl
 async function verifyOtp(){cfgFromUi();const token=String(document.getElementById('igcSyncCode')?.value||'').replace(/\s+/g,'');if(!S.cfg.email||!token)throw new Error('Escribe tu correo y el código recibido.');const data=await jfetch('/auth/v1/verify',{method:'POST',auth:false,body:JSON.stringify({type:'email',email:S.cfg.email,token})});if(!data?.access_token)throw new Error('El código no produjo una sesión. Pide uno nuevo.');S.session=data;S.needsReauth=false;saveSession();renderAuthUi();return data}
 async function verifyOtpAndSetPassword(){await verifyOtp();const password=String(document.getElementById('igcSyncNewPassword')?.value||'');if(password.length<8)throw new Error('La contraseña debe tener al menos 8 caracteres.');await jfetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});return true}
 const AUTH_RECOVERY_MESSAGE='Tu sesión caducó y no se pudo renovar automáticamente. Vuelve a entrar en Cuenta; tus perfiles y revisiones guardados no se borraron.';
+const AUTH_NETWORK_MESSAGE='No se pudo renovar la sesión por un problema de conexión. Comprueba Internet y vuelve a sincronizar; tus datos locales están intactos.';
 let refreshInFlight=null;
 function sessionOwner(session){
  return String(session?.user?.email||session?.user?.id||'').trim().toLowerCase();
@@ -13147,7 +13148,7 @@ function expiresAtSeconds(session){
 }
 async function refresh(staleAccess=''){
  const previous=S.session;
- if(!previous?.refresh_token)return false;
+ if(!previous?.refresh_token){if(previous?.access_token){S.needsReauth=true;renderAuthUi();}return false;}
  if(staleAccess&&previous.access_token!==staleAccess)return true;
  if(refreshInFlight)return refreshInFlight;
  const flight=(async()=>{
@@ -13160,13 +13161,18 @@ async function refresh(staleAccess=''){
    if(data.user&&sessionOwner(data)!==sessionOwner(previous))throw new Error('La renovación devolvió otra identidad.');
    S.session={...previous,...data,user:data.user||previous.user};
    S.needsReauth=false;
+   S.lastRefreshError='';
    saveSession();
    renderAuthUi();
    return true;
   }catch(error){
-   if(S.session===previous&&(error?.status===400||error?.status===401||error?.status===403)){
-    S.needsReauth=true;
-    renderAuthUi();
+   if(S.session===previous){
+    if(error?.status===400||error?.status===401||error?.status===403){
+     S.needsReauth=true;
+     renderAuthUi();
+    }else{
+     S.lastRefreshError=AUTH_NETWORK_MESSAGE;
+    }
    }
    console.warn('IG Cleaner: no se pudo renovar la sesión.',error?.status||'network');
    return false;
@@ -13180,7 +13186,7 @@ async function ensureAuth(){
  if(S.needsReauth)throw new Error(AUTH_RECOVERY_MESSAGE);
  const expires=expiresAtSeconds(S.session);
  if(expires&&expires<=Date.now()/1000+90){
-  if(!await refresh(S.session.access_token))throw new Error(AUTH_RECOVERY_MESSAGE);
+  if(!await refresh(S.session.access_token))throw new Error(S.needsReauth?AUTH_RECOVERY_MESSAGE:(S.lastRefreshError||AUTH_RECOVERY_MESSAGE));
  }
  return true;
 }
@@ -13199,7 +13205,7 @@ async function rest(path,opt={}){
  catch(error){
   const message=String(error?.message||'');
   if(error?.status!==401&&!(error?.status===403&&/jwt expired|token.*expired/i.test(message)))throw error;
-  if(!await refresh(usedAccess))throw new Error(AUTH_RECOVERY_MESSAGE);
+  if(!await refresh(usedAccess))throw new Error(S.needsReauth?AUTH_RECOVERY_MESSAGE:(S.lastRefreshError||AUTH_RECOVERY_MESSAGE));
   if(originalOwner!==sessionOwner(S.session))throw new Error('La cuenta cambió durante la sincronización. Intenta otra vez.');
   return checked();
  }
