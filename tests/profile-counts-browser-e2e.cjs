@@ -64,10 +64,11 @@ const {chromium}=require("playwright");
    showPage("profileStats");
    window.igcCountsRender();
   });
-  assert(!(await page.locator("#igcCountsRobotActions").isVisible()),
-   "Technical robot buttons should be invisible to normal users");
-  // The app auto-submits /api/auto when the local bridge is available.
-  // No clicking Start, no entering names and no CSV upload.
+  assert(await page.locator("#igcCountsRobotActions").isVisible(),
+   "Pacing, Pause and Resume controls must be visible");
+  assert(await page.locator("#igcCountsResume").isVisible());
+  await page.locator("#igcCountsRobotConnect button").click();
+  // Explicit connect starts the robot; no imported Following CSV needed.
 
   const deadline=Date.now()+8000;
   while(queries<1&&Date.now()<deadline)
