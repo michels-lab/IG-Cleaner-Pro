@@ -1,0 +1,77 @@
+import json
+import tempfile
+from pathlib import Path
+import unittest
+
+from tools.profile_counts_pacing import (
+    check_pacing, history_path, load_history, register_visit,
+    wait_required, save_history,
+)
+
+
+class ProfileCountsPacingTests(unittest.TestCase):
+    def test_user_example_independent_window_and_delay(self):
+        count, minutes, delay = check_pacing(200, 5, 5)
+        self.assertEqual((count, minutes, delay), (200, 5, 5))
+        clock=1_700_000_000.0
+        events=[clock + i*5 for i in range(60)]
+        # With visits at 0s,5s,...295s, next at 300s is allowed:
+        # the first visit falls out of the rolling five-minute window.
+        self.assertGreater(wait_required(events,count,minutes,delay,clock+298),1.9)
+        self.assertEqual(wait_required(events,count,minutes,delay,clock+300),0.0)
+
+    def test_window_limit_applies_even_with_zero_gap(self):
+        now=1_700_000_000.0
+        events=[now-40,now-30,now-20]
+        self.assertAlmostEqual(wait_required(events,3,5,0,now),260.05,places=2)
+        self.assertEqual(wait_required(events,3,5,0,now+261),0)
+
+    def test_gap_applies_even_below_window_limit(self):
+        now=1_700_000_000.0
+        self.assertAlmostEqual(wait_required([now-2],200,5,5,now),3)
+        self.assertEqual(wait_required([now-5],200,5,5,now),0)
+
+    def test_rate_window_uses_most_recent_n_visits(self):
+        now=1_700_000_000.0
+        events=[now-290, now-200,now-100,now-10]
+        # Four visits in the last 5 minutes; with count=3,
+        # next is allowed only after the second oldest expires.
+        self.assertAlmostEqual(wait_required(events,3,5,0,now),100.05,places=2)
+
+    def test_resume_from_persistent_ledger(self):
+        with tempfile.TemporaryDirectory() as folder:
+            results=Path(folder)/"profile.csv"
+            visits_file=history_path(results)
+            clock=1_700_000_000.0
+            visits=register_visit(visits_file, [], at=clock-20)
+            visits=register_visit(visits_file, visits, at=clock-5)
+            self.assertEqual(load_history(visits_file,now=clock),[clock-20,clock-5])
+            self.assertAlmostEqual(wait_required(load_history(visits_file,now=clock),2,5,5,clock),280.05,places=2)
+            self.assertFalse(visits_file.with_suffix(visits_file.suffix+".tmp").exists())
+
+    def test_legacy_result_seeds_cooldown(self):
+        clock=1_700_000_000.0
+        with tempfile.TemporaryDirectory() as folder:
+            stamp="2023-11-14T22:13:15+00:00"  # clock -5 seconds
+            seeded=load_history(Path(folder)/"missing.json",{
+                "sample":{"checked_at":stamp}
+            },now=clock)
+            self.assertEqual(seeded,[clock-5])
+            self.assertAlmostEqual(wait_required(seeded,50,60,72,clock),67)
+
+    def test_corrupt_log_cannot_reset_rate_limits(self):
+        with tempfile.TemporaryDirectory() as folder:
+            filename=Path(folder)/"visits.json"
+            filename.write_text("invalid-json", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                load_history(filename, now=1_700_000_000.0)
+
+    def test_boundaries(self):
+        for kwargs in [(0,5,5),(10001,5,5),(50,0,5),(50,1441,5),
+                       (50,5,-1),(50,5,float("nan")),(50,5,float("inf"))]:
+            with self.assertRaises(ValueError):
+                check_pacing(*kwargs)
+        self.assertEqual(check_pacing(10000,1440,0),(10000,1440,0.0))
+
+if __name__ == "__main__":
+    unittest.main()
