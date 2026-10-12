@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.41.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.42.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.41.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.42.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,13 +27,21 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.41.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.42.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
       "productionTransport": "google-play-after-device-validation",
       "artifactTemplate": "IG-Cleaner-Pro-Android-v{version}.apk",
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
+    },
+    "windowsRobot": {
+      "artifact": "IG-Cleaner-Pro-Automatic-Robot-Windows-v120.42.zip",
+      "artifactTemplate": "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip",
+      "transport": "github-release",
+      "runtime": "local-windows-chrome",
+      "execution": "double-click Start-Insta-Cleaner-Robot.cmd",
+      "liveInstagramOwnerAcceptance": "not-yet-validated"
     }
   },
   "browserState": {
@@ -51,7 +59,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.42",
+    "nextRelease": "v120.43",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -63,9 +71,9 @@
       "v120.32",
       "v120.33"
     ],
-    "currentStableRelease": "v120.41",
-    "lastPublishedRun": 38125964658,
-    "lastPublishedCommit": "1f711badcbc902e61beb7e382a49fe55f87fe9a1",
+    "currentStableRelease": "v120.42",
+    "lastPublishedRun": 38216103775,
+    "lastPublishedCommit": "1c806e34e3f3b84c9311f466353a6ad30fe735c2",
     "genericPublisher": ".github/workflows/release.yml",
     "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
   }
