@@ -71,5 +71,17 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(ctx.window.igcAutoSwitchGuard(),true,
   'After the backend confirms paused, owner switch may proceed');
  assert.equal(elements.igcAutoProgress.value,0);
- console.log('Automations action execution, account proof, owner approval, pause and partial HTML gate: PASS');
+ // If owner B is selected while A's job is paused, the UI must still
+ // know A is paused and allow returning to A. When A resumes, deny switch.
+ context.owner='owner_B';context.active='ig_B';
+ await ctx.window.igcAutoPoll();
+ assert.equal(ctx.window.igcAutoSwitchGuard(),true,
+  'Paused job in owner A must allow navigating back from owner B');
+ assert.match(elements.igcAutoLiveStatus.textContent,/otra cuenta/,
+  'Cross-owner status must be explained without exposing other owner's queue');
+ p.running=true;p.status='running';
+ await ctx.window.igcAutoPoll();
+ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
+  'Active job for a different account still blocks identity change');
+ console.log('Automations action execution, owner switching guard, pause and partial HTML gate: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
