@@ -183,6 +183,31 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         finally:
             self.collector.stop()
 
+    def test_explicit_pause_resume_and_account_safe_pacing(self):
+        def stop_at_checkpoint():
+            self.collector.stop_signal.wait(2)
+            self.collector._update("paused", "Fixture paused")
+        self.collector._run = stop_at_checkpoint
+        self.request("/api/auto", body={"owner":"A","account":"ig-one"})
+        cfg = {"owner":"A","account":"ig-one","max_per_window":200,
+               "window_minutes":5,"min_delay_seconds":5,"pause_every":10,
+               "pause_minutes":2}
+        state=self.request("/api/config", body=cfg)
+        self.assertEqual(state["max_per_window"],200)
+        self.assertEqual(state["pause_every"],10)
+        with self.assertRaises(HTTPError):
+            self.request("/api/config",body={**cfg,"owner":"B"})
+        self.assertEqual(self.request("/api/stop",body={})["status"],"pausing")
+        self.collector.worker.join(timeout=3)
+        self.assertEqual(self.request("/api/status")["status"],"paused")
+        with self.assertRaises(HTTPError):
+            self.request("/api/continue",body={**cfg,"account":"other"})
+        resumed=self.request("/api/continue",body=cfg)
+        self.assertEqual(resumed["max_per_window"],200)
+        self.assertEqual(resumed["account"],"ig-one")
+        self.collector.stop()
+        self.collector.worker.join(timeout=3)
+
     def test_start_and_login_ready_without_real_browser(self):
         # No Internet/Instagram visit in an offline CI test.
         self.collector._run=lambda: self.collector._update("complete","Simulated done",0)
