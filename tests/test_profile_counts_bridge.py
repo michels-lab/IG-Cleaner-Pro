@@ -94,9 +94,9 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(state["status"],"idle")
         self.assertEqual(state["progress"],1)
         self.assertEqual(state["total"],2)
-        self.assertEqual(state["max_per_window"],200)
-        self.assertEqual(state["window_minutes"],5)
-        self.assertEqual(state["min_delay_seconds"],5)
+        self.assertEqual(state["max_per_window"],50)
+        self.assertEqual(state["window_minutes"],60)
+        self.assertEqual(state["min_delay_seconds"],72)
         self.assertFalse(state["running"])
         rows = self.request("/api/results")["rows"]
         self.assertEqual(len(rows),1)
@@ -111,6 +111,9 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         })
         self.collector.worker.join(2)
         self.assertEqual(state["total"],2)
+        self.assertEqual(state["max_per_window"],200)
+        self.assertEqual(state["window_minutes"],5)
+        self.assertEqual(state["min_delay_seconds"],5)
         self.assertEqual(self.request("/api/status")["status"],"complete")
         with self.assertRaises(HTTPError) as e:
             self.request("/api/resume",body={})
