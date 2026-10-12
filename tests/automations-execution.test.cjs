@@ -83,7 +83,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(ctx.window.igcAutoSwitchGuard(),true,
   'Paused job in owner A must allow navigating back from owner B');
- assert.match(elements.igcAutoLiveStatus.textContent,/another Instagram account/,
+ assert.match(elements.igcAutoLiveStatus.textContent,/another account/,
   "Cross-owner status must be explained without exposing another account's queue");
  p.running=true;p.status='running';
  await ctx.window.igcAutoPoll();
