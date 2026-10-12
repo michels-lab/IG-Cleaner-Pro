@@ -46,7 +46,7 @@ class FakeRoot:
     def get_by_role(self, role, name=None):
         import re
         matched = ([self.clicker] if role == "button" and
-                   re.fullmatch(name, self.label, re.I) else [])
+                   name.fullmatch(self.label) else [])
         return FakeMatches(matched)
 
     def count(self):
