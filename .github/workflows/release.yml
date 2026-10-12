@@ -338,9 +338,17 @@ jobs:
             mv "${candidates[0]}" "$ROBOT_ZIP"
           fi
           test -s "$ROBOT_ZIP"
-          unzip -l "$ROBOT_ZIP" | grep -q "Start-Insta-Cleaner-Robot.cmd"
-          unzip -l "$ROBOT_ZIP" | grep -q "IGCleanerProfileCounts.exe"
-          unzip -p "$ROBOT_ZIP" IG-Cleaner-Pro.html | grep -q "UI v${{ steps.release.outputs.version }}"
+          python3 - "$ROBOT_ZIP" "${{ steps.release.outputs.version }}" <<'PY'
+          import sys, zipfile
+          path, version = sys.argv[1:]
+          required = {"Start-Insta-Cleaner-Robot.cmd", "IGCleanerProfileCounts.exe", "IG-Cleaner-Pro.html"}
+          with zipfile.ZipFile(path) as archive:
+              names = set(archive.namelist())
+              assert required <= names, f"Missing Windows robot files: {required-names}"
+              html = archive.read("IG-Cleaner-Pro.html").decode("utf-8")
+              assert f"UI v{version}" in html, "Windows robot bundle has wrong app version"
+          print(f"Verified Windows collector ZIP version {version}: {path}")
+          PY
           (cd dist && rm -f SHA256SUMS.txt && sha256sum * > SHA256SUMS.txt)
       - name: Verify release bundle contents
         run: |
