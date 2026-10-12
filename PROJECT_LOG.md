@@ -1504,3 +1504,9 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Hallazgo: la interfaz seguía pidiendo el launcher CMD y el README nombraba otro ejecutable para healthcheck.
 - Corrección: mensajes de UI y documentación ahora usan únicamente InstaCleanerPro.exe, más test de regresión sobre los artefactos fuente.
 - Validación pendiente: CI exact-head y aceptación en equipo Windows con Chrome y sesión real; ningún release público automático.
+
+
+### 2026-10-12 — Preparing governed v120.43 release (owner explicitly requested)
+- Prepared integrated Windows publishing pipeline (single `InstaCleanerPro.exe` without legacy CMD, verified ZIP contents and Chromium/Windows tests), signed Android versionCode 12043, matching HTML UI v120.43 and release notes.
+- Pending: exact-head CI on new version, PR merge, separate governed release request on main, exact-publish-commit visual checks and signing, GitHub assets/checksums verification.
+- Disclose unverified owner Instagram UI, real action acceptance, and Windows↔Android Profile Counts sync limitations; no automated action performed on the owner's account.
