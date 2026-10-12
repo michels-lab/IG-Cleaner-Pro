@@ -38,6 +38,7 @@ class Collector:
         self.lock = threading.RLock()
         self.login_ready = threading.Event()
         self.stop_signal = threading.Event()
+        self.pause_requested = False
         self.worker = None
         self.status = "idle"
         self.message = "Sin tarea activa"
@@ -56,6 +57,7 @@ class Collector:
         self.expected_handle = ""
         self.detected_handle = ""
         self.discovery_complete = False
+        self.current_profile = ""
 
     def result_path(self):
         # No owner/usernames in filenames or URL paths.
@@ -88,6 +90,11 @@ class Collector:
                 if owner != self.owner or account != self.account:
                     raise ValueError("Hay otra cuenta en ejecución. No se mezclan los perfiles.")
                 return self.snapshot()
+            if self.status in ("paused", "pausing") and not request.get("resume_requested"):
+                if owner != self.owner or account != self.account:
+                    raise ValueError("Hay otra cuenta pausada. No se mezclan los perfiles.")
+                return self.snapshot()
+            self.pause_requested = False
             self.owner, self.account = owner, account
             self.expected_handle = expected or ""
             self.autonomous = True
@@ -98,6 +105,7 @@ class Collector:
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
             self.wait_until = 0
+            self.current_profile = ""
             self.message = "Abriendo Instagram para reconocer tu cuenta..."
             self.status = "starting"
             self.stop_signal.clear()
@@ -141,6 +149,7 @@ class Collector:
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = pause_every, pause_minutes
             self.wait_until = 0
+            self.current_profile = ""
             saved = read_results(self.result_path())
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
@@ -148,6 +157,7 @@ class Collector:
                             if load_only else "Iniciando navegador visible...")
             self.status = "idle" if load_only else "starting"
             self.stop_signal.clear()
+            self.pause_requested = False
             self.login_ready.clear()
             if not load_only:
                 self.worker = threading.Thread(target=self._run, daemon=True)
@@ -194,7 +204,7 @@ class Collector:
                             break
                         self.stop_signal.wait(3)
                     if self.stop_signal.is_set():
-                        self._update("stopped", "Detenido antes de iniciar.")
+                        self._update("paused", "Detenido antes de iniciar.")
                         return
                     self.detected_handle = handle
                     if self.expected_handle and self.expected_handle != handle:
@@ -222,7 +232,7 @@ class Collector:
                                      "No pude leer la lista Following visible. Comprueba Instagram; no inventaré perfiles.")
                         return
                     if self.stop_signal.is_set():
-                        self._update("stopped", "Búsqueda interrumpida; lista parcial guardada.")
+                        self._update("paused", "Búsqueda interrumpida; lista parcial guardada.")
                         return
                     self._update("running", "Lista Following "+("completa" if complete else "parcial")+
                                  "; recopilando cifras...")
@@ -231,7 +241,7 @@ class Collector:
                     while not self.stop_signal.is_set() and not self.login_ready.wait(0.25):
                         pass
                     if self.stop_signal.is_set():
-                        self._update("stopped", "Detenido antes de iniciar.")
+                        self._update("paused", "Detenido antes de iniciar.")
                         return
 
                 saved = read_results(self.result_path())
@@ -243,7 +253,7 @@ class Collector:
                 self._update("running", "Consultando perfiles visibles...")
                 for index, username in enumerate(remaining, 1):
                     if self.stop_signal.is_set():
-                        self._update("stopped", "Pausado; los resultados quedan guardados.")
+                        self._update("paused", "Pausado; los resultados quedan guardados.")
                         return
                     while True:
                         waiting = max(
@@ -258,10 +268,11 @@ class Collector:
                             self.message = (f"Pausa programada: {int(waiting + 0.999)} s antes de "
                                             f"@{username}.")
                         if self.stop_signal.wait(waiting):
-                            self._update("stopped", "Pausado; los resultados quedan guardados.")
+                            self._update("paused", "Pausado; los resultados quedan guardados.")
                             return
                     with self.lock:
                         self.wait_until = 0
+                        self.current_profile = username
                     # Persist a budget event BEFORE navigating. Crashes and
                     # blocked/login pages cannot silently reset the cooldown.
                     visits = register_visit(visits_file, visits)
@@ -286,12 +297,19 @@ class Collector:
                     save_results(self.result_path(), saved)
                     completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
                     self._update("running", f"@{username}: {status}. Completados {completed}/{self.total}.", completed)
-                self._update("complete" if not self.autonomous or self.discovery_complete else "partial",
+                if self.stop_signal.is_set():
+                    self._update("paused", "Pausado; se guardó el avance.")
+                    return
+                unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
+                self._update("complete" if not unresolved and (not self.autonomous or self.discovery_complete) else "partial",
                              "Datos recopilados. "+("Following completo." if self.discovery_complete else
                              "La lista Following podría estar incompleta; se necesitará revisar el navegador."))
         except Exception as exc:
             self._update("error", "El navegador falló: " + str(exc)[:240])
         finally:
+            with self.lock:
+                self.wait_until = 0
+                self.current_profile = ""
             if browser is not None:
                 try:
                     browser.close()
@@ -307,15 +325,61 @@ class Collector:
             return self.snapshot()
 
     def stop(self):
-        self.stop_signal.set()
+        """Pause at the next safe checkpoint. Already saved results stay on disk."""
         with self.lock:
-            if self.status in ("starting", "login", "running"):
-                self.message = "Deteniendo la tarea de forma segura..."
+            if self.worker and self.worker.is_alive():
+                self.pause_requested = True
+                self.status = "pausing"
+                self.message = "Pausando después de la visita actual; guardando resultados..."
+                self.stop_signal.set()
+            return self.snapshot()
+
+    def continue_collection(self, request: dict):
+        """Explicit user action; a paused job never resumes because the page reloads."""
+        with self.lock:
+            owner, account = str(request.get("owner") or ""), str(request.get("account") or "")
+            if not owner or not account or owner != self.owner or account != self.account:
+                raise ValueError("Selecciona el mismo usuario y perfil de Instagram antes de reanudar.")
+            if self.worker and self.worker.is_alive():
+                raise ValueError("El robot sigue pausando. Espera a que termine la visita actual.")
+            if self.status not in ("paused", "partial", "error"):
+                raise ValueError("No hay una recopilación pausada para reanudar.")
+            request = dict(request)
+            request["expected_handle"] = self.expected_handle
+            request["resume_requested"] = True
+        return self.auto_start(request)
+
+    def update_config(self, request: dict):
+        """New pacing applies from the next profile; no cooldown history is erased."""
+        owner, account = str(request.get("owner") or ""), str(request.get("account") or "")
+        count, minutes, delay = check_pacing(
+            request.get("max_per_window"), request.get("window_minutes"),
+            request.get("min_delay_seconds"))
+        rest_count, rest_minutes = check_batch_rest(
+            request.get("pause_every", 0), request.get("pause_minutes", 0))
+        with self.lock:
+            if not owner or owner != self.owner or account != self.account:
+                raise ValueError("Los tiempos pertenecen a otro usuario o Instagram.")
+            self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
+            self.pause_every, self.pause_minutes = rest_count, rest_minutes
+            self.message = "Tiempos guardados; se aplican desde la siguiente visita."
             return self.snapshot()
 
     def snapshot(self):
         with self.lock:
+            saved = read_results(self.result_path()) if self.owner and self.account else {}
+            good = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
+            error = sum(saved.get(u, {}).get("status") == "error" for u in self.usernames)
+            unavailable = sum(saved.get(u, {}).get("status") == "unavailable" for u in self.usernames)
+            analyzed = good + error + unavailable
             return {
+                "analyzed": analyzed,
+                "successful": good,
+                "errors": error,
+                "unavailable": unavailable,
+                "pending": max(0, self.total - analyzed),
+                "remaining": max(0, self.total - good),
+                "current_profile": self.current_profile,
                 "status": self.status,
                 "message": self.message,
                 "progress": self.progress,
@@ -397,7 +461,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -416,6 +480,10 @@ def build_server(collector: Collector, token: str, port: int = 0):
                     result = collector.start(data, load_only=True)
                 elif self.path == "/api/stop":
                     result = collector.stop()
+                elif self.path == "/api/continue":
+                    result = collector.continue_collection(data)
+                elif self.path == "/api/config":
+                    result = collector.update_config(data)
                 else:
                     result = collector.resume()
                 self._send(200, result)
