@@ -1,6 +1,6 @@
 # Profile Counts — robot navegador y estadísticas por perfil
 
-**Estado:** desarrollo en la rama feature; **no publicado**. Flujo autónomo actualizado el 11 de octubre de 2026. Esta función no confunde el número de cuentas que **tú** sigues con los Followers/Following de **cada tercero**.
+**Estado:** flujo autónomo publicado en la versión estable **v120.42** el 12 de octubre de 2026. Aún necesita aceptación con una sesión real de Instagram. Las mejoras posteriores se validan en una rama sin publicación automática. Esta función no confunde el número de cuentas que **tú** sigues con los Followers/Following de **cada tercero**.
 
 ## Uso normal — automático, sin CSV ni configuraciones
 
@@ -14,7 +14,7 @@
 
 Este sistema abre la página normal de Instagram desde una sesión de navegador que gestionas tú. **No usa permisos de Meta API**. La contraseña de Instagram nunca se pide dentro de Insta Cleaner ni se guarda en el repositorio. Las cookies de sesión quedan en el perfil privado del navegador local. La PC debe permanecer encendida y el lanzador abierto; **no es una ejecución autónoma de Android ni un trabajo en la nube**.
 
-**Estado real de validación:** pruebas automáticas locales con perfiles simulados; el reconocimiento de sesión y la lectura de la lista Following todavía requieren verificación presencial en el Instagram del propietario. La interface de Instagram puede variar según país, idioma, cuenta y fecha.
+**Estado real de validación:** pruebas automáticas locales con perfiles simulados; el reconocimiento de sesión y la lectura de la lista Following todavía requieren verificación con Instagram real. La interfaz de Instagram puede variar por cuenta/idioma/fecha. Una lectura parcial nunca es garantía de que toda tu lista fue recuperada. Una mejora posterior a v120.42 impide que una nueva exploración parcial borre el listado guardado anteriormente, y exige que el número de perfiles coincida con el contador visible exacto antes de marcar Following como completo.
 
 ## Controles internos y método CSV anterior (alternativos, ocultos en uso automático)
 

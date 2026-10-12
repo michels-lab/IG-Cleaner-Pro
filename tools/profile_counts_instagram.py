@@ -14,9 +14,9 @@ import time
 from urllib.parse import urlparse
 
 try:
-    from .profile_counts_robot import valid_username, BLOCK_MARKERS
+    from .profile_counts_robot import valid_username, BLOCK_MARKERS, parse_number
 except ImportError:
-    from profile_counts_robot import valid_username, BLOCK_MARKERS
+    from profile_counts_robot import valid_username, BLOCK_MARKERS, parse_number
 
 RESERVED = frozenset((
     "about", "accounts", "api", "challenge", "developer", "direct", "directory",
@@ -117,6 +117,40 @@ def _scroll_visible_following(dialog):
     }""")
 
 
+def expected_following_count(*labels):
+    """Use only an exact, visible Following counter as completion evidence.
+
+    Abbreviations such as 11.8K cannot prove the exact number of handles and
+    must not be treated as a successful full scan.
+    """
+    for label in labels:
+        match = re.search(r"(?<!\\w)(\\d[\\d.,\\s\\u00a0\\u202f]*(?:[kKmM]|[ ]mil|[ ]millones)?)",
+                          str(label or ""), re.I)
+        if not match:
+            continue
+        parsed = parse_number(match.group(1))
+        if parsed and not parsed[1]:
+            return parsed[0]
+    return None
+
+
+def reconcile_following_discovery(cached, observed, complete):
+    """Preserve older same-account handles during a partial browser rescan.
+
+    A positively completed visible scan replaces the cache: old accounts might
+    have been unfollowed. Incomplete scans can only *add* to the provisional
+    queue, never erase an earlier checkpoint.
+    """
+    fresh = list(dict.fromkeys(
+        u for raw in observed if (u := valid_username(raw))
+    ))
+    if complete:
+        return fresh
+    return list(dict.fromkeys(
+        [u for raw in cached if (u := valid_username(raw))] + fresh
+    ))
+
+
 def read_following_visible(page, username, on_batch=None, stop_signal=None,
                            max_scrolls=2500):
     """Read visible profile anchors in the Following dialog as it scrolls.
@@ -141,6 +175,11 @@ def read_following_visible(page, username, on_batch=None, stop_signal=None,
             break
     if candidate is None:
         raise RuntimeError("No está visible el enlace Following de la cuenta iniciada.")
+    expected = expected_following_count(
+        candidate.get_attribute("title"),
+        candidate.get_attribute("aria-label"),
+        candidate.inner_text(timeout=3000),
+    )
     candidate.click(timeout=12000)
     dialog = page.locator('[role="dialog"]').last
     dialog.wait_for(state="visible", timeout=12000)
@@ -168,10 +207,13 @@ def read_following_visible(page, username, on_batch=None, stop_signal=None,
             no_progress += 1
         scroll = _scroll_visible_following(dialog)
         if scroll.get("atEnd") and no_progress >= 4:
-            # Some dialogs load one more batch after scrolling to the bottom.
+            # Scrolling to the bottom is not proof that lazy-loaded Following
+            # finished. Never claim completeness when fewer handles than an
+            # exact visible total were read, or when only a rounded count exists.
+            complete = expected is not None and len(collected) >= expected
             if on_batch:
-                on_batch(list(collected), True)
-            return collected, True
+                on_batch(list(collected), complete)
+            return collected, complete
         if no_progress >= 18:
             return collected, False
         page.wait_for_timeout(450)

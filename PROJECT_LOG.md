@@ -1,3 +1,11 @@
+## 2026-10-12 — Following discovery checkpoint hardening (development branch; no release)
+
+- Found a resume regression in the shipped Windows autonomous collector: an incomplete re-scan could replace the older same-account Following checkpoint, then collect only the shortened result. Partial lazy-loaded dialogs could also be marked complete after four idle scrolls, even when the header showed a larger exact Following count.
+- Introduced exact-visible-Following count evidence for completion. Abbreviated counts (e.g. 11.8K), missing counters or a smaller discovered list remain **partial**; do not claim completion or fabricate missing usernames.
+- Retain the union of previously cached same-Instagram-handle usernames and a partial re-scan; a positively completed verified scan replaces that cache so genuinely unfollowed users need not remain current. The bridge now visits the reconciled queue rather than the raw partial observation.
+- Added offline regression tests for exact/approximate totals, partial versus verified-complete cache reconciliation and bridge end-to-end resume with a fake browser. No Instagram credentials are handled; previous account-key isolation, pacing, review/Focus state and CSV data remain untouched.
+- **QA/release boundary:** exact-head CI required; real owner Instagram DOM/Chrome and Samsung acceptance remain open. Official v120.42 remains unchanged and v120.43 is **not authorized**.
+
 ## 2026-10-12 — v120.42 stable publication verified (Windows Profile Counts + Android + Desktop)
 
 - User explicitly requested **"dale release para probarla"**. Governed normal release [v120.42](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.42) published at **2026-10-12T07:13:17Z**, release commit `1c806e34e3f3b84c9311f466353a6ad30fe735c2`, GitHub Actions run **38216103775** SUCCESS.

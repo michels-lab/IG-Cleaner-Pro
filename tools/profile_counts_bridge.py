@@ -18,7 +18,7 @@ import time
 import webbrowser
 
 from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
-                                      write_following_cache, read_following_cache)
+                                      write_following_cache, read_following_cache, reconcile_following_discovery)
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_pacing import (check_pacing, history_path, load_history,
@@ -208,15 +208,20 @@ class Collector:
                     self.total = len(cached)
                     self._update("discovering", "Leyendo tu lista Following de @"+handle+"...")
                     def save_batch(users, complete):
+                        retained = reconcile_following_discovery(cached, users, complete)
                         with self.lock:
-                            self.usernames = users
-                            self.total = len(users)
+                            self.usernames = retained
+                            self.total = len(retained)
                             self.discovery_complete = bool(complete)
-                            self.message = "Following detectados: "+str(len(users))+" perfiles."
-                        write_following_cache(self.followings_path(), handle, users, complete)
+                            self.message = ("Following detectados: "+str(len(retained))+
+                                            (" perfiles (lista provisional)." if not complete else " perfiles."))
+                        write_following_cache(self.followings_path(), handle, retained, complete)
                     users, complete = read_following_visible(
                         page, handle, on_batch=save_batch, stop_signal=self.stop_signal)
                     save_batch(users, complete)
+                    # Visit the reconciled queue, not the shortened current DOM
+                    # snapshot. Previously saved handles remain on partial scans.
+                    users = list(self.usernames)
                     if not users:
                         self._update("needs_attention",
                                      "No pude leer la lista Following visible. Comprueba Instagram; no inventaré perfiles.")
