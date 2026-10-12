@@ -8,7 +8,7 @@
 
 **Este es el flujo principal pedido por el propietario**:
 
-1. En Windows abre el paquete de prueba de Insta Cleaner mediante `Start-Insta-Cleaner-Robot.cmd` (Chrome instalado, sin instalar Python).
+1. En Windows abre el paquete integrado de prueba mediante `InstaCleanerPro.exe` (Chrome instalado). No ejecutes archivos `.cmd`, scripts de Python ni un puente independiente; esta indicación corresponde al candidato integrado, no al ZIP estable v120.42.
 2. El controlador abre Insta Cleaner y su ventana de Chrome. **Inicia sesión en Instagram** si hace falta; no necesitas iniciar otra tarea, pulsar «Ya inicié sesión», configurar tandas, importar archivos ni extraer tu Following.
 3. Cuando aparezca la sesión de Instagram, el robot busca el enlace visible de tu propio perfil, abre **Following** y recorre los perfiles mostrados en el cuadro de Instagram. Guarda la lista detectada progresivamente por cuenta.
 4. Después visita cada perfil obtenido y lee los dos contadores visibles. En Insta Cleaner → **Insights → Profile Counts** aparecen el progreso y las cifras conforme se guardan. El robot controla sus pausas por dentro y conserva el avance si reinicias.
