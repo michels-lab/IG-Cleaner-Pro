@@ -19,11 +19,11 @@ from urllib.parse import urlparse
 try:
     # tests import tools.profile_counts_robot, whereas the portable launcher
     # imports profile_counts_robot from its own script directory.
-    from .profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
+    from .profile_counts_pacing import (check_pacing, history_path, load_history, register_visit, finish_visit,
                                         wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
                                         DEFAULT_DELAY_SECONDS)
 except ImportError:
-    from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
+    from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit, finish_visit,
                                        wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
                                        DEFAULT_DELAY_SECONDS)
 
@@ -227,7 +227,10 @@ def run(args):
                     print(f"Pausa programada antes de @{username}: {waiting:.1f} segundos.")
                     time.sleep(waiting)
                 visits = register_visit(visits_file, visits)
-                status, counts = collect_visible_counts(page, username)
+                try:
+                    status, counts = collect_visible_counts(page, username)
+                finally:
+                    visits = finish_visit(visits_file, visits)
                 stamp = iso_now()
                 if status in ("blocked", "login_required"):
                     print(f"Detenido en @{username}: {status}. Requiere revisión humana; no se evaden desafíos.")
