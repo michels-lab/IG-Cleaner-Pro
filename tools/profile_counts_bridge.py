@@ -79,7 +79,7 @@ class Collector:
         pacing = dict(max_per_window=request.get("max_per_window", DEFAULT_COUNT),
                       window_minutes=request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
                       min_delay_seconds=request.get("min_delay_seconds", DEFAULT_DELAY_SECONDS))
-        count, minutes, delay = check_pacing(**pacing) if False else check_pacing(
+        count, minutes, delay = check_pacing(
             pacing["max_per_window"], pacing["window_minutes"], pacing["min_delay_seconds"])
         rest_count, rest_minutes = check_batch_rest(request.get("pause_every", 0),
                                                      request.get("pause_minutes", 0))
