@@ -55,6 +55,16 @@ class DesktopAppTests(unittest.TestCase):
             self.assertTrue(any("#igc-robot=31777." in s for s in args))
             self.assertFalse(any(s.endswith(".cmd") for s in args))
 
+    def test_second_windows_instance_cannot_claim_same_workspace(self):
+        if sys.platform != "win32":
+            self.skipTest("Windows named mutex")
+        handle = native.acquire_single_instance()
+        try:
+            with self.assertRaisesRegex(RuntimeError, "ya está abierto"):
+                native.acquire_single_instance()
+        finally:
+            native.release_single_instance(handle)
+
     def test_app_same_server_as_actions_and_counts(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
