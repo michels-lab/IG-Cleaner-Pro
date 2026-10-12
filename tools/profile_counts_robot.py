@@ -155,7 +155,8 @@ def collect_visible_counts(page, username: str):
         lowered = page_text.lower()
         if any(token in lowered for token in BLOCK_MARKERS):
             return "blocked", None
-        if page.locator('input[name="username"], input[name="password"]').count() and "log in" in lowered:
+        # Login forms are localized; do not depend on the English "log in" label.
+        if page.locator('input[name="password"]').count():
             return "login_required", None
         if any(token in lowered for token in UNAVAILABLE_MARKERS):
             return "unavailable", None
