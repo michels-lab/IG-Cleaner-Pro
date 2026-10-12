@@ -109,7 +109,7 @@ class DesktopAppTests(unittest.TestCase):
             with (patch.object(native, "bundled_html", return_value=ui),
                   patch.object(native, "app_home", return_value=root / "app"),
                   patch.object(native, "chrome_path", return_value=chrome),
-                  patch.object(native, "stop_safely") as stop,
+                  patch.object(native, "stop_safely", wraps=native.stop_safely) as stop,
                   patch.object(native.subprocess, "Popen", return_value=FakeProcess()) as launch):
                 result = native.main([])
             self.assertEqual(result, 0)
