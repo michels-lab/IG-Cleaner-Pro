@@ -1,4 +1,4 @@
-name: Profile Counts Windows portable preview
+name: Insta Cleaner Windows Automations preview
 
 on:
   workflow_dispatch:
@@ -71,16 +71,16 @@ jobs:
           @(
             "candidate_source_sha=${{ github.sha }}"
             "candidate_kind=unreleased_windows_preview"
-            "application=IG Cleaner Pro / Profile Counts"
+            "application=IG Cleaner Pro / Automations + Profile Counts"
           ) | Set-Content artifacts/profile-counts-preview/BUILD-INFO.txt
           Get-FileHash artifacts/profile-counts-preview/IGCleanerProfileCounts.exe -Algorithm SHA256 |
             Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
           if (!(Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd)) { throw "Launcher absent." }
-          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip -Force
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Automations-Windows-PREVIEW.zip -Force
       - uses: actions/upload-artifact@v4
         with:
-          name: IG-Cleaner-Profile-Counts-Windows-PREVIEW-${{ github.sha }}
-          path: artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip
+          name: IG-Cleaner-Automations-Windows-PREVIEW-${{ github.sha }}
+          path: artifacts/IG-Cleaner-Pro-Automations-Windows-PREVIEW.zip
           retention-days: 14
           if-no-files-found: error
