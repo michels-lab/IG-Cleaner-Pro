@@ -93,7 +93,7 @@ class FakePage:
         self.delay = []
 
     def open_action(self):
-        if self.header.label == "Following":
+        if self.header.label in ("Following", "Siguiendo"):
             self.menu.visible = True
         else:
             self.dialog.visible = True
@@ -103,11 +103,11 @@ class FakePage:
         if self.private:
             self.dialog.visible = True
         else:
-            self.header.label = "Follow"
+            self.header.label = getattr(self, "after_label", "Follow")
 
     def confirm(self):
         self.dialog.visible = False
-        self.header.label = "Follow"
+        self.header.label = getattr(self, "after_label", "Follow")
 
     def goto(self, url, **_):
         self.url = url
@@ -147,6 +147,29 @@ class ActionSafetyTests(unittest.TestCase):
             status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
         self.assertEqual(status, "ok")
         self.assertEqual(page.header.clicker.clicked, 1)
+        self.assertEqual(page.menu.clicker.clicked, 1)
+        self.assertEqual(page.dialog.clicker.clicked, 1)
+
+    def test_public_spanish_menu_unfollow_without_second_confirmation(self):
+        page = FakePage("unfollow")
+        page.header.label, page.menu.label = "Siguiendo", "Dejar de seguir"
+        page.after_label = "Seguir"
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "ok")
+        self.assertEqual(page.menu.clicker.clicked, 1)
+        self.assertEqual(page.dialog.clicker.clicked, 0)
+
+    def test_private_spanish_menu_then_confirmation(self):
+        page = FakePage("unfollow", private=True)
+        page.header.label, page.menu.label = "Siguiendo", "Dejar de seguir"
+        page.dialog.label = "Dejar de seguir"
+        page.after_label = "Seguir"
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "ok")
         self.assertEqual(page.menu.clicker.clicked, 1)
         self.assertEqual(page.dialog.clicker.clicked, 1)
 
