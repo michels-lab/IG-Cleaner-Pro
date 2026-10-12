@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_counts_pacing.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
       - 'tools/build_standalone_desktop_html.py'
       - 'packaging/profile-counts/**'
