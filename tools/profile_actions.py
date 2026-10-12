@@ -521,6 +521,7 @@ class ActionRobot:
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
+                              "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
                               "message": rows[u].get("message", ""),
                               "at": rows[u].get("at", "")} for u in self.targets]}
