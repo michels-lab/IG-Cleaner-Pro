@@ -13105,7 +13105,7 @@ const CFG='igc_v12027_supabase_config', SES='igc_v12027_supabase_session';
 const DATA_META='igc_v12030_list_sync_meta';
 const SUPABASE_URL='https://ilmztedebwdzgnlrvwxy.supabase.co', SUPABASE_KEY='sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1';
 const BATCH_LS='ig_v12024_prepared_focus_batches';
-const S={cfg:{email:'',auto:true},session:null,busy:false,lastSync:0,lastError:'',timer:null,stats:{eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0}};
+const S={cfg:{email:'',auto:true},session:null,busy:false,lastSync:0,lastError:'',needsReauth:false,lastRefreshError:'',timer:null,stats:{eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0}};
 let dataMeta={};
 try{S.cfg={...S.cfg,...JSON.parse(localStorage.getItem(CFG)||'{}')}}catch{}
 try{S.session=JSON.parse(localStorage.getItem(SES)||'null')}catch{}
@@ -13127,12 +13127,89 @@ function cfgFromUi(){S.cfg.email=String(document.getElementById('igcSyncEmail')?
 function headers(auth=true,extra={}){const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...extra};if(auth&&S.session?.access_token)h.Authorization=`Bearer ${S.session.access_token}`;return h}
 async function jfetch(path,opt={}){const r=await fetch(SUPABASE_URL+path,{...opt,headers:{...headers(opt.auth!==false),...(opt.headers||{})}});const txt=await r.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{data=txt}if(!r.ok){const e=new Error(data?.msg||data?.message||data?.error_description||data?.error||`${r.status} ${r.statusText}`);e.status=r.status;throw e}return data}
 async function sendOtp(){cfgFromUi();if(!S.cfg.email)throw new Error('Escribe tu correo.');await jfetch('/auth/v1/otp',{method:'POST',auth:false,body:JSON.stringify({email:S.cfg.email,create_user:true})});status(`Código enviado a ${S.cfg.email}. Revisa tu correo.`,'ok')}
-async function signInPassword(){cfgFromUi();const password=String(document.getElementById('igcSyncPassword')?.value||'');if(!S.cfg.email||!password)throw new Error('Escribe tu correo y contraseña.');const data=await jfetch('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:JSON.stringify({email:S.cfg.email,password})});if(!data?.access_token)throw new Error('No se pudo iniciar sesión.');S.session=data;saveSession();renderAuthUi();return data}
-async function verifyOtp(){cfgFromUi();const token=String(document.getElementById('igcSyncCode')?.value||'').replace(/\s+/g,'');if(!S.cfg.email||!token)throw new Error('Escribe tu correo y el código recibido.');const data=await jfetch('/auth/v1/verify',{method:'POST',auth:false,body:JSON.stringify({type:'email',email:S.cfg.email,token})});if(!data?.access_token)throw new Error('El código no produjo una sesión. Pide uno nuevo.');S.session=data;saveSession();renderAuthUi();return data}
+async function signInPassword(){cfgFromUi();const password=String(document.getElementById('igcSyncPassword')?.value||'');if(!S.cfg.email||!password)throw new Error('Escribe tu correo y contraseña.');const data=await jfetch('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:JSON.stringify({email:S.cfg.email,password})});if(!data?.access_token)throw new Error('No se pudo iniciar sesión.');S.session=data;S.needsReauth=false;saveSession();renderAuthUi();return data}
+async function verifyOtp(){cfgFromUi();const token=String(document.getElementById('igcSyncCode')?.value||'').replace(/\s+/g,'');if(!S.cfg.email||!token)throw new Error('Escribe tu correo y el código recibido.');const data=await jfetch('/auth/v1/verify',{method:'POST',auth:false,body:JSON.stringify({type:'email',email:S.cfg.email,token})});if(!data?.access_token)throw new Error('El código no produjo una sesión. Pide uno nuevo.');S.session=data;S.needsReauth=false;saveSession();renderAuthUi();return data}
 async function verifyOtpAndSetPassword(){await verifyOtp();const password=String(document.getElementById('igcSyncNewPassword')?.value||'');if(password.length<8)throw new Error('La contraseña debe tener al menos 8 caracteres.');await jfetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});return true}
-async function refresh(){if(!S.session?.refresh_token)return false;try{const d=await jfetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:JSON.stringify({refresh_token:S.session.refresh_token})});if(d?.access_token){S.session=d;saveSession();return true}}catch(e){console.warn('refresh session',e)}return false}
-async function ensureAuth(){if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta primero.');return true}
-async function rest(path,opt={}){const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);path=scoped.path;opt=scoped.opt;try{return await jfetch('/rest/v1/'+path,opt)}catch(e){if((e.status===401||e.status===403)&&await refresh())return await jfetch('/rest/v1/'+path,opt);throw e}}
+const AUTH_RECOVERY_MESSAGE='Tu sesión caducó y no se pudo renovar automáticamente. Vuelve a entrar en Cuenta; tus perfiles y revisiones guardados no se borraron.';
+const AUTH_NETWORK_MESSAGE='No se pudo renovar la sesión por un problema de conexión. Comprueba Internet y vuelve a sincronizar; tus datos locales están intactos.';
+let refreshInFlight=null;
+function sessionOwner(session){
+ return String(session?.user?.email||session?.user?.id||'').trim().toLowerCase();
+}
+function expiresAtSeconds(session){
+ const direct=Number(session?.expires_at||0);
+ if(Number.isFinite(direct)&&direct>1000000000)return direct;
+ try{
+  const part=String(session?.access_token||'').split('.')[1];
+  if(!part||typeof atob!=='function')return 0;
+  const payload=JSON.parse(atob(part.replace(/-/g,'+').replace(/_/g,'/')));
+  return Number(payload?.exp)||0;
+ }catch{return 0}
+}
+async function refresh(staleAccess=''){
+ const previous=S.session;
+ if(!previous?.refresh_token){if(previous?.access_token){S.needsReauth=true;renderAuthUi();}return false;}
+ if(staleAccess&&previous.access_token!==staleAccess)return true;
+ if(refreshInFlight)return refreshInFlight;
+ const flight=(async()=>{
+  try{
+   const data=await jfetch('/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',auth:false,body:JSON.stringify({refresh_token:previous.refresh_token})
+   });
+   if(!data?.access_token||!data?.refresh_token)throw new Error('No se obtuvo un par de tokens válido.');
+   if(S.session!==previous)return false;
+   if(data.user&&sessionOwner(data)!==sessionOwner(previous))throw new Error('La renovación devolvió otra identidad.');
+   S.session={...previous,...data,user:data.user||previous.user};
+   S.needsReauth=false;
+   S.lastRefreshError='';
+   saveSession();
+   renderAuthUi();
+   return true;
+  }catch(error){
+   if(S.session===previous){
+    if(error?.status===400||error?.status===401||error?.status===403){
+     S.needsReauth=true;
+     renderAuthUi();
+    }else{
+     S.lastRefreshError=AUTH_NETWORK_MESSAGE;
+    }
+   }
+   console.warn('IG Cleaner: no se pudo renovar la sesión.',error?.status||'network');
+   return false;
+  }
+ })();
+ refreshInFlight=flight;
+ try{return await flight}finally{if(refreshInFlight===flight)refreshInFlight=null}
+}
+async function ensureAuth(){
+ if(!S.session?.access_token)throw new Error('Inicia sesión en Cuenta primero.');
+ if(S.needsReauth)throw new Error(AUTH_RECOVERY_MESSAGE);
+ const expires=expiresAtSeconds(S.session);
+ if(expires&&expires<=Date.now()/1000+90){
+  if(!await refresh(S.session.access_token))throw new Error(S.needsReauth?AUTH_RECOVERY_MESSAGE:(S.lastRefreshError||AUTH_RECOVERY_MESSAGE));
+ }
+ return true;
+}
+async function rest(path,opt={}){
+ await ensureAuth();
+ const originalOwner=sessionOwner(S.session);
+ const usedAccess=S.session.access_token;
+ const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);
+ path=scoped.path;opt=scoped.opt;
+ const checked=async()=>{
+  const result=await jfetch('/rest/v1/'+path,opt);
+  if(originalOwner!==sessionOwner(S.session))throw new Error('La cuenta cambió durante la sincronización. Intenta otra vez.');
+  return result;
+ };
+ try{return await checked()}
+ catch(error){
+  const message=String(error?.message||'');
+  if(error?.status!==401&&!(error?.status===403&&/jwt expired|token.*expired/i.test(message)))throw error;
+  if(!await refresh(usedAccess))throw new Error(S.needsReauth?AUTH_RECOVERY_MESSAGE:(S.lastRefreshError||AUTH_RECOVERY_MESSAGE));
+  if(originalOwner!==sessionOwner(S.session))throw new Error('La cuenta cambió durante la sincronización. Intenta otra vez.');
+  return checked();
+ }
+}
 const IGC_SYNC_TABLES=['devices','audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state','instagram_accounts','instagram_audit_events','instagram_focus_batches','instagram_focus_batch_items','instagram_profile_state','instagram_list_snapshots','instagram_workspace_state'];
 function privacyDataStatus(text,type=''){
   const el=document.getElementById('privacyDataStatus');
@@ -13755,12 +13832,13 @@ window.igcRefreshInstagramProfiles=async function(){
  }
 };
 window.igcSyncNow=()=>syncNow(true);
-window.igcSyncDisconnect=function(){S.session=null;saveSession();notifyHostSession(true);renderAuthUi();window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión cerrada. Solo se muestran perfiles guardados localmente; inicia sesión en Cuenta para consultar el resto.','error');status('Sesión cerrada. Tus datos locales permanecen intactos.','warn')};
+window.igcSyncDisconnect=function(){S.session=null;S.needsReauth=false;saveSession();notifyHostSession(true);renderAuthUi();window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión cerrada. Solo se muestran perfiles guardados localmente; inicia sesión en Cuenta para consultar el resto.','error');status('Sesión cerrada. Tus datos locales permanecen intactos.','warn')};
 window.igcSyncSwitchAccount=function(){
  if(S.busy){status('Termina la sincronización actual antes de cambiar de usuario.','warn');return;}
  if(!confirm('Cambiar usuario cerrará esta sesión. Tus perfiles de Instagram, revisiones y respaldos no se borrarán. Para entrar con otra cuenta necesitarás su correo y contraseña. ¿Continuar?'))return;
  clearTimeout(statePushTimer);
  S.session=null;
+ S.needsReauth=false;
  saveSession();
  notifyHostSession(true);
  S.cfg.email='';
@@ -13774,8 +13852,8 @@ window.igcSyncSwitchAccount=function(){
  // The next successful login reloads into its own verified owner namespace.
  location.reload();
 };
-function schedule(){clearInterval(S.timer);if(S.cfg.auto)S.timer=setInterval(()=>{if(S.session?.access_token&&!document.hidden)syncNow(false)},15000)}
-function renderAuthUi(){const out=document.getElementById('igcSyncSignedOut'),inn=document.getElementById('igcSyncSignedIn'),who=document.getElementById('igcSyncAccount');const on=!!S.session?.access_token;if(out)out.style.display=on?'none':'';if(inn)inn.style.display=on?'':'none';if(who)who.textContent=S.session?.user?.email||S.cfg.email||'Cuenta conectada';renderStats()}
+function schedule(){clearInterval(S.timer);if(S.cfg.auto)S.timer=setInterval(()=>{if(S.session?.access_token&&!S.needsReauth&&!document.hidden)syncNow(false)},15000)}
+function renderAuthUi(){const out=document.getElementById('igcSyncSignedOut'),inn=document.getElementById('igcSyncSignedIn'),who=document.getElementById('igcSyncAccount');const on=!!S.session?.access_token&&!S.needsReauth;if(out)out.style.display=on?'none':'';if(inn)inn.style.display=on?'':'none';if(who)who.textContent=S.session?.user?.email||S.cfg.email||'Cuenta conectada';renderStats()}
 function install(){const sys=[...document.querySelectorAll('.igc-nav-group')].find(g=>/SYSTEM/i.test(g.querySelector('.igc-nav-cap')?.textContent||''));if(sys&&!document.getElementById('tab-sync')){const audit=document.getElementById('tab-audit'),b=document.createElement('button');b.className='navbtn';b.id='tab-sync';b.title='Cuenta';b.setAttribute('onclick',"showPage('sync')");b.innerHTML='<span class="igc-nav-icon">☁</span><span class="igc-nav-label">Cuenta</span>';sys.insertBefore(b,audit||null)}if(!document.getElementById('page-sync')){const main=document.querySelector('main.igc-workspace'),p=document.createElement('div');p.className='page';p.id='page-sync';p.innerHTML=`<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">INSTAGRAM CLEANER PRO · MULTI-DEVICE</div><h2>Cuenta y sincronización</h2><p>Tu cuenta mantiene Desktop y Android al día, incluyendo las listas completas de personas.</p></div><div class="panel"><div class="title">Tu cuenta</div><div id="igcSyncSignedOut"><div class="igc-sync-fields"><div class="control"><label>Correo</label><input id="igcSyncEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div class="control"><label>Contraseña</label><input id="igcSyncPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña"></div></div><div class="btnrow"><button class="btn primary" onclick="igcSyncPasswordSignIn()">Entrar</button><button class="btn" onclick="igcSyncToggleOtp()">Primera vez / recuperar contraseña</button></div><div id="igcSyncOtpGroup" class="igc-sync-fields" style="display:none;margin-top:12px"><div class="control"><label>Código de verificación</label><input id="igcSyncCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código del correo"></div><div class="control"><label>Nueva contraseña</label><input id="igcSyncNewPassword" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div><div class="btnrow" style="grid-column:1/-1"><button class="btn" onclick="igcSyncSendCode()">Enviar código</button><button class="btn green" onclick="igcSyncVerifyCode()">Verificar y guardar contraseña</button></div></div><div class="igc-sync-help" style="margin-top:10px">Usa correo + contraseña normalmente. El código solo se necesita la primera vez o para recuperar acceso. Project URL y keys siguen preconfigurados.</div></div><div id="igcSyncSignedIn" style="display:none"><div class="igc-sync-card"><b>Conectado</b><small id="igcSyncAccount">Cuenta conectada</small></div><div class="btnrow" style="margin-top:10px"><button class="btn green" onclick="igcSyncNow()">Sincronizar ahora</button><button class="btn" onclick="igcSyncSwitchAccount()">Cambiar usuario</button><button class="btn red" onclick="igcSyncDisconnect()">Cerrar sesión</button></div><div class="igc-sync-help" style="margin-top:10px">Sincronización automática activa cada 15 s mientras el Workspace esté abierto. Cambiar usuario solicita otro correo y contraseña; no borra perfiles ni revisiones guardadas.</div></div><div id="igcSyncStatus" class="igc-sync-status">${S.session?.access_token?'Sesión restaurada.':'Inicia sesión una sola vez en este dispositivo.'}</div><div id="igcSyncKpis" class="igc-sync-kpis"></div></div><div class="igc-sync-grid"><div class="panel"><div class="title">Qué se sincroniza</div><div class="igc-sync-card"><b>Listas completas</b><small>Following, Followers y Pending viajan con sus usernames y metadatos para que Android muestre las mismas personas que Desktop.</small></div><div class="igc-sync-card"><b>Revisiones y decisiones</b><small>Revisiones históricas y nuevas, protegidos y pausas se sincronizan entre Desktop y Android.</small></div><div class="igc-sync-card"><b>Focus preparados</b><small>Los Foco 20/30/40 congelados de Desktop llegan a Android con exactamente los mismos usernames.</small></div><div class="igc-sync-card"><b>Audit Log</b><small>Abiertos, revisados, auditados, cambios de decisión y tandas completadas viajan como eventos.</small></div></div><div class="panel"><div class="title">Estado</div><div class="igc-sync-help">• El servidor está preconfigurado en la app.<br>• La misma cuenta usa contraseña en Desktop y Android; OTP queda para alta o recuperación.<br>• Desktop publica la copia canónica de Following, Followers y Pending.<br>• Android descarga esas listas y reconstruye Review, Mutuals, Followers y Pending.<br>• Revisado y Auditado siguen siendo eventos distintos.</div></div></div></div>`;main.appendChild(p)}const email=document.getElementById('igcSyncEmail');if(email)email.value=S.cfg.email||S.session?.user?.email||'';S.cfg.auto=true;saveCfg();renderAuthUi();schedule();notifyHostSession();if(S.session?.access_token){
   window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión restaurada. Consultando todos los Instagram…');
   status('Sesión restaurada. Sincronizando listas…','ok');
