@@ -39,6 +39,8 @@ const {chromium}=require("playwright");
    assert.equal(body.max_per_window,50);
    assert.equal(body.window_minutes,60);
    assert.equal(body.min_delay_seconds,72);
+   assert.equal(body.pause_every,0);
+   assert.equal(body.pause_minutes,0);
    identity={owner:body.owner,account:body.account};
    queries++;
    send(200,{message:"Starting fixture",status:"starting",total:1,progress:0});
