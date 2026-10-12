@@ -196,13 +196,26 @@ class Collector:
                 page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
                 if self.autonomous:
                     self._update("login", "Inicia sesión en Instagram; detectaré tu cuenta automáticamente.")
+                    # Instagram changes its sidebar markup and may open the
+                    # logged-in profile in another tab. Check every browser tab,
+                    # but never guess an identity from an arbitrary profile URL.
+                    login_started = time.monotonic()
                     while not self.stop_signal.is_set():
-                        if challenge_detected(page):
-                            self._update("blocked", "Instagram pidió una verificación. Se detuvo para que la revises.")
+                        pages = [p for p in browser.pages if not p.is_closed()]
+                        if any(challenge_detected(p) for p in pages):
+                            self._update("blocked", "Instagram requested verification; collection stopped.")
                             return
-                        handle = signed_in_handle(page)
+                        identified = {u for p in pages if (u := signed_in_handle(p))}
+                        if len(identified) > 1:
+                            self._update("account_mismatch", "Different Instagram sessions were detected. Close extra accounts and retry.")
+                            return
+                        handle = next(iter(identified), None)
                         if handle:
                             break
+                        if time.monotonic() - login_started > 40:
+                            self._update("needs_attention",
+                                         "Instagram is open but its logged-in profile cannot be identified. Use the Chrome window opened by Insta Cleaner, reload Instagram, and press Connect Instagram to retry.")
+                            return
                         self.stop_signal.wait(3)
                     if self.stop_signal.is_set():
                         self._update("paused", "Detenido antes de iniciar.")
