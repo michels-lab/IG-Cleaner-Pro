@@ -3769,13 +3769,13 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <p id="igcCountsRobotPaceNote" class="note" style="display:none" aria-hidden="true">El robot ajusta sus pausas internamente.</p>
 </div>
-<div class="btnrow">
+<div class="btnrow" id="igcCountsManualCSV">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
 <label class="btn" style="cursor:pointer">② Importar resultados CSV<input id="igcCountsImport" type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
 <button class="btn" type="button" onclick="igcCountsExportResults()">Exportar resultados CSV</button>
 <button class="btn" type="button" onclick="igcCountsRender()">Actualizar lista</button>
 </div>
-<p class="note">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. Se respetan ambos límites; los retrasos de carga aumentan el tiempo real. El robot se detiene si Instagram solicita verificación. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
+<p class="note" id="igcCountsManualHelp">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. Se respetan ambos límites; los retrasos de carga aumentan el tiempo real. El robot se detiene si Instagram solicita verificación. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
 <input type="search" id="igcCountsQuery" placeholder="Buscar @usuario" style="min-width:160px;flex:1" oninput="igcCountsRender()">
 <select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pendientes</option><option value="ok">Con datos</option><option value="other">Sin datos / error</option></select>
@@ -13983,7 +13983,9 @@ window.igcCountsRobotAuto=async function(){
   }
   const profiles=window.IGC_INSTAGRAM_PROFILES;
   const profile=(profiles?.accounts||[]).find(p=>p.account_key===ctx.account);
-  const expected_handle=normalize(profile?.username||'');
+  let cached_handle='';
+  try{cached_handle=normalize(JSON.parse(window.localStorage.getItem(discoveredKey())||'null')?.handle||'')}catch(e){}
+  const expected_handle=normalize(profile?.username||cached_handle||'');
   const pacing=robotConfig();
   await bridgeRequest('auto',{owner:ctx.owner,account:ctx.account,expected_handle,...pacing});
   igcRobotAutoIdentity=id;
@@ -13994,6 +13996,8 @@ if(robot&&robot.port>0&&robot.port<=65535){
  window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
  if(controls)controls.style.display='none';
+ const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='none';
+ const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='none';
  window.igcCountsRobotPreview();
  setInterval(()=>{if(!document.hidden){window.igcCountsRobotAuto();window.igcCountsRobotPoll()}},5000);
  setTimeout(()=>window.igcCountsRobotAuto(),1500);
