@@ -46,22 +46,29 @@ class FakeRoot:
     def last(self):
         return self
 
-    def __init__(self, label, callback=None):
-        self.buttons = {}
+    def __init__(self, label, callback=None, visible=True, roles=("button",)):
         self.label = label
+        self.visible = visible
+        self.roles = roles
         self.clicker = FakeButton(callback or (lambda: None))
 
     def get_by_role(self, role, name=None):
-        import re
-        matched = ([self.clicker] if role == "button" and
-                   name.fullmatch(self.label) else [])
-        return FakeMatches(matched)
+        return FakeMatches([self.clicker] if
+                           self.visible and role in self.roles and
+                           name.fullmatch(self.label) else [])
+
+    def get_by_text(self, label, exact=True):
+        return FakeMatches([self.clicker] if self.visible and
+                           label.fullmatch(self.label) else [])
+
+    def nth(self, i):
+        return self
 
     def count(self):
-        return 1
+        return int(self.visible)
 
     def is_visible(self):
-        return True
+        return self.visible
 
     def inner_text(self, timeout=4000):
         return self.label
@@ -73,13 +80,34 @@ class FakeMissing:
 
 
 class FakePage:
-    def __init__(self, task, target="target.user"):
+    def __init__(self, task, target="target.user", private=False):
         self.url = "https://www.instagram.com/"
         self.target = target
-        self.header = FakeRoot("Following" if task == "unfollow" else "Requested")
+        self.private = private
+        self.menu = FakeRoot("Unfollow", self.choose_unfollow,
+                             visible=False, roles=("menuitem",))
         self.dialog = FakeRoot("Unfollow" if task == "unfollow" else "Cancel Request",
-                               lambda: setattr(self.header, "label", "Follow"))
+                               self.confirm, visible=False)
+        self.header = FakeRoot("Following" if task == "unfollow" else "Requested",
+                               self.open_action)
         self.delay = []
+
+    def open_action(self):
+        if self.header.label == "Following":
+            self.menu.visible = True
+        else:
+            self.dialog.visible = True
+
+    def choose_unfollow(self):
+        self.menu.visible = False
+        if self.private:
+            self.dialog.visible = True
+        else:
+            self.header.label = "Follow"
+
+    def confirm(self):
+        self.dialog.visible = False
+        self.header.label = "Follow"
 
     def goto(self, url, **_):
         self.url = url
@@ -90,8 +118,12 @@ class FakePage:
     def locator(self, selector):
         if selector == "header":
             return self.header
+        if selector == '[role="menu"]':
+            return self.menu
         if selector == '[role="dialog"]':
             return self.dialog
+        if selector == '[role="listbox"]':
+            return FakeMissing()
         if selector == 'input[name="password"]':
             return FakeMissing()
         raise AssertionError("Unexpected locator: " + selector)
@@ -105,6 +137,17 @@ class ActionSafetyTests(unittest.TestCase):
             status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
         self.assertEqual(status, "ok")
         self.assertEqual(page.header.clicker.clicked, 1)
+        self.assertEqual(page.menu.clicker.clicked, 1)
+        self.assertEqual(page.dialog.clicker.clicked, 0, "Public profiles do not always ask for confirmation.")
+
+    def test_private_unfollow_confirms_only_when_dialog_appears(self):
+        page = FakePage("unfollow", private=True)
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "ok")
+        self.assertEqual(page.header.clicker.clicked, 1)
+        self.assertEqual(page.menu.clicker.clicked, 1)
         self.assertEqual(page.dialog.clicker.clicked, 1)
 
     def test_cancel_requires_requested_button_and_verified_follow(self):
