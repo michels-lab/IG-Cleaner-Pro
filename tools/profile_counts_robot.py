@@ -21,11 +21,13 @@ try:
     # imports profile_counts_robot from its own script directory.
     from .profile_counts_pacing import (check_pacing, history_path, load_history, register_visit, finish_visit,
                                         wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
-                                        DEFAULT_DELAY_SECONDS)
+                                        DEFAULT_DELAY_SECONDS,
+                                        check_batch_rest, batch_path, load_batch_state, batch_wait, finish_batch_visit)
 except ImportError:
     from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit, finish_visit,
                                        wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
-                                       DEFAULT_DELAY_SECONDS)
+                                       DEFAULT_DELAY_SECONDS,
+                                       check_batch_rest, batch_path, load_batch_state, batch_wait, finish_batch_visit)
 
 FIELDS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
 USERNAME = re.compile(r"^[A-Za-z0-9._]{1,30}$")
@@ -194,6 +196,9 @@ def run(args):
         args.window_minutes, args.min_delay_seconds)
     visits_file = history_path(args.output)
     visits = load_history(visits_file, results)
+    pause_every, pause_minutes = check_batch_rest(args.pause_every, args.pause_minutes)
+    rests_file = batch_path(args.output)
+    rests = load_batch_state(rests_file)
     pending = [u for u in usernames if u not in results or
                (args.retry_unavailable and results[u].get("status") in ("error", "unavailable", "login_required"))]
     if args.max_profiles:
@@ -221,7 +226,8 @@ def run(args):
             input("Cuando la cuenta esté lista, vuelve a esta terminal y presiona Enter para iniciar: ")
             for index, username in enumerate(pending, 1):
                 while True:
-                    waiting = wait_required(visits, max_count, window_minutes, min_delay)
+                    waiting = max(wait_required(visits, max_count, window_minutes, min_delay),
+                                  batch_wait(rests, pause_every, pause_minutes))
                     if waiting <= 0:
                         break
                     print(f"Pausa programada antes de @{username}: {waiting:.1f} segundos.")
@@ -231,6 +237,7 @@ def run(args):
                     status, counts = collect_visible_counts(page, username)
                 finally:
                     visits = finish_visit(visits_file, visits)
+                    rests = finish_batch_visit(rests_file, rests, pause_every, pause_minutes)
                 stamp = iso_now()
                 if status in ("blocked", "login_required"):
                     print(f"Detenido en @{username}: {status}. Requiere revisión humana; no se evaden desafíos.")
@@ -258,6 +265,8 @@ def main(argv=None):
     parser.add_argument("--max-per-window", type=int, help="Visitas máximas permitidas por ventana (1 a 10,000).")
     parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES, help="Longitud de la ventana, en minutos (1 a 1,440).")
     parser.add_argument("--min-delay-seconds", type=float, default=DEFAULT_DELAY_SECONDS, help="Espera mínima entre perfiles, en segundos (0 a 3,600).")
+    parser.add_argument("--pause-every", type=int, default=0, help="Opcional: descanso largo después de cada N perfiles; 0 desactiva.")
+    parser.add_argument("--pause-minutes", type=float, default=0, help="Duración de cada descanso largo, en minutos; 0 desactiva.")
     parser.add_argument("--max-profiles", type=int, default=0, help="0: todos los pendientes; otro número: límite por ejecución.")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser",
                         help="Carpeta local con la sesión del navegador. Tratarla como privada.")
@@ -266,6 +275,7 @@ def main(argv=None):
     try:
         check_pacing(args.max_per_window if args.max_per_window is not None else args.per_hour,
                      args.window_minutes, args.min_delay_seconds)
+        check_batch_rest(args.pause_every, args.pause_minutes)
     except ValueError as exc:
         parser.error(str(exc))
     if args.max_profiles < 0:
