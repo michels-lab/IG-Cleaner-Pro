@@ -66,6 +66,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   igcCountsFootnote:{textContent:'',style:{}},
   igcCountsQuery:{value:''},igcCountsFilter:{value:'all'},
   igcCountsRobotStatus:{textContent:'',style:{}},
+  igcCountsRobotProgress:{value:0},
   igcCountsRobotActions:{style:{display:'none'}},
   igcCountsRobotRate:{value:'50'}
  };
@@ -78,6 +79,8 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   let value={};
   if(action==='start'){
    value={status:'starting',message:'Starting',total:1,progress:0};
+  } else if(action==='load'){
+   value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
    value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,per_hour:50};
   } else if(action==='results'){
@@ -110,6 +113,11 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert.equal(startBody.owner,'owner_A');assert.equal(startBody.account,'ig_A');
  assert.deepEqual(Array.from(startBody.usernames),['public.user']);
  await bridgeCtx.window.igcCountsRobotPoll();
+ assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
+ await bridgeCtx.window.igcCountsRobotLoad();
+ const restore=requests.find(r=>r.url.endsWith('/load'));
+ assert(restore,'UI must recover saved rows without launching browser');
+ assert.equal(JSON.parse(restore.options.body).account,'ig_A');
  const bridgeSaved=JSON.parse(bridgeStore.get(Array.from(bridgeStore.keys())[0]));
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
