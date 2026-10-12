@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   windows-portable:
-    name: Frozen Windows robot and double-click bundle
+    name: Insta Cleaner Pro integrated Windows executable
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
@@ -84,6 +84,9 @@ jobs:
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
           if (!(Test-Path artifacts/profile-counts-preview/InstaCleanerPro.exe)) { throw "Integrated Windows app absent." }
           if (Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd) { throw "Legacy .cmd launcher must not ship." }
+          # The HTML is embedded inside the EXE, not an additional file the user must open.
+          Remove-Item artifacts/profile-counts-preview/IG-Cleaner-Pro.html -Force
+          if (Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html) { throw "HTML must not ship separately." }
           Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/Insta-Cleaner-Pro-Windows-Integrated-PREVIEW.zip -Force
       - uses: actions/upload-artifact@v4
         with:
