@@ -80,7 +80,7 @@ def _visible_button(root, words):
     return None
 
 
-def perform_visible_action(page, username, task, expected_handle):
+def perform_visible_action(page, username, task, expected_handle, can_act=None):
     """Performs one observable action and verifies a visible Follow button afterward.
 
     Requires navigation identity as well as the signed-in owner navigation link.
@@ -116,12 +116,16 @@ def perform_visible_action(page, username, task, expected_handle):
         confirm_words = [r"Cancel Request", r"Cancelar solicitud", r"Cancelar"]
     if active is None:
         return "review", "No aparece el estado requerido del perfil; revisar manualmente."
+    if can_act and not can_act(username):
+        return "skipped", "Perfil protegido u omitido antes del clic."
     active.click(timeout=10000)
     page.wait_for_timeout(500)
     dialog = page.locator('[role="dialog"]').last
     confirm_root = dialog if dialog.count() and dialog.is_visible() else page
     confirmation = _visible_button(confirm_root, confirm_words)
     if confirmation:
+        if can_act and not can_act(username):
+            return "review", "Se abrió el diálogo, pero la protección cambió; confirmar estado manualmente."
         confirmation.click(timeout=10000)
     page.wait_for_timeout(1200)
     if challenge_detected(page) or page.locator('input[name="password"]').count():
@@ -212,7 +216,8 @@ class ActionRobot:
             raise ValueError("El tamaño de tanda debe estar entre 1 y 1,000.")
         max_count, window, delay = check_pacing(count, ACTION_WINDOW_MINUTES,
                                                  data.get("gap_seconds", 10))
-        every, rest = check_batch_rest(count, data.get("rest_minutes", 5))
+        rest_input = data.get("rest_minutes", 5)
+        every, rest = check_batch_rest(count if rest_input else 0, rest_input)
         if data.get("confirmation") != task + ":" + str(len(targets)):
             raise ValueError("La tanda no fue aprobada explícitamente.")
         if task == "unfollow" and data.get("followers_evidence") is not True:
@@ -321,7 +326,8 @@ class ActionRobot:
                     while not self.stop_event.is_set():
                         delay = max(wait_required(visits, self.max_count, self.window_minutes,
                                                   self.min_delay_seconds),
-                                    batch_wait(rests, self.max_count, self.rest_minutes))
+                                    batch_wait(rests, self.max_count if self.rest_minutes > 0 else 0,
+                                               self.rest_minutes))
                         if delay <= 0: break
                         with self.lock:
                             self.status, self.wait_until = "waiting", time.time() + delay
@@ -338,12 +344,19 @@ class ActionRobot:
                         continue
                     visits = register_visit(visits_file, visits)
                     try:
-                        result, details = perform_visible_action(page, user, self.task, self.handle)
+                        result, details = perform_visible_action(
+                            page, user, self.task, self.handle,
+                            lambda name: not self.stop_event.is_set() and
+                            not self._protected_for(name) and name not in self.skipped)
                     except Exception as exc:
                         result, details = "error", "No se verificó la acción: " + str(exc)[:200]
                     finally:
                         visits = finish_visit(visits_file, visits)
-                        rests = finish_batch_visit(rests_file, rests, self.max_count, self.rest_minutes)
+                        rests = finish_batch_visit(
+                            rests_file, rests,
+                            self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                    if result == "skipped":
+                        continue
                     journal[user] = {"status": result, "message": details,
                                      "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                     _atomic_json(path, journal)
