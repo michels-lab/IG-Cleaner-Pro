@@ -16,9 +16,16 @@ import sys
 import time
 from urllib.parse import urlparse
 
-from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
-                                   wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
-                                   DEFAULT_DELAY_SECONDS)
+try:
+    # tests import tools.profile_counts_robot, whereas the portable launcher
+    # imports profile_counts_robot from its own script directory.
+    from .profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
+                                        wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
+                                        DEFAULT_DELAY_SECONDS)
+except ImportError:
+    from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
+                                       wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
+                                       DEFAULT_DELAY_SECONDS)
 
 FIELDS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
 USERNAME = re.compile(r"^[A-Za-z0-9._]{1,30}$")
