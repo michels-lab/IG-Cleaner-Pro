@@ -14270,7 +14270,10 @@ window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
  mode=next;
  const search=document.getElementById("igcAutoSearch");if(search)search.value="";
+ const issuesTask=document.getElementById("igcAutoIssueTask");
+ if(issuesTask&&next!=="protected")issuesTask.value=next;
  window.igcAutoRender();
+ window.igcAutoRenderIssues();
 };
 window.igcAutoSkip=function(kind,user){
  refreshScope();
