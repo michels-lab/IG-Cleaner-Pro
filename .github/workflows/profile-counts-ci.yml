@@ -3,8 +3,10 @@ on:
   pull_request:
     paths:
       - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_bridge.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
       - 'tests/test_profile_counts_robot.py'
+      - 'tests/test_profile_counts_bridge.py'
       - 'tests/profile-counts-ui.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
   push:
@@ -12,8 +14,10 @@ on:
       - 'feat/profile-counts-queue-20261011'
     paths:
       - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_bridge.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
       - 'tests/test_profile_counts_robot.py'
+      - 'tests/test_profile_counts_bridge.py'
       - 'tests/profile-counts-ui.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
 permissions:
@@ -30,6 +34,6 @@ jobs:
         with:
           node-version: '22'
       - name: Python profile counts parsing, queue and resume
-        run: python -m unittest discover -s tests -p 'test_profile_counts_robot.py' -v
+        run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
       - name: Desktop Insights CSV and account isolation
         run: node tests/profile-counts-ui.test.cjs
