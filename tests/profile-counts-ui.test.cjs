@@ -57,5 +57,66 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  identity.active='ig_A';identity.owner='owner_B';
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('0 con datos')),'Different app login must not inherit counts');
+
+ // Simulate the actual local control protocol, including account-scoped sync.
+ const bridgeStore=new Map(),requests=[];
+ const robotElements={
+  igcCountsRows:{innerHTML:''},
+  igcCountsSummary:{replaceChildren(){},appendChild(){}},
+  igcCountsFootnote:{textContent:'',style:{}},
+  igcCountsQuery:{value:''},igcCountsFilter:{value:'all'},
+  igcCountsRobotStatus:{textContent:'',style:{}},
+  igcCountsRobotActions:{style:{display:'none'}},
+  igcCountsRobotRate:{value:'50'}
+ };
+ const bridgeIdentity={owner:'owner_A',active:'ig_A'};
+ const mockFetch=async(url,options)=>{
+  requests.push({url,options});
+  assert.match(url,/^http:\/\/127\.0\.0\.1:32111\/api\//);
+  assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijklmnop');
+  const action=url.split('/').pop();
+  let value={};
+  if(action==='start'){
+   value={status:'starting',message:'Starting',total:1,progress:0};
+  } else if(action==='status'){
+   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,per_hour:50};
+  } else if(action==='results'){
+   value={rows:[
+    {username:'public.user',followers:'3456',following:'789',status:'ok',
+     checked_at:'2026-10-12T01:00:00+00:00',approximate:'false'},
+    {username:'outside',followers:'999',following:'999',status:'ok',
+     checked_at:'2026-10-12T01:00:00+00:00',approximate:'false'}
+   ]};
+  }
+  return {ok:true,json:async()=>value};
+ };
+ const bridgeCtx={
+  window:{localStorage:{getItem:k=>bridgeStore.get(k)||null,setItem:(k,v)=>bridgeStore.set(k,v)},
+   IGC_INSTAGRAM_PROFILES:bridgeIdentity,
+   location:{hash:'#igc-robot=32111.0123456789abcdefghijklmnop'}},
+  document:{readyState:'loading',addEventListener(){},hidden:false,
+   getElementById:id=>robotElements[id]||null,
+   createElement:()=>({textContent:'',style:{}})},
+  followingRaw:[{username:'public.user'}],fetch:mockFetch,setInterval(){},setTimeout(){},
+  Date,Number,Array,Set,Map,JSON,Math,String,Error,encodeURIComponent
+ };
+ vm.createContext(bridgeCtx);vm.runInContext(match[1],bridgeCtx);
+ assert.equal(robotElements.igcCountsRobotActions.style.display,'flex');
+ await bridgeCtx.window.igcCountsRobotStart();
+ const start=requests.find(r=>r.url.endsWith('/start'));
+ assert(start,'Direct Start must submit a localhost POST');
+ assert.equal(start.options.method,'POST');
+ const startBody=JSON.parse(start.options.body);
+ assert.equal(startBody.owner,'owner_A');assert.equal(startBody.account,'ig_A');
+ assert.deepEqual(Array.from(startBody.usernames),['public.user']);
+ await bridgeCtx.window.igcCountsRobotPoll();
+ const bridgeSaved=JSON.parse(bridgeStore.get(Array.from(bridgeStore.keys())[0]));
+ assert.equal(bridgeSaved.records['public.user'].followers,'3456');
+ assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
+ bridgeIdentity.active='ig_B';
+ await bridgeCtx.window.igcCountsRobotPoll();
+ assert.equal(bridgeStore.size,1,'Polling another active Instagram must not save foreign results');
+ assert.match(robotElements.igcCountsRobotStatus.textContent,/otro Instagram/);
+ console.log('Profile Counts local bridge Start/Poll, token and account isolation: PASS');
  console.log('Profile Counts UI source parsing, CSV, and owner/profile isolation: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
