@@ -77,10 +77,30 @@ def visible_link_descriptors(page):
 
 
 def signed_in_handle(page):
-    """None while login form is visible or account identity remains ambiguous."""
+    """Return exactly one visibly proven logged-in identity, or None.
+
+    Instagram sometimes removes the Profile navigation anchor. An owner's
+    own profile with an Edit profile button AND matching header username is
+    alternate positive evidence, never an arbitrary URL or a Follow button.
+    """
     if page.locator('input[name="password"]').count():
         return None
-    return own_profile_from_anchors(visible_link_descriptors(page))
+    via_nav = own_profile_from_anchors(visible_link_descriptors(page))
+    from_own_page = None
+    candidate = user_from_href(getattr(page, "url", ""))
+    if candidate:
+        header = page.locator("header").first
+        if header.count() and header.is_visible():
+            edit = re.compile(r"^\\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\\s*$", re.I)
+            controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
+            names = header.locator("h1,h2").all_inner_texts()
+            if sum(c.count() for c in controls) == 1 and any(
+                str(n).strip().lstrip("@").casefold() == candidate for n in names
+            ):
+                from_own_page = candidate
+    if via_nav and from_own_page and via_nav != from_own_page:
+        return None  # two conflicting visible identities; never guess
+    return via_nav or from_own_page
 
 
 def challenge_detected(page):
