@@ -20,7 +20,9 @@ import webbrowser
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    register_visit, finish_visit, wait_required,
-                                   DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS)
+                                   DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS,
+                                   check_batch_rest, batch_path, load_batch_state,
+                                   batch_wait, finish_batch_visit)
 
 MAX_REQUEST = 900_000
 MAX_QUEUE = 10_000
@@ -44,6 +46,8 @@ class Collector:
         self.max_per_window = DEFAULT_COUNT
         self.window_minutes = DEFAULT_WINDOW_MINUTES
         self.min_delay_seconds = DEFAULT_DELAY_SECONDS
+        self.pause_every = 0
+        self.pause_minutes = 0.0
         self.wait_until = 0
 
     def result_path(self):
@@ -74,11 +78,16 @@ class Collector:
             request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
             request.get("min_delay_seconds", DEFAULT_DELAY_SECONDS),
         )
+        pause_every, pause_minutes = check_batch_rest(
+            request.get("pause_every", 0),
+            request.get("pause_minutes", 0),
+        )
         with self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Ya existe una recopilación activa. Detenla antes de iniciar otra.")
             self.owner, self.account, self.usernames = owner, account, normalized
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
+            self.pause_every, self.pause_minutes = pause_every, pause_minutes
             self.wait_until = 0
             saved = read_results(self.result_path())
             self.total = len(normalized)
@@ -132,6 +141,8 @@ class Collector:
                 saved = read_results(self.result_path())
                 visits_file = history_path(self.result_path())
                 visits = load_history(visits_file, saved)
+                rests_file = batch_path(self.result_path())
+                rests = load_batch_state(rests_file)
                 remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
                 self._update("running", "Consultando perfiles visibles...")
                 for index, username in enumerate(remaining, 1):
@@ -139,8 +150,11 @@ class Collector:
                         self._update("stopped", "Pausado; los resultados quedan guardados.")
                         return
                     while True:
-                        waiting = wait_required(visits, self.max_per_window, self.window_minutes,
-                                                self.min_delay_seconds)
+                        waiting = max(
+                            wait_required(visits, self.max_per_window, self.window_minutes,
+                                          self.min_delay_seconds),
+                            batch_wait(rests, self.pause_every, self.pause_minutes),
+                        )
                         if waiting <= 0:
                             break
                         with self.lock:
@@ -159,6 +173,8 @@ class Collector:
                         status, counts = collect_visible_counts(page, username)
                     finally:
                         visits = finish_visit(visits_file, visits)
+                        rests = finish_batch_visit(rests_file, rests, self.pause_every,
+                                                   self.pause_minutes)
                     if status in ("login_required", "blocked"):
                         self._update("blocked", "Instagram solicitó acceso/verificación o limitó las consultas. Se detuvo sin evasión.")
                         return
@@ -209,6 +225,8 @@ class Collector:
                 "max_per_window": self.max_per_window,
                 "window_minutes": self.window_minutes,
                 "min_delay_seconds": self.min_delay_seconds,
+                "pause_every": self.pause_every,
+                "pause_minutes": self.pause_minutes,
                 "wait_seconds": max(0, int(self.wait_until - time.time() + 0.999)) if self.wait_until else 0,
                 "owner": self.owner,
                 "account": self.account,
