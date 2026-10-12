@@ -3754,8 +3754,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Robot de navegador · Control local</strong>
 <p id="igcCountsRobotStatus" class="note" aria-live="polite">Abre Insta Cleaner desde el lanzador del robot de PC para activar la recopilación sin CSV.</p>
+<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:8px;accent-color:var(--accent)" aria-label="Avance del robot"></progress>
 <div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center">
 <label>Perfiles/hora <input id="igcCountsRobotRate" type="number" min="1" max="60" step="1" value="50" style="width:75px"></label>
+<button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Recuperar guardados</button>
 <button class="btn primary" type="button" onclick="igcCountsRobotStart()">▶ Iniciar recopilación</button>
 <button class="btn" type="button" onclick="igcCountsRobotLoginReady()">Ya inicié sesión</button>
 <button class="btn orange" type="button" onclick="igcCountsRobotStop()">Pausar robot</button>
@@ -13855,6 +13857,17 @@ function applyRobotRows(rows){
  if(applied){write(current);window.igcCountsRender()}
  return applied;
 }
+window.igcCountsRobotLoad=async function(){
+ if(!robot)return;
+ const users=members();
+ if(!users.length){robotStatus('Carga primero Following para recuperar la cuenta correcta.',true);return}
+ try{
+  const ctx=context();
+  const state=await bridgeRequest('load',{usernames:users,owner:ctx.owner,account:ctx.account});
+  robotStatus(state.message);
+  await window.igcCountsRobotPoll();
+ }catch(e){robotStatus('No se pudieron recuperar los registros: '+e.message,true)}
+};
 window.igcCountsRobotPoll=async function(){
  if(!robot||robotBusy)return;
  robotBusy=true;
@@ -13868,7 +13881,9 @@ window.igcCountsRobotPoll=async function(){
    const data=await bridgeRequest('results');
    applyRobotRows(data.rows);
   }
-  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos · '+state.per_hour+'/hora');
+  const percentage=state.total?Math.round(state.progress/state.total*100):0;
+  const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
+  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%) · '+state.per_hour+'/hora');
  }catch(e){robotStatus('No se puede conectar con el robot local: '+e.message,true)}
  finally{robotBusy=false}
 };
@@ -13880,6 +13895,7 @@ window.igcCountsRobotStart=async function(){
  try{
   const ctx=context();
   const result=await bridgeRequest('start',{usernames:users,owner:ctx.owner,account:ctx.account,per_hour:rate});
+  const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=result.total?Math.round(result.progress/result.total*100):0;
   robotStatus((result.message||'Robot iniciando')+' · '+result.progress+'/'+result.total);
  }catch(e){robotStatus('No se pudo iniciar: '+e.message,true)}
 };
