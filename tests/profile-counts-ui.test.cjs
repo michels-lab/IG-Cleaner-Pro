@@ -6,6 +6,7 @@ assert(match,'Profile Counts script missing from canonical Desktop source');
 new vm.Script(match[1],{filename:'igc-profile-counts-ui.js'});
 assert(source.includes('id="igcProfileCountsPanel"'),'Insights must expose Profile Counts');
 assert(source.includes('id="igcCountsImport"'),'Import control missing');
+assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot controls missing');
 
 (async ()=>{
  const store=new Map(),summary=[],elements={
@@ -19,6 +20,7 @@ assert(source.includes('id="igcCountsImport"'),'Import control missing');
  const ctx={window:{
    localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},
    IGC_INSTAGRAM_PROFILES:identity,
+   location:{hash:''},
  },document:{
   readyState:'loading',addEventListener(){},
   getElementById:id=>elements[id]||null,
@@ -26,7 +28,7 @@ assert(source.includes('id="igcCountsImport"'),'Import control missing');
   body:{appendChild(){}}
  },followingRaw:[{username:'public.user'},{username:'second.user'}],
   URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}},
-  Blob:class {constructor(){}},setTimeout(){},Date,Number,Array,Set,Map,JSON,Math,
+  Blob:class {constructor(){}},setTimeout(){},setInterval(){},Date,Number,Array,Set,Map,JSON,Math,
   encodeURIComponent,String,Error
  };
  vm.createContext(ctx);vm.runInContext(match[1],ctx);
