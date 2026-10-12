@@ -14,6 +14,7 @@ on:
       - 'tests/profile-counts-ui.test.cjs'
       - 'tests/automations-planner.test.cjs'
       - 'tests/automations-execution.test.cjs'
+      - 'tests/automations-issues.test.cjs'
       - 'tests/test_profile_counts_actions.py'
       - 'tests/mutual-focus-ratio.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
@@ -53,5 +54,7 @@ jobs:
         run: node tests/automations-planner.test.cjs
       - name: Automations Chrome action-control integration
         run: node tests/automations-execution.test.cjs
+      - name: Automations interactive anomalies and history
+        run: node tests/automations-issues.test.cjs
       - name: Mutuals Focus-only profile ratio priority
         run: node tests/mutual-focus-ratio.test.cjs
