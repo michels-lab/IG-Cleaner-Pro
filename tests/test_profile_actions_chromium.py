@@ -184,6 +184,22 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.assertEqual(self.page.evaluate("window.__dangerous"),[])
                 self.page.unroute_all()
 
+
+    def test_login_detects_editable_owner_profile_without_profile_nav(self):
+        from profile_counts_instagram import signed_in_handle
+        html = """<!doctype html><html><body>
+          <header><h2>my.profile</h2><button>Edit profile</button></header>
+          <main><a href="/random.person/">Random public profile</a></main>
+        </body></html>"""
+        self.page.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        self.page.goto("https://www.instagram.com/my.profile/")
+        self.assertEqual(signed_in_handle(self.page), "my.profile")
+        self.page.goto("https://www.instagram.com/somebody.else/")
+        self.assertIsNone(signed_in_handle(self.page),
+            "A profile URL must never prove the active account without matching owner controls")
+        self.page.unroute_all()
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
