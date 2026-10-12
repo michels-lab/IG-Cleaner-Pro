@@ -75,6 +75,28 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         p.owner,p.account,p.usernames="user-A","ig-one",["some.user"]
         self.assertEqual(self.request("/api/results")["rows"],[])
 
+    def test_load_saved_count_rows_without_starting_instagram(self):
+        from profile_counts_robot import save_results
+        self.collector.owner = "owner-A"
+        self.collector.account = "ig-one"
+        save_results(self.collector.result_path(), {
+            "public.user": {
+                "username":"public.user", "followers":"333", "following":"222",
+                "checked_at":"2026-10-12T02:00:00+00:00",
+                "source":"instagram_visible_profile_browser", "status":"ok", "approximate":"false"
+            }
+        })
+        state = self.request("/api/load", body={
+            "owner":"owner-A","account":"ig-one","usernames":["public.user","second.user"]
+        })
+        self.assertEqual(state["status"],"idle")
+        self.assertEqual(state["progress"],1)
+        self.assertEqual(state["total"],2)
+        self.assertFalse(state["running"])
+        rows = self.request("/api/results")["rows"]
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]["followers"],"333")
+
     def test_start_and_login_ready_without_real_browser(self):
         # No Internet/Instagram visit in an offline CI test.
         self.collector._run=lambda: self.collector._update("complete","Simulated done",0)
