@@ -81,6 +81,31 @@ def chrome_app_args(executable: Path, page: Path, workspace: Path, port: int, to
             "--app=" + url]
 
 
+def acquire_single_instance():
+    """Prevent reopening a second window with a dead port/token for the same profile."""
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_wchar_p]
+    kernel32.CreateMutexW.restype = ctypes.c_void_p
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel32.CloseHandle.restype = ctypes.c_bool
+    handle = kernel32.CreateMutexW(None, False, "Local\\MichelsLab_InstaCleanerPro_Desktop")
+    if not handle:
+        raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
+    if ctypes.get_last_error() == 183:
+        kernel32.CloseHandle(handle)
+        raise RuntimeError("Insta Cleaner Pro ya está abierto. Usa la ventana existente.")
+    return handle
+
+
+def release_single_instance(handle):
+    if handle is not None and sys.platform == "win32":
+        import ctypes
+        ctypes.windll.kernel32.CloseHandle(handle)
+
+
 def alert(message: str) -> None:
     """User-visible startup errors for --windowed Windows binaries."""
     if sys.platform == "win32":
@@ -117,26 +142,30 @@ def main(argv=None) -> int:
             print("PASS: app Desktop y robot integrados en un ejecutable.")
             return 0
 
-        home = app_home()
-        page = prepare_html(source, home / BUNDLED_HTML)
-        browser = chrome_path()
-        chrome_workspace = home / "workspace-browser"
-        chrome_workspace.mkdir(parents=True, exist_ok=True)
-        # Keep existing result and Instagram session paths, so an upgrade from
-        # the old controller retains collected data and signed-in IG browser.
-        legacy = Path.home() / ".ig-cleaner-pro"
-        collector = Collector(legacy / "profile-counts", legacy / "instagram-browser")
-        token = secrets.token_urlsafe(32)
-        server = build_server(collector, token, 0)
-        worker = threading.Thread(target=server.serve_forever, daemon=True)
-        worker.start()
+        mutex = acquire_single_instance()
         try:
-            chrome = subprocess.Popen(chrome_app_args(browser, page, chrome_workspace,
-                                                     server.server_port, token))
-            chrome.wait()
+            home = app_home()
+            page = prepare_html(source, home / BUNDLED_HTML)
+            browser = chrome_path()
+            chrome_workspace = home / "workspace-browser"
+            chrome_workspace.mkdir(parents=True, exist_ok=True)
+            # Keep existing result and Instagram session paths, so an upgrade
+            # retains earlier robot results and the signed-in Instagram browser.
+            legacy = Path.home() / ".ig-cleaner-pro"
+            collector = Collector(legacy / "profile-counts", legacy / "instagram-browser")
+            token = secrets.token_urlsafe(32)
+            server = build_server(collector, token, 0)
+            worker = threading.Thread(target=server.serve_forever, daemon=True)
+            worker.start()
+            try:
+                chrome = subprocess.Popen(chrome_app_args(browser, page, chrome_workspace,
+                                                         server.server_port, token))
+                chrome.wait()
+            finally:
+                stop_safely(server)
+            return 0
         finally:
-            stop_safely(server)
-        return 0
+            release_single_instance(mutex)
     except Exception as exc:
         alert("Insta Cleaner no pudo iniciarse:\n" + str(exc))
         return 1
