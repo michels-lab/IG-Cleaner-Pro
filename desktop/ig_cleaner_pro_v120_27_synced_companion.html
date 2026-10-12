@@ -14191,5 +14191,151 @@ const orig=window.showPage;if(typeof orig==='function')window.showPage=function(
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
 })();
 </script>
+
+<script id="igc-automations-plan">
+(function(){
+"use strict";
+// This module is intentionally review-only until the browser action runner
+// passes live, owner-approved acceptance. No profile-changing network requests.
+let mode="unfollow",identity="",skips={unfollow:new Set(),cancel:new Set()};
+const choices=["unfollow","cancel","protected"];
+function norm(value){const v=String(value||"").trim().replace(/^@/,"").toLowerCase();return /^[a-z0-9._]{1,30}$/.test(v)?v:""}
+function scope(){
+ const x=window.IGC_INSTAGRAM_PROFILES||{};
+ return encodeURIComponent(String(x.owner||"local"))+"__"+encodeURIComponent(String(x.active||"legacy"));
+}
+function key(){return "igc_action_protected_v1__"+scope()}
+function timingKey(){return "igc_action_timing_v1__"+scope()+"__"+mode}
+function saved(){
+ try{
+  const x=JSON.parse(localStorage.getItem(key())||"{}");
+  return {unfollow:Array.isArray(x.unfollow)?x.unfollow.map(norm).filter(Boolean):[],
+          cancel:Array.isArray(x.cancel)?x.cancel.map(norm).filter(Boolean):[]};
+ }catch{return {unfollow:[],cancel:[]}}
+}
+function isProtected(kind,u){return saved()[kind].includes(u)||(kind==="unfollow"&&typeof protectedSet!=="undefined"&&protectedSet.has(u))}
+function write(kind,u,protectedValue){
+ const state=saved(),set=new Set(state[kind]);if(protectedValue)set.add(u);else set.delete(u);
+ state[kind]=[...set];localStorage.setItem(key(),JSON.stringify(state));
+ if(kind==="unfollow"&&typeof protectedSet!=="undefined"){
+  if(protectedValue)protectedSet.add(u);else protectedSet.delete(u);
+  if(typeof saveSet==="function"&&typeof LS_PROT!=="undefined")saveSet(LS_PROT,protectedSet);
+ }
+}
+function inputs(){
+ if(mode==="cancel"){
+  return (typeof pendingRequestsRaw!=="undefined"?pendingRequestsRaw:[]).map(r=>({kind:"cancel",username:norm(r.username)})).filter(r=>r.username);
+ }
+ if(mode==="protected"){
+  const p=saved(),accounts=new Set(p.unfollow);
+  if(typeof protectedSet!=="undefined")for(const u of protectedSet)accounts.add(norm(u));
+  return [...accounts].filter(Boolean).map(username=>({kind:"unfollow",username}))
+    .concat(p.cancel.map(username=>({kind:"cancel",username})));
+ }
+ if(typeof followingRaw==="undefined"||typeof followersMap==="undefined")return [];
+ return followingRaw.filter(r=>r&&r.username&&!followersMap.has(r.username))
+   .map(r=>({kind:"unfollow",username:norm(r.username)})).filter(r=>r.username);
+}
+function refreshScope(){
+ const active=scope();
+ if(identity!==active){identity=active;skips={unfollow:new Set(),cancel:new Set()}}
+}
+function setStatus(text){
+ const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
+}
+window.igcAutoChoose=function(next){
+ if(!choices.includes(next))return;
+ mode=next;
+ const search=document.getElementById("igcAutoSearch");if(search)search.value="";
+ window.igcAutoRender();
+};
+window.igcAutoSkip=function(kind,user){
+ refreshScope();
+ if(!["unfollow","cancel"].includes(kind))return;
+ const u=norm(user);if(!u)return;
+ skips[kind].add(u);window.igcAutoRender();
+};
+window.igcAutoProtect=function(kind,user){
+ refreshScope();
+ if(!["unfollow","cancel"].includes(kind))return;
+ const u=norm(user);if(!u)return;
+ write(kind,u,!isProtected(kind,u));
+ window.igcAutoRender();
+};
+window.igcAutoClearSkipped=function(){
+ refreshScope();
+ skips.unfollow.clear();skips.cancel.clear();window.igcAutoRender();
+};
+window.igcAutoSaveTiming=function(){
+ try{
+  const count=Number(document.getElementById("igcAutoBatch")?.value);
+  const rest=Number(document.getElementById("igcAutoRest")?.value);
+  const gap=Number(document.getElementById("igcAutoGap")?.value);
+  if(!Number.isInteger(count)||count<1||count>1000||
+     !Number.isFinite(rest)||rest<0||rest>1440||
+     !Number.isFinite(gap)||gap<0||gap>3600)throw Error("Verifica los valores de tanda y espera.");
+  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
+  setStatus("Ritmo guardado para esta cuenta y tarea. La ejecución está pendiente de validación en Instagram real.");
+ }catch(e){setStatus(e.message)}
+};
+window.igcAutoRender=function(){
+ const root=document.getElementById("igcAutoRows");if(!root)return;
+ refreshScope();
+ const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
+ const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
+ const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
+ const readyCount=Math.max(0,all.length-protectedCount-skippedCount);
+ const stats=document.getElementById("igcAutoMetrics");
+ if(stats){
+  stats.replaceChildren();
+  for(const label of ["Lista: "+all.length,"Preparados: "+readyCount,"Protegidos: "+protectedCount,"Omitidos: "+skippedCount,"Errores de ejecución: —"]){
+   const item=document.createElement("span");item.textContent=label;stats.appendChild(item);
+  }
+ }
+ if(mode==="unfollow"&&(!Array.isArray(followingRaw)||!followingRaw.length||!Array.isArray(followersRaw)||!followersRaw.length)){
+  setStatus("Necesitas exportaciones verificables de Following y Followers para preparar una revisión. Sin esos datos no se debe asumir que alguien no te sigue.");
+ }else if(mode==="protected"){
+  setStatus("Perfiles protegidos: se omiten siempre en las listas de acciones. Aquí puedes retirar la protección.");
+ }else{
+  setStatus("Solo vista previa: "+(mode==="cancel"?"solicitudes enviadas":"cuentas que podrían no seguirte")+". Ninguna acción se ejecuta hasta que esté validado el robot de Chrome.");
+ }
+ try{
+  const t=JSON.parse(localStorage.getItem(timingKey())||"null");
+  if(t){
+   document.getElementById("igcAutoBatch").value=String(t.count);
+   document.getElementById("igcAutoRest").value=String(t.rest);
+   document.getElementById("igcAutoGap").value=String(t.gap);
+  }
+ }catch{}
+ root.replaceChildren();
+ const visible=list.slice(0,300);
+ if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No hay perfiles para este filtro.";tr.appendChild(td);root.appendChild(tr);return}
+ for(const item of visible){
+  const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),actions=document.createElement("td");
+  const link=document.createElement("a");link.href="https://www.instagram.com/"+encodeURIComponent(item.username)+"/";
+  link.target="_blank";link.rel="noopener noreferrer";link.textContent="@"+item.username;u.appendChild(link);
+  const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
+  status.textContent=protectedNow?"★ Favorito protegido":skipped?"Omitido esta vez":mode==="protected"?"Protegido":"Pendiente de revisión";
+  const protect=document.createElement("button");protect.className="btn";protect.type="button";
+  protect.textContent=protectedNow?"Quitar favorito":"★ Proteger / Favorito";
+  protect.addEventListener("click",()=>window.igcAutoProtect(item.kind,item.username));
+  actions.appendChild(protect);
+  if(mode!=="protected"){
+   const skip=document.createElement("button");skip.className="btn";skip.type="button";
+   skip.textContent=skipped?"Omitido":"Omitir esta vez";skip.disabled=skipped||protectedNow;
+   skip.addEventListener("click",()=>window.igcAutoSkip(item.kind,item.username));actions.appendChild(skip);
+  }
+  tr.appendChild(u);tr.appendChild(status);tr.appendChild(actions);root.appendChild(tr);
+ }
+};
+const original=window.showPage;
+if(typeof original==="function")window.showPage=function(id){
+ const ret=original.apply(this,arguments);
+ if(id==="automations")window.igcAutoRender();
+ return ret;
+};
+})();
+</script>
 </body>
 </html>
