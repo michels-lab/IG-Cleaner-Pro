@@ -48,6 +48,10 @@ function harness(){
  const target=list.children.find(y=>y.textContent.includes('second@example.test'));
  target.click();
  await Promise.resolve();await Promise.resolve();
+ if(x.test.S.session?.user?.email!=='second@example.test')
+  console.error('switch debug',{busy:x.test.S.busy,owner:x.test.S.session?.user?.email,
+    target:target.textContent,clicked:typeof target.click,reloads:x.reloads.length,
+    savedOwners:Object.keys(x.test.readRemembered())});
  assert.equal(x.test.S.session.user.email,'second@example.test');
  assert.equal(JSON.parse(x.entries.get(SES)).user.email,'second@example.test');
  assert.equal(x.reloads.length,1,'Switch must reload the owner namespace');
