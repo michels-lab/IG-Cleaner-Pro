@@ -1,3 +1,5 @@
+> **Actualización de desarrollo — 2026-10-12 (no publicada):** El panel de Profile Counts muestra **Conectar Instagram**, los cinco controles de ritmo, **Guardar intervalos**, **Pausar** y **Reanudar**, además de métricas de analizados, correctos, pendientes, errores, sin datos y progreso porcentual. El acceso a Instagram se realiza en Chrome normal del robot de Windows; no se introduce la contraseña en la app. Conectar explícitamente inicia el descubrimiento; ya no se inicia una recopilación al abrir la página. Pausar espera a un punto seguro y conserva CSV/cola, y Reanudar solicita el mismo propietario y `account_key` antes de volver a consultar perfiles pendientes. Los límites de visitas previas permanecen en disco. La función autónoma, la lectura del DOM y las pausas requieren aceptación real del propietario. La última versión publicada continúa siendo **v120.42** hasta un nuevo release autorizado. Las tareas de cancelación de solicitudes y unfollow viven **separadas** en Automatizaciones y todavía no ejecutan cambios en Instagram.
+
 # Profile Counts — robot navegador y estadísticas por perfil
 
 **Estado:** desarrollo en la rama feature; **no publicado**. Flujo autónomo actualizado el 11 de octubre de 2026. Esta función no confunde el número de cuentas que **tú** sigues con los Followers/Following de **cada tercero**.
@@ -6,7 +8,7 @@
 
 **Este es el flujo principal pedido por el propietario**:
 
-1. En Windows abre el paquete de prueba de Insta Cleaner mediante `Start-Insta-Cleaner-Robot.cmd` (Chrome instalado, sin instalar Python).
+1. En Windows abre el paquete integrado de prueba mediante `InstaCleanerPro.exe` (Chrome instalado). No ejecutes archivos `.cmd`, scripts de Python ni un puente independiente; esta indicación corresponde al candidato integrado, no al ZIP estable v120.42.
 2. El controlador abre Insta Cleaner y su ventana de Chrome. **Inicia sesión en Instagram** si hace falta; no necesitas iniciar otra tarea, pulsar «Ya inicié sesión», configurar tandas, importar archivos ni extraer tu Following.
 3. Cuando aparezca la sesión de Instagram, el robot busca el enlace visible de tu propio perfil, abre **Following** y recorre los perfiles mostrados en el cuadro de Instagram. Guarda la lista detectada progresivamente por cuenta.
 4. Después visita cada perfil obtenido y lee los dos contadores visibles. En Insta Cleaner → **Insights → Profile Counts** aparecen el progreso y las cifras conforme se guardan. El robot controla sus pausas por dentro y conserva el avance si reinicias.
@@ -110,3 +112,8 @@ Estados: `ok` — ambas cifras leídas; `unavailable` — no visibles; `error` �
 - UI Chromium con ZIP de Following real de prueba y CSV de resultado; independencia de propietario y `account_key`.
 - Android: importar y mostrar CSV a través de WebView en dispositivo/emulador, conservando auth, Focus y datos anteriores.
 - Verificar empaquetado del HTML actualizado y las instrucciones de instalación; no publicar ni alterar la firma Android antes del release coordinado y autorizado.
+
+
+## Corrección de lecturas Following parciales — 2026-10-12
+
+Cuando Instagram solo entrega una parte de Following, la lectura se marca **provisional** y conserva los usuarios del último checkpoint de la **misma cuenta**; una visita incompleta nunca borra la cola histórica. Solo una exploración completa, contrastada con un contador visible **exacto** (no redondeado), permite sustituir la cola antigua. Los resultados de perfiles en una cola provisional son informativos: **no equivalen a una lista completa ni autorizan unfollow**. Esta garantía tiene pruebas unitarias y de reanudación simulada; falta validación en la sesión real del propietario.

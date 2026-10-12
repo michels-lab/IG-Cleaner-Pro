@@ -59,6 +59,8 @@ jobs:
         run: node tests/multi-instagram-contract.test.cjs
       - name: Verify JWT expiry, proactive refresh and cross-owner session safety
         run: node tests/auth-session-refresh.test.cjs
+      - name: Test Switch Account with remembered logins and preserved owner history
+        run: node tests/auth-account-switch.test.cjs
       - name: Verify code-only Supabase Auth email templates (offline; no production mutation)
         run: python3 tests/auth-email-templates-contract.py
       - name: Validate sanitized Instagram import fixture

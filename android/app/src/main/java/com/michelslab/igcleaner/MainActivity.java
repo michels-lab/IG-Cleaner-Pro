@@ -1194,6 +1194,7 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
         MaterialButton exportCloudData = view.findViewById(R.id.exportCloudData);
         MaterialButton deleteCloudData = view.findViewById(R.id.deleteCloudData);
+        MaterialButton savedAccountSignIn = view.findViewById(R.id.savedAccountSignIn);
         MaterialButton switchAccount = view.findViewById(R.id.switchAccount);
         MaterialButton logout = view.findViewById(R.id.logout);
         TextView accountEmail = view.findViewById(R.id.accountEmail);
@@ -1316,47 +1317,83 @@ public final class MainActivity extends AppCompatActivity {
         exportCloudData.setOnClickListener(v -> exportSyncedCloudData());
         deleteCloudData.setOnClickListener(v -> confirmDeleteSyncedCloudData());
 
-        switchAccount.setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
-                .setTitle("Switch account")
-                .setMessage("Sign out of " + api.getEmail()
-                        + " and sign in with a different IG Cleaner email? Your Instagram profiles, local history and cloud backups will not be deleted. You will need the other account's password.")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Switch account", (dialog, which) -> {
-                    switchAccount.setEnabled(false);
-                    logout.setEnabled(false);
-                    setGlobalStatus("SWITCHING • signing out safely");
-                    // Serialize behind any in-flight native sync so an earlier request
-                    // cannot complete after the owner changes.
-                    runAsync(() -> {
-                        api.logout();
-                        api.setEmail("");
-                        mainHandler.post(() -> {
-                            syncedFollowing = new JSONArray();
-                            syncedFollowers = new JSONArray();
-                            syncedPending = new JSONArray();
-                            syncedWorkspaceState = new JSONObject();
-                            syncedReviewStateAvailable = false;
-                            currentBatch = null;
-                            currentItems = new JSONArray();
-                            itemByUsername.clear();
-                            opened.clear();
-                            remotelyReviewed.clear();
-                            reviewedDevice.clear();
-                            auditEventByUsername.clear();
-                            auditOpened.clear();
-                            // Keep per-owner caches and original ZIP/local review history.
-                            setGlobalStatus("SIGN IN • choose another account");
-                            showNativeAccountScreen();
-                        });
-                    }, true);
-                }).show());
+        savedAccountSignIn.setVisibility(api.rememberedAccounts().isEmpty() ? View.GONE : View.VISIBLE);
+        savedAccountSignIn.setOnClickListener(v -> switchAccount.performClick());
+
+        switchAccount.setOnClickListener(v -> {
+            java.util.List<String> saved = api.rememberedAccounts();
+            String[] choices = new String[saved.size() + 1];
+            for (int i = 0; i < saved.size(); i++) {
+                String user = saved.get(i);
+                choices[i] = user.equalsIgnoreCase(api.getEmail()) ?
+                        "✓ " + user + " (current)" : user;
+            }
+            choices[saved.size()] = "＋ Add another account";
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Switch account")
+                    .setItems(choices, (dialog, choice) -> {
+                        if (choice == saved.size()) {
+                            // Keep encrypted sessions so returning is one tap;
+                            // only Sign out removes the selected remembered login.
+                            runAsync(() -> {
+                                api.prepareAnotherAccount();
+                                mainHandler.post(() -> {
+                                    resetAfterAccountChange();
+                                    setGlobalStatus("SIGN IN • add another account");
+                                    showNativeAccountScreen();
+                                });
+                            }, true);
+                            return;
+                        }
+                        String selected = saved.get(choice);
+                        if (selected.equalsIgnoreCase(api.getEmail())) return;
+                        switchAccount.setEnabled(false);
+                        setGlobalStatus("SWITCHING • checking saved session");
+                        // Serialized by the app's single IO executor; a pending
+                        // sync cannot finish under the newly selected owner.
+                        runAsync(() -> {
+                            try {
+                                api.activateRememberedAccount(selected);
+                                mainHandler.post(() -> {
+                                    resetAfterAccountChange();
+                                    setGlobalStatus("CONNECTED • " + api.getEmail());
+                                    showNativeAccountScreen();
+                                });
+                            } finally {
+                                // A rejected or expired login must not leave
+                                // the Switch account control permanently disabled.
+                                mainHandler.post(() -> switchAccount.setEnabled(true));
+                            }
+                        }, true);
+                    }).setNegativeButton("Cancel", null).show();
+        });
 
         logout.setOnClickListener(v -> {
-            clearWorkspaceCache();
+            // Sign out forgets the CURRENT login only, unlike account switching.
             api.logout();
-            setGlobalStatus("SIGNED OUT");
+            resetAfterAccountChange();
+            setGlobalStatus("SIGNED OUT • remembered accounts preserved");
             showNativeAccountScreen();
         });
+    }
+
+    private void resetAfterAccountChange() {
+        disposeWorkspaceWebView();
+        // Invalidate in-memory values; owner-specific cached exports, review
+        // history and cloud tables are never deleted by account switching.
+        syncedFollowing = new JSONArray();
+        syncedFollowers = new JSONArray();
+        syncedPending = new JSONArray();
+        syncedWorkspaceState = new JSONObject();
+        syncedReviewStateAvailable = false;
+        currentBatch = null;
+        currentItems = new JSONArray();
+        itemByUsername.clear();
+        opened.clear();
+        remotelyReviewed.clear();
+        reviewedDevice.clear();
+        auditEventByUsername.clear();
+        auditOpened.clear();
     }
 
     private void showWorkspaceScreen(String targetPage, String subtitle) {

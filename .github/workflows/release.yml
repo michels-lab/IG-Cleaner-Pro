@@ -96,7 +96,7 @@ jobs:
   windows-robot:
     needs: release-request-gate
     if: needs.release-request-gate.outputs.publish == 'true'
-    name: Frozen Windows robot and double-click bundle
+    name: Insta Cleaner Pro integrated Windows executable
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
@@ -116,41 +116,55 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install playwright==1.57.0 pyinstaller==6.16.0
-      - name: Build Windows executable with embedded Playwright driver
+      - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
-          pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts tools/profile_counts_bridge.py
-      - name: Test the frozen executable without contacting Instagram
+          python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
+      - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |
-          & ".\dist\IGCleanerProfileCounts.exe" --healthcheck
-          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+          python -m unittest discover -s tests -p 'test_native_desktop.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Integrated desktop tests failed." }
       - name: Create self-contained Desktop app HTML
         shell: pwsh
         run: |
-          $Version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
-          if (!$Version) { throw 'Missing release version from signed Android metadata' }
           New-Item -ItemType Directory -Force "artifacts\profile-counts-preview" | Out-Null
-          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version $Version
+          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version ((Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName)
           if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
           node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
-      - name: Bundle launcher, local executable, and instructions
+      - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
-          Copy-Item dist/IGCleanerProfileCounts.exe artifacts/profile-counts-preview/
-          Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd artifacts/profile-counts-preview/
+          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --name InstaCleanerPro tools/ig_cleaner_desktop.py
+      - name: Test the frozen executable without contacting Instagram
+        shell: pwsh
+        run: |
+          # A --windowed PyInstaller application is a GUI process; calling it
+          # with & does not reliably wait or refresh PowerShell's LASTEXITCODE.
+          $candidate = (Resolve-Path ".\dist\InstaCleanerPro.exe").Path
+          $result = Start-Process -FilePath $candidate -ArgumentList "--healthcheck" -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Integrated Windows executable healthcheck exited $($result.ExitCode)." }
+      - name: Bundle integrated one-click application and instructions
+        shell: pwsh
+        run: |
+          Copy-Item dist/InstaCleanerPro.exe artifacts/profile-counts-preview/
           Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
           @(
             "candidate_source_sha=${{ github.sha }}"
             "candidate_kind=stable_github_release_live_instagram_untested"
-            "application=IG Cleaner Pro / Profile Counts"
+            "application=Insta Cleaner Pro / Windows App + Automations + Profile Counts"
           ) | Set-Content artifacts/profile-counts-preview/BUILD-INFO.txt
-          Get-FileHash artifacts/profile-counts-preview/IGCleanerProfileCounts.exe -Algorithm SHA256 |
+          Get-FileHash artifacts/profile-counts-preview/InstaCleanerPro.exe -Algorithm SHA256 |
             Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
-          if (!(Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd)) { throw "Launcher absent." }
-          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath "artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v${Version}.zip" -Force
+          if (!(Test-Path artifacts/profile-counts-preview/InstaCleanerPro.exe)) { throw "Integrated Windows app absent." }
+          if (Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd) { throw "Legacy .cmd launcher must not ship." }
+          # The HTML is embedded inside the EXE, not an additional file the user must open.
+          Remove-Item artifacts/profile-counts-preview/IG-Cleaner-Pro.html -Force
+          if (Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html) { throw "HTML must not ship separately." }
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v${Version}.zip -Force
       - uses: actions/upload-artifact@v4
         with:
           name: ig-cleaner-stable-windows-robot-${{ github.sha }}
@@ -341,13 +355,16 @@ jobs:
           python3 - "$ROBOT_ZIP" "${{ steps.release.outputs.version }}" <<'PY'
           import sys, zipfile
           path, version = sys.argv[1:]
-          required = {"Start-Insta-Cleaner-Robot.cmd", "IGCleanerProfileCounts.exe", "IG-Cleaner-Pro.html"}
+          required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt"}
           with zipfile.ZipFile(path) as archive:
               names = set(archive.namelist())
-              assert required <= names, f"Missing Windows robot files: {required-names}"
-              html = archive.read("IG-Cleaner-Pro.html").decode("utf-8")
-              assert f"UI v{version}" in html, "Windows robot bundle has wrong app version"
-          print(f"Verified Windows collector ZIP version {version}: {path}")
+              assert required <= names, f"Missing integrated Windows files: {required-names}"
+              assert "Start-Insta-Cleaner-Robot.cmd" not in names, "Legacy launcher must not ship"
+              assert "IG-Cleaner-Pro.html" not in names, "Embedded UI must not ship as external HTML"
+              build = archive.read("BUILD-INFO.txt").decode("utf-8")
+              assert "stable_github_release_live_instagram_untested" in build
+              assert archive.getinfo("InstaCleanerPro.exe").file_size > 10_000_000
+          print(f"Verified integrated Windows EXE ZIP v{version}: {path}")
           PY
           (cd dist && rm -f SHA256SUMS.txt && sha256sum * > SHA256SUMS.txt)
       - name: Verify release bundle contents
@@ -362,7 +379,7 @@ jobs:
 
       - name: Build release notes
         run: |
-          cat > release-notes.md <<EOF
+          cat > release-notes.md <<'EOF'
           # Instagram Cleaner Pro v${{ steps.release.outputs.version }}
 
           Normal GitHub release (**not a prerelease**).
@@ -372,10 +389,10 @@ jobs:
 
           **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
 
-          ## Automatic Instagram robot for Windows
-          **To test the Instagram browser collector**, download `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip`, extract everything and double-click `Start-Insta-Cleaner-Robot.cmd`. Requires Google Chrome, but not Python. After you log in to Instagram in the visible browser, it attempts to discover Following and read visible follower/following counts automatically. The ordinary Desktop HTML and Android APK do NOT run this Windows collector.
+          ## Windows integrated app + automation
+          **To test the bundled Windows app**, download `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip`, extract, and open **InstaCleanerPro.exe** (Chrome required; no separate CMD or Python installation). The EXE contains the Desktop workspace, Profile Counts robot, and owner-confirmed Cancel Requests / Unfollow actions. Changes to Instagram require explicit selection, approval, and verification. Mutuals is Focus-only.
 
-          **Test limitation:** real Instagram signed-in collection has not been validated. Instagram may change its layout, block automated browsing or yield incomplete data. No challenge bypass is performed.
+          **Acceptance limitation:** automated browser flows passed offline Chromium UI simulations; live Instagram signed-in DOM, action clicks on the owner's account, and real Windows/Android account data were not validated. Instagram can block browsing or change controls. Stop on challenge/account mismatch, back up data, and test with a small deliberately selected batch. Android cannot run the Windows robot or automatically synchronize new Profile Counts results.
           ## Android
           Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
 

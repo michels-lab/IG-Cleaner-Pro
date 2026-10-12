@@ -1,3 +1,9 @@
+## v120.43 release candidate — explicit owner authorization 2026-10-12
+
+- Owner requested "Dales release" after integrated Windows/Android/Desktop automated QA. Prepare v120.43 only with the integrated Windows EXE and synchronized Desktop/Android version. A release commit must run exact-commit screenshot and signed APK checks; do not publish a mismatched old CMD robot ZIP.
+- PR #82 on `feat/profile-counts-visible-controls-20261012`; Profile Counts partial Following fix and integrated Windows launch verified in CI. **Live Instagram owner/Windows/Samsung acceptance is still pending** and must be disclosed. Android does not run Playwright locally or auto-sync Windows counts.
+- Release authorization is activated in a separate main-branch request after merging validated source and version metadata; do not mistake the branch preparation itself for a published release.
+
 ## v120.42 published — owner testing of automatic Instagram profile counts (2026-10-12)
 
 - Stable [v120.42](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.42) is **published**, not queued; verified normal release run [38216103775](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38216103775) SUCCESS, commit `1c806e34e3f3b84c9311f466353a6ad30fe735c2`, all seven assets uploaded.
@@ -424,3 +430,7 @@ Direct evidence on the exact current branch:
 - Supabase Performance Advisor: **0 Auth RLS Initialization Plan warnings**; one informational unused-index notice remains.
 
 These checks do not replace Android `assembleDebug` / embedded Workspace packaging or the full same-SHA CI run. Do not merge PR #20 until executable CI resumes and passes.
+
+## 2026-10-12 — Real Switch Account behavior, not Sign Out
+
+The owner clarified that Switch Accounts must **choose between remembered app login sessions** rather than open Sign In. Implemented in PR #82 (not in stable v120.42): native Android chooser with AndroidKeyStore AES-GCM encrypted session slots and Desktop account selection preserving each login's refresh token; Sign Out removes only the selected saved login. Add another account preserves previous sessions. Login selection rebuilds per-owner data scope and never deletes Followings, Focus, reviews or cloud backups. New Desktop and Android emulator tests added. A real Android phone and Windows owner acceptance are pending.

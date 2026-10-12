@@ -40,7 +40,7 @@
       "artifactTemplate": "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip",
       "transport": "github-release",
       "runtime": "local-windows-chrome",
-      "execution": "double-click Start-Insta-Cleaner-Robot.cmd",
+      "execution": "double-click InstaCleanerPro.exe (bundled UI + local robot)",
       "liveInstagramOwnerAcceptance": "not-yet-validated"
     }
   },

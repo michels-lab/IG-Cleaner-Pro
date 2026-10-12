@@ -1426,3 +1426,87 @@ The user explicitly prefers to inspect apps **after release** rather than waitin
 ## 2026-10-12 — Shared agent contract synchronization
 
 Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructions.md to Michel-Software-Standards child-agent-core 2026-10-12.1. Local product instructions remain byte-for-byte unchanged outside those blocks. Carries current installer EULA/shortcut, standalone HTML (where applicable), and independent work during CI policies; does not modify app code, workflows, versions or releases. Validation: one managed block per target, exact canonical body and preserved local prefix/suffix. Product/runtime acceptance is not inferred from this documentation change.
+
+
+## 2026-10-12 — Profile Counts visible controls + Automation planner + Mutuals Focus ratio (candidate)
+
+- Owner reported that Windows robot's Instagram connect/login entry, batch size/window, per-profile delays, Pause/Resume, progress and error counts were not findable. Root cause in Desktop source: #igcCountsRobotActions and #igcCountsRobotPaceNote intentionally hidden, and automatic startup on page load; old /api/resume only signaled manual login, not paused work.
+- Candidate adds explicit Conectar Instagram/Chrome, visible per-account pacing controls, Save, Pause, Resume and progress (analyzed, success, remaining, errors, unavailable, current username/wait, percentage). A saved pause is reentered only by explicit Resume; local controller requests enforce owner/account and preserve visits/results across sessions. No secrets or Meta API access.
+- Separate **Automatizaciones** planning page gives per-list Skip this batch, persistent ★ protected favorites, search and accessible Protected view for cancel-sent-requests and unfollow-not-followback tasks; timing stored by owner/account/task. Browser actions explicitly **disabled** until DOM/owner acceptance; do not misrepresent the queue as an automated execution.
+- Mutuals **remains Focus-only**; Following/Followers ratio from valid Profile Counts records ranks review batch candidates, with existing review/history exclusions and protected checks. Ratios are not used to unfollow, and missing numbers provide no ratio priority.
+- Added/adjusted controller, UI, Chromium and planner behavioral tests plus `docs/AUTOMATIONS.md`. Await exact-head CI including Android emulator and Windows packaging; keep changes on PR branch until validation. Real Instagram login, action execution and physical Android acceptance not yet verified; no release authorized. Stable remains v120.42.
+
+## 2026-10-12 — Automations Chrome action engine implemented on PR #82 (candidate)
+
+- Follow-up requirement: `Automatizaciones` must **execute** Cancel Sent Requests and Unfollow Non-Followback, rather than show a read-only queue. Keep Mutuals Focus-only.
+- Added `tools/profile_actions.py`: per-owner/Instagram/task SHA-256 segregated local journal, guarded visible Playwright browser actions from a user-signed-in Chrome window, verification of signed-in owner before any target visit, strict target URL/header and pre-/post-button verification. Requested→Cancel Request→Follow and Following→Unfollow→Follow in English/Spanish are best-effort DOM selectors; explicit visible "Follows you/Te sigue" blocks unfollow. Challenge, login, identity mismatch, incorrect control or unverified final action stops and records state. No Meta API, login password capture or CAPTCHA evasion.
+- `tools/profile_counts_bridge.py` now exposes token-protected loopback `/api/actions/status`, `start`, `pause`, `continue`, `protect`, `skip`, binding action attempts to the IG Cleaner owner/account and expected IG handle; refuses concurrent Profile Counts and action-browser sessions. Rate-window and batch cooldowns remain disk-backed. Resuming skips successful results and ambiguous click results to avoid duplicate side effects; no silent retries.
+- Desktop Automations UI now has an explicit **Ejecutar tanda seleccionada** approval dialog with username preview, live action metrics/status/progress, per-profile favorites/skip, pause/resume and timing. Unfollow requires nonempty full Following+Followers evidence and refuses detected partial HTML. The user is shown a message if the Windows loopback runner is not connected.
+- Added Python mocked-DOM and owner-scope tests (`tests/test_profile_counts_actions.py`), Desktop bridge integration (`tests/automations-execution.test.cjs`) and CI path coverage; updated Windows preview package instructions and `docs/AUTOMATIONS.md`.
+- Validation **not assumed**: review exact final PR #82 head actions and Windows portable preview (GitHub CI) prior to merge. A live owner-signed-in Instagram check, genuine UI selector/confirmation behavior and physical Windows testing are **not yet verified**. The stable public v120.42 is unchanged; no release authorized.
+
+## 2026-10-12 — Corrección de flujo Unfollow público/privado
+
+- Evidencia de usuario: las pantallas reales distinguen el menú de **Siguiendo → Dejar de seguir** del posible diálogo adicional de una cuenta privada. No asumir un único diálogo obligatorio para todas las cuentas.
+- Implementación en `tools/profile_actions.py`: encontrar acción en menú visible (`menuitem` o botón), verificar cambio a Seguir inmediatamente después en público, y confirmar modal privado **solo si está visible**; ante ausencia de estado o múltiples botones homónimos marcar revisión sin repetir clic. Comprobación de protección/omisión antes de ambos clics. Mantener verificación de identidad y resultado final.
+- Se añadieron fixtures/test de perfiles públicos y privados en español e inglés a `tests/test_profile_counts_actions.py`. Esperar CI de head exacto y aceptación del dueño en Chrome real; sin release.
+
+## 2026-10-12 — Evidencia real de modal de solicitudes pendientes y prueba
+
+- Capturas del propietario: una solicitud no aceptada se muestra como `Requested` en el perfil; al pulsar aparece advertencia de tener que volver a solicitar seguir a @handle si se cambia de opinión, con **Unfollow** rojo y **Cancel** neutro. Importante: Unfollow aquí cancela la *solicitud*, no el seguimiento aprobado.
+- `tools/profile_actions.py`: la ruta cancel exige estado previo `Requested/Solicitado`; mantiene compatibilidad con acciones explícitas Cancel Request, pero para el texto Unfollow/Dejar de seguir solo actúa si el diálogo contiene referencia al **@handle exacto** y evidencia de volver a solicitar seguimiento. `Cancel` nunca es una acción de cancelar solicitud. Si el modal es incierto, no se pulsa.
+- `tests/test_profile_actions_chromium.py`: añade casos de confirmación pendiente en inglés y español, perfil protegido, aviso impreciso, @handle que no coincide y estado final no confirmado. Validación de navegador real pero HTML local interceptado, sin usar credenciales ni cambiar Instagram. Esperar verde en Windows preview exact-head antes de integrar o publicar.
+
+## 2026-10-12 — Dos videos de flujo real y corrección de estado final
+
+- Se inspeccionaron los dos videos aportados: uno muestra cancelación de solicitud pendiente (`Requested` con diálogo `Unfollow`); el otro muestra menú de `Following → Unfollow` de una persona que sí sigue al propietario, de ahí resultado `Follow Back`. Conservar esa semántica; `Follow Back` no implica que se la siga de vuelta.
+- El CI de Windows del commit anterior falló **1 de 15** casos Chromium: el texto español terminaba `@target.user.`, y el matcher interpretaba la puntuación final como extensión del nombre. `tools/profile_actions.py` corrigió el control de límite de username y diferenciación de `Follow` vs `Follow Back` en mensajes de auditoría.
+- `tests/test_profile_actions_chromium.py` extendido con pruebas de `Follow Back` EN/ES y de @handle extendido malicioso o incorrecto. Mantener prohibición de unfollow automático a mutuals verificados o protegidos. Pendiente validación exact-head, paquete Windows y aceptación real; no marcar producción como probada.
+
+## 2026-10-12 — Pending desactualizado, mutuals detectados y resumen de excepciones
+
+- Requisito nuevo: tras las acciones del robot, mostrar **lista interactiva** de perfiles anómalos, especialmente si la tanda era `No me siguen` pero el resultado fue `Follow Back`, si faltan datos al abrir el perfil, o si un perfil listado en `Pending` ya muestra `Following/Siguiendo`.
+- Motor `tools/profile_actions.py`: prevalidación `Requested` protege contra unfollow accidental cuando la solicitud ya se aceptó. `Pending` → `Following` devuelve revisión sin clic y etiqueta `pending_already_following`; se etiquetan también `unexpected_followback`, `pending_not_requested`, `missing_profile_info`, `mutual_before_action` y resultados ambiguos/bloqueados. Diario JSON del robot ahora guarda `issue` por perfil y API snapshot `issues`, `issue_count`, `processed`, `pending`; los hallazgos previos al clic pueden acumularse en la tanda sin bloquear otras visitas.
+- Interfaz `desktop/ig_cleaner_pro_v120_27_synced_companion.html`: panel resumen siempre accesible dentro de Automatizaciones con selector de tarea, filtro, búsqueda, `Abrir perfil`, `Proteger` y `Ya revisé`, guardado de revisión/local cache por cuenta y tarea; nunca deduce que una acción debe repetirse solo porque se marca pendiente.
+- `tests/test_profile_counts_actions.py`, `tests/test_profile_actions_chromium.py`, `tests/automations-issues.test.cjs`: casos de protección sin click, estado stale Pending, ausencia de datos, persistencia de incidencias y aislamiento entre cuentas; CI debe pasar en commit exacto. **Sin validación real contra sesión Instagram** y sin release hasta validaciones.
+
+## 2026-10-12 — Integración real Windows: una sola aplicación, sin CMD
+
+- Decisión confirmada por el propietario: el robot de Instagram debe iniciarse **dentro de Insta Cleaner**, sin un lanzador .cmd ni procesos auxiliares que él deba gestionar.
+- Causa anterior: el producto usaba un HTML suelto más `IGCleanerProfileCounts.exe` lanzado mediante `Start-Insta-Cleaner-Robot.cmd`; la acción Chrome/Instagram estaba conectada por puerto y token locales, pero no era una aplicación integrada.
+- Implementación PR #82: nuevo `tools/ig_cleaner_desktop.py` abre ventana propia de Insta Cleaner en Chrome `--app` con perfil persistente, alberga el servidor tokenizado de forma interna en el mismo EXE y apaga/pausa los jobs al cerrar. `tools/profile_counts_bridge.py` expone referencias locales al controlador para cierre seguro; ningún servicio se publica a Internet. No se automatiza Instagram al abrir la app, solo cuando el usuario autoriza la acción.
+- El compilador `.github/workflows/profile-counts-windows-preview.yml` genera `InstaCleanerPro.exe` con `--onefile --windowed`, icono canónico y HTML embedded; ZIP sin .cmd ni HTML independiente. `tests/test_native_desktop.py` comprueba persistencia, rutas, servidor único, shutdown y que un solo EXE lance app mode. README de paquete documenta la ruta estable, migración mediante respaldo y uso.
+- Límite: el nuevo perfil de la ventana de aplicación tiene almacenamiento de navegador propio; la importación desde HTML anterior es una migración explícita y no puede afirmarse automática. Chrome/robot siguen requiriendo sesión real; no hay aceptación en la PC del propietario ni release estable. CI Windows exact-head y revisión de regresiones pendientes antes de merge.
+
+## 2026-10-12 — Switch Accounts was Sign Out; fixed account chooser (Android + Desktop)
+
+- User-reported regression: **Switch account** did nothing different from Sign out; both discarded the active session, with no list of previously authenticated users. Exact root cause: Android `MainActivity` called `api.logout()` inside Switch; Desktop `igcSyncSwitchAccount` set `S.session=null` and reloaded.
+- Android: added `AccountSessionVault.java` using Android Keystore AES-GCM for **one encrypted access/refresh session per IG Cleaner login**. Existing active login migrates on startup, and tokens rotate in the corresponding slot. Switch chooser lists remembered emails + **Add another account**. Selecting an email restores and verifies that account/session, clears in-memory caches and rebuilds the native UI. **Sign out** forgets only the active saved session. Stale WebView messages from another owner are rejected. Per-user Instagram workspaces and local histories remain untouched.
+- Desktop/Windows: `Cambiar cuenta` opens an actual chooser with stored users and **Añadir otra cuenta**, restoring the selected session and reloading the owner-dependent namespace. Refresh updates the relevant saved session. Sign out forgets only the current user; other sessions remain available. No Instagram password is stored. Browser-stored session tokens still have the same inherent risk as the existing single-session storage; never treat a shared Windows profile as a secure multi-user device.
+- New tests: `tests/auth-account-switch.test.cjs` (two logins, dialog, reload and owner isolation) and Android `RememberedAccountSwitchTest.java` (AndroidKeyStore encrypted storage, switch/sign-out, mismatched identity). Instrumentation count updated from 8 to 10. Existing CI and Windows integrated preview must complete for this exact commit before merge/release; no stable release approved.
+
+## 2026-10-12 — Real Chromium login-switch acceptance and action-job owner guard
+
+- **Verified:** CI `38241950533` ran `tests/auth-account-switch-browser.test.cjs` against the exact single-file Desktop artifact opened through `file://` in real Chromium; switched from the first fixture app login to a second remembered login, verified the new session, preserved the prior login and review history. No real Instagram or Supabase requests.
+- **Safety fix:** an action robot started under IG Cleaner owner/Instagram account must not continue while the user switches the app login or active Instagram profile. New `window.igcAutoSwitchGuard` fails closed when the local robot's state is unknown or its worker is active/starting/pausing. Desktop `IGC_INSTAGRAM_PROFILES.switch`, `igcSyncSwitchAccount`, `activateRemembered`, Add Account and Sign Out refuse identity changes until the backend confirms the action job is paused/stopped. Action pause remains available in Automatizaciones.
+- **Regression:** `tests/automations-execution.test.cjs` now checks unknown/running robot blocks identity changes and confirmed paused worker allows them. This avoids changing the UI owner while an already approved batch is still making Instagram changes; without the guard the old worker could continue after interface reload.
+- **Packaging/UI:** removed obsolete instruction requiring a separate `.cmd`; the integrated Windows application is `InstaCleanerPro.exe`. No stable release, real-owner account authentication test or actual Instagram action confirmation implied by the offline assertions.
+
+
+### 2026-10-12 — Integración de PR #80 en candidato PR #82
+- **Hallazgo:** una lectura Following incompleta podía sustituir la lista guardada y excluir perfiles previamente descubiertos.
+- **Cambio:** reconciliar checkpoints de la misma cuenta, exigir un contador visible exacto para marcar una lectura completa y procesar la cola reconciliada; incluir pruebas de parser y reanudación.
+- **Seguridad:** la lectura parcial nunca acredita ausencia de followback ni autoriza automatizar unfollow. Sin publicación ni cambio de versión.
+- **Estado:** pendiente CI exact-head y aceptación del navegador de Instagram con sesión real del propietario.
+
+
+### 2026-10-12 — Instrucciones de lanzamiento de Windows alineadas
+- Hallazgo: la interfaz seguía pidiendo el launcher CMD y el README nombraba otro ejecutable para healthcheck.
+- Corrección: mensajes de UI y documentación ahora usan únicamente InstaCleanerPro.exe, más test de regresión sobre los artefactos fuente.
+- Validación pendiente: CI exact-head y aceptación en equipo Windows con Chrome y sesión real; ningún release público automático.
+
+
+### 2026-10-12 — Preparing governed v120.43 release (owner explicitly requested)
+- Prepared integrated Windows publishing pipeline (single `InstaCleanerPro.exe` without legacy CMD, verified ZIP contents and Chromium/Windows tests), signed Android versionCode 12043, matching HTML UI v120.43 and release notes.
+- Pending: exact-head CI on new version, PR merge, separate governed release request on main, exact-publish-commit visual checks and signing, GitHub assets/checksums verification.
+- Disclose unverified owner Instagram UI, real action acceptance, and Windows↔Android Profile Counts sync limitations; no automated action performed on the owner's account.

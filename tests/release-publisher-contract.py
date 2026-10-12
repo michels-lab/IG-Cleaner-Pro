@@ -42,6 +42,23 @@ for token in (
 ):
     assert token in workflow, f"Release P0 missing protected visual approval: {token}"
 
+
+# The stable Windows publisher must match the exact tested integrated app,
+# never silently regress to the removed legacy CMD + standalone collector.
+for token in (
+    'pyinstaller --clean --noconfirm --onefile --windowed',
+    '--name InstaCleanerPro tools/ig_cleaner_desktop.py',
+    'test_profile_actions_chromium.py',
+    'test_native_desktop.py',
+    'InstaCleanerPro.exe',
+    'EXECUTABLE-SHA256.txt',
+    'required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt"}',
+):
+    assert token in workflow, f"Integrated Windows release contract missing: {token}"
+assert 'Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd' not in workflow
+assert 'pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts' not in workflow
+assert manifest["channels"]["windowsRobot"]["execution"] == "double-click InstaCleanerPro.exe (bundled UI + local robot)"
+
 desktop=manifest["channels"]["desktop"]
 android=manifest["channels"]["android"]
 policy=manifest["releasePolicy"]

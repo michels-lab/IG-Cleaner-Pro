@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from tools.profile_counts_instagram import (
     user_from_href, own_profile_from_anchors,
-    write_following_cache, read_following_cache
+    write_following_cache, read_following_cache,
+    expected_following_count, reconcile_following_discovery
 )
 
 from tools.profile_counts_robot import (
@@ -31,6 +32,24 @@ class InstagramVisibleDiscoveryTests(unittest.TestCase):
         for value in ("/p/photo/", "/explore/", "/direct/inbox/",
                       "/accounts/login/", "https://example.org/not-instagram/"):
             self.assertIsNone(user_from_href(value))
+
+    def test_visible_following_exact_count_required_for_completion(self):
+        self.assertEqual(expected_following_count("Following 11,869"), 11869)
+        self.assertEqual(expected_following_count("1.234 seguidos"), 1234)
+        self.assertEqual(expected_following_count("Following"), None)
+        self.assertEqual(expected_following_count("11.8K Following"), None)
+        self.assertEqual(expected_following_count("12,3 mil seguidos"), None)
+
+    def test_partial_following_resume_preserves_cached_checkpoint(self):
+        previous = ["old.friend", "still.friend", "@still.friend"]
+        observed = ["still.friend", "new.friend"]
+        self.assertEqual(reconcile_following_discovery(previous, observed, False),
+                         ["old.friend", "still.friend", "new.friend"])
+        self.assertEqual(reconcile_following_discovery(previous, observed, True),
+                         ["still.friend", "new.friend"])
+        self.assertEqual(reconcile_following_discovery(previous, [], False),
+                         ["old.friend", "still.friend"])
+        self.assertEqual(reconcile_following_discovery(previous, [], True), [])
 
     def test_following_cache_keeps_instagram_separate(self):
         with tempfile.TemporaryDirectory() as folder:

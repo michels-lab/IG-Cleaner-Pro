@@ -4,6 +4,7 @@ on:
     paths:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_actions.py'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -11,6 +12,11 @@ on:
       - 'tests/test_profile_counts_bridge.py'
       - 'tests/test_profile_counts_pacing.py'
       - 'tests/profile-counts-ui.test.cjs'
+      - 'tests/automations-planner.test.cjs'
+      - 'tests/automations-execution.test.cjs'
+      - 'tests/automations-issues.test.cjs'
+      - 'tests/test_profile_counts_actions.py'
+      - 'tests/mutual-focus-ratio.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
   push:
     branches:
@@ -18,6 +24,7 @@ on:
     paths:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_actions.py'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -43,3 +50,11 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
       - name: Desktop Insights CSV and account isolation
         run: node tests/profile-counts-ui.test.cjs
+      - name: Automations planner protected/skip/account isolation
+        run: node tests/automations-planner.test.cjs
+      - name: Automations Chrome action-control integration
+        run: node tests/automations-execution.test.cjs
+      - name: Automations interactive anomalies and history
+        run: node tests/automations-issues.test.cjs
+      - name: Mutuals Focus-only profile ratio priority
+        run: node tests/mutual-focus-ratio.test.cjs

@@ -73,7 +73,12 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   igcCountsRobotGap:{value:'5'},
   igcCountsRobotRestEvery:{value:'10'},
   igcCountsRobotRestMinutes:{value:'2'},
-  igcCountsRobotPaceNote:{textContent:'',style:{}}
+  igcCountsRobotPaceNote:{textContent:'',style:{}},
+  igcCountsMetricAnalyzed:{textContent:''},igcCountsMetricSuccess:{textContent:''},
+  igcCountsMetricPending:{textContent:''},igcCountsMetricErrors:{textContent:''},
+  igcCountsMetricUnavailable:{textContent:''},igcCountsMetricRemaining:{textContent:''},
+  igcCountsRobotCurrent:{textContent:''},igcCountsRobotPercent:{textContent:''},
+  igcCountsPause:{disabled:false},igcCountsResume:{disabled:false}
  };
  const bridgeIdentity={owner:'owner_A',active:'ig_A'};
  const mockFetch=async(url,options)=>{
@@ -113,9 +118,9 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   Date,Number,Array,Set,Map,JSON,Math,String,Error,encodeURIComponent
  };
  vm.createContext(bridgeCtx);vm.runInContext(match[1],bridgeCtx);
- assert.equal(robotElements.igcCountsRobotActions.style.display,'none','No manual robot configuration should be shown');
- assert.match(source,/igcCountsRobotAuto/,'App must start detection automatically');
- await bridgeCtx.window.igcCountsRobotAuto();
+ assert.equal(robotElements.igcCountsRobotActions.style.display,'flex','Pacing, pause and resume must be visible');
+ assert.match(source,/id="igcCountsResume"/,'Explicit Resume button should be visible');
+ await bridgeCtx.window.igcCountsRobotConnect();
  const auto=requests.find(r=>r.url.endsWith('/auto'));
  assert(auto,'Automatic detection must begin without any Start click');
  assert.equal(JSON.parse(auto.options.body).account,'ig_A');
@@ -137,7 +142,14 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert.match(robotElements.igcCountsRobotPaceNote.textContent,/60 perfiles/);
  assert.match(robotElements.igcCountsRobotPaceNote.textContent,/2 min después de cada 10/);
  await bridgeCtx.window.igcCountsRobotPoll();
+ assert.match(robotElements.igcCountsMetricSuccess.textContent,/Correctos: 1/);
  assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
+ await bridgeCtx.window.igcCountsRobotSaveConfig();
+ assert(requests.some(r=>r.url.endsWith('/config')),'Saved pacing must reach active controller');
+ await bridgeCtx.window.igcCountsRobotStop();
+ assert(requests.some(r=>r.url.endsWith('/stop')),'Pause must call bridge');
+ await bridgeCtx.window.igcCountsRobotContinue();
+ assert(requests.some(r=>r.url.endsWith('/continue')),'Resume must call bridge');
  await bridgeCtx.window.igcCountsRobotLoad();
  const restore=requests.find(r=>r.url.endsWith('/load'));
  assert(restore,'UI must recover saved rows without launching browser');
