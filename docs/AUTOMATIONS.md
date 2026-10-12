@@ -30,3 +30,7 @@ Los exports y resultados siguen siendo locales. No se debe enviar la contraseña
 ## Límites de verificación actual
 
 La prueba automatizada usa un navegador simulado (botones `Following`, `Requested`, `Unfollow`, `Cancel Request` y `Follow`) más verificaciones de cuenta, protección y confirmación. **No** se ha demostrado todavía que los botones reales de Instagram en el equipo de la persona tengan exactamente esos roles/nombres ni que los resultados funcionen con cuentas privadas e internacionalización diversa. El robot no intenta resolver CAPTCHA ni evadir restricciones. Antes de usarlo con muchas cuentas, validar con una tanda pequeña y revisar su historial.
+
+### Flujo de Unfollow público y privado — 2026-10-12
+
+La pantalla puede mostrar **Siguiendo/Following** y abrir un **menú** que contiene **Dejar de seguir/Unfollow**. En un perfil **público** ese segundo clic puede producir directamente el botón **Seguir/Follow**; no se debe exigir una confirmación inexistente. En un perfil **privado** puede aparecer después un diálogo adicional **Dejar de seguir/Unfollow/Confirmar**, que se confirma únicamente si efectivamente está visible y el perfil sigue siendo el indicado. Si no hay menú, el robot comprueba si el botón final ya cambió; si no hay estado verificable se detiene con revisión manual. Nunca da éxito por el clic solamente. Las pruebas simulan ambos caminos en inglés y español; falta aceptación con sesión real.
