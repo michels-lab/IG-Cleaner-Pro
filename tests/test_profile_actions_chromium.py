@@ -87,6 +87,8 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        document.querySelector('#private-confirm').style.display='none';
        document.querySelector('#request-confirm').style.display='none';
        if(result==='follow')document.querySelector('#relationship').textContent=label;
+       if(result==='followback')document.querySelector('#relationship').textContent=
+         document.documentElement.lang==='es'?'Seguir también':'Follow Back';
        if(blocked)document.body.insertAdjacentHTML('beforeend','<span>Try again later</span>');
      }}
     </script>
@@ -144,6 +146,19 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(status, "ok", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
 
+    def test_mutual_public_unfollow_ends_follow_back(self):
+        status, message, events = self.attempt(result="followback")
+        self.assertEqual(status, "ok", message)
+        self.assertIn("Follow Back", message)
+        self.assertIn("aún te sigue", message)
+        self.assertEqual(events, ["open", "unfollow", "confirmed"])
+
+    def test_mutual_public_unfollow_spanish_ends_seguir_tambien(self):
+        status, message, events = self.attempt(locale="es", result="followback")
+        self.assertEqual(status, "ok", message)
+        self.assertIn("Seguir también", message)
+        self.assertEqual(events, ["open", "unfollow", "confirmed"])
+
     def test_private_english_extra_confirmation(self):
         status, message, events = self.attempt(private=True)
         self.assertEqual(status, "ok", message)
@@ -186,6 +201,12 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(status, "review", message)
         self.assertEqual(events, ["open"])
 
+    def test_pending_unfollow_does_not_match_username_extension(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True,
+                                               warning_handle="target.user.another")
+        self.assertEqual(status, "review", message)
+        self.assertEqual(events, ["open"])
+
     def test_pending_unfollow_wrong_handle_must_not_click(self):
         status, message, events = self.attempt(task="cancel", request_unfollow=True,
                                                warning_handle="not.target.user")
@@ -202,6 +223,13 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt(task="cancel", request_unfollow=True,
                                                result="unchanged")
         self.assertEqual(status, "review", message)
+        self.assertEqual(events, ["open", "confirmed"])
+
+    def test_pending_request_follow_state_is_not_follow_back(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True)
+        self.assertEqual(status, "ok", message)
+        self.assertIn("Follow / Seguir", message)
+        self.assertNotIn("La persona aún te sigue", message)
         self.assertEqual(events, ["open", "confirmed"])
 
     def test_request_cancel_english(self):
