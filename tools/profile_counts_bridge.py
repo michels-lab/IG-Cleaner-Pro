@@ -17,6 +17,9 @@ import threading
 import time
 import webbrowser
 
+from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
+                                      write_following_cache, read_following_cache)
+
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    register_visit, finish_visit, wait_required,
@@ -49,12 +52,58 @@ class Collector:
         self.pause_every = 0
         self.pause_minutes = 0.0
         self.wait_until = 0
+        self.autonomous = False
+        self.expected_handle = ""
+        self.detected_handle = ""
+        self.discovery_complete = False
 
     def result_path(self):
         # No owner/usernames in filenames or URL paths.
         identity = self.owner + "\0" + self.account
         digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("profile-counts-" + digest + ".csv")
+
+    def followings_path(self):
+        return self.result_path().with_suffix(".following.json")
+
+    def auto_start(self, request: dict):
+        """Called once by the local Desktop client. No CSV or start click needed."""
+        owner = str(request.get("owner") or "").strip()
+        account = str(request.get("account") or "").strip()
+        if not owner or not account or len(owner)>200 or len(account)>120:
+            raise ValueError("Falta identidad de la cuenta activa de Insta Cleaner.")
+        expected = valid_username(request.get("expected_handle") or "")
+        if request.get("expected_handle") and not expected:
+            raise ValueError("El nombre de Instagram esperado es inválido.")
+        # Pacing is retained internally; novice users do not need to see settings.
+        pacing = dict(max_per_window=request.get("max_per_window", DEFAULT_COUNT),
+                      window_minutes=request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
+                      min_delay_seconds=request.get("min_delay_seconds", DEFAULT_DELAY_SECONDS))
+        count, minutes, delay = check_pacing(**pacing) if False else check_pacing(
+            pacing["max_per_window"], pacing["window_minutes"], pacing["min_delay_seconds"])
+        rest_count, rest_minutes = check_batch_rest(request.get("pause_every", 0),
+                                                     request.get("pause_minutes", 0))
+        with self.lock:
+            if self.worker and self.worker.is_alive():
+                if owner != self.owner or account != self.account:
+                    raise ValueError("Hay otra cuenta en ejecución. No se mezclan los perfiles.")
+                return self.snapshot()
+            self.owner, self.account = owner, account
+            self.expected_handle = expected or ""
+            self.autonomous = True
+            self.detected_handle = ""
+            self.discovery_complete = False
+            self.usernames = []
+            self.total = self.progress = 0
+            self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
+            self.pause_every, self.pause_minutes = rest_count, rest_minutes
+            self.wait_until = 0
+            self.message = "Abriendo Instagram para reconocer tu cuenta..."
+            self.status = "starting"
+            self.stop_signal.clear()
+            self.worker = threading.Thread(target=self._run, daemon=True)
+            self.worker.start()
+            return self.snapshot()
 
     def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
@@ -86,6 +135,9 @@ class Collector:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Ya existe una recopilación activa. Detenla antes de iniciar otra.")
             self.owner, self.account, self.usernames = owner, account, normalized
+            self.autonomous = False
+            self.detected_handle = ""
+            self.discovery_complete = False
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = pause_every, pause_minutes
             self.wait_until = 0
@@ -131,12 +183,56 @@ class Collector:
                         browser = pw.chromium.launch_persistent_context(channel="chrome", **launch_args)
                 page = browser.pages[0] if browser.pages else browser.new_page()
                 page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
-                self._update("login", "Inicia sesión en la ventana de Instagram y luego pulsa 'Ya inicié sesión' en Insta Cleaner.")
-                while not self.stop_signal.is_set() and not self.login_ready.wait(0.25):
-                    pass
-                if self.stop_signal.is_set():
-                    self._update("stopped", "Detenido antes de iniciar.")
-                    return
+                if self.autonomous:
+                    self._update("login", "Inicia sesión en Instagram; detectaré tu cuenta automáticamente.")
+                    while not self.stop_signal.is_set():
+                        if challenge_detected(page):
+                            self._update("blocked", "Instagram pidió una verificación. Se detuvo para que la revises.")
+                            return
+                        handle = signed_in_handle(page)
+                        if handle:
+                            break
+                        self.stop_signal.wait(3)
+                    if self.stop_signal.is_set():
+                        self._update("stopped", "Detenido antes de iniciar.")
+                        return
+                    self.detected_handle = handle
+                    if self.expected_handle and self.expected_handle != handle:
+                        self._update("account_mismatch",
+                                     "Instagram abierto: @"+handle+
+                                     ". Insta Cleaner tiene @"+self.expected_handle+
+                                     " seleccionado. No se mezclarán cuentas.")
+                        return
+                    cached = read_following_cache(self.followings_path(), handle)
+                    self.usernames = cached
+                    self.total = len(cached)
+                    self._update("discovering", "Leyendo tu lista Following de @"+handle+"...")
+                    def save_batch(users, complete):
+                        with self.lock:
+                            self.usernames = users
+                            self.total = len(users)
+                            self.discovery_complete = bool(complete)
+                            self.message = "Following detectados: "+str(len(users))+" perfiles."
+                        write_following_cache(self.followings_path(), handle, users, complete)
+                    users, complete = read_following_visible(
+                        page, handle, on_batch=save_batch, stop_signal=self.stop_signal)
+                    save_batch(users, complete)
+                    if not users:
+                        self._update("needs_attention",
+                                     "No pude leer la lista Following visible. Comprueba Instagram; no inventaré perfiles.")
+                        return
+                    if self.stop_signal.is_set():
+                        self._update("stopped", "Búsqueda interrumpida; lista parcial guardada.")
+                        return
+                    self._update("running", "Lista Following "+("completa" if complete else "parcial")+
+                                 "; recopilando cifras...")
+                else:
+                    self._update("login", "Inicia sesión en Instagram y pulsa Ya inicié sesión.")
+                    while not self.stop_signal.is_set() and not self.login_ready.wait(0.25):
+                        pass
+                    if self.stop_signal.is_set():
+                        self._update("stopped", "Detenido antes de iniciar.")
+                        return
 
                 saved = read_results(self.result_path())
                 visits_file = history_path(self.result_path())
@@ -190,7 +286,9 @@ class Collector:
                     save_results(self.result_path(), saved)
                     completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
                     self._update("running", f"@{username}: {status}. Completados {completed}/{self.total}.", completed)
-                self._update("complete", "Terminó la cola. Los perfiles sin cifras siguen marcados como no disponibles.")
+                self._update("complete" if not self.autonomous or self.discovery_complete else "partial",
+                             "Datos recopilados. "+("Following completo." if self.discovery_complete else
+                             "La lista Following podría estar incompleta; se necesitará revisar el navegador."))
         except Exception as exc:
             self._update("error", "El navegador falló: " + str(exc)[:240])
         finally:
@@ -231,7 +329,16 @@ class Collector:
                 "owner": self.owner,
                 "account": self.account,
                 "running": bool(self.worker and self.worker.is_alive()),
+                "autonomous": self.autonomous,
+                "detected_handle": self.detected_handle,
+                "discovery_complete": self.discovery_complete,
+                "discovered": len(self.usernames),
             }
+
+    def following(self):
+        with self.lock:
+            return {"usernames": list(self.usernames), "handle": self.detected_handle,
+                    "complete": self.discovery_complete}
 
     def results(self):
         with self.lock:
@@ -282,13 +389,15 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 self._send(200, collector.snapshot())
             elif self.path == "/api/results":
                 self._send(200, {"rows": collector.results()})
+            elif self.path == "/api/following":
+                self._send(200, collector.following())
             else:
                 self._send(404, {"error": "Ruta desconocida."})
 
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -301,6 +410,8 @@ def build_server(collector: Collector, token: str, port: int = 0):
                     raise ValueError("Solicitud inválida.")
                 if self.path == "/api/start":
                     result = collector.start(data)
+                elif self.path == "/api/auto":
+                    result = collector.auto_start(data)
                 elif self.path == "/api/load":
                     result = collector.start(data, load_only=True)
                 elif self.path == "/api/stop":
