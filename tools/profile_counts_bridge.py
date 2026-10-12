@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import secrets
+import sys
 import threading
 import time
 import webbrowser
@@ -98,11 +99,21 @@ class Collector:
             from playwright.sync_api import sync_playwright
             self.session_dir.mkdir(parents=True, exist_ok=True)
             with sync_playwright() as pw:
-                browser = pw.chromium.launch_persistent_context(
+                launch_args = dict(
                     user_data_dir=str(self.session_dir),
                     headless=False,
                     viewport={"width": 1180, "height": 860},
                 )
+                # The Windows portable EXE ships the Playwright driver, not a
+                # 150 MB Chromium download. Prefer a locally installed Chrome
+                # when frozen; source installs can use playwright Chromium.
+                if getattr(sys, "frozen", False):
+                    browser = pw.chromium.launch_persistent_context(channel="chrome", **launch_args)
+                else:
+                    try:
+                        browser = pw.chromium.launch_persistent_context(**launch_args)
+                    except Exception:
+                        browser = pw.chromium.launch_persistent_context(channel="chrome", **launch_args)
                 page = browser.pages[0] if browser.pages else browser.new_page()
                 page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
                 self._update("login", "Inicia sesión en la ventana de Instagram y luego pulsa 'Ya inicié sesión' en Insta Cleaner.")
@@ -262,12 +273,22 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
 def main():
     parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
-    parser.add_argument("--app", required=True, type=Path, help="Ruta del HTML Desktop (misma versión que ya usas).")
+    parser.add_argument("--app", type=Path, help="Ruta del HTML Desktop (misma versión que ya usas).")
+    parser.add_argument("--healthcheck", action="store_true", help="Prueba empaquetado Playwright + servidor local, sin abrir Instagram.")
     parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser")
     args = parser.parse_args()
-    if not args.app.is_file() or args.app.suffix.lower() != ".html":
+    if args.healthcheck:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            if not pw.chromium:
+                raise RuntimeError("Playwright no inicializó Chromium.")
+        probe = build_server(Collector(args.data_dir, args.session_dir), "offline-check-token")
+        probe.server_close()
+        print("PASS: runtime Playwright y servidor local disponibles (no prueba Instagram).")
+        return
+    if not args.app or not args.app.is_file() or args.app.suffix.lower() != ".html":
         parser.error("--app necesita un archivo Desktop HTML existente.")
     secret = secrets.token_urlsafe(32)
     collector = Collector(args.data_dir, args.session_dir)
