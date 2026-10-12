@@ -14,7 +14,7 @@ El **robot local de PC** se puede controlar desde la sección **Insights → Pro
 python tools/profile_counts_bridge.py --app "RUTA/IG-Cleaner-Pro-Desktop.html"
 ```
 
-4. Se abre tu HTML de Insta Cleaner en el navegador. Carga Following si hace falta, entra a Insights y configura **Perfiles máximos**, **Cada (minutos)** y **Espera entre perfiles (segundos)**. Pulsa **Iniciar recopilación**.
+4. Se abre tu HTML de Insta Cleaner en el navegador. Carga Following si hace falta, entra a Insights y configura **Perfiles máximos**, **Cada (minutos)** y **Espera entre perfiles (segundos)**. Opcionalmente, añade un **descanso largo después de N perfiles** y su duración en minutos. Pulsa **Iniciar recopilación**. Los ajustes quedan guardados por propietario y perfil de Instagram.
 5. Cuando se abra Chromium para Instagram, inicia sesión **directamente allí**. Regresa a Insta Cleaner y pulsa **Ya inicié sesión**. La recopilación guarda resultados continuamente y aparecen en la tabla sin transferencias CSV.
 6. Puedes pulsar **Pausar robot**, cerrar la app y luego volver a iniciar el puente para continuar. En Insights, **Recuperar guardados** consulta los resultados persistentes sin abrir Instagram, y la barra de avance muestra el porcentaje de perfiles con ambas cifras obtenidas. La PC y la terminal del puente deben seguir abiertas mientras el robot trabaja. Los resultados se guardan separados por propietario de IG Cleaner y perfil de Instagram. El siguiente inicio no repite registros completados.
 
@@ -26,6 +26,8 @@ El CSV sigue existiendo como alternativa portátil, especialmente para importar 
 
 - Programación independiente: **máximo de 1–10,000 perfiles por ventana móvil** (1–1,440 minutos), y **espera mínima de 0–3,600 segundos** entre inicios de consulta. Predeterminado: 50 visitas por 60 minutos y 72 segundos entre perfiles. No garantiza que Instagram responda ni evita restricciones.
 - Ejemplo pedido: **200 perfiles cada 5 minutos** con **5 segundos entre perfiles** equivale aproximadamente a **hasta 60 inicios por 5 minutos** (y potencialmente menos debido a la carga de páginas). Ambos límites se cumplen simultáneamente; no se aceleran las visitas para alcanzar los 200.
+- **Otra modalidad:** si quieres consultar grupos de 200 y **descansar 5 minutos una vez terminados esos 200**, introduce `Descanso después de N perfiles = 200` y `Minutos de descanso = 5`. Esto es independiente de `máximo por ventana` y de los 5 segundos de espera entre perfiles. El descanso largo se conserva al cerrar y reabrir el programa.
+- Los perfiles por ventana, minutos, espera mínima y descanso opcional se conservan en la instalación local, separados por propietario y `account_key`; un cambio de cuenta no debería copiar estas preferencias a otro Instagram.
 - Las visitas consumen presupuesto antes de abrir el perfil y se registran en el archivo local `.visits.json` correspondiente a la cuenta. El historial no se borra al pausar/reiniciar. Los errores y páginas bloqueadas consumen también una visita; no se restaura el cupo para insistir artificialmente.
 - Al aparecer desafío, login o bloqueo, el robot **se detiene** sin evasión automática.
 - Los contadores redondeados que muestre Instagram se etiquetan como aproximados; ausencia no es cero.
@@ -54,7 +56,7 @@ python -m playwright install chromium
 python tools/profile_counts_robot.py --input ig-cleaner-cola-legacy.csv --output resultados.csv --per-hour 50
 ```
 
-Cambia el nombre `ig-cleaner-cola-legacy.csv` por el archivo descargado. La primera vez se abre una ventana de Chromium; inicia sesión en Instagram ahí, regresa a la terminal y presiona **Enter**. No cierres esa terminal ni el navegador mientras recolecta. Dejar la PC suspendida detiene el trabajo. También puedes personalizar la cadencia con `--max-per-window 200 --window-minutes 5 --min-delay-seconds 5`. Si se omiten, se aplica la configuración predeterminada de 50/60 minutos y espera de 72 segundos. `--per-hour` se conserva para compatibilidad antigua con la cuota por hora, pero los tres argumentos nuevos son los recomendados. Son techos de visitas, no garantías de resultados ni un método para eludir restricciones.
+Cambia el nombre `ig-cleaner-cola-legacy.csv` por el archivo descargado. La primera vez se abre una ventana de Chromium; inicia sesión en Instagram ahí, regresa a la terminal y presiona **Enter**. No cierres esa terminal ni el navegador mientras recolecta. Dejar la PC suspendida detiene el trabajo. También puedes personalizar la cadencia con `--max-per-window 200 --window-minutes 5 --min-delay-seconds 5`. Para descansar 5 minutos **después de cada 200 consultas** añade `--pause-every 200 --pause-minutes 5`. Si se omiten, se aplica la configuración predeterminada de 50/60 minutos y espera de 72 segundos. `--per-hour` se conserva para compatibilidad antigua con la cuota por hora, pero los tres argumentos nuevos son los recomendados. Son techos de visitas, no garantías de resultados ni un método para eludir restricciones.
 
 Para procesar únicamente veinte perfiles en una sesión:
 
