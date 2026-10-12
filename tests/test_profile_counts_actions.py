@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_actions import ActionRobot, perform_visible_action
+from profile_actions import ActionRobot, perform_visible_action, _action_issue, _atomic_json
 from profile_counts_bridge import Collector
 
 
@@ -180,6 +180,56 @@ class ActionSafetyTests(unittest.TestCase):
             status, _ = perform_visible_action(page, "target.user", "cancel", "my.profile")
         self.assertEqual(status, "ok")
         self.assertEqual(page.dialog.clicker.clicked, 1)
+
+    def test_pending_but_now_following_no_unfollow_and_incident(self):
+        page=FakePage("cancel")
+        page.header.label="Following"
+        with patch("profile_actions.challenge_detected",return_value=False), \
+             patch("profile_actions.signed_in_handle",return_value="my.profile"):
+            status, message=perform_visible_action(page,"target.user","cancel","my.profile")
+        self.assertEqual(status,"review")
+        self.assertEqual(_action_issue("cancel",status,message),"pending_already_following")
+        self.assertEqual(page.header.clicker.clicked,0)
+        self.assertEqual(page.menu.clicker.clicked,0)
+        self.assertEqual(page.dialog.clicker.clicked,0)
+
+    def test_pending_without_requested_or_following_is_not_clicked(self):
+        page=FakePage("cancel")
+        page.header.label="Follow"
+        with patch("profile_actions.challenge_detected",return_value=False), \
+             patch("profile_actions.signed_in_handle",return_value="my.profile"):
+            status, message=perform_visible_action(page,"target.user","cancel","my.profile")
+        self.assertEqual(status,"review")
+        self.assertEqual(_action_issue("cancel",status,message),"pending_not_requested")
+        self.assertEqual(page.header.clicker.clicked,0)
+
+    def test_followback_anomaly_has_dedicated_issue_code(self):
+        result="Acción confirmada: Follow Back / Seguir también. La persona aún te sigue."
+        self.assertEqual(_action_issue("unfollow","ok",result),"unexpected_followback")
+        self.assertEqual(_action_issue("unfollow","ok","Follow / Seguir"),"")
+
+    def test_persisted_exception_report_survives_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            counts=Collector(root / "data",root / "session")
+            robot=ActionRobot(counts,counts.data_dir,counts.session_dir)
+            robot.owner, robot.account, robot.task = "ownerA","igA","cancel"
+            robot.targets=["accepted.now","unknown.info"]
+            _atomic_json(robot._base(),{
+                "accepted.now":{"status":"review","issue":"pending_already_following",
+                                "message":"Pendiente desactualizado: Instagram muestra Following","at":"2026-10-12"},
+                "unknown.info":{"status":"review","issue":"missing_profile_info",
+                                "message":"No hay información","at":"2026-10-12"}})
+            snapshot=robot.snapshot()
+            self.assertEqual(snapshot["issue_count"],2)
+            self.assertEqual({i["issue"] for i in snapshot["issues"]},
+                             {"pending_already_following","missing_profile_info"})
+            second=ActionRobot(counts,counts.data_dir,counts.session_dir)
+            second.owner,second.account,second.task=robot.owner,robot.account,robot.task
+            second.targets=list(robot.targets)
+            self.assertEqual(second.snapshot()["issue_count"],2)
+            second.account="other-ig"
+            self.assertEqual(second.snapshot()["issue_count"],0)
 
     def test_protected_profile_never_clicked(self):
         page = FakePage("unfollow")
