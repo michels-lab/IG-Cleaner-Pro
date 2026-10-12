@@ -3759,6 +3759,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <label>Perfiles máximos <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
 <label>Cada (minutos) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <label>Espera entre perfiles (segundos) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Descanso después de N perfiles <input id="igcCountsRobotRestEvery" type="number" min="0" max="10000" step="1" value="0" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Minutos de descanso <input id="igcCountsRobotRestMinutes" type="number" min="0" max="1440" step="0.5" value="0" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Recuperar guardados</button>
 <button class="btn primary" type="button" onclick="igcCountsRobotStart()">▶ Iniciar recopilación</button>
 <button class="btn" type="button" onclick="igcCountsRobotLoginReady()">Ya inicié sesión</button>
@@ -13866,7 +13868,7 @@ window.igcCountsRobotLoad=async function(){
  if(!users.length){robotStatus('Carga primero Following para recuperar la cuenta correcta.',true);return}
  try{
   const ctx=context();
-  const state=await bridgeRequest('load',{usernames:users,owner:ctx.owner,account:ctx.account});
+  const state=await bridgeRequest('load',{usernames:users,owner:ctx.owner,account:ctx.account,...robotConfig()});
   robotStatus(state.message);
   await window.igcCountsRobotPoll();
  }catch(e){robotStatus('No se pudieron recuperar los registros: '+e.message,true)}
@@ -13886,33 +13888,55 @@ window.igcCountsRobotPoll=async function(){
   }
   const percentage=state.total?Math.round(state.progress/state.total*100):0;
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
-  const pacing=' · '+state.max_per_window+' perfiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s entre perfiles';
+  const pacing=' · '+state.max_per_window+' perfiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s entre perfiles'+(state.pause_every?' · descanso '+state.pause_minutes+' min cada '+state.pause_every:'');
   robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%)'+pacing);
  }catch(e){robotStatus('No se puede conectar con el robot local: '+e.message,true)}
  finally{robotBusy=false}
+};
+function robotPaceKey(){const ctx=context();return 'igc_robot_pacing_v1__'+encodeURIComponent(ctx.owner)+'__'+encodeURIComponent(ctx.account)}
+window.igcCountsRobotRestoreConfig=function(){
+ try{
+  const saved=JSON.parse(window.localStorage.getItem(robotPaceKey())||'null');
+  if(!saved)return;
+  for(const [name,id] of [['max_per_window','igcCountsRobotMax'],['window_minutes','igcCountsRobotWindow'],
+   ['min_delay_seconds','igcCountsRobotGap'],['pause_every','igcCountsRobotRestEvery'],
+   ['pause_minutes','igcCountsRobotRestMinutes']]){
+   if(saved[name]!==undefined){const el=document.getElementById(id);if(el)el.value=String(saved[name]);}
+  }
+ }catch(e){}
 };
 function robotConfig(){
  const max_per_window=Number(document.getElementById('igcCountsRobotMax')?.value);
  const window_minutes=Number(document.getElementById('igcCountsRobotWindow')?.value);
  const min_delay_seconds=Number(document.getElementById('igcCountsRobotGap')?.value);
+ const pause_every=Number(document.getElementById('igcCountsRobotRestEvery')?.value);
+ const pause_minutes=Number(document.getElementById('igcCountsRobotRestMinutes')?.value);
  if(!Number.isInteger(max_per_window)||max_per_window<1||max_per_window>10000||
     !Number.isInteger(window_minutes)||window_minutes<1||window_minutes>1440||
     !Number.isFinite(min_delay_seconds)||min_delay_seconds<0||min_delay_seconds>3600){
   throw Error('Configura perfiles (1–10,000), minutos (1–1,440) y espera (0–3,600 s).');
  }
- return {max_per_window,window_minutes,min_delay_seconds};
+ if(!Number.isInteger(pause_every)||pause_every<0||pause_every>10000||
+    !Number.isFinite(pause_minutes)||pause_minutes<0||pause_minutes>1440||
+    ((pause_every===0)!==(pause_minutes===0))){
+   throw Error('El descanso largo requiere ambos valores positivos, o ambos en cero para desactivarlo.');
+ }
+ return {max_per_window,window_minutes,min_delay_seconds,pause_every,pause_minutes};
 }
 window.igcCountsRobotPreview=function(){
  const note=document.getElementById('igcCountsRobotPaceNote');if(!note)return;
  try{
-  const {max_per_window,window_minutes,min_delay_seconds}=robotConfig();
+  const config=robotConfig();
+  const {max_per_window,window_minutes,min_delay_seconds,pause_every,pause_minutes}=config;
+  window.localStorage.setItem(robotPaceKey(),JSON.stringify(config));
   const maxGap=min_delay_seconds?Math.ceil(window_minutes*60/min_delay_seconds):max_per_window;
   const possible=Math.min(max_per_window,maxGap);
   const limited=possible<max_per_window;
   note.textContent='Máximo configurado: '+max_per_window+' perfiles en '+window_minutes+
     ' min, con al menos '+min_delay_seconds+' s entre visitas. Capacidad teórica: hasta '+
     possible+' perfiles por ventana'+(limited?' (la espera entre perfiles es el límite principal)':'')+
-    '. Las páginas pueden tardar más; el ritmo no está garantizado.';
+    '. Las páginas pueden tardar más; el ritmo no está garantizado.'+
+    (pause_every?' Descanso adicional: '+pause_minutes+' min después de cada '+pause_every+' perfiles.':' Sin descanso adicional de tanda.');
   note.style.color='var(--muted)';
  }catch(e){note.textContent=e.message;note.style.color='var(--red)'}
 };
@@ -13936,14 +13960,16 @@ window.igcCountsRobotStop=async function(){
  catch(e){robotStatus(e.message,true)}
 };
 if(robot&&robot.port>0&&robot.port<=65535){
+ window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
  if(controls)controls.style.display='flex';
  window.igcCountsRobotPreview();
  setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
  setTimeout(()=>window.igcCountsRobotPoll(),200);
 }
+window.igcCountsRobotRestoreConfig();
 window.igcCountsRobotPreview();
-const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats')window.igcCountsRender();return result};
+const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats'){window.igcCountsRobotRestoreConfig();window.igcCountsRobotPreview();window.igcCountsRender()}return result};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
 })();
 </script>
