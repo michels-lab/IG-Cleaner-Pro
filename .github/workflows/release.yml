@@ -96,8 +96,9 @@ jobs:
   windows-robot:
     needs: release-request-gate
     if: needs.release-request-gate.outputs.publish == 'true'
+    name: Frozen Windows robot and double-click bundle
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -106,24 +107,57 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install tested packaging and browser dependencies
+      - name: Install browser test dependencies
+        shell: pwsh
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install chromium
+      - name: Install build-time dependencies only
         shell: pwsh
         run: |
           python -m pip install playwright==1.57.0 pyinstaller==6.16.0
-          npm install --no-save playwright@1.57.0
-          npx playwright install chromium
-      - name: Compile and smoke Windows visible-browser robot
+      - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
           pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts tools/profile_counts_bridge.py
-          if ($LASTEXITCODE -ne 0) { throw "Windows robot build failed." }
-          & ".\\dist\\IGCleanerProfileCounts.exe" --healthcheck
-          if ($LASTEXITCODE -ne 0) { throw "Windows robot healthcheck failed." }
-      - name: Assemble stable Windows standalone app and launcher
+      - name: Test the frozen executable without contacting Instagram
         shell: pwsh
         run: |
-          $Version = (Get-Content "release/android-signing.json" -Raw | ConvertFrom-Json).versionName
-          if ($Version -notmatch '^\\d+\\.\\d+
+          & ".\dist\IGCleanerProfileCounts.exe" --healthcheck
+          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+      - name: Create self-contained Desktop app HTML
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "artifacts\profile-counts-preview" | Out-Null
+          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version $Version
+          if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
+          node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
+      - name: Bundle launcher, local executable, and instructions
+        shell: pwsh
+        run: |
+          Copy-Item dist/IGCleanerProfileCounts.exe artifacts/profile-counts-preview/
+          Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd artifacts/profile-counts-preview/
+          Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
+          @(
+            "candidate_source_sha=${{ github.sha }}"
+            "candidate_kind=stable_github_release_live_instagram_untested"
+            "application=IG Cleaner Pro / Profile Counts"
+          ) | Set-Content artifacts/profile-counts-preview/BUILD-INFO.txt
+          Get-FileHash artifacts/profile-counts-preview/IGCleanerProfileCounts.exe -Algorithm SHA256 |
+            Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
+          if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
+          if (!(Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd)) { throw "Launcher absent." }
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v$Version.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ig-cleaner-stable-windows-robot-${{ github.sha }}
+          path: artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip
+          retention-days: 14
+          if-no-files-found: error
+
+  publish:
+    needs: [release-request-gate, rendered-ui-qa, windows-robot]
     if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success' && needs.windows-robot.result == 'success'
     runs-on: ubuntu-latest
     env:
@@ -286,16 +320,15 @@ jobs:
             --version "${{ steps.release.outputs.version }}"
           (cd dist && sha256sum * > SHA256SUMS.txt)
 
-      - name: Include validated exact-commit Windows robot bundle
+      - name: Download validated Windows robot from same commit
         uses: actions/download-artifact@v4
         with:
           name: ig-cleaner-stable-windows-robot-${{ github.sha }}
           path: dist
-      - name: Recalculate checksums for all three installation channels
+      - name: Verify robot release ZIP and refresh SHA256 checksums
         run: |
           test -f "dist/IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip"
           (cd dist && rm -f SHA256SUMS.txt && sha256sum * > SHA256SUMS.txt)
-
       - name: Verify release bundle contents
         run: |
           unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "IG-Cleaner-Pro.html"
@@ -318,11 +351,10 @@ jobs:
 
           **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
 
-          ## Automatic Instagram browser robot on Windows
-          **To test automatic Following detection, download `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip`**, unzip everything, and double-click `Start-Insta-Cleaner-Robot.cmd`. Chrome is required. Sign into Instagram in the separate visible Chrome window. The robot will attempt to discover your Following list and read each visible profile counter automatically, with internal pacing. This is a Windows-only LOCAL collector and is not included in the regular Desktop HTML or Android APK.
+          ## Automatic Instagram robot for Windows
+          **To test the Instagram browser collector**, download `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip`, extract everything and double-click `Start-Insta-Cleaner-Robot.cmd`. Requires Google Chrome, but not Python. After you log in to Instagram in the visible browser, it attempts to discover Following and read visible follower/following counts automatically. The ordinary Desktop HTML and Android APK do NOT run this Windows collector.
 
-          **Important test limitation:** automated test fixtures have passed, but this feature has NOT been tested with your real Instagram session. Instagram may block automation or change its UI; collection may be incomplete. No bypass is included.
-
+          **Test limitation:** real Instagram signed-in collection has not been validated. Instagram may change its layout, block automated browsing or yield incomplete data. No challenge bypass is performed.
           ## Android
           Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
 
@@ -357,244 +389,4 @@ jobs:
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_html_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip"
-          gh release view "$TAG" --json tagName,isPrerelease,isDraft,url
-) { throw "Invalid release version." }
-          New-Item -ItemType Directory -Force "artifacts\\windows-robot" | Out-Null
-          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/windows-robot/IG-Cleaner-Pro.html --version $Version
-          if ($LASTEXITCODE -ne 0) { throw "Windows standalone HTML build failed." }
-          node tests/desktop-standalone-smoke.cjs "artifacts/windows-robot/IG-Cleaner-Pro.html"
-          if ($LASTEXITCODE -ne 0) { throw "Windows standalone HTML smoke failed." }
-          Copy-Item dist/IGCleanerProfileCounts.exe artifacts/windows-robot/
-          Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd artifacts/windows-robot/
-          Copy-Item packaging/profile-counts/README.txt artifacts/windows-robot/
-          @("version=$Version","source_sha=${{ github.sha }}","publisher=Michel's Lab IG Cleaner Pro stable") | Set-Content artifacts/windows-robot/BUILD-INFO.txt
-          Get-FileHash artifacts/windows-robot/IGCleanerProfileCounts.exe -Algorithm SHA256 |
-            Select-Object -ExpandProperty Hash | Set-Content artifacts/windows-robot/EXECUTABLE-SHA256.txt
-          Compress-Archive -Path artifacts/windows-robot/* -DestinationPath "IG-Cleaner-Pro-Automatic-Robot-Windows-v$Version.zip" -Force
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ig-cleaner-stable-windows-robot-${{ github.sha }}
-          path: IG-Cleaner-Pro-Automatic-Robot-Windows-v*.zip
-          if-no-files-found: error
-          retention-days: 14
-
-  publish:
-    needs: [release-request-gate, rendered-ui-qa, windows-robot]
-    if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success'
-    runs-on: ubuntu-latest
-    env:
-      IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
-      IGC_ANDROID_KEY_ALIAS: ${{ secrets.IGC_ANDROID_KEY_ALIAS }}
-      IGC_ANDROID_KEY_PASSWORD: ${{ secrets.IGC_ANDROID_KEY_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-
-      - name: Resolve and verify release request
-        id: release
-        run: |
-          python3 - <<'PY'
-          import json, pathlib, re, os
-          manifest=json.loads(pathlib.Path("release/distribution-manifest.json").read_text())
-          request=json.loads(pathlib.Path(".michelslab/release-request.json").read_text())
-          signing=json.loads(pathlib.Path("release/android-signing.json").read_text())
-          policy=manifest["releasePolicy"]
-
-          version=str(request.get("version","")).strip()
-          tag=str(request.get("tag","")).strip()
-          assert re.fullmatch(r"\d+\.\d+", version), "Release version must look like 120.35"
-          assert tag == f"v{version}", "Release tag must exactly match version"
-          assert request.get("authorized") is True, "Release request is not explicitly authorized"
-          assert request.get("status") in ("requested","authorized"), "Release request is not in a publishable state"
-          assert request.get("requested_channel") == "stable"
-          assert request.get("github_prerelease") is False
-          assert policy["nextRelease"] == tag
-          assert policy["githubPrerelease"] is False
-          assert policy["explicitManualPublishRequired"] is True
-          assert policy["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
-          assert signing["packageId"] == "com.michelslab.igcleaner"
-
-          desktop=manifest["channels"]["desktop"]["artifactTemplate"].replace("{version}",version)
-          android=manifest["channels"]["android"]["artifactTemplate"].replace("{version}",version)
-          desktop_html=manifest["channels"]["desktop"]["primaryArtifactTemplate"].replace("{version}",version)
-          assert desktop_html == f"IG-Cleaner-Pro-Desktop-v{version}.html"
-          assert manifest["channels"]["desktop"]["standaloneOffline"] is True
-          expected_code=int(version.replace(".",""))
-          assert signing["versionName"] == version, "Signing metadata versionName does not match release request"
-          assert signing["versionCode"] == expected_code, "Signing metadata versionCode does not match release request"
-
-          gradle=pathlib.Path("android/app/build.gradle.kts").read_text()
-          assert f'versionName = "{version}"' in gradle
-          assert f"versionCode = {expected_code}" in gradle
-          assert 'applicationIdSuffix = ".beta"' in gradle
-          assert "Production Android signing is required" in gradle
-
-          html=pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
-          assert f"UI v{version}" in html
-          assert "normalizeLegacyReviewState" in html
-          assert "pushWorkspaceState" in html
-          assert "list_snapshots" in html
-          assert 'src="assets/michel_duarte_avatar.jpg"' in html
-          assert 'src="assets/michels-lab/official-lockup.png"' in html
-
-          out=os.environ["GITHUB_OUTPUT"]
-          with open(out,"a",encoding="utf-8") as f:
-              f.write(f"version={version}\n")
-              f.write(f"tag={tag}\n")
-              f.write(f"version_code={expected_code}\n")
-              f.write(f"desktop_artifact={desktop}\n")
-              f.write(f"desktop_html_artifact={desktop_html}\n")
-              f.write(f"android_artifact={android}\n")
-          PY
-
-      - name: Run release contracts
-        run: |
-          node tests/desktop-contract.test.cjs
-          python3 tests/fixture-contract.py
-          python3 tests/branding-contract.py
-          python3 tests/privacy-contract.py
-          python3 tests/android-contract.py
-          python3 tests/android-signing-contract.py
-          python3 tests/release-publisher-contract.py
-          python3 tests/standalone-desktop-contract.py
-          python3 tests/rls-contract.py
-
-      - name: Install Android SDK packages
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
-          fi
-          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Restore production Android keystore
-        env:
-          IGC_ANDROID_KEYSTORE_B64: ${{ secrets.IGC_ANDROID_KEYSTORE_B64 }}
-        run: |
-          test -n "$IGC_ANDROID_KEYSTORE_B64"
-          test -n "$IGC_ANDROID_KEYSTORE_PASSWORD"
-          test -n "$IGC_ANDROID_KEY_ALIAS"
-          test -n "$IGC_ANDROID_KEY_PASSWORD"
-          IGC_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/ig-cleaner-pro-release.jks"
-          echo "$IGC_ANDROID_KEYSTORE_B64" | base64 --decode > "$IGC_ANDROID_KEYSTORE_PATH"
-          chmod 600 "$IGC_ANDROID_KEYSTORE_PATH"
-          echo "IGC_ANDROID_KEYSTORE_PATH=$IGC_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
-
-      - name: Verify production signing identity
-        run: |
-          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"])')"
-          ACTUAL="$(keytool -list -v -keystore "$IGC_ANDROID_KEYSTORE_PATH" -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" -alias "$IGC_ANDROID_KEY_ALIAS" | awk -F'SHA256: ' '/SHA256:/{gsub(/:/,"",$2); print $2; exit}')"
-          test "$ACTUAL" = "$EXPECTED"
-
-      - name: Build signed Android release
-        run: gradle -p android :app:assembleRelease
-
-      - name: Verify signed Android package
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          APK="android/app/build/outputs/apk/release/app-release.apk"
-          test -f "$APK"
-          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          AAPT="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
-          "$AAPT" dump badging "$APK" | tee /tmp/badging.txt
-
-          grep -q "package: name='com.michelslab.igcleaner'" /tmp/badging.txt
-          grep -q "versionCode='${{ steps.release.outputs.version_code }}'" /tmp/badging.txt
-          grep -q "versionName='${{ steps.release.outputs.version }}'" /tmp/badging.txt
-          ! grep -q "com.michelslab.igcleaner.beta" /tmp/badging.txt
-
-          EXPECTED="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["certificateSha256"].lower())')"
-          ACTUAL="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/apksigner.txt | tr '[:upper:]' '[:lower:]')"
-          test "$ACTUAL" = "$EXPECTED"
-
-      - name: Build release bundle
-        run: |
-          rm -rf dist package
-          mkdir -p package/assets/michels-lab package/assets/ig-cleaner-pro dist
-          cp desktop/ig_cleaner_pro_v120_27_synced_companion.html package/IG-Cleaner-Pro.html
-          cp desktop/assets/michel_duarte_avatar.jpg package/assets/michel_duarte_avatar.jpg
-          cp desktop/assets/michels-lab/official-lockup.png package/assets/michels-lab/official-lockup.png
-          cp desktop/assets/ig-cleaner-pro/official-app-icon.png package/assets/ig-cleaner-pro/official-app-icon.png
-          cp branding/ig-cleaner-pro/official-app-icon-1024.png "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-logo.png"
-          cp docs/PRIVACY.md "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-PRIVACY.md"
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/${{ steps.release.outputs.android_artifact }}"
-          (cd package && zip -r "../dist/${{ steps.release.outputs.desktop_artifact }}" .)
-          python3 tools/build_standalone_desktop_html.py \
-            --source package/IG-Cleaner-Pro.html \
-            --assets-root package \
-            --output "dist/${{ steps.release.outputs.desktop_html_artifact }}" \
-            --version "${{ steps.release.outputs.version }}"
-          (cd dist && sha256sum * > SHA256SUMS.txt)
-
-      - name: Verify release bundle contents
-        run: |
-          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "IG-Cleaner-Pro.html"
-          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michel_duarte_avatar.jpg"
-          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/michels-lab/official-lockup.png"
-          unzip -l "dist/${{ steps.release.outputs.desktop_artifact }}" | grep "assets/ig-cleaner-pro/official-app-icon.png"
-          test -f "dist/${{ steps.release.outputs.desktop_html_artifact }}"
-          test "$(grep -o 'data:image/' "dist/${{ steps.release.outputs.desktop_html_artifact }}" | wc -l)" -ge 3
-          test -f "dist/${{ steps.release.outputs.android_artifact }}"
-
-      - name: Build release notes
-        run: |
-          cat > release-notes.md <<EOF
-          # Instagram Cleaner Pro v${{ steps.release.outputs.version }}
-
-          Normal GitHub release (**not a prerelease**).
-
-          ## Desktop
-          **Recommended direct download:** **${{ steps.release.outputs.desktop_html_artifact }}** — one standalone HTML file with product, author, and Michel's Lab images embedded; open directly in your browser, no extraction required.
-
-          **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
-
-          ## Android
-          Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
-
-          SHA-256 checksums are included in **SHA256SUMS.txt**.
-          EOF
-          if [ -f release/RELEASE_NOTES.md ]; then
-            printf "\n## Changes\n\n" >> release-notes.md
-            cat release/RELEASE_NOTES.md >> release-notes.md
-          fi
-
-      - name: Publish normal GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ steps.release.outputs.tag }}"
-          TITLE="Instagram Cleaner Pro v${{ steps.release.outputs.version }}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
-            gh release upload "$TAG" dist/* --clobber
-          else
-            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
-          fi
-
-      - name: Verify published release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ steps.release.outputs.tag }}"
-          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/$TAG --jq .prerelease)" = "false"
-          test "$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/$TAG --jq .draft)" = "false"
-          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.android_artifact }}"
-          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_artifact }}"
-          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_html_artifact }}"
           gh release view "$TAG" --json tagName,isPrerelease,isDraft,url
