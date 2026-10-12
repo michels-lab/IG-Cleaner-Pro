@@ -13133,7 +13133,7 @@ async function verifyOtpAndSetPassword(){await verifyOtp();const password=String
 const AUTH_RECOVERY_MESSAGE='Tu sesión caducó y no se pudo renovar automáticamente. Vuelve a entrar en Cuenta; tus perfiles y revisiones guardados no se borraron.';
 let refreshInFlight=null;
 function sessionOwner(session){
- return String(session?.user?.id||session?.user?.email||'').trim().toLowerCase();
+ return String(session?.user?.email||session?.user?.id||'').trim().toLowerCase();
 }
 function expiresAtSeconds(session){
  const direct=Number(session?.expires_at||0);
