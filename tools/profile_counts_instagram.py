@@ -24,6 +24,7 @@ RESERVED = frozenset((
     "privacy", "reels", "reel", "stories", "tags", "terms", "web",
 ))
 PROFILE_TERMS = re.compile(r"\b(profile|perfil|profil|profilo|profilbild)\b", re.I)
+PROFILE_PICTURE_TERMS = re.compile(r"\b(profile|perfil)\s+(?:picture|photo|pic|image|foto)\b", re.I)
 
 
 def user_from_href(href):
@@ -49,16 +50,18 @@ def own_profile_from_anchors(anchors):
         # Only trust explicit navigation labels or pictures inside the nav.
         label = " ".join(str(anchor.get(k) or "") for k in
                          ("text", "aria", "title", "svg_title", "svg_aria"))
-        if anchor.get("in_navigation"):
-            label += " " + str(anchor.get("image_alt") or "")
         user = user_from_href(anchor.get("href"))
-        if user and PROFILE_TERMS.search(label):
+        if not user:
+            continue
+        if anchor.get("in_navigation") and PROFILE_PICTURE_TERMS.search(str(anchor.get("image_alt") or "")):
+            hits.add(user)
+        elif PROFILE_TERMS.search(label):
             hits.add(user)
     return next(iter(hits)) if len(hits) == 1 else None
 
 
 def visible_link_descriptors(page):
-    return page.evaluate("""() => [...document.querySelectorAll('a[href]')]
+    return page.evaluate("""() => [...document.querySelectorAll('a[href], [role=link][href]')]
         .filter(el => { const r=el.getBoundingClientRect();
           return r.width>0 && r.height>0 && r.bottom>0; })
         .map(el => ({
@@ -69,7 +72,7 @@ def visible_link_descriptors(page):
           image_alt: el.querySelector('img')?.getAttribute('alt') || '',
           svg_title: el.querySelector('svg title')?.textContent || '',
           svg_aria: el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '',
-          in_navigation: !!el.closest('nav, [role=navigation]')
+          in_navigation: !!el.closest('nav, aside, [role=navigation]')
         }))""")
 
 
