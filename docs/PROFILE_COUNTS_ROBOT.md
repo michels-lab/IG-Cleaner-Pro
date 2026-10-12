@@ -112,3 +112,8 @@ Estados: `ok` — ambas cifras leídas; `unavailable` — no visibles; `error` �
 - UI Chromium con ZIP de Following real de prueba y CSV de resultado; independencia de propietario y `account_key`.
 - Android: importar y mostrar CSV a través de WebView en dispositivo/emulador, conservando auth, Focus y datos anteriores.
 - Verificar empaquetado del HTML actualizado y las instrucciones de instalación; no publicar ni alterar la firma Android antes del release coordinado y autorizado.
+
+
+## Corrección de lecturas Following parciales — 2026-10-12
+
+Cuando Instagram solo entrega una parte de Following, la lectura se marca **provisional** y conserva los usuarios del último checkpoint de la **misma cuenta**; una visita incompleta nunca borra la cola histórica. Solo una exploración completa, contrastada con un contador visible **exacto** (no redondeado), permite sustituir la cola antigua. Los resultados de perfiles en una cola provisional son informativos: **no equivalen a una lista completa ni autorizan unfollow**. Esta garantía tiene pruebas unitarias y de reanudación simulada; falta validación en la sesión real del propietario.

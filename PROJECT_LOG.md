@@ -1491,3 +1491,10 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - **Safety fix:** an action robot started under IG Cleaner owner/Instagram account must not continue while the user switches the app login or active Instagram profile. New `window.igcAutoSwitchGuard` fails closed when the local robot's state is unknown or its worker is active/starting/pausing. Desktop `IGC_INSTAGRAM_PROFILES.switch`, `igcSyncSwitchAccount`, `activateRemembered`, Add Account and Sign Out refuse identity changes until the backend confirms the action job is paused/stopped. Action pause remains available in Automatizaciones.
 - **Regression:** `tests/automations-execution.test.cjs` now checks unknown/running robot blocks identity changes and confirmed paused worker allows them. This avoids changing the UI owner while an already approved batch is still making Instagram changes; without the guard the old worker could continue after interface reload.
 - **Packaging/UI:** removed obsolete instruction requiring a separate `.cmd`; the integrated Windows application is `InstaCleanerPro.exe`. No stable release, real-owner account authentication test or actual Instagram action confirmation implied by the offline assertions.
+
+
+### 2026-10-12 — Integración de PR #80 en candidato PR #82
+- **Hallazgo:** una lectura Following incompleta podía sustituir la lista guardada y excluir perfiles previamente descubiertos.
+- **Cambio:** reconciliar checkpoints de la misma cuenta, exigir un contador visible exacto para marcar una lectura completa y procesar la cola reconciliada; incluir pruebas de parser y reanudación.
+- **Seguridad:** la lectura parcial nunca acredita ausencia de followback ni autoriza automatizar unfollow. Sin publicación ni cambio de versión.
+- **Estado:** pendiente CI exact-head y aceptación del navegador de Instagram con sesión real del propietario.

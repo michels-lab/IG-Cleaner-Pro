@@ -164,6 +164,59 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(rows["first.user"]["followers"],"123")
         self.assertEqual(rows["second.user"]["following"],"45")
 
+    def test_autonomous_partial_discovery_resumes_same_account_checkpoint(self):
+        import types
+        from unittest.mock import patch
+        from profile_counts_instagram import write_following_cache, read_following_cache
+        from profile_counts_robot import read_results
+
+        class FakePage:
+            def goto(self, *args, **kwargs): pass
+        class FakeBrowser:
+            pages = [FakePage()]
+            def close(self): pass
+        class FakeSync:
+            def __enter__(self):
+                self.chromium = types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw: FakeBrowser())
+                return self
+            def __exit__(self, *exc): pass
+        fake_module = types.ModuleType("playwright.sync_api")
+        fake_module.sync_playwright = lambda: FakeSync()
+        fake_playwright = types.ModuleType("playwright")
+        fake_playwright.sync_api = fake_module
+
+        c = self.collector
+        c.owner, c.account, c.expected_handle = "owner_A", "ig_A", "own.profile"
+        c.autonomous = True
+        c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
+        write_following_cache(c.followings_path(), "own.profile",
+                              ["old.friend", "still.friend"], False)
+
+        def partial_scan(page, handle, on_batch, stop_signal):
+            self.assertEqual(handle, "own.profile")
+            on_batch(["still.friend", "new.friend"], False)
+            return ["still.friend", "new.friend"], False
+
+        with patch.dict(sys.modules, {"playwright": fake_playwright,
+                                      "playwright.sync_api": fake_module}), \
+             patch("profile_counts_bridge.challenge_detected", return_value=False), \
+             patch("profile_counts_bridge.signed_in_handle", return_value="own.profile"), \
+             patch("profile_counts_bridge.read_following_visible", side_effect=partial_scan), \
+             patch("profile_counts_bridge.collect_visible_counts", return_value=("ok", (33, 4, False))):
+            c._run()
+
+        self.assertEqual(c.snapshot()["status"], "partial")
+        self.assertFalse(c.snapshot()["discovery_complete"])
+        self.assertEqual(c.snapshot()["total"], 3)
+        self.assertEqual(c.snapshot()["progress"], 3)
+        self.assertEqual(c.following()["usernames"],
+                         ["old.friend", "still.friend", "new.friend"])
+        self.assertEqual(read_following_cache(c.followings_path(), "own.profile"),
+                         ["old.friend", "still.friend", "new.friend"])
+        self.assertEqual(set(read_results(c.result_path())),
+                         {"old.friend", "still.friend", "new.friend"})
+
     def test_autonomous_account_identity_mismatch_rejected_before_switch(self):
         import time
         def hold():
