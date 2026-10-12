@@ -1,3 +1,11 @@
+## v120.44 — optional followback audit, Unfollow filter, login resilience
+
+- Unreviewed Unfollow filtering and optional independent read-only followback audit (#85).
+- English labels in Automations and Profile Counts; full English-only UI remains tracked in #86 and is not yet complete.
+- Improved account/login recognition and owner-scoped guards.
+- Real Instagram signed-in browser acceptance remains pending; simulated Chromium tests do not replace live verification.
+- Windows integrated EXE, standalone Desktop HTML and production-signed Android are subject to governed publication checks.
+
 ## v120.43 — Integrated Windows Insta Cleaner + account switching + safe Profile Counts
 
 - **Windows integrated app:** Download `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.43.zip`, extract, and double-click **InstaCleanerPro.exe**. It includes the Desktop workspace, visible Chrome robot and loopback controller. Requires Google Chrome; no CMD, Python or separate HTML to start the robot. Windows needs manual testing on the owner's machine.
