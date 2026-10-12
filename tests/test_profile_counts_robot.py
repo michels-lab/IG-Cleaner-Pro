@@ -17,14 +17,25 @@ class InstagramVisibleDiscoveryTests(unittest.TestCase):
     def test_profile_identity_must_come_from_labeled_nav(self):
         self.assertEqual(own_profile_from_anchors([
             {"href":"/random/", "text":"Photo by"},
-            {"href":"/myinstagram/", "aria":"Perfil"},
+            {"href":"/myinstagram/", "aria":"Perfil", "in_navigation":True},
         ]),"myinstagram")
         self.assertIsNone(own_profile_from_anchors([
             {"href":"/random/", "text":"Photo by"}
         ]))
         self.assertIsNone(own_profile_from_anchors([
-            {"href":"/user1/", "aria":"Profile"},
-            {"href":"/user2/", "aria":"Profile"}
+            {"href":"/friend/", "text":"Visit my profile"},
+            {"href":"/someone/", "aria":"Profile picture outside nav"}
+        ]),"Non-navigation links may not identify the logged-in account")
+        self.assertEqual(own_profile_from_anchors([
+            {"href":"/owner.name/", "in_navigation":True, "image_alt":"owner.name's profile picture"},
+            {"href":"/random/", "image_alt":"random's profile picture"}
+        ]),"owner.name")
+        self.assertIsNone(own_profile_from_anchors([
+            {"href":"/friend/", "image_alt":"friend's profile picture"}
+        ]),"Feed pictures are never proof of active account")
+        self.assertIsNone(own_profile_from_anchors([
+            {"href":"/user1/", "aria":"Profile", "in_navigation":True},
+            {"href":"/user2/", "aria":"Profile", "in_navigation":True}
         ]))
 
     def test_following_urls_reject_non_profile_paths(self):

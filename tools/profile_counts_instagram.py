@@ -24,6 +24,7 @@ RESERVED = frozenset((
     "privacy", "reels", "reel", "stories", "tags", "terms", "web",
 ))
 PROFILE_TERMS = re.compile(r"\b(profile|perfil|profil|profilo|profilbild)\b", re.I)
+PROFILE_PICTURE_TERMS = re.compile(r"\b(profile|perfil)\s+(?:picture|photo|pic|image|foto)\b", re.I)
 
 
 def user_from_href(href):
@@ -49,16 +50,21 @@ def own_profile_from_anchors(anchors):
         # Only trust explicit navigation labels or pictures inside the nav.
         label = " ".join(str(anchor.get(k) or "") for k in
                          ("text", "aria", "title", "svg_title", "svg_aria"))
-        if anchor.get("in_navigation"):
-            label += " " + str(anchor.get("image_alt") or "")
         user = user_from_href(anchor.get("href"))
-        if user and PROFILE_TERMS.search(label):
+        if not user:
+            continue
+        # A feed link titled "See profile" is NOT an account-identity signal.
+        # Accept only clearly labeled navigation/sidebar anchors.
+        if anchor.get("in_navigation") and (
+            PROFILE_PICTURE_TERMS.search(str(anchor.get("image_alt") or "")) or
+            PROFILE_TERMS.search(label)
+        ):
             hits.add(user)
     return next(iter(hits)) if len(hits) == 1 else None
 
 
 def visible_link_descriptors(page):
-    return page.evaluate("""() => [...document.querySelectorAll('a[href]')]
+    return page.evaluate("""() => [...document.querySelectorAll('a[href], [role=link][href]')]
         .filter(el => { const r=el.getBoundingClientRect();
           return r.width>0 && r.height>0 && r.bottom>0; })
         .map(el => ({
@@ -69,15 +75,35 @@ def visible_link_descriptors(page):
           image_alt: el.querySelector('img')?.getAttribute('alt') || '',
           svg_title: el.querySelector('svg title')?.textContent || '',
           svg_aria: el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '',
-          in_navigation: !!el.closest('nav, [role=navigation]')
+          in_navigation: !!el.closest('nav, aside, [role=navigation]')
         }))""")
 
 
 def signed_in_handle(page):
-    """None while login form is visible or account identity remains ambiguous."""
+    """Return exactly one visibly proven logged-in identity, or None.
+
+    Instagram sometimes removes the Profile navigation anchor. An owner's
+    own profile with an Edit profile button AND matching header username is
+    alternate positive evidence, never an arbitrary URL or a Follow button.
+    """
     if page.locator('input[name="password"]').count():
         return None
-    return own_profile_from_anchors(visible_link_descriptors(page))
+    via_nav = own_profile_from_anchors(visible_link_descriptors(page))
+    from_own_page = None
+    candidate = user_from_href(getattr(page, "url", ""))
+    if candidate:
+        header = page.locator("header").first
+        if header.count() and header.is_visible():
+            edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
+            controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
+            names = header.locator("h1,h2").all_inner_texts()
+            if sum(c.count() for c in controls) == 1 and any(
+                str(n).strip().lstrip("@").casefold() == candidate for n in names
+            ):
+                from_own_page = candidate
+    if via_nav and from_own_page and via_nav != from_own_page:
+        return None  # two conflicting visible identities; never guess
+    return via_nav or from_own_page
 
 
 def challenge_detected(page):

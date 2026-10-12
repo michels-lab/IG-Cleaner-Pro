@@ -33,7 +33,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  };
  vm.createContext(ctx);vm.runInContext(match[1],ctx);
  ctx.window.igcCountsRender();
- assert(summary.some(s=>s.includes('2 perfiles')),'Render should read Following from active workspace');
+ assert(summary.some(s=>s.includes('2 profiles')),'Render should read Following from active workspace');
  assert.match(elements.igcCountsRows.innerHTML,/public\.user/);
  ctx.window.igcCountsExportQueue();
  assert.equal(clicked,1,'Export should trigger actual browser download');
@@ -45,7 +45,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  await ctx.window.igcCountsImportFile(input);
  assert.equal(input.value,'');
  assert.match(elements.igcCountsRows.innerHTML,/1,234/, 'Import must render counts: '+elements.igcCountsFootnote.textContent+' keys='+JSON.stringify(Array.from(store.keys())));
- assert(summary.some(s=>s.includes('1 con datos')));
+ assert(summary.some(s=>s.includes('1 with data')));
  const onlyKey=Array.from(store.keys())[0];
  assert(onlyKey.includes('owner_A')&&onlyKey.includes('ig_A'));
  const saved=JSON.parse(store.get(onlyKey));
@@ -53,10 +53,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert.equal(saved.records['unrelated'],undefined,'Do not import profiles outside active Following');
  identity.active='ig_B';
  ctx.window.igcCountsRender();
- assert(summary.some(s=>s.includes('0 con datos')),'Sibling Instagram must not inherit counts');
+ assert(summary.some(s=>s.includes('0 with data')),'Sibling Instagram must not inherit counts');
  identity.active='ig_A';identity.owner='owner_B';
  ctx.window.igcCountsRender();
- assert(summary.some(s=>s.includes('0 con datos')),'Different app login must not inherit counts');
+ assert(summary.some(s=>s.includes('0 with data')),'Different app login must not inherit counts');
 
  // Simulate the actual local control protocol, including account-scoped sync.
  const bridgeStore=new Map(),requests=[];
@@ -139,10 +139,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert(bridgeStore.has('igc_robot_pacing_v1__owner_A__ig_A'),'User-selected pacing should be saved per Instagram');
  bridgeCtx.window.igcCountsRobotRestoreConfig();
  assert.equal(robotElements.igcCountsRobotMax.value,'200');
- assert.match(robotElements.igcCountsRobotPaceNote.textContent,/60 perfiles/);
- assert.match(robotElements.igcCountsRobotPaceNote.textContent,/2 min después de cada 10/);
+ assert.match(robotElements.igcCountsRobotPaceNote.textContent,/60 profiles/);
+ assert.match(robotElements.igcCountsRobotPaceNote.textContent,/2 min after every 10/);
  await bridgeCtx.window.igcCountsRobotPoll();
- assert.match(robotElements.igcCountsMetricSuccess.textContent,/Correctos: 1/);
+ assert.match(robotElements.igcCountsMetricSuccess.textContent,/Verified: 1/);
  assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
  await bridgeCtx.window.igcCountsRobotSaveConfig();
  assert(requests.some(r=>r.url.endsWith('/config')),'Saved pacing must reach active controller');
@@ -166,7 +166,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  await bridgeCtx.window.igcCountsRobotPoll();
  assert.equal(Array.from(bridgeStore.keys()).filter(k=>k.startsWith('igc_profile_counts_v1__')).length,1,
   'Polling another active Instagram must not save foreign profile-count results');
- assert.match(robotElements.igcCountsRobotStatus.textContent,/otro Instagram/);
+ assert.match(robotElements.igcCountsRobotStatus.textContent,/another Instagram/);
  console.log('Profile Counts local bridge Start/Poll, token and account isolation: PASS');
  console.log('Profile Counts UI source parsing, CSV, and owner/profile isolation: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
