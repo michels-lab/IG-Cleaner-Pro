@@ -6,6 +6,8 @@ on:
     paths:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_actions.py'
+      - 'tests/test_profile_actions_chromium.py'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -38,6 +40,11 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install playwright==1.57.0 pyinstaller==6.16.0
+      - name: Offline public/private Instagram action flows in real Chromium
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
