@@ -69,7 +69,7 @@ def visible_link_descriptors(page):
           image_alt: el.querySelector('img')?.getAttribute('alt') || '',
           svg_title: el.querySelector('svg title')?.textContent || '',
           svg_aria: el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '',
-          in_navigation: !!el.closest('nav, [role=navigation], aside')
+          in_navigation: !!el.closest('nav, [role=navigation]')
         }))""")
 
 
