@@ -2,10 +2,43 @@ import csv
 from pathlib import Path
 import tempfile
 import unittest
+from tools.profile_counts_instagram import (
+    user_from_href, own_profile_from_anchors,
+    write_following_cache, read_following_cache
+)
+
 from tools.profile_counts_robot import (
     parse_number, parse_profile_counts, read_queue, read_results, save_results,
     valid_username,
 )
+
+class InstagramVisibleDiscoveryTests(unittest.TestCase):
+    def test_profile_identity_must_come_from_labeled_nav(self):
+        self.assertEqual(own_profile_from_anchors([
+            {"href":"/random/", "text":"Photo by"},
+            {"href":"/myinstagram/", "aria":"Perfil"},
+        ]),"myinstagram")
+        self.assertIsNone(own_profile_from_anchors([
+            {"href":"/random/", "text":"Photo by"}
+        ]))
+        self.assertIsNone(own_profile_from_anchors([
+            {"href":"/user1/", "aria":"Profile"},
+            {"href":"/user2/", "aria":"Profile"}
+        ]))
+
+    def test_following_urls_reject_non_profile_paths(self):
+        self.assertEqual(user_from_href("/friend.user/"),"friend.user")
+        for value in ("/p/photo/", "/explore/", "/direct/inbox/",
+                      "/accounts/login/", "https://example.org/not-instagram/"):
+            self.assertIsNone(user_from_href(value))
+
+    def test_following_cache_keeps_instagram_separate(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"following.json"
+            write_following_cache(path,"owner1",["one","one","@two"],False)
+            self.assertEqual(read_following_cache(path,"owner1"),["one","two"])
+            self.assertEqual(read_following_cache(path,"owner2"),[])
+
 
 class ProfileCountsRobotTests(unittest.TestCase):
     def test_visible_meta_english(self):
