@@ -132,6 +132,8 @@ class ProfileCountsBridgeTests(unittest.TestCase):
             def __exit__(self,*exc): pass
         fake_module=types.ModuleType("playwright.sync_api")
         fake_module.sync_playwright=lambda:FakeSync()
+        fake_playwright=types.ModuleType("playwright")
+        fake_playwright.sync_api=fake_module
         def visible_following(page,handle,on_batch,stop_signal):
             self.assertEqual(handle,"own.profile")
             on_batch(["first.user","second.user"],True)
@@ -146,7 +148,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector.min_delay_seconds=0
         self.collector.pause_every=0
         self.collector.pause_minutes=0
-        with patch.dict(sys.modules,{"playwright.sync_api":fake_module}), \
+        with patch.dict(sys.modules,{"playwright":fake_playwright,"playwright.sync_api":fake_module}), \
              patch("profile_counts_bridge.challenge_detected",return_value=False), \
              patch("profile_counts_bridge.signed_in_handle",return_value="own.profile"), \
              patch("profile_counts_bridge.read_following_visible",side_effect=visible_following), \
