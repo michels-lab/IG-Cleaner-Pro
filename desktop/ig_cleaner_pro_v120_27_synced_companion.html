@@ -3749,25 +3749,34 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div><div class="panel" id="igcProfileCountsPanel">
 <div class="title">◎ Profile Counts — Instagram visible</div>
-<p class="note">Inicia sesión en Instagram en la ventana que se abre. El robot detecta tu cuenta, lee la lista de perfiles que sigues y consulta las cifras visibles de cada perfil. No tienes que exportar Following, dar Iniciar ni configurar los tiempos. Instagram puede restringir el acceso.</p>
+<p class="note">Conecta el robot de Windows y accede a Instagram desde la ventana de Chrome que abre. Configura tus tandas, mira el progreso y usa Pausar / Reanudar cuando quieras. Instagram puede restringir la automatización.</p>
 <div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Recopilación automática de Instagram</strong>
 <p id="igcCountsRobotStatus" class="note" aria-live="polite">Al iniciar sesión en Instagram, se detectarán automáticamente los perfiles que sigues y sus cifras visibles.</p>
-<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:8px;accent-color:var(--accent)" aria-label="Avance del robot"></progress>
-<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center;flex-wrap:wrap" hidden aria-hidden="true">
+<div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
+<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Conectar Instagram / abrir Chrome</button>
+<a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.42" target="_blank" rel="noopener">Obtener robot Windows</a>
+</div>
+<div id="igcCountsRobotMetrics" class="igc-counts-stats" aria-live="polite">
+<span id="igcCountsMetricAnalyzed">Analizados: 0</span><span id="igcCountsMetricSuccess">Correctos: 0</span><span id="igcCountsMetricPending">Pendientes: —</span><span id="igcCountsMetricErrors">Errores: 0</span><span id="igcCountsMetricUnavailable">Sin datos: 0</span><span id="igcCountsMetricRemaining">Faltan por completar: —</span>
+</div>
+<p id="igcCountsRobotCurrent" class="note" aria-live="polite">Esperando conexión con Instagram…</p>
+<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Porcentaje analizado"></progress>
+<div id="igcCountsRobotPercent" class="note" role="status">0% · Descubriendo perfiles</div>
+<div class="btnrow" id="igcCountsRobotActions" style="display:flex;align-items:center;flex-wrap:wrap">
 <label>Perfiles máximos <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
 <label>Cada (minutos) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <label>Espera entre perfiles (segundos) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <label>Descanso después de N perfiles <input id="igcCountsRobotRestEvery" type="number" min="0" max="10000" step="1" value="0" style="width:85px" oninput="igcCountsRobotPreview()"></label>
 <label>Minutos de descanso <input id="igcCountsRobotRestMinutes" type="number" min="0" max="1440" step="0.5" value="0" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<button class="btn primary" type="button" onclick="igcCountsRobotSaveConfig()">Guardar intervalos</button>
+<button class="btn orange" id="igcCountsPause" type="button" onclick="igcCountsRobotStop()">⏸ Pausar</button>
+<button class="btn" id="igcCountsResume" type="button" onclick="igcCountsRobotContinue()">▶ Reanudar</button>
+<button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Actualizar progreso</button>
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Recuperar guardados</button>
-<button class="btn primary" type="button" onclick="igcCountsRobotStart()">▶ Iniciar recopilación</button>
-<button class="btn" type="button" onclick="igcCountsRobotLoginReady()">Ya inicié sesión</button>
-<button class="btn orange" type="button" onclick="igcCountsRobotStop()">Pausar robot</button>
-<button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Ver progreso</button>
 </div>
-<p id="igcCountsRobotPaceNote" class="note" style="display:none" aria-hidden="true">El robot ajusta sus pausas internamente.</p>
+<p id="igcCountsRobotPaceNote" class="note">Puedes ajustar los intervalos por cuenta y guardarlos.</p>
 </div>
 <div class="btnrow" id="igcCountsManualCSV">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
@@ -13972,10 +13981,29 @@ window.igcCountsRobotPoll=async function(){
    applyRobotRows(data.rows);
    window.igcCountsRender();
   }
-  const percentage=state.total?Math.round(state.progress/state.total*100):0;
+  const good=Number(state.successful??state.progress??0),total=Number(state.total||0);
+  const analyzed=Number(state.analyzed??good),errors=Number(state.errors||0);
+  const unavailable=Number(state.unavailable||0),pending=Number(state.pending??Math.max(0,total-analyzed));
+  const percentage=total?Math.round(Math.min(total,analyzed)/total*100):0;
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
+  for(const [id,value] of [
+   ['igcCountsMetricAnalyzed','Analizados: '+analyzed+' / '+total],
+   ['igcCountsMetricSuccess','Correctos: '+good],
+   ['igcCountsMetricPending','Pendientes: '+pending],
+   ['igcCountsMetricErrors','Errores: '+errors],
+   ['igcCountsMetricUnavailable','Sin datos: '+unavailable],
+   ['igcCountsMetricRemaining','Faltan por completar: '+(state.remaining??Math.max(0,total-good))]
+  ]){const e=document.getElementById(id);if(e)e.textContent=value}
+  const percent=document.getElementById('igcCountsRobotPercent');if(percent)percent.textContent=percentage+'% analizado'+(!state.discovery_complete?' · Following provisional':'');
+  const current=document.getElementById('igcCountsRobotCurrent');
+  if(current)current.textContent=(state.current_profile?'Analizando @'+state.current_profile+' · ':'')+
+   (state.wait_seconds?'Próxima consulta en '+state.wait_seconds+' s · ':'')+
+   'Estado: '+state.status+(state.detected_handle?' · @'+state.detected_handle:'');
+  const pause=document.getElementById('igcCountsPause'),resume=document.getElementById('igcCountsResume');
+  if(pause)pause.disabled=!state.running||['pausing','paused'].includes(state.status);
+  if(resume)resume.disabled=state.running||!['paused','partial','error'].includes(state.status);
   const pacing=' · '+state.max_per_window+' perfiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s entre perfiles'+(state.pause_every?' · descanso '+state.pause_minutes+' min cada '+state.pause_every:'');
-  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%)'+pacing);
+  robotStatus((state.message||state.status)+' · '+good+'/'+total+' con cifras ('+percentage+'% analizado)'+pacing);
  }catch(e){robotStatus('No se puede conectar con el robot local: '+e.message,true)}
  finally{robotBusy=false}
 };
@@ -14042,14 +14070,44 @@ window.igcCountsRobotLoginReady=async function(){
  catch(e){robotStatus(e.message,true)}
 };
 window.igcCountsRobotStop=async function(){
- try{const result=await bridgeRequest('stop',{});robotStatus(result.message)}
+ try{const result=await bridgeRequest('stop',{});robotStatus(result.message);await window.igcCountsRobotPoll()}
  catch(e){robotStatus(e.message,true)}
 };
+window.igcCountsRobotConnect=async function(){
+ if(!robot){
+  robotStatus('Primero ejecuta Start-Insta-Cleaner-Robot.cmd del ZIP de Windows: abrirá Insta Cleaner con conexión local.',true);
+  return;
+ }
+ await window.igcCountsRobotAuto(true);
+};
+window.igcCountsRobotContinue=async function(){
+ if(!robot){robotStatus('Abre Insta Cleaner desde el lanzador del robot en Windows.',true);return}
+ try{
+  const ctx=context();
+  const result=await bridgeRequest('continue',{owner:ctx.owner,account:ctx.account,...robotConfig()});
+  igcRobotAutoIdentity=ctx.owner+'__'+ctx.account;
+  robotStatus(result.message);await window.igcCountsRobotPoll();
+ }catch(e){robotStatus('No se pudo reanudar: '+e.message,true)}
+};
+window.igcCountsRobotSaveConfig=async function(){
+ try{
+  const config=robotConfig(),ctx=context();
+  window.localStorage.setItem(robotPaceKey(),JSON.stringify(config));
+  if(robot){
+   const state=await bridgeRequest('status');
+   if(state.owner===ctx.owner&&state.account===ctx.account){
+    const result=await bridgeRequest('config',{owner:ctx.owner,account:ctx.account,...config});
+    robotStatus(result.message);return;
+   }
+  }
+  robotStatus('Intervalos guardados para la próxima ejecución.');
+ }catch(e){robotStatus(e.message,true)}
+};
 let igcRobotAutoIdentity='';
-window.igcCountsRobotAuto=async function(){
+window.igcCountsRobotAuto=async function(force=false){
  if(!robot)return;
  const ctx=context(),id=ctx.owner+'__'+ctx.account;
- if(igcRobotAutoIdentity===id)return;
+ if(igcRobotAutoIdentity===id&&!force)return;
  try{
   const state=await bridgeRequest('status');
   if(state.running){
@@ -14057,7 +14115,13 @@ window.igcCountsRobotAuto=async function(){
     robotStatus('La recopilación activa corresponde a otro Instagram. No se mezclarán los datos.',true);
     return;
    }
-   igcRobotAutoIdentity=id;return;
+   igcRobotAutoIdentity=id;
+   robotStatus('Chrome ya está conectado: '+(state.message||state.status));
+   return;
+  }
+  if(['paused','pausing'].includes(state.status)){
+   robotStatus('La recopilación está pausada. Pulsa Reanudar para continuar.');
+   return;
   }
   const profiles=window.IGC_INSTAGRAM_PROFILES;
   const profile=(profiles?.accounts||[]).find(p=>p.account_key===ctx.account);
@@ -14073,13 +14137,12 @@ window.igcCountsRobotAuto=async function(){
 if(robot&&robot.port>0&&robot.port<=65535){
  window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
- if(controls)controls.style.display='none';
+ if(controls)controls.style.display='flex';
  const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='none';
  const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='none';
  window.igcCountsRobotPreview();
- setInterval(()=>{if(!document.hidden){window.igcCountsRobotAuto();window.igcCountsRobotPoll()}},5000);
- setTimeout(()=>window.igcCountsRobotAuto(),1500);
- setTimeout(()=>window.igcCountsRobotPoll(),2400);
+ setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
+ setTimeout(()=>window.igcCountsRobotPoll(),1000);
 }
 window.igcCountsRobotRestoreConfig();
 window.igcCountsRobotPreview();
