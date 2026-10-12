@@ -68,7 +68,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   igcCountsRobotStatus:{textContent:'',style:{}},
   igcCountsRobotProgress:{value:0},
   igcCountsRobotActions:{style:{display:'none'}},
-  igcCountsRobotRate:{value:'50'}
+  igcCountsRobotMax:{value:'200'},
+  igcCountsRobotWindow:{value:'5'},
+  igcCountsRobotGap:{value:'5'},
+  igcCountsRobotPaceNote:{textContent:'',style:{}}
  };
  const bridgeIdentity={owner:'owner_A',active:'ig_A'};
  const mockFetch=async(url,options)=>{
@@ -82,7 +85,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   } else if(action==='load'){
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
-   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,per_hour:50};
+   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5};
   } else if(action==='results'){
    value={rows:[
     {username:'public.user',followers:'3456',following:'789',status:'ok',
@@ -112,6 +115,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const startBody=JSON.parse(start.options.body);
  assert.equal(startBody.owner,'owner_A');assert.equal(startBody.account,'ig_A');
  assert.deepEqual(Array.from(startBody.usernames),['public.user']);
+ assert.equal(startBody.max_per_window,200);
+ assert.equal(startBody.window_minutes,5);
+ assert.equal(startBody.min_delay_seconds,5);
+ assert.match(robotElements.igcCountsRobotPaceNote.textContent,/60 perfiles/);
  await bridgeCtx.window.igcCountsRobotPoll();
  assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
  await bridgeCtx.window.igcCountsRobotLoad();
