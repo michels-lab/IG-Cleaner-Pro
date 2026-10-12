@@ -165,6 +165,58 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(rows["first.user"]["followers"],"123")
         self.assertEqual(rows["second.user"]["following"],"45")
 
+
+    def test_login_attention_keeps_browser_open_then_resumes_automatically(self):
+        import types
+        from unittest.mock import patch
+        class FakePage:
+            def goto(self, *args, **kwargs): pass
+            def is_closed(self): return False
+        class FakeBrowser:
+            pages = [FakePage()]
+            def close(self): pass
+        class FakeSync:
+            def __enter__(self):
+                self.chromium = types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw: FakeBrowser())
+                return self
+            def __exit__(self, *exc): pass
+        fake_sync = types.ModuleType("playwright.sync_api")
+        fake_sync.sync_playwright = lambda: FakeSync()
+        fake_playwright = types.ModuleType("playwright")
+        fake_playwright.sync_api = fake_sync
+        c = self.collector
+        c.owner, c.account, c.expected_handle = "owner-A", "ig-A", "my.profile"
+        c.autonomous = True
+        c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
+        seen = []
+        original = c._update
+        def record(status, message, progress=None):
+            seen.append(status)
+            original(status, message, progress)
+        c._update = record
+        original_wait = c.stop_signal.wait
+        c.stop_signal.wait = lambda duration: False
+        try:
+            with patch.dict(sys.modules, {"playwright": fake_playwright,
+                                          "playwright.sync_api": fake_sync}), \\
+                 patch("profile_counts_bridge.challenge_detected", return_value=False), \\
+                 patch("profile_counts_bridge.signed_in_handle",
+                       side_effect=[None, "my.profile"]), \\
+                 patch("profile_counts_bridge.time.monotonic",
+                       side_effect=[0.0, 42.0]), \\
+                 patch("profile_counts_bridge.read_following_visible",
+                       return_value=(["one.profile"], True)), \\
+                 patch("profile_counts_bridge.collect_visible_counts",
+                       return_value=("ok", (5, 2, False))):
+                c._run()
+        finally:
+            c.stop_signal.wait = original_wait
+        self.assertIn("needs_attention", seen)
+        self.assertIn("discovering", seen)
+        self.assertEqual(c.snapshot()["status"], "complete")
+        self.assertEqual(c.snapshot()["progress"], 1)
+
     def test_autonomous_partial_discovery_resumes_same_account_checkpoint(self):
         import types
         from unittest.mock import patch
