@@ -133,12 +133,15 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const restore=requests.find(r=>r.url.endsWith('/load'));
  assert(restore,'UI must recover saved rows without launching browser');
  assert.equal(JSON.parse(restore.options.body).account,'ig_A');
- const bridgeSaved=JSON.parse(bridgeStore.get(Array.from(bridgeStore.keys())[0]));
+ const dataKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_counts_v1__'));
+ assert(dataKey,'Profile counts must be saved independent of pacing preferences');
+ const bridgeSaved=JSON.parse(bridgeStore.get(dataKey));
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
  bridgeIdentity.active='ig_B';
  await bridgeCtx.window.igcCountsRobotPoll();
- assert.equal(bridgeStore.size,1,'Polling another active Instagram must not save foreign results');
+ assert.equal(Array.from(bridgeStore.keys()).filter(k=>k.startsWith('igc_profile_counts_v1__')).length,1,
+  'Polling another active Instagram must not save foreign profile-count results');
  assert.match(robotElements.igcCountsRobotStatus.textContent,/otro Instagram/);
  console.log('Profile Counts local bridge Start/Poll, token and account isolation: PASS');
  console.log('Profile Counts UI source parsing, CSV, and owner/profile isolation: PASS');
