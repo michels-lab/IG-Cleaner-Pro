@@ -108,12 +108,15 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         state=self.request("/api/start",body={
             "owner":"owner-A","account":"ig-one","usernames":["@AAA", "aaa", "b.b"],
             "max_per_window":200,"window_minutes":5,"min_delay_seconds":5,
+            "pause_every":12,"pause_minutes":5,
         })
         self.collector.worker.join(2)
         self.assertEqual(state["total"],2)
         self.assertEqual(state["max_per_window"],200)
         self.assertEqual(state["window_minutes"],5)
         self.assertEqual(state["min_delay_seconds"],5)
+        self.assertEqual(state["pause_every"],12)
+        self.assertEqual(state["pause_minutes"],5)
         self.assertEqual(self.request("/api/status")["status"],"complete")
         with self.assertRaises(HTTPError) as e:
             self.request("/api/resume",body={})
