@@ -26,6 +26,7 @@ public final class SyncApi {
     private static final String PUBLISHABLE_KEY = "sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1";
 
     private final SharedPreferences prefs;
+    private final AccountSessionVault accounts;
     private String accessToken;
     private String refreshToken;
     private long expiresAt;
@@ -37,7 +38,57 @@ public final class SyncApi {
 
     public SyncApi(Context context) {
         prefs = context.getSharedPreferences("igc_sync", Context.MODE_PRIVATE);
+        accounts = new AccountSessionVault(context);
         load();
+    }
+
+    public java.util.List<String> rememberedAccounts() {
+        java.util.List<String> result = accounts.accounts();
+        if (hasSession() && !result.contains(getEmail().toLowerCase(Locale.ROOT)))
+            result.add(getEmail().toLowerCase(Locale.ROOT));
+        java.util.Collections.sort(result);
+        return result;
+    }
+
+    private void rememberCurrentSession() {
+        if (!hasSession() || getEmail().isBlank() || getRefreshToken().isBlank()) return;
+        try { accounts.store(getEmail(), webSession()); }
+        catch (Exception ignored) {
+            // Authentication still works, but device-key storage might be unavailable.
+            // Never save passwords or unencrypted multi-account refresh tokens.
+        }
+    }
+
+    public synchronized void activateRememberedAccount(String target) throws Exception {
+        String selected = target == null ? "" : target.trim().toLowerCase(Locale.ROOT);
+        JSONObject saved = accounts.read(selected);
+        if (saved == null) throw new IllegalArgumentException("Esta cuenta no tiene una sesión recordada.");
+        JSONObject user = saved.optJSONObject("user");
+        if (user == null || !selected.equalsIgnoreCase(user.optString("email", "")))
+            throw new IllegalArgumentException("La sesión recordada pertenece a otra cuenta.");
+        if (tokenExpiry(saved) <= System.currentTimeMillis()/1000L + 90) {
+            String savedRefresh = saved.optString("refresh_token", "");
+            if (savedRefresh.isBlank()) throw new IllegalStateException("La sesión expiró. Inicia sesión nuevamente.");
+            JSONObject updated = requestObject("POST", "/auth/v1/token?grant_type=refresh_token",
+                    new JSONObject().put("refresh_token", savedRefresh), false, null);
+            JSONObject confirmed = updated.optJSONObject("user");
+            if (!updated.has("access_token") || confirmed == null ||
+                    !selected.equalsIgnoreCase(confirmed.optString("email", "")))
+                throw new IllegalStateException("No se pudo comprobar el usuario de la sesión. Inicia sesión.");
+            saved = updated;
+        }
+        setEmail(selected);
+        saveSession(saved);
+    }
+
+    /** Add a login without invalidating remembered sessions. Only Sign out forgets one. */
+    public synchronized void prepareAnotherAccount() {
+        accessToken = "";
+        refreshToken = "";
+        expiresAt = 0;
+        prefs.edit().remove("access").remove("refresh").remove("expires_at")
+                .remove("native_newer").apply();
+        setEmail("");
     }
 
     public String getInstagramProfile() { return activeInstagramProfile; }
@@ -101,6 +152,7 @@ public final class SyncApi {
                     .putString("email", email == null ? "" : email)
                     .putBoolean("native_newer", false)
                     .apply();
+            rememberCurrentSession();
         } catch (Exception ignored) {
             // Keep the last known-good native session if the WebView sends malformed data.
         }
@@ -183,11 +235,11 @@ public final class SyncApi {
         updatePassword(password);
     }
 
-    public void logout() {
-        accessToken = "";
-        refreshToken = "";
-        activeInstagramProfile = "legacy";
-        prefs.edit().remove("access").remove("refresh").remove("native_newer").apply();
+    public synchronized void logout() {
+        // Sign out is explicitly different from Switch Account: forget this
+        // login's remembered token, while other remembered accounts survive.
+        accounts.remove(getEmail());
+        prepareAnotherAccount();
     }
 
     public static String scopeQuery(String query, String profile) {
@@ -326,6 +378,7 @@ public final class SyncApi {
                 .putLong("expires_at", expiresAt)
                 .putBoolean("native_newer", true)
                 .apply();
+        rememberCurrentSession();
     }
 
     private boolean refreshSession() {
