@@ -19,6 +19,7 @@ import webbrowser
 
 from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
                                       write_following_cache, read_following_cache)
+from profile_actions import ActionRobot
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_pacing import (check_pacing, history_path, load_history,
@@ -413,6 +414,7 @@ class Collector:
 
 
 def build_server(collector: Collector, token: str, port: int = 0):
+    actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -455,13 +457,15 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 self._send(200, {"rows": collector.results()})
             elif self.path == "/api/following":
                 self._send(200, collector.following())
+            elif self.path == "/api/actions/status":
+                self._send(200, actions.snapshot())
             else:
                 self._send(404, {"error": "Ruta desconocida."})
 
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -472,7 +476,15 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 data = json.loads(body or b"{}")
                 if not isinstance(data, dict):
                     raise ValueError("Solicitud inválida.")
-                if self.path == "/api/start":
+                if self.path == "/api/actions/start":
+                    result = actions.start(data)
+                elif self.path == "/api/actions/continue":
+                    result = actions.start(data, resume=True)
+                elif self.path == "/api/actions/pause":
+                    result = actions.pause(data)
+                elif self.path == "/api/actions/protect":
+                    result = actions.protect(data)
+                elif self.path == "/api/start":
                     result = collector.start(data)
                 elif self.path == "/api/auto":
                     result = collector.auto_start(data)
