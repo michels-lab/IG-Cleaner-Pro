@@ -204,6 +204,23 @@ def _verify_final_state(page, expected_handle, *, checks=3):
     return "review", "Estado final ambiguo: no repetir esta operación automáticamente."
 
 
+def _action_issue(task, result, message):
+    """Stable codes for the owner-facing anomalies report, independent of UI locale."""
+    if task == "unfollow" and result == "ok" and "Follow Back / Seguir también" in message:
+        return "unexpected_followback"
+    if task == "cancel" and result == "review" and message.startswith("Pendiente desactualizado:"):
+        return "pending_already_following"
+    if task == "cancel" and result == "review" and message.startswith("La solicitud ya no aparece"):
+        return "pending_not_requested"
+    if result == "review" and message.startswith("El perfil indica que ya te sigue"):
+        return "mutual_before_action"
+    if result == "review" and message.startswith("El perfil no muestra"):
+        return "missing_profile_info"
+    if result in ("review", "error", "blocked"):
+        return "requires_manual_review"
+    return ""
+
+
 def perform_visible_action(page, username, task, expected_handle, can_act=None):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
@@ -233,6 +250,13 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
               if task == "unfollow" else
               _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
+        if task == "cancel":
+            if _visible_button(header, [r"Following", r"Siguiendo"]):
+                return "review", ("Pendiente desactualizado: Instagram muestra Siguiendo / Following; "
+                                  "la solicitud ya fue aceptada. No se modificó el seguimiento.")
+            if _follow_state(header):
+                return "review", ("La solicitud ya no aparece como Requested / Solicitado; "
+                                  "no se realizó ningún cambio.")
         return "review", "El perfil no muestra el estado necesario para esta acción."
     if can_act and not can_act(username):
         return "skipped", "Omitido o protegido antes del primer clic."
@@ -407,6 +431,11 @@ class ActionRobot:
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
+            issues = [{"username": u, "status": rows[u].get("status", "pending"),
+                       "issue": rows[u].get("issue", ""),
+                       "message": rows[u].get("message", ""),
+                       "at": rows[u].get("at", "")}
+                      for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
             skipped = sum(u in self.skipped for u in self.targets)
             return {"status": self.status, "message": self.message,
@@ -415,10 +444,12 @@ class ActionRobot:
                     "running": bool(self.worker and self.worker.is_alive()),
                     "total": len(self.targets), "successful": successful,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
+                    "issue_count": len(issues), "issues": issues,
                     "remaining": sum(u not in protected and u not in self.skipped and rows[u].get("status") != "ok"
                                      for u in self.targets),
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
+                              "issue": rows[u].get("issue", ""),
                               "message": rows[u].get("message", ""),
                               "at": rows[u].get("at", "")} for u in self.targets]}
 
@@ -505,10 +536,17 @@ class ActionRobot:
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
                     if result == "skipped":
                         continue
+                    issue = _action_issue(self.task, result, details)
                     journal[user] = {"status": result, "message": details,
+                                     "issue": issue,
                                      "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                     _atomic_json(path, journal)
                     if result != "ok":
+                        # No-click preflight anomalies can be reviewed together after
+                        # the batch. Potentially clicked/ambiguous results still stop.
+                        if issue in ("pending_already_following", "pending_not_requested",
+                                     "mutual_before_action", "missing_profile_info"):
+                            continue
                         with self.lock:
                             self.status, self.message = result, "@" + user + ": " + details
                         return
