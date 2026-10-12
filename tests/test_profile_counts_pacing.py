@@ -5,7 +5,7 @@ import unittest
 
 from tools.profile_counts_pacing import (
     check_pacing, history_path, load_history, register_visit,
-    wait_required, save_history,
+    wait_required, save_history, finish_visit,
 )
 
 
@@ -65,6 +65,18 @@ class ProfileCountsPacingTests(unittest.TestCase):
             filename.write_text("invalid-json", encoding="utf-8")
             with self.assertRaises(ValueError):
                 load_history(filename, now=1_700_000_000.0)
+
+    def test_wait_is_after_profile_finishes_and_survives_restart(self):
+        clock=1_700_000_000.0
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"visits.json"
+            events=register_visit(path, [], at=clock-9)
+            # The page required seven seconds; pause still needs five more
+            # seconds after the browser finishes this profile.
+            events=finish_visit(path, events, at=clock-2)
+            self.assertEqual(load_history(path, now=clock), [clock-2])
+            self.assertEqual(wait_required(events,200,5,5,now=clock), 3)
+            self.assertEqual(wait_required(events,200,5,5,now=clock+3), 0)
 
     def test_boundaries(self):
         for kwargs in [(0,5,5),(10001,5,5),(50,0,5),(50,1441,5),
