@@ -16,7 +16,7 @@ python tools/profile_counts_bridge.py --app "RUTA/IG-Cleaner-Pro-Desktop.html"
 
 4. Se abre tu archivo HTML de Insta Cleaner en el navegador. Carga Following si aún no está en esa instalación, entra a Insights, elige los perfiles por hora y pulsa **Iniciar recopilación**.
 5. Cuando se abra Chromium para Instagram, inicia sesión **directamente allí**. Regresa a Insta Cleaner y pulsa **Ya inicié sesión**. La recopilación guarda resultados continuamente y aparecen en la tabla sin transferencias CSV.
-6. Puedes pulsar **Pausar robot**, cerrar la app y luego volver a iniciar el puente para continuar. La PC y la terminal del puente deben seguir abiertas mientras el robot trabaja. Los resultados se guardan separados por propietario de IG Cleaner y perfil de Instagram. El siguiente inicio no repite registros completados.
+6. Puedes pulsar **Pausar robot**, cerrar la app y luego volver a iniciar el puente para continuar. En Insights, **Recuperar guardados** consulta los resultados persistentes sin abrir Instagram, y la barra de avance muestra el porcentaje de perfiles con ambas cifras obtenidas. La PC y la terminal del puente deben seguir abiertas mientras el robot trabaja. Los resultados se guardan separados por propietario de IG Cleaner y perfil de Instagram. El siguiente inicio no repite registros completados.
 
 La clave del puente aparece únicamente en el fragmento del enlace local de lanzamiento. **No compartas el enlace**, ni el directorio de Chromium con sus cookies. El puente no se expone a Internet ni ejecuta un servidor remoto. Cierra la terminal para apagarlo.
 
