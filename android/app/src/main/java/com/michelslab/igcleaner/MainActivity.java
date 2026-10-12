@@ -1348,12 +1348,18 @@ public final class MainActivity extends AppCompatActivity {
                         // Serialized by the app's single IO executor; a pending
                         // sync cannot finish under the newly selected owner.
                         runAsync(() -> {
-                            api.activateRememberedAccount(selected);
-                            mainHandler.post(() -> {
-                                resetAfterAccountChange();
-                                setGlobalStatus("CONNECTED • " + api.getEmail());
-                                showNativeAccountScreen();
-                            });
+                            try {
+                                api.activateRememberedAccount(selected);
+                                mainHandler.post(() -> {
+                                    resetAfterAccountChange();
+                                    setGlobalStatus("CONNECTED • " + api.getEmail());
+                                    showNativeAccountScreen();
+                                });
+                            } finally {
+                                // A rejected or expired login must not leave
+                                // the Switch account control permanently disabled.
+                                mainHandler.post(() -> switchAccount.setEnabled(true));
+                            }
                         }, true);
                     }).setNegativeButton("Cancel", null).show();
         });
