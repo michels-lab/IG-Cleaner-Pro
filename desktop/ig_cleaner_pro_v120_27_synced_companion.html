@@ -2899,6 +2899,10 @@ window.IGC_INSTAGRAM_PROFILES={
  switch(key){
   if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(key)))throw Error('Identidad inválida');
   if(key!==this.active&&key!=='legacy'&&!this.accounts.some(a=>a.account_key===key))throw Error('Perfil ajeno a tu cuenta');
+  if(key!==this.active&&window.igcAutoSwitchGuard?.()===false){
+   alert('Hay una automatización activa (o no se verificó su estado). Pulsa Pausar y espera a que quede detenida antes de cambiar de Instagram.');
+   this.render();return;
+  }
   igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
   try{const account=this.accounts.find(a=>a.account_key===key);window.AndroidBridge?.selectInstagramProfile?.(key,account?.username?'@'+account.username:'Datos anteriores')}catch(_){}
   location.reload();
@@ -13931,6 +13935,7 @@ window.igcRefreshInstagramProfiles=async function(){
 };
 window.igcSyncNow=()=>syncNow(true);
 window.igcSyncDisconnect=function(){
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de cerrar sesión.','warn');return}
  if(S.busy){status('Termina la sincronización antes de cerrar sesión.','warn');return}
  const who=sessionOwner(S.session);
  forgetRemembered(who);
@@ -13940,6 +13945,7 @@ window.igcSyncDisconnect=function(){
  location.reload();
 };
 function addAnotherLogin(){
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de añadir otra cuenta.','warn');return}
  if(S.busy){status('Termina la sincronización antes de añadir un usuario.','warn');return}
  saveRemembered(S.session);
  clearTimeout(statePushTimer);
@@ -13949,6 +13955,7 @@ function addAnotherLogin(){
  location.reload();
 }
 async function activateRemembered(owner){
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de cambiar de cuenta.','warn');return}
  const next=readRemembered()[owner];
  if(!next?.refresh_token||!next?.access_token||sessionOwner(next)!==owner){
   status('La sesión guardada no es válida. Entra con la contraseña de ese usuario.','warn');return;
@@ -13981,6 +13988,7 @@ function makeAccountButton(label,action,container){
  button.addEventListener('click',action);container.appendChild(button);return button;
 }
 window.igcSyncSwitchAccount=function(){
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización antes de cambiar de cuenta.','warn');return}
  if(window.AndroidBridge){status('En Android, cambia de cuenta desde la pantalla Cuenta.','warn');return}
  if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return}
  document.getElementById('igcLoginChooser')?.remove();
@@ -14401,8 +14409,16 @@ window.igcAutoSaveTiming=function(){
 const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false;
+// Do not silently leave a running action job acting on a different identity.
+// Unknown connection state is fail-closed until the local robot is queried.
+window.igcAutoSwitchGuard=function(){
+ if(!actionBridge)return true;
+ if(!actionState)return false;
+ return !actionState.running &&
+   !['starting','running','login','waiting','pausing'].includes(String(actionState.status));
+};
 async function requestAction(endpoint,body){
- if(!actionBridge)throw Error("Abre el ZIP del robot de Windows con Start-Insta-Cleaner-Robot.cmd.");
+ if(!actionBridge)throw Error("Abre InstaCleanerPro.exe: el motor de Automatizaciones está integrado en la aplicación de Windows.");
  const response=await fetch("http://127.0.0.1:"+actionBridge.port+"/api/actions/"+endpoint,{
   method:body?"POST":"GET",mode:"cors",cache:"no-store",
   headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":actionBridge.token},
