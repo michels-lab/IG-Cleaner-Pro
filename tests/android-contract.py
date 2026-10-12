@@ -57,6 +57,14 @@ for token in (
 for token in ("exportCloudData", "deleteCloudData"):
     assert f'@+id/{token}' in account_layout, f"Android account privacy control missing: {token}"
 
+# Native and embedded HTML must not reuse an already rotated JWT after expiry.
+for token in ("private long expiresAt;", "tokenExpiry(JSONObject result)",
+              "expiresAt <= System.currentTimeMillis() / 1000L + 90",
+              "refreshSession(); // One bounded preflight",
+              ".putLong(\"expires_at\", expiresAt)",
+              "nativeSessionIsNewer()", "incomingExpiry <= expiresAt"):
+    assert token in sync_api, f"Native JWT refresh contract missing: {token}"
+
 assert 'public void delete(String tableQuery)' in sync_api
 assert '"DELETE"' in sync_api
 for token in ("scopeQuery(String query, String profile)", '"instagram_" + table',
