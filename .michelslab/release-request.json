@@ -1,12 +1,15 @@
 {
   "version": "120.42",
   "tag": "v120.42",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "User explicitly requested 'dale release para probarla' on 2026-10-12 for IG Cleaner Pro autonomous Instagram Profile Counts. Publish governed v120.42 normal GitHub release with signed Android APK, Desktop standalone HTML and Windows visible-browser robot ZIP. Real Instagram signed-in scraping is unverified and disclosed; physical user acceptance follows.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.41",
-  "retry_reason": "Retry governed v120.42 after verifying exact Windows-robot archive filename, robust ZIP content checks and preserving signed Android + Desktop release gates; initial publisher build failed before publishing assets."
+  "retry_reason": "Retry governed v120.42 after verifying exact Windows-robot archive filename, robust ZIP content checks and preserving signed Android + Desktop release gates; initial publisher build failed before publishing assets.",
+  "published_run": 38216103775,
+  "published_commit": "1c806e34e3f3b84c9311f466353a6ad30fe735c2",
+  "completed_at_utc": "2026-10-12T07:13:17Z"
 }
