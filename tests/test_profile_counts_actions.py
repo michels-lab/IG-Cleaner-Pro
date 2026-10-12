@@ -38,6 +38,14 @@ class FakeMatches:
 
 
 class FakeRoot:
+    @property
+    def first(self):
+        return self
+
+    @property
+    def last(self):
+        return self
+
     def __init__(self, label, callback=None):
         self.buttons = {}
         self.label = label
