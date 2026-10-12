@@ -465,7 +465,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -484,6 +484,8 @@ def build_server(collector: Collector, token: str, port: int = 0):
                     result = actions.pause(data)
                 elif self.path == "/api/actions/protect":
                     result = actions.protect(data)
+                elif self.path == "/api/actions/skip":
+                    result = actions.skip(data)
                 elif self.path == "/api/start":
                     result = collector.start(data)
                 elif self.path == "/api/auto":
