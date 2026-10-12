@@ -1426,3 +1426,12 @@ The user explicitly prefers to inspect apps **after release** rather than waitin
 ## 2026-10-12 — Shared agent contract synchronization
 
 Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructions.md to Michel-Software-Standards child-agent-core 2026-10-12.1. Local product instructions remain byte-for-byte unchanged outside those blocks. Carries current installer EULA/shortcut, standalone HTML (where applicable), and independent work during CI policies; does not modify app code, workflows, versions or releases. Validation: one managed block per target, exact canonical body and preserved local prefix/suffix. Product/runtime acceptance is not inferred from this documentation change.
+
+
+## 2026-10-12 — Profile Counts visible controls + Automation planner + Mutuals Focus ratio (candidate)
+
+- Owner reported that Windows robot's Instagram connect/login entry, batch size/window, per-profile delays, Pause/Resume, progress and error counts were not findable. Root cause in Desktop source: #igcCountsRobotActions and #igcCountsRobotPaceNote intentionally hidden, and automatic startup on page load; old /api/resume only signaled manual login, not paused work.
+- Candidate adds explicit Conectar Instagram/Chrome, visible per-account pacing controls, Save, Pause, Resume and progress (analyzed, success, remaining, errors, unavailable, current username/wait, percentage). A saved pause is reentered only by explicit Resume; local controller requests enforce owner/account and preserve visits/results across sessions. No secrets or Meta API access.
+- Separate **Automatizaciones** planning page gives per-list Skip this batch, persistent ★ protected favorites, search and accessible Protected view for cancel-sent-requests and unfollow-not-followback tasks; timing stored by owner/account/task. Browser actions explicitly **disabled** until DOM/owner acceptance; do not misrepresent the queue as an automated execution.
+- Mutuals **remains Focus-only**; Following/Followers ratio from valid Profile Counts records ranks review batch candidates, with existing review/history exclusions and protected checks. Ratios are not used to unfollow, and missing numbers provide no ratio priority.
+- Added/adjusted controller, UI, Chromium and planner behavioral tests plus `docs/AUTOMATIONS.md`. Await exact-head CI including Android emulator and Windows packaging; keep changes on PR branch until validation. Real Instagram login, action execution and physical Android acceptance not yet verified; no release authorized. Stable remains v120.42.
