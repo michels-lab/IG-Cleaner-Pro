@@ -103,6 +103,22 @@ def wait_required(events, count: int, minutes: int, delay: float, now=None):
     return max(wait_gap, wait_window)
 
 
+def finish_visit(file: Path, events, at=None):
+    """Anchor the minimum inter-profile pause to the END of the prior visit.
+
+    An attempted visit was already written before navigation, so a crash
+    cannot erase its budget. After the page returns, extend the latest
+    timestamp to the completion moment, making the real pause explicit.
+    """
+    if not events:
+        raise ValueError("No hay una visita activa para finalizar.")
+    at = time.time() if at is None else at
+    recent = list(events)
+    recent[-1] = max(recent[-1], at)
+    save_history(file, recent)
+    return recent
+
+
 def register_visit(file: Path, events, at=None):
     at = time.time() if at is None else at
     recent = [stamp for stamp in events if stamp > at - MAX_WINDOW_MINUTES * 60]
