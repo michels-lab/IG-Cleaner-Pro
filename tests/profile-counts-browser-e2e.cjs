@@ -65,8 +65,19 @@ const {chromium}=require("playwright");
   });
   await page.locator("#igcCountsRobotActions").waitFor({state:"visible",timeout:6000});
   await page.locator('#igcCountsRobotActions button[onclick="igcCountsRobotStart()"]').click();
-  await page.waitForFunction(()=>document.querySelector("#igcCountsRobotStatus")?.textContent.includes("Starting fixture"),
-   {timeout:10000});
+  try {
+    await page.waitForFunction(()=>document.querySelector("#igcCountsRobotStatus")?.textContent.includes("Starting fixture"),
+      null, {timeout:7000});
+  } catch (err) {
+    const diagnostics=await page.evaluate(()=>({
+      status:document.getElementById("igcCountsRobotStatus")?.textContent,
+      preview:document.getElementById("igcCountsRobotPaceNote")?.textContent,
+      config:["igcCountsRobotMax","igcCountsRobotWindow","igcCountsRobotGap","igcCountsRobotRestEvery","igcCountsRobotRestMinutes"]
+         .map(x=>[x,document.getElementById(x)?.value]),
+      active:window.IGC_INSTAGRAM_PROFILES?.active
+    }));
+    throw Error("Robot Start browser acceptance: "+JSON.stringify({diagnostics,queries,errors})+" / "+err.message);
+  }
   assert.equal(queries,1,"UI did not start local collector");
   await page.evaluate(()=>window.igcCountsRobotPoll());
   await page.waitForFunction(()=>document.querySelector("#igcCountsRows")?.textContent.includes("8,765"),
