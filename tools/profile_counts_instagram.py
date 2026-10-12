@@ -53,9 +53,12 @@ def own_profile_from_anchors(anchors):
         user = user_from_href(anchor.get("href"))
         if not user:
             continue
-        if anchor.get("in_navigation") and PROFILE_PICTURE_TERMS.search(str(anchor.get("image_alt") or "")):
-            hits.add(user)
-        elif PROFILE_TERMS.search(label):
+        # A feed link titled "See profile" is NOT an account-identity signal.
+        # Accept only clearly labeled navigation/sidebar anchors.
+        if anchor.get("in_navigation") and (
+            PROFILE_PICTURE_TERMS.search(str(anchor.get("image_alt") or "")) or
+            PROFILE_TERMS.search(label)
+        ):
             hits.add(user)
     return next(iter(hits)) if len(hits) == 1 else None
 
