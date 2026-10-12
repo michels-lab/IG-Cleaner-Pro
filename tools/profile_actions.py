@@ -315,7 +315,7 @@ def classify_followback_search(dialog, username, *, text=None, usernames=None):
     found = set(usernames if usernames is not None else [])
     if own in found:
         return "follows_you"
-    empty = re.search(r"\\b(no results found|no results|no users found|no se encontraron resultados|sin resultados|no hay resultados)\\b",
+    empty = re.search(r"\b(no results found|no results|no users found|no se encontraron resultados|sin resultados|no hay resultados)\b",
                       text if text is not None else dialog.inner_text(timeout=4000), re.I)
     return "not_following" if empty and not found else "unverified"
 
@@ -332,13 +332,13 @@ def perform_visible_followback_audit(page, username, expected_handle):
     page.wait_for_timeout(950)
     if challenge_detected(page) or signed_in_handle(page) != expected_handle:
         return "blocked", "unverified", "Instagram challenge or identity mismatch."
-    link = page.locator('a[href*="/followers/"]').filter(visible=True)
+    link = page.locator('a[href*="/followers/"]')
     # Match the owner's exact Followers URL. Never inspect another account.
     target = None
     for i in range(min(link.count(), 15)):
         item = link.nth(i)
         href = item.get_attribute("href") or ""
-        if re.search(r"/" + re.escape(expected_handle) + r"/followers/?(?:\\?|$)", href, re.I):
+        if item.is_visible() and re.search(r"/" + re.escape(expected_handle) + r"/followers/?(?:\?|$)", href, re.I):
             target = item
             break
     if target is None:
