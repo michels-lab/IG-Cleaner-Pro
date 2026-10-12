@@ -14168,7 +14168,7 @@ window.igcCountsRobotPoll=async function(){
   const pacing=' · '+state.max_per_window+' profiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s between profiles'+(state.pause_every?' · rest '+state.pause_minutes+' min every '+state.pause_every:'');
   const stalled=state.status==='needs_attention';
   robotStatus((stalled
-    ? 'Instagram login could not be verified. In the Chrome opened by Insta Cleaner, sign in and reload Instagram. Then press Connect Instagram / Open Chrome to retry.'
+    ? 'Instagram login could not be verified yet. Sign in or reload Instagram in the Chrome opened by Insta Cleaner. Detection continues automatically; you can Pause at any time.'
     : (state.message||state.status))+' · '+good+'/'+total+' with counts ('+percentage+'% analyzed)'+pacing,stalled);
  }catch(e){robotStatus('Cannot connect to the local robot: '+e.message,true)}
  finally{robotBusy=false}
