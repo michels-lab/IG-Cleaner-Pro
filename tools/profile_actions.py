@@ -103,6 +103,10 @@ def perform_visible_action(page, username, task, expected_handle):
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
         return "blocked", "No se encontró la cabecera del perfil."
+    # Do not unfollow a user when the live profile explicitly shows reciprocity.
+    if task == "unfollow" and re.search(r"\b(follows you|te sigue)\b",
+                                          header.inner_text(timeout=4000), re.I):
+        return "review", "El perfil indica que ya te sigue; requiere revisión."
     # Match control only inside the target profile header, not recommendations.
     if task == "unfollow":
         active = _visible_button(header, [r"Following", r"Siguiendo"])
@@ -138,6 +142,7 @@ class ActionRobot:
         self.worker = None
         self.owner = self.account = self.handle = self.task = ""
         self.targets = []
+        self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
         self.min_delay_seconds = 10.0
@@ -180,6 +185,16 @@ class ActionRobot:
             _atomic_json(self._protection_file(), sorted(protected))
             return self.snapshot()
 
+    def skip(self, data):
+        with self.lock:
+            if (str(data.get("owner") or ""), str(data.get("account") or "")) != (self.owner, self.account):
+                raise ValueError("La tanda de acciones pertenece a otro Instagram.")
+            user = valid_username(data.get("username"))
+            if not user or user not in self.targets:
+                raise ValueError("El perfil no forma parte de esta tanda.")
+            self.skipped.add(user)
+            return self.snapshot()
+
     def start(self, data, *, resume=False):
         owner = str(data.get("owner") or "").strip()
         account = str(data.get("account") or "").strip()
@@ -213,6 +228,8 @@ class ActionRobot:
                 raise ValueError("No hay una tarea pausada para reanudar.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             self.targets = targets
+            if not resume:
+                self.skipped.clear()
             self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
             self.rest_minutes = rest
             saved_protected = self._protected()
@@ -241,13 +258,14 @@ class ActionRobot:
             successful = sum(x.get("status") == "ok" for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
             ignored = sum(u in protected for u in self.targets)
+            skipped = sum(u in self.skipped for u in self.targets)
             return {"status": self.status, "message": self.message,
                     "owner": self.owner, "account": self.account, "task": self.task,
                     "current_profile": self.current,
                     "running": bool(self.worker and self.worker.is_alive()),
                     "total": len(self.targets), "successful": successful,
-                    "errors": reviewed, "protected": ignored,
-                    "remaining": sum(u not in protected and rows[u].get("status") != "ok"
+                    "errors": reviewed, "protected": ignored, "skipped": skipped,
+                    "remaining": sum(u not in protected and u not in self.skipped and rows[u].get("status") != "ok"
                                      for u in self.targets),
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
@@ -298,7 +316,7 @@ class ActionRobot:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
                         return
-                    if self._protected_for(user) or journal.get(user, {}).get("status") == "ok":
+                    if self._protected_for(user) or user in self.skipped or journal.get(user, {}).get("status") == "ok":
                         continue
                     while not self.stop_event.is_set():
                         delay = max(wait_required(visits, self.max_count, self.window_minutes,
@@ -316,7 +334,7 @@ class ActionRobot:
                         self.wait_until = 0
                         self.current = user
                         self.status, self.message = "running", "Consultando @" + user
-                    if self._protected_for(user):
+                    if self._protected_for(user) or user in self.skipped:
                         continue
                     visits = register_visit(visits_file, visits)
                     try:
