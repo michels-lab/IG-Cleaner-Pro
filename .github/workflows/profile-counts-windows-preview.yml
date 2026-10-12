@@ -67,8 +67,11 @@ jobs:
       - name: Test the frozen executable without contacting Instagram
         shell: pwsh
         run: |
-          & ".\dist\InstaCleanerPro.exe" --healthcheck
-          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+          # A --windowed PyInstaller application is a GUI process; calling it
+          # with & does not reliably wait or refresh PowerShell's LASTEXITCODE.
+          $candidate = (Resolve-Path ".\dist\InstaCleanerPro.exe").Path
+          $result = Start-Process -FilePath $candidate -ArgumentList "--healthcheck" -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw "Integrated Windows executable healthcheck exited $($result.ExitCode)." }
       - name: Bundle integrated one-click application and instructions
         shell: pwsh
         run: |
