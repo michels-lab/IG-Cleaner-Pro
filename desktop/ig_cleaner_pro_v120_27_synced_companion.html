@@ -9860,10 +9860,31 @@ function followersMutualFilteredRows(){
 
   return rows.sort(followerOldestFirstSort);
 }
+// Mutuals uses Profile Counts strictly to PRIORITIZE human Focus review.
+// A high Following/Followers ratio is not evidence of bot/fraud or permission to unfollow.
+function igcMutualRatioInfo(row){
+  const value=window.igcCountsGetRecord?.(row?.username);
+  if(!value||value.status!=='ok')return null;
+  const followers=Number(value.followers),following=Number(value.following);
+  if(!Number.isFinite(followers)||!Number.isFinite(following)||followers<0||following<0||
+     value.followers===''||value.following==='')return null;
+  return {ratio:following/Math.max(1,followers),followers,following,approximate:!!value.approximate};
+}
+function igcMutualRatioBonus(row){
+  const v=igcMutualRatioInfo(row);if(!v)return 0;
+  return Math.min(45,Math.max(0,Math.log2(Math.max(1,v.ratio))*9))*(v.approximate?.75:1);
+}
+function igcMutualFocusSort(a,b){
+  const score=r=>historyFocusScore(r,'mutual')+igcMutualRatioBonus(r);
+  const diff=score(b)-score(a);
+  return diff||followerOldestFirstSort(a,b);
+}
 function followersMutualSmartCandidates(){
   return followersMutualRows()
     .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual')&&!recentlyFailedHistory(r,3))
     .sort((a,b)=>{
+      const ratioPriority=igcMutualRatioBonus(b)-igcMutualRatioBonus(a);
+      if(ratioPriority!==0)return ratioPriority;
       const hist=historyFocusScore(b,'mutual')-historyFocusScore(a,'mutual');
       if(hist!==0)return hist;
       const ageA=followerAgeDays(a), ageB=followerAgeDays(b);
@@ -9886,7 +9907,7 @@ function followersMutualRows(){
 function followersMutualCandidates(){
   return followersMutualRows()
     .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual')&&!tooRepeatedForNormalFocus(r))
-    .sort(historyAwareSort('mutual',followerOldestFirstSort));
+    .sort(igcMutualFocusSort);
 }
 function followersMutualFocusN(n){
   const prepared=igcTryOpenPreparedFocus('mutual',n);
@@ -9899,7 +9920,7 @@ function followersMutualFocusN(n){
 function followersMutualRiskN(n){
   const primary=followersMutualRows()
     .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual')&&['alto','medio'].includes(r.riskLevel))
-    .sort(historyAwareSort('mutual',followerOldestFirstSort));
+    .sort(igcMutualFocusSort);
   const rows=focusBatchFill(primary,followersMutualAnyFocusCandidates(),n,'mutual');
   if(!rows.length){offerAlternativeFocus('mutual',n,`seguidores mutuos riesgo ${n}`);renderFollowersMutualTab();return;}
   openConfirmedFocusRows(rows,`seguidores mutuos riesgo ${n}`,'mutual',n);
@@ -13952,6 +13973,9 @@ function applyRobotRows(rows){
  if(applied){write(current);window.igcCountsRender()}
  return applied;
 }
+window.igcCountsGetRecord=function(username){
+ const u=normalize(username);return u?read()[u]||null:null;
+};
 window.igcCountsRobotLoad=async function(){
  if(!robot)return;
  const users=members();
