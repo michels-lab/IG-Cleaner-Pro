@@ -53,7 +53,9 @@ class ProfileCountsBridgeTests(unittest.TestCase):
     def test_reject_invalid_job(self):
         for body in (
             {"owner":"A","account":"first","usernames":[]},
-            {"owner":"A","account":"first","usernames":["valid"],"per_hour":61},
+            {"owner":"A","account":"first","usernames":["valid"],"max_per_window":0},
+            {"owner":"A","account":"first","usernames":["valid"],"max_per_window":200,"window_minutes":0},
+            {"owner":"A","account":"first","usernames":["valid"],"min_delay_seconds":-2},
             {"owner":"A","account":"","usernames":["valid"]},
             {"owner":"A","account":"first","usernames":["../unsafe"]},
         ):
@@ -92,6 +94,9 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(state["status"],"idle")
         self.assertEqual(state["progress"],1)
         self.assertEqual(state["total"],2)
+        self.assertEqual(state["max_per_window"],200)
+        self.assertEqual(state["window_minutes"],5)
+        self.assertEqual(state["min_delay_seconds"],5)
         self.assertFalse(state["running"])
         rows = self.request("/api/results")["rows"]
         self.assertEqual(len(rows),1)
@@ -102,7 +107,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector._run=lambda: self.collector._update("complete","Simulated done",0)
         state=self.request("/api/start",body={
             "owner":"owner-A","account":"ig-one","usernames":["@AAA", "aaa", "b.b"],
-            "per_hour":50,
+            "max_per_window":200,"window_minutes":5,"min_delay_seconds":5,
         })
         self.collector.worker.join(2)
         self.assertEqual(state["total"],2)
