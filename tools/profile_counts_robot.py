@@ -16,6 +16,10 @@ import sys
 import time
 from urllib.parse import urlparse
 
+from profile_counts_pacing import (check_pacing, history_path, load_history, register_visit,
+                                   wait_required, DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES,
+                                   DEFAULT_DELAY_SECONDS)
+
 FIELDS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
 USERNAME = re.compile(r"^[A-Za-z0-9._]{1,30}$")
 LABEL = {
@@ -178,6 +182,11 @@ def run(args):
     if not usernames:
         raise ValueError("No hay nombres de usuario válidos en el archivo.")
     results = read_results(args.output)
+    max_count, window_minutes, min_delay = check_pacing(
+        args.max_per_window if args.max_per_window is not None else args.per_hour,
+        args.window_minutes, args.min_delay_seconds)
+    visits_file = history_path(args.output)
+    visits = load_history(visits_file, results)
     pending = [u for u in usernames if u not in results or
                (args.retry_unavailable and results[u].get("status") in ("error", "unavailable", "login_required"))]
     if args.max_profiles:
@@ -203,13 +212,14 @@ def run(args):
             page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
             print("Abre tu sesión de Instagram en esta ventana si hace falta.")
             input("Cuando la cuenta esté lista, vuelve a esta terminal y presiona Enter para iniciar: ")
-            interval = 3600 / args.per_hour
             for index, username in enumerate(pending, 1):
-                elapsed = seconds_since(last_visit(results))
-                if elapsed < interval:
-                    remaining = interval - elapsed
-                    print(f"Pausa entre consultas: {remaining:.0f} segundos.")
-                    time.sleep(remaining)
+                while True:
+                    waiting = wait_required(visits, max_count, window_minutes, min_delay)
+                    if waiting <= 0:
+                        break
+                    print(f"Pausa programada antes de @{username}: {waiting:.1f} segundos.")
+                    time.sleep(waiting)
+                visits = register_visit(visits_file, visits)
                 status, counts = collect_visible_counts(page, username)
                 stamp = iso_now()
                 if status in ("blocked", "login_required"):
@@ -234,14 +244,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Recopila contadores visibles de Instagram con navegador local y sesión propia.")
     parser.add_argument("--input", required=True, type=Path, help="CSV exportado desde Insta Cleaner (username,profile_url).")
     parser.add_argument("--output", type=Path, default=Path("profile_counts_results.csv"), help="CSV de progreso/resultados persistentes.")
-    parser.add_argument("--per-hour", type=int, default=50, help="Máximo de visitas por hora, predeterminado 50.")
+    parser.add_argument("--per-hour", type=int, default=DEFAULT_COUNT, help="Compatibilidad anterior: máximo por hora si no usas --max-per-window.")
+    parser.add_argument("--max-per-window", type=int, help="Visitas máximas permitidas por ventana (1 a 10,000).")
+    parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES, help="Longitud de la ventana, en minutos (1 a 1,440).")
+    parser.add_argument("--min-delay-seconds", type=float, default=DEFAULT_DELAY_SECONDS, help="Espera mínima entre perfiles, en segundos (0 a 3,600).")
     parser.add_argument("--max-profiles", type=int, default=0, help="0: todos los pendientes; otro número: límite por ejecución.")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser",
                         help="Carpeta local con la sesión del navegador. Tratarla como privada.")
     parser.add_argument("--retry-unavailable", action="store_true", help="Revisitar errores y perfiles sin datos; nunca repetir OK.")
     args = parser.parse_args(argv)
-    if not 1 <= args.per_hour <= 60:
-        parser.error("--per-hour debe estar entre 1 y 60")
+    try:
+        check_pacing(args.max_per_window if args.max_per_window is not None else args.per_hour,
+                     args.window_minutes, args.min_delay_seconds)
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.max_profiles < 0:
         parser.error("--max-profiles no puede ser negativo")
     try:
