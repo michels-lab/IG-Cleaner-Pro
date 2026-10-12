@@ -64,28 +64,90 @@ def _users(raw):
     return out
 
 
-def _visible_button(root, words):
-    """Match a single visible button with an exact localized accessible label."""
+def _visible_named_control(root, words, roles=("button", "menuitem"), text_fallback=False):
+    """A uniquely named, visible control; duplicates and uncertainty fail closed."""
     for word in words:
-        matches = root.get_by_role("button", name=re.compile(r"^\s*" + word + r"\s*$", re.I))
-        try:
-            candidates = [matches.nth(i) for i in range(min(matches.count(), 6))
-                          if matches.nth(i).is_visible()]
-        except Exception:
-            candidates = []
-        if len(candidates) == 1:
-            return candidates[0]
-        if len(candidates) > 1:
-            raise RuntimeError("Hay múltiples botones equivalentes; no se hará clic a ciegas.")
+        label = re.compile(r"^\s*(?:" + word + r")\s*$", re.I)
+        seen = []
+        for role in roles:
+            matches = root.get_by_role(role, name=label)
+            try:
+                if matches.count() > 8:
+                    raise RuntimeError("Demasiados controles similares; requiere revisión.")
+                seen.extend(matches.nth(i) for i in range(matches.count())
+                            if matches.nth(i).is_visible())
+            except RuntimeError:
+                raise
+            except Exception:
+                continue
+        if not seen and text_fallback:
+            try:
+                matches = root.get_by_text(label, exact=True)
+                if matches.count() > 8:
+                    raise RuntimeError("Demasiados textos equivalentes; requiere revisión.")
+                seen.extend(matches.nth(i) for i in range(matches.count())
+                            if matches.nth(i).is_visible())
+            except RuntimeError:
+                raise
+            except Exception:
+                continue
+        if len(seen) == 1:
+            return seen[0]
+        if len(seen) > 1:
+            raise RuntimeError("Hay múltiples opciones equivalentes; no se hará clic a ciegas.")
     return None
 
 
-def perform_visible_action(page, username, task, expected_handle, can_act=None):
-    """Performs one observable action and verifies a visible Follow button afterward.
+def _visible_button(root, words):
+    return _visible_named_control(root, words, roles=("button",))
 
-    Requires navigation identity as well as the signed-in owner navigation link.
-    The button choices are deliberately strict: if Instagram changes its UI,
-    manual review is safer than guessing.
+
+def _unfollow_option(page):
+    """Look in an opened action menu/dialog first; never follow unrelated UI text."""
+    names = [r"Unfollow", r"Dejar de seguir"]
+    # Public profiles typically show an action menu (not a confirmation dialog).
+    for selector in ('[role="menu"]', '[role="dialog"]', '[role="listbox"]'):
+        areas = page.locator(selector)
+        try:
+            visible = [areas.nth(i) for i in range(min(areas.count(), 8))
+                       if areas.nth(i).is_visible()]
+        except Exception:
+            visible = []
+        if visible:
+            if len(visible) > 1:
+                raise RuntimeError("Hay varios menús abiertos; revisar manualmente.")
+            return _visible_named_control(visible[0], names, text_fallback=True)
+    # Some Instagram menus are rendered as plain DOM without a menu role.
+    # Only do a global search after verifying the user's active session AND
+    # that the current page is the exact intended target profile.
+    return _visible_named_control(page, names, text_fallback=True)
+
+
+def _follow_is_visible(header):
+    return _visible_button(header, [r"Follow", r"Seguir",
+                                    r"Follow Back", r"Seguir también"]) is not None
+
+
+def _verify_final_state(page, expected_handle, *, checks=3):
+    """Allow short UI settling but never infer success from a completed click."""
+    for _ in range(checks):
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram mostró acceso/verificación tras la acción."
+        if signed_in_handle(page) != expected_handle:
+            return "blocked", "La cuenta de Instagram cambió durante la acción."
+        header = page.locator("header").first
+        if header.count() and header.is_visible() and _follow_is_visible(header):
+            return "ok", "Acción confirmada por el botón Seguir del perfil."
+        page.wait_for_timeout(650)
+    return "review", "Estado final ambiguo: no repetir esta operación automáticamente."
+
+
+def perform_visible_action(page, username, task, expected_handle, can_act=None):
+    """Execute real visible public-menu/private-confirmation flows conservatively.
+
+    A public profile commonly needs Following -> menu Unfollow -> Follow.
+    Private profiles may additionally ask for confirmation. The robot inspects
+    what is actually shown rather than assuming any profile privacy state.
     """
     if task not in TASKS:
         raise ValueError("Acción desconocida.")
@@ -94,8 +156,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     page.wait_for_timeout(1000)
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram solicitó acceso o verificación."
-    signed = signed_in_handle(page)
-    if signed != expected_handle:
+    if signed_in_handle(page) != expected_handle:
         return "blocked", "No se puede verificar el Instagram activo; ninguna acción realizada."
     url = urlparse(page.url)
     if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").lower() != username:
@@ -103,39 +164,59 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
         return "blocked", "No se encontró la cabecera del perfil."
-    # Do not unfollow a user when the live profile explicitly shows reciprocity.
     if task == "unfollow" and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "El perfil indica que ya te sigue; requiere revisión."
-    # Match control only inside the target profile header, not recommendations.
-    if task == "unfollow":
-        active = _visible_button(header, [r"Following", r"Siguiendo"])
-        confirm_words = [r"Unfollow", r"Dejar de seguir"]
-    else:
-        active = _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"])
-        confirm_words = [r"Cancel Request", r"Cancelar solicitud", r"Cancelar"]
+    active = (_visible_button(header, [r"Following", r"Siguiendo"])
+              if task == "unfollow" else
+              _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
-        return "review", "No aparece el estado requerido del perfil; revisar manualmente."
+        return "review", "El perfil no muestra el estado necesario para esta acción."
     if can_act and not can_act(username):
-        return "skipped", "Perfil protegido u omitido antes del clic."
+        return "skipped", "Omitido o protegido antes del primer clic."
     active.click(timeout=10000)
-    page.wait_for_timeout(500)
-    dialog = page.locator('[role="dialog"]').last
-    confirm_root = dialog if dialog.count() and dialog.is_visible() else page
-    confirmation = _visible_button(confirm_root, confirm_words)
-    if confirmation:
+    page.wait_for_timeout(450)
+
+    if task == "unfollow":
+        # The FIRST click only opens a menu on public accounts.
+        # Locate the "Unfollow" command in that menu (or a direct dialog).
+        choice = _unfollow_option(page)
+        if choice is None:
+            # Rare layouts change directly on the first click. Do not guess.
+            return _verify_final_state(page, expected_handle)
         if can_act and not can_act(username):
-            return "review", "Se abrió el diálogo, pero la protección cambió; confirmar estado manualmente."
-        confirmation.click(timeout=10000)
-    page.wait_for_timeout(1200)
-    if challenge_detected(page) or page.locator('input[name="password"]').count():
-        return "blocked", "Instagram mostró acceso/verificación tras la acción."
-    if signed_in_handle(page) != expected_handle:
-        return "blocked", "No se puede verificar la sesión tras la acción."
-    new_header = page.locator("header").first
-    if _visible_button(new_header, [r"Follow", r"Seguir", r"Follow Back", r"Seguir también"]):
-        return "ok", "Acción confirmada en el perfil visible."
-    return "review", "Clic realizado, pero el estado final no es verificable. No repetir automáticamente."
+            return "review", "Se abrió el menú, pero la protección cambió; revisar antes de continuar."
+        choice.click(timeout=10000)
+        page.wait_for_timeout(650)
+        # Public: new Follow button should be visible already.
+        status, message = _verify_final_state(page, expected_handle, checks=2)
+        if status in ("ok", "blocked"):
+            return status, message
+        # Private: Instagram may prompt one more explicit confirmation.
+        dialog = page.locator('[role="dialog"]').last
+        if dialog.count() and dialog.is_visible():
+            confirm = _visible_named_control(dialog,
+                    [r"Unfollow", r"Dejar de seguir", r"Confirm", r"Confirmar"],
+                    text_fallback=True)
+            if confirm:
+                if can_act and not can_act(username):
+                    return "review", "Confirmación privada pendiente; protección cambió."
+                confirm.click(timeout=10000)
+                return _verify_final_state(page, expected_handle)
+        return "review", "No se pudo confirmar si el perfil requiere otro paso; no se repetirá el clic."
+
+    # Cancel sent follow request: Instagram layouts vary between direct toggles
+    # and explicit Cancel Request confirmation.
+    dialog = page.locator('[role="dialog"]').last
+    if dialog.count() and dialog.is_visible():
+        choice = _visible_named_control(dialog,
+            [r"Cancel Request", r"Cancelar solicitud", r"Cancelar"],
+            text_fallback=True)
+        if choice:
+            if can_act and not can_act(username):
+                return "review", "Protección modificada antes de cancelar solicitud."
+            choice.click(timeout=10000)
+    return _verify_final_state(page, expected_handle)
 
 
 class ActionRobot:
