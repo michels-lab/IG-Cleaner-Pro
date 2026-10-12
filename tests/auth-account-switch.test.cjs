@@ -24,7 +24,7 @@ function harness(){
   body:{appendChild(node){refs.set(node.id,node);return node}},addEventListener(){},hidden:false};
  const window={IGC_INSTAGRAM_PROFILES:{scopeRest:(path,opt)=>({path,opt}),setCloudStatus(){},active:'legacy',accounts:[]},
    location:{reload:()=>reloads.push(true)},addEventListener(){}};
- const ctx={window,localStorage:storage,igcRawProfileStorage:storage,document,
+ const ctx={window,location:window.location,localStorage:storage,igcRawProfileStorage:storage,document,
   setTimeout(){},clearTimeout(){},setInterval(){},clearInterval(){},
   fetch:async()=>{throw Error('Switch of unexpired sessions must not need network')},
   console:{warn(){}},Date,JSON,Math,Error,Number,String,Array,Map,Set};
@@ -48,10 +48,6 @@ function harness(){
  const target=list.children.find(y=>y.textContent.includes('second@example.test'));
  target.click();
  await Promise.resolve();await Promise.resolve();
- if(x.test.S.session?.user?.email!=='second@example.test')
-  console.error('switch debug',{busy:x.test.S.busy,owner:x.test.S.session?.user?.email,
-    target:target.textContent,clicked:typeof target.click,reloads:x.reloads.length,
-    savedOwners:Object.keys(x.test.readRemembered())});
  assert.equal(x.test.S.session.user.email,'second@example.test');
  assert.equal(JSON.parse(x.entries.get(SES)).user.email,'second@example.test');
  assert.equal(x.reloads.length,1,'Switch must reload the owner namespace');
