@@ -14452,12 +14452,14 @@ function igcAutoIssueReviewed(task){
   return parsed&&typeof parsed==="object"&&!Array.isArray(parsed)?parsed:{};
  }catch{return {}}
 }
-window.igcAutoIssueMark=function(task,username,done){
- if(!["unfollow","cancel"].includes(task))return;
- const user=norm(username);if(!user)return;
- const selected=igcAutoIssueReviewed(task);
- if(done)selected[user]=new Date().toISOString();
- else delete selected[user];
+function igcAutoIssueRowKey(issue){
+ return [norm(issue.username),issue.issue||"",issue.at||""].join("|");
+}
+window.igcAutoIssueMark=function(task,issue,done){
+ if(!["unfollow","cancel"].includes(task)||!norm(issue.username))return;
+ const selected=igcAutoIssueReviewed(task),id=igcAutoIssueRowKey(issue);
+ if(done)selected[id]=new Date().toISOString();
+ else delete selected[id];
  localStorage.setItem(igcAutoIssueReviewedKey(task),JSON.stringify(selected));
  window.igcAutoRenderIssues();
 };
@@ -14484,7 +14486,7 @@ window.igcAutoRenderIssues=function(){
  }
  const all=Array.isArray(data?.issues)?data.issues.filter(r=>norm(r.username)&&r.issue):[];
  const marked=igcAutoIssueReviewed(selected);
- const outstanding=all.filter(r=>!marked[r.username]).length;
+ const outstanding=all.filter(r=>!marked[igcAutoIssueRowKey(r)]).length;
  const total=document.getElementById("igcAutoIssueTotal");
  if(total)total.textContent=outstanding+" pendientes de revisión · "+all.length+" incidencias";
  const status=document.getElementById("igcAutoIssueStatus");
@@ -14492,8 +14494,8 @@ window.igcAutoRenderIssues=function(){
   ["complete","partial"].includes(data.status)?"Tanda terminada. Revisa las discrepancias y abre los perfiles directamente.":
   "Resumen disponible durante la tanda; no se ejecutarán de nuevo las acciones de resultado ambiguo.";
  const rows=all.filter(r=>r.username.toLowerCase().includes(search)&&(
-  filter==="all"||(filter==="pending"&&!marked[r.username])||
-  (filter==="reviewed"&&!!marked[r.username])||r.issue===filter));
+  filter==="all"||(filter==="pending"&&!marked[igcAutoIssueRowKey(r)])||
+  (filter==="reviewed"&&!!marked[igcAutoIssueRowKey(r)])||r.issue===filter));
  root.replaceChildren();
  if(!rows.length){
   const tr=document.createElement("tr"),td=document.createElement("td");
@@ -14525,8 +14527,8 @@ window.igcAutoRenderIssues=function(){
   });
   actions.appendChild(protect);
   const checked=document.createElement("button");checked.type="button";checked.className="btn";
-  checked.textContent=marked[issue.username]?"↶ Marcar pendiente":"✓ Ya revisé";
-  checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue.username,!marked[issue.username]));
+  checked.textContent=marked[igcAutoIssueRowKey(issue)]?"↶ Marcar pendiente":"✓ Ya revisé";
+  checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue,!marked[igcAutoIssueRowKey(issue)]));
   actions.appendChild(checked);
   tr.appendChild(name);tr.appendChild(reason);tr.appendChild(actions);root.appendChild(tr);
  }
