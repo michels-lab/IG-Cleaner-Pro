@@ -1,3 +1,11 @@
+## 2026-10-12 — JWT expired during Desktop profile registry sync (user screenshot; development fix)
+
+- User supplied screenshot of **Cuenta y sincronización** signed in to an IG Cleaner login, but cloud list profile registry failed with **JWT expired**. Source root cause: the shared Web sync client restored tokens as connected, only attempted a refresh after an HTTP 401/403, lacked proactive expiry handling/single-flight rotation and left the sign-in form hidden if rotation failed. Android's native client also refreshed only reactively and could accept an older WebView token after native rotation.
+- Development branch `fix/supabase-jwt-refresh-20261012` adds Desktop/embedded-WebView proactive JWT expiry checks (server expires_at or JWT exp), single-flight refresh, automatic bounded retry on 401/JWT-expired 403, owner identity safeguards against pending refresh after account switches, and a visible login form only when refresh is definitively rejected. A temporary connectivity failure never deletes or logs out saved local state.
+- Native SyncApi stores and conveys expires_at and refreshes before expiring authenticated requests; it refuses a stale WebView callback from overwriting a newer same-owner native token. Keeps former 401 fallback. Does **not** mutate Supabase/Auth hosted settings, migrate profiles, clear local data, or change release numbering/signing.
+- Added full shared-sync JavaScript VM behavior contract and a native source guard, included in standard CI.
+- **QA/release:** checks pending on exact PR head; user should reload their current app and, if refresh token is already invalid, sign in again using **Cuenta** (do not delete profiles or clear data). Published v120.42 remains unchanged; v120.43 requires separate explicit release instruction.
+
 ## 2026-10-12 — v120.42 stable publication verified (Windows Profile Counts + Android + Desktop)
 
 - User explicitly requested **"dale release para probarla"**. Governed normal release [v120.42](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.42) published at **2026-10-12T07:13:17Z**, release commit `1c806e34e3f3b84c9311f466353a6ad30fe735c2`, GitHub Actions run **38216103775** SUCCESS.
