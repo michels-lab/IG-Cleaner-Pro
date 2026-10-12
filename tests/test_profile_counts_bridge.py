@@ -146,10 +146,10 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector.min_delay_seconds=0
         self.collector.pause_every=0
         self.collector.pause_minutes=0
-        with patch.dict(sys.modules,{"playwright.sync_api":fake_module}), \\
-             patch("profile_counts_bridge.challenge_detected",return_value=False), \\
-             patch("profile_counts_bridge.signed_in_handle",return_value="own.profile"), \\
-             patch("profile_counts_bridge.read_following_visible",side_effect=visible_following), \\
+        with patch.dict(sys.modules,{"playwright.sync_api":fake_module}), \
+             patch("profile_counts_bridge.challenge_detected",return_value=False), \
+             patch("profile_counts_bridge.signed_in_handle",return_value="own.profile"), \
+             patch("profile_counts_bridge.read_following_visible",side_effect=visible_following), \
              patch("profile_counts_bridge.collect_visible_counts",return_value=("ok",(123,45,False))):
             self.collector._run()
 
