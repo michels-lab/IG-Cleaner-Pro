@@ -1,4 +1,4 @@
-name: Insta Cleaner Windows Automations preview
+name: Insta Cleaner integrated Windows app preview
 
 on:
   workflow_dispatch:
@@ -7,6 +7,8 @@ on:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
+      - 'tools/ig_cleaner_desktop.py'
+      - 'tests/test_native_desktop.py'
       - 'tests/test_profile_actions_chromium.py'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
@@ -45,15 +47,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
-      - name: Build Windows executable with embedded Playwright driver
+      - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |
-          pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts tools/profile_counts_bridge.py
-      - name: Test the frozen executable without contacting Instagram
-        shell: pwsh
-        run: |
-          & ".\dist\IGCleanerProfileCounts.exe" --healthcheck
-          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+          python -m unittest discover -s tests -p 'test_native_desktop.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Integrated desktop tests failed." }
       - name: Create self-contained Desktop app HTML
         shell: pwsh
         run: |
@@ -62,25 +60,34 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
           node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
-      - name: Bundle launcher, local executable, and instructions
+      - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
-          Copy-Item dist/IGCleanerProfileCounts.exe artifacts/profile-counts-preview/
-          Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd artifacts/profile-counts-preview/
+          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --name InstaCleanerPro tools/ig_cleaner_desktop.py
+      - name: Test the frozen executable without contacting Instagram
+        shell: pwsh
+        run: |
+          & ".\dist\InstaCleanerPro.exe" --healthcheck
+          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+      - name: Bundle integrated one-click application and instructions
+        shell: pwsh
+        run: |
+          Copy-Item dist/InstaCleanerPro.exe artifacts/profile-counts-preview/
           Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
           @(
             "candidate_source_sha=${{ github.sha }}"
             "candidate_kind=unreleased_windows_preview"
-            "application=IG Cleaner Pro / Automations + Profile Counts"
+            "application=Insta Cleaner Pro / Integrated Windows App + Automations + Profile Counts"
           ) | Set-Content artifacts/profile-counts-preview/BUILD-INFO.txt
-          Get-FileHash artifacts/profile-counts-preview/IGCleanerProfileCounts.exe -Algorithm SHA256 |
+          Get-FileHash artifacts/profile-counts-preview/InstaCleanerPro.exe -Algorithm SHA256 |
             Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
-          if (!(Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd)) { throw "Launcher absent." }
-          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Automations-Windows-PREVIEW.zip -Force
+          if (!(Test-Path artifacts/profile-counts-preview/InstaCleanerPro.exe)) { throw "Integrated Windows app absent." }
+          if (Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd) { throw "Legacy .cmd launcher must not ship." }
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/Insta-Cleaner-Pro-Windows-Integrated-PREVIEW.zip -Force
       - uses: actions/upload-artifact@v4
         with:
-          name: IG-Cleaner-Automations-Windows-PREVIEW-${{ github.sha }}
-          path: artifacts/IG-Cleaner-Pro-Automations-Windows-PREVIEW.zip
+          name: Insta-Cleaner-Windows-Integrated-PREVIEW-${{ github.sha }}
+          path: artifacts/Insta-Cleaner-Pro-Windows-Integrated-PREVIEW.zip
           retention-days: 14
           if-no-files-found: error
