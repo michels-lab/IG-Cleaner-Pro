@@ -1,14 +1,11 @@
 {
-  "version": "120.41",
-  "tag": "v120.41",
-  "authorized": false,
-  "authorization_source": "User explicitly requested 'dale release' on 2026-10-11 after merged IG Cleaner PR #67 full Desktop Instagram selector/cloud refresh and PR #69 distinct Desktop/Android app login Switch account. Validations required on exact v120.41 candidate head; current published v120.40; stable production signed Android and standalone Desktop HTML must ship together. Physical Samsung user review remains after publication.",
+  "version": "120.42",
+  "tag": "v120.42",
+  "authorized": true,
+  "authorization_source": "User explicitly requested 'dale release para probarla' on 2026-10-12 for IG Cleaner Pro autonomous Instagram Profile Counts. Publish governed v120.42 normal GitHub release with signed Android APK, Desktop standalone HTML and Windows visible-browser robot ZIP. Real Instagram signed-in scraping is unverified and disclosed; physical user acceptance follows.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.40",
-  "published_run": 38125964658,
-  "published_commit": "1f711badcbc902e61beb7e382a49fe55f87fe9a1",
-  "completed_at_utc": "2026-10-11T08:50:34Z"
+  "status": "requested",
+  "previous_stable_release": "v120.41"
 }
