@@ -38,6 +38,8 @@ const ctx={document,localStorage,
  saveSet(){},LS_PROT:'protected',Set,Map,JSON,Math,Date,Number,String,encodeURIComponent,
  fetch:mockFetch,setInterval(){},Error};
 vm.createContext(ctx);vm.runInContext(script[1],ctx);
+assert.equal(ctx.window.igcAutoSwitchGuard(),false,
+ 'Unknown active robot status must block switching to another account');
 (async()=>{
  ctx.window.igcAutoRender();
  ctx.window.igcAutoSkip('unfollow','skip.me');
@@ -62,6 +64,12 @@ vm.createContext(ctx);vm.runInContext(script[1],ctx);
  await ctx.window.igcAutoPause();
  assert(calls.some(c=>c.type==='pause'),'Pause control must call local robot');
  await ctx.window.igcAutoPoll();
+ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
+  'Running Chrome actions must block switching account/profile');
+ p.running=false;p.status='paused';
+ await ctx.window.igcAutoPoll();
+ assert.equal(ctx.window.igcAutoSwitchGuard(),true,
+  'After the backend confirms paused, owner switch may proceed');
  assert.equal(elements.igcAutoProgress.value,0);
  console.log('Automations action execution, account proof, owner approval, pause and partial HTML gate: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
