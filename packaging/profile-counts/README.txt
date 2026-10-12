@@ -1,20 +1,19 @@
-# Insta Cleaner Pro — Automatizaciones + Profile Counts (Windows Preview)
+# Insta Cleaner Pro — Aplicación Windows integrada (Preview)
 
-**Paquete de prueba; no es un release estable.** Verifica el archivo `BUILD-INFO.txt` para conocer el commit exacto del candidato. Contiene la app HTML completa y un controlador local de Chrome para Profile Counts y Automatizaciones. La estable pública v120.42 tiene Profile Counts, pero no el motor de acciones de este candidato.
+**Paquete de prueba; no es un release estable.** Verifica el archivo `BUILD-INFO.txt` para conocer el commit exacto del candidato. Contiene un único InstaCleanerPro.exe con la interfaz y el robot integrados. La estable pública v120.42 no contiene esta integración.
 
-## Uso local (Windows)
+## Inicio único en Windows (sin .cmd ni programa auxiliar)
 
-1. Descomprime el ZIP COMPLETO y abre `Start-Insta-Cleaner-Robot.cmd`. No ejecutes el HTML suelto: las acciones necesitan el robot local conectado.
-2. Inicia sesión en **IG Cleaner Pro** y selecciona el **Instagram correcto** con @username asignado.
-3. **Para Profile Counts:** abre Insights → Profile Counts y pulsa **Conectar Instagram / abrir Chrome**. Inicia sesión directamente en la ventana real de Instagram. Configura tus tandas/esperas y usa Pausar o Reanudar; consulta el avance y los errores dentro de la app.
-4. **Para Cancelar solicitudes enviadas:** importa tu lista Pending Requests desde un export de Instagram. Abre Automatizaciones → Cancelar solicitudes, revisa los perfiles, marca Omisiones/Favoritos, define tamaño de tanda e intervalos, pulsa **Ejecutar tanda seleccionada** y confirma. El robot solo actúa en perfiles que todavía muestran **Requested/Solicitado**.
-5. **Para Dejar de seguir:** importa exportaciones completas de Following y Followers, no HTML parcial. En Automatizaciones → Dejar de seguir, revisa la cola, protegidos, tamaños y espera. Pulsa **Ejecutar tanda seleccionada** y confirma. El robot requiere botón **Following/Siguiendo** en el perfil real y confirma estado final **Follow/Seguir**.
-6. **Pausar/Reanudar:** el controlador guarda un historial por Instagram/tarea y un registro de tiempo consumido; no repite acciones confirmadas ni vuelve a clicar perfiles con resultado ambiguo. Los cambios de cuenta o bloqueos detienen el proceso.
-7. Los **Mutuals** solo tienen Focos: nunca se cancelan ni dejan de seguir automáticamente desde esa sección.
+1. Extrae el ZIP completo y haz doble clic en **InstaCleanerPro.exe**. Es la aplicación completa con su interfaz y el motor del robot integrados; no abras un HTML ni ejecutes un .cmd.
+2. Insta Cleaner abre una **ventana de aplicación**, sin las pestañas habituales de Chrome. Inicia sesión en IG Cleaner y selecciona tu perfil de Instagram. En el primer arranque se crea un espacio local persistente específico para esta aplicación.
+3. En **Automatizaciones**, elige Cancelar solicitudes enviadas o Dejar de seguir a quienes no te siguen. Revisa la cola y los perfiles protegidos, elige tamaños de tanda, descansos e intervalos, y pulsa **Ejecutar tanda seleccionada**. La app solicita tu aprobación antes de efectuar cambios.
+4. El robot se inicia **dentro del mismo InstaCleanerPro.exe** al ejecutar una tarea. Cuando necesite tu sesión de Instagram abrirá una ventana visible de Chrome, donde puedes iniciar sesión en el sitio auténtico; no se introducen contraseñas de Instagram en Insta Cleaner.
+5. **Pausar** y **Reanudar** funcionan desde la app. Hay progreso, errores y lista de resultados; no se repiten acciones confirmadas ni clics ambiguos. Favoritos/Omitir se comprueban antes de actuar. Cerrar la aplicación solicita una pausa y espera a que el robot finalice el punto seguro.
+6. En **Insights → Profile Counts** se conecta la sesión de Instagram de manera equivalente para recopilar las cifras públicas. **Mutuals** conserva exclusivamente Focos humanos; nunca ejecuta unfollows o cancelaciones.
 
-**Limitación de la vista previa:** código y pruebas automatizadas no sustituyen un test presencial con tu Instagram. El DOM y los botones de Instagram pueden cambiar o variar por idioma. Si el robot no consigue identificar el perfil, el estado o el control final, **NO realiza la acción** (o marca para revisar si ya hubo un clic). Es posible que Instagram restrinja la cuenta por automatización, incluso con pausas.
+**IMPORTANTE:** Esta es una preview técnica, no una release estable. Las pruebas de GitHub son sobre navegadores con páginas simuladas. No se ha probado todavía con una sesión real del propietario; empieza con una tanda de 1 o 2 cuentas que quieras modificar conscientemente y comprueba el resultado. Instagram puede cambiar sus controles o restringir automatizaciones. Nunca intentes eludir verificaciones o restricciones.
 
-**Versión:** esta compilación candidata lleva la interfaz y el motor de acciones nuevos; los ZIP anteriores de v120.42 no los incluyen. No equivale a un release estable.
+**Persistencia y actualización:** La interfaz integrada y sus datos se almacenan bajo `%LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\` y se mantienen en actualizaciones del mismo EXE. Los datos anteriores de una versión HTML en una ruta distinta **no se migran automáticamente**: expórtalos como respaldo e impórtalos en la nueva aplicación antes de hacer cambios; no borres el HTML viejo hasta confirmar que todo está presente. El robot sigue utilizando los datos existentes de `%USERPROFILE%\.ig-cleaner-pro\` para no perder sesiones o resultados previos.
 
 ## Datos y límites
 - **No solicita credenciales a Insta Cleaner** ni usa la API de Meta. La contraseña de Instagram se escribe únicamente en la ventana auténtica de Chrome que abre el robot.
