@@ -3755,14 +3755,17 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <strong>Robot de navegador · Control local</strong>
 <p id="igcCountsRobotStatus" class="note" aria-live="polite">Abre Insta Cleaner desde el lanzador del robot de PC para activar la recopilación sin CSV.</p>
 <progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:8px;accent-color:var(--accent)" aria-label="Avance del robot"></progress>
-<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center">
-<label>Perfiles/hora <input id="igcCountsRobotRate" type="number" min="1" max="60" step="1" value="50" style="width:75px"></label>
+<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center;flex-wrap:wrap">
+<label>Perfiles máximos <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Cada (minutos) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Espera entre perfiles (segundos) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Recuperar guardados</button>
 <button class="btn primary" type="button" onclick="igcCountsRobotStart()">▶ Iniciar recopilación</button>
 <button class="btn" type="button" onclick="igcCountsRobotLoginReady()">Ya inicié sesión</button>
 <button class="btn orange" type="button" onclick="igcCountsRobotStop()">Pausar robot</button>
 <button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Ver progreso</button>
 </div>
+<p id="igcCountsRobotPaceNote" class="note" aria-live="polite">Puedes ajustar perfiles por ventana, minutos y espera entre cada visita.</p>
 </div>
 <div class="btnrow">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
@@ -3770,7 +3773,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsExportResults()">Exportar resultados CSV</button>
 <button class="btn" type="button" onclick="igcCountsRender()">Actualizar lista</button>
 </div>
-<p class="note">En Windows ejecuta <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --per-hour 50</code> (Playwright requerido) y luego importa resultados.csv. El robot pausa si Instagram solicita verificación; 50/h es un límite, no una garantía. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
+<p class="note">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. Se respetan ambos límites; los retrasos de carga aumentan el tiempo real. El robot se detiene si Instagram solicita verificación. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
 <input type="search" id="igcCountsQuery" placeholder="Buscar @usuario" style="min-width:160px;flex:1" oninput="igcCountsRender()">
 <select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pendientes</option><option value="ok">Con datos</option><option value="other">Sin datos / error</option></select>
@@ -13883,18 +13886,43 @@ window.igcCountsRobotPoll=async function(){
   }
   const percentage=state.total?Math.round(state.progress/state.total*100):0;
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
-  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%) · '+state.per_hour+'/hora');
+  const pacing=' · '+state.max_per_window+' perfiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s entre perfiles';
+  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%)'+pacing);
  }catch(e){robotStatus('No se puede conectar con el robot local: '+e.message,true)}
  finally{robotBusy=false}
 };
+function robotConfig(){
+ const max_per_window=Number(document.getElementById('igcCountsRobotMax')?.value);
+ const window_minutes=Number(document.getElementById('igcCountsRobotWindow')?.value);
+ const min_delay_seconds=Number(document.getElementById('igcCountsRobotGap')?.value);
+ if(!Number.isInteger(max_per_window)||max_per_window<1||max_per_window>10000||
+    !Number.isInteger(window_minutes)||window_minutes<1||window_minutes>1440||
+    !Number.isFinite(min_delay_seconds)||min_delay_seconds<0||min_delay_seconds>3600){
+  throw Error('Configura perfiles (1–10,000), minutos (1–1,440) y espera (0–3,600 s).');
+ }
+ return {max_per_window,window_minutes,min_delay_seconds};
+}
+window.igcCountsRobotPreview=function(){
+ const note=document.getElementById('igcCountsRobotPaceNote');if(!note)return;
+ try{
+  const {max_per_window,window_minutes,min_delay_seconds}=robotConfig();
+  const maxGap=min_delay_seconds?Math.ceil(window_minutes*60/min_delay_seconds):max_per_window;
+  const possible=Math.min(max_per_window,maxGap);
+  const limited=possible<max_per_window;
+  note.textContent='Máximo configurado: '+max_per_window+' perfiles en '+window_minutes+
+    ' min, con al menos '+min_delay_seconds+' s entre visitas. Capacidad teórica: hasta '+
+    possible+' perfiles por ventana'+(limited?' (la espera entre perfiles es el límite principal)':'')+
+    '. Las páginas pueden tardar más; el ritmo no está garantizado.';
+  note.style.color='var(--muted)';
+ }catch(e){note.textContent=e.message;note.style.color='var(--red)'}
+};
 window.igcCountsRobotStart=async function(){
  if(!robot)return;
- const users=members(),rate=Number(document.getElementById('igcCountsRobotRate')?.value||50);
+ const users=members();
  if(!users.length){robotStatus('Carga primero la lista Following del Instagram seleccionado.',true);return}
- if(!Number.isInteger(rate)||rate<1||rate>60){robotStatus('Elige de 1 a 60 perfiles/hora.',true);return}
  try{
-  const ctx=context();
-  const result=await bridgeRequest('start',{usernames:users,owner:ctx.owner,account:ctx.account,per_hour:rate});
+  const pacing=robotConfig(),ctx=context();
+  const result=await bridgeRequest('start',{usernames:users,owner:ctx.owner,account:ctx.account,...pacing});
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=result.total?Math.round(result.progress/result.total*100):0;
   robotStatus((result.message||'Robot iniciando')+' · '+result.progress+'/'+result.total);
  }catch(e){robotStatus('No se pudo iniciar: '+e.message,true)}
@@ -13910,9 +13938,11 @@ window.igcCountsRobotStop=async function(){
 if(robot&&robot.port>0&&robot.port<=65535){
  const controls=document.getElementById('igcCountsRobotActions');
  if(controls)controls.style.display='flex';
+ window.igcCountsRobotPreview();
  setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
  setTimeout(()=>window.igcCountsRobotPoll(),200);
 }
+window.igcCountsRobotPreview();
 const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats')window.igcCountsRender();return result};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
 })();
