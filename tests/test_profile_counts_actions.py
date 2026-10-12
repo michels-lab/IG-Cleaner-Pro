@@ -1,0 +1,183 @@
+"""Safety and behavior contract for action-capable Instagram browser robot.
+
+No real Instagram requests are sent in automated tests.
+"""
+import tempfile
+from pathlib import Path
+import sys
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+from profile_actions import ActionRobot, perform_visible_action
+from profile_counts_bridge import Collector
+
+
+class FakeButton:
+    def __init__(self, click):
+        self.clicked = 0
+        self.callback = click
+
+    def is_visible(self):
+        return True
+
+    def click(self, timeout=10000):
+        self.clicked += 1
+        self.callback()
+
+
+class FakeMatches:
+    def __init__(self, buttons):
+        self.buttons = buttons
+
+    def count(self):
+        return len(self.buttons)
+
+    def nth(self, i):
+        return self.buttons[i]
+
+
+class FakeRoot:
+    def __init__(self, label, callback=None):
+        self.buttons = {}
+        self.label = label
+        self.clicker = FakeButton(callback or (lambda: None))
+
+    def get_by_role(self, role, name=None):
+        import re
+        matched = ([self.clicker] if role == "button" and
+                   re.fullmatch(name, self.label, re.I) else [])
+        return FakeMatches(matched)
+
+    def count(self):
+        return 1
+
+    def is_visible(self):
+        return True
+
+    def inner_text(self, timeout=4000):
+        return self.label
+
+
+class FakeMissing:
+    def count(self):
+        return 0
+
+
+class FakePage:
+    def __init__(self, task, target="target.user"):
+        self.url = "https://www.instagram.com/"
+        self.target = target
+        self.header = FakeRoot("Following" if task == "unfollow" else "Requested")
+        self.dialog = FakeRoot("Unfollow" if task == "unfollow" else "Cancel Request",
+                               lambda: setattr(self.header, "label", "Follow"))
+        self.delay = []
+
+    def goto(self, url, **_):
+        self.url = url
+
+    def wait_for_timeout(self, ms):
+        self.delay.append(ms)
+
+    def locator(self, selector):
+        if selector == "header":
+            return self.header
+        if selector == '[role="dialog"]':
+            return self.dialog
+        if selector == 'input[name="password"]':
+            return FakeMissing()
+        raise AssertionError("Unexpected locator: " + selector)
+
+
+class ActionSafetyTests(unittest.TestCase):
+    def test_unfollow_requires_live_following_and_confirmed_follow_state(self):
+        page = FakePage("unfollow")
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "ok")
+        self.assertEqual(page.header.clicker.clicked, 1)
+        self.assertEqual(page.dialog.clicker.clicked, 1)
+
+    def test_cancel_requires_requested_button_and_verified_follow(self):
+        page = FakePage("cancel")
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "cancel", "my.profile")
+        self.assertEqual(status, "ok")
+        self.assertEqual(page.dialog.clicker.clicked, 1)
+
+    def test_protected_profile_never_clicked(self):
+        page = FakePage("unfollow")
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow",
+                                               "my.profile", lambda _: False)
+        self.assertEqual(status, "skipped")
+        self.assertEqual(page.header.clicker.clicked, 0)
+
+    def test_wrong_active_account_is_hard_stop(self):
+        page = FakePage("cancel")
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="wrong.profile"):
+            status, _ = perform_visible_action(page, "target.user", "cancel", "my.profile")
+        self.assertEqual(status, "blocked")
+        self.assertEqual(page.header.clicker.clicked, 0)
+
+    def test_unexpected_follow_button_is_manual_review(self):
+        page = FakePage("unfollow")
+        page.header.label = "Follow"
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "review")
+        self.assertEqual(page.header.clicker.clicked, 0)
+
+    def test_protection_and_session_boundaries(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            counts = Collector(root / "data", root / "session")
+            actions = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            # Simulate a controlled paused job, never launch Playwright here.
+            actions.owner, actions.account = "owner1", "instagram1"
+            actions.handle, actions.task = "my.profile", "unfollow"
+            actions.targets = ["one.user", "two.user"]
+            actions.status = "paused"
+            with self.assertRaises(ValueError):
+                actions.protect({"owner":"owner2", "account":"instagram1",
+                                 "protected":["one.user"]})
+            actions.protect({"owner":"owner1", "account":"instagram1",
+                             "protected":["one.user"]})
+            self.assertTrue(actions._protected_for("one.user"))
+            actions.skip({"owner":"owner1", "account":"instagram1",
+                          "username":"two.user"})
+            self.assertIn("two.user", actions.skipped)
+            result = actions.snapshot()
+            self.assertEqual(result["remaining"], 0)
+            self.assertEqual(result["protected"], 1)
+            self.assertEqual(result["skipped"], 1)
+
+    def test_requires_explicit_approved_queue_and_full_followers(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            counts=Collector(root / "data", root / "session")
+            actions=ActionRobot(counts, counts.data_dir, counts.session_dir)
+            payload={"owner":"owner1","account":"instagram1",
+                     "expected_handle":"my.profile", "task":"unfollow",
+                     "targets":["one.user"],"batch_size":30,
+                     "gap_seconds":10,"rest_minutes":5}
+            with self.assertRaisesRegex(ValueError, "aprobada"):
+                actions.start(payload)
+            payload["confirmation"]="unfollow:1"
+            with self.assertRaisesRegex(ValueError, "Followers"):
+                actions.start(payload)
+            payload["followers_evidence"]=True
+            actions._run=lambda: None
+            result=actions.start(payload)
+            actions.worker.join(timeout=2)
+            self.assertEqual(result["total"],1)
+            self.assertEqual(result["account"],"instagram1")
+
+
+if __name__ == "__main__":
+    unittest.main()
