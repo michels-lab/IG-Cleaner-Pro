@@ -438,15 +438,21 @@ class ActionRobot:
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
             skipped = sum(u in self.skipped for u in self.targets)
+            completed_states = ("ok", "review", "error", "blocked")
+            processed = sum(rows[u].get("status") in completed_states
+                            or u in protected or u in self.skipped for u in self.targets)
+            pending = sum(u not in protected and u not in self.skipped and
+                          rows[u].get("status") not in completed_states
+                          for u in self.targets)
             return {"status": self.status, "message": self.message,
                     "owner": self.owner, "account": self.account, "task": self.task,
                     "current_profile": self.current,
                     "running": bool(self.worker and self.worker.is_alive()),
-                    "total": len(self.targets), "successful": successful,
+                    "total": len(self.targets), "processed": processed,
+                    "pending": pending, "successful": successful,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
-                    "remaining": sum(u not in protected and u not in self.skipped and rows[u].get("status") != "ok"
-                                     for u in self.targets),
+                    "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "issue": rows[u].get("issue", ""),
