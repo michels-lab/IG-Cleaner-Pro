@@ -1,3 +1,10 @@
+## v120.42 published — owner testing of automatic Instagram profile counts (2026-10-12)
+
+- Stable [v120.42](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.42) is **published**, not queued; verified normal release run [38216103775](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38216103775) SUCCESS, commit `1c806e34e3f3b84c9311f466353a6ad30fe735c2`, all seven assets uploaded.
+- **Windows robot ZIP** `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.42.zip`: extract, double-click `Start-Insta-Cleaner-Robot.cmd`, log in to Instagram in visible Chrome; automatic Following lookup/counter collection is implemented but **not tested with a real signed-in Instagram session**. Stop on session mismatch or challenge; collection may be partial.
+- **Android signed APK** v120.42 retains production package/signature, and Desktop HTML v120.42 is included. Android does not run a local Playwright robot or automatically receive the new Windows counts. The owner's device/data acceptance is open; preserve history and per-owner/account separation.
+- v120.42 release authorization consumed; next v120.43 is unapproved. The initial 38215091151 publish failed before uploading because of Windows artifact naming; subsequent release passed verified archive ZIP checks.
+
 ## Owner-verified sender + Switch account, eight-digit OTP copy correction — 2026-10-11
 
 - Owner's Gmail screenshot visibly confirms sender **`Michel's Lab · IG Cleaner Pro <michelslab.dev@gmail.com>`**, no Brevo fallback. User reports successful numeric-code signup and working **Switch account**. OTP length in actual email is **eight digits** while template text says six, so avoid describing this as a six-digit production OTP. Do not commit or echo the pictured temporary code.
