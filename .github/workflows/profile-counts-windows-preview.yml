@@ -24,6 +24,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        shell: pwsh
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install chromium
       - name: Install build-time dependencies only
         shell: pwsh
         run: |
