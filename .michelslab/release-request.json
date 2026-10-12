@@ -1,15 +1,12 @@
 {
-  "version": "120.43",
-  "tag": "v120.43",
-  "authorized": false,
-  "authorization_source": "Owner explicitly instructed 'Dales release' on 2026-10-12 for the updated integrated Windows Insta Cleaner, Desktop and Android builds after reviewing previous CI limitations. Release for supervised testing with live Instagram acceptance disclosed; publish only after governed exact-commit visual, Windows, production Android signing and package checks.",
+  "version": "120.44",
+  "tag": "v120.44",
+  "authorized": true,
+  "authorization_source": "Owner explicitly requested 'dale release y despues continuas cambiando todo a ingles' on 2026-10-12. Publish currently merged v120.44 code using governed exact-commit checks before further English-only UI modifications.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.42",
-  "owner_acceptance_note": "Live Instagram DOM/actions and physical Windows/Samsung cross-device acceptance remain unverified; state that prominently in release notes. No automatic Instagram actions are triggered by installing.",
-  "published_run": 38270817146,
-  "published_commit": "469189095fa1e2f2308689c59d6e60eddec36868",
-  "completed_at_utc": "2026-10-12T15:36:48Z"
+  "status": "requested",
+  "previous_stable_release": "v120.43",
+  "owner_acceptance_note": "Real Instagram session/browser actions remain unverified; full English-only UI work is subsequent and is not part of v120.44. CI must validate exact source and signed Android before publishing."
 }
