@@ -91,7 +91,7 @@ def signed_in_handle(page):
     if candidate:
         header = page.locator("header").first
         if header.count() and header.is_visible():
-            edit = re.compile(r"^\\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\\s*$", re.I)
+            edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
             controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
             names = header.locator("h1,h2").all_inner_texts()
             if sum(c.count() for c in controls) == 1 and any(
