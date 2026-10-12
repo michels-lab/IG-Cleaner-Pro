@@ -14420,8 +14420,9 @@ window.igcAutoPoll=async function(){
   const metrics=document.getElementById("igcAutoExecutionMetrics");
   if(metrics){
    metrics.replaceChildren();
-   for(const label of ["Total: "+state.total,"Confirmados: "+state.successful,
-    "Faltan: "+state.remaining,"Errores / revisar: "+state.errors,
+   for(const label of ["Analizados: "+(state.processed??state.successful)+" / "+state.total,
+    "Confirmados: "+state.successful,"Faltan: "+state.remaining,
+    "Errores / revisar: "+state.errors,
     "Omitidos: "+(state.skipped||0),"Protegidos: "+state.protected,
     "Incidencias: "+(state.issue_count||0)]){
     const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
