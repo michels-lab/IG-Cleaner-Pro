@@ -57,7 +57,7 @@ jobs:
         run: node tests/desktop-contract.test.cjs
       - name: Verify multi-Instagram isolated account storage and scoped REST behavior
         run: node tests/multi-instagram-contract.test.cjs
-      - name: Behavioral check: JWT expiry, proactive refresh and cross-owner session safety
+      - name: Verify JWT expiry, proactive refresh and cross-owner session safety
         run: node tests/auth-session-refresh.test.cjs
       - name: Verify code-only Supabase Auth email templates (offline; no production mutation)
         run: python3 tests/auth-email-templates-contract.py
