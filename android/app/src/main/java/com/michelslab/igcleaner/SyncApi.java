@@ -2,6 +2,7 @@ package com.michelslab.igcleaner;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Base64;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,6 +28,7 @@ public final class SyncApi {
     private final SharedPreferences prefs;
     private String accessToken;
     private String refreshToken;
+    private long expiresAt;
     private String email;
     private String activeInstagramProfile = "legacy";
     private static final Set<String> SCOPED_IG_TABLES = Set.of(
@@ -77,7 +79,16 @@ public final class SyncApi {
             String nextAccess = session.optString("access_token", "");
             String nextRefresh = session.optString("refresh_token", "");
             if (nextAccess.isBlank()) return;
+            String incomingOwner = session.optJSONObject("user") == null ? "" :
+                    session.optJSONObject("user").optString("email", "").trim();
+            long incomingExpiry = tokenExpiry(session);
+            // The native client might already have rotated this token. A stale
+            // WebView boot callback must not overwrite the newer native pair.
+            if (nativeSessionIsNewer() && nextAccess.equals(getAccessToken()) == false
+                    && (incomingOwner.isBlank() || incomingOwner.equalsIgnoreCase(getEmail()))
+                    && (incomingExpiry == 0 || (expiresAt > 0 && incomingExpiry <= expiresAt))) return;
             accessToken = nextAccess;
+            expiresAt = incomingExpiry;
             if (!nextRefresh.isBlank()) refreshToken = nextRefresh;
             JSONObject user = session.optJSONObject("user");
             if (user != null && !user.optString("email", "").isBlank()) {
@@ -86,6 +97,7 @@ public final class SyncApi {
             prefs.edit()
                     .putString("access", accessToken)
                     .putString("refresh", refreshToken == null ? "" : refreshToken)
+                    .putLong("expires_at", expiresAt)
                     .putString("email", email == null ? "" : email)
                     .putBoolean("native_newer", false)
                     .apply();
@@ -99,6 +111,7 @@ public final class SyncApi {
         try {
             out.put("access_token", getAccessToken());
             out.put("refresh_token", getRefreshToken());
+            if (expiresAt > 0) out.put("expires_at", expiresAt);
             out.put("token_type", "bearer");
             out.put("user", new JSONObject().put("email", getEmail()));
         } catch (Exception ignored) {}
@@ -281,19 +294,36 @@ public final class SyncApi {
         email = prefs.getString("email", "");
         accessToken = prefs.getString("access", "");
         refreshToken = prefs.getString("refresh", "");
+        expiresAt = prefs.getLong("expires_at", 0);
         activeInstagramProfile = prefs.getString("instagram_profile_" + profileOwnerKey(), "legacy");
         if (!activeInstagramProfile.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
             activeInstagramProfile = "legacy";
     }
 
+    private long tokenExpiry(JSONObject result) {
+        long at = result.optLong("expires_at", 0);
+        if (at > 1_000_000_000L) return at;
+        long seconds = result.optLong("expires_in", 0);
+        if (seconds > 0) return System.currentTimeMillis() / 1000L + seconds;
+        try {
+            String[] parts = result.optString("access_token", "").split("\\.");
+            if (parts.length < 2) return 0;
+            String json = new String(Base64.decode(parts[1],
+                    Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING), StandardCharsets.UTF_8);
+            return new JSONObject(json).optLong("exp", 0);
+        } catch (Exception ignored) { return 0; }
+    }
+
     private void saveSession(JSONObject result) {
         accessToken = result.optString("access_token", "");
+        expiresAt = tokenExpiry(result);
         refreshToken = result.optString("refresh_token", refreshToken == null ? "" : refreshToken);
         JSONObject user = result.optJSONObject("user");
         if (user != null && !user.optString("email").isBlank()) setEmail(user.optString("email"));
         prefs.edit()
                 .putString("access", accessToken)
                 .putString("refresh", refreshToken)
+                .putLong("expires_at", expiresAt)
                 .putBoolean("native_newer", true)
                 .apply();
     }
@@ -327,6 +357,10 @@ public final class SyncApi {
 
     private String raw(String method, String path, String body, boolean auth,
                        Map<String, String> headers, boolean allowRefresh) throws Exception {
+        if (auth && allowRefresh && hasSession() && expiresAt > 0
+                && expiresAt <= System.currentTimeMillis() / 1000L + 90) {
+            refreshSession(); // One bounded preflight; the 401 fallback remains intact.
+        }
         HttpURLConnection connection = (HttpURLConnection) new URL(BASE_URL + path).openConnection();
         connection.setRequestMethod(method);
         connection.setConnectTimeout(15_000);
