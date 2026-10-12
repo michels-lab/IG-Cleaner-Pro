@@ -3751,6 +3751,18 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot sin conectar. Abre la app desde Start-Insta-Cleaner-Robot.cmd en Windows.</p>
 <progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Avance de la tanda"></progress>
+<div class="panel" id="igcAutoIssuesPanel" style="margin-top:14px" aria-label="Resumen de incidencias">
+<div class="title">Resumen de incidencias <span id="igcAutoIssueTotal" class="note" aria-live="polite">0</span></div>
+<p id="igcAutoIssueStatus" class="note" role="status" aria-live="polite">Las discrepancias y los perfiles sin información aparecerán aquí; puedes revisarlos cuando termine la tanda.</p>
+<div class="btnrow">
+<label>Tarea <select id="igcAutoIssueTask" onchange="igcAutoRenderIssues()"><option value="unfollow">No me siguen</option><option value="cancel">Solicitudes enviadas</option></select></label>
+<label>Mostrar <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Sin revisar</option><option value="all">Todos</option><option value="reviewed">Revisados</option><option value="unexpected_followback">Follow Back inesperado</option><option value="pending_already_following">Pending ya aceptado</option><option value="missing_profile_info">Sin información</option></select></label>
+<input id="igcAutoIssueSearch" type="search" placeholder="Buscar @perfil en incidencias" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
+</div>
+<div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;text-align:left">
+<thead><tr><th>Perfil</th><th>Motivo / Resultado</th><th>Acciones</th></tr></thead>
+<tbody id="igcAutoIssueRows"></tbody></table></div>
+</div>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Perfil</th><th>Estado</th><th>Decisión</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
 <p class="note">Omitir esta vez excluye el perfil de la tanda. Proteger es permanente hasta que lo retires; ambos se comprueban antes de actuar. Las listas de Mutuals conservan exclusivamente Focos, sin automatizaciones.</p>
 </div></div></div><div class="page" id="page-profileStats">
@@ -14396,12 +14408,19 @@ window.igcAutoPoll=async function(){
    return;
   }
   actionState=state;
+  if(state.owner&&state.account&&state.task&&Array.isArray(state.issues)){
+   localStorage.setItem(igcAutoIssuesKey(state.task),
+       JSON.stringify({task:state.task,status:state.status,total:state.total,
+                       issues:state.issues,updated_at:new Date().toISOString()}));
+  }
+  window.igcAutoRenderIssues();
   const metrics=document.getElementById("igcAutoExecutionMetrics");
   if(metrics){
    metrics.replaceChildren();
    for(const label of ["Total: "+state.total,"Confirmados: "+state.successful,
     "Faltan: "+state.remaining,"Errores / revisar: "+state.errors,
-    "Omitidos: "+(state.skipped||0),"Protegidos: "+state.protected]){
+    "Omitidos: "+(state.skipped||0),"Protegidos: "+state.protected,
+    "Incidencias: "+(state.issue_count||0)]){
     const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
    }
   }
@@ -14419,6 +14438,94 @@ window.igcAutoPoll=async function(){
   const el=document.getElementById("igcAutoLiveStatus");
   if(el)el.textContent="Robot no disponible: "+e.message;
  }finally{actionBusy=false}
+};
+
+function igcAutoIssuesKey(task){return "igc_action_issue_cache_v1__"+scope()+"__"+task}
+function igcAutoIssueReviewedKey(task){return "igc_action_issue_checked_v1__"+scope()+"__"+task}
+function igcAutoIssueReviewed(task){
+ try{
+  const parsed=JSON.parse(localStorage.getItem(igcAutoIssueReviewedKey(task))||"{}");
+  return parsed&&typeof parsed==="object"&&!Array.isArray(parsed)?parsed:{};
+ }catch{return {}}
+}
+window.igcAutoIssueMark=function(task,username,done){
+ if(!["unfollow","cancel"].includes(task))return;
+ const user=norm(username);if(!user)return;
+ const selected=igcAutoIssueReviewed(task);
+ if(done)selected[user]=new Date().toISOString();
+ else delete selected[user];
+ localStorage.setItem(igcAutoIssueReviewedKey(task),JSON.stringify(selected));
+ window.igcAutoRenderIssues();
+};
+const issueLabels={
+ unexpected_followback:"Follow Back inesperado: esta cuenta sí te sigue",
+ pending_already_following:"Pending desactualizado: ya la sigues",
+ pending_not_requested:"Ya no aparece como solicitud pendiente",
+ mutual_before_action:"Te sigue: no se realizó unfollow",
+ missing_profile_info:"Información insuficiente; no se hizo clic",
+ requires_manual_review:"No se pudo confirmar; requiere revisión manual"
+};
+window.igcAutoRenderIssues=function(){
+ const root=document.getElementById("igcAutoIssueRows");if(!root)return;
+ const selected=document.getElementById("igcAutoIssueTask")?.value||"unfollow";
+ if(!["unfollow","cancel"].includes(selected))return;
+ const filter=document.getElementById("igcAutoIssueFilter")?.value||"pending";
+ const search=(document.getElementById("igcAutoIssueSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
+ let data=null;
+ try{data=JSON.parse(localStorage.getItem(igcAutoIssuesKey(selected))||"null")}catch{}
+ const ctx=actionOwner();
+ if(data?.task!==selected)data=null;
+ if(actionState?.task===selected&&actionState.owner===ctx.owner&&actionState.account===ctx.account){
+  data={task:selected,status:actionState.status,total:actionState.total,issues:actionState.issues||[]};
+ }
+ const all=Array.isArray(data?.issues)?data.issues.filter(r=>norm(r.username)&&r.issue):[];
+ const marked=igcAutoIssueReviewed(selected);
+ const outstanding=all.filter(r=>!marked[r.username]).length;
+ const total=document.getElementById("igcAutoIssueTotal");
+ if(total)total.textContent=outstanding+" pendientes de revisión · "+all.length+" incidencias";
+ const status=document.getElementById("igcAutoIssueStatus");
+ if(status)status.textContent=!data?"Todavía no hay resultados para esta tarea.":
+  ["complete","partial"].includes(data.status)?"Tanda terminada. Revisa las discrepancias y abre los perfiles directamente.":
+  "Resumen disponible durante la tanda; no se ejecutarán de nuevo las acciones de resultado ambiguo.";
+ const rows=all.filter(r=>r.username.toLowerCase().includes(search)&&(
+  filter==="all"||(filter==="pending"&&!marked[r.username])||
+  (filter==="reviewed"&&!!marked[r.username])||r.issue===filter));
+ root.replaceChildren();
+ if(!rows.length){
+  const tr=document.createElement("tr"),td=document.createElement("td");
+  td.colSpan=3;td.textContent="No hay incidencias para este filtro.";
+  tr.appendChild(td);root.appendChild(tr);return;
+ }
+ for(const issue of rows.slice(0,1000)){
+  const tr=document.createElement("tr"),name=document.createElement("td"),
+   reason=document.createElement("td"),actions=document.createElement("td");
+  const link=document.createElement("a");
+  link.href="https://www.instagram.com/"+encodeURIComponent(issue.username)+"/";
+  link.target="_blank";link.rel="noopener noreferrer";
+  link.textContent="@"+issue.username;name.appendChild(link);
+  const heading=document.createElement("strong");
+  heading.textContent=issueLabels[issue.issue]||"Incidencia de revisión";
+  reason.appendChild(heading);
+  const detail=document.createElement("div");detail.className="note";
+  detail.textContent=issue.message||issue.status||"";
+  reason.appendChild(detail);
+  const profile=document.createElement("a");profile.className="btn";
+  profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
+  profile.textContent="↗ Abrir perfil";actions.appendChild(profile);
+  const protect=document.createElement("button");protect.type="button";protect.className="btn";
+  protect.textContent=isProtected(selected,issue.username)?"★ Protegido":"★ Proteger";
+  protect.disabled=isProtected(selected,issue.username);
+  protect.addEventListener("click",()=>{
+   if(!isProtected(selected,issue.username))window.igcAutoProtect(selected,issue.username);
+   window.igcAutoRenderIssues();
+  });
+  actions.appendChild(protect);
+  const checked=document.createElement("button");checked.type="button";checked.className="btn";
+  checked.textContent=marked[issue.username]?"↶ Marcar pendiente":"✓ Ya revisé";
+  checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue.username,!marked[issue.username]));
+  actions.appendChild(checked);
+  tr.appendChild(name);tr.appendChild(reason);tr.appendChild(actions);root.appendChild(tr);
+ }
 };
 
 window.igcAutoRender=function(){
@@ -14477,7 +14584,7 @@ window.igcAutoRender=function(){
 const original=window.showPage;
 if(typeof original==="function")window.showPage=function(id){
  const ret=original.apply(this,arguments);
- if(id==="automations"){window.igcAutoRender();if(actionBridge)window.igcAutoPoll()}
+ if(id==="automations"){window.igcAutoRender();window.igcAutoRenderIssues();if(actionBridge)window.igcAutoPoll()}
  return ret;
 };
 if(actionBridge&&typeof setInterval==="function")
