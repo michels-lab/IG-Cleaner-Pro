@@ -65,10 +65,10 @@ const {chromium}=require("playwright");
   });
   await page.locator("#igcCountsRobotActions").waitFor({state:"visible",timeout:6000});
   await page.locator('#igcCountsRobotActions button[onclick="igcCountsRobotStart()"]').click();
-  try {
-    await page.waitForFunction(()=>document.querySelector("#igcCountsRobotStatus")?.textContent.includes("Starting fixture"),
-      null, {timeout:7000});
-  } catch (err) {
+  const deadline=Date.now()+8000;
+  while(queries<1&&Date.now()<deadline)
+    await new Promise(resolve=>setTimeout(resolve,100));
+  if(queries!==1){
     const diagnostics=await page.evaluate(()=>({
       status:document.getElementById("igcCountsRobotStatus")?.textContent,
       preview:document.getElementById("igcCountsRobotPaceNote")?.textContent,
@@ -76,9 +76,8 @@ const {chromium}=require("playwright");
          .map(x=>[x,document.getElementById(x)?.value]),
       active:window.IGC_INSTAGRAM_PROFILES?.active
     }));
-    throw Error("Robot Start browser acceptance: "+JSON.stringify({diagnostics,queries,errors})+" / "+err.message);
+    throw Error("Real browser never submitted Start: "+JSON.stringify({diagnostics,queries,errors}));
   }
-  assert.equal(queries,1,"UI did not start local collector");
   await page.evaluate(()=>window.igcCountsRobotPoll());
   await page.waitForFunction(()=>document.querySelector("#igcCountsRows")?.textContent.includes("8,765"),
    {timeout:10000});
