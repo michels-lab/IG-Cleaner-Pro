@@ -1510,3 +1510,10 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Prepared integrated Windows publishing pipeline (single `InstaCleanerPro.exe` without legacy CMD, verified ZIP contents and Chromium/Windows tests), signed Android versionCode 12043, matching HTML UI v120.43 and release notes.
 - Pending: exact-head CI on new version, PR merge, separate governed release request on main, exact-publish-commit visual checks and signing, GitHub assets/checksums verification.
 - Disclose unverified owner Instagram UI, real action acceptance, and Windows↔Android Profile Counts sync limitations; no automated action performed on the owner's account.
+
+
+### 2026-10-12 — Official normal v120.43 published
+- Owner expressly authorized release. Squash-merged PR #82 then published commit `469189095fa1e2f2308689c59d6e60eddec36868` through governed [run #38270817146](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38270817146), all jobs SUCCESS.
+- Seven release assets verified: integrated Windows robot ZIP, production-signed Android APK, standalone Desktop HTML, optional Desktop ZIP, logo, privacy and SHA256SUMS. Exact-commit Android/Desktop visual evidence and frozen Windows EXE QA succeeded.
+- Release accepted as GitHub distribution for owner-supervised testing; **not** validated with real Instagram UI/actions or physical Windows/Samsung session. No Google Play publication.
+- Request consumed; next release target v120.44, pending new authorization.

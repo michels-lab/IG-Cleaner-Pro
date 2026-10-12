@@ -1,3 +1,11 @@
+## v120.43 published — 2026-10-12
+
+- Official normal release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.43
+- Governed publication workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38270817146 completed SUCCESS against exact source `469189095fa1e2f2308689c59d6e60eddec36868`; all seven files uploaded including Windows `InstaCleanerPro.exe` integrated ZIP, signed production Android APK, Desktop standalone HTML and checksums.
+- v120.43 request consumed and next governed version reserved as v120.44; do not re-publish without separate explicit authorization.
+- **Owner acceptance still open:** actual Instagram signed-in DOM, public/private action outcomes, Windows/Samsung session and local-vs-cloud transfer. No automatic Windows robot execution in Android; Profile Counts read on PC do not synchronize to Android automatically.
+- Maintainer note: Windows robot is bundled in `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.43.zip`; do **not** tell users to open old `.cmd`.
+
 ## v120.43 release candidate — explicit owner authorization 2026-10-12
 
 - Owner requested "Dales release" after integrated Windows/Android/Desktop automated QA. Prepare v120.43 only with the integrated Windows EXE and synchronized Desktop/Android version. A release commit must run exact-commit screenshot and signed APK checks; do not publish a mismatched old CMD robot ZIP.
