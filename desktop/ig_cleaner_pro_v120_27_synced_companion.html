@@ -14319,8 +14319,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 "use strict";
 // This module is intentionally review-only until the browser action runner
 // passes live, owner-approved acceptance. No profile-changing network requests.
-let mode="unfollow",identity="",skips={unfollow:new Set(),cancel:new Set()};
-const choices=["unfollow","cancel","protected"];
+let mode="unfollow",identity="",skips={unfollow:new Set(),cancel:new Set(),audit:new Set()};
+const choices=["unfollow","cancel","protected","audit"];
 function norm(value){const v=String(value||"").trim().replace(/^@/,"").toLowerCase();return /^[a-z0-9._]{1,30}$/.test(v)?v:""}
 function scope(){
  const x=window.IGC_INSTAGRAM_PROFILES||{};
@@ -14335,11 +14335,12 @@ function saved(){
           cancel:Array.isArray(x.cancel)?x.cancel.map(norm).filter(Boolean):[]};
  }catch{return {unfollow:[],cancel:[]}}
 }
-function isProtected(kind,u){return saved()[kind].includes(u)||(kind==="unfollow"&&typeof protectedSet!=="undefined"&&protectedSet.has(u))}
+function isProtected(kind,u){const k=kind==="audit"?"unfollow":kind;return saved()[k].includes(u)||(k==="unfollow"&&typeof protectedSet!=="undefined"&&protectedSet.has(u))}
 function write(kind,u,protectedValue){
- const state=saved(),set=new Set(state[kind]);if(protectedValue)set.add(u);else set.delete(u);
- state[kind]=[...set];localStorage.setItem(key(),JSON.stringify(state));
- if(kind==="unfollow"&&typeof protectedSet!=="undefined"){
+ const k=kind==="audit"?"unfollow":kind;
+ const state=saved(),set=new Set(state[k]);if(protectedValue)set.add(u);else set.delete(u);
+ state[k]=[...set];localStorage.setItem(key(),JSON.stringify(state));
+ if(k==="unfollow"&&typeof protectedSet!=="undefined"){
   if(protectedValue)protectedSet.add(u);else protectedSet.delete(u);
   if(typeof saveSet==="function"&&typeof LS_PROT!=="undefined")saveSet(LS_PROT,protectedSet);
  }
@@ -14355,12 +14356,21 @@ function inputs(){
     .concat(p.cancel.map(username=>({kind:"cancel",username})));
  }
  if(typeof followingRaw==="undefined"||typeof followersMap==="undefined")return [];
- return followingRaw.filter(r=>r&&r.username&&!followersMap.has(r.username))
-   .map(r=>({kind:"unfollow",username:norm(r.username)})).filter(r=>r.username);
+ const candidates=followingRaw.filter(r=>r&&r.username&&!followersMap.has(r.username))
+   .map(r=>({kind:mode==="audit"?"audit":"unfollow",username:norm(r.username)})).filter(r=>r.username);
+ if(mode==="audit")return candidates;
+ // Do not queue already-reviewed current non-followbacks for Unfollow.
+ const reviews=typeof buildRowsForMode==="function"?
+   new Map(buildRowsForMode("following").map(r=>[r.username,r])):null;
+ return candidates.filter(r=>{
+   const row=reviews?.get(r.username);
+   if(row&&typeof isDoneValidForMode==="function")return !isDoneValidForMode(row,"following");
+   return !(typeof doneSet!=="undefined"&&doneSet.has(r.username));
+ });
 }
 function refreshScope(){
  const active=scope();
- if(identity!==active){identity=active;skips={unfollow:new Set(),cancel:new Set()}}
+ if(identity!==active){identity=active;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
 }
 function setStatus(text){
  const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
@@ -14376,14 +14386,14 @@ window.igcAutoChoose=function(next){
 };
 window.igcAutoSkip=function(kind,user){
  refreshScope();
- if(!["unfollow","cancel"].includes(kind))return;
+ if(!["unfollow","cancel","audit"].includes(kind))return;
  const u=norm(user);if(!u)return;
  skips[kind].add(u);window.igcAutoRender();
  if(actionBridge)requestAction("skip",{...actionOwner(),username:u}).catch(()=>{});
 };
 window.igcAutoProtect=function(kind,user){
  refreshScope();
- if(!["unfollow","cancel"].includes(kind))return;
+ if(!["unfollow","cancel","audit"].includes(kind))return;
  const u=norm(user);if(!u)return;
  write(kind,u,!isProtected(kind,u));
  window.igcAutoRender();
@@ -14391,7 +14401,7 @@ window.igcAutoProtect=function(kind,user){
 };
 window.igcAutoClearSkipped=function(){
  refreshScope();
- skips.unfollow.clear();skips.cancel.clear();window.igcAutoRender();
+ skips.unfollow.clear();skips.cancel.clear();skips.audit.clear();window.igcAutoRender();
 };
 window.igcAutoSaveTiming=function(){
  try{
@@ -14467,21 +14477,22 @@ function actionConfig(task,targets){
      window.V119_HTML?.partial))
   throw Error("Para unfollow necesitas los ZIP completos de Following y Followers; HTML parcial no es evidencia suficiente.");
  if(!targets.length)throw Error("No hay perfiles elegibles; revisa favoritos, omisiones o filtros.");
- const protected_all=[...new Set([...(saved()[task]||[]),
-  ...(task==="unfollow"&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
+ const protected_all=[...new Set([...(saved()[task==="audit"?"unfollow":task]||[]),
+  ...(["unfollow","audit"].includes(task)&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
  return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,
          protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
          confirmation:task+":"+targets.length};
 }
 window.igcAutoStart=async function(){
- if(mode==="protected"){setStatus("Elige Cancelar solicitudes o Unfollow antes de ejecutar.");return}
+ if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
  try{
   const targets=selectedActionTargets(),data=actionConfig(mode,targets);
-  const operation=mode==="cancel"?"CANCELAR SOLICITUDES":"DEJAR DE SEGUIR";
+  const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
   const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
-  if(!window.confirm("¿Autorizar "+operation+" en "+targets.length+" perfiles de @"+
-       data.expected_handle+"?\n"+summary+(targets.length>15?" y más…":"")+
-       "\nEl robot verificará el estado del perfil antes y después. Esta acción cambia tu Instagram."))return;
+  if(!window.confirm("Run "+operation+" on "+targets.length+" profiles from @"+
+       data.expected_handle+"?\n"+summary+(targets.length>15?" and more…":"")+
+       (mode==="audit"?"\nRead-only: no follow, unfollow, or cancel-request actions.":
+        "\nEach relationship-changing action is individually checked.")))return;
   window.igcAutoSaveTiming();
   const result=await requestAction("start",data);
   actionState=result;
@@ -14501,8 +14512,8 @@ window.igcAutoContinue=async function(){
   if(!state.task||state.owner!==owner||state.account!==account)
    throw Error("La tarea pausada es de otra cuenta.");
   const targets=(state.rows||[]).map(r=>r.username),data=actionConfig(state.task,targets);
-  if(!window.confirm("¿Reanudar "+(state.task==="cancel"?"cancelaciones":"unfollows")+
-    " de @"+data.expected_handle+"? Ya ejecutadas correctamente NO se repiten."))return;
+  if(!window.confirm("Resume "+(state.task==="cancel"?"cancellations":state.task==="audit"?"read-only audit":"unfollows")+
+    " for @"+data.expected_handle+"? Completed profiles are not repeated."))return;
   actionState=await requestAction("continue",data);
   await window.igcAutoPoll();
  }catch(e){setStatus("No se pudo reanudar: "+e.message)}
@@ -14568,7 +14579,7 @@ function igcAutoIssueRowKey(issue){
  return [norm(issue.username),issue.issue||"",issue.at||""].join("|");
 }
 window.igcAutoIssueMark=function(task,issue,done){
- if(!["unfollow","cancel"].includes(task)||!norm(issue.username))return;
+ if(!["unfollow","cancel","audit"].includes(task)||!norm(issue.username))return;
  const selected=igcAutoIssueReviewed(task),id=igcAutoIssueRowKey(issue);
  if(done)selected[id]=new Date().toISOString();
  else delete selected[id];
@@ -14586,7 +14597,7 @@ const issueLabels={
 window.igcAutoRenderIssues=function(){
  const root=document.getElementById("igcAutoIssueRows");if(!root)return;
  const selected=document.getElementById("igcAutoIssueTask")?.value||"unfollow";
- if(!["unfollow","cancel"].includes(selected))return;
+ if(!["unfollow","cancel","audit"].includes(selected))return;
  const filter=document.getElementById("igcAutoIssueFilter")?.value||"pending";
  const search=(document.getElementById("igcAutoIssueSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  let data=null;
@@ -14685,8 +14696,11 @@ window.igcAutoRender=function(){
   link.target="_blank";link.rel="noopener noreferrer";link.textContent="@"+item.username;u.appendChild(link);
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
-  status.textContent=protectedNow?"★ Favorito protegido":skipped?"Omitido esta vez":
-     live.status==="ok"?"Confirmado":live.status&&live.status!=="pending"?(live.status+": "+live.message):"Pendiente de revisión";
+  status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
+     live.audit_relation==="follows_you"?"✓ Follows you (verified)":
+     live.audit_relation==="not_following"?"✓ Not following you (verified)":
+     live.status==="ok"?"✓ Completed":
+     live.status&&live.status!=="pending"?(live.status+": "+live.message):"Not reviewed";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
   protect.textContent=protectedNow?"Quitar favorito":"★ Proteger / Favorito";
   protect.addEventListener("click",()=>window.igcAutoProtect(item.kind,item.username));
