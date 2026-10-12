@@ -595,6 +595,7 @@ class ActionRobot:
                     if self._protected_for(user) or user in self.skipped:
                         continue
                     visits = register_visit(visits_file, visits)
+                    relation = ""
                     try:
                         if self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
