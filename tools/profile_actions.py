@@ -237,8 +237,11 @@ class ActionRobot:
                 self.skipped.clear()
             self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
             self.rest_minutes = rest
-            saved_protected = self._protected()
-            saved_protected.update(_users(data.get("protected", [])))
+            # A newly authorized batch uses the owner's current visible
+            # favorites. During an active run protection may only be added.
+            saved_protected = set(_users(data.get("protected", [])))
+            if resume:
+                saved_protected.update(self._protected())
             _atomic_json(self._protection_file(), sorted(saved_protected))
             self.stop_event.clear()
             self.status, self.message = "starting", "Abriendo Instagram en Chrome…"
@@ -321,7 +324,10 @@ class ActionRobot:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
                         return
-                    if self._protected_for(user) or user in self.skipped or journal.get(user, {}).get("status") == "ok":
+                    # Ambiguous results may have clicked already: never replay
+                    # them automatically, even on Resume.
+                    if (self._protected_for(user) or user in self.skipped or
+                        journal.get(user, {}).get("status") in ("ok", "review", "error", "blocked")):
                         continue
                     while not self.stop_event.is_set():
                         delay = max(wait_required(visits, self.max_count, self.window_minutes,
@@ -365,7 +371,12 @@ class ActionRobot:
                             self.status, self.message = result, "@" + user + ": " + details
                         return
                 with self.lock:
-                    self.status, self.message = "complete", "Tanda terminada; resultados guardados."
+                    remaining = sum(u not in self._protected() and u not in self.skipped and
+                                    journal.get(u, {}).get("status") != "ok"
+                                    for u in self.targets)
+                    self.status = "partial" if remaining else "complete"
+                    self.message = ("Tanda revisada: hay perfiles que requieren verificación manual."
+                                    if remaining else "Tanda terminada; resultados guardados.")
         except Exception as exc:
             with self.lock:
                 self.status, self.message = "error", "Robot detenido: " + str(exc)[:220]
