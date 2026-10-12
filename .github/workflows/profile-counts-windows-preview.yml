@@ -51,7 +51,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force "artifacts\profile-counts-preview" | Out-Null
-          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version "120.41"
+          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version ((Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName)
           if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
           node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
