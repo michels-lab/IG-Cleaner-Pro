@@ -124,7 +124,7 @@ def expected_following_count(*labels):
     must not be treated as a successful full scan.
     """
     for label in labels:
-        match = re.search(r"(?<!\\w)(\\d[\\d.,\\s\\u00a0\\u202f]*(?:[kKmM]|[ ]mil|[ ]millones)?)",
+        match = re.search(r"(?<!\w)(\d[\d.,\s\u00a0\u202f]*(?:[kKmM]|[ ]mil|[ ]millones)?)",
                           str(label or ""), re.I)
         if not match:
             continue
