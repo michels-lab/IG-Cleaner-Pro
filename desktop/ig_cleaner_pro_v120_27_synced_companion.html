@@ -3729,8 +3729,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div></div></div><div class="page" id="page-automations"><div class="igc-page-flow">
 <div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automatizaciones</h2><p>Prepara acciones para tu cuenta de Instagram, separadas de los Focos de revisión.</p></div>
 <div class="panel" id="igcAutoPanel">
-<div class="title">Robot de acciones · planificación segura</div>
-<p class="note">Esta vista prepara las listas, exclusiones y ritmos. La ejecución de cancelar solicitudes o dejar de seguir permanece desactivada hasta validar la interacción real en Instagram. Nunca modifica tu cuenta desde esta pantalla.</p>
+<div class="title">Robot de acciones · Chrome local</div>
+<p class="note">Prepara una tanda, comprueba tus favoritos y pulsa Ejecutar. Instagram se abre en Chrome; confirma tu sesión en esa ventana. Las acciones se realizan únicamente con tu autorización y se verifican individualmente. La PC debe permanecer encendida; las restricciones de Instagram pueden detener el robot.</p>
 <div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Dejar de seguir · No me siguen</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancelar solicitudes enviadas</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Perfiles protegidos</button></div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparando vista...</div>
 <div class="igc-counts-stats" id="igcAutoMetrics" aria-live="polite"></div>
@@ -3740,9 +3740,19 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <label>Espera entre perfiles (s) <input id="igcAutoGap" type="number" min="0" max="3600" value="10" style="width:78px"></label>
 <button class="btn" type="button" onclick="igcAutoSaveTiming()">Guardar tiempos</button>
 </div>
-<div class="btnrow"><button class="btn orange" type="button" disabled title="Disponible cuando pase las pruebas con Instagram real">⏸ Pausar robot</button><button class="btn" type="button" disabled title="Disponible cuando pase las pruebas con Instagram real">▶ Reanudar robot</button><button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Nueva tanda</button><input id="igcAutoSearch" type="search" placeholder="Buscar @perfil" oninput="igcAutoRender()" style="min-width:150px;flex:1"></div>
+<div class="btnrow">
+<button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Ejecutar tanda seleccionada</button>
+<button class="btn orange" id="igcAutoPause" type="button" onclick="igcAutoPause()">⏸ Pausar</button>
+<button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Reanudar</button>
+<button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Nueva tanda</button>
+<button class="btn" type="button" onclick="igcAutoPoll()">⟳ Actualizar</button>
+<input id="igcAutoSearch" type="search" placeholder="Buscar @perfil" oninput="igcAutoRender()" style="min-width:150px;flex:1">
+</div>
+<div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
+<p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot sin conectar. Abre la app desde Start-Insta-Cleaner-Robot.cmd en Windows.</p>
+<progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Avance de la tanda"></progress>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Perfil</th><th>Estado</th><th>Decisión</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
-<p class="note">Omitir esta vez solo afecta la tanda preparada. Proteger es permanente hasta que lo retires; los protegidos no se proponen para acciones. Las listas de Mutuals conservan exclusivamente Focos.</p>
+<p class="note">Omitir esta vez excluye el perfil de la tanda. Proteger es permanente hasta que lo retires; ambos se comprueban antes de actuar. Las listas de Mutuals conservan exclusivamente Focos, sin automatizaciones.</p>
 </div></div></div><div class="page" id="page-profileStats">
 
 
@@ -14255,6 +14265,7 @@ window.igcAutoSkip=function(kind,user){
  if(!["unfollow","cancel"].includes(kind))return;
  const u=norm(user);if(!u)return;
  skips[kind].add(u);window.igcAutoRender();
+ if(actionBridge)requestAction("skip",{...actionOwner(),username:u}).catch(()=>{});
 };
 window.igcAutoProtect=function(kind,user){
  refreshScope();
@@ -14262,6 +14273,7 @@ window.igcAutoProtect=function(kind,user){
  const u=norm(user);if(!u)return;
  write(kind,u,!isProtected(kind,u));
  window.igcAutoRender();
+ if(actionBridge)requestAction("protect",{...actionOwner(),protected:[u]}).catch(e=>setStatus("Protección local guardada; aviso del robot: "+e.message));
 };
 window.igcAutoClearSkipped=function(){
  refreshScope();
@@ -14276,9 +14288,139 @@ window.igcAutoSaveTiming=function(){
      !Number.isFinite(rest)||rest<0||rest>1440||
      !Number.isFinite(gap)||gap<0||gap>3600)throw Error("Verifica los valores de tanda y espera.");
   localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
-  setStatus("Ritmo guardado para esta cuenta y tarea. La ejecución está pendiente de validación en Instagram real.");
+  setStatus("Ritmo guardado para esta cuenta y tarea. Se aplicará a la próxima tanda.");
  }catch(e){setStatus(e.message)}
 };
+// Local-only action connector: same capability token used by the Profile Counts robot.
+const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec((window.location?.hash||"").replace(/^#/,""));
+const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
+let actionState=null,actionBusy=false;
+async function requestAction(endpoint,body){
+ if(!actionBridge)throw Error("Abre el ZIP del robot de Windows con Start-Insta-Cleaner-Robot.cmd.");
+ const response=await fetch("http://127.0.0.1:"+actionBridge.port+"/api/actions/"+endpoint,{
+  method:body?"POST":"GET",mode:"cors",cache:"no-store",
+  headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":actionBridge.token},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const value=await response.json();
+ if(!response.ok)throw Error(value.error||"La conexión local no completó la acción.");
+ return value;
+}
+function actionOwner(){
+ const p=window.IGC_INSTAGRAM_PROFILES||{};
+ return {owner:String(p.owner||""),account:String(p.active||"")};
+}
+function ownInstagramHandle(){
+ const p=window.IGC_INSTAGRAM_PROFILES||{},profile=(p.accounts||[]).find(x=>x.account_key===p.active);
+ let handle=norm(profile?.username||"");
+ if(!handle){
+  try{
+   const key="igc_profile_discovered_v1__"+encodeURIComponent(p.owner)+"__"+encodeURIComponent(p.active);
+   handle=norm(JSON.parse(localStorage.getItem(key)||"null")?.handle);
+  }catch{}
+ }
+ return handle;
+}
+function selectedActionTargets(){
+ refreshScope();
+ const limit=Number(document.getElementById("igcAutoBatch")?.value||30);
+ if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error("Tanda: elige de 1 a 1,000 perfiles.");
+ return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&!skips[r.kind].has(r.username))
+     .map(r=>r.username))].slice(0,limit);
+}
+function actionConfig(task,targets){
+ const {owner,account}=actionOwner();
+ if(!owner||!account)throw Error("Inicia sesión en Insta Cleaner y selecciona un Instagram.");
+ const expected_handle=ownInstagramHandle();
+ if(!expected_handle)throw Error("Asigna el @Instagram activo en la sección Cuenta antes de ejecutar.");
+ const rest_minutes=Number(document.getElementById("igcAutoRest")?.value);
+ const gap_seconds=Number(document.getElementById("igcAutoGap")?.value);
+ const batch_size=Number(document.getElementById("igcAutoBatch")?.value);
+ if(!Number.isInteger(batch_size)||batch_size<1||batch_size>1000||
+    !Number.isFinite(rest_minutes)||rest_minutes<=0||rest_minutes>1440||
+    !Number.isFinite(gap_seconds)||gap_seconds<0||gap_seconds>3600)
+  throw Error("Configura una tanda válida, un descanso positivo y la espera entre perfiles.");
+ if(task==="unfollow"&&
+    (!Array.isArray(followingRaw)||!followingRaw.length||!Array.isArray(followersRaw)||!followersRaw.length||
+     window.V119_HTML?.partial))
+  throw Error("Para unfollow necesitas los ZIP completos de Following y Followers; HTML parcial no es evidencia suficiente.");
+ if(!targets.length)throw Error("No hay perfiles elegibles; revisa favoritos, omisiones o filtros.");
+ const protected_all=[...new Set([...(saved()[task]||[]),
+  ...(task==="unfollow"&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
+ return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,
+         protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
+         confirmation:task+":"+targets.length};
+}
+window.igcAutoStart=async function(){
+ if(mode==="protected"){setStatus("Elige Cancelar solicitudes o Unfollow antes de ejecutar.");return}
+ try{
+  const targets=selectedActionTargets(),data=actionConfig(mode,targets);
+  const operation=mode==="cancel"?"CANCELAR SOLICITUDES":"DEJAR DE SEGUIR";
+  const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
+  if(!window.confirm("¿Autorizar "+operation+" en "+targets.length+" perfiles de @"+
+       data.expected_handle+"?\n"+summary+(targets.length>15?" y más…":"")+
+       "\nEl robot verificará el estado del perfil antes y después. Esta acción cambia tu Instagram."))return;
+  window.igcAutoSaveTiming();
+  const result=await requestAction("start",data);
+  actionState=result;
+  await window.igcAutoPoll();
+ }catch(e){setStatus("No se pudo iniciar: "+e.message)}
+};
+window.igcAutoPause=async function(){
+ try{
+  const result=await requestAction("pause",actionOwner());
+  actionState=result;await window.igcAutoPoll();
+ }catch(e){setStatus("No se pudo pausar: "+e.message)}
+};
+window.igcAutoContinue=async function(){
+ try{
+  const state=await requestAction("status");
+  const {owner,account}=actionOwner();
+  if(!state.task||state.owner!==owner||state.account!==account)
+   throw Error("La tarea pausada es de otra cuenta.");
+  const targets=(state.rows||[]).map(r=>r.username),data=actionConfig(state.task,targets);
+  if(!window.confirm("¿Reanudar "+(state.task==="cancel"?"cancelaciones":"unfollows")+
+    " de @"+data.expected_handle+"? Ya ejecutadas correctamente NO se repiten."))return;
+  actionState=await requestAction("continue",data);
+  await window.igcAutoPoll();
+ }catch(e){setStatus("No se pudo reanudar: "+e.message)}
+};
+window.igcAutoPoll=async function(){
+ if(!actionBridge||actionBusy)return;
+ actionBusy=true;
+ try{
+  const state=await requestAction("status"),ctx=actionOwner();
+  if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
+   const text=document.getElementById("igcAutoLiveStatus");
+   if(text)text.textContent="El robot está asociado a otro Instagram. Selecciona esa cuenta para consultar.";
+   return;
+  }
+  actionState=state;
+  const metrics=document.getElementById("igcAutoExecutionMetrics");
+  if(metrics){
+   metrics.replaceChildren();
+   for(const label of ["Total: "+state.total,"Confirmados: "+state.successful,
+    "Faltan: "+state.remaining,"Errores / revisar: "+state.errors,
+    "Omitidos: "+(state.skipped||0),"Protegidos: "+state.protected]){
+    const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
+   }
+  }
+  const bar=document.getElementById("igcAutoProgress");
+  if(bar)bar.value=state.total?Math.round(100*(state.total-state.remaining)/state.total):0;
+  const info=document.getElementById("igcAutoLiveStatus");
+  if(info)info.textContent="Estado: "+state.status+" · "+(state.message||"")+
+      (state.current_profile?" · @"+state.current_profile:"")+
+      (state.wait_seconds?" · próximo perfil en "+state.wait_seconds+" s":"");
+  const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
+  if(pause)pause.disabled=!state.running;
+  if(resume)resume.disabled=state.running||!["paused","blocked","review","error"].includes(state.status);
+  window.igcAutoRender();
+ }catch(e){
+  const el=document.getElementById("igcAutoLiveStatus");
+  if(el)el.textContent="Robot no disponible: "+e.message;
+ }finally{actionBusy=false}
+};
+
 window.igcAutoRender=function(){
  const root=document.getElementById("igcAutoRows");if(!root)return;
  refreshScope();
@@ -14299,7 +14441,7 @@ window.igcAutoRender=function(){
  }else if(mode==="protected"){
   setStatus("Perfiles protegidos: se omiten siempre en las listas de acciones. Aquí puedes retirar la protección.");
  }else{
-  setStatus("Solo vista previa: "+(mode==="cancel"?"solicitudes enviadas":"cuentas que podrían no seguirte")+". Ninguna acción se ejecuta hasta que esté validado el robot de Chrome.");
+  setStatus("Lista preparada: "+(mode==="cancel"?"solicitudes enviadas":"perfiles sin followback confirmado por exportaciones completas")+". Revisa y autoriza la tanda antes de ejecutar.");
  }
  try{
   const t=JSON.parse(localStorage.getItem(timingKey())||"null");
@@ -14317,7 +14459,9 @@ window.igcAutoRender=function(){
   const link=document.createElement("a");link.href="https://www.instagram.com/"+encodeURIComponent(item.username)+"/";
   link.target="_blank";link.rel="noopener noreferrer";link.textContent="@"+item.username;u.appendChild(link);
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
-  status.textContent=protectedNow?"★ Favorito protegido":skipped?"Omitido esta vez":mode==="protected"?"Protegido":"Pendiente de revisión";
+  const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
+  status.textContent=protectedNow?"★ Favorito protegido":skipped?"Omitido esta vez":
+     live.status==="ok"?"Confirmado":live.status&&live.status!=="pending"?(live.status+": "+live.message):"Pendiente de revisión";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
   protect.textContent=protectedNow?"Quitar favorito":"★ Proteger / Favorito";
   protect.addEventListener("click",()=>window.igcAutoProtect(item.kind,item.username));
@@ -14333,9 +14477,11 @@ window.igcAutoRender=function(){
 const original=window.showPage;
 if(typeof original==="function")window.showPage=function(id){
  const ret=original.apply(this,arguments);
- if(id==="automations")window.igcAutoRender();
+ if(id==="automations"){window.igcAutoRender();if(actionBridge)window.igcAutoPoll()}
  return ret;
 };
+if(actionBridge&&typeof setInterval==="function")
+ setInterval(()=>{if(!document.hidden)window.igcAutoPoll()},5000);
 })();
 </script>
 </body>
