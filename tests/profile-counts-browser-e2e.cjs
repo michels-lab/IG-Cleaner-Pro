@@ -60,7 +60,7 @@ const {chromium}=require("playwright");
    window.igcCountsRender();
   });
   await page.locator("#igcCountsRobotActions").waitFor({state:"visible",timeout:6000});
-  await page.locator("#igcCountsRobotActions button").first().click();
+  await page.locator('#igcCountsRobotActions button[onclick="igcCountsRobotStart()"]').click();
   await page.waitForFunction(()=>document.querySelector("#igcCountsRobotStatus")?.textContent.includes("Starting fixture"),
    {timeout:10000});
   assert.equal(queries,1,"UI did not start local collector");
