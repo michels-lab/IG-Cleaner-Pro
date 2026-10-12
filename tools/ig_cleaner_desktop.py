@@ -136,10 +136,14 @@ def main(argv=None) -> int:
         if args.healthcheck:
             if not source.is_file() or source.stat().st_size < 100_000:
                 raise RuntimeError("Falta la interfaz Desktop dentro del ejecutable.")
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as playwright:
+                if not playwright.chromium:
+                    raise RuntimeError("No se empaquetó el controlador de Chrome.")
             server = build_server(Collector(app_home() / "robot-data", app_home() / "instagram-browser"),
                                   "healthcheck-token")
             server.server_close()
-            print("PASS: app Desktop y robot integrados en un ejecutable.")
+            print("PASS: UI embebida, controlador Playwright y servidor local disponibles.")
             return 0
 
         mutex = acquire_single_instance()
