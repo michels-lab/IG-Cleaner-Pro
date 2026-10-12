@@ -14337,7 +14337,7 @@ function actionConfig(task,targets){
  const gap_seconds=Number(document.getElementById("igcAutoGap")?.value);
  const batch_size=Number(document.getElementById("igcAutoBatch")?.value);
  if(!Number.isInteger(batch_size)||batch_size<1||batch_size>1000||
-    !Number.isFinite(rest_minutes)||rest_minutes<=0||rest_minutes>1440||
+    !Number.isFinite(rest_minutes)||rest_minutes<0||rest_minutes>1440||
     !Number.isFinite(gap_seconds)||gap_seconds<0||gap_seconds>3600)
   throw Error("Configura una tanda válida, un descanso positivo y la espera entre perfiles.");
  if(task==="unfollow"&&
