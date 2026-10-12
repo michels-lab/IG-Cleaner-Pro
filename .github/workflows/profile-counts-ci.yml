@@ -12,6 +12,7 @@ on:
       - 'tests/test_profile_counts_pacing.py'
       - 'tests/profile-counts-ui.test.cjs'
       - 'tests/automations-planner.test.cjs'
+      - 'tests/mutual-focus-ratio.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
   push:
     branches:
@@ -46,3 +47,5 @@ jobs:
         run: node tests/profile-counts-ui.test.cjs
       - name: Automations planner protected/skip/account isolation
         run: node tests/automations-planner.test.cjs
+      - name: Mutuals Focus-only profile ratio priority
+        run: node tests/mutual-focus-ratio.test.cjs
