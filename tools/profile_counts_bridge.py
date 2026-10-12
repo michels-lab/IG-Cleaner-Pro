@@ -19,7 +19,7 @@ import webbrowser
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_pacing import (check_pacing, history_path, load_history,
-                                   register_visit, wait_required,
+                                   register_visit, finish_visit, wait_required,
                                    DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS)
 
 MAX_REQUEST = 900_000
@@ -155,7 +155,10 @@ class Collector:
                     # Persist a budget event BEFORE navigating. Crashes and
                     # blocked/login pages cannot silently reset the cooldown.
                     visits = register_visit(visits_file, visits)
-                    status, counts = collect_visible_counts(page, username)
+                    try:
+                        status, counts = collect_visible_counts(page, username)
+                    finally:
+                        visits = finish_visit(visits_file, visits)
                     if status in ("login_required", "blocked"):
                         self._update("blocked", "Instagram solicitó acceso/verificación o limitó las consultas. Se detuvo sin evasión.")
                         return
