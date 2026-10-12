@@ -14512,12 +14512,17 @@ window.igcAutoPoll=async function(){
  actionBusy=true;
  try{
   const state=await requestAction("status"),ctx=actionOwner();
+  // Keep the worker's running/paused signal even across account scopes.
+  // A paused job belonging to A must not trap the user in B, and an active
+  // job belonging to A must still prevent B from changing identities.
+  actionState=state;
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
    const text=document.getElementById("igcAutoLiveStatus");
-   if(text)text.textContent="El robot está asociado a otro Instagram. Selecciona esa cuenta para consultar.";
+   if(text)text.textContent=state.running
+     ?"Hay acciones en ejecución para otro Instagram; pausa desde esa sesión antes de cambiar otra vez."
+     :"El robot está pausado o terminado en otra cuenta; puedes volver a ese Instagram.";
    return;
   }
-  actionState=state;
   if(state.owner&&state.account&&state.task&&Array.isArray(state.issues)){
    localStorage.setItem(igcAutoIssuesKey(state.task),
        JSON.stringify({task:state.task,status:state.status,total:state.total,
