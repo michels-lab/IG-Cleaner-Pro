@@ -3749,13 +3749,13 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div><div class="panel" id="igcProfileCountsPanel">
 <div class="title">◎ Profile Counts — Instagram visible</div>
-<p class="note">Consulta los seguidores y seguidos de cada cuenta de tu Following. El robot abre perfiles en un navegador local con tu sesión, sin API de Meta ni contraseña dentro de IG Cleaner. Algunos perfiles pueden no mostrar datos o bloquear consultas automáticas.</p>
+<p class="note">Inicia sesión en Instagram en la ventana que se abre. El robot detecta tu cuenta, lee la lista de perfiles que sigues y consulta las cifras visibles de cada perfil. No tienes que exportar Following, dar Iniciar ni configurar los tiempos. Instagram puede restringir el acceso.</p>
 <div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
-<strong>Robot de navegador · Control local</strong>
-<p id="igcCountsRobotStatus" class="note" aria-live="polite">Abre Insta Cleaner desde el lanzador del robot de PC para activar la recopilación sin CSV.</p>
+<strong>Recopilación automática de Instagram</strong>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Al iniciar sesión en Instagram, se detectarán automáticamente los perfiles que sigues y sus cifras visibles.</p>
 <progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:8px;accent-color:var(--accent)" aria-label="Avance del robot"></progress>
-<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center;flex-wrap:wrap">
+<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center;flex-wrap:wrap" hidden aria-hidden="true">
 <label>Perfiles máximos <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
 <label>Cada (minutos) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
 <label>Espera entre perfiles (segundos) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
@@ -3767,7 +3767,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn orange" type="button" onclick="igcCountsRobotStop()">Pausar robot</button>
 <button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Ver progreso</button>
 </div>
-<p id="igcCountsRobotPaceNote" class="note" aria-live="polite">Puedes ajustar perfiles por ventana, minutos y espera entre cada visita.</p>
+<p id="igcCountsRobotPaceNote" class="note" style="display:none" aria-hidden="true">El robot ajusta sus pausas internamente.</p>
 </div>
 <div class="btnrow">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
@@ -13810,7 +13810,10 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function context(){const p=window.IGC_INSTAGRAM_PROFILES;return {owner:String(p?.owner||'signed_out'),account:String(p?.active||'legacy')}}
 function key(){const p=context();return 'igc_profile_counts_v1__'+encodeURIComponent(p.owner)+'__'+encodeURIComponent(p.account)}
 function normalize(u){const v=String(u||'').trim().replace(/^@/,'').toLowerCase();return USER.test(v)?v:''}
-function members(){const seen=new Set();return (typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw:[]).map(r=>normalize(r.username)).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function discoveredKey(){return 'igc_profile_discovered_v1__'+encodeURIComponent(context().owner)+'__'+encodeURIComponent(context().account)}
+function discovered(){try{const v=JSON.parse(window.localStorage.getItem(discoveredKey())||'null');return v?.schema==='igc-browser-following-v1'&&Array.isArray(v.usernames)?v.usernames.map(normalize).filter(Boolean):[]}catch{return []}}
+function members(){const seen=new Set(),automatic=discovered(),input=automatic.length?automatic:(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]);return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function storeDiscovered(users,handle,complete){const uniq=[...new Set((users||[]).map(normalize).filter(Boolean))];if(!uniq.length)return;window.localStorage.setItem(discoveredKey(),JSON.stringify({schema:'igc-browser-following-v1',usernames:uniq,handle,complete:!!complete,updatedAt:new Date().toISOString()}))}
 function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
 function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
 function csvCell(value){let s=String(value??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
@@ -13883,8 +13886,13 @@ window.igcCountsRobotPoll=async function(){
    robotStatus('El robot está asociado a otro Instagram. Selecciónalo antes de sincronizar resultados.',true);return;
   }
   if(state.owner){
+   const follows=await bridgeRequest('following');
+   if(follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
+    storeDiscovered(follows.usernames,follows.handle,follows.complete);
+   }
    const data=await bridgeRequest('results');
    applyRobotRows(data.rows);
+   window.igcCountsRender();
   }
   const percentage=state.total?Math.round(state.progress/state.total*100):0;
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
@@ -13959,13 +13967,37 @@ window.igcCountsRobotStop=async function(){
  try{const result=await bridgeRequest('stop',{});robotStatus(result.message)}
  catch(e){robotStatus(e.message,true)}
 };
+let igcRobotAutoIdentity='';
+window.igcCountsRobotAuto=async function(){
+ if(!robot)return;
+ const ctx=context(),id=ctx.owner+'__'+ctx.account;
+ if(igcRobotAutoIdentity===id)return;
+ try{
+  const state=await bridgeRequest('status');
+  if(state.running){
+   if(state.owner!==ctx.owner||state.account!==ctx.account){
+    robotStatus('La recopilación activa corresponde a otro Instagram. No se mezclarán los datos.',true);
+    return;
+   }
+   igcRobotAutoIdentity=id;return;
+  }
+  const profiles=window.IGC_INSTAGRAM_PROFILES;
+  const profile=(profiles?.accounts||[]).find(p=>p.account_key===ctx.account);
+  const expected_handle=normalize(profile?.username||'');
+  const pacing=robotConfig();
+  await bridgeRequest('auto',{owner:ctx.owner,account:ctx.account,expected_handle,...pacing});
+  igcRobotAutoIdentity=id;
+  robotStatus('Abriendo Instagram; detectaré tu sesión y Following automáticamente.');
+ }catch(e){robotStatus('No pude iniciar la recopilación automática: '+e.message,true)}
+};
 if(robot&&robot.port>0&&robot.port<=65535){
  window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
- if(controls)controls.style.display='flex';
+ if(controls)controls.style.display='none';
  window.igcCountsRobotPreview();
- setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
- setTimeout(()=>window.igcCountsRobotPoll(),200);
+ setInterval(()=>{if(!document.hidden){window.igcCountsRobotAuto();window.igcCountsRobotPoll()}},5000);
+ setTimeout(()=>window.igcCountsRobotAuto(),1500);
+ setTimeout(()=>window.igcCountsRobotPoll(),2400);
 }
 window.igcCountsRobotRestoreConfig();
 window.igcCountsRobotPreview();
