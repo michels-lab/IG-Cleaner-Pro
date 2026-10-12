@@ -27,4 +27,4 @@
 - **No probado aún con una sesión real de Instagram ni en el equipo Windows del usuario.** Es una build de validación técnica.
 
 ## Validación técnica
-La build Windows ejecuta `IGCleanerProfileCounts.exe --healthcheck` en un runner Windows sin abrir Instagram, para confirmar que el ejecutable congelado puede importar Playwright e iniciar un servidor local. Esto **no sustituye** la prueba en navegador Chrome real ni Android.
+La build Windows ejecuta `InstaCleanerPro.exe --healthcheck` en un runner Windows sin abrir Instagram, para confirmar que el ejecutable congelado puede importar Playwright e iniciar un servidor local. Esto **no sustituye** la prueba en navegador Chrome real ni Android.

@@ -3753,7 +3753,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <input id="igcAutoSearch" type="search" placeholder="Buscar @perfil" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
-<p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot sin conectar. Abre la app desde Start-Insta-Cleaner-Robot.cmd en Windows.</p>
+<p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot sin conectar. Abre InstaCleanerPro.exe en Windows para conectar el servicio local.</p>
 <progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Avance de la tanda"></progress>
 <div class="panel" id="igcAutoIssuesPanel" style="margin-top:14px" aria-label="Resumen de incidencias">
 <div class="title">Resumen de incidencias <span id="igcAutoIssueTotal" class="note" aria-live="polite">0</span></div>
@@ -14238,7 +14238,7 @@ window.igcCountsRobotStop=async function(){
 };
 window.igcCountsRobotConnect=async function(){
  if(!robot){
-  robotStatus('Primero ejecuta Start-Insta-Cleaner-Robot.cmd del ZIP de Windows: abrirá Insta Cleaner con conexión local.',true);
+  robotStatus('Abre InstaCleanerPro.exe del ZIP de Windows; la aplicación incluye el servicio local.',true);
   return;
  }
  await window.igcCountsRobotAuto(true);

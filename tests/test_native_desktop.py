@@ -128,5 +128,16 @@ class DesktopAppTests(unittest.TestCase):
             self.assertEqual(stop.call_count, 1)
 
 
+    def test_interface_and_preview_instructions_use_integrated_executable(self):
+        root = Path(__file__).resolve().parents[1]
+        html = (root / "desktop" / "ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+        readme = (root / "packaging" / "profile-counts" / "README.txt").read_text(encoding="utf-8")
+        self.assertNotIn("Start-Insta-Cleaner-Robot.cmd", html)
+        self.assertNotIn("IGCleanerProfileCounts.exe --healthcheck", readme)
+        self.assertIn("InstaCleanerPro.exe --healthcheck", readme)
+        self.assertIn("InstaCleanerPro.exe", html)
+
+
+
 if __name__ == "__main__":
     unittest.main()

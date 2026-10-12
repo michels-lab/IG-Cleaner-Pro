@@ -1498,3 +1498,9 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - **Cambio:** reconciliar checkpoints de la misma cuenta, exigir un contador visible exacto para marcar una lectura completa y procesar la cola reconciliada; incluir pruebas de parser y reanudación.
 - **Seguridad:** la lectura parcial nunca acredita ausencia de followback ni autoriza automatizar unfollow. Sin publicación ni cambio de versión.
 - **Estado:** pendiente CI exact-head y aceptación del navegador de Instagram con sesión real del propietario.
+
+
+### 2026-10-12 — Instrucciones de lanzamiento de Windows alineadas
+- Hallazgo: la interfaz seguía pidiendo el launcher CMD y el README nombraba otro ejecutable para healthcheck.
+- Corrección: mensajes de UI y documentación ahora usan únicamente InstaCleanerPro.exe, más test de regresión sobre los artefactos fuente.
+- Validación pendiente: CI exact-head y aceptación en equipo Windows con Chrome y sesión real; ningún release público automático.
