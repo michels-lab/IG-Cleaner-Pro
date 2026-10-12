@@ -121,6 +121,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
 
         class FakePage:
             def goto(self,*args,**kwargs): pass
+            def is_closed(self): return False
         class FakeBrowser:
             pages=[FakePage()]
             def close(self):pass
@@ -172,6 +173,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
 
         class FakePage:
             def goto(self, *args, **kwargs): pass
+            def is_closed(self): return False
         class FakeBrowser:
             pages = [FakePage()]
             def close(self): pass
