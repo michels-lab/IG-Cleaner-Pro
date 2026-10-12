@@ -102,6 +102,37 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(len(rows),1)
         self.assertEqual(rows[0]["followers"],"333")
 
+    def test_autonomous_start_needs_no_csv_or_click(self):
+        # Browser interaction is simulated; user credentials are never supplied.
+        self.collector._run=lambda: self.collector._update("complete","Fixture finished",0)
+        state=self.request("/api/auto",body={
+            "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram"
+        })
+        self.collector.worker.join(2)
+        self.assertTrue(state["autonomous"])
+        self.assertEqual(state["total"],0)
+        self.assertEqual(self.request("/api/following")["usernames"],[])
+        self.assertEqual(self.request("/api/status")["status"],"complete")
+
+    def test_autonomous_account_identity_mismatch_rejected_before_switch(self):
+        import time
+        def hold():
+            while not self.collector.stop_signal.wait(0.1): pass
+        self.collector._run=hold
+        try:
+            response=self.request("/api/auto",body={
+                "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram"
+            })
+            self.assertEqual(response["account"],"ig-one")
+            with self.assertRaises(HTTPError) as exc:
+                self.request("/api/auto",body={
+                    "owner":"owner-A","account":"ig-two","expected_handle":"another.instagram"
+                })
+            self.assertEqual(exc.exception.code,400)
+            self.assertEqual(self.request("/api/status")["account"],"ig-one")
+        finally:
+            self.collector.stop()
+
     def test_start_and_login_ready_without_real_browser(self):
         # No Internet/Instagram visit in an offline CI test.
         self.collector._run=lambda: self.collector._update("complete","Simulated done",0)
