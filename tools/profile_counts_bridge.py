@@ -49,7 +49,7 @@ class Collector:
         digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("profile-counts-" + digest + ".csv")
 
-    def start(self, request: dict):
+    def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
         if not isinstance(usernames, list) or not 1 <= len(usernames) <= MAX_QUEUE:
             raise ValueError("La lista debe tener entre 1 y 10,000 perfiles.")
@@ -79,12 +79,14 @@ class Collector:
             saved = read_results(self.result_path())
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
-            self.message = "Iniciando navegador visible..."
-            self.status = "starting"
+            self.message = ("Registros guardados recuperados; pulsa Iniciar para continuar."
+                            if load_only else "Iniciando navegador visible...")
+            self.status = "idle" if load_only else "starting"
             self.stop_signal.clear()
             self.login_ready.clear()
-            self.worker = threading.Thread(target=self._run, daemon=True)
-            self.worker.start()
+            if not load_only:
+                self.worker = threading.Thread(target=self._run, daemon=True)
+                self.worker.start()
             return self.snapshot()
 
     def _update(self, status: str, message: str, progress=None):
@@ -243,7 +245,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/stop", "/api/resume"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -256,6 +258,8 @@ def build_server(collector: Collector, token: str, port: int = 0):
                     raise ValueError("Solicitud inválida.")
                 if self.path == "/api/start":
                     result = collector.start(data)
+                elif self.path == "/api/load":
+                    result = collector.start(data, load_only=True)
                 elif self.path == "/api/stop":
                     result = collector.stop()
                 else:
