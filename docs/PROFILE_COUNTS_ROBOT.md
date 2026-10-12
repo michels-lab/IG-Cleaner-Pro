@@ -1,6 +1,24 @@
 # Profile Counts — robot navegador y estadísticas por perfil
 
-**Estado:** desarrollo en la rama feature; **no publicado**. Diseño solicitado el 11 de octubre de 2026. Esta función no confunde el número de cuentas que **tú** sigues con los Followers/Following de **cada tercero**.
+**Estado:** desarrollo en la rama feature; **no publicado**. Flujo autónomo actualizado el 11 de octubre de 2026. Esta función no confunde el número de cuentas que **tú** sigues con los Followers/Following de **cada tercero**.
+
+## Uso normal — automático, sin CSV ni configuraciones
+
+**Este es el flujo principal pedido por el propietario**:
+
+1. En Windows abre el paquete de prueba de Insta Cleaner mediante `Start-Insta-Cleaner-Robot.cmd` (Chrome instalado, sin instalar Python).
+2. El controlador abre Insta Cleaner y su ventana de Chrome. **Inicia sesión en Instagram** si hace falta; no necesitas iniciar otra tarea, pulsar «Ya inicié sesión», configurar tandas, importar archivos ni extraer tu Following.
+3. Cuando aparezca la sesión de Instagram, el robot busca el enlace visible de tu propio perfil, abre **Following** y recorre los perfiles mostrados en el cuadro de Instagram. Guarda la lista detectada progresivamente por cuenta.
+4. Después visita cada perfil obtenido y lee los dos contadores visibles. En Insta Cleaner → **Insights → Profile Counts** aparecen el progreso y las cifras conforme se guardan. El robot controla sus pausas por dentro y conserva el avance si reinicias.
+5. Si Instagram pide verificación, oculta Following, modifica su interfaz o muestra una cuenta distinta de la seleccionada en Insta Cleaner, el robot **se detiene o señala datos incompletos**. No evade comprobaciones ni inventa números.
+
+Este sistema abre la página normal de Instagram desde una sesión de navegador que gestionas tú. **No usa permisos de Meta API**. La contraseña de Instagram nunca se pide dentro de Insta Cleaner ni se guarda en el repositorio. Las cookies de sesión quedan en el perfil privado del navegador local. La PC debe permanecer encendida y el lanzador abierto; **no es una ejecución autónoma de Android ni un trabajo en la nube**.
+
+**Estado real de validación:** pruebas automáticas locales con perfiles simulados; el reconocimiento de sesión y la lectura de la lista Following todavía requieren verificación presencial en el Instagram del propietario. La interface de Instagram puede variar según país, idioma, cuenta y fecha.
+
+## Controles internos y método CSV anterior (alternativos, ocultos en uso automático)
+
+Se conservan el limitador por ventana, espera mínima tras cada perfil y descanso después de N visitas para que el robot no opere sin cadencia. El panel técnico se oculta en el uso habitual. Los CSV de exportación/importación siguen implementados como respaldo si falla la lectura directa del navegador.
 
 ## Control directo desde Insta Cleaner (PC, sin intercambio manual de CSV)
 
