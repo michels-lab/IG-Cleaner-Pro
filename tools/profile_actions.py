@@ -24,7 +24,7 @@ from profile_counts_pacing import (
     finish_batch_visit,
 )
 
-TASKS = {"unfollow": "dejar de seguir", "cancel": "cancelar solicitud"}
+TASKS = {"unfollow": "unfollow", "cancel": "cancel request", "audit": "read-only followback audit"}
 ACTION_WINDOW_MINUTES = 60
 MAX_ACTIONS_PER_JOB = 1000
 
@@ -304,6 +304,72 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     return _verify_final_state(page, expected_handle)
 
 
+
+def classify_followback_search(dialog, username, *, text=None, usernames=None):
+    """Fail-closed classification of Instagram's OWN followers search results.
+
+    A missing 'Follows you' tag is not evidence of non-followback.
+    Negative requires Instagram explicitly rendering an empty search result.
+    """
+    own = valid_username(username)
+    found = set(usernames if usernames is not None else [])
+    if own in found:
+        return "follows_you"
+    empty = re.search(r"\\b(no results found|no results|no users found|no se encontraron resultados|sin resultados|no hay resultados)\\b",
+                      text if text is not None else dialog.inner_text(timeout=4000), re.I)
+    return "not_following" if empty and not found else "unverified"
+
+
+def perform_visible_followback_audit(page, username, expected_handle):
+    """Read-only audit: search a candidate in the signed-in owner's Followers.
+
+    Never click Follow, Following, Requested, Unfollow, or Cancel Request.
+    """
+    if signed_in_handle(page) != expected_handle:
+        return "review", "unverified", "Active Instagram identity could not be confirmed."
+    page.goto("https://www.instagram.com/" + expected_handle + "/",
+              wait_until="domcontentloaded", timeout=45000)
+    page.wait_for_timeout(950)
+    if challenge_detected(page) or signed_in_handle(page) != expected_handle:
+        return "blocked", "unverified", "Instagram challenge or identity mismatch."
+    link = page.locator('a[href*="/followers/"]').filter(visible=True)
+    # Match the owner's exact Followers URL. Never inspect another account.
+    target = None
+    for i in range(min(link.count(), 15)):
+        item = link.nth(i)
+        href = item.get_attribute("href") or ""
+        if re.search(r"/" + re.escape(expected_handle) + r"/followers/?(?:\\?|$)", href, re.I):
+            target = item
+            break
+    if target is None:
+        return "review", "unverified", "Owner Followers link unavailable; no conclusion."
+    target.click(timeout=12000)
+    dialog = page.locator('[role="dialog"]').last
+    dialog.wait_for(state="visible", timeout=12000)
+    # Different layouts label the visible search as Search or Buscar.
+    searches = dialog.locator('input[placeholder*="Search"], input[placeholder*="Buscar"], input[aria-label*="Search"], input[aria-label*="Buscar"]')
+    if searches.count() != 1 or not searches.first.is_visible():
+        return "review", "unverified", "Followers search field unavailable; no conclusion."
+    searches.first.fill(username)
+    page.wait_for_timeout(1400)
+    observations = []
+    for _ in range(2):
+        if challenge_detected(page) or signed_in_handle(page) != expected_handle:
+            return "blocked", "unverified", "Instagram challenge or identity mismatch during audit."
+        links = dialog.locator("a[href]").evaluate_all(
+            "(els) => els.filter(el => el.getBoundingClientRect().width > 0).map(el => el.getAttribute('href') || '')")
+        from profile_counts_instagram import user_from_href
+        matches = [u for href in links if (u := user_from_href(href))]
+        result = classify_followback_search(dialog, username, usernames=matches)
+        observations.append(result)
+        page.wait_for_timeout(450)
+    if observations == ["follows_you", "follows_you"]:
+        return "ok", "follows_you", "Verified: appears in your live Instagram Followers search."
+    if observations == ["not_following", "not_following"]:
+        return "ok", "not_following", "Verified: Instagram explicitly shows no results for this username in your Followers."
+    return "review", "unverified", "Followers search gave incomplete or inconsistent evidence."
+
+
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
         self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
@@ -529,10 +595,15 @@ class ActionRobot:
                         continue
                     visits = register_visit(visits_file, visits)
                     try:
-                        result, details = perform_visible_action(
-                            page, user, self.task, self.handle,
-                            lambda name: not self.stop_event.is_set() and
-                            not self._protected_for(name) and name not in self.skipped)
+                        if self.task == "audit":
+                            result, relation, details = perform_visible_followback_audit(
+                                page, user, self.handle)
+                        else:
+                            relation = ""
+                            result, details = perform_visible_action(
+                                page, user, self.task, self.handle,
+                                lambda name: not self.stop_event.is_set() and
+                                not self._protected_for(name) and name not in self.skipped)
                     except Exception as exc:
                         result, details = "error", "No se verificó la acción: " + str(exc)[:200]
                     finally:
@@ -544,12 +615,15 @@ class ActionRobot:
                         continue
                     issue = _action_issue(self.task, result, details)
                     journal[user] = {"status": result, "message": details,
+                                     "audit_relation": relation,
                                      "issue": issue,
                                      "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                     _atomic_json(path, journal)
                     if result != "ok":
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
+                        if self.task == "audit" and result == "review":
+                            continue
                         if issue in ("pending_already_following", "pending_not_requested",
                                      "mutual_before_action", "missing_profile_info"):
                             continue
