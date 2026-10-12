@@ -83,6 +83,8 @@ public final class SyncApi {
 
     /** Add a login without invalidating remembered sessions. Only Sign out forgets one. */
     public synchronized void prepareAnotherAccount() {
+        // Migrate the currently active pre-v120.43 session before leaving it.
+        rememberCurrentSession();
         accessToken = "";
         refreshToken = "";
         expiresAt = 0;
@@ -243,8 +245,9 @@ public final class SyncApi {
     public synchronized void logout() {
         // Sign out is explicitly different from Switch Account: forget this
         // login's remembered token, while other remembered accounts survive.
-        accounts.remove(getEmail());
+        String previous = getEmail();
         prepareAnotherAccount();
+        accounts.remove(previous);
     }
 
     public static String scopeQuery(String query, String profile) {
@@ -355,6 +358,9 @@ public final class SyncApi {
         activeInstagramProfile = prefs.getString("instagram_profile_" + profileOwnerKey(), "legacy");
         if (!activeInstagramProfile.matches("(legacy|ig_[a-z0-9_-]{8,64})"))
             activeInstagramProfile = "legacy";
+        // Upgrade the existing signed-in account into encrypted multi-login
+        // storage without requiring an extra password prompt.
+        rememberCurrentSession();
     }
 
     private long tokenExpiry(JSONObject result) {
