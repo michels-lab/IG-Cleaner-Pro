@@ -379,7 +379,7 @@ jobs:
 
       - name: Build release notes
         run: |
-          cat > release-notes.md <<EOF
+          cat > release-notes.md <<'EOF'
           # Instagram Cleaner Pro v${{ steps.release.outputs.version }}
 
           Normal GitHub release (**not a prerelease**).
