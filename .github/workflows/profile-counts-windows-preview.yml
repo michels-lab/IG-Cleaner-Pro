@@ -1,0 +1,79 @@
+name: Profile Counts Windows portable preview
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_counts_pacing.py'
+      - 'tools/profile_counts_instagram.py'
+      - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
+      - 'tools/build_standalone_desktop_html.py'
+      - 'packaging/profile-counts/**'
+      - '.github/workflows/profile-counts-windows-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-portable:
+    name: Frozen Windows robot and double-click bundle
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        shell: pwsh
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install chromium
+      - name: Install build-time dependencies only
+        shell: pwsh
+        run: |
+          python -m pip install playwright==1.57.0 pyinstaller==6.16.0
+      - name: Build Windows executable with embedded Playwright driver
+        shell: pwsh
+        run: |
+          pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts tools/profile_counts_bridge.py
+      - name: Test the frozen executable without contacting Instagram
+        shell: pwsh
+        run: |
+          & ".\dist\IGCleanerProfileCounts.exe" --healthcheck
+          if ($LASTEXITCODE -ne 0) { throw "The Windows robot executable failed its offline healthcheck." }
+      - name: Create self-contained Desktop app HTML
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "artifacts\profile-counts-preview" | Out-Null
+          python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version ((Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName)
+          if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
+          node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
+      - name: Bundle launcher, local executable, and instructions
+        shell: pwsh
+        run: |
+          Copy-Item dist/IGCleanerProfileCounts.exe artifacts/profile-counts-preview/
+          Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd artifacts/profile-counts-preview/
+          Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
+          @(
+            "candidate_source_sha=${{ github.sha }}"
+            "candidate_kind=unreleased_windows_preview"
+            "application=IG Cleaner Pro / Profile Counts"
+          ) | Set-Content artifacts/profile-counts-preview/BUILD-INFO.txt
+          Get-FileHash artifacts/profile-counts-preview/IGCleanerProfileCounts.exe -Algorithm SHA256 |
+            Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
+          if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
+          if (!(Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd)) { throw "Launcher absent." }
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IG-Cleaner-Profile-Counts-Windows-PREVIEW-${{ github.sha }}
+          path: artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip
+          retention-days: 14
+          if-no-files-found: error

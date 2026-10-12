@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <link rel="icon" type="image/png" href="assets/ig-cleaner-pro/official-app-icon.png"/>
-<title>Instagram Cleaner Pro v120.41</title>
+<title>Instagram Cleaner Pro v120.42</title>
 <style>
 :root{
   --bg:#08090d;--surface:#0f1117;--surface2:#151820;--surface3:#1c2030;--border:#242a3d;
@@ -2925,7 +2925,7 @@ window.IGC_INSTAGRAM_PROFILES={
 document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.render());
 </script>
 
-<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><div class="igc-instagram-rail"><label for="igcInstagramIdentity">INSTAGRAM</label><div class="igc-profile-current"><span class="igc-profile-current-caption">PERFIL ACTIVO</span><strong id="igcInstagramActiveFullName" aria-live="polite">Datos anteriores</strong></div><div class="igc-profile-select-row"><select id="igcInstagramIdentity" aria-label="Cambiar cuenta de Instagram" onchange="IGC_INSTAGRAM_PROFILES.switch(this.value)"><option value="legacy">Datos anteriores</option></select></div><div class="igc-profile-actions"><button type="button" title="Añadir perfil de Instagram" onclick="igcAddInstagramProfile()">＋ Añadir</button><button type="button" title="Editar @usuario del Instagram seleccionado" aria-label="Editar @usuario" onclick="igcEditInstagramProfile()">✎ Editar</button><button type="button" title="Exportar respaldo del Instagram seleccionado" aria-label="Respaldo Instagram" onclick="igcExportSelectedInstagramProfile()">↓ Respaldo</button><button type="button" id="igcDeleteInstagramButton" title="Eliminar Instagram seleccionado" aria-label="Eliminar Instagram seleccionado" onclick="igcDeleteInstagramProfile()" disabled>× Eliminar</button><button type="button" id="igcRefreshInstagramButton" title="Consultar de nuevo los perfiles de tu cuenta en la nube" onclick="igcRefreshInstagramProfiles()">⟳ Actualizar perfiles</button></div><div id="igcInstagramIdentitySummary" aria-live="polite"></div><div id="igcInstagramCloudStatus" role="status" aria-live="polite">Para ver todos los perfiles, conecta tu cuenta en Cuenta.</div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><div class="igc-engine-badge">Engine v119 · UI v120.41</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Decide qué revisar, abre una tanda y vuelve aquí a confirmar.</p></div><button class="igc-command-btn igc-header-about" id="aboutDeveloperBtn" title="About" type="button" aria-haspopup="dialog">ⓘ About</button><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Importar</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>Una lectura rápida de tus tres flujos principales antes de empezar una tanda.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>¿Qué quieres hacer ahora?</h3><p>Empieza por una sesión de revisión o entra directo al módulo que necesitas.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Abre una tanda de Review sobre cuentas que tú sigues.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Limpiar following</b><small>Trabaja sobre las cuentas que sigues con filtros y estados.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>Followers que también sigues, con su propio Focus, historial y sesión.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>Personas que te siguen pero tú no sigues, en un workspace independiente.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Solicitudes pendientes</b><small>Revisa solicitudes que siguen sin resolverse.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Abre relaciones que cambiaron desde el ZIP anterior o desde tu última revisión.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
+<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><div class="igc-instagram-rail"><label for="igcInstagramIdentity">INSTAGRAM</label><div class="igc-profile-current"><span class="igc-profile-current-caption">PERFIL ACTIVO</span><strong id="igcInstagramActiveFullName" aria-live="polite">Datos anteriores</strong></div><div class="igc-profile-select-row"><select id="igcInstagramIdentity" aria-label="Cambiar cuenta de Instagram" onchange="IGC_INSTAGRAM_PROFILES.switch(this.value)"><option value="legacy">Datos anteriores</option></select></div><div class="igc-profile-actions"><button type="button" title="Añadir perfil de Instagram" onclick="igcAddInstagramProfile()">＋ Añadir</button><button type="button" title="Editar @usuario del Instagram seleccionado" aria-label="Editar @usuario" onclick="igcEditInstagramProfile()">✎ Editar</button><button type="button" title="Exportar respaldo del Instagram seleccionado" aria-label="Respaldo Instagram" onclick="igcExportSelectedInstagramProfile()">↓ Respaldo</button><button type="button" id="igcDeleteInstagramButton" title="Eliminar Instagram seleccionado" aria-label="Eliminar Instagram seleccionado" onclick="igcDeleteInstagramProfile()" disabled>× Eliminar</button><button type="button" id="igcRefreshInstagramButton" title="Consultar de nuevo los perfiles de tu cuenta en la nube" onclick="igcRefreshInstagramProfiles()">⟳ Actualizar perfiles</button></div><div id="igcInstagramIdentitySummary" aria-live="polite"></div><div id="igcInstagramCloudStatus" role="status" aria-live="polite">Para ver todos los perfiles, conecta tu cuenta en Cuenta.</div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><div class="igc-engine-badge">Engine v119 · UI v120.42</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Decide qué revisar, abre una tanda y vuelve aquí a confirmar.</p></div><button class="igc-command-btn igc-header-about" id="aboutDeveloperBtn" title="About" type="button" aria-haspopup="dialog">ⓘ About</button><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Importar</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>Una lectura rápida de tus tres flujos principales antes de empezar una tanda.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>¿Qué quieres hacer ahora?</h3><p>Empieza por una sesión de revisión o entra directo al módulo que necesitas.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Abre una tanda de Review sobre cuentas que tú sigues.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Limpiar following</b><small>Trabaja sobre las cuentas que sigues con filtros y estados.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>Followers que también sigues, con su propio Focus, historial y sesión.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>Personas que te siguen pero tú no sigues, en un workspace independiente.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Solicitudes pendientes</b><small>Revisa solicitudes que siguen sin resolverse.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Abre relaciones que cambiaron desde el ZIP anterior o desde tu última revisión.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
 <div class="title">🧭 Dashboard por módulo</div>
 <div class="note">
       Vista rápida separada por flujo: limpieza de following, pending requests y seguidores que sigo. No usa notas manuales: solo estados, decisiones rápidas, progreso y siguiente acción recomendada.
@@ -3747,6 +3747,46 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn red" onclick="selectStatsCritical()">Seleccionar prioridad crítica</button>
 <button class="btn purple" onclick="selectStatsHighRiskFollowers()">Ver followers riesgo alto</button>
 </div>
+</div><div class="panel" id="igcProfileCountsPanel">
+<div class="title">◎ Profile Counts — Instagram visible</div>
+<p class="note">Inicia sesión en Instagram en la ventana que se abre. El robot detecta tu cuenta, lee la lista de perfiles que sigues y consulta las cifras visibles de cada perfil. No tienes que exportar Following, dar Iniciar ni configurar los tiempos. Instagram puede restringir el acceso.</p>
+<div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
+<div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
+<strong>Recopilación automática de Instagram</strong>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Al iniciar sesión en Instagram, se detectarán automáticamente los perfiles que sigues y sus cifras visibles.</p>
+<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:8px;accent-color:var(--accent)" aria-label="Avance del robot"></progress>
+<div class="btnrow" id="igcCountsRobotActions" style="display:none;align-items:center;flex-wrap:wrap" hidden aria-hidden="true">
+<label>Perfiles máximos <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Cada (minutos) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Espera entre perfiles (segundos) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Descanso después de N perfiles <input id="igcCountsRobotRestEvery" type="number" min="0" max="10000" step="1" value="0" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Minutos de descanso <input id="igcCountsRobotRestMinutes" type="number" min="0" max="1440" step="0.5" value="0" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Recuperar guardados</button>
+<button class="btn primary" type="button" onclick="igcCountsRobotStart()">▶ Iniciar recopilación</button>
+<button class="btn" type="button" onclick="igcCountsRobotLoginReady()">Ya inicié sesión</button>
+<button class="btn orange" type="button" onclick="igcCountsRobotStop()">Pausar robot</button>
+<button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Ver progreso</button>
+</div>
+<p id="igcCountsRobotPaceNote" class="note" style="display:none" aria-hidden="true">El robot ajusta sus pausas internamente.</p>
+</div>
+<div class="btnrow" id="igcCountsManualCSV">
+<button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Exportar cola para robot</button>
+<label class="btn" style="cursor:pointer">② Importar resultados CSV<input id="igcCountsImport" type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
+<button class="btn" type="button" onclick="igcCountsExportResults()">Exportar resultados CSV</button>
+<button class="btn" type="button" onclick="igcCountsRender()">Actualizar lista</button>
+</div>
+<p class="note" id="igcCountsManualHelp">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. Se respetan ambos límites; los retrasos de carga aumentan el tiempo real. El robot se detiene si Instagram solicita verificación. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
+<input type="search" id="igcCountsQuery" placeholder="Buscar @usuario" style="min-width:160px;flex:1" oninput="igcCountsRender()">
+<select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pendientes</option><option value="ok">Con datos</option><option value="other">Sin datos / error</option></select>
+</div>
+<div style="overflow:auto;max-height:520px">
+<table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
+<thead><tr><th>@Usuario</th><th>Seguidores</th><th>Siguiendo</th><th>Consultado</th><th>Estado</th></tr></thead>
+<tbody id="igcCountsRows"><tr><td colspan="5">Carga Following para comenzar.</td></tr></tbody>
+</table>
+</div>
+<div class="note" id="igcCountsFootnote"></div>
 </div><div class="panel">
 <div class="title">🧠 Conclusión del perfil</div>
 <div class="profile-conclusion" id="profileConclusion">
@@ -12282,7 +12322,7 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
     <div class="aboutRole">ABOUT THE DEVELOPER · INDEPENDENT SOFTWARE DEVELOPER</div>
     <h2 id="aboutDeveloperTitle" class="aboutName">Michel Armando Duarte Flores</h2>
     <div class="aboutBio">Materials Engineer · Metallurgical Engineering Research</div>
-    <div class="aboutVersion">Instagram Cleaner Pro · UI v120.41</div>
+    <div class="aboutVersion">Instagram Cleaner Pro · UI v120.42</div>
   </div>
   <div class="aboutProfileRow">
     <div aria-label="Michel Duarte developer portrait" class="aboutAvatar" id="aboutAvatarFrame">
@@ -12339,10 +12379,10 @@ Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la n
 </div>
 <div aria-hidden="true" class="versionOverlay" id="versionOverlay">
 <section aria-labelledby="versionTitle" aria-modal="true" class="versionDialog" role="dialog">
-<h3 id="versionTitle">Instagram Cleaner Pro · UI v120.41</h3>
+<h3 id="versionTitle">Instagram Cleaner Pro · UI v120.42</h3>
 <div class="versionGrid">
 <div class="detailBlock"><span>Producto</span><b>IG Cleaner Pro</b><div>Herramienta local de análisis y limpieza de exports de Instagram.</div></div>
-<div class="detailBlock"><span>Versión</span><b>Engine v119 · UI v120.41</b><div>ZIP primary · JSON/HTML autodetect · precise dates · follow-order · evidence · ZIP changes · focus intelligence · portable HTML report · snapshot timeline · editable Focus · profile dossier · cross-device audit log · state audit · performance cache · import delta · JSON intact</div></div>
+<div class="detailBlock"><span>Versión</span><b>Engine v119 · UI v120.42</b><div>ZIP primary · JSON/HTML autodetect · precise dates · follow-order · evidence · ZIP changes · focus intelligence · portable HTML report · snapshot timeline · editable Focus · profile dossier · cross-device audit log · state audit · performance cache · import delta · JSON intact</div></div>
 <div class="detailBlock"><span>Runtime</span><b>Web / HTML local</b><div>Procesamiento en el navegador, sin backend y sin login de Instagram.</div></div>
 <div class="detailBlock"><span>Autor</span><b>Michel Armando Duarte Flores</b><div>Michel's Lab</div></div>
 </div>
@@ -13752,5 +13792,222 @@ setTimeout(install,0);
 </script>
 <!-- v120.27: Supabase-backed Desktop ↔ Android sync center; existing relationship parsers unchanged. -->
 
+<style id="igc-profile-counts-style">
+#igcProfileCountsPanel .note{line-height:1.6;max-width:100%}
+#igcProfileCountsPanel .igc-counts-stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+#igcProfileCountsPanel .igc-counts-stats span{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;border-radius:10px}
+#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+#igcProfileCountsPanel .igc-counts-table a{color:var(--accent)}
+#igcProfileCountsPanel .igc-counts-table th{position:sticky;top:0;background:var(--surface)}
+#igcProfileCountsPanel .igc-counts-table td:nth-child(2),#igcProfileCountsPanel .igc-counts-table td:nth-child(3){text-align:right}
+@media(max-width:620px){#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 5px;font-size:11px}}
+</style>
+<script id="igc-profile-counts-ui">
+(function(){
+'use strict';
+const SCHEMA='ig-cleaner-profile-counts-v1',COLUMNS=['username','followers','following','checked_at','source','status','approximate'],USER=/^[a-zA-Z0-9._]{1,30}$/;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function context(){const p=window.IGC_INSTAGRAM_PROFILES;return {owner:String(p?.owner||'signed_out'),account:String(p?.active||'legacy')}}
+function key(){const p=context();return 'igc_profile_counts_v1__'+encodeURIComponent(p.owner)+'__'+encodeURIComponent(p.account)}
+function normalize(u){const v=String(u||'').trim().replace(/^@/,'').toLowerCase();return USER.test(v)?v:''}
+function discoveredKey(){return 'igc_profile_discovered_v1__'+encodeURIComponent(context().owner)+'__'+encodeURIComponent(context().account)}
+function discovered(){try{const v=JSON.parse(window.localStorage.getItem(discoveredKey())||'null');return v?.schema==='igc-browser-following-v1'&&Array.isArray(v.usernames)?v.usernames.map(normalize).filter(Boolean):[]}catch{return []}}
+function members(){const seen=new Set(),automatic=discovered(),input=automatic.length?automatic:(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]);return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function storeDiscovered(users,handle,complete){const uniq=[...new Set((users||[]).map(normalize).filter(Boolean))];if(!uniq.length)return;window.localStorage.setItem(discoveredKey(),JSON.stringify({schema:'igc-browser-following-v1',usernames:uniq,handle,complete:!!complete,updatedAt:new Date().toISOString()}))}
+function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
+function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
+function csvCell(value){let s=String(value??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+function csvString(rows){return '\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n'}
+function download(name,rows){const url=URL.createObjectURL(new Blob([csvString(rows)],{type:'text/csv;charset=utf-8;'}));const link=document.createElement('a');link.href=url;link.download=name;link.style.display='none';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+function filename(kind){return 'ig-cleaner-'+kind+'-'+context().account.replace(/[^a-z0-9_-]/gi,'_')+'.csv'}
+function parseCSV(text){const rows=[],row=[];let field='',quoted=false;text=String(text||'').replace(/^\uFEFF/,'');for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"')quoted=true;else if(c===','){row.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row.slice());row.length=0;field=''}else field+=c}if(quoted)throw Error('CSV entrecomillado incompleto');if(field||row.length){row.push(field);rows.push(row)}return rows}
+function validCount(v){const s=String(v??'').trim();return s===''?'':(/^\d{1,15}$/.test(s)&&Number.isSafeInteger(Number(s))?s:null)}
+function setMessage(msg,bad=false){const node=document.getElementById('igcCountsFootnote');if(node){node.textContent=msg;node.style.color=bad?'var(--red)':'var(--muted)'}}
+window.igcCountsExportQueue=function(){const users=members();if(!users.length){setMessage('Primero importa o sincroniza tu lista Following en este Instagram.',true);return}download(filename('cola'),[['username','profile_url'],...users.map(u=>[u,'https://www.instagram.com/'+u+'/'])]);setMessage('Exportada la cola de '+users.length+' perfiles para el navegador robot.')};
+window.igcCountsExportResults=function(){const all=read(),users=members();download(filename('resultados'),[COLUMNS,...users.map(u=>{const r=all[u]||{};return [u,r.followers??'',r.following??'',r.checked_at??'',r.source??'',r.status??'pending',r.approximate??'false']})]);setMessage('Exportados '+users.length+' perfiles; los datos no obtenidos quedan vacíos.')};
+window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV requiere username, followers, following, checked_at y status.');const allowed=new Set(members());if(!allowed.size)throw Error('Primero carga Following en el Instagram activo.');const current=read();let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};imported++}write(current);window.igcCountsRender();setMessage('Guardados '+imported+' resultados. Omitidos '+ignored+' (perfiles ajenos, inválidos o antiguos).')}catch(err){setMessage('No se pudo importar: '+err.message,true)}finally{input.value=''}};
+window.igcCountsRender=function(){const body=document.getElementById('igcCountsRows'),sum=document.getElementById('igcCountsSummary');if(!body||!sum)return;const users=members(),stored=read(),measured=users.filter(u=>stored[u]?.status==='ok').length,failed=users.filter(u=>stored[u]&&stored[u].status!=='ok').length;sum.replaceChildren();for(const label of [users.length+' perfiles en Following',measured+' con datos',(users.length-measured-failed)+' pendientes',failed+' sin datos / error']){const el=document.createElement('span');el.textContent=label;sum.appendChild(el)}const q=String(document.getElementById('igcCountsQuery')?.value||'').toLowerCase(),filter=document.getElementById('igcCountsFilter')?.value||'all',chosen=users.filter(u=>{const s=stored[u]?.status||'pending';return u.includes(q)&&(filter==='all'||(filter==='pending'&&s==='pending')||(filter==='ok'&&s==='ok')||(filter==='other'&&s!=='ok'&&s!=='pending'))});const max=250;body.innerHTML=chosen.slice(0,max).map(u=>{const r=stored[u]||{},status=r.status||'pending',stamp=r.checked_at?new Date(r.checked_at):null,date=stamp&&!Number.isNaN(stamp.getTime())?stamp.toLocaleString('es-MX'):'—',fmt=n=>(n===undefined||n===null||n==='')?'—':Number(n).toLocaleString('es-MX'),suffix=r.approximate?' ≈':'';return '<tr><td><a href="https://www.instagram.com/'+u+'/" target="_blank" rel="noopener noreferrer">@'+esc(u)+'</a></td><td>'+esc(fmt(r.followers))+suffix+'</td><td>'+esc(fmt(r.following))+suffix+'</td><td>'+esc(date)+'</td><td>'+esc(status)+'</td></tr>'}).join('')||'<tr><td colspan="5">Sin perfiles con estos filtros.</td></tr>';setMessage(chosen.length>max?'Mostrando '+max+' de '+chosen.length+' resultados. Exporta CSV para verlos todos.':'Datos separados por usuario de IG Cleaner y por Instagram activo, guardados localmente.')};
+
+// Optional desktop control bridge. Only local host (127.0.0.1) and a temporary
+// launcher-provided random token; credentials and Instagram cookies never enter JS.
+const bridgeMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec(window.location.hash.replace(/^#/,''));
+const robot=bridgeMatch?{port:Number(bridgeMatch[1]),token:bridgeMatch[2]}:null;
+let robotBusy=false;
+async function bridgeRequest(endpoint,body){
+ if(!robot)throw Error('El robot de PC no está conectado.');
+ const response=await fetch('http://127.0.0.1:'+robot.port+'/api/'+endpoint,{
+  method:body?'POST':'GET',mode:'cors',cache:'no-store',
+  headers:{'Content-Type':'application/json','X-IGC-Bridge-Token':robot.token},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const result=await response.json();
+ if(!response.ok)throw Error(result.error||'El robot local respondió con un error.');
+ return result;
+}
+function robotStatus(message,bad=false){
+ const el=document.getElementById('igcCountsRobotStatus');
+ if(el){el.textContent=message;el.style.color=bad?'var(--red)':'var(--muted)'}
+}
+function applyRobotRows(rows){
+ const allowed=new Set(members()),current=read();
+ let applied=0;
+ for(const r of rows||[]){
+  const u=normalize(r.username),f=validCount(r.followers),g=validCount(r.following);
+  if(!u||!allowed.has(u)||f===null||g===null||!['ok','unavailable','error'].includes(r.status))continue;
+  if(r.status==='ok'&&(f===''||g===''))continue;
+  const stamp=String(r.checked_at||'');
+  if(!/^\d{4}-\d\d-\d\dT/.test(stamp))continue;
+  if(current[u]?.checked_at && current[u].checked_at>=stamp)continue;
+  current[u]={username:u,followers:f,following:g,checked_at:stamp,
+   status:r.status,source:'instagram_visible_profile_browser',approximate:r.approximate===true||r.approximate==='true'};
+  applied++;
+ }
+ if(applied){write(current);window.igcCountsRender()}
+ return applied;
+}
+window.igcCountsRobotLoad=async function(){
+ if(!robot)return;
+ const users=members();
+ if(!users.length){robotStatus('Carga primero Following para recuperar la cuenta correcta.',true);return}
+ try{
+  const ctx=context();
+  const state=await bridgeRequest('load',{usernames:users,owner:ctx.owner,account:ctx.account,...robotConfig()});
+  robotStatus(state.message);
+  await window.igcCountsRobotPoll();
+ }catch(e){robotStatus('No se pudieron recuperar los registros: '+e.message,true)}
+};
+window.igcCountsRobotPoll=async function(){
+ if(!robot||robotBusy)return;
+ robotBusy=true;
+ try{
+  const state=await bridgeRequest('status');
+  const ctx=context();
+  if(state.owner && (state.owner!==ctx.owner||state.account!==ctx.account)){
+   robotStatus('El robot está asociado a otro Instagram. Selecciónalo antes de sincronizar resultados.',true);return;
+  }
+  if(state.owner){
+   const follows=await bridgeRequest('following');
+   if(follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
+    storeDiscovered(follows.usernames,follows.handle,follows.complete);
+   }
+   const data=await bridgeRequest('results');
+   applyRobotRows(data.rows);
+   window.igcCountsRender();
+  }
+  const percentage=state.total?Math.round(state.progress/state.total*100):0;
+  const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
+  const pacing=' · '+state.max_per_window+' perfiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s entre perfiles'+(state.pause_every?' · descanso '+state.pause_minutes+' min cada '+state.pause_every:'');
+  robotStatus((state.message||state.status)+' · '+state.progress+'/'+state.total+' con datos ('+percentage+'%)'+pacing);
+ }catch(e){robotStatus('No se puede conectar con el robot local: '+e.message,true)}
+ finally{robotBusy=false}
+};
+function robotPaceKey(){const ctx=context();return 'igc_robot_pacing_v1__'+encodeURIComponent(ctx.owner)+'__'+encodeURIComponent(ctx.account)}
+window.igcCountsRobotRestoreConfig=function(){
+ try{
+  const saved=JSON.parse(window.localStorage.getItem(robotPaceKey())||'null');
+  if(!saved)return;
+  for(const [name,id] of [['max_per_window','igcCountsRobotMax'],['window_minutes','igcCountsRobotWindow'],
+   ['min_delay_seconds','igcCountsRobotGap'],['pause_every','igcCountsRobotRestEvery'],
+   ['pause_minutes','igcCountsRobotRestMinutes']]){
+   if(saved[name]!==undefined){const el=document.getElementById(id);if(el)el.value=String(saved[name]);}
+  }
+ }catch(e){}
+};
+function robotConfig(){
+ const max_per_window=Number(document.getElementById('igcCountsRobotMax')?.value);
+ const window_minutes=Number(document.getElementById('igcCountsRobotWindow')?.value);
+ const min_delay_seconds=Number(document.getElementById('igcCountsRobotGap')?.value);
+ const pause_every=Number(document.getElementById('igcCountsRobotRestEvery')?.value);
+ const pause_minutes=Number(document.getElementById('igcCountsRobotRestMinutes')?.value);
+ if(!Number.isInteger(max_per_window)||max_per_window<1||max_per_window>10000||
+    !Number.isInteger(window_minutes)||window_minutes<1||window_minutes>1440||
+    !Number.isFinite(min_delay_seconds)||min_delay_seconds<0||min_delay_seconds>3600){
+  throw Error('Configura perfiles (1–10,000), minutos (1–1,440) y espera (0–3,600 s).');
+ }
+ if(!Number.isInteger(pause_every)||pause_every<0||pause_every>10000||
+    !Number.isFinite(pause_minutes)||pause_minutes<0||pause_minutes>1440||
+    ((pause_every===0)!==(pause_minutes===0))){
+   throw Error('El descanso largo requiere ambos valores positivos, o ambos en cero para desactivarlo.');
+ }
+ return {max_per_window,window_minutes,min_delay_seconds,pause_every,pause_minutes};
+}
+window.igcCountsRobotPreview=function(){
+ const note=document.getElementById('igcCountsRobotPaceNote');if(!note)return;
+ try{
+  const config=robotConfig();
+  const {max_per_window,window_minutes,min_delay_seconds,pause_every,pause_minutes}=config;
+  window.localStorage.setItem(robotPaceKey(),JSON.stringify(config));
+  const maxGap=min_delay_seconds?Math.ceil(window_minutes*60/min_delay_seconds):max_per_window;
+  const possible=Math.min(max_per_window,maxGap);
+  const limited=possible<max_per_window;
+  note.textContent='Máximo configurado: '+max_per_window+' perfiles en '+window_minutes+
+    ' min, con al menos '+min_delay_seconds+' s entre visitas. Capacidad teórica: hasta '+
+    possible+' perfiles por ventana'+(limited?' (la espera entre perfiles es el límite principal)':'')+
+    '. Las páginas pueden tardar más; el ritmo no está garantizado.'+
+    (pause_every?' Descanso adicional: '+pause_minutes+' min después de cada '+pause_every+' perfiles.':' Sin descanso adicional de tanda.');
+  note.style.color='var(--muted)';
+ }catch(e){note.textContent=e.message;note.style.color='var(--red)'}
+};
+window.igcCountsRobotStart=async function(){
+ if(!robot)return;
+ const users=members();
+ if(!users.length){robotStatus('Carga primero la lista Following del Instagram seleccionado.',true);return}
+ try{
+  const pacing=robotConfig(),ctx=context();
+  const result=await bridgeRequest('start',{usernames:users,owner:ctx.owner,account:ctx.account,...pacing});
+  const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=result.total?Math.round(result.progress/result.total*100):0;
+  robotStatus((result.message||'Robot iniciando')+' · '+result.progress+'/'+result.total);
+ }catch(e){robotStatus('No se pudo iniciar: '+e.message,true)}
+};
+window.igcCountsRobotLoginReady=async function(){
+ try{const result=await bridgeRequest('resume',{});robotStatus(result.message)}
+ catch(e){robotStatus(e.message,true)}
+};
+window.igcCountsRobotStop=async function(){
+ try{const result=await bridgeRequest('stop',{});robotStatus(result.message)}
+ catch(e){robotStatus(e.message,true)}
+};
+let igcRobotAutoIdentity='';
+window.igcCountsRobotAuto=async function(){
+ if(!robot)return;
+ const ctx=context(),id=ctx.owner+'__'+ctx.account;
+ if(igcRobotAutoIdentity===id)return;
+ try{
+  const state=await bridgeRequest('status');
+  if(state.running){
+   if(state.owner!==ctx.owner||state.account!==ctx.account){
+    robotStatus('La recopilación activa corresponde a otro Instagram. No se mezclarán los datos.',true);
+    return;
+   }
+   igcRobotAutoIdentity=id;return;
+  }
+  const profiles=window.IGC_INSTAGRAM_PROFILES;
+  const profile=(profiles?.accounts||[]).find(p=>p.account_key===ctx.account);
+  let cached_handle='';
+  try{cached_handle=normalize(JSON.parse(window.localStorage.getItem(discoveredKey())||'null')?.handle||'')}catch(e){}
+  const expected_handle=normalize(profile?.username||cached_handle||'');
+  const pacing=robotConfig();
+  await bridgeRequest('auto',{owner:ctx.owner,account:ctx.account,expected_handle,...pacing});
+  igcRobotAutoIdentity=id;
+  robotStatus('Abriendo Instagram; detectaré tu sesión y Following automáticamente.');
+ }catch(e){robotStatus('No pude iniciar la recopilación automática: '+e.message,true)}
+};
+if(robot&&robot.port>0&&robot.port<=65535){
+ window.igcCountsRobotRestoreConfig();
+ const controls=document.getElementById('igcCountsRobotActions');
+ if(controls)controls.style.display='none';
+ const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='none';
+ const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='none';
+ window.igcCountsRobotPreview();
+ setInterval(()=>{if(!document.hidden){window.igcCountsRobotAuto();window.igcCountsRobotPoll()}},5000);
+ setTimeout(()=>window.igcCountsRobotAuto(),1500);
+ setTimeout(()=>window.igcCountsRobotPoll(),2400);
+}
+window.igcCountsRobotRestoreConfig();
+window.igcCountsRobotPreview();
+const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats'){window.igcCountsRobotRestoreConfig();window.igcCountsRobotPreview();window.igcCountsRender()}return result};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
+})();
+</script>
 </body>
 </html>

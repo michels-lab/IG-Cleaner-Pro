@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import hashlib
+import json
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -81,9 +82,10 @@ assert 'pushWorkspaceState' in html
 assert 'list_snapshots' in html
 
 # All user-visible development identity must agree with the governed next release.
-assert '<title>Instagram Cleaner Pro v120.41</title>' in html
-assert 'Engine v119 · UI v120.41' in html
-assert 'Instagram Cleaner Pro · UI v120.41' in html
+version = json.loads((ROOT / "release/android-signing.json").read_text(encoding="utf-8"))["versionName"]
+assert f'<title>Instagram Cleaner Pro v{version}</title>' in html
+assert f'Engine v119 · UI v{version}' in html
+assert f'Instagram Cleaner Pro · UI v{version}' in html
 assert 'UI v120.26' not in html
 assert 'UI v120.27' not in html
 

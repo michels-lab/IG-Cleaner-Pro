@@ -1,0 +1,45 @@
+name: Profile Counts feature tests
+on:
+  pull_request:
+    paths:
+      - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_counts_pacing.py'
+      - 'tools/profile_counts_instagram.py'
+      - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
+      - 'tests/test_profile_counts_robot.py'
+      - 'tests/test_profile_counts_bridge.py'
+      - 'tests/test_profile_counts_pacing.py'
+      - 'tests/profile-counts-ui.test.cjs'
+      - '.github/workflows/profile-counts-ci.yml'
+  push:
+    branches:
+      - 'feat/profile-counts-queue-20261011'
+    paths:
+      - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_bridge.py'
+      - 'tools/profile_counts_pacing.py'
+      - 'tools/profile_counts_instagram.py'
+      - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
+      - 'tests/test_profile_counts_robot.py'
+      - 'tests/test_profile_counts_bridge.py'
+      - 'tests/test_profile_counts_pacing.py'
+      - 'tests/profile-counts-ui.test.cjs'
+      - '.github/workflows/profile-counts-ci.yml'
+permissions:
+  contents: read
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python profile counts parsing, queue and resume
+        run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
+      - name: Desktop Insights CSV and account isolation
+        run: node tests/profile-counts-ui.test.cjs

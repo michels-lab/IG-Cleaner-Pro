@@ -7,14 +7,15 @@ const assert = require('assert');
 const root = path.join(__dirname, '..');
 const htmlPath = path.join(root, 'desktop', 'ig_cleaner_pro_v120_27_synced_companion.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
+const version = JSON.parse(fs.readFileSync(path.join(root,'release','android-signing.json'),'utf8')).versionName;
 
 function requireToken(token, why) {
   assert(html.includes(token), why + ': ' + token);
 }
 
 for (const [token, why] of [
-  ['<title>Instagram Cleaner Pro v120.41</title>', 'Desktop title must match active development version'],
-  ['Engine v119 · UI v120.41', 'Desktop visible UI version must match active development version'],
+  [`<title>Instagram Cleaner Pro v${version}</title>`, 'Desktop title must match active development version'],
+  [`Engine v119 · UI v${version}`, 'Desktop visible UI version must match active development version'],
   ['function readFile(file)', 'Desktop must read local files'],
   ["r.readAsText(file,'utf-8')", 'Desktop must parse the full selected file'],
   ['function extractFromJSON(data,source)', 'JSON importer must exist'],

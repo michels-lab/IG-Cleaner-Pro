@@ -47,6 +47,8 @@ jobs:
             --output artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html \
             --version "$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
           node tests/desktop-standalone-smoke.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
+      - name: Verify actual Desktop Chromium file-to-localhost Profile Counts bridge
+        run: node tests/profile-counts-browser-e2e.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Capture real compact and wide Desktop visual tests from built artifact
         env:
           IGC_VISUAL_HTML: artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
