@@ -2,13 +2,15 @@
 
 **Paquete de prueba; no es un release estable.** Esta versión contiene la app HTML completa y el controlador del robot visible. La v120.41 pública no incluye Profile Counts.
 
-## Uso (Windows)
-1. Descomprime toda la carpeta, sin separar los archivos.
-2. Necesitas Google Chrome instalado (el robot abre Chrome visible), conexión a Internet y una cuenta Instagram propia. No necesitas instalar Python, Playwright ni ejecutar comandos.
-3. Haz doble clic en `Start-Insta-Cleaner-Robot.cmd`. Mantén abierta la ventana del controlador y utiliza el navegador que se abrirá con Insta Cleaner.
-4. En Insta Cleaner, importa/sincroniza tu Following habitual; cambia al Instagram correcto y ve a **Insights → Profile Counts**.
-5. Configura **máximo de perfiles**, **ventana en minutos**, **espera mínima después de cada perfil (segundos)** y, opcionalmente, **descansar X minutos después de cada N perfiles**. Se guardan por cuenta de Instagram. Pulsa **Iniciar recopilación**, inicia sesión en Instagram personalmente si hace falta y pulsa **Ya inicié sesión** en la app.
-6. Consulta la tabla mientras avanzan las visitas. **Pausar robot** conserva registros guardados; puedes volver a abrir este lanzador y reanudar con el mismo perfil/propietario.
+## Uso automático (Windows)
+1. Descomprime la carpeta completa y abre Start-Insta-Cleaner-Robot.cmd.
+2. El lanzador abre Insta Cleaner y una ventana de Chrome en tu PC. Inicia sesión directamente en Instagram si no estaba abierta tu sesión.
+3. El programa detectará tu propio perfil, abrirá el apartado Following, recorrerá los perfiles visibles y recopilará automáticamente sus contadores de seguidores y seguidos.
+4. Las cifras irán apareciendo en Insta Cleaner → Insights → Profile Counts. No hace falta CSV de Instagram, pulsar Iniciar ni configurar el ritmo del robot. Las pausas internas son automáticas.
+5. El programa reconoce la cuenta de Instagram y, si no coincide con el perfil seleccionado en Insta Cleaner, DETIENE la recolección para no mezclar tus datos. Si Instagram pide un desafío o bloquea las consultas, también se detiene.
+6. Deja la PC encendida y la ventana del controlador abierta durante la recopilación. Los datos y pausas quedan guardados para reanudarlos al volver a abrir el lanzador.
+
+**Importante:** esta es una build PREVIEW todavía no probada contra una sesión real de Instagram. Si cambia su interfaz, puede que el robot no encuentre el enlace Following o solo recupere una lista parcial. Nunca inventará números para suplir los faltantes.
 
 ## Datos y límites
 - **No solicita credenciales a Insta Cleaner** ni usa la API de Meta. La contraseña de Instagram se escribe únicamente en la ventana auténtica de Chrome que abre el robot.
@@ -17,7 +19,7 @@
 - Browser login: `%USERPROFILE%\.ig-cleaner-pro\instagram-browser` (cookies privadas, no compartir). Resultados: `%USERPROFILE%\.ig-cleaner-pro\profile-counts` (CSV persistentes; evitar borrarlos).
 - El workspace de Insta Cleaner almacena otra parte de la información localmente. **Mover el HTML o usar otro perfil/navegador puede mostrar datos diferentes**. Guarda respaldos de tus listas y utiliza siempre la misma ubicación para abrirla.
 - Ejemplo configurable: máximo de 200 visitas en una ventana de 5 minutos, con 5 segundos entre perfiles (equivale a no más de unas 60 consultas en cinco minutos, antes de contar la carga de páginas). Adicionalmente se puede programar una pausa de 5 minutos **después de completar cada 200 visitas**, si así lo decides.
-- El registro local conserva los límites y descansos tras pausar o reiniciar; no reinicia la cuenta de visitas. La automatización puede estar restringida por las condiciones de Instagram y provocar desafíos o restricciones, incluso con pausas. No se evaden restricciones ni se garantizan respuestas.
+- El registro local conserva los límites y descansos tras pausar o reiniciar; no reinicia la cuenta de visitas. Las visitas automáticas pueden estar restringidas por las condiciones de Instagram y provocar desafíos o restricciones, incluso con pausas. No se evaden restricciones ni se garantizan respuestas.
 - Los resultados solo se integran automáticamente en la app HTML de PC. La transferencia Desktop↔Android de esta nueva tabla aún está pendiente; los CSV siguen disponibles.
 - **No probado aún con una sesión real de Instagram ni en el equipo Windows del usuario.** Es una build de validación técnica.
 
