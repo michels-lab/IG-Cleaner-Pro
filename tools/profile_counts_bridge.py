@@ -17,10 +17,10 @@ import threading
 import time
 import webbrowser
 
-from profile_counts_robot import (
-    collect_visible_counts, iso_now, last_visit, read_results,
-    save_results, seconds_since, valid_username,
-)
+from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
+from profile_counts_pacing import (check_pacing, history_path, load_history,
+                                   register_visit, wait_required,
+                                   DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS)
 
 MAX_REQUEST = 900_000
 MAX_QUEUE = 10_000
@@ -41,7 +41,10 @@ class Collector:
         self.owner = ""
         self.account = ""
         self.usernames = []
-        self.per_hour = 50
+        self.max_per_window = DEFAULT_COUNT
+        self.window_minutes = DEFAULT_WINDOW_MINUTES
+        self.min_delay_seconds = DEFAULT_DELAY_SECONDS
+        self.wait_until = 0
 
     def result_path(self):
         # No owner/usernames in filenames or URL paths.
@@ -66,16 +69,17 @@ class Collector:
         account = str(request.get("account") or "").strip()
         if not owner or not account or len(owner) > 200 or len(account) > 120:
             raise ValueError("Se requiere identidad de propietario e Instagram activo.")
-        try:
-            per_hour = int(request.get("per_hour", 50))
-        except (TypeError, ValueError) as exc:
-            raise ValueError("El ritmo de perfiles por hora es inválido.") from exc
-        if not 1 <= per_hour <= 60:
-            raise ValueError("El ritmo permitido es de 1 a 60 perfiles por hora.")
+        count, minutes, delay = check_pacing(
+            request.get("max_per_window", request.get("per_hour", DEFAULT_COUNT)),
+            request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
+            request.get("min_delay_seconds", DEFAULT_DELAY_SECONDS),
+        )
         with self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Ya existe una recopilación activa. Detenla antes de iniciar otra.")
-            self.owner, self.account, self.usernames, self.per_hour = owner, account, normalized, per_hour
+            self.owner, self.account, self.usernames = owner, account, normalized
+            self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
+            self.wait_until = 0
             saved = read_results(self.result_path())
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
@@ -126,16 +130,31 @@ class Collector:
                     return
 
                 saved = read_results(self.result_path())
+                visits_file = history_path(self.result_path())
+                visits = load_history(visits_file, saved)
                 remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
                 self._update("running", "Consultando perfiles visibles...")
                 for index, username in enumerate(remaining, 1):
                     if self.stop_signal.is_set():
                         self._update("stopped", "Pausado; los resultados quedan guardados.")
                         return
-                    delay = max(0, 3600 / self.per_hour - seconds_since(last_visit(saved)))
-                    if delay and self.stop_signal.wait(delay):
-                        self._update("stopped", "Pausado; los resultados quedan guardados.")
-                        return
+                    while True:
+                        waiting = wait_required(visits, self.max_per_window, self.window_minutes,
+                                                self.min_delay_seconds)
+                        if waiting <= 0:
+                            break
+                        with self.lock:
+                            self.wait_until = time.time() + waiting
+                            self.message = (f"Pausa programada: {int(waiting + 0.999)} s antes de "
+                                            f"@{username}.")
+                        if self.stop_signal.wait(waiting):
+                            self._update("stopped", "Pausado; los resultados quedan guardados.")
+                            return
+                    with self.lock:
+                        self.wait_until = 0
+                    # Persist a budget event BEFORE navigating. Crashes and
+                    # blocked/login pages cannot silently reset the cooldown.
+                    visits = register_visit(visits_file, visits)
                     status, counts = collect_visible_counts(page, username)
                     if status in ("login_required", "blocked"):
                         self._update("blocked", "Instagram solicitó acceso/verificación o limitó las consultas. Se detuvo sin evasión.")
@@ -184,7 +203,10 @@ class Collector:
                 "message": self.message,
                 "progress": self.progress,
                 "total": self.total,
-                "per_hour": self.per_hour,
+                "max_per_window": self.max_per_window,
+                "window_minutes": self.window_minutes,
+                "min_delay_seconds": self.min_delay_seconds,
+                "wait_seconds": max(0, int(self.wait_until - time.time() + 0.999)) if self.wait_until else 0,
                 "owner": self.owner,
                 "account": self.account,
                 "running": bool(self.worker and self.worker.is_alive()),
