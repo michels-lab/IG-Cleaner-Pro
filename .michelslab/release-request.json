@@ -7,5 +7,6 @@
   "requested_channel": "stable",
   "github_prerelease": false,
   "status": "requested",
-  "previous_stable_release": "v120.41"
+  "previous_stable_release": "v120.41",
+  "retry_reason": "Retry governed v120.42 after verifying exact Windows-robot archive filename, robust ZIP content checks and preserving signed Android + Desktop release gates; initial publisher build failed before publishing assets."
 }
