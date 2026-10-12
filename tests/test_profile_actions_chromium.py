@@ -117,7 +117,8 @@ class RealBrowserSelectorTests(unittest.TestCase):
 
     def attempt(self, *, task="unfollow", locale="en", private=False,
                 account="my.profile", result="follow", protected=False, blocked=False,
-                request_unfollow=False, warning_handle="target.user", include_warning=True):
+                request_unfollow=False, warning_handle="target.user", include_warning=True,
+                pending_already_following=False, missing_profile=False):
         html = fake_profile(locale=locale, private=private, account=account,
                             result=result, blocked=blocked,
                             request_unfollow=request_unfollow,
@@ -126,10 +127,14 @@ class RealBrowserSelectorTests(unittest.TestCase):
         # Intercept all Instagram URLs, even accidental external navigations.
         self.page.route("https://www.instagram.com/**",
                         lambda route: route.fulfill(status=200, content_type="text/html", body=html))
-        if task == "cancel":
+        if task == "cancel" and not pending_already_following and not missing_profile:
             self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
                 document.querySelector('#relationship').textContent =
                     document.documentElement.lang==='es'?'Solicitado':'Requested';
+            });""")
+        if missing_profile:
+            self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
+                document.querySelector('#relationship').textContent = 'Unknown status';
             });""")
         status, message = perform_visible_action(
             self.page, "target.user", task, "my.profile",
@@ -183,6 +188,25 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt(result="unchanged")
         self.assertEqual(status, "review", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
+
+    def test_pending_list_outdated_but_now_following_no_click(self):
+        status,message,events=self.attempt(task="cancel",pending_already_following=True)
+        self.assertEqual(status,"review",message)
+        self.assertIn("Pendiente desactualizado",message)
+        self.assertEqual(events,[])
+
+    def test_pending_list_outdated_but_now_siguiendo_no_click(self):
+        status,message,events=self.attempt(task="cancel",locale="es",
+                                           pending_already_following=True)
+        self.assertEqual(status,"review",message)
+        self.assertIn("Pendiente desactualizado",message)
+        self.assertEqual(events,[])
+
+    def test_missing_profile_relationship_no_click(self):
+        status,message,events=self.attempt(task="cancel",missing_profile=True)
+        self.assertEqual(status,"review",message)
+        self.assertIn("no muestra el estado necesario",message)
+        self.assertEqual(events,[])
 
     def test_pending_request_dialog_unfollow_english(self):
         status, message, events = self.attempt(task="cancel", request_unfollow=True)
