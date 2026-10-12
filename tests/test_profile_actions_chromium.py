@@ -17,12 +17,18 @@ except ImportError:
 
 
 def fake_profile(locale="en", private=False, account="my.profile", result="follow",
-                 blocked=False, after_menu=""):
+                 blocked=False, request_unfollow=False, warning_handle="target.user",
+                 include_warning=True):
     following, unfollow, follow = (("Siguiendo", "Dejar de seguir", "Seguir")
                                    if locale == "es" else
                                    ("Following", "Unfollow", "Follow"))
     requested, cancel = (("Solicitado", "Cancelar solicitud")
                          if locale == "es" else ("Requested", "Cancel Request"))
+    warning = ((f"If you change your mind, you'll have to request to follow @{warning_handle} again."
+                if locale == "en" else
+                f"Si cambias de opinión, tendrás que enviar otra solicitud para volver a seguir a @{warning_handle}.")
+               if include_warning else
+               f"Are you sure you want to stop following @{warning_handle}?")
     # One button in the target header and a DIV action row like Instagram's
     # visually rendered Following popup. A private profile adds a second dialog.
     return f"""<!doctype html><html lang="{locale}"><head><meta charset="utf-8"></head><body>
@@ -39,15 +45,25 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
       <div id="unfollow" onclick="chooseUnfollow()">{unfollow}</div>
       <button id="cancel-request" onclick="finishChange()" style="display:none">{cancel}</button>
     </div>
+    <div id="request-confirm" role="dialog" style="display:none">
+      <p>{warning}</p>
+      <button id="request-unfollow" onclick="finishChange()">{unfollow}</button>
+      <button id="request-dismiss" onclick="dismissRequest()">{'Cancelar' if locale == 'es' else 'Cancel'}</button>
+    </div>
     <div id="private-confirm" role="dialog" style="display:none">
       <button id="private-confirm-action" onclick="finishChange()">{unfollow}</button>
     </div>
     <script>
      const label={follow!r}, privateFlow={str(private).lower()},
-           blocked={str(blocked).lower()}, result={result!r};
+           blocked={str(blocked).lower()}, result={result!r},
+           requestUnfollow={str(request_unfollow).lower()};
      window.__steps=[];
      function openRelationship() {{
        window.__steps.push('open');
+       if(requestUnfollow) {{
+         document.querySelector('#request-confirm').style.display='block';
+         return;
+       }}
        document.querySelector('#action-menu').style.display='block';
        if(document.querySelector('#relationship').textContent.includes('Solicitado') ||
           document.querySelector('#relationship').textContent.includes('Requested')) {{
@@ -61,10 +77,15 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        if(privateFlow)document.querySelector('#private-confirm').style.display='block';
        else finishChange();
      }}
+     function dismissRequest() {{
+       window.__steps.push('dismiss');
+       document.querySelector('#request-confirm').style.display='none';
+     }}
      function finishChange() {{
        window.__steps.push('confirmed');
        document.querySelector('#action-menu').style.display='none';
        document.querySelector('#private-confirm').style.display='none';
+       document.querySelector('#request-confirm').style.display='none';
        if(result==='follow')document.querySelector('#relationship').textContent=label;
        if(blocked)document.body.insertAdjacentHTML('beforeend','<span>Try again later</span>');
      }}
@@ -93,9 +114,13 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.context.close()
 
     def attempt(self, *, task="unfollow", locale="en", private=False,
-                account="my.profile", result="follow", protected=False, blocked=False):
+                account="my.profile", result="follow", protected=False, blocked=False,
+                request_unfollow=False, warning_handle="target.user", include_warning=True):
         html = fake_profile(locale=locale, private=private, account=account,
-                            result=result, blocked=blocked)
+                            result=result, blocked=blocked,
+                            request_unfollow=request_unfollow,
+                            warning_handle=warning_handle,
+                            include_warning=include_warning)
         # Intercept all Instagram URLs, even accidental external navigations.
         self.page.route("https://www.instagram.com/**",
                         lambda route: route.fulfill(status=200, content_type="text/html", body=html))
@@ -143,6 +168,41 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt(result="unchanged")
         self.assertEqual(status, "review", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
+
+    def test_pending_request_dialog_unfollow_english(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True)
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(events, ["open", "confirmed"])
+
+    def test_pending_request_dialog_unfollow_spanish(self):
+        status, message, events = self.attempt(task="cancel", locale="es",
+                                               request_unfollow=True)
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(events, ["open", "confirmed"])
+
+    def test_pending_unfollow_no_warning_must_not_click(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True,
+                                               include_warning=False)
+        self.assertEqual(status, "review", message)
+        self.assertEqual(events, ["open"])
+
+    def test_pending_unfollow_wrong_handle_must_not_click(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True,
+                                               warning_handle="not.target.user")
+        self.assertEqual(status, "review", message)
+        self.assertEqual(events, ["open"])
+
+    def test_pending_unfollow_protected_no_click(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True,
+                                               protected=True)
+        self.assertEqual(status, "skipped", message)
+        self.assertEqual(events, [])
+
+    def test_pending_unfollow_no_verified_follow_is_review(self):
+        status, message, events = self.attempt(task="cancel", request_unfollow=True,
+                                               result="unchanged")
+        self.assertEqual(status, "review", message)
+        self.assertEqual(events, ["open", "confirmed"])
 
     def test_request_cancel_english(self):
         status, message, events = self.attempt(task="cancel")
