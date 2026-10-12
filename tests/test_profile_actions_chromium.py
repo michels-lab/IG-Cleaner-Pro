@@ -177,7 +177,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.page.goto("https://www.instagram.com/")
                 self.page.evaluate("(f) => window.__follows=f", follows)
                 # The mocked page reloads on audit navigation; persist fixture flag.
-                self.page.add_init_script("(f) => window.__follows=f", follows)
+                self.page.add_init_script("window.__follows = " + ("true;" if follows else "false;"))
                 status, relation, details = perform_visible_followback_audit(
                     self.page, "target.user", "my.profile")
                 self.assertEqual((status,relation),("ok","follows_you" if follows else "not_following"),details)
