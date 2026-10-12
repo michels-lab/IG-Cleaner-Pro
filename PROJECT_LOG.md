@@ -1444,3 +1444,9 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Desktop Automations UI now has an explicit **Ejecutar tanda seleccionada** approval dialog with username preview, live action metrics/status/progress, per-profile favorites/skip, pause/resume and timing. Unfollow requires nonempty full Following+Followers evidence and refuses detected partial HTML. The user is shown a message if the Windows loopback runner is not connected.
 - Added Python mocked-DOM and owner-scope tests (`tests/test_profile_counts_actions.py`), Desktop bridge integration (`tests/automations-execution.test.cjs`) and CI path coverage; updated Windows preview package instructions and `docs/AUTOMATIONS.md`.
 - Validation **not assumed**: review exact final PR #82 head actions and Windows portable preview (GitHub CI) prior to merge. A live owner-signed-in Instagram check, genuine UI selector/confirmation behavior and physical Windows testing are **not yet verified**. The stable public v120.42 is unchanged; no release authorized.
+
+## 2026-10-12 — Corrección de flujo Unfollow público/privado
+
+- Evidencia de usuario: las pantallas reales distinguen el menú de **Siguiendo → Dejar de seguir** del posible diálogo adicional de una cuenta privada. No asumir un único diálogo obligatorio para todas las cuentas.
+- Implementación en `tools/profile_actions.py`: encontrar acción en menú visible (`menuitem` o botón), verificar cambio a Seguir inmediatamente después en público, y confirmar modal privado **solo si está visible**; ante ausencia de estado o múltiples botones homónimos marcar revisión sin repetir clic. Comprobación de protección/omisión antes de ambos clics. Mantener verificación de identidad y resultado final.
+- Se añadieron fixtures/test de perfiles públicos y privados en español e inglés a `tests/test_profile_counts_actions.py`. Esperar CI de head exacto y aceptación del dueño en Chrome real; sin release.
