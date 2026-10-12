@@ -6,6 +6,7 @@ import unittest
 from tools.profile_counts_pacing import (
     check_pacing, history_path, load_history, register_visit,
     wait_required, save_history, finish_visit,
+    check_batch_rest, batch_path, load_batch_state, finish_batch_visit, batch_wait,
 )
 
 
@@ -77,6 +78,28 @@ class ProfileCountsPacingTests(unittest.TestCase):
             self.assertEqual(load_history(path, now=clock), [clock-2])
             self.assertEqual(wait_required(events,200,5,5,now=clock), 3)
             self.assertEqual(wait_required(events,200,5,5,now=clock+3), 0)
+
+    def test_additional_rest_after_each_n_profiles_survives_restart(self):
+        clock=1_700_000_000.0
+        self.assertEqual(check_batch_rest(200,5),(200,5.0))
+        with tempfile.TemporaryDirectory() as folder:
+            file=batch_path(Path(folder)/"results.csv")
+            state=load_batch_state(file)
+            state=finish_batch_visit(file,state,3,5,now=clock)
+            state=finish_batch_visit(file,state,3,5,now=clock+10)
+            self.assertEqual(state["count"],2)
+            self.assertEqual(batch_wait(state,3,5,now=clock+20),0)
+            state=finish_batch_visit(file,state,3,5,now=clock+20)
+            self.assertEqual(state["count"],0)
+            self.assertEqual(batch_wait(load_batch_state(file),3,5,now=clock+25),295)
+            self.assertEqual(batch_wait(load_batch_state(file),3,5,now=clock+320),0)
+
+    def test_optional_rest_can_be_disabled_and_rejects_half_configuration(self):
+        self.assertEqual(check_batch_rest(0,0),(0,0.0))
+        self.assertEqual(batch_wait({"rest_until":99999},0,0,now=0),0)
+        for count, minutes in [(200,0),(0,5),(-1,5),(200,-1),(200,float("inf")),(10001,1)]:
+            with self.assertRaises(ValueError):
+                check_batch_rest(count,minutes)
 
     def test_boundaries(self):
         for kwargs in [(0,5,5),(10001,5,5),(50,0,5),(50,1441,5),
