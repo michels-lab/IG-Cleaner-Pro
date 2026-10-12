@@ -136,6 +136,38 @@ def _visible_dialog(page):
     return open_dialogs[0] if open_dialogs else None
 
 
+def _request_cancel_confirmation(dialog, username):
+    """Recognize the pending-request dialog Instagram currently labels Unfollow.
+
+    An ordinary unfollow and a rejected follow request can share the same
+    action label. The positive evidence is Requested on the header (checked by
+    caller), the request-to-follow-again warning, and the exact target @handle.
+    A bare Cancel button is always a dismiss option, never cancel-request.
+    """
+    explicit = _visible_named_control(
+        dialog, [r"Cancel Request", r"Cancelar solicitud",
+                 r"Retirar solicitud", r"Withdraw Request"], text_fallback=True)
+    if explicit is not None:
+        return explicit
+    unfollow = _visible_named_control(
+        dialog, [r"Unfollow", r"Dejar de seguir"], text_fallback=True)
+    if unfollow is None:
+        return None
+    context = dialog.inner_text(timeout=4000)
+    expected = r"(?<![A-Za-z0-9_.])@" + re.escape(username) + r"(?![A-Za-z0-9_.])"
+    if not re.search(expected, context, re.I):
+        return None
+    english = (re.search(r"\brequest\s+to\s+follow\b", context, re.I) and
+               re.search(r"\bagain\b", context, re.I))
+    spanish = (re.search(r"\bsolicitud\b|\bsolicitar\b", context, re.I) and
+               re.search(r"\bseguir\b", context, re.I) and
+               re.search(r"\bvolver\b|\botra\b|\bde\s+nuevo\b|\bnuevamente\b",
+                         context, re.I))
+    if not (english or spanish):
+        return None
+    return unfollow
+
+
 def _follow_is_visible(header):
     return _visible_button(header, [r"Follow", r"Seguir",
                                     r"Follow Back", r"Seguir también"]) is not None
@@ -222,13 +254,12 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     # and explicit Cancel Request confirmation.
     dialog = _visible_dialog(page)
     if dialog is not None:
-        choice = _visible_named_control(dialog,
-            [r"Cancel Request", r"Cancelar solicitud", r"Cancelar"],
-            text_fallback=True)
-        if choice:
-            if can_act and not can_act(username):
-                return "review", "Protección modificada antes de cancelar solicitud."
-            choice.click(timeout=10000)
+        choice = _request_cancel_confirmation(dialog, username)
+        if choice is None:
+            return "review", "La confirmación no demuestra que sea la solicitud pendiente del perfil; no se hará clic."
+        if can_act and not can_act(username):
+            return "review", "Protección modificada antes de cancelar solicitud."
+        choice.click(timeout=10000)
     return _verify_final_state(page, expected_handle)
 
 
