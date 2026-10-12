@@ -32,10 +32,11 @@ const {chromium}=require("playwright");
    owner:identity.owner,account:identity.account,progress:1,total:1,per_hour:50}:
    {status:"idle",message:"Ready",owner:"",account:"",progress:0,total:0,per_hour:50});return}
   if(req.url==="/api/results"){send(200,{rows:results});return}
-  if(req.url==="/api/start"&&req.method==="POST"){
+  if(req.url==="/api/following"){send(200,{handle:"fixture.owner",complete:true,usernames:["public.user"]});return}
+  if(req.url==="/api/auto"&&req.method==="POST"){
    const chunks=[];for await(const chunk of req)chunks.push(chunk);
    const body=JSON.parse(Buffer.concat(chunks).toString("utf8"));
-   assert.deepEqual(body.usernames,["public.user"]);
+   assert(!("usernames" in body),"No imported Following CSV or manual queue allowed");
    assert.equal(body.max_per_window,50);
    assert.equal(body.window_minutes,60);
    assert.equal(body.min_delay_seconds,72);
@@ -59,12 +60,15 @@ const {chromium}=require("playwright");
    {waitUntil:"domcontentloaded",timeout:60000});
   await page.locator("#igcAppShell").waitFor({state:"visible",timeout:15000});
   await page.evaluate(()=>{
-   followingRaw=[{username:"public.user"}];
+   followingRaw=[]; // No Instagram export provided: browser discovery supplies the handles
    showPage("profileStats");
    window.igcCountsRender();
   });
-  await page.locator("#igcCountsRobotActions").waitFor({state:"visible",timeout:6000});
-  await page.locator('#igcCountsRobotActions button[onclick="igcCountsRobotStart()"]').click();
+  assert(!(await page.locator("#igcCountsRobotActions").isVisible()),
+   "Technical robot buttons should be invisible to normal users");
+  // The app auto-submits /api/auto when the local bridge is available.
+  // No clicking Start, no entering names and no CSV upload.
+
   const deadline=Date.now()+8000;
   while(queries<1&&Date.now()<deadline)
     await new Promise(resolve=>setTimeout(resolve,100));
@@ -76,7 +80,7 @@ const {chromium}=require("playwright");
          .map(x=>[x,document.getElementById(x)?.value]),
       active:window.IGC_INSTAGRAM_PROFILES?.active
     }));
-    throw Error("Real browser never submitted Start: "+JSON.stringify({diagnostics,queries,errors}));
+    throw Error("Real browser never automatically connected: "+JSON.stringify({diagnostics,queries,errors}));
   }
   await page.evaluate(()=>window.igcCountsRobotPoll());
   await page.waitForFunction(()=>document.querySelector("#igcCountsRows")?.textContent.includes("8,765"),
@@ -92,7 +96,7 @@ const {chromium}=require("playwright");
   assert.equal(localState.records["public.user"].followers,"8765");
   assert(errors.filter(e=>e.includes("igcCounts")).length===0,
    "UI JavaScript exceptions: "+JSON.stringify(errors));
-  console.log("PASS: real file:// Desktop Chromium displayed localhost robot controls, sent authorized Start and persisted visible mock counts.");
+  console.log("PASS: real file:// Chromium auto-started robot, discovered mock Following with no CSV and stored follower counts.");
   await context.close();
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(err=>{console.error(err);process.exitCode=1});
