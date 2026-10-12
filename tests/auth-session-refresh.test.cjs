@@ -109,6 +109,20 @@ async function testExpiredRefreshShowsSignIn(){
  assert.equal(x.entries.get('ig_v13_done'),'["saved_review"]','Original reviews must not be erased');
  assert.equal(JSON.parse(x.entries.get(KEY)).user.email,'owner@example.com');
 }
+async function testTransientRefreshFailureKeepsSession(){
+ const x=harness(session(),async()=>{throw Error('network unavailable');});
+ await assert.rejects(x.api.rest('instagram_accounts?select=*',{method:'GET'}),/problema de conexión/);
+ assert.equal(x.api.S.needsReauth,false,'An offline failure is not an invalid login');
+ assert.equal(x.elements.get('igcSyncSignedIn').style.display,undefined);
+ assert.equal(x.entries.get('ig_v13_done'),'["saved_review"]');
+}
+async function testMissingRefreshTokenOffersLogin(){
+ const x=harness(session({refresh_token:''}),async()=>{throw Error('No requests should be made');});
+ await assert.rejects(x.api.rest('instagram_accounts?select=*',{method:'GET'}),/Vuelve a entrar/);
+ assert.equal(x.api.S.needsReauth,true);
+ assert.equal(x.elements.get('igcSyncSignedOut').style.display,'');
+ assert.equal(x.entries.get('ig_v13_done'),'["saved_review"]');
+}
 async function testSwitchDuringFlight(){
  let done;
  const deferred=new Promise(resolve=>done=resolve);
@@ -128,6 +142,8 @@ async function testSwitchDuringFlight(){
  await testReactive401();
  await testRls403IsNotExpiry();
  await testExpiredRefreshShowsSignIn();
+ await testTransientRefreshFailureKeepsSession();
+ await testMissingRefreshTokenOffersLogin();
  await testSwitchDuringFlight();
  console.log('PASS: shared Desktop/Android sync refresh, retries, RLS, cross-owner race and preserved offline data');
 })().catch(error=>{console.error(error);process.exitCode=1});
