@@ -27,11 +27,19 @@ const ctx={window:{IGC_INSTAGRAM_PROFILES:scope,showPage(id){return id}},
 vm.createContext(ctx);vm.runInContext(script[1],ctx);
 ctx.window.igcAutoRender();
 assert.equal(dom.igcAutoRows.children.length,2,'Only non-mutual accounts should enter unfollow queue');
+ctx.doneSet=new Set(['no.follow2']);
+ctx.window.igcAutoRender();
+assert.equal(dom.igcAutoRows.children.length,1,'Current reviewed non-followback must not enter Unfollow');
+ctx.window.igcAutoChoose('audit');
+assert.equal(dom.igcAutoRows.children.length,2,'Optional audit can inspect any suspected non-followback including reviewed');
+ctx.window.igcAutoChoose('unfollow');
+ctx.doneSet=new Set();
+ctx.window.igcAutoRender();
 let buttons=dom.igcAutoRows.children[0].children[2].children;
 buttons[1].click();
-assert.match(dom.igcAutoMetrics.children[3].textContent,/Omitidos: 1/);
+assert.match(dom.igcAutoMetrics.children[3].textContent,/Skipped: 1/);
 ctx.window.igcAutoClearSkipped();
-assert.match(dom.igcAutoMetrics.children[3].textContent,/Omitidos: 0/);
+assert.match(dom.igcAutoMetrics.children[3].textContent,/Skipped: 0/);
 buttons=dom.igcAutoRows.children[0].children[2].children;
 buttons[0].click();
 assert(protectedSet.has('no.follow'),'Protected favorite must be respected by existing Review/Mutuals');
@@ -44,12 +52,12 @@ assert(!protectedSet.has('no.follow'));
 ctx.window.igcAutoChoose('cancel');
 assert.equal(dom.igcAutoRows.children.length,1);
 dom.igcAutoRows.children[0].children[2].children[0].click();
-assert.equal(dom.igcAutoRows.children[0].children[1].textContent,'★ Favorito protegido');
+assert.equal(dom.igcAutoRows.children[0].children[1].textContent,'★ Protected');
 ctx.window.igcAutoSaveTiming();
 assert([...store.keys()].some(k=>k.includes('igc_action_timing_v1__owner_A__ig_A__cancel')));
 scope.active='ig_B';
 ctx.window.igcAutoRender();
-assert.equal(dom.igcAutoRows.children[0].children[1].textContent,'Pendiente de revisión',
+assert.equal(dom.igcAutoRows.children[0].children[1].textContent,'Not reviewed',
  'Favorites for another Instagram must not leak');
 assert(!('fetch' in ctx),'Planner must not contact Instagram or mutate accounts');
 console.log('Automations per-list skip/protect/pacing and scope isolation: PASS');

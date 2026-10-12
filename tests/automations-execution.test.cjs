@@ -50,16 +50,22 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(request.data.expected_handle,'my.profile');
  assert.equal(request.data.followers_evidence,true);
  assert.equal(request.data.gap_seconds,5);
- assert(texts[0].includes('DEJAR DE SEGUIR'));
+ assert(texts[0].includes('UNFOLLOW'));
  ctx.window.igcAutoChoose('cancel');
  await ctx.window.igcAutoStart();
  const requests=calls.filter(c=>c.type==='start');assert.equal(requests.length,2);
  assert.equal(requests[1].data.task,'cancel');
  assert.deepEqual(requests[1].data.targets,['request.one']);
  ctx.window.V119_HTML={partial:true};
+ ctx.window.igcAutoChoose('audit');
+ await ctx.window.igcAutoStart();
+ const readOnly=calls.filter(c=>c.type==='start').at(-1);
+ assert.equal(readOnly.data.task,'audit');
+ assert.equal(readOnly.data.followers_evidence,false,'Optional audit must not require complete exports');
+ assert(texts.at(-1).includes('READ-ONLY'));
  ctx.window.igcAutoChoose('unfollow');
  await ctx.window.igcAutoStart();
- assert.equal(calls.filter(c=>c.type==='start').length,2,'Partial HTML must reject an unfollow');
+ assert.equal(calls.filter(c=>c.type==='start').length,3,'Partial HTML must reject an unfollow but allow optional audit');
  ctx.window.V119_HTML={partial:false};
  await ctx.window.igcAutoPause();
  assert(calls.some(c=>c.type==='pause'),'Pause control must call local robot');
@@ -77,7 +83,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(ctx.window.igcAutoSwitchGuard(),true,
   'Paused job in owner A must allow navigating back from owner B');
- assert.match(elements.igcAutoLiveStatus.textContent,/otra cuenta/,
+ assert.match(elements.igcAutoLiveStatus.textContent,/another Instagram account/,
   "Cross-owner status must be explained without exposing another account's queue");
  p.running=true;p.status='running';
  await ctx.window.igcAutoPoll();

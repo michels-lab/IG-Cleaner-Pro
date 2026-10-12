@@ -22,6 +22,13 @@ class InstagramVisibleDiscoveryTests(unittest.TestCase):
         self.assertIsNone(own_profile_from_anchors([
             {"href":"/random/", "text":"Photo by"}
         ]))
+        self.assertEqual(own_profile_from_anchors([
+            {"href":"/owner.name/", "in_navigation":True, "image_alt":"owner.name's profile picture"},
+            {"href":"/random/", "image_alt":"random's profile picture"}
+        ]),"owner.name")
+        self.assertIsNone(own_profile_from_anchors([
+            {"href":"/friend/", "image_alt":"friend's profile picture"}
+        ]),"Feed pictures are never proof of active account")
         self.assertIsNone(own_profile_from_anchors([
             {"href":"/user1/", "aria":"Profile"},
             {"href":"/user2/", "aria":"Profile"}

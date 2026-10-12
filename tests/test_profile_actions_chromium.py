@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_actions import perform_visible_action
+from profile_actions import perform_visible_action, classify_followback_search, perform_visible_followback_audit
 
 try:
     from playwright.sync_api import sync_playwright
@@ -95,6 +95,15 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
     </body></html>"""
 
 
+
+class FollowbackAuditClassifierTests(unittest.TestCase):
+    def test_verified_positive_negative_and_inconclusive_are_disjoint(self):
+        self.assertEqual(classify_followback_search(None,"target.user",text="",usernames=["target.user"]),"follows_you")
+        self.assertEqual(classify_followback_search(None,"target.user",text="No results found",usernames=[]),"not_following")
+        self.assertEqual(classify_followback_search(None,"target.user",text="",usernames=[]),"unverified")
+        self.assertEqual(classify_followback_search(None,"target.user",text="No results found",usernames=["other.user"]),"unverified")
+
+
 class RealBrowserSelectorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -140,6 +149,40 @@ class RealBrowserSelectorTests(unittest.TestCase):
             self.page, "target.user", task, "my.profile",
             (lambda _: not protected))
         return status, message, self.page.evaluate("window.__steps")
+
+
+    def test_read_only_audit_searches_own_followers_without_relation_click(self):
+        for follows in (True, False):
+            with self.subTest(follows=follows):
+                html = """<!doctype html><html><body>
+                <nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>
+                <a href="/my.profile/followers/" onclick="showFollowers(event)">123 followers</a>
+                <div role="dialog" id="dialog" style="display:none">
+                  <input placeholder="Search" oninput="searchUsers(this.value)">
+                  <div id="results"></div>
+                </div>
+                <button id="danger" onclick="window.__dangerous.push('follow')">Following</button>
+                <script>
+                window.__dangerous=[];
+                function showFollowers(event) { event.preventDefault();document.querySelector('#dialog').style.display='block';}
+                function searchUsers(value) {
+                  document.querySelector('#results').innerHTML =
+                    value.toLowerCase()==='target.user'&&window.__follows
+                      ? '<a href="/target.user/">target.user</a>' : 'No results found';
+                }
+                </script></body></html>"""
+                # Loaded as offline response even though the URL looks like Instagram.
+                self.page.route("https://www.instagram.com/**",
+                    lambda route: route.fulfill(status=200,content_type="text/html",body=html))
+                self.page.goto("https://www.instagram.com/")
+                self.page.evaluate("(f) => window.__follows=f", follows)
+                # The mocked page reloads on audit navigation; persist fixture flag.
+                self.page.add_init_script("(f) => window.__follows=f", follows)
+                status, relation, details = perform_visible_followback_audit(
+                    self.page, "target.user", "my.profile")
+                self.assertEqual((status,relation),("ok","follows_you" if follows else "not_following"),details)
+                self.assertEqual(self.page.evaluate("window.__dangerous"),[])
+                self.page.unroute_all()
 
     def test_public_english_popup(self):
         status, message, events = self.attempt()
