@@ -123,6 +123,19 @@ def _unfollow_option(page):
     return _visible_named_control(page, names, text_fallback=True)
 
 
+def _visible_dialog(page):
+    """Choose the single visible dialog; Instagram can leave hidden dialogs in DOM."""
+    dialogs = page.locator('[role="dialog"]')
+    total = dialogs.count()
+    if total > 12:
+        raise RuntimeError("Demasiados diálogos; requiere revisión.")
+    open_dialogs = [dialogs.nth(i) for i in range(total)
+                    if dialogs.nth(i).is_visible()]
+    if len(open_dialogs) > 1:
+        raise RuntimeError("Varios diálogos visibles; no se ejecutará un clic ambiguo.")
+    return open_dialogs[0] if open_dialogs else None
+
+
 def _follow_is_visible(header):
     return _visible_button(header, [r"Follow", r"Seguir",
                                     r"Follow Back", r"Seguir también"]) is not None
@@ -193,8 +206,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         if status in ("ok", "blocked"):
             return status, message
         # Private: Instagram may prompt one more explicit confirmation.
-        dialog = page.locator('[role="dialog"]').last
-        if dialog.count() and dialog.is_visible():
+        dialog = _visible_dialog(page)
+        if dialog is not None:
             confirm = _visible_named_control(dialog,
                     [r"Unfollow", r"Dejar de seguir", r"Confirm", r"Confirmar"],
                     text_fallback=True)
@@ -207,8 +220,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
     # and explicit Cancel Request confirmation.
-    dialog = page.locator('[role="dialog"]').last
-    if dialog.count() and dialog.is_visible():
+    dialog = _visible_dialog(page)
+    if dialog is not None:
         choice = _visible_named_control(dialog,
             [r"Cancel Request", r"Cancelar solicitud", r"Cancelar"],
             text_fallback=True)
