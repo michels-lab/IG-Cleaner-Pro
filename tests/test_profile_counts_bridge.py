@@ -199,10 +199,10 @@ class ProfileCountsBridgeTests(unittest.TestCase):
             return ["still.friend", "new.friend"], False
 
         with patch.dict(sys.modules, {"playwright": fake_playwright,
-                                      "playwright.sync_api": fake_module}), \\
-             patch("profile_counts_bridge.challenge_detected", return_value=False), \\
-             patch("profile_counts_bridge.signed_in_handle", return_value="own.profile"), \\
-             patch("profile_counts_bridge.read_following_visible", side_effect=partial_scan), \\
+                                      "playwright.sync_api": fake_module}), \
+             patch("profile_counts_bridge.challenge_detected", return_value=False), \
+             patch("profile_counts_bridge.signed_in_handle", return_value="own.profile"), \
+             patch("profile_counts_bridge.read_following_visible", side_effect=partial_scan), \
              patch("profile_counts_bridge.collect_visible_counts", return_value=("ok", (33, 4, False))):
             c._run()
 
