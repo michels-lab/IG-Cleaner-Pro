@@ -1194,6 +1194,7 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton managePassword = view.findViewById(R.id.managePassword);
         MaterialButton exportCloudData = view.findViewById(R.id.exportCloudData);
         MaterialButton deleteCloudData = view.findViewById(R.id.deleteCloudData);
+        MaterialButton savedAccountSignIn = view.findViewById(R.id.savedAccountSignIn);
         MaterialButton switchAccount = view.findViewById(R.id.switchAccount);
         MaterialButton logout = view.findViewById(R.id.logout);
         TextView accountEmail = view.findViewById(R.id.accountEmail);
@@ -1315,6 +1316,9 @@ public final class MainActivity extends AppCompatActivity {
 
         exportCloudData.setOnClickListener(v -> exportSyncedCloudData());
         deleteCloudData.setOnClickListener(v -> confirmDeleteSyncedCloudData());
+
+        savedAccountSignIn.setVisibility(api.rememberedAccounts().isEmpty() ? View.GONE : View.VISIBLE);
+        savedAccountSignIn.setOnClickListener(v -> switchAccount.performClick());
 
         switchAccount.setOnClickListener(v -> {
             java.util.List<String> saved = api.rememberedAccounts();
