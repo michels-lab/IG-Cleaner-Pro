@@ -114,6 +114,54 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(self.request("/api/following")["usernames"],[])
         self.assertEqual(self.request("/api/status")["status"],"complete")
 
+    def test_autonomous_full_pipeline_without_csv_or_manual_resume(self):
+        import types
+        from unittest.mock import patch
+        from profile_counts_robot import read_results
+
+        class FakePage:
+            def goto(self,*args,**kwargs): pass
+        class FakeBrowser:
+            pages=[FakePage()]
+            def close(self):pass
+        class FakeSync:
+            def __enter__(self):
+                self.chromium=types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw:FakeBrowser())
+                return self
+            def __exit__(self,*exc): pass
+        fake_module=types.ModuleType("playwright.sync_api")
+        fake_module.sync_playwright=lambda:FakeSync()
+        def visible_following(page,handle,on_batch,stop_signal):
+            self.assertEqual(handle,"own.profile")
+            on_batch(["first.user","second.user"],True)
+            return ["first.user","second.user"],True
+
+        self.collector.owner="owner_A"
+        self.collector.account="ig_A"
+        self.collector.expected_handle="own.profile"
+        self.collector.autonomous=True
+        self.collector.max_per_window=50
+        self.collector.window_minutes=60
+        self.collector.min_delay_seconds=0
+        self.collector.pause_every=0
+        self.collector.pause_minutes=0
+        with patch.dict(sys.modules,{"playwright.sync_api":fake_module}), \\
+             patch("profile_counts_bridge.challenge_detected",return_value=False), \\
+             patch("profile_counts_bridge.signed_in_handle",return_value="own.profile"), \\
+             patch("profile_counts_bridge.read_following_visible",side_effect=visible_following), \\
+             patch("profile_counts_bridge.collect_visible_counts",return_value=("ok",(123,45,False))):
+            self.collector._run()
+
+        state=self.collector.snapshot()
+        self.assertEqual(state["status"],"complete")
+        self.assertEqual(state["progress"],2)
+        self.assertTrue(state["discovery_complete"])
+        self.assertEqual(self.collector.following()["usernames"],["first.user","second.user"])
+        rows=read_results(self.collector.result_path())
+        self.assertEqual(rows["first.user"]["followers"],"123")
+        self.assertEqual(rows["second.user"]["following"],"45")
+
     def test_autonomous_account_identity_mismatch_rejected_before_switch(self):
         import time
         def hold():
