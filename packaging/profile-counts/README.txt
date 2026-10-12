@@ -1,6 +1,6 @@
-# Insta Cleaner Pro — Windows Profile Counts Preview
+# Insta Cleaner Pro — Automatizaciones + Profile Counts (Windows Preview)
 
-**Paquete de prueba; no es un release estable.** Contiene la app HTML completa y un controlador local de Chrome para Profile Counts y Automatizaciones. La estable pública v120.42 tiene Profile Counts, pero no el motor de acciones de este candidato.
+**Paquete de prueba; no es un release estable.** Verifica el archivo `BUILD-INFO.txt` para conocer el commit exacto del candidato. Contiene la app HTML completa y un controlador local de Chrome para Profile Counts y Automatizaciones. La estable pública v120.42 tiene Profile Counts, pero no el motor de acciones de este candidato.
 
 ## Uso local (Windows)
 
