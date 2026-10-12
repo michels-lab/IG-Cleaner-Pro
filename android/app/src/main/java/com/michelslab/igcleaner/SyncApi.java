@@ -133,6 +133,11 @@ public final class SyncApi {
             String incomingOwner = session.optJSONObject("user") == null ? "" :
                     session.optJSONObject("user").optString("email", "").trim();
             long incomingExpiry = tokenExpiry(session);
+            // Ignore stale WebView messages from another owner after a switch.
+            // Account changes are only committed by verified native login or
+            // explicit selection in Switch Account, never by a background frame.
+            if (hasSession() && !incomingOwner.isBlank() &&
+                    !incomingOwner.equalsIgnoreCase(getEmail())) return;
             // The native client might already have rotated this token. A stale
             // WebView boot callback must not overwrite the newer native pair.
             if (nativeSessionIsNewer() && nextAccess.equals(getAccessToken()) == false
