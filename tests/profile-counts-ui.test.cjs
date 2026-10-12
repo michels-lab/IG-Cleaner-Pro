@@ -71,6 +71,8 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   igcCountsRobotMax:{value:'200'},
   igcCountsRobotWindow:{value:'5'},
   igcCountsRobotGap:{value:'5'},
+  igcCountsRobotRestEvery:{value:'10'},
+  igcCountsRobotRestMinutes:{value:'2'},
   igcCountsRobotPaceNote:{textContent:'',style:{}}
  };
  const bridgeIdentity={owner:'owner_A',active:'ig_A'};
@@ -85,7 +87,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   } else if(action==='load'){
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
-   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5};
+   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
   } else if(action==='results'){
    value={rows:[
     {username:'public.user',followers:'3456',following:'789',status:'ok',
@@ -118,7 +120,13 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  assert.equal(startBody.max_per_window,200);
  assert.equal(startBody.window_minutes,5);
  assert.equal(startBody.min_delay_seconds,5);
+ assert.equal(startBody.pause_every,10);
+ assert.equal(startBody.pause_minutes,2);
+ assert(bridgeStore.has('igc_robot_pacing_v1__owner_A__ig_A'),'User-selected pacing should be saved per Instagram');
+ bridgeCtx.window.igcCountsRobotRestoreConfig();
+ assert.equal(robotElements.igcCountsRobotMax.value,'200');
  assert.match(robotElements.igcCountsRobotPaceNote.textContent,/60 perfiles/);
+ assert.match(robotElements.igcCountsRobotPaceNote.textContent,/2 min después de cada 10/);
  await bridgeCtx.window.igcCountsRobotPoll();
  assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
  await bridgeCtx.window.igcCountsRobotLoad();
