@@ -13173,6 +13173,7 @@ installUi();load();
 'use strict';
 const CFG='igc_v12027_supabase_config', SES='igc_v12027_supabase_session';
 const DATA_META='igc_v12030_list_sync_meta';
+const ACCOUNT_SESSIONS='igc_v120_login_accounts_v1';
 const SUPABASE_URL='https://ilmztedebwdzgnlrvwxy.supabase.co', SUPABASE_KEY='sb_publishable_lR4d9UhSczfs4h90iK21DA_BfnqiBc1';
 const BATCH_LS='ig_v12024_prepared_focus_batches';
 const S={cfg:{email:'',auto:true},session:null,busy:false,lastSync:0,lastError:'',needsReauth:false,lastRefreshError:'',timer:null,stats:{eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0}};
@@ -13189,7 +13190,34 @@ function notifyHostSession(forceLogout=false){try{
  if(!S.session?.access_token&&!forceLogout)return;
  if(window.AndroidBridge&&typeof window.AndroidBridge.syncSession==='function')window.AndroidBridge.syncSession(JSON.stringify(S.session||null));
 }catch{}}
-function saveSession(){try{S.session?localStorage.setItem(SES,JSON.stringify(S.session)):localStorage.removeItem(SES)}catch{}notifyHostSession()}
+function desktopLoginStore(){
+ // Android owns its logins in the native Android Keystore, never in WebView JS.
+ if(window.AndroidBridge)return null;
+ try{return igcRawProfileStorage}catch{return null}
+}
+function readRemembered(){
+ const store=desktopLoginStore();if(!store)return {};
+ try{
+  const raw=JSON.parse(store.getItem(ACCOUNT_SESSIONS)||'{}');
+  return raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+ }catch{return{}}
+}
+function saveRemembered(session){
+ const store=desktopLoginStore(),owner=sessionOwner(session);
+ if(!store||!owner||!session?.refresh_token||!session?.access_token)return;
+ const data=readRemembered();
+ data[owner]=session;
+ store.setItem(ACCOUNT_SESSIONS,JSON.stringify(data));
+}
+function forgetRemembered(owner){
+ const store=desktopLoginStore();if(!store||!owner)return;
+ const data=readRemembered();delete data[owner];store.setItem(ACCOUNT_SESSIONS,JSON.stringify(data));
+}
+function saveSession(){
+ try{S.session?localStorage.setItem(SES,JSON.stringify(S.session)):localStorage.removeItem(SES)}catch{}
+ saveRemembered(S.session);
+ notifyHostSession();
+}
 function saveDataMeta(){try{localStorage.setItem(DATA_META,JSON.stringify(dataMeta||{}))}catch{}}
 function status(text,type=''){const el=document.getElementById('igcSyncStatus');if(el){el.className='igc-sync-status '+type;el.textContent=text}renderStats()}
 function renderStats(){const el=document.getElementById('igcSyncKpis');if(!el)return;const ev=window.igcAuditGetEvents?.()||[],android=ev.filter(x=>x.deviceType==='android').length,desktop=ev.filter(x=>x.deviceType==='desktop').length;el.innerHTML=`<div class="igc-sync-kpi"><b>${ev.length}</b><span>eventos locales</span></div><div class="igc-sync-kpi"><b>${desktop}</b><span>desktop</span></div><div class="igc-sync-kpi"><b>${android}</b><span>android</span></div><div class="igc-sync-kpi"><b>${S.stats.profilesDown||0}</b><span>perfiles en nube</span></div><div class="igc-sync-kpi"><b>${S.lastSync?new Date(S.lastSync).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):'—'}</b><span>último sync</span></div>`}
@@ -13902,29 +13930,92 @@ window.igcRefreshInstagramProfiles=async function(){
  }
 };
 window.igcSyncNow=()=>syncNow(true);
-window.igcSyncDisconnect=function(){S.session=null;S.needsReauth=false;saveSession();notifyHostSession(true);renderAuthUi();window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión cerrada. Solo se muestran perfiles guardados localmente; inicia sesión en Cuenta para consultar el resto.','error');status('Sesión cerrada. Tus datos locales permanecen intactos.','warn')};
-window.igcSyncSwitchAccount=function(){
- if(S.busy){status('Termina la sincronización actual antes de cambiar de usuario.','warn');return;}
- if(!confirm('Cambiar usuario cerrará esta sesión. Tus perfiles de Instagram, revisiones y respaldos no se borrarán. Para entrar con otra cuenta necesitarás su correo y contraseña. ¿Continuar?'))return;
+window.igcSyncDisconnect=function(){
+ if(S.busy){status('Termina la sincronización antes de cerrar sesión.','warn');return}
+ const who=sessionOwner(S.session);
+ forgetRemembered(who);
  clearTimeout(statePushTimer);
- S.session=null;
- S.needsReauth=false;
- saveSession();
- notifyHostSession(true);
- S.cfg.email='';
- saveCfg();
- dataMeta={};
- saveDataMeta();
- for(const id of ['igcSyncPassword','igcSyncCode','igcSyncNewPassword']){
-  const field=document.getElementById(id);if(field)field.value='';
- }
- // Reload into the signed_out owner namespace before accepting another login.
- // The next successful login reloads into its own verified owner namespace.
+ S.session=null;S.needsReauth=false;saveSession();notifyHostSession(true);
+ S.cfg.email='';saveCfg();
  location.reload();
+};
+function addAnotherLogin(){
+ if(S.busy){status('Termina la sincronización antes de añadir un usuario.','warn');return}
+ saveRemembered(S.session);
+ clearTimeout(statePushTimer);
+ S.session=null;S.needsReauth=false;
+ saveSession();
+ S.cfg.email='';saveCfg();
+ location.reload();
+}
+async function activateRemembered(owner){
+ const next=readRemembered()[owner];
+ if(!next?.refresh_token||!next?.access_token||sessionOwner(next)!==owner){
+  status('La sesión guardada no es válida. Entra con la contraseña de ese usuario.','warn');return;
+ }
+ if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return}
+ const previous=S.session;
+ const previousReauth=S.needsReauth;
+ saveRemembered(previous);
+ S.session=next;
+ S.needsReauth=false;
+ try{
+  if(expiresAtSeconds(next)<=Date.now()/1000+90){
+   const ok=await refresh(next.access_token);
+   if(!ok)throw new Error('La sesión caducó; inicia sesión nuevamente con ese usuario.');
+  }
+  clearTimeout(statePushTimer);
+  S.cfg.email=owner;saveCfg();
+  saveSession();
+  // Rebuild owner-dependent localStorage, Focus state and Instagram registry.
+  location.reload();
+ }catch(error){
+  S.session=previous;S.needsReauth=previousReauth;
+  saveSession();
+  status('No se cambió de cuenta: '+String(error.message||error),'warn');
+ }
+}
+function makeAccountButton(label,action,container){
+ const button=document.createElement('button');button.type='button';button.className='btn';
+ button.textContent=label;button.style.width='100%';button.style.textAlign='left';
+ button.addEventListener('click',action);container.appendChild(button);return button;
+}
+window.igcSyncSwitchAccount=function(){
+ if(window.AndroidBridge){status('En Android, cambia de cuenta desde la pantalla Cuenta.','warn');return}
+ if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return}
+ document.getElementById('igcLoginChooser')?.remove();
+ const dialog=document.createElement('dialog');
+ dialog.id='igcLoginChooser';dialog.style.cssText='max-width:min(460px,calc(100vw - 28px));width:100%;border:1px solid var(--line,#425064);border-radius:16px;background:var(--panel,#171d2a);color:var(--text,#fff);padding:20px;box-shadow:0 24px 85px #000a';
+ const title=document.createElement('h3');title.textContent='Cambiar cuenta de Insta Cleaner';
+ dialog.appendChild(title);
+ const note=document.createElement('p');note.className='note';
+ note.textContent='Selecciona una sesión guardada. Tus listas, favoritos y revisiones se mantienen separadas por usuario.';
+ dialog.appendChild(note);
+ const list=document.createElement('div');list.style.cssText='display:grid;gap:9px;margin:14px 0';
+ const active=sessionOwner(S.session);
+ const remembered=readRemembered();
+ if(S.session?.refresh_token&&active)remembered[active]=S.session;
+ for(const owner of Object.keys(remembered).sort()){
+  const isCurrent=active===owner;
+  const b=makeAccountButton((isCurrent?'✓ ':'')+owner+(isCurrent?' · actual':''),()=>{
+   dialog.close();dialog.remove();
+   if(!isCurrent)activateRemembered(owner);
+  },list);
+  b.disabled=isCurrent;
+ }
+ makeAccountButton('＋ Añadir otra cuenta',()=>{
+  dialog.close();dialog.remove();addAnotherLogin();
+ },list);
+ dialog.appendChild(list);
+ const close=makeAccountButton('Cancelar',()=>{dialog.close();dialog.remove()},dialog);
+ close.style.textAlign='center';
+ document.body.appendChild(dialog);
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+ dialog.showModal();
 };
 function schedule(){clearInterval(S.timer);if(S.cfg.auto)S.timer=setInterval(()=>{if(S.session?.access_token&&!S.needsReauth&&!document.hidden)syncNow(false)},15000)}
 function renderAuthUi(){const out=document.getElementById('igcSyncSignedOut'),inn=document.getElementById('igcSyncSignedIn'),who=document.getElementById('igcSyncAccount');const on=!!S.session?.access_token&&!S.needsReauth;if(out)out.style.display=on?'none':'';if(inn)inn.style.display=on?'':'none';if(who)who.textContent=S.session?.user?.email||S.cfg.email||'Cuenta conectada';renderStats()}
-function install(){const sys=[...document.querySelectorAll('.igc-nav-group')].find(g=>/SYSTEM/i.test(g.querySelector('.igc-nav-cap')?.textContent||''));if(sys&&!document.getElementById('tab-sync')){const audit=document.getElementById('tab-audit'),b=document.createElement('button');b.className='navbtn';b.id='tab-sync';b.title='Cuenta';b.setAttribute('onclick',"showPage('sync')");b.innerHTML='<span class="igc-nav-icon">☁</span><span class="igc-nav-label">Cuenta</span>';sys.insertBefore(b,audit||null)}if(!document.getElementById('page-sync')){const main=document.querySelector('main.igc-workspace'),p=document.createElement('div');p.className='page';p.id='page-sync';p.innerHTML=`<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">INSTAGRAM CLEANER PRO · MULTI-DEVICE</div><h2>Cuenta y sincronización</h2><p>Tu cuenta mantiene Desktop y Android al día, incluyendo las listas completas de personas.</p></div><div class="panel"><div class="title">Tu cuenta</div><div id="igcSyncSignedOut"><div class="igc-sync-fields"><div class="control"><label>Correo</label><input id="igcSyncEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div class="control"><label>Contraseña</label><input id="igcSyncPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña"></div></div><div class="btnrow"><button class="btn primary" onclick="igcSyncPasswordSignIn()">Entrar</button><button class="btn" onclick="igcSyncToggleOtp()">Primera vez / recuperar contraseña</button></div><div id="igcSyncOtpGroup" class="igc-sync-fields" style="display:none;margin-top:12px"><div class="control"><label>Código de verificación</label><input id="igcSyncCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código del correo"></div><div class="control"><label>Nueva contraseña</label><input id="igcSyncNewPassword" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div><div class="btnrow" style="grid-column:1/-1"><button class="btn" onclick="igcSyncSendCode()">Enviar código</button><button class="btn green" onclick="igcSyncVerifyCode()">Verificar y guardar contraseña</button></div></div><div class="igc-sync-help" style="margin-top:10px">Usa correo + contraseña normalmente. El código solo se necesita la primera vez o para recuperar acceso. Project URL y keys siguen preconfigurados.</div></div><div id="igcSyncSignedIn" style="display:none"><div class="igc-sync-card"><b>Conectado</b><small id="igcSyncAccount">Cuenta conectada</small></div><div class="btnrow" style="margin-top:10px"><button class="btn green" onclick="igcSyncNow()">Sincronizar ahora</button><button class="btn" onclick="igcSyncSwitchAccount()">Cambiar usuario</button><button class="btn red" onclick="igcSyncDisconnect()">Cerrar sesión</button></div><div class="igc-sync-help" style="margin-top:10px">Sincronización automática activa cada 15 s mientras el Workspace esté abierto. Cambiar usuario solicita otro correo y contraseña; no borra perfiles ni revisiones guardadas.</div></div><div id="igcSyncStatus" class="igc-sync-status">${S.session?.access_token?'Sesión restaurada.':'Inicia sesión una sola vez en este dispositivo.'}</div><div id="igcSyncKpis" class="igc-sync-kpis"></div></div><div class="igc-sync-grid"><div class="panel"><div class="title">Qué se sincroniza</div><div class="igc-sync-card"><b>Listas completas</b><small>Following, Followers y Pending viajan con sus usernames y metadatos para que Android muestre las mismas personas que Desktop.</small></div><div class="igc-sync-card"><b>Revisiones y decisiones</b><small>Revisiones históricas y nuevas, protegidos y pausas se sincronizan entre Desktop y Android.</small></div><div class="igc-sync-card"><b>Focus preparados</b><small>Los Foco 20/30/40 congelados de Desktop llegan a Android con exactamente los mismos usernames.</small></div><div class="igc-sync-card"><b>Audit Log</b><small>Abiertos, revisados, auditados, cambios de decisión y tandas completadas viajan como eventos.</small></div></div><div class="panel"><div class="title">Estado</div><div class="igc-sync-help">• El servidor está preconfigurado en la app.<br>• La misma cuenta usa contraseña en Desktop y Android; OTP queda para alta o recuperación.<br>• Desktop publica la copia canónica de Following, Followers y Pending.<br>• Android descarga esas listas y reconstruye Review, Mutuals, Followers y Pending.<br>• Revisado y Auditado siguen siendo eventos distintos.</div></div></div></div>`;main.appendChild(p)}const email=document.getElementById('igcSyncEmail');if(email)email.value=S.cfg.email||S.session?.user?.email||'';S.cfg.auto=true;saveCfg();renderAuthUi();schedule();notifyHostSession();if(S.session?.access_token){
+function install(){const sys=[...document.querySelectorAll('.igc-nav-group')].find(g=>/SYSTEM/i.test(g.querySelector('.igc-nav-cap')?.textContent||''));if(sys&&!document.getElementById('tab-sync')){const audit=document.getElementById('tab-audit'),b=document.createElement('button');b.className='navbtn';b.id='tab-sync';b.title='Cuenta';b.setAttribute('onclick',"showPage('sync')");b.innerHTML='<span class="igc-nav-icon">☁</span><span class="igc-nav-label">Cuenta</span>';sys.insertBefore(b,audit||null)}if(!document.getElementById('page-sync')){const main=document.querySelector('main.igc-workspace'),p=document.createElement('div');p.className='page';p.id='page-sync';p.innerHTML=`<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">INSTAGRAM CLEANER PRO · MULTI-DEVICE</div><h2>Cuenta y sincronización</h2><p>Tu cuenta mantiene Desktop y Android al día, incluyendo las listas completas de personas.</p></div><div class="panel"><div class="title">Tu cuenta</div><div id="igcSyncSignedOut"><div class="igc-sync-fields"><div class="control"><label>Correo</label><input id="igcSyncEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div class="control"><label>Contraseña</label><input id="igcSyncPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña"></div></div><div class="btnrow"><button class="btn primary" onclick="igcSyncPasswordSignIn()">Entrar</button><button class="btn" onclick="igcSyncToggleOtp()">Primera vez / recuperar contraseña</button></div><div id="igcSyncOtpGroup" class="igc-sync-fields" style="display:none;margin-top:12px"><div class="control"><label>Código de verificación</label><input id="igcSyncCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código del correo"></div><div class="control"><label>Nueva contraseña</label><input id="igcSyncNewPassword" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div><div class="btnrow" style="grid-column:1/-1"><button class="btn" onclick="igcSyncSendCode()">Enviar código</button><button class="btn green" onclick="igcSyncVerifyCode()">Verificar y guardar contraseña</button></div></div><div class="igc-sync-help" style="margin-top:10px">Usa correo + contraseña normalmente. El código solo se necesita la primera vez o para recuperar acceso. Project URL y keys siguen preconfigurados.</div></div><div id="igcSyncSignedIn" style="display:none"><div class="igc-sync-card"><b>Conectado</b><small id="igcSyncAccount">Cuenta conectada</small></div><div class="btnrow" style="margin-top:10px"><button class="btn green" onclick="igcSyncNow()">Sincronizar ahora</button><button class="btn" onclick="igcSyncSwitchAccount()">Cambiar cuenta</button><button class="btn red" onclick="igcSyncDisconnect()">Cerrar sesión</button></div><div class="igc-sync-help" style="margin-top:10px">Sincronización automática activa cada 15 s mientras el Workspace esté abierto. Cambiar cuenta muestra las sesiones recordadas y permite añadir otro usuario. Cerrar sesión olvida únicamente la cuenta actual.</div></div><div id="igcSyncStatus" class="igc-sync-status">${S.session?.access_token?'Sesión restaurada.':'Inicia sesión una sola vez en este dispositivo.'}</div><div id="igcSyncKpis" class="igc-sync-kpis"></div></div><div class="igc-sync-grid"><div class="panel"><div class="title">Qué se sincroniza</div><div class="igc-sync-card"><b>Listas completas</b><small>Following, Followers y Pending viajan con sus usernames y metadatos para que Android muestre las mismas personas que Desktop.</small></div><div class="igc-sync-card"><b>Revisiones y decisiones</b><small>Revisiones históricas y nuevas, protegidos y pausas se sincronizan entre Desktop y Android.</small></div><div class="igc-sync-card"><b>Focus preparados</b><small>Los Foco 20/30/40 congelados de Desktop llegan a Android con exactamente los mismos usernames.</small></div><div class="igc-sync-card"><b>Audit Log</b><small>Abiertos, revisados, auditados, cambios de decisión y tandas completadas viajan como eventos.</small></div></div><div class="panel"><div class="title">Estado</div><div class="igc-sync-help">• El servidor está preconfigurado en la app.<br>• La misma cuenta usa contraseña en Desktop y Android; OTP queda para alta o recuperación.<br>• Desktop publica la copia canónica de Following, Followers y Pending.<br>• Android descarga esas listas y reconstruye Review, Mutuals, Followers y Pending.<br>• Revisado y Auditado siguen siendo eventos distintos.</div></div></div></div>`;main.appendChild(p)}const email=document.getElementById('igcSyncEmail');if(email)email.value=S.cfg.email||S.session?.user?.email||'';S.cfg.auto=true;saveCfg();renderAuthUi();schedule();notifyHostSession();if(S.session?.access_token){
   window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Sesión restaurada. Consultando todos los Instagram…');
   status('Sesión restaurada. Sincronizando listas…','ok');
   setTimeout(()=>syncNow(false),150);
