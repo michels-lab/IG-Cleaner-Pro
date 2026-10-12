@@ -45,7 +45,12 @@ def own_profile_from_anchors(anchors):
     """Require a clearly labeled Profile navigation link (never guess from feed)."""
     hits = set()
     for anchor in anchors:
-        label = " ".join(str(anchor.get(k) or "") for k in ("text", "aria", "title", "image_alt", "svg_title"))
+        # Profile photos in the FEED also have "profile picture" alt text.
+        # Only trust explicit navigation labels or pictures inside the nav.
+        label = " ".join(str(anchor.get(k) or "") for k in
+                         ("text", "aria", "title", "svg_title", "svg_aria"))
+        if anchor.get("in_navigation"):
+            label += " " + str(anchor.get("image_alt") or "")
         user = user_from_href(anchor.get("href"))
         if user and PROFILE_TERMS.search(label):
             hits.add(user)
@@ -62,7 +67,9 @@ def visible_link_descriptors(page):
           aria: el.getAttribute('aria-label') || '',
           title: el.getAttribute('title') || '',
           image_alt: el.querySelector('img')?.getAttribute('alt') || '',
-          svg_title: el.querySelector('svg title')?.textContent || ''
+          svg_title: el.querySelector('svg title')?.textContent || '',
+          svg_aria: el.querySelector('svg[aria-label]')?.getAttribute('aria-label') || '',
+          in_navigation: !!el.closest('nav, [role=navigation], aside')
         }))""")
 
 
