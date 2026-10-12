@@ -508,7 +508,11 @@ def build_server(collector: Collector, token: str, port: int = 0):
             # Never write the app token, following list or Instagram usernames to logs.
             return
 
-    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    # Native Windows launcher owns this server and pauses jobs before exit.
+    server.actions = actions
+    server.collector = collector
+    return server
 
 
 def main():
