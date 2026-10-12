@@ -1,15 +1,12 @@
 {
-  "version": "120.42",
-  "tag": "v120.42",
-  "authorized": false,
-  "authorization_source": "User explicitly requested 'dale release para probarla' on 2026-10-12 for IG Cleaner Pro autonomous Instagram Profile Counts. Publish governed v120.42 normal GitHub release with signed Android APK, Desktop standalone HTML and Windows visible-browser robot ZIP. Real Instagram signed-in scraping is unverified and disclosed; physical user acceptance follows.",
+  "version": "120.43",
+  "tag": "v120.43",
+  "authorized": true,
+  "authorization_source": "Owner explicitly instructed 'Dales release' on 2026-10-12 for the updated integrated Windows Insta Cleaner, Desktop and Android builds after reviewing previous CI limitations. Release for supervised testing with live Instagram acceptance disclosed; publish only after governed exact-commit visual, Windows, production Android signing and package checks.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.41",
-  "retry_reason": "Retry governed v120.42 after verifying exact Windows-robot archive filename, robust ZIP content checks and preserving signed Android + Desktop release gates; initial publisher build failed before publishing assets.",
-  "published_run": 38216103775,
-  "published_commit": "1c806e34e3f3b84c9311f466353a6ad30fe735c2",
-  "completed_at_utc": "2026-10-12T07:13:17Z"
+  "status": "requested",
+  "previous_stable_release": "v120.42",
+  "owner_acceptance_note": "Live Instagram DOM/actions and physical Windows/Samsung cross-device acceptance remain unverified; state that prominently in release notes. No automatic Instagram actions are triggered by installing."
 }
