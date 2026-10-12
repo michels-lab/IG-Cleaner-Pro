@@ -2,11 +2,11 @@
   "version": "120.44",
   "tag": "v120.44",
   "authorized": true,
-  "authorization_source": "Owner explicitly requested 'dale release y despues continuas cambiando todo a ingles' on 2026-10-12. Publish currently merged v120.44 code using governed exact-commit checks before further English-only UI modifications.",
+  "authorization_source": "Owner explicitly requested 'dale release y despues continuas cambiando todo a ingles' on 2026-10-12. Publish currently merged v120.44 code using governed exact-commit checks before further English-only UI modifications. Owner reaffirmed release was not delivered and requested completion; retrigger governed publisher, no bypass of release gates.",
   "android_stable_artifact": "signed-production-keystore",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "requested",
+  "status": "authorized",
   "previous_stable_release": "v120.43",
   "owner_acceptance_note": "Real Instagram session/browser actions remain unverified; full English-only UI work is subsequent and is not part of v120.44. CI must validate exact source and signed Android before publishing."
 }
