@@ -128,6 +128,8 @@ jobs:
       - name: Create self-contained Desktop app HTML
         shell: pwsh
         run: |
+          $Version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
+          if (!$Version) { throw 'Missing release version from signed Android metadata' }
           New-Item -ItemType Directory -Force "artifacts\profile-counts-preview" | Out-Null
           python tools/build_standalone_desktop_html.py --source desktop/ig_cleaner_pro_v120_27_synced_companion.html --assets-root desktop --output artifacts/profile-counts-preview/IG-Cleaner-Pro.html --version $Version
           if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
@@ -152,7 +154,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ig-cleaner-stable-windows-robot-${{ github.sha }}
-          path: artifacts/IG-Cleaner-Pro-Profile-Counts-Windows-PREVIEW.zip
+          path: artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v*.zip
           retention-days: 14
           if-no-files-found: error
 
