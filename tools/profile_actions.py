@@ -154,7 +154,10 @@ def _request_cancel_confirmation(dialog, username):
     if unfollow is None:
         return None
     context = dialog.inner_text(timeout=4000)
-    expected = r"(?<![A-Za-z0-9_.])@" + re.escape(username) + r"(?![A-Za-z0-9_.])"
+    # A trailing period may be sentence punctuation, but @handle.extra is
+    # a different Instagram username and must not pass an exact-match gate.
+    expected = (r"(?<![A-Za-z0-9_.])@" + re.escape(username)
+                + r"(?![A-Za-z0-9_]|\.[A-Za-z0-9_])")
     if not re.search(expected, context, re.I):
         return None
     english = (re.search(r"\brequest\s+to\s+follow\b", context, re.I) and
@@ -168,9 +171,17 @@ def _request_cancel_confirmation(dialog, username):
     return unfollow
 
 
-def _follow_is_visible(header):
-    return _visible_button(header, [r"Follow", r"Seguir",
-                                    r"Follow Back", r"Seguir también"]) is not None
+def _follow_state(header):
+    """Return verified post-action relation without conflating follow-back.
+
+    Follow Back / Seguir también: they follow the owner; owner no longer follows.
+    Follow / Seguir: owner no longer follows; no follow-back is indicated.
+    """
+    if _visible_button(header, [r"Follow Back", r"Seguir también"]):
+        return "follow_back"
+    if _visible_button(header, [r"Follow", r"Seguir"]):
+        return "follow"
+    return None
 
 
 def _verify_final_state(page, expected_handle, *, checks=3):
@@ -181,8 +192,14 @@ def _verify_final_state(page, expected_handle, *, checks=3):
         if signed_in_handle(page) != expected_handle:
             return "blocked", "La cuenta de Instagram cambió durante la acción."
         header = page.locator("header").first
-        if header.count() and header.is_visible() and _follow_is_visible(header):
-            return "ok", "Acción confirmada por el botón Seguir del perfil."
+        if header.count() and header.is_visible():
+            state = _follow_state(header)
+            if state == "follow_back":
+                return "ok", ("Acción confirmada: Follow Back / Seguir también. "
+                              "La persona aún te sigue, pero tú ya no la sigues.")
+            if state == "follow":
+                return "ok", ("Acción confirmada: Follow / Seguir. "
+                              "Ya no la sigues; el perfil no muestra followback.")
         page.wait_for_timeout(650)
     return "review", "Estado final ambiguo: no repetir esta operación automáticamente."
 
