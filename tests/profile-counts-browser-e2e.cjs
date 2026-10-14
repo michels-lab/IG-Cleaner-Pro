@@ -68,7 +68,7 @@ const {chromium}=require("playwright");
   assert(await page.locator("#igcCountsRobotActions").isVisible(),
    "Pacing, Pause and Resume controls must be visible");
   assert(await page.locator("#igcCountsResume").isVisible());
-  await page.locator("#igcCountsRobotConnect button").click();
+  await page.locator("#igcCountsRobotConnect button").first().click();
   // Explicit connect starts counts on the existing import; no Following dialog.
 
   const deadline=Date.now()+8000;
