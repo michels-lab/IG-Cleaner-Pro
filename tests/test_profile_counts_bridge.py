@@ -407,12 +407,14 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector._run=hold
         try:
             response=self.request("/api/auto",body={
-                "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram"
+                "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram",
+                "discover_following":True
             })
             self.assertEqual(response["account"],"ig-one")
             with self.assertRaises(HTTPError) as exc:
                 self.request("/api/auto",body={
-                    "owner":"owner-A","account":"ig-two","expected_handle":"another.instagram"
+                    "owner":"owner-A","account":"ig-two","expected_handle":"another.instagram",
+                    "discover_following":True
                 })
             self.assertEqual(exc.exception.code,400)
             self.assertEqual(self.request("/api/status")["account"],"ig-one")
@@ -424,7 +426,8 @@ class ProfileCountsBridgeTests(unittest.TestCase):
             self.collector.stop_signal.wait(2)
             self.collector._update("paused", "Fixture paused")
         self.collector._run = stop_at_checkpoint
-        self.request("/api/auto", body={"owner":"A","account":"ig-one"})
+        self.request("/api/auto", body={"owner":"A","account":"ig-one",
+                                           "discover_following":True})
         cfg = {"owner":"A","account":"ig-one","max_per_window":200,
                "window_minutes":5,"min_delay_seconds":5,"pause_every":10,
                "pause_minutes":2}
