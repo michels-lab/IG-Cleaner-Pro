@@ -1,3 +1,12 @@
+## 2026-10-14 — Imported Following is authoritative for Profile Counts; no redundant browser discovery
+
+- Owner supplied a real Windows v120.44 screenshot: @realmichelduarte session detection succeeded, but the robot failed because it searched for a visible own-profile Following link, then closed Chrome. The owner confirmed Insta Cleaner already holds **11,869 Following profiles** and wants the robot to visit those accounts directly to read their public Followers and Following counts.
+- Corrected development flow: Desktop sends the current selected-workspace imported Following handle list to the local authenticated robot; imported profiles take precedence over a possibly stale browser discovery cache. The robot verifies the logged-in Instagram identity, resumes persisted per-account results, visits each imported profile and never opens the owner's Following dialog in this default mode.
+- Raised the bounded imported queue ceiling from 10,000 to 50,000 (existing body-size guard still applies); explicit 11,869-profile test checks there is no silent truncation. Empty imports now show guidance rather than initiating implicit Instagram Following discovery.
+- Browser discovery remains an **optional separate user action**, labeled "Refresh Following from Instagram (optional)", with safe owner verification, manual-recovery retry and unchanged protected/private-session boundaries. Imported snapshot completeness must not be misrepresented as a live Instagram-followback audit.
+- Added Python import/identity/opt-in/end-to-end tests and file:// Chromium bridge fixture proving the queue comes from imported data without a Following UI scrape; old tests updated to opt into discovery explicitly. All tests are simulated, not acceptance of real 11,869-profile Instagram navigation or the owner's physical Windows installation.
+- Applies only to unreleased v120.45 source PR #94. The existing v120.44 release is unchanged; publishing requires a new explicit owner instruction.
+
 ## 2026-10-14 — Live owner screenshot: Chrome signed in but Instagram Home account not detected (development fix)
 
 - Owner's Windows v120.44 screenshot shows Instagram Home displaying the signed-in account with **Switch** in the right-hand account row, while Insta Cleaner Insights → Profile Counts remains at zero and reports identity not yet verified. This is live evidence of the symptom, **not** acceptance of a corrected build.
