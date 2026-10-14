@@ -2,8 +2,8 @@
     <string name="app_name">IG Cleaner Pro</string>
     <string name="nav_focus">Focus</string>
     <string name="nav_audit">Audit</string>
-    <string name="nav_account">Cuenta</string>
+    <string name="nav_account">Account</string>
     <string name="about_title">IG Cleaner Pro</string>
-    <string name="about_body">v120.35\nMichel’s Lab\n\nIG Cleaner completo en Android con Workspace compartido, Focus móvil, Audit y sincronización por dispositivo.</string>
+    <string name="about_body">Michel’s Lab\n\nFull IG Cleaner for Android with a shared workspace, mobile Focus, Audit and cross-device synchronization.</string>
     <string name="brand_logo_description">IG Cleaner Pro official logo</string>
 </resources>
