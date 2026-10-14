@@ -7,6 +7,15 @@ new vm.Script(match[1],{filename:'igc-profile-counts-ui.js'});
 assert(source.includes('id="igcProfileCountsPanel"'),'Insights must expose Profile Counts');
 assert(source.includes('id="igcCountsImport"'),'Import control missing');
 assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot controls missing');
+const automationStart=source.indexOf('id="page-automations"');
+const insightsStart=source.indexOf('id="page-profileStats"');
+const robotStart=source.indexOf('id="igcCountsRobotBridge"');
+const countsStart=source.indexOf('id="igcCountsRows"');
+assert(automationStart>=0 && automationStart<robotStart && robotStart<insightsStart,
+ 'Every robot, including Profile Counts, must live within Automations');
+assert(insightsStart<countsStart && source.indexOf('id="igcCountsRobotBridge"',insightsStart)===-1,
+ 'Insights must contain counts results, not robot controls');
+
 
 (async ()=>{
  const store=new Map(),summary=[],elements={
@@ -60,6 +69,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
 
  // Simulate the actual local control protocol, including account-scoped sync.
  const bridgeStore=new Map(),requests=[];
+ let staged=null;
  const robotElements={
   igcCountsRows:{innerHTML:''},
   igcCountsSummary:{replaceChildren(){},appendChild(){}},
@@ -87,7 +97,19 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijklmnop');
   const action=url.split('/').pop();
   let value={};
-  if(action==='start'){
+  if(action==='queue/init'){
+   const b=JSON.parse(options.body);
+   staged={owner:b.owner,account:b.account,total:b.total,transfer:'fixture-token',usernames:[]};
+   value={transfer:staged.transfer,total:staged.total,received:0};
+  } else if(action==='queue/append'){
+   const b=JSON.parse(options.body);
+   assert.equal(b.owner,staged.owner);
+   assert.equal(b.account,staged.account);
+   assert.equal(b.transfer,staged.transfer);
+   assert.equal(b.offset,staged.usernames.length);
+   staged.usernames.push(...b.usernames);
+   value={received:staged.usernames.length,total:staged.total};
+  } else if(action==='start'){
    value={status:'starting',message:'Starting',total:1,progress:0};
   } else if(action==='auto'){
    value={status:'starting',message:'Auto-detecting Instagram login',total:0,progress:0};
@@ -124,7 +146,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const auto=requests.find(r=>r.url.endsWith('/auto'));
  assert(auto,'Automatic detection must begin without any Start click');
  assert.equal(JSON.parse(auto.options.body).account,'ig_A');
- assert.deepEqual(JSON.parse(auto.options.body).usernames,['public.user']);
+ assert.deepEqual(JSON.parse(auto.options.body).usernames,[]);
+ assert.equal(JSON.parse(auto.options.body).use_staged_import,true);
+ assert.equal(JSON.parse(auto.options.body).transfer,staged.transfer);
+ assert.deepEqual(staged.usernames,['public.user']);
  assert.equal(JSON.parse(auto.options.body).discover_following,false);
  await bridgeCtx.window.igcCountsRobotDiscover();
  const optional=requests.filter(r=>r.url.endsWith('/auto')).at(-1);
