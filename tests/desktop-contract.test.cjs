@@ -42,9 +42,9 @@ for (const token of [
 ]) requireToken(token, 'Persistent-state compatibility token missing');
 
 for (const token of [
-  'Revisar de nuevo 30',
+  '🔁 Recheck 30',
   'Double Check 30',
-  'Ver NO ME SIGUE revisados',
+  '👁 View reviewed non-followback accounts',
   'Followers',
   'Mutuals',
   'Pending',
