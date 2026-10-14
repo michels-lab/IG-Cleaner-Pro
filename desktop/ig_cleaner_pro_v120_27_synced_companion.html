@@ -12422,31 +12422,31 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
 <div aria-hidden="true" class="legalOverlay" id="legalOverlay">
 <section aria-labelledby="legalTitle" aria-modal="true" class="legalDialog" role="dialog">
 <h3 id="legalTitle">IG Cleaner Pro — Legal</h3>
-<div class="legalCopy">IG Cleaner Pro es software propietario. Copyright © 2026 Michel Armando Duarte Flores / Michel's Lab. All Rights Reserved.
+<div class="legalCopy">IG Cleaner Pro is proprietary software. Copyright © 2026 Michel Armando Duarte Flores / Michel's Lab. All Rights Reserved.
 
-La disponibilidad del código fuente, la distribución de una build HTML o la publicación del código con fines de demostración, portafolio, educación o revisión no concede permiso para copiar, modificar, redistribuir, rebrandear, vender, sublicenciar ni incorporar IG Cleaner Pro —o partes sustanciales de este— en otro producto sin autorización expresa y por escrito del titular de los derechos.
+Access to source code, HTML distributions or publication for demonstration, portfolio, educational or review purposes does not grant permission to copy, modify, redistribute, rebrand, sell, sublicense or incorporate IG Cleaner Pro, or substantial portions of it, into another product without the copyright holder's express written authorization.
 
-IG Cleaner Pro es una herramienta independiente y no está afiliada, patrocinada ni respaldada por Instagram ni por Meta Platforms, Inc.</div>
+IG Cleaner Pro is independent software and is not affiliated with, sponsored by or endorsed by Instagram or Meta Platforms, Inc.</div>
 <div class="legalActions"><button class="btn primary" id="legalClose">Close</button></div>
 </section>
 </div>
 <div aria-hidden="true" class="privacyOverlay" id="privacyOverlay">
 <section aria-labelledby="privacyTitle" aria-modal="true" class="privacyDialog" role="dialog">
-<h3 id="privacyTitle">Instagram Cleaner Pro — Privacidad</h3>
+<h3 id="privacyTitle">Instagram Cleaner Pro — Privacy</h3>
 <div class="legalCopy">LOCAL-FIRST
-El export original de Instagram (ZIP/JSON/HTML) se procesa localmente y no se sube como respaldo en la nube.
+Original Instagram ZIP/JSON/HTML exports are processed locally and are not uploaded as cloud backups.
 
-SI ACTIVAS SYNC
-Se pueden guardar de forma privada en tu cuenta datos normalizados necesarios para Desktop ↔ Android: listas de usernames/relaciones, estado reviewed/protected/snoozed, Focus batches, eventos de auditoría y datos de dispositivo.
+IF YOU ENABLE SYNC
+Derived data needed for Desktop–Android synchronization may be stored privately in your account: usernames and relationship lists, review/protection/snooze states, Focus batches, audit events and device metadata.
 
-ALMACENAMIENTO LOCAL
-La app usa localStorage y IndexedDB para conservar estado, revisiones y snapshots. Ese estado permanece hasta que lo eliminas/restableces o una migración documentada lo transforma.
+LOCAL STORAGE
+The app uses localStorage and IndexedDB to keep your state, reviews and snapshots. This data remains until you remove or reset it, or a documented migration changes it.
 
-BACKUP / CAMBIOS
-Antes de un reset o migración destructiva, exporta un respaldo desde Vault. Cambiar de origen/ruta/perfil del navegador puede abrir un contexto de almacenamiento distinto.
+BACKUPS / CHANGES
+Export a backup from Vault before a reset or destructive migration. Changing browser origin, path or profile may use a separate storage context.
 
-GESTIÓN DE DATOS SINCRONIZADOS
-Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la nube o borrar todas sus filas sincronizadas. El borrado de nube no elimina el ZIP/JSON/HTML original ni respaldos locales independientes. Después de borrar la nube, la app cierra la sesión para impedir que el auto-sync vuelva a cargar inmediatamente el estado local.</div>
+SYNCED DATA MANAGEMENT
+You can export all of your account's currently synchronized cloud data to JSON or delete its synchronized records. Cloud deletion does not remove your original ZIP/JSON/HTML or independent local backups. After cloud deletion, the app signs out to prevent auto-sync from immediately re-uploading local state.</div>
 <div id="privacyDataStatus" class="legalCopy" style="margin-top:12px">Sign in under Account to export or delete synced data.</div>
 <div class="legalActions"><button class="btn green" id="privacyExportCloud">Export cloud data</button><button class="btn red" id="privacyDeleteCloud">Delete cloud data</button><button class="btn primary" id="privacyClose">Close</button></div>
 </section>
@@ -12458,7 +12458,7 @@ Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la n
 <div class="detailBlock"><span>Producto</span><b>IG Cleaner Pro</b><div>Local analysis and cleanup tool for Instagram exports.</div></div>
 <div class="detailBlock"><span>Version</span><b>Engine v119 · UI v120.45</b><div>ZIP primary · JSON/HTML autodetect · precise dates · follow-order · evidence · ZIP changes · focus intelligence · portable HTML report · snapshot timeline · editable Focus · profile dossier · cross-device audit log · state audit · performance cache · import delta · JSON intact</div></div>
 <div class="detailBlock"><span>Runtime</span><b>Web / HTML local</b><div>Browser-based processing; Instagram sign-in is not needed for local import.</div></div>
-<div class="detailBlock"><span>Autor</span><b>Michel Armando Duarte Flores</b><div>Michel's Lab</div></div>
+<div class="detailBlock"><span>Author</span><b>Michel Armando Duarte Flores</b><div>Michel's Lab</div></div>
 </div>
 <div class="legalActions"><button class="btn primary" id="versionClose">Close</button></div>
 </section>
@@ -12503,16 +12503,16 @@ Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la n
 (()=>{
   'use strict';
   const META={
-    upload:['Importar datos','Carga exports y revisa su cobertura antes de comparar.'],
-    moduleDashboard:['Command Center','Decide qué flujo trabajar y entra directo a una sesión.'],
-    list:['Review Queue','Limpieza principal de following, filtros, tandas y decisiones.'],
-    followersMutual:['Mutuals','Followers que también sigues, con Focus, historial y sesión propios.'],
-    followersFans:['Followers que no sigo','Personas que te siguen pero tú no sigues, separadas de Mutuals.'],
-    pendingRequests:['Pending Lab','Solicitudes pendientes con su propia revisión y seguimiento.'],
-    profileStats:['Insights','Métricas y señales para entender tu cuenta antes de limpiar.'],
-    compare:['Changes','Compara exports y snapshots para detectar cambios de relación.'],
-    backup:['Vault','Protege el estado interno de IG Cleaner y restaura cuando lo necesites.'],
-    diag:['System Health','Comprueba consistencia, tandas y estados internos.']
+    upload:['Import data','Load exports and check their completeness before comparing.'],
+    moduleDashboard:['Command Center','Choose a workflow and jump straight into a review session.'],
+    list:['Review Queue','Main Following cleanup, filters, batches and decisions.'],
+    followersMutual:['Mutuals','Mutual followers with their own Focus, history and sessions.'],
+    followersFans:['Followers you do not follow','Followers you do not follow, kept separate from Mutuals.'],
+    pendingRequests:['Pending Lab','Pending follow requests with independent reviews and tracking.'],
+    profileStats:['Insights','Metrics and signals to understand your account before cleanup.'],
+    compare:['Changes','Compare exports and snapshots to detect relationship changes.'],
+    backup:['Vault','Protect IG Cleaner state and restore it whenever needed.'],
+    diag:['System Health','Check app consistency, batches and saved state.']
   };
   window.igcUpdateContext=function(id){const m=META[id]||['IG Cleaner Pro','Relationship workspace'];const t=document.getElementById('igcWorkspaceTitle'),sub=document.getElementById('igcWorkspaceSubtitle');if(t)t.textContent=m[0];if(sub)sub.textContent=m[1];};
   const active=document.querySelector('.page.active');if(active)window.igcUpdateContext(active.id.replace(/^page-/,''));
@@ -12525,11 +12525,11 @@ Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la n
   'use strict';
   const host=()=>document.getElementById('igcContextActions');
   const btn=(label,handler,cls='')=>`<button class="igc-command-btn ${cls}" onclick="${handler}" type="button">${label}</button>`;
-  const baseButtons=()=>btn('Importar',"showPage('upload')",'quiet');
+  const baseButtons=()=>btn('Import',"showPage('upload')",'quiet');
   window.igcRenderContextActions=function(id){
     const el=host();if(!el)return;let actions='';
-    if(id==='list')actions=btn('Foco 20','focusMode20()')+btn('Foco 30','focusMode30()','focus')+btn('Foco 40','focusMode40()');
-    else if(id==='followersMutual')actions=btn('Mutuos 20','followersMutualFocusN(20)')+btn('Mutuos 30','followersMutualFocusN(30)','focus')+btn('Mutuos 40','followersMutualFocusN(40)');
+    if(id==='list')actions=btn('Focus 20','focusMode20()')+btn('Focus 30','focusMode30()','focus')+btn('Focus 40','focusMode40()');
+    else if(id==='followersMutual')actions=btn('Mutuals 20','followersMutualFocusN(20)')+btn('Mutuals 30','followersMutualFocusN(30)','focus')+btn('Mutuals 40','followersMutualFocusN(40)');
     else if(id==='followersFans')actions=btn('Followers 20','followersFocusN(20)')+btn('Followers 30','followersFocusN(30)','focus')+btn('Followers 40','followersFocusN(40)');
     else if(id==='pendingRequests')actions=btn('Pending 20','pendingFocusN(20)')+btn('Pending 30','pendingFocusN(30)','focus')+btn('Pending 40','pendingFocusN(40)');
     el.innerHTML=actions+baseButtons();
@@ -12561,7 +12561,7 @@ function setZipStatus(title,meta='',pct=null){
   if(box)box.classList.add('show');if(t)t.textContent=title;if(m)m.textContent=meta;
   if(p&&pct!=null)p.style.width=Math.max(0,Math.min(100,Number(pct)||0))+'%';
 }
-function zipError(message){setZipStatus('No pude procesar el ZIP','',100);const n=q('igcZipNote');if(n)n.innerHTML=`<span style="color:#ff9aac">${escZip(message)}</span>`;msg?.(message,'e')}
+function zipError(message){setZipStatus('Could not process the ZIP','',100);const n=q('igcZipNote');if(n)n.innerHTML=`<span style="color:#ff9aac">${escZip(message)}</span>`;msg?.(message,'e')}
 window.igcZipDrag=function(ev,on){ev.preventDefault();q('igcZipDrop')?.classList.toggle('dragover',!!on)};
 window.igcZipDropFile=function(ev){ev.preventDefault();igcZipDrag(ev,false);const f=ev.dataTransfer?.files?.[0];if(f)igcHandleZipInput(f)};
 
@@ -13378,10 +13378,10 @@ window.igcPrivacyDeleteCloudData=async function(){
   try{
     await ensureAuth();
     if(!confirm('Esto borrará TODOS los datos sincronizados de esta cuenta en la nube. Tus exports originales y respaldos locales independientes no se borrarán. ¿Continuar?'))return;
-    const typed=prompt('Confirmación final: escribe BORRAR NUBE');
-    if(String(typed||'').trim().toUpperCase()!=='BORRAR NUBE'){privacyDataStatus('Borrado cancelado.');return}
+    const typed=prompt('Confirmación final: type DELETE CLOUD');
+    if(String(typed||'').trim().toUpperCase()!=='DELETE CLOUD'){privacyDataStatus('Deletion canceled.');return}
     S.busy=true;
-    privacyDataStatus('Borrando datos sincronizados…');
+    privacyDataStatus('Deleting synchronized data…');
     const order=['instagram_focus_batch_items','instagram_focus_batches','instagram_profile_state','instagram_audit_events','instagram_list_snapshots','instagram_workspace_state','instagram_accounts','focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
     for(const table of order){
       await rest(`${table}?user_id=not.is.null`,{method:'DELETE',globalAccountData:true,headers:{Prefer:'return=minimal'}});
