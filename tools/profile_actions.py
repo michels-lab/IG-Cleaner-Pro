@@ -454,7 +454,7 @@ class ActionRobot:
             raise ValueError("The batch was not explicitly approved.")
         if task == "unfollow" and data.get("followers_evidence") is not True:
             raise ValueError("A complete Followers list has not been verified.")
-        with self.lock:
+        with self.collector.browser_admission, self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Ya hay un robot de acciones activo.")
             if self.collector.worker and self.collector.worker.is_alive():
