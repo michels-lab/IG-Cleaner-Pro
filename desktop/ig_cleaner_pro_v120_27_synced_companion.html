@@ -14316,9 +14316,29 @@ window.igcCountsRobotAuto=async function(force=false,discoverFollowing=false){
    robotStatus('Import your Following list first, or choose the optional Instagram discovery button.',true);
    return;
   }
+  let upload={};
+  if(!discoverFollowing){
+   // A bounded transport chunk is not a limit on the account or the analysis.
+   const staged=await bridgeRequest('queue/init',{
+    owner:ctx.owner,account:ctx.account,total:usernames.length
+   });
+   for(let offset=0;offset<usernames.length;offset+=1000){
+    const chunk=usernames.slice(offset,offset+1000);
+    const ack=await bridgeRequest('queue/append',{
+     owner:ctx.owner,account:ctx.account,transfer:staged.transfer,
+     offset,usernames:chunk
+    });
+    if(ack.received!==offset+chunk.length)
+     throw Error('Profile upload was not acknowledged; no robot started.');
+    if(context().owner!==ctx.owner||context().account!==ctx.account)
+     throw Error('Instagram account changed during import; no robot started.');
+    robotStatus('Preparing Profile Counts: '+ack.received+' / '+usernames.length+' profiles.');
+   }
+   upload={use_staged_import:true,transfer:staged.transfer};
+  }
   await bridgeRequest('auto',{
    owner:ctx.owner,account:ctx.account,expected_handle,
-   usernames,discover_following:discoverFollowing,...pacing
+   usernames:[],discover_following:discoverFollowing,...upload,...pacing
   });
   igcRobotAutoIdentity=id;
   robotStatus(discoverFollowing
