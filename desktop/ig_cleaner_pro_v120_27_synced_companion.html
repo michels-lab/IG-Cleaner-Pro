@@ -4300,7 +4300,7 @@ function cancelActiveFocusBatch(){
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
   renderModuleDashboard?.();
-  msg(`Tanda cancelada: ${count} perfiles de ${kind==='pending'?'Pending':'Seguidores que sigo'} vuelven a quedar disponibles.`,'w');
+  msg(`Tanda cancelada: ${count} perfiles de ${kind==='pending'?'Pending':'Mutual followers'} vuelven a quedar disponibles.`,'w');
 }
 setInterval(renderActiveBatchDock,60000);
 
@@ -4416,7 +4416,7 @@ function historyFocusLabel(row){
   if(h.reopened)parts.push(`reabierto ${h.reopened}`);
   if(h.unconfirmed)parts.push(`sin confirmar ${h.unconfirmed}`);
   if(h.reviewed)parts.push(`revisado ${h.reviewed}`);
-  if(h.lastOpened)parts.push(`últ. apertura ${formatMaybeDate(h.lastOpened)}`);
+  if(h.lastOpened)parts.push(`last opened ${formatMaybeDate(h.lastOpened)}`);
   return parts.join(' · ')||'sin eventos';
 }
 
@@ -4479,7 +4479,7 @@ function restoreAllUnconfirmed(){
   renderDoubleCheckStats?.();
   renderModuleDashboard();
   runStateDiagnosis(false);
-  msg(`Restaurados ${restored} perfiles abiertos/sin confirmar. Volverán a salir en focos.`,restored?'s':'i');
+  msg(`Restored ${restored} opened/unconfirmed profiles. They can appear in future Focus batches.`,restored?'s':'i');
 }
 function problemPendingCount(){return pendingRows().filter(pendingNeedsAttention).length}
 function problemMutualCount(){return followersMutualRows().filter(mutualNeedsAttention).length}
@@ -4491,34 +4491,34 @@ function diagnoseState(){
   const pendingAll=pendingRows();
   const mutualAll=followersMutualRows();
   const activeCount=activeFocusBatch?.rows?.length||0;
-  if(activeCount)add('medium','Tanda activa sin confirmar',`${activeCount} perfiles siguen como abierto sin confirmar desde ${formatMaybeDate(activeFocusBatch.openedAt)}. Si ya confirmaste, usa Borrar tanda atorada o deja que v71 lo limpie automáticamente.`,activeCount);
+  if(activeCount)add('medium','Unconfirmed active batch',`${activeCount} perfiles siguen como abierto sin confirmar desde ${formatMaybeDate(activeFocusBatch.openedAt)}. Si ya confirmaste, usa Borrar tanda atorada o deja que v71 lo limpie automáticamente.`,activeCount);
 
   const staleActive=activeFocusBatch?.openedAt && Date.now()-activeFocusBatch.openedAt>3*3600000;
-  if(staleActive)add('high','Tanda activa vieja',`La tanda activa lleva más de 3 horas abierta. Recupera el popup o restaúrala.`,activeCount);
+  if(staleActive)add('high','Stale active batch',`La tanda activa lleva más de 3 horas abierta. Recupera el popup o restaúrala.`,activeCount);
 
   const pendingMissingDate=Object.entries(pendingReviewedMeta||{}).filter(([u,m])=>m&&!m.reviewedAt).length;
-  if(pendingMissingDate)add('high','Pending revisados sin fecha',`${pendingMissingDate} pending tienen decisión pero no fecha de revisión.`,pendingMissingDate);
+  if(pendingMissingDate)add('high','Pending requests reviewed without a date',`${pendingMissingDate} pending tienen decisión pero no fecha de revisión.`,pendingMissingDate);
 
   const pendingLegacy=pendingAll.filter(r=>r.opened&&!r.reviewed&&!isInActiveFocus(r,'pending')).length;
-  if(pendingLegacy)add('medium','Pending abiertos no revisados antiguos',`${pendingLegacy} pending quedaron como abiertos sin revisión en el sistema viejo. Puedes restaurarlos.`,pendingLegacy);
+  if(pendingLegacy)add('medium','Legacy opened/unreviewed pending requests',`${pendingLegacy} pending quedaron como abiertos sin revisión en el sistema viejo. Puedes restaurarlos.`,pendingLegacy);
 
   const pendingStillListed=pendingAll.filter(r=>r.reviewed&&!pendingCrossStatus(r).inFollowing).length;
-  if(pendingStillListed)add('low','Pending revisados aún aparecen en pending',`${pendingStillListed} pending revisados siguen sin aparecer como aceptados en el export actual. Puede ser normal si siguen pendientes.`,pendingStillListed);
+  if(pendingStillListed)add('low','Reviewed requests still appear as pending',`${pendingStillListed} pending revisados siguen sin aparecer como aceptados en el export actual. Puede ser normal si siguen pendientes.`,pendingStillListed);
 
   const pendingExpired=Object.keys(pendingSnoozeMap||{}).filter(u=>pendingSnoozeMap[u]&&pendingSnoozeMap[u]<=Date.now()).length;
   if(pendingExpired)add('medium','Pausas vencidas en Pending',`${pendingExpired} pausas de pending ya vencieron.`,pendingExpired);
 
   const mutualProtectedNotReviewed=mutualAll.filter(r=>r.protected&&!r.done).length;
-  if(mutualProtectedNotReviewed)add('medium','Mutuos protegidos sin revisión',`${mutualProtectedNotReviewed} seguidores que sigo están protegidos pero no aparecen como revisados.`,mutualProtectedNotReviewed);
+  if(mutualProtectedNotReviewed)add('medium','Protected mutuals without reviews',`${mutualProtectedNotReviewed} seguidores que sigo están protegidos pero no aparecen como revisados.`,mutualProtectedNotReviewed);
 
   const mutualDoneNoDate=mutualAll.filter(r=>r.done&&!reviewedAtTsForMode(r,'followers')).length;
-  if(mutualDoneNoDate)add('high','Mutuos revisados sin fecha',`${mutualDoneNoDate} seguidores que sigo están revisados pero no tienen fecha válida.`,mutualDoneNoDate);
+  if(mutualDoneNoDate)add('high','Reviewed mutuals without a date',`${mutualDoneNoDate} seguidores que sigo están revisados pero no tienen fecha válida.`,mutualDoneNoDate);
 
   const mutualExpired=Object.keys(snoozeMap||{}).filter(u=>snoozeMap[u]&&snoozeMap[u]<=Date.now()).length;
   if(mutualExpired)add('medium','Pausas vencidas generales',`${mutualExpired} pausas generales ya vencieron.`,mutualExpired);
 
   const doneNoMeta=[...doneSet].filter(u=>!reviewedMeta[u]).length;
-  if(doneNoMeta)add('medium','Revisados sin metadata',`${doneNoMeta} usuarios están en revisados pero no tienen metadata inteligente.`,doneNoMeta);
+  if(doneNoMeta)add('medium','Reviewed profiles missing metadata',`${doneNoMeta} usuarios están en revisados pero no tienen metadata inteligente.`,doneNoMeta);
 
   const repeatedUnconfirmed=Object.values(profileHistory||{}).filter(h=>(h.unconfirmed||0)>=2&&!h.reviewed).length;
   const temporarilyAvoided=Object.values(profileHistory||{}).filter(h=>(h.unconfirmed||0)>0 && h.lastOpened && hoursSince(h.lastOpened)<3).length;
@@ -4526,7 +4526,7 @@ function diagnoseState(){
   if(temporarilyAvoided)add('low','Perfiles evitados temporalmente por historial',`${temporarilyAvoided} perfiles no se priorizan porque quedaron sin confirmar recientemente.`,temporarilyAvoided);
 
   const problems=problemPendingCount()+problemMutualCount()+problemMainCount();
-  if(problems)add('low','Bandeja necesita atención',`${problems} perfiles caen en reglas de atención: riesgo, pausas vencidas, aceptados detectados o limbo.`,problems);
+  if(problems)add('low','Review queue needs attention',`${problems} perfiles caen en reglas de atención: riesgo, pausas vencidas, aceptados detectados o limbo.`,problems);
 
   return {
     issues,
@@ -4575,7 +4575,7 @@ function runStateDiagnosis(showMessage=true){
 function renderGuidedSessionMini(){
   if(!guidedSession100)return '<p class="muted">No hay sesión guiada activa.</p>';
   const steps=guidedSession100.steps||[];
-  return `<div class="guided-session-steps">${steps.map((s,i)=>`<div class="guided-step"><b>${s.rows?.length||0}</b><span>${i+1}. ${esc(s.title||s.kind)} · ${esc(s.status||'pendiente')}</span></div>`).join('')}</div>`;
+  return `<div class="guided-session-steps">${steps.map((s,i)=>`<div class="guided-step"><b>${s.rows?.length||0}</b><span>${i+1}. ${esc(s.title||s.kind)} · ${esc(s.status||'pending')}</span></div>`).join('')}</div>`;
 }
 
 function mainSessionCandidates(){
@@ -4598,15 +4598,15 @@ function buildGuidedSession100(){
     createdAt:Date.now(),
     currentIndex:0,
     steps:[
-      {kind:'pending',title:'Pending requests',label:'sesión 100 · pending',rows:p.map(safeBatchRow),status:p.length?'pendiente':'vacío'},
-      {kind:'mutual',title:'Seguidores que sigo',label:'sesión 100 · seguidores que sigo',rows:m.map(safeBatchRow),status:m.length?'pendiente':'vacío'},
-      {kind:'main',title:'Seguidos que no me siguen',label:'sesión 100 · seguidos no me siguen',rows:f.map(safeBatchRow),status:f.length?'pendiente':'vacío'}
+      {kind:'pending',title:'Pending requests',label:'100-profile session · pending',rows:p.map(safeBatchRow),status:p.length?'pending':'empty'},
+      {kind:'mutual',title:'Mutual followers',label:'100-profile session · mutual followers',rows:m.map(safeBatchRow),status:m.length?'pending':'empty'},
+      {kind:'main',title:'Accounts that do not follow back',label:'100-profile session · non-followback',rows:f.map(safeBatchRow),status:f.length?'pending':'empty'}
     ]
   };
 }
 function startGuidedSession100(){
   if(activeFocusBatch?.rows?.length){
-    msg('Primero termina, recupera o cancela la tanda activa antes de iniciar sesión 100.','w');
+    msg('Finish, recover or cancel the active batch before starting a 100-profile session.','w');
     renderActiveBatchDock();
     return;
   }
@@ -4618,7 +4618,7 @@ function startGuidedSession100(){
 function currentGuidedStep(){
   if(!guidedSession100)return null;
   const steps=guidedSession100.steps||[];
-  return steps.find(s=>s.status==='pendiente'&&s.rows&&s.rows.length)||null;
+  return steps.find(s=>s.status==='pending'&&s.rows&&s.rows.length)||null;
 }
 function continueGuidedSession100(){
   if(!guidedSession100){msg('No active guided session. Start a 100-profile session first.','w');return;}
@@ -4641,7 +4641,7 @@ function maybeContinueGuidedSession(kind,label,outcome){
   if(!guidedSession100)return;
   const next=currentGuidedStep();
   runStateDiagnosis(false);
-  if(next && confirm(`Bloque "${label}" terminado. ¿Abrir ahora el siguiente bloque de la sesión 100?\n\nSiguiente: ${next.title} · ${next.rows.length} perfiles.`)){
+  if(next && confirm(`Batch "${label}" complete. Open the next 100-profile session batch now?\n\nNext: ${next.title} · ${next.rows.length} profiles.`)){
     continueGuidedSession100();
   }else if(!next){
     msg('Guided 100-profile session completed.','s');
@@ -4956,7 +4956,7 @@ async function processFiles(){
     try{autoCleanGarbageStates(false);}catch(e){console.warn('auto-clean falló',e)}
     showPostProcessNavPopup();
 
-    msg(`Procesado: ${followingRaw.length} following y ${followersRaw.length} followers únicos.`,'s');
+    msg(`Processed: ${followingRaw.length} unique Following and ${followersRaw.length} unique Followers.`,'s');
     if(followingRaw.length<=1){
       msg('Warning: very few Following accounts were detected. Check Diagnostics to verify the import format.','w');
     }
@@ -4994,7 +4994,7 @@ function buildRows(){
       return {
         username:u.username,href:u.href,
         dateMain:u.timestamp||0,dateOther:fr?fr.timestamp||0:0,
-        dateMainLabel:'Yo lo seguí',dateOtherLabel:'Me siguió',
+        dateMainLabel:'I followed them',dateOtherLabel:'They followed me',
         relation:followsBack?'Me sigue':'No me sigue',
         relationGood:followsBack,
         followsBack,
@@ -5011,7 +5011,7 @@ function buildRows(){
       return {
         username:u.username,href:u.href,
         dateMain:u.timestamp||0,dateOther:fw?fw.timestamp||0:0,
-        dateMainLabel:'Me siguió',dateOtherLabel:'Yo lo seguí',
+        dateMainLabel:'They followed me',dateOtherLabel:'I followed them',
         relation:iFollow?'Yo lo sigo':'No lo sigo',
         relationGood:iFollow,
         followsBack:true,
@@ -5022,10 +5022,10 @@ function buildRows(){
     });
   }
 
-  document.getElementById('dateCol1').textContent=currentMode==='following'?'Yo lo seguí':'Me siguió';
-  document.getElementById('dateCol2').textContent=currentMode==='following'?'Me siguió':'Yo lo seguí';
-  document.getElementById('dateFromLabel').textContent=currentMode==='following'?'Desde: yo lo seguí':'Desde: me siguió';
-  document.getElementById('dateToLabel').textContent=currentMode==='following'?'Hasta: yo lo seguí':'Hasta: me siguió';
+  document.getElementById('dateCol1').textContent=currentMode==='following'?'I followed them':'They followed me';
+  document.getElementById('dateCol2').textContent=currentMode==='following'?'They followed me':'I followed them';
+  document.getElementById('dateFromLabel').textContent=currentMode==='following'?'From: I followed them':'From: they followed me';
+  document.getElementById('dateToLabel').textContent=currentMode==='following'?'Until: I followed them':'Until: they followed me';
   renderStats();
 }
 
@@ -5083,7 +5083,7 @@ function calcRisk(username,ctx){
   if(score>=ctx.high)level='alto';
   else if(score>=ctx.medium)level='medio';
 
-  return {score,level,reasons:reasons.length?reasons:['sin señales fuertes'],codes:[...new Set(codes)]};
+  return {score,level,reasons:reasons.length?reasons:['no strong indicators'],codes:[...new Set(codes)]};
 }
 
 function getMediumThreshold(){return Number(document.getElementById('mediumThreshold').value)||35}
@@ -5185,7 +5185,7 @@ function excludeMostRecentDate(){
   document.getElementById('dateTo').value=prev;
   updateDateRange();
   const excluded=allRows.filter(r=>dateKey(r.dateMain)===max).length;
-  msg(`Ocultando la fecha más reciente (${max}): ${excluded} cuentas.`,'i');
+  msg(`Hiding the most recent date (${max}): ${excluded} accounts.`,'i');
 }
 
 function setMostRecentDateOnly(){
@@ -5252,7 +5252,7 @@ function calcPriority(row){
   if(row.riskCodes && row.riskCodes.includes('spam_word')){score+=18;why.push('spam/scam');}
   if(row.riskCodes && row.riskCodes.includes('many_numbers')){score+=8;why.push('muchos números');}
 
-  if(!isDoneValid(row)){score+=8;why.push('pendiente');}
+  if(!isDoneValid(row)){score+=8;why.push('pending');}
   if(row.dateMain===0){score+=5;why.push('sin fecha');}
 
   score=Math.max(0,Math.min(100,Math.round(score)));
@@ -5357,7 +5357,7 @@ function clearHiddenSelection(){
   logAction('clear_selection',`Se limpiaron ${c} seleccionados fuera de vista`,{count:c,source:'limpiar fuera de vista'});
   renderTable();
   updateSessionPanel();
-  msg(`${c} seleccionados fuera de vista eliminados de la selección.`, 'i');
+  msg(`${c} offscreen selected profiles removed from the selection.`, 'i');
 }
 
 
@@ -5397,7 +5397,7 @@ function showPendingBadDirect(){
   applyFilters();
   showPage('list');
   forceLiveRefresh(`Vista directa: pendientes malos (${filteredRows.length})`);
-  msg(`Mostrando pendientes malos: ${filteredRows.length} cuentas que no te siguen y aún no están resueltas.`, 's');
+  msg(`Showing unresolved non-followback accounts: ${filteredRows.length}.`, 's');
 }
 
 
@@ -5422,7 +5422,7 @@ function showLatestDayRows(){
   if(hl)hl.checked=false;
   applyFilters();
   const {max}=getMinMaxDates();
-  msg(max?`Mostrando también la fecha más reciente/hoy (${max}).`:'Showing the most recent date/today.','i');
+  msg(max?`Also showing the most recent date/today (${max}).`:'Showing the most recent date/today.','i');
 }
 
 function hideLatestDayRows(){
@@ -5859,7 +5859,7 @@ function renderTable(){
   const hiddenDoneInfo=document.getElementById('hideDone')?.checked?` · verificados ocultos`:``;
   const reviewRangeInfo=(document.getElementById('reviewedFrom')?.value||document.getElementById('reviewedTo')?.value)?` · filtro revisión activo`:``;
   document.getElementById('tableInfo').textContent=`${filteredRows.length} visibles de ${allRows.length} · ${visibleSelectedRows().length} seleccionados visibles · ${hiddenSelectedCount()} fuera de vista${hiddenDoneInfo}${hiddenLatestInfo}${reviewRangeInfo}`;
-  document.getElementById('pageInfo').textContent=`Página ${currentPage}/${pages}`;
+  document.getElementById('pageInfo').textContent=`Page ${currentPage}/${pages}`;
   updateSessionPanel();
   applyColumnVisibility();
 }
@@ -6377,7 +6377,7 @@ function showVerifyPopup(rows){
   const labels=relationLabels();
 
   text.innerHTML=`Se abrió una tanda de <b>${rows.length}</b> perfiles. De esos, <b>${pending.length}</b> están pendientes de verificar: <span style="color:var(--red)">${bad}</span> ${labels.bad} y <span style="color:var(--green)">${good}</span> ${labels.good}.<br><br>Cuando termines de revisarlos en Instagram, marca aquí para guardarlos como verificados inteligentes. Si no se abrieron todos, usa “Volver a abrir perfiles” antes de verificar.`;
-  list.innerHTML=rows.slice(0,80).map(r=>`<div>@${esc(r.username)} · ${esc(r.relation)} · ${isDoneValid(r)?'ya verificado':'pendiente'}</div>`).join('') + (rows.length>80?`<div>... y ${rows.length-80} más</div>`:'');
+  list.innerHTML=rows.slice(0,80).map(r=>`<div>@${esc(r.username)} · ${esc(r.relation)} · ${isDoneValid(r)?'ya verificado':'pending'}</div>`).join('') + (rows.length>80?`<div>... y ${rows.length-80} más</div>`:'');
   backdrop.style.display='flex';
 }
 
@@ -7312,7 +7312,7 @@ function runLogicAudit(show=true){
       const active=typeof isInActiveFocus==='function'&&isInActiveFocus(r,'mutual');
       const openable=typeof isMutualOpenableForFocus==='function'?isMutualOpenableForFocus(r):(!r.done&&!r.protected&&!isSnoozed(r)&&!active);
       if(!r.done&&!r.protected&&!isSnoozed(r)&&!active&&!openable){
-        auditPush(issues,'warn','Seguidores que sigo',r.username,'Mutuo pendiente pero no entra a foco por historial o bloqueo interno','Limpiar bloqueo temporal si aplica',{code:'mutual_not_openable'});
+        auditPush(issues,'warn','Mutual followers',r.username,'Mutuo pendiente pero no entra a foco por historial o bloqueo interno','Limpiar bloqueo temporal si aplica',{code:'mutual_not_openable'});
       }
     });
   }catch(e){}
@@ -7336,7 +7336,7 @@ function renderLogicAudit(issues=lastLogicAuditRows){
   const warns=issues.filter(i=>i.type==='warn').length;
   const main=issues.filter(i=>i.module==='Lista').length;
   const pending=issues.filter(i=>i.module==='Pending').length;
-  const mutual=issues.filter(i=>i.module==='Seguidores que sigo').length;
+  const mutual=issues.filter(i=>i.module==='Mutual followers').length;
   summary.innerHTML=`
     <div class="audit-kpi ${errors?'hot':'ok'}"><b>${errors}</b><span>errores</span></div>
     <div class="audit-kpi ${warns?'warn':'ok'}"><b>${warns}</b><span>advertencias</span></div>
@@ -9844,7 +9844,7 @@ function renderFollowersSessionPanel(){
   }
 }
 
-function renderFollowersFocus(){const rows=followersAnalysisRows();const total=rows.length,high=rows.filter(r=>r.riskLevel==='alto').length,med=rows.filter(r=>r.riskLevel==='medio').length,fans=rows.filter(r=>!r.iFollow).length,pending=rows.filter(r=>!r.done&&!r.protected).length;const stats=document.getElementById('followersFocusStats');if(stats)stats.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>followers</span></div><div class="focuslab-kpi"><b>${high}</b><span>riesgo alto</span></div><div class="focuslab-kpi"><b>${med}</b><span>riesgo medio</span></div><div class="focuslab-kpi"><b>${fans}</b><span>no los sigo</span></div><div class="focuslab-kpi"><b>${pending}</b><span>sin revisar</span></div>`;const body=document.getElementById('followersFocusTableBody');if(!body)return;if(!rows.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">Carga followers para ver este análisis.</td></tr>';return}const tableRows=rows.filter(r=>['alto','medio'].includes(r.riskLevel)||!r.iFollow).slice(0,300);body.innerHTML=tableRows.map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const status=r.done?'revisado':(r.protected?'protegido':(isInActiveFocus(r,'mutual')?'abierto sin confirmar':'pendiente'));return`<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge ${r.iFollow?'bgreen':'bpurple'}">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td><td><span class="focuslab-status ${status==='abierto sin confirmar'?'status-unconfirmed':(status==='pendiente'?'pending':'opened')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">No hay followers sospechosos según estos filtros.</td></tr>'}
+function renderFollowersFocus(){const rows=followersAnalysisRows();const total=rows.length,high=rows.filter(r=>r.riskLevel==='alto').length,med=rows.filter(r=>r.riskLevel==='medio').length,fans=rows.filter(r=>!r.iFollow).length,pending=rows.filter(r=>!r.done&&!r.protected).length;const stats=document.getElementById('followersFocusStats');if(stats)stats.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>followers</span></div><div class="focuslab-kpi"><b>${high}</b><span>riesgo alto</span></div><div class="focuslab-kpi"><b>${med}</b><span>riesgo medio</span></div><div class="focuslab-kpi"><b>${fans}</b><span>no los sigo</span></div><div class="focuslab-kpi"><b>${pending}</b><span>sin revisar</span></div>`;const body=document.getElementById('followersFocusTableBody');if(!body)return;if(!rows.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">Carga followers para ver este análisis.</td></tr>';return}const tableRows=rows.filter(r=>['alto','medio'].includes(r.riskLevel)||!r.iFollow).slice(0,300);body.innerHTML=tableRows.map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const status=r.done?'revisado':(r.protected?'protegido':(isInActiveFocus(r,'mutual')?'abierto sin confirmar':'pending'));return`<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge ${r.iFollow?'bgreen':'bpurple'}">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td><td><span class="focuslab-status ${status==='abierto sin confirmar'?'status-unconfirmed':(status==='pending'?'pending':'opened')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">No hay followers sospechosos según estos filtros.</td></tr>'}
 function exportFollowersFocusCSV(){const rows=followersAnalysisRows();if(!rows.length){msg('Carga followers primero.','w');return}const headers=['usuario','perfil','relacion','fecha_follower','riesgo','puntaje','razones','revisado','protegido'];const csv=[headers.join(',')].concat(rows.map(r=>[r.username,r.href,r.relation,formatDateFromTs(r.dateMain)||'',r.riskLevel,r.riskScore,r.riskReasons.join('; '),r.done?'si':'no',r.protected?'si':'no'].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))).join('\n');downloadFile(`ig_followers_focus_analysis_${Date.now()}.csv`,csv,'text/csv;charset=utf-8');msg('Análisis de followers exportado.','s')}
 
 
@@ -9987,8 +9987,8 @@ function renderFollowersMutualTab(){
     const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';
     const blockReason=mutualNoOpenReason(r);
     const ratio=igcMutualRatioInfo(r),ratioLabel=ratio?(' · '+ratio.ratio.toFixed(1)+'× siguiendo/seguidores'+(ratio.approximate?' ≈':'') ):'';
-    const status=r.done?'revisado':(r.protected?'protegido':'pendiente');
-    const reviewedText=mutualReviewStatusLabel(r);const decisionText=mutualReviewDecisionLabel(r);const reviewedDate=mutualReviewDateLabel(r);const reviewedBadge=r.done?'<span class="badge bgreen">Sí, revisado</span>':'<span class="badge bblue">No revisado</span>';const decisionBadge=r.done?`<span class="badge bpurple">${esc(decisionText)}</span>`:'<span class="muted">—</span>';return `<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge bgreen">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td>${reviewedBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(reviewedDate)}</span></td><td><div class="reason">${esc(historyFocusLabel(r))}</div></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · ')+ratioLabel)}</div></td><td><span class="focuslab-status ${status==='pendiente'?'pending':'opened'}">${esc(status)}</span></td></tr>`
+    const status=r.done?'revisado':(r.protected?'protegido':'pending');
+    const reviewedText=mutualReviewStatusLabel(r);const decisionText=mutualReviewDecisionLabel(r);const reviewedDate=mutualReviewDateLabel(r);const reviewedBadge=r.done?'<span class="badge bgreen">Sí, revisado</span>':'<span class="badge bblue">No revisado</span>';const decisionBadge=r.done?`<span class="badge bpurple">${esc(decisionText)}</span>`:'<span class="muted">—</span>';return `<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge bgreen">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td>${reviewedBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(reviewedDate)}</span></td><td><div class="reason">${esc(historyFocusLabel(r))}</div></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · ')+ratioLabel)}</div></td><td><span class="focuslab-status ${status==='pending'?'pending':'opened'}">${esc(status)}</span></td></tr>`
   }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay seguidores que sigo con este filtro.</td></tr>';
 }
 function exportFollowersMutualCSV(){
