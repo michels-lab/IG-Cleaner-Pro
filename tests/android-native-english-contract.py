@@ -22,7 +22,7 @@ ET.parse(ACCOUNT)
 # UI translations must not change relation data, DOM recognition or
 # account-scoped backup/review behavior.
 for token in ('lower.contains("no me sigue")', 'lower.contains("foco")',
-              'exportInstagramProfileBackup', 'deleteInstagramProfile'):
+              'exportSelectedInstagramProfileBackup', 'deleteInstagramProfile'):
     assert token in java, f"Native behavior boundary removed: {token}"
 
 for token in ("Select Instagram profile", "Add Instagram profile",
