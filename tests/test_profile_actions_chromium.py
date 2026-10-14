@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import perform_visible_action, classify_followback_search, perform_visible_followback_audit
-from profile_counts_instagram import signed_in_handle
+from profile_counts_instagram import signed_in_handle, read_following_visible, FollowingControlUnavailable
 
 try:
     from playwright.sync_api import sync_playwright
@@ -146,6 +146,62 @@ class RealBrowserSelectorTests(unittest.TestCase):
         )""")
         self.assertIsNone(signed_in_handle(self.page))
 
+
+
+    def following_fixture(self, control="button", opened=False, language="en"):
+        label = ("1 seguidos" if language == "es" else "1 following")
+        if control == "button":
+            button = f'<button id="following-control" onclick="openList()">{label}</button>'
+        elif control == "link":
+            button = (f'<a id="following-control" href="/realmichelduarte/following/" '
+                      f'onclick="openList();return false;">{label}</a>')
+        elif control == "text":
+            button = f'<div onclick="openList()"><span>{label}</span></div>'
+        else:
+            button = '<button id="followers-only" onclick="window.badClicks++">5 followers</button>'
+        html = f"""<!doctype html><html><body>
+          <nav><a href="/realmichelduarte/" aria-label="Profile">Profile</a></nav>
+          <header><h2>realmichelduarte</h2><button>Edit profile</button>{button}</header>
+          <div role="dialog" id="following-dialog" style="display:{'block' if opened else 'none'}">
+            <h2>Following</h2><a href="/friend.user/">friend.user</a>
+          </div>
+          <script>window.badClicks=0;window.openCount=0;
+          function openList() {{ window.openCount++;document.querySelector('#following-dialog').style.display='block'; }}
+          </script></body></html>"""
+        self.page.route("https://www.instagram.com/**",
+                        lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+
+    def test_following_collection_accepts_header_button_or_link(self):
+        for control in ("button", "link", "text"):
+            with self.subTest(control=control):
+                self.page.unroute_all()
+                self.following_fixture(control=control)
+                usernames, complete = read_following_visible(
+                    self.page, "realmichelduarte", max_scrolls=9)
+                self.assertEqual(usernames, ["friend.user"])
+                self.assertTrue(complete)
+                self.assertEqual(self.page.evaluate("window.openCount"), 1)
+
+    def test_following_collection_accepts_owner_opened_dialog(self):
+        self.following_fixture(control="none", opened=True)
+        usernames, complete = read_following_visible(
+            self.page, "realmichelduarte", max_scrolls=9)
+        self.assertEqual(usernames, ["friend.user"])
+        self.assertFalse(complete)
+        self.assertEqual(self.page.evaluate("window.badClicks"), 0)
+
+    def test_missing_following_never_clicks_followers(self):
+        self.following_fixture(control="none", opened=False)
+        with self.assertRaises(FollowingControlUnavailable):
+            read_following_visible(self.page, "realmichelduarte", max_scrolls=3)
+        self.assertEqual(self.page.evaluate("window.badClicks"), 0)
+
+    def test_spanish_following_button(self):
+        self.following_fixture(control="button", language="es")
+        usernames, complete = read_following_visible(
+            self.page, "realmichelduarte", max_scrolls=9)
+        self.assertEqual(usernames, ["friend.user"])
+        self.assertTrue(complete)
 
     def attempt(self, *, task="unfollow", locale="en", private=False,
                 account="my.profile", result="follow", protected=False, blocked=False,
