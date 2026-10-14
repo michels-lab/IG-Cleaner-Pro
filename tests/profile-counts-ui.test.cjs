@@ -96,7 +96,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   } else if(action==='load'){
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
-   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
+   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',queue_source:'imported',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
   } else if(action==='results'){
    value={rows:[
     {username:'public.user',followers:'3456',following:'789',status:'ok',
@@ -124,6 +124,12 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const auto=requests.find(r=>r.url.endsWith('/auto'));
  assert(auto,'Automatic detection must begin without any Start click');
  assert.equal(JSON.parse(auto.options.body).account,'ig_A');
+ assert.deepEqual(JSON.parse(auto.options.body).usernames,['public.user']);
+ assert.equal(JSON.parse(auto.options.body).discover_following,false);
+ await bridgeCtx.window.igcCountsRobotDiscover();
+ const optional=requests.filter(r=>r.url.endsWith('/auto')).at(-1);
+ assert.equal(JSON.parse(optional.options.body).discover_following,true,'Following refresh must require an explicit owner click');
+ assert.deepEqual(JSON.parse(optional.options.body).usernames,[]);
  await bridgeCtx.window.igcCountsRobotStart();
  const start=requests.find(r=>r.url.endsWith('/start'));
  assert(start,'Direct Start must submit a localhost POST');
@@ -159,8 +165,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const bridgeSaved=JSON.parse(bridgeStore.get(dataKey));
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
  const followingKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_discovered_v1__'));
- assert(followingKey,'Visible Instagram Following should be imported without CSV');
- assert.deepEqual(JSON.parse(bridgeStore.get(followingKey)).usernames,['public.user']);
+ assert.equal(followingKey,undefined,'Imported snapshots must not be mislabeled as a fresh browser discovery');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
  bridgeIdentity.active='ig_B';
  await bridgeCtx.window.igcCountsRobotPoll();
