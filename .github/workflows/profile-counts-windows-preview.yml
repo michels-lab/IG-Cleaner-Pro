@@ -60,6 +60,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "The Desktop HTML failed to build." }
           node tests/desktop-standalone-smoke.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "The packaged Desktop HTML failed its smoke test." }
+          node tests/profile-counts-indexeddb-browser.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
