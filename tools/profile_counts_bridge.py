@@ -562,7 +562,7 @@ class Collector:
         with self.lock:
             # A directly imported queue is already in Desktop; avoid sending a
             # potentially enormous duplicate JSON response every five seconds.
-            return {"usernames": list(self.usernames) if self.queue_source == "instagram" else [],
+            return {"usernames": list(self.usernames) if self.queue_source != "imported" else [],
                     "handle": self.detected_handle, "complete": self.discovery_complete}
 
     def results(self):
