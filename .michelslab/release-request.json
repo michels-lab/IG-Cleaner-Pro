@@ -1,21 +1,12 @@
 {
-  "version": "120.44",
-  "tag": "v120.44",
-  "authorized": false,
-  "authorization_source": "Owner explicitly requested 'dale release y despues continuas cambiando todo a ingles' on 2026-10-12. Publish currently merged v120.44 code using governed exact-commit checks before further English-only UI modifications. Owner reaffirmed release was not delivered and requested completion; retrigger governed publisher, no bypass of release gates.",
-  "android_stable_artifact": "signed-production-keystore",
+  "version": "120.45",
+  "tag": "v120.45",
+  "authorized": true,
+  "authorization_source": "Owner explicitly said 'dale release' on 2026-10-14 following integration and 5/5 successful CI checks for PR #94. Publish the latest v120.45 development from main as an official stable GitHub Release only after all exact-commit Android, Desktop, Windows and signing gates pass.",
   "requested_channel": "stable",
   "github_prerelease": false,
-  "status": "published",
-  "previous_stable_release": "v120.43",
-  "owner_acceptance_note": "Real Instagram session/browser actions remain unverified; full English-only UI work is subsequent and is not part of v120.44. CI must validate exact source and signed Android before publishing.",
-  "governed_retry": {
-    "date": "2026-10-14",
-    "reason": "Owner-authorized v120.44 retry after validated PR #89 fixed incorrect candidate-vs-stable artifact assertions; re-run exact-commit Desktop/Android rendered UI, integrated Windows and signed Android release gates.",
-    "hotfix_pr": 89,
-    "expected_prior_stable": "v120.43"
-  },
-  "published_run": 38525933376,
-  "published_commit": "90337e23b8bb91b3b2720f73a958c85cea152f77",
-  "completed_at_utc": "2026-10-14T07:10:05Z"
+  "android_stable_artifact": "signed-production-keystore",
+  "status": "requested",
+  "previous_stable_release": "v120.44",
+  "owner_acceptance_note": "Windows Profile Counts now uses the 11,869 already-imported Following profiles without reopening Following; real Instagram user-session scanning and physical Windows/Samsung acceptance are still pending. Publish for the owner to test, not as a claim of live Instagram acceptance. Preserve existing account data, production Android certificate, and release-gate failures."
 }
