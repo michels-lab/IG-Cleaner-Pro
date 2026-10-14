@@ -14084,18 +14084,129 @@ function discoveredKey(){return 'igc_profile_discovered_v1__'+encodeURIComponent
 function discovered(){try{const v=JSON.parse(window.localStorage.getItem(discoveredKey())||'null');return v?.schema==='igc-browser-following-v1'&&Array.isArray(v.usernames)?v.usernames.map(normalize).filter(Boolean):[]}catch{return []}}
 function members(){const seen=new Set(),imported=(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]),automatic=discovered(),input=imported.length?imported:automatic;return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
 function storeDiscovered(users,handle,complete){const uniq=[...new Set((users||[]).map(normalize).filter(Boolean))];if(!uniq.length)return;window.localStorage.setItem(discoveredKey(),JSON.stringify({schema:'igc-browser-following-v1',usernames:uniq,handle,complete:!!complete,updatedAt:new Date().toISOString()}))}
-function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
-function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
+
+// v120.46: per-profile IndexedDB records avoid a single localStorage quota blob.
+// Legacy records are retained as a non-destructive migration backup.
+const COUNTS_DB='ig_cleaner_profile_counts_v2',COUNTS_STORE='records',COUNTS_DB_VERSION=1;
+const countsCache=new Map(),hydration=new Map();
+function legacyRecords(scope){
+ try{const o=JSON.parse(window.localStorage.getItem(scope)||'null');
+  return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{};
+ }catch(e){window.IGC_COUNTS_STORAGE_ERROR='Legacy data could not be read: '+e.message;return{}}
+}
+function read(){const scope=key();if(!countsCache.has(scope))countsCache.set(scope,legacyRecords(scope));return countsCache.get(scope)}
+function countsDb(){
+ if(typeof indexedDB==='undefined')return Promise.resolve(null);
+ return new Promise((resolve,reject)=>{
+  const q=indexedDB.open(COUNTS_DB,COUNTS_DB_VERSION);
+  q.onupgradeneeded=()=>{const db=q.result;if(!db.objectStoreNames.contains(COUNTS_STORE)){
+   const st=db.createObjectStore(COUNTS_STORE,{keyPath:'id'});
+   st.createIndex('scope','scope',{unique:false});
+  }};
+  q.onsuccess=()=>resolve(q.result);
+  q.onerror=()=>reject(q.error||Error('IndexedDB unavailable'));
+  q.onblocked=()=>reject(Error('Close other IG Cleaner windows blocking a storage upgrade'));
+ });
+}
+function countsRows(db,scope){
+ return new Promise((resolve,reject)=>{
+  const rows=Object.create(null);
+  const tx=db.transaction(COUNTS_STORE,'readonly');
+  const q=tx.objectStore(COUNTS_STORE).index('scope').openCursor(IDBKeyRange.only(scope));
+  q.onsuccess=()=>{const c=q.result;if(!c)return;rows[c.value.username]=c.value.record;c.continue()};
+  q.onerror=()=>reject(q.error||Error('Cannot read historical counts'));
+  tx.oncomplete=()=>resolve(rows);
+  tx.onerror=()=>reject(tx.error||Error('Counts database read failed'));
+  tx.onabort=()=>reject(tx.error||Error('Counts database read aborted'));
+ });
+}
+async function countsPersist(db,scope,entries){
+ // Bounded transactions; a failure is surfaced and does not erase legacy data.
+ for(let i=0;i<entries.length;i+=500){
+  const chunk=entries.slice(i,i+500);
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction(COUNTS_STORE,'readwrite'),st=tx.objectStore(COUNTS_STORE);
+   for(const [username,record] of chunk)st.put({
+    id:scope+'\u0000'+username,scope,username,record
+   });
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error||Error('IndexedDB storage write failed'));
+   tx.onabort=()=>reject(tx.error||Error('IndexedDB transaction aborted'));
+  });
+ }
+}
+function newerCounts(a,b){return String(a?.checked_at||'')>=String(b?.checked_at||'')}
+async function countsHydrate(){
+ const scope=key();
+ if(hydration.has(scope))return hydration.get(scope);
+ const task=(async()=>{
+  const old=legacyRecords(scope),db=await countsDb();
+  if(!db){countsCache.set(scope,old);return false}
+  try{
+   const stored=await countsRows(db,scope);
+   const upgrades=[];
+   for(const [u,r] of Object.entries(old))if(!stored[u]||!newerCounts(stored[u],r)){
+    stored[u]=r;upgrades.push([u,r]);
+   }
+   await countsPersist(db,scope,upgrades);
+   countsCache.set(scope,stored);
+   return true;
+  }finally{db.close()}
+ })();
+ hydration.set(scope,task);
+ try{return await task}catch(e){
+  hydration.delete(scope);
+  window.IGC_COUNTS_STORAGE_ERROR='Storage migration failed; original records were retained: '+e.message;
+  throw e;
+ }
+}
+async function write(records,changes=Object.entries(records)){
+ const scope=key(),db=await countsDb();
+ if(!db){
+  // Legacy-only environments remain compatible, but quota errors are NEVER hidden.
+  window.localStorage.setItem(scope,JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}));
+ }else{
+  try{await countsPersist(db,scope,changes)}
+  finally{db.close()}
+ }
+ countsCache.set(scope,records);
+}
+function countsStorageError(error){
+ const message='Profile Counts storage failed. Previous saved data was kept. Export a backup or free device storage: '+error.message;
+ window.IGC_COUNTS_STORAGE_ERROR=message;setMessage(message,true);robotStatus(message,true);
+}
+window.igcCountsStorageReady=countsHydrate;
+
 function csvCell(value){let s=String(value??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 function csvString(rows){return '\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n'}
 function download(name,rows){const url=URL.createObjectURL(new Blob([csvString(rows)],{type:'text/csv;charset=utf-8;'}));const link=document.createElement('a');link.href=url;link.download=name;link.style.display='none';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 function filename(kind){return 'ig-cleaner-'+kind+'-'+context().account.replace(/[^a-z0-9_-]/gi,'_')+'.csv'}
+
+async function downloadLargeCSV(name,rows){
+ // Native stream writes bounded chunks. Blob fallback remains for file:// browsers.
+ const native=typeof window.showSaveFilePicker==='function';
+ let stream=null,chunks=['\uFEFF'],buffer='',lines=0;
+ if(native){const handle=await window.showSaveFilePicker({suggestedName:name,
+  types:[{description:'CSV',accept:{'text/csv':['.csv']}}]});stream=await handle.createWritable()}
+ try{
+  for(const row of rows()){
+   buffer+=row.map(csvCell).join(',')+'\r\n';lines++;
+   if(lines%1000===0){if(stream)await stream.write(buffer);else chunks.push(buffer);buffer=''}
+  }
+  if(buffer){if(stream)await stream.write(buffer);else chunks.push(buffer)}
+  if(stream)await stream.close();
+  else{const url=URL.createObjectURL(new Blob(chunks,{type:'text/csv;charset=utf-8;'}));
+   const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+ }catch(e){if(stream)try{await stream.abort()}catch{}throw e}
+}
+
 function parseCSV(text){const rows=[],row=[];let field='',quoted=false;text=String(text||'').replace(/^\uFEFF/,'');for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"')quoted=true;else if(c===','){row.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row.slice());row.length=0;field=''}else field+=c}if(quoted)throw Error('CSV entrecomillado incompleto');if(field||row.length){row.push(field);rows.push(row)}return rows}
 function validCount(v){const s=String(v??'').trim();return s===''?'':(/^\d{1,15}$/.test(s)&&Number.isSafeInteger(Number(s))?s:null)}
 function setMessage(msg,bad=false){const node=document.getElementById('igcCountsFootnote');if(node){node.textContent=msg;node.style.color=bad?'var(--red)':'var(--muted)'}}
 window.igcCountsExportQueue=function(){const users=members();if(!users.length){setMessage('Primero importa o sincroniza tu lista Following en este Instagram.',true);return}download(filename('cola'),[['username','profile_url'],...users.map(u=>[u,'https://www.instagram.com/'+u+'/'])]);setMessage('Exported queue of '+users.length+' profiles for the browser robot.')};
-window.igcCountsExportResults=function(){const all=read(),users=members();download(filename('resultados'),[COLUMNS,...users.map(u=>{const r=all[u]||{};return [u,r.followers??'',r.following??'',r.checked_at??'',r.source??'',r.status??'pending',r.approximate??'false']})]);setMessage('Exported '+users.length+' profiles; missing counts remain empty.')};
-window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV requiere username, followers, following, checked_at y status.');const allowed=new Set(members());if(!allowed.size)throw Error('Primero carga Following en el Instagram activo.');const current=read();let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};imported++}write(current);window.igcCountsRender();setMessage('Saved '+imported+' results. Ignored '+ignored+' (foreign profiles, invalid, or stale).')}catch(err){setMessage('No se pudo importar: '+err.message,true)}finally{input.value=''}};
+window.igcCountsExportResults=async function(){try{await countsHydrate();const all=read(),users=members();await downloadLargeCSV(filename('resultados'),function*(){yield COLUMNS;for(const u of users){const r=all[u]||{};yield [u,r.followers??'',r.following??'',r.checked_at??'',r.source??'',r.status??'pending',r.approximate??'false']}});setMessage('Exported '+users.length+' profiles; missing counts remain empty.')}catch(e){countsStorageError(e)}};
+window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV requiere username, followers, following, checked_at y status.');const allowed=new Set(members());if(!allowed.size)throw Error('Primero carga Following en el Instagram activo.');await countsHydrate();const current=read(),changes=[];let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};changes.push([username,current[username]]);imported++}await write(current,changes);window.igcCountsRender();setMessage('Saved '+imported+' results. Ignored '+ignored+' (foreign profiles, invalid, or stale).')}catch(err){countsStorageError(err)}finally{input.value=''}};
 let countsPage=0;
 window.igcCountsSetPage=function(next,reset=false){countsPage=reset?0:Math.max(0,countsPage+next);window.igcCountsRender()};
 window.igcCountsRender=function(){const body=document.getElementById('igcCountsRows'),sum=document.getElementById('igcCountsSummary');if(!body||!sum)return;const users=members(),stored=read(),measured=users.filter(u=>stored[u]?.status==='ok').length,failed=users.filter(u=>stored[u]&&stored[u].status!=='ok').length;sum.replaceChildren();for(const label of [users.length+' profiles in Following',measured+' with data',(users.length-measured-failed)+' pending',failed+' unavailable / error']){const el=document.createElement('span');el.textContent=label;sum.appendChild(el)}const q=String(document.getElementById('igcCountsQuery')?.value||'').toLowerCase(),filter=document.getElementById('igcCountsFilter')?.value||'all',chosen=users.filter(u=>{const s=stored[u]?.status||'pending';return u.includes(q)&&(filter==='all'||(filter==='pending'&&s==='pending')||(filter==='ok'&&s==='ok')||(filter==='other'&&s!=='ok'&&s!=='pending'))});const pageSize=250,totalPages=Math.max(1,Math.ceil(chosen.length/pageSize));countsPage=Math.min(countsPage,totalPages-1);const offset=countsPage*pageSize;body.innerHTML=chosen.slice(offset,offset+pageSize).map(u=>{const r=stored[u]||{},status=r.status||'pending',stamp=r.checked_at?new Date(r.checked_at):null,date=stamp&&!Number.isNaN(stamp.getTime())?stamp.toLocaleString('es-MX'):'—',fmt=n=>(n===undefined||n===null||n==='')?'—':Number(n).toLocaleString('es-MX'),suffix=r.approximate?' ≈':'';return '<tr><td><a href="https://www.instagram.com/'+u+'/" target="_blank" rel="noopener noreferrer">@'+esc(u)+'</a></td><td>'+esc(fmt(r.followers))+suffix+'</td><td>'+esc(fmt(r.following))+suffix+'</td><td>'+esc(date)+'</td><td>'+esc(status)+'</td></tr>'}).join('')||'<tr><td colspan="5">No profiles match these filters.</td></tr>';const info=document.getElementById('igcCountsPageInfo');if(info)info.textContent='Page '+(countsPage+1)+' / '+totalPages+' · '+chosen.length.toLocaleString('en-US')+' profiles';const prev=document.getElementById('igcCountsPagePrev'),next=document.getElementById('igcCountsPageNext');if(prev)prev.disabled=countsPage===0;if(next)next.disabled=countsPage>=totalPages-1;setMessage('Showing '+(chosen.length?offset+1:0)+'–'+Math.min(chosen.length,offset+pageSize)+' of '+chosen.length+' matches. All imported profiles are included in analytics; pages limit only rendered rows.')};
@@ -14120,8 +14231,9 @@ function robotStatus(message,bad=false){
  const el=document.getElementById('igcCountsRobotStatus');
  if(el){el.textContent=message;el.style.color=bad?'var(--red)':'var(--muted)'}
 }
-function applyRobotRows(rows){
- const allowed=new Set(members()),current=read();
+async function applyRobotRows(rows){
+ await countsHydrate();
+ const allowed=new Set(members()),current=read(),changes=[];
  let applied=0;
  for(const r of rows||[]){
   const u=normalize(r.username),f=validCount(r.followers),g=validCount(r.following);
@@ -14166,7 +14278,7 @@ window.igcCountsRobotPoll=async function(){
     storeDiscovered(follows.usernames,follows.handle,follows.complete);
    }
    const data=await bridgeRequest('results');
-   applyRobotRows(data.rows);
+   await applyRobotRows(data.rows);
    window.igcCountsRender();
   }
   const good=Number(state.successful??state.progress??0),total=Number(state.total||0);
@@ -14195,7 +14307,7 @@ window.igcCountsRobotPoll=async function(){
   robotStatus((stalled
     ? 'Instagram login could not be verified yet. Sign in or reload Instagram in the Chrome opened by Insta Cleaner. Detection continues automatically; you can Pause at any time.'
     : (state.message||state.status))+' · '+good+'/'+total+' with counts ('+percentage+'% analyzed)'+pacing,stalled);
- }catch(e){robotStatus('Cannot connect to the local robot: '+e.message,true)}
+ }catch(e){countsStorageError(e)}
  finally{robotBusy=false}
 };
 function robotPaceKey(){const ctx=context();return 'igc_robot_pacing_v1__'+encodeURIComponent(ctx.owner)+'__'+encodeURIComponent(ctx.account)}
@@ -14377,7 +14489,7 @@ if(robot&&robot.port>0&&robot.port<=65535){
 window.igcCountsRobotRestoreConfig();
 window.igcCountsRobotPreview();
 const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats'){window.igcCountsRobotRestoreConfig();window.igcCountsRobotPreview();window.igcCountsRender()}return result};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>igcCountsRender());else igcCountsRender();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{igcCountsRender();countsHydrate().then(()=>igcCountsRender()).catch(countsStorageError)});else{igcCountsRender();countsHydrate().then(()=>igcCountsRender()).catch(countsStorageError)}
 })();
 </script>
 
