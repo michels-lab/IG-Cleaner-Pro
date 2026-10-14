@@ -13126,7 +13126,7 @@ setTimeout(init,0);
 'use strict';
 const DB_NAME='ig_cleaner_cross_device_audit', DB_STORE='events', DB_VERSION=1;
 const FALLBACK='igc_v12026_audit_events_fallback', DEVICE_KEY='igc_v12026_device_identity', ACTIVE_KEY='igc_v12026_active_audit_session';
-const MAX_FALLBACK=12000;
+// Audit event storage is not capped by the number of Following/Followers.
 const A={events:[],ready:false,active:null,renderTimer:null,batchCtx:null,suppressOpen:false,seq:0};
 window.IGC_AUDIT_SCHEMA_VERSION=1;
 function clean(v){try{return cleanUsername(v)||String(v||'').replace(/^@/,'').trim().toLowerCase()}catch{return String(v||'').replace(/^@/,'').trim().toLowerCase()}}
@@ -13141,8 +13141,36 @@ function moduleLabel(m){return ({main:'Review',review:'Review',list:'Review',fol
 function fmt(ts){try{return new Date(Number(ts)).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'})}catch{return '—'}}
 function relative(ts){const d=Math.max(0,now()-Number(ts||0)),m=Math.floor(d/60000);if(m<1)return'hace unos segundos';if(m<60)return`hace ${m} min`;const h=Math.floor(m/60);if(h<24)return`hace ${h} h`;const days=Math.floor(h/24);if(days<30)return`hace ${days} d`;const mo=Math.floor(days/30);if(mo<12)return`hace ${mo} mes${mo===1?'':'es'}`;const y=Math.floor(mo/12);return`hace ${y} año${y===1?'':'s'}`}
 function openDb(){return new Promise((res,rej)=>{try{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=()=>{const db=q.result;if(!db.objectStoreNames.contains(DB_STORE)){const st=db.createObjectStore(DB_STORE,{keyPath:'id'});st.createIndex('ts','ts',{unique:false});st.createIndex('username','username',{unique:false});st.createIndex('deviceType','deviceType',{unique:false});st.createIndex('action','action',{unique:false})}};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}})}
-async function dbAll(){try{const db=await openDb(),data=await new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readonly'),q=tx.objectStore(DB_STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();return data}catch{try{return JSON.parse(localStorage.getItem(FALLBACK)||'[]')||[]}catch{return[]}}}
-async function dbPutMany(items){try{const db=await openDb();await new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readwrite'),st=tx.objectStore(DB_STORE);items.forEach(x=>st.put(x));tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch{let cur=[];try{cur=JSON.parse(localStorage.getItem(FALLBACK)||'[]')||[]}catch{}const map=new Map(cur.map(x=>[x.id,x]));items.forEach(x=>map.set(x.id,x));const out=[...map.values()].sort((a,b)=>Number(b.ts)-Number(a.ts)).slice(0,MAX_FALLBACK);try{localStorage.setItem(FALLBACK,JSON.stringify(out))}catch{}}}
+
+function auditFallback(){const value=JSON.parse(localStorage.getItem(FALLBACK)||'[]');return Array.isArray(value)?value:[]}
+function auditStorageFailure(e){const detail='Audit history could not be saved. Existing events are preserved; free storage or export a backup: '+e.message;window.IGC_AUDIT_STORAGE_ERROR=detail;console.error(detail);if(typeof msg==='function')msg(detail,'w')}
+async function auditDbPut(items){const db=await openDb();try{for(let i=0;i<items.length;i+=500){const chunk=items.slice(i,i+500);await new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readwrite'),st=tx.objectStore(DB_STORE);chunk.forEach(x=>st.put(x));tx.oncomplete=res;tx.onerror=()=>rej(tx.error||Error('Cannot save audit events'));tx.onabort=()=>rej(tx.error||Error('Audit transaction aborted'))})}}finally{db.close()}}
+async function dbAll(){
+ // Reconcile a legacy fallback into IndexedDB before displaying events.
+ const fallback=auditFallback();
+ try{
+  const db=await openDb(),data=await new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readonly'),q=tx.objectStore(DB_STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);tx.onabort=()=>rej(tx.error)});db.close();
+  const known=new Set(data.map(x=>x.id)),missing=fallback.filter(x=>!known.has(x.id));
+  if(missing.length)await auditDbPut(missing); // keep the fallback as a non-destructive backup
+  return data.concat(missing);
+ }catch(e){
+  if(!fallback.length)auditStorageFailure(e);
+  return fallback;
+ }
+}
+async function dbPutMany(items){
+ try{await auditDbPut(items)}
+ catch(e){
+  // Do not silently truncate to 12k or swallow quota errors.
+  const map=new Map(auditFallback().map(x=>[x.id,x]));
+  items.forEach(x=>map.set(x.id,x));
+  const out=[...map.values()].sort((a,b)=>Number(b.ts)-Number(a.ts));
+  try{localStorage.setItem(FALLBACK,JSON.stringify(out))}
+  catch(storageError){auditStorageFailure(storageError);throw storageError}
+  auditStorageFailure(e); // IndexedDB unavailable; backed up to legacy storage
+ }
+}
+
 async function dbClear(){try{const db=await openDb();await new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readwrite'),q=tx.objectStore(DB_STORE).clear();q.onsuccess=res;q.onerror=()=>rej(q.error)});db.close()}catch{}try{localStorage.removeItem(FALLBACK)}catch{}}
 function normalizeEvent(x={}){const d=x.device&&typeof x.device==='object'?x.device:{};return {schema:1,id:String(x.id||uid()),ts:Number(x.ts||now()),username:clean(x.username||''),action:String(x.action||'event'),deviceId:String(x.deviceId||d.id||'unknown'),deviceType:normalizeDeviceType(x.deviceType||d.type||'other'),deviceLabel:String(x.deviceLabel||d.label||x.deviceType||'Unknown'),module:String(x.module||'unknown'),batchId:String(x.batchId||''),batchLabel:String(x.batchLabel||''),batchSize:Number(x.batchSize||0),decision:String(x.decision||''),originEventId:String(x.originEventId||''),meta:(x.meta&&typeof x.meta==='object')?x.meta:{}}}
 function dedupeRecent(e){return A.events.some(x=>x.username===e.username&&x.action===e.action&&x.deviceId===e.deviceId&&x.batchId===e.batchId&&Math.abs(Number(x.ts)-Number(e.ts))<1400)}
