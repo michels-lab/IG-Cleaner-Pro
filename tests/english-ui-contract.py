@@ -53,8 +53,8 @@ ET.parse(account)
 # Static HTML body copy must be English; do not scan JS payloads that preserve
 # Instagram's Spanish selectors or historical serialized review identifiers.
 import re
-static_ui = re.sub(r"<script\\b[^>]*>[\\s\\S]*?</script>", "", ui, flags=re.I)
-static_ui = re.sub(r"<style\\b[^>]*>[\\s\\S]*?</style>", "", static_ui, flags=re.I)
+static_ui = re.sub(r"<script\b[^>]*>[\s\S]*?</script>", "", ui, flags=re.I)
+static_ui = re.sub(r"<style\b[^>]*>[\s\S]*?</style>", "", static_ui, flags=re.I)
 visible_nodes = [m.group(1).strip() for m in re.finditer(r">([^<>]+)<", static_ui)]
 accented = [node for node in visible_nodes if re.search(r"[áéíóúñ¿¡ÁÉÍÓÚÑ]", node)]
 assert not accented, f"Untranslated static UI text nodes: {accented[:8]}"
