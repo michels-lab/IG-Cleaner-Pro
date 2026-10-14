@@ -2876,7 +2876,7 @@ window.IGC_INSTAGRAM_PROFILES={
   if(remove)remove.disabled=this.active==='legacy';
  },
  async purgeLocalWorkspace(key){
-  if(!/^ig_[a-z0-9_-]{8,64}$/.test(String(key)))throw Error('Datos anteriores está protegido');
+  if(!/^ig_[a-z0-9_-]{8,64}$/.test(String(key)))throw Error('Legacy data is protected');
   const prefix='igc_profile__'+IGC_INSTAGRAM_OWNER+'__'+key+'__';
   for(let i=igcRawProfileStorage.length-1;i>=0;i--){
    const k=igcRawProfileStorage.key(i);
@@ -2891,16 +2891,16 @@ window.IGC_INSTAGRAM_PROFILES={
      const req=window.indexedDB.deleteDatabase(item.name);
      req.onsuccess=()=>resolve();
      req.onerror=()=>reject(req.error||Error('No se pudo limpiar el historial local'));
-     req.onblocked=()=>reject(Error('Cierra otra pestaña con este perfil y vuelve a intentar'));
+     req.onblocked=()=>reject(Error('Close another tab using this profile and try again'));
     });
    }
   }
  },
  switch(key){
-  if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(key)))throw Error('Identidad inválida');
+  if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(key)))throw Error('Invalid account identity');
   if(key!==this.active&&key!=='legacy'&&!this.accounts.some(a=>a.account_key===key))throw Error('Perfil ajeno a tu cuenta');
   if(key!==this.active&&window.igcAutoSwitchGuard?.()===false){
-   alert('Hay una automatización activa (o no se verificó su estado). Pulsa Pausar y espera a que quede detenida antes de cambiar de Instagram.');
+   alert('An automation is active or its status is unknown. Pause it and confirm it has stopped before switching Instagram profiles.');
    this.render();return;
   }
   igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
@@ -4088,7 +4088,7 @@ let lastVerifiedBatchForUndo=[];
 let batchHistory=[];
 let actionLog=[];
 let dailyGoal=0;
-let lastLiveAction='Sin acciones todavía.';
+let lastLiveAction='No actions yet.';
 let reviewedMeta={}, profileHistory={}, guidedSession100=null;
 let oldFollowersRaw=[], compareLost=[], compareGained=[], compareStayed=[];
 let internalSnapshot=null, snapLostFollowers=[], snapGainedFollowers=[], snapNewFollowing=[], snapRemovedFollowing=[];
@@ -4262,7 +4262,7 @@ function pruneResolvedActiveFocusBatch(){
 }
 function forceClearStuckFocusBatch(){
   if(!activeFocusBatch&&!localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)){msg('No hay tanda atorada que borrar.','i');return;}
-  if(!confirm('¿Borrar la tanda activa atorada? Esto NO borra revisiones ni decisiones guardadas; solo oculta/limpia el popup de tanda activa.'))return;
+  if(!confirm('Delete the stuck active batch? This does NOT delete saved reviews or decisions. It only clears the active batch dialog.'))return;
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
   try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
@@ -4294,7 +4294,7 @@ function markActiveFocusNotReviewed(){
 }
 function cancelActiveFocusBatch(){
   if(!activeFocusBatch||!activeFocusBatch.rows?.length){forceClearStuckFocusBatch();return;}
-  if(!confirm('¿Cancelar esta tanda activa? No se marcará nada como revisado y esos perfiles volverán a salir en focos futuros.'))return;
+  if(!confirm('Cancel this active batch? No profile will be marked reviewed, and the profiles can appear in future Focus batches.'))return;
   const kind=activeFocusBatch.kind, count=activeFocusBatch.rows.length;
   clearActiveFocusBatch();
   renderPendingRequests?.();
@@ -4422,13 +4422,13 @@ function historyFocusLabel(row){
 
 function exportProfileHistoryCSV(){
   const rows=Object.values(profileHistory||{}).sort((a,b)=>(b.lastReviewed||b.lastOpened||0)-(a.lastReviewed||a.lastOpened||0));
-  if(!rows.length){msg('No hay historial automático todavía.','w');return;}
+  if(!rows.length){msg('No automatic history yet.','w');return;}
   const headers=['usuario','abierto','reabierto','revisado','sin_confirmar','pausado','ultima_seccion','ultima_decision','ultimo_abierto','ultima_revision'];
   const csv=[headers.join(',')].concat(rows.map(h=>[
     h.username,h.opened||0,h.reopened||0,h.reviewed||0,h.unconfirmed||0,h.snoozed||0,h.lastSection||'',pendingDecisionLabel(h.lastDecision||''),h.lastOpened?new Date(h.lastOpened).toISOString():'',h.lastReviewed?new Date(h.lastReviewed).toISOString():''
   ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))).join('\n');
   downloadFile(`ig_historial_automatico_${Date.now()}.csv`,csv,'text/csv;charset=utf-8');
-  msg('Historial automático exportado.','s');
+  msg('Automatic history exported.','s');
 }
 function formatMaybeDate(ms){return ms?new Date(ms).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}):'—'}
 
@@ -4621,10 +4621,10 @@ function currentGuidedStep(){
   return steps.find(s=>s.status==='pendiente'&&s.rows&&s.rows.length)||null;
 }
 function continueGuidedSession100(){
-  if(!guidedSession100){msg('No hay sesión guiada activa. Inicia una sesión 100 primero.','w');return;}
-  if(activeFocusBatch?.rows?.length){msg('Ya hay una tanda activa. Confírmala o cancélala antes de continuar.','w');return;}
+  if(!guidedSession100){msg('No active guided session. Start a 100-profile session first.','w');return;}
+  if(activeFocusBatch?.rows?.length){msg('A batch is already active. Confirm or cancel it before continuing.','w');return;}
   const step=currentGuidedStep();
-  if(!step){msg('Sesión guiada terminada o sin perfiles disponibles.','s');guidedSession100=null;saveGuidedSession100();runStateDiagnosis(false);return;}
+  if(!step){msg('Guided session completed or no eligible profiles remain.','s');guidedSession100=null;saveGuidedSession100();runStateDiagnosis(false);return;}
   step.status='activa';
   saveGuidedSession100();
   openConfirmedFocusRows(step.rows,step.label,step.kind);
@@ -4644,14 +4644,14 @@ function maybeContinueGuidedSession(kind,label,outcome){
   if(next && confirm(`Bloque "${label}" terminado. ¿Abrir ahora el siguiente bloque de la sesión 100?\n\nSiguiente: ${next.title} · ${next.rows.length} perfiles.`)){
     continueGuidedSession100();
   }else if(!next){
-    msg('Sesión guiada 100 terminada.','s');
+    msg('Guided 100-profile session completed.','s');
     guidedSession100=null;saveGuidedSession100();runStateDiagnosis(false);
   }
 }
 function cancelGuidedSession100(){
-  if(!guidedSession100){msg('No hay sesión guiada activa.','i');return;}
-  if(!confirm('¿Cancelar la sesión guiada 100? No borra revisiones ya guardadas.'))return;
-  guidedSession100=null;saveGuidedSession100();runStateDiagnosis(false);msg('Sesión guiada cancelada.','w');
+  if(!guidedSession100){msg('No active guided session.','i');return;}
+  if(!confirm('Cancel the guided 100-profile session? Previously saved reviews will be preserved.'))return;
+  guidedSession100=null;saveGuidedSession100();runStateDiagnosis(false);msg('Guided session canceled.','w');
 }
 
 
@@ -4874,7 +4874,7 @@ function showPostProcessNavPopup(){
   const sub=document.getElementById('postProcessNavSub');
   const kpis=document.getElementById('postProcessNavKpis');
   if(!overlay){
-    msg('No encontré el popup de navegación en el DOM.', 'e');
+    msg('The navigation dialog was not found.', 'e');
     return;
   }
 
@@ -4958,7 +4958,7 @@ async function processFiles(){
 
     msg(`Procesado: ${followingRaw.length} following y ${followersRaw.length} followers únicos.`,'s');
     if(followingRaw.length<=1){
-      msg('Ojo: detecté muy pocos following. Revisa Diagnóstico para ver si el archivo following tiene el formato correcto.','w');
+      msg('Warning: very few Following accounts were detected. Check Diagnostics to verify the import format.','w');
     }
 
     // Render secundario diferido para que el botón no se sienta atorado.
@@ -5180,7 +5180,7 @@ function excludeMostRecentDate(){
   const d=new Date(max+'T00:00:00');
   d.setDate(d.getDate()-1);
   const prev=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  if(prev<min){msg('No hay fechas anteriores a la más reciente.','w');return;}
+  if(prev<min){msg('No dates earlier than the most recent one are available.','w');return;}
   document.getElementById('dateFrom').value=min;
   document.getElementById('dateTo').value=prev;
   updateDateRange();
@@ -5258,7 +5258,7 @@ function calcPriority(row){
   score=Math.max(0,Math.min(100,Math.round(score)));
 
   let level='baja', label='Baja', cls='pbaja';
-  if(score>=80){level='critica';label='Crítica';cls='pcrit';}
+  if(score>=80){level='critica';label='Critical';cls='pcrit';}
   else if(score>=55){level='alta';label='Alta';cls='palta';}
   else if(score>=30){level='media';label='Media';cls='pmedia';}
 
@@ -5325,7 +5325,7 @@ function reviewReasonForMode(row,mode){
   return isDoneValidForMode(row,mode) ? reviewReasonFor(row) : '';
 }
 function mutualReviewStatusLabel(row){
-  return isDoneValidForMode(row,'followers') ? 'Sí, revisado' : 'No revisado';
+  return isDoneValidForMode(row,'followers') ? 'Yes, reviewed' : 'Not reviewed';
 }
 function mutualReviewDecisionLabel(row){
   const reason=reviewReasonForMode(row,'followers');
@@ -5407,7 +5407,7 @@ function applyDefaultListView(){
   if(hd)hd.checked=true;
   if(hl)hl.checked=true;
   applyFilters();
-  msg('Vista default: ocultando verificados y fecha más reciente/hoy.','i');
+  msg('Default view: hiding verified accounts and the most recent date/today.','i');
 }
 
 function showVerifiedRows(){
@@ -5422,7 +5422,7 @@ function showLatestDayRows(){
   if(hl)hl.checked=false;
   applyFilters();
   const {max}=getMinMaxDates();
-  msg(max?`Mostrando también la fecha más reciente/hoy (${max}).`:'Mostrando fecha más reciente/hoy.','i');
+  msg(max?`Mostrando también la fecha más reciente/hoy (${max}).`:'Showing the most recent date/today.','i');
 }
 
 function hideLatestDayRows(){
@@ -5554,7 +5554,7 @@ function reviewedAtTs(row){
 
 function reviewedAtLabel(row){
   const ts=reviewedAtTs(row);
-  return ts ? formatActionDate(ts) : 'Sin revisión';
+  return ts ? formatActionDate(ts) : 'Not reviewed';
 }
 
 function reviewedRangeBounds(){
@@ -5580,7 +5580,7 @@ function updateReviewedDateHint(){
   const el=document.getElementById('reviewedDateHint');
   if(!el)return;
   const {start,end,from,to}=reviewedRangeBounds();
-  if(start===null && end===null){el.textContent='Sin filtro por revisión';return;}
+  if(start===null && end===null){el.textContent='No review-date filter';return;}
   const count=allRows.filter(r=>reviewedDateMatches(r)).length;
   el.textContent=`${count} revisadas en rango · ${from||'inicio'} → ${to||'hoy'}`;
 }
@@ -5804,14 +5804,14 @@ function renderTable(){
   if(!allRows.length){
     body.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--muted);padding:40px">Carga archivos primero.</td></tr>';
     document.getElementById('tableInfo').textContent='0 filas';
-    document.getElementById('pageInfo').textContent='Página 0/0';
+    document.getElementById('pageInfo').textContent='Page 0/0';
     applyColumnVisibility();
     return;
   }
   if(!filteredRows.length){
     body.innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--muted);padding:40px">Sin resultados para estos filtros.</td></tr>';
     document.getElementById('tableInfo').textContent='0 visibles';
-    document.getElementById('pageInfo').textContent='Página 0/0';
+    document.getElementById('pageInfo').textContent='Page 0/0';
     applyColumnVisibility();
     return;
   }
@@ -7966,7 +7966,7 @@ function countPriorityFollowing(rows){
 }
 
 function topRowsHTML(rows,mode,sorter,kind){
-  if(!rows.length)return 'Sin datos.';
+  if(!rows.length)return 'No data.';
   return withTempMode(mode,()=>{
     const list=[...rows].sort(sorter).slice(0,10);
     return list.map(r=>{
@@ -7975,7 +7975,7 @@ function topRowsHTML(rows,mode,sorter,kind){
         ? `<span class="priority-pill ${pr.cls}">${pr.label} · ${pr.score}</span>`
         : `<span class="badge ${r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue'}">${r.riskLevel} · ${r.riskScore}</span>`;
       return `<div class="toprow"><span>@${esc(r.username)}</span><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a><span class="score">${badge}</span></div>`;
-    }).join('') || 'Sin datos.';
+    }).join('') || 'No data.';
   });
 }
 
@@ -8328,7 +8328,7 @@ function renderProfileStats(){
     const plan=document.getElementById('cleaningPlan'); if(plan)plan.innerHTML='Carga tus archivos para generar un plan.';
     const prog=document.getElementById('estimatedProgressPanel'); if(prog)prog.innerHTML='Carga tus archivos para calcular avance.';
     ['reciprocityBars','riskPriorityBars','followingTimelineBars','followersTimelineBars','topPriorityFollowing','topRiskFollowers'].forEach(id=>{
-      const el=document.getElementById(id); if(el)el.innerHTML='Sin datos.';
+      const el=document.getElementById(id); if(el)el.innerHTML='No data.';
     });
     return;
   }
@@ -8396,7 +8396,7 @@ function renderProfileStats(){
     barRow('Followers riesgo alto',riskFollowers.alto,followersCount,'linear-gradient(90deg,var(--red),var(--orange))'),
     barRow('Followers riesgo medio',riskFollowers.medio,followersCount,'linear-gradient(90deg,var(--orange),var(--yellow))'),
     '<div class="kpi-note" style="margin:14px 0 8px">Prioridad de limpieza en following</div>',
-    barRow('Crítica',priority.critica,followingCount,'linear-gradient(90deg,var(--red),#ff7a90)'),
+    barRow('Critical',priority.critica,followingCount,'linear-gradient(90deg,var(--red),#ff7a90)'),
     barRow('Alta',priority.alta,followingCount,'linear-gradient(90deg,var(--orange),var(--yellow))'),
     barRow('Media',priority.media,followingCount,'linear-gradient(90deg,var(--purple),var(--accent))'),
     barRow('Baja',priority.baja,followingCount,'linear-gradient(90deg,var(--blue),var(--accent))')
@@ -12809,13 +12809,13 @@ function r24ReviewInfo(row,kind){
   const u=row?.username||'';
   if(kind==='pending'){
     const meta=pendingReviewedMeta?.[u]||null,reviewed=!!meta?.reviewedAt;
-    return {status:reviewed?'reviewed':'pending',label:reviewed?'Revisado':'No revisado',reviewedAt:meta?.reviewedAt||0,decision:pendingDecisionLabel(meta?.decision||''),protected:false,snoozed:!!isPendingSnoozed?.(row)};
+    return {status:reviewed?'reviewed':'pending',label:reviewed?'Revisado':'Not reviewed',reviewedAt:meta?.reviewedAt||0,decision:pendingDecisionLabel(meta?.decision||''),protected:false,snoozed:!!isPendingSnoozed?.(row)};
   }
   const mode=kind==='main'?'following':'followers',meta=reviewedMeta?.[u]||null;
   let valid=false;try{valid=!!isDoneValidForMode(row,mode)}catch{}
   const stale=!!meta&&!!doneSet?.has?.(u)&&!valid;
   const status=valid?'reviewed':stale?'recheck':'pending';
-  const label=valid?'Revisado':stale?'Revisar de nuevo':'No revisado';
+  const label=valid?'Revisado':stale?'Revisar de nuevo':'Not reviewed';
   const rawDecision=meta?.reviewReason||profileHistory?.[u]?.lastDecision||'';
   let snoozed=false;try{snoozed=!!isSnoozed(row)}catch{}
   return {status,label,reviewedAt:meta?.reviewedAt||0,decision:pendingDecisionLabel(rawDecision),protected:!!protectedSet?.has?.(u),snoozed};
