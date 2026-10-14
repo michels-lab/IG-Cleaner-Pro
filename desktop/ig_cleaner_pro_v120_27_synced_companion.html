@@ -3731,7 +3731,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
       The importer works locally without an Instagram login or Instagram API. Optional synchronized data and explicitly approved Windows robot actions are separate features.
     </div>
 </div></div></div><div class="page" id="page-automations"><div class="igc-page-flow">
-<div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage Instagram actions separately from human-only Focus review.</p></div>
+<div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage every Instagram robot in one workspace. Insights is for analysis; Mutuals remains human-only Focus.</p></div>
 <div class="panel" id="igcAutoPanel">
 <div class="title">Instagram action robot · Local Chrome</div>
 <p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
@@ -3769,7 +3769,48 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
 <p class="note">Skip excludes a profile from the current batch; protection persists until removed. Mutuals are human-only Focus lists, never automated account changes.</p>
-</div></div></div><div class="page" id="page-profileStats">
+</div>
+<div class="panel" id="igcAutomationsProfileCountsPanel">
+<div class="title">◎ Profile Counts Robot · Local Chrome</div>
+<p class="note">This is the home for every Instagram robot. Profile Counts reads visible follower and following statistics for accounts already in your imported list. Insights shows the resulting analysis; no new Following export is required.</p>
+<div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
+<strong>Automatic Instagram profile collection</strong>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
+<div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
+<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
+<button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
+<a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45" target="_blank" rel="noopener">Get Windows app</a>
+</div>
+<div id="igcCountsRobotMetrics" class="igc-counts-stats" aria-live="polite">
+<span id="igcCountsMetricAnalyzed">Analyzed: 0</span><span id="igcCountsMetricSuccess">Verified: 0</span><span id="igcCountsMetricPending">Pending: —</span><span id="igcCountsMetricErrors">Errors: 0</span><span id="igcCountsMetricUnavailable">Unavailable: 0</span><span id="igcCountsMetricRemaining">Remaining: —</span>
+</div>
+<p id="igcCountsRobotCurrent" class="note" aria-live="polite">Waiting for Instagram connection…</p>
+<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Percent analyzed"></progress>
+<div id="igcCountsRobotPercent" class="note" role="status">0% · Discovering profiles</div>
+<div class="btnrow" id="igcCountsRobotActions" style="display:flex;align-items:center;flex-wrap:wrap">
+<label>Maximum profiles <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Per (minutes) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Delay per profile (seconds) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<label>Rest after N profiles <input id="igcCountsRobotRestEvery" type="number" min="0" max="10000" step="1" value="0" style="width:85px" oninput="igcCountsRobotPreview()"></label>
+<label>Minutes of rest <input id="igcCountsRobotRestMinutes" type="number" min="0" max="1440" step="0.5" value="0" style="width:75px" oninput="igcCountsRobotPreview()"></label>
+<button class="btn primary" type="button" onclick="igcCountsRobotSaveConfig()">Save pacing</button>
+<button class="btn orange" id="igcCountsPause" type="button" onclick="igcCountsRobotStop()">⏸ Pause</button>
+<button class="btn" id="igcCountsResume" type="button" onclick="igcCountsRobotContinue()">▶ Resume</button>
+<button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Refresh progress</button>
+<button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Restore saved results</button>
+</div>
+<p id="igcCountsRobotPaceNote" class="note">You can customize and save pacing for each account.</p>
+</div>
+<div class="btnrow" id="igcCountsManualCSV">
+<button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Export robot queue</button>
+<label class="btn" style="cursor:pointer">② Import CSV results<input id="igcCountsImport" type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
+<button class="btn" type="button" onclick="igcCountsExportResults()">Export CSV results</button>
+<button class="btn" type="button" onclick="igcCountsRender()">Refresh results</button>
+</div>
+<p class="note" id="igcCountsManualHelp">On Windows, start the local robot here or use the optional CLI to process an exported queue. The robot pauses for Instagram verification and preserves saved results. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instructions</a>.</p>
+
+</div>
+</div></div><div class="page" id="page-profileStats">
 
 
 
@@ -3791,51 +3832,17 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn purple" onclick="selectStatsHighRiskFollowers()">View high-risk followers</button>
 </div>
 </div><div class="panel" id="igcProfileCountsPanel">
-<div class="title">◎ Profile Counts — Visible Instagram data</div>
-<p class="note">The Windows robot uses your imported Following list; it verifies your Instagram session and reads each profile’s visible counts. It will not reopen your Following list unless you explicitly request a refresh.</p>
+<div class="title">◎ Profile Counts Results</div>
+<p class="note">These results include every imported profile in calculations, regardless of the number of Following or Followers. Run or pause the Profile Counts robot under Automations.</p>
+<div class="btnrow"><button class="btn" type="button" onclick="showPage('automations')">Open Profile Counts Robot in Automations →</button><button class="btn" type="button" onclick="igcCountsExportResults()">Export all results CSV</button></div>
 <div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
-<div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
-<strong>Automatic Instagram profile collection</strong>
-<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
-<div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
-<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
-<button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
-<a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45" target="_blank" rel="noopener">Get Windows app</a>
-</div>
-<div id="igcCountsRobotMetrics" class="igc-counts-stats" aria-live="polite">
-<span id="igcCountsMetricAnalyzed">Analyzed: 0</span><span id="igcCountsMetricSuccess">Verified: 0</span><span id="igcCountsMetricPending">Pending: —</span><span id="igcCountsMetricErrors">Errors: 0</span><span id="igcCountsMetricUnavailable">Unavailable: 0</span><span id="igcCountsMetricRemaining">Remaining: —</span>
-</div>
-<p id="igcCountsRobotCurrent" class="note" aria-live="polite">Waiting for Instagram connection…</p>
-<progress id="igcCountsRobotProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Porcentaje analizado"></progress>
-<div id="igcCountsRobotPercent" class="note" role="status">0% · Discovering profiles</div>
-<div class="btnrow" id="igcCountsRobotActions" style="display:flex;align-items:center;flex-wrap:wrap">
-<label>Maximum profiles <input id="igcCountsRobotMax" type="number" min="1" max="10000" step="1" value="50" style="width:85px" oninput="igcCountsRobotPreview()"></label>
-<label>Per (minutes) <input id="igcCountsRobotWindow" type="number" min="1" max="1440" step="1" value="60" style="width:75px" oninput="igcCountsRobotPreview()"></label>
-<label>Delay per profile (seconds) <input id="igcCountsRobotGap" type="number" min="0" max="3600" step="0.5" value="72" style="width:75px" oninput="igcCountsRobotPreview()"></label>
-<label>Rest after N profiles <input id="igcCountsRobotRestEvery" type="number" min="0" max="10000" step="1" value="0" style="width:85px" oninput="igcCountsRobotPreview()"></label>
-<label>Minutes of rest <input id="igcCountsRobotRestMinutes" type="number" min="0" max="1440" step="0.5" value="0" style="width:75px" oninput="igcCountsRobotPreview()"></label>
-<button class="btn primary" type="button" onclick="igcCountsRobotSaveConfig()">Save pacing</button>
-<button class="btn orange" id="igcCountsPause" type="button" onclick="igcCountsRobotStop()">⏸ Pause</button>
-<button class="btn" id="igcCountsResume" type="button" onclick="igcCountsRobotContinue()">▶ Resume</button>
-<button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Refresh progress</button>
-<button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Restore saved results</button>
-</div>
-<p id="igcCountsRobotPaceNote" class="note">You can customize and save pacing for each account.</p>
-</div>
-<div class="btnrow" id="igcCountsManualCSV">
-<button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Export robot queue</button>
-<label class="btn" style="cursor:pointer">② Import CSV results<input id="igcCountsImport" type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
-<button class="btn" type="button" onclick="igcCountsExportResults()">Export CSV results</button>
-<button class="btn" type="button" onclick="igcCountsRender()">Actualizar lista</button>
-</div>
-<p class="note" id="igcCountsManualHelp">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. The visit limits are enforced; page loading adds time. The robot stops if Instagram requests verification. Keep your PC running. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
 <input type="search" id="igcCountsQuery" placeholder="Search @username" style="min-width:160px;flex:1" oninput="igcCountsRender()">
 <select id="igcCountsFilter" aria-label="Filter by status" onchange="igcCountsRender()"><option value="all">All</option><option value="pending">Pending</option><option value="ok">With data</option><option value="other">No data / error</option></select>
 </div>
 <div style="overflow:auto;max-height:520px">
 <table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
-<thead><tr><th>@Usuario</th><th>Followers</th><th>Following</th><th>Consultado</th><th>Status</th></tr></thead>
+<thead><tr><th>@Username</th><th>Followers</th><th>Following</th><th>Checked</th><th>Status</th></tr></thead>
 <tbody id="igcCountsRows"><tr><td colspan="5">Import Following to get started.</td></tr></tbody>
 </table>
 </div>
