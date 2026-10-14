@@ -797,24 +797,24 @@ public final class MainActivity extends AppCompatActivity {
         if (!username.isBlank()) return "@" + username;
         return "legacy".equals(key)
                 ? "Datos anteriores (sin asignar)"
-                : row.optString("label", "Perfil sin @usuario");
+                : row.optString("label", "Profile without @username");
     }
 
     private static String instagramProfileMetrics(JSONObject row) {
-        if (row == null) return "Sin estadísticas sincronizadas";
+        if (row == null) return "No synced statistics available";
         String detail = "Following " + String.format(Locale.ROOT, "%,d", row.optLong("following_count", 0))
                 + " · Followers " + String.format(Locale.ROOT, "%,d", row.optLong("followers_count", 0))
                 + " · Pending " + String.format(Locale.ROOT, "%,d", row.optLong("pending_count", 0))
                 + " · Revisiones " + String.format(Locale.ROOT, "%,d", row.optLong("review_count", 0));
         String stamp = row.optString("last_sync_at", "");
         if (!stamp.isBlank() && !"null".equals(stamp))
-            detail += "\nÚltimo snapshot: " + stamp.substring(0, Math.min(10, stamp.length()));
+            detail += "\nLatest snapshot: " + stamp.substring(0, Math.min(10, stamp.length()));
         return detail;
     }
 
     private void showInstagramProfileManager() {
         if (!api.hasSession()) {
-            Snackbar.make(content, "Conéctate primero a tu cuenta de IG Cleaner.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Sign in to your IG Cleaner account first.", Snackbar.LENGTH_LONG).show();
             return;
         }
         runAsync(() -> {
@@ -848,7 +848,7 @@ public final class MainActivity extends AppCompatActivity {
                         + "\n" + instagramProfileMetrics(profileForKey(summaries, key));
             }
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
-                    .setTitle("Seleccionar Instagram")
+                    .setTitle("Select Instagram profile")
                     // setMessage + setItems hides list rows in Material AlertDialog.
                     .setItems(labels, (dialog, which) -> {
                         JSONObject selected = all.optJSONObject(which);
@@ -856,7 +856,7 @@ public final class MainActivity extends AppCompatActivity {
                         String key = selected.optString("account_key", "legacy");
                         changeInstagramProfile(key, instagramProfileName(selected));
                     })
-                    .setPositiveButton("Añadir Instagram", (dialog, which) -> addInstagramProfile())
+                    .setPositiveButton("Add Instagram profile", (dialog, which) -> addInstagramProfile())
                     .setNeutralButton("Asignar datos anteriores", (dialog, which) -> labelLegacyInstagramProfile())
                     .setNegativeButton("Cancelar", null)
                     .show());
@@ -865,18 +865,18 @@ public final class MainActivity extends AppCompatActivity {
 
     private void addInstagramProfile() {
         TextInputEditText field = new TextInputEditText(this);
-        field.setHint("@nombredeusuario");
+        field.setHint("@username");
         field.setSingleLine(true);
         field.setPadding(dp(18), dp(12), dp(18), dp(12));
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Añadir Instagram")
-                .setMessage("Primero elige si este Instagram corresponde a Datos anteriores o si quieres un perfil completamente nuevo.")
+                .setTitle("Add Instagram profile")
+                .setMessage("Choose whether this Instagram account belongs to your legacy data or needs a completely new workspace.")
                 .setView(field)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Continuar", (dialog, which) -> {
+                .setPositiveButton("Continue", (dialog, which) -> {
                     String username = rawTextOf(field).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
                     if (!username.matches("[a-z0-9._]{1,30}")) {
-                        Snackbar.make(content, "@usuario de Instagram inválido.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(content, "Invalid Instagram @username.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
                     runAsync(() -> {
@@ -900,13 +900,13 @@ public final class MainActivity extends AppCompatActivity {
                             } else if (legacyUnassigned) {
                                 String[] choices = matched == null ? new String[]{
                                     "Usar Datos anteriores (conservar las listas y revisiones)",
-                                    "Crear perfil NUEVO vacío"
+                                    "Create a NEW empty profile"
                                 } : new String[]{
-                                    "Asociar @" + username + " a Datos anteriores (sin borrar el perfil creado)",
-                                    "Abrir el perfil nuevo existente"
+                                    "Assign @" + username + " to legacy data (without deleting the existing profile)",
+                                    "Open the existing new profile"
                                 };
                                 new MaterialAlertDialogBuilder(this)
-                                        .setTitle("¿Qué datos corresponden a @" + username + "?")
+                                        .setTitle("Which data belongs to @" + username + "?")
                                         .setItems(choices, (d, w) -> {
                                             if (w == 0) setInstagramUsernameWithConfirmation("legacy", username, true);
                                             else if (matched != null)
@@ -916,7 +916,7 @@ public final class MainActivity extends AppCompatActivity {
                                         }).setNegativeButton("Cancelar", null).show();
                             } else if (matched != null) {
                                 new MaterialAlertDialogBuilder(this).setTitle("Ya existe @" + username)
-                                        .setMessage("Este Instagram ya tiene un perfil. No se creó otro vacío.")
+                                        .setMessage("This Instagram already has a profile. No duplicate was created.")
                                         .setPositiveButton("Abrir",
                                                 (d, w) -> changeInstagramProfile(
                                                         matched.optString("account_key"), "@" + username))
@@ -954,13 +954,13 @@ public final class MainActivity extends AppCompatActivity {
         field.setPadding(dp(18), dp(12), dp(18), dp(12));
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Editar Instagram")
-                .setMessage("Solo cambia el @usuario; no mueve listas, revisiones ni tandas entre perfiles.")
+                .setMessage("Only change the @username; lists, reviews and batches stay in the same profile.")
                 .setView(field)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Guardar", (dialog, which) -> {
+                .setPositiveButton("Save", (dialog, which) -> {
                     String username = rawTextOf(field).trim().replaceFirst("^@", "").toLowerCase(Locale.ROOT);
                     if (!username.matches("[a-z0-9._]{1,30}")) {
-                        Snackbar.make(content, "Usuario inválido.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(content, "Invalid username.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
                     setInstagramUsernameWithConfirmation(key, username, true);
@@ -972,7 +972,7 @@ public final class MainActivity extends AppCompatActivity {
             JSONArray rows = api.getUnscoped(
                     "instagram_accounts?select=account_key,username,label");
             JSONObject target = profileForKey(rows, key);
-            if (target == null) throw new IllegalStateException("Perfil no encontrado. Actualiza la lista.");
+            if (target == null) throw new IllegalStateException("Profile not found. Refresh the list.");
             String expected = instagramUsername(target);
             JSONObject conflict = null;
             for (int i = 0; i < rows.length(); i++) {
@@ -982,12 +982,12 @@ public final class MainActivity extends AppCompatActivity {
             }
             JSONObject collision = conflict;
             if (collision != null && (!"legacy".equals(key) || !allowTransfer))
-                throw new IllegalStateException("@" + username + " ya corresponde a otro perfil; no se cambió nada.");
+                throw new IllegalStateException("@" + username + " already belongs to another profile. Nothing was changed.");
             if (collision != null) {
                 String otherKey = collision.optString("account_key");
                 mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle("Recuperar @" + username + " en Datos anteriores")
-                        .setMessage("El @usuario está en otro perfil. Puedes asignarlo a Datos anteriores sin borrar ni mezclar listas. El otro perfil permanecerá accesible como 'Sin asignar' con todo su historial independiente.\n\n¿Reasignar solamente el nombre?")
+                        .setMessage("The @username belongs to another profile. You can assign it to legacy data without deleting or mixing lists. The previous profile stays accessible as 'Unassigned' with its independent history.\n\nReassign only the username?")
                         .setNegativeButton("Cancelar", null)
                         .setPositiveButton("Reasignar @usuario", (dialog, which) ->
                                 persistInstagramUsername(key, username, expected, otherKey))
@@ -1010,7 +1010,7 @@ public final class MainActivity extends AppCompatActivity {
                         api.setInstagramProfile(key, "@" + username);
                     if ("account_native".equals(currentScreen)) showNativeAccountScreen();
                 }
-                Snackbar.make(content, "@" + username + " asignado sin borrar datos.", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(content, "@" + username + " assigned without deleting data.", Snackbar.LENGTH_LONG).show();
             });
         }, true);
     }
@@ -1030,14 +1030,14 @@ public final class MainActivity extends AppCompatActivity {
 
     private void exportSelectedInstagramProfileBackup(String key, String label, Runnable onSaved) {
         if (!api.hasSession()) {
-            Snackbar.make(content, "Inicia sesión para exportar el respaldo.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Sign in to export the backup.", Snackbar.LENGTH_LONG).show();
             return;
         }
-        setGlobalStatus("EXPORTANDO • respaldo de " + label);
+        setGlobalStatus("EXPORTING • backup of " + label);
         runAsync(() -> {
             JSONArray accountRows = api.getUnscoped(
                     "instagram_accounts?select=*&account_key=eq." + key);
-            if (accountRows.length() != 1) throw new IllegalStateException("Perfil no encontrado; no se exportó nada.");
+            if (accountRows.length() != 1) throw new IllegalStateException("Profile not found; nothing was exported.");
             JSONObject tables = new JSONObject();
             JSONObject counts = new JSONObject();
             for (String table : new String[]{
@@ -1054,14 +1054,14 @@ public final class MainActivity extends AppCompatActivity {
                     .put("account_key", key)
                     .put("account", accountRows.getJSONObject(0))
                     .put("counts", counts).put("tables", tables)
-                    .put("note", "Solo datos sincronizados en la nube. Los datos locales sin sincronizar y el ZIP original requieren respaldo independiente.");
+                    .put("note", "Only synced cloud data is included. Unsynced local data and the original ZIP require a separate backup.");
             String saved = saveBytesToDownloads(
                     "IG-Cleaner-Instagram-" + key + "-" + System.currentTimeMillis() + ".json",
                     "application/json",
                     payload.toString(2).getBytes(StandardCharsets.UTF_8));
             mainHandler.post(() -> {
-                setGlobalStatus("RESPALDO GUARDADO • " + saved);
-                Snackbar.make(content, "Respaldo: " + saved, Snackbar.LENGTH_LONG).show();
+                setGlobalStatus("BACKUP SAVED • " + saved);
+                Snackbar.make(content, "Backup: " + saved, Snackbar.LENGTH_LONG).show();
                 if (onSaved != null) onSaved.run();
             });
         }, true);
@@ -1070,25 +1070,25 @@ public final class MainActivity extends AppCompatActivity {
     private void confirmDeleteInstagramProfile() {
         final String key = api.getInstagramProfile();
         if ("legacy".equals(key)) {
-            Snackbar.make(content, "Datos anteriores está protegido.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Legacy data is protected.", Snackbar.LENGTH_LONG).show();
             return;
         }
         if (!api.hasSession()) {
-            Snackbar.make(content, "Inicia sesión antes de eliminar un perfil.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Sign in before deleting a profile.", Snackbar.LENGTH_LONG).show();
             return;
         }
         runAsync(() -> {
             JSONArray rows = api.getUnscoped(
                     "instagram_accounts?select=account_key,username,label&account_key=eq." + key);
-            if (rows.length() != 1) throw new IllegalStateException("El perfil no existe. Actualiza los perfiles.");
+            if (rows.length() != 1) throw new IllegalStateException("Profile does not exist. Refresh your profiles.");
             JSONObject row = rows.getJSONObject(0);
             String username = instagramUsername(row);
             String label = instagramProfileName(row);
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
-                    .setTitle("Respaldo antes de eliminar " + label)
+                    .setTitle("Back up before deleting " + label)
                     .setItems(new String[]{
-                        "Guardar respaldo sincronizado y continuar",
-                        "Continuar sin respaldo (se perderá el historial sincronizado)"
+                        "Save synced backup and continue",
+                        "Continue without backup (synced history will be lost)"
                     }, (dialog, which) -> {
                         if (which == 0) exportSelectedInstagramProfileBackup(key, label,
                                 () -> showFinalInstagramDeleteConfirmation(key, username, label));
@@ -1100,20 +1100,20 @@ public final class MainActivity extends AppCompatActivity {
 
     private void showFinalInstagramDeleteConfirmation(String key, String username, String label) {
         String required = username.isBlank()
-                ? "BORRAR " + key.substring(Math.max(0, key.length() - 6))
+                ? "DELETE " + key.substring(Math.max(0, key.length() - 6))
                 : "@" + username;
         TextInputEditText typed = new TextInputEditText(this);
         typed.setHint(required);
         typed.setSingleLine(true);
         typed.setPadding(dp(18), dp(12), dp(18), dp(12));
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Eliminar definitivamente " + label)
-                .setMessage("Borra listas, revisiones, Focus e historial sincronizados SOLO de este perfil. Datos anteriores y las demás cuentas no cambian.\\n\\nEscribe exactamente " + required + " para confirmar.")
+                .setTitle("Permanently delete " + label)
+                .setMessage("Deletes synced lists, reviews, Focus batches and history ONLY for this profile. Legacy data and other accounts remain unchanged.\\n\\nType exactly " + required + " to confirm.")
                 .setView(typed)
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Eliminar perfil", (dialog, which) -> {
+                .setPositiveButton("Delete profile", (dialog, which) -> {
                     if (!required.equals(rawTextOf(typed).trim())) {
-                        Snackbar.make(content, "Confirmación incorrecta. No se borró nada.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(content, "Confirmation did not match. Nothing was deleted.", Snackbar.LENGTH_LONG).show();
                         return;
                     }
                     runAsync(() -> {
@@ -1127,7 +1127,7 @@ public final class MainActivity extends AppCompatActivity {
                             if (bottomNav.getSelectedItemId() != R.id.navHome)
                                 bottomNav.setSelectedItemId(R.id.navHome);
                             else showMobileWorkspaceScreen("home");
-                            Snackbar.make(content, label + " eliminado. Datos anteriores está intacto.",
+                            Snackbar.make(content, label + " deleted. Legacy data is intact.",
                                     Snackbar.LENGTH_LONG).show();
                         });
                     }, true);
@@ -1207,7 +1207,7 @@ public final class MainActivity extends AppCompatActivity {
         accountEmail.setText(api.getEmail());
         label.setText(deviceLabel() + " · session remembered on this device");
         String selectedProfile = api.getInstagramProfile();
-        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\nCargando estadísticas…");
+        activeInstagramProfileLabel.setText(api.getInstagramProfileLabel() + "\nLoading statistics…");
         if (connected) {
             runAsync(() -> {
                 JSONArray summaries = api.getInstagramProfileSummaries();
@@ -1524,7 +1524,7 @@ public final class MainActivity extends AppCompatActivity {
                     + "})();";
             workspaceWebView.evaluateJavascript(js, null);
         } catch (Exception error) {
-            setGlobalStatus("Workspace: error de sesión");
+            setGlobalStatus("Workspace: session error");
         }
     }
 
@@ -1726,7 +1726,7 @@ public final class MainActivity extends AppCompatActivity {
         public void selectInstagramProfile(String key, String label) {
             mainHandler.post(() -> {
                 try { changeInstagramProfile(key, label); }
-                catch (Exception ignored) { setGlobalStatus("Perfil de Instagram inválido"); }
+                catch (Exception ignored) { setGlobalStatus("Invalid Instagram profile"); }
             });
         }
 
@@ -1735,9 +1735,9 @@ public final class MainActivity extends AppCompatActivity {
             api.adoptWebSession(sessionJson);
             mainHandler.post(() -> {
                 if (api.hasSession()) {
-                    setGlobalStatus("Cuenta conectada · sesión compartida");
+                    setGlobalStatus("Account connected · shared session");
                 } else {
-                    setGlobalStatus("Sesión cerrada");
+                    setGlobalStatus("Signed out");
                 }
             });
         }
@@ -1762,7 +1762,7 @@ public final class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void bulkOpenBlocked() {
             mainHandler.post(() -> Toast.makeText(MainActivity.this,
-                    "En Android usa Focus: un perfil por vez.", Toast.LENGTH_SHORT).show());
+                    "On Android, use Focus: one profile at a time.", Toast.LENGTH_SHORT).show());
         }
 
         @JavascriptInterface
@@ -1831,7 +1831,7 @@ public final class MainActivity extends AppCompatActivity {
             return;
         }
 
-        focusSubtitle.setText("Abre un perfil a la vez. El checklist registra apertura; tú confirmas la revisión al final.");
+        focusSubtitle.setText("Open one profile at a time. The checklist tracks openings; you confirm reviews at the end.");
         loadBatches();
     }
 
@@ -1856,7 +1856,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (!"focus".equals(currentScreen) || focusView == null) return;
                 renderBatches(batches, events);
                 renderDoubleCheckStats(doubleCycle);
-                setGlobalStatus("Focus · historial sincronizado");
+                setGlobalStatus("Focus · synced history");
             });
         }, true);
     }
@@ -1865,7 +1865,7 @@ public final class MainActivity extends AppCompatActivity {
         currentBatch = null;
         clearFocusState();
         focusTitle.setText("Focus");
-        focusSubtitle.setText("Crea una tanda aquí o continúa una preparada en cualquier dispositivo.");
+        focusSubtitle.setText("Create a batch here or continue one prepared on another device.");
         focusProgress.setVisibility(View.GONE);
         focusProgressLabel.setVisibility(View.GONE);
         profileList.setVisibility(View.GONE);
@@ -1883,8 +1883,8 @@ public final class MainActivity extends AppCompatActivity {
                     "active".equals(batch.optString("status")))) activeBatches.put(batch);
         }
         if (activeBatches.length() == 0) {
-            addEmptyCard(batchContainer, "No hay tandas activas",
-                    "Puedes crear Foco 20/30/40 directamente en Android. Se guardará en tu cuenta y Desktop podrá verla.");
+            addEmptyCard(batchContainer, "No active batches",
+                    "You can create Focus 20/30/40 directly on Android. It will sync to your account and Desktop.");
             return;
         }
 
@@ -1903,7 +1903,7 @@ public final class MainActivity extends AppCompatActivity {
         LinearLayout inner = new LinearLayout(this);
         inner.setOrientation(LinearLayout.VERTICAL);
         inner.setPadding(dp(13), dp(10), dp(13), dp(10));
-        inner.addView(text("ÚLTIMA TANDA POR SECCIÓN", 11, R.color.ig_cyan, true));
+        inner.addView(text("LATEST BATCH BY SECTION", 11, R.color.ig_cyan, true));
         String[] modules = {"main", "mutual", "followers", "pending", "double"};
         String[] labels = {"REVIEW · no te siguen", "MUTUALS", "FOLLOWERS", "PENDING", "DOUBLE CHECK"};
         for (int j = 0; j < modules.length; j++) {
@@ -2012,9 +2012,9 @@ public final class MainActivity extends AppCompatActivity {
         doubleCheck.setLayoutParams(doubleLp);
         doubleCheck.setOnClickListener(v -> createDoubleCheckBatch(false));
         inner.addView(doubleCheck);
-        doubleCheckCycleStats = text("Consultando ciclo sincronizado…", 11, R.color.ig_cyan, false);
+        doubleCheckCycleStats = text("Checking synced cycle…", 11, R.color.ig_cyan, false);
         inner.addView(doubleCheckCycleStats);
-        inner.addView(text("Ciclo independiente · hasta 30 distintos por tanda · confirma la revisión al final.",
+        inner.addView(text("Independent cycle · up to 30 unique profiles per batch · confirm reviews at the end.",
                 11, R.color.ig_muted, false));
         card.addView(inner);
 
@@ -2041,7 +2041,7 @@ public final class MainActivity extends AppCompatActivity {
         }
         // A frozen/created batch counts in the rotation; it is NOT proof that
         // its profiles were actually opened or that review was confirmed.
-        doubleCheckCycleStats.setText("Ciclo sincronizado: " + visited + " / " + total +
+        doubleCheckCycleStats.setText("Synced cycle: " + visited + " / " + total +
                 " incluidos en tandas · " + Math.max(0, total - visited) + " sin incluir");
     }
 
@@ -2054,8 +2054,8 @@ public final class MainActivity extends AppCompatActivity {
         String[] labels = {
                 "Review · no te siguen",
                 "Mutuals · se siguen mutuamente",
-                "Followers · tú no los sigues",
-                "Requests · solicitudes pendientes"
+                "Followers · you don't follow them",
+                "Requests · pending"
         };
         String[] modules = {"main", "mutual", "followers", "pending"};
         final int[] selected = {0};
@@ -2140,7 +2140,7 @@ public final class MainActivity extends AppCompatActivity {
                 Snackbar.make(content,
                         count == requestedSize
                                 ? "Focus " + requestedSize + " creado en Android"
-                                : "Solo había " + count + " perfiles elegibles; se creó la tanda con esos perfiles",
+                                : "Only " + count + " eligible profiles were available; the batch was created with them",
                         Snackbar.LENGTH_LONG).show();
                 loadBatch(batch);
             });
@@ -2175,7 +2175,7 @@ public final class MainActivity extends AppCompatActivity {
             touchDevice();
             refreshFocusSourceData();
             if (!syncedReviewStateAvailable)
-                throw new IllegalStateException("Sincroniza primero la revisión de Desktop antes de Double Check.");
+                throw new IllegalStateException("Sync Desktop reviews before starting Double Check.");
             JSONObject followersEvidence = syncedWorkspaceState.optJSONObject("followersEvidence");
             if (followersEvidence != null && followersEvidence.optBoolean("partial", false))
                 throw new IllegalStateException("Followers proviene de HTML parcial: las ausencias no demuestran que NO te siguen. Importa un export completo antes de Double Check.");
@@ -2198,7 +2198,7 @@ public final class MainActivity extends AppCompatActivity {
                         || inActiveBatch.contains(user)) continue;
                 if (snoozed != null && snoozed.optLong(user, 0L) > nowMs) continue;
                 eligible.add(nativeFocusCandidate(user, entry.getValue(), "main",
-                        "Double Check · no aparece en followers sincronizados", false, true, following, followers));
+                        "Double Check · not present in synced followers", false, true, following, followers));
             }
             // Like the Desktop Double Check cycle, older unfollowed-back accounts
             // and accounts without a current confirmed review are revisited.
@@ -2223,13 +2223,13 @@ public final class MainActivity extends AppCompatActivity {
                     if (finished) {
                         new MaterialAlertDialogBuilder(this)
                                 .setTitle("Ciclo Double Check completado")
-                                .setMessage("Todos los perfiles actualmente elegibles ya pasaron por este ciclo. ¿Reiniciar y comenzar otra vez con tandas de 30?")
+                                .setMessage("Every currently eligible profile has already completed this cycle. Reset and start over with batches of 30?")
                                 .setNegativeButton("Conservar ciclo", null)
                                 .setPositiveButton("Reiniciar ciclo", (dialog, which) ->
                                         createDoubleCheckBatch(true))
                                 .show();
                     } else {
-                        Snackbar.make(content, "No hay perfiles elegibles para Double Check en este momento.", Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(content, "No profiles are currently eligible for Double Check.", Snackbar.LENGTH_LONG).show();
                     }
                 });
                 return;
@@ -2281,7 +2281,7 @@ public final class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 if (!"focus".equals(currentScreen)) return;
                 Snackbar.make(content,
-                        "Double Check: " + count + " perfiles nuevos dentro del ciclo",
+                        "Double Check: " + count + " new profiles in this cycle",
                         Snackbar.LENGTH_LONG).show();
                 loadBatch(batch);
             });
@@ -2491,7 +2491,7 @@ public final class MainActivity extends AppCompatActivity {
         int target = batch.optInt("target_size", 0);
         String module = batch.optString("module", "review");
         String status = batch.optString("status", "prepared");
-        TextView meta = text(target + " perfiles · " + module + " · " + status,
+        TextView meta = text(target + " profiles · " + module + " · " + status,
                 12, R.color.ig_muted, false);
 
         inner.addView(title);
@@ -2573,7 +2573,7 @@ public final class MainActivity extends AppCompatActivity {
 
         String label = currentBatch == null ? "Focus" : currentBatch.optString("label", "Focus");
         focusTitle.setText(label);
-        focusSubtitle.setText("Toca un perfil → se abre Instagram → vuelve aquí y continúa.");
+        focusSubtitle.setText("Tap a profile → Instagram opens → return here to continue.");
 
         // Index synchronized relationship snapshots once per batch, not once per row.
         Map<String, JSONObject> followingIndex = jsonArrayByUsername(syncedFollowing);
@@ -2607,9 +2607,9 @@ public final class MainActivity extends AppCompatActivity {
         int done = opened.size();
         focusProgress.setMax(Math.max(total, 1));
         focusProgress.setProgressCompat(done, true);
-        focusProgressLabel.setText(done + " / " + total + " perfiles abiertos");
+        focusProgressLabel.setText(done + " / " + total + " profiles opened");
         finishBatch.setEnabled(total > 0 && done >= total);
-        finishBatch.setText(done >= total ? "Finalizar revisión" : "Faltan " + Math.max(0, total - done));
+        finishBatch.setText(done >= total ? "Finish review" : "Remaining: " + Math.max(0, total - done));
     }
 
     private void openNextPending() {
@@ -2619,7 +2619,7 @@ public final class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        Toast.makeText(this, "Ya abriste todos los perfiles de esta tanda.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "You have opened all profiles in this batch.", Toast.LENGTH_SHORT).show();
     }
 
     private void openFocusProfile(ProfileAdapter.ProfileRow row) {
@@ -2666,26 +2666,26 @@ public final class MainActivity extends AppCompatActivity {
             final int[] choice = {0};
             new MaterialAlertDialogBuilder(this)
                     .setTitle("Confirmar Double Check")
-                    .setMessage("Abrir no equivale a revisar. Elige la decisión para los " +
-                            currentItems.length() + " perfiles de esta tanda.")
+                    .setMessage("Opening is not the same as reviewing. Choose a decision for the " +
+                            currentItems.length() + " profiles in this batch.")
                     .setSingleChoiceItems(decisions, 0, (dialog, which) -> choice[0] = which)
-                    .setNegativeButton("No pude revisar todavía", null)
-                    .setPositiveButton("Confirmar revisión", (dialog, which) ->
+                    .setNegativeButton("I couldn't review yet", null)
+                    .setPositiveButton("Confirm review", (dialog, which) ->
                             finalizeBatch(codes[choice[0]]))
                     .show();
             return;
         }
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Finalizar revisión")
-                .setMessage("¿Confirmas que revisaste los " + currentItems.length() +
-                        " perfiles? Abrir un perfil y revisarlo son eventos distintos; esta confirmación marca la tanda como revisada.")
+                .setTitle("Finish review")
+                .setMessage("Do you confirm you reviewed the " + currentItems.length() +
+                        " profiles? Opening and reviewing are different events; this confirmation marks the batch as reviewed.")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Sí, revisados", (dialog, which) -> finalizeBatch("reviewed"))
+                .setPositiveButton("Yes, reviewed", (dialog, which) -> finalizeBatch("reviewed"))
                 .show();
     }
 
     private void finalizeBatch(String decision) {
-        setGlobalStatus("Guardando revisión…");
+        setGlobalStatus("Saving review…");
         runAsync(() -> {
             String now = Instant.now().toString();
             String batchId = currentBatch.optString("id");
@@ -2742,7 +2742,7 @@ public final class MainActivity extends AppCompatActivity {
                 setGlobalStatus("Tanda completada en Android");
                 currentBatch = null;
                 showFocusScreen();
-                Snackbar.make(content, "Revisión sincronizada con Desktop", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(content, "Review synced with Desktop", Snackbar.LENGTH_LONG).show();
             });
         }, true);
     }
@@ -2814,8 +2814,8 @@ public final class MainActivity extends AppCompatActivity {
                 finishAudit.setVisibility(rows.isEmpty() ? View.GONE : View.VISIBLE);
                 TextView subtitle = auditView.findViewById(R.id.auditSubtitle);
                 subtitle.setText(rows.isEmpty()
-                        ? "No hay perfiles para este filtro todavía."
-                        : rows.size() + " perfiles · toca uno para abrirlo y auditarlo.");
+                        ? "No profiles match this filter yet."
+                        : rows.size() + " profiles · toca uno para abrirlo y auditarlo.");
                 setGlobalStatus("ACTIVITY READY • " + rows.size() + " profiles");
             });
         }, true);
@@ -2848,11 +2848,11 @@ public final class MainActivity extends AppCompatActivity {
 
     private void finishAuditSession() {
         if (auditOpened.isEmpty()) {
-            Toast.makeText(this, "Abre al menos un perfil antes de cerrar la auditoría.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Open at least one profile before finishing the audit.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        setGlobalStatus("Guardando auditoría…");
+        setGlobalStatus("Saving audit…");
         runAsync(() -> {
             for (String username : auditOpened) {
                 JSONObject origin = auditEventByUsername.get(username);
@@ -2865,8 +2865,8 @@ public final class MainActivity extends AppCompatActivity {
             }
             int count = auditOpened.size();
             mainHandler.post(() -> {
-                setGlobalStatus("Auditoría registrada · " + count + " perfil(es)");
-                Snackbar.make(content, "Auditoría guardada sin cambiar la revisión original", Snackbar.LENGTH_LONG).show();
+                setGlobalStatus("Audit recorded · " + count + " profile(s)");
+                Snackbar.make(content, "Audit saved without changing the original review", Snackbar.LENGTH_LONG).show();
             });
         }, true);
     }
@@ -2874,7 +2874,7 @@ public final class MainActivity extends AppCompatActivity {
     private void syncNow() {
         if (("advanced".equals(currentScreen) || "account".equals(currentScreen))
                 && workspaceWebView != null) {
-            setGlobalStatus("Sincronizando Workspace…");
+            setGlobalStatus("Syncing workspace…");
             workspaceWebView.evaluateJavascript(
                     "(function(){if(typeof window.igcSyncNow==='function'){window.igcSyncNow();return 'ok';}return 'missing';})()",
                     null);
@@ -2883,7 +2883,7 @@ public final class MainActivity extends AppCompatActivity {
 
         if (!api.hasSession()) {
             bottomNav.setSelectedItemId(R.id.navProfile);
-            Snackbar.make(content, "Inicia sesión para sincronizar", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(content, "Sign in to sync", Snackbar.LENGTH_LONG).show();
             return;
         }
 
@@ -2892,11 +2892,11 @@ public final class MainActivity extends AppCompatActivity {
             return;
         }
 
-        setGlobalStatus("Sincronizando…");
+        setGlobalStatus("Syncing…");
         runAsync(() -> {
             touchDevice();
             mainHandler.post(() -> {
-                setGlobalStatus("Sincronizado · " + DateFormat.getTimeFormat(this).format(new Date()));
+                setGlobalStatus("Synced · " + DateFormat.getTimeFormat(this).format(new Date()));
                 if ("focus".equals(currentScreen)) {
                     // Sync must refresh real Focus dates/history even while a
                     // batch is open, not merely show a misleading status.
@@ -3055,7 +3055,7 @@ public final class MainActivity extends AppCompatActivity {
         if (brandContext != null) {
             String section = (value == null || value.isBlank()) ? "MICHEL'S LAB" : value;
             brandContext.setText(section + " · " + api.getInstagramProfileLabel() + "  ▾");
-            brandContext.setContentDescription("Cambiar perfil de Instagram: "
+            brandContext.setContentDescription("Switch Instagram profile: "
                     + api.getInstagramProfileLabel());
         }
     }
