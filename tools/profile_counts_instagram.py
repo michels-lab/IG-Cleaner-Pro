@@ -79,6 +79,58 @@ def visible_link_descriptors(page):
         }))""")
 
 
+def own_profile_from_switcher_rows(rows):
+    """A visible compact Switch-account row is positive owner identity evidence.
+
+    Use only ordinary profile links in the SAME small row as the Switch
+    control, not unrelated suggested accounts or usernames in feed posts.
+    Conflicting rows/links fail closed.
+    """
+    identities = set()
+    for row in rows:
+        handles = {u for href in row.get("hrefs", [])
+                   if (u := user_from_href(href))}
+        if len(handles) != 1:
+            return None if handles else (None if identities else None)
+        identities.update(handles)
+    return next(iter(identities)) if len(identities) == 1 else None
+
+
+def visible_switcher_account_rows(page):
+    """Read compact visible own-account / Switch rows on Instagram Home.
+
+    The desktop Home recommendations rail shows the signed-in user adjacent
+    to a Switch control even when Instagram hides/restructures Profile nav.
+    Never infer identity from 'Suggested for you' links alone.
+    """
+    return page.evaluate("""() => {
+      const visible = (node) => {
+        const r = node.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.bottom > 0 &&
+          r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+      };
+      const switchLabel = /^(?:switch|cambiar|cambiar cuenta|changer|wechseln)$/i;
+      const rows = [], keys = new Set();
+      for (const el of document.querySelectorAll('button,[role="button"],a,span,div')) {
+        if (el.childElementCount > 3) continue;
+        const label = (el.getAttribute('aria-label') || el.textContent || '').trim();
+        if (label.length > 30 || !switchLabel.test(label) || !visible(el)) continue;
+        let parent = el.parentElement;
+        for (let depth=0; parent && depth<7; depth++, parent=parent.parentElement) {
+          const r=parent.getBoundingClientRect();
+          if (r.width > 760 || r.height > 200) break;
+          const hrefs=[...parent.querySelectorAll('a[href]')]
+            .filter(visible).map(a => a.getAttribute('href') || '');
+          if (!hrefs.length) continue;
+          const key=hrefs.join('|');
+          if (!keys.has(key)) { rows.push({hrefs}); keys.add(key); }
+          break;
+        }
+      }
+      return rows;
+    }""")
+
+
 def signed_in_handle(page):
     """Return exactly one visibly proven logged-in identity, or None.
 
@@ -89,6 +141,7 @@ def signed_in_handle(page):
     if page.locator('input[name="password"]').count():
         return None
     via_nav = own_profile_from_anchors(visible_link_descriptors(page))
+    via_switcher = own_profile_from_switcher_rows(visible_switcher_account_rows(page))
     from_own_page = None
     candidate = user_from_href(getattr(page, "url", ""))
     if candidate:
@@ -101,9 +154,10 @@ def signed_in_handle(page):
                 str(n).strip().lstrip("@").casefold() == candidate for n in names
             ):
                 from_own_page = candidate
-    if via_nav and from_own_page and via_nav != from_own_page:
-        return None  # two conflicting visible identities; never guess
-    return via_nav or from_own_page
+    identities = {h.casefold() for h in (via_nav, via_switcher, from_own_page) if h}
+    if len(identities) != 1:
+        return None  # never guess if trusted identity signals disagree or vanish
+    return next(iter(identities))
 
 
 def challenge_detected(page):
