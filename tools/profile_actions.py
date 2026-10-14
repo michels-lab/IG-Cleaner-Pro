@@ -206,15 +206,15 @@ def _verify_final_state(page, expected_handle, *, checks=3):
 
 def _action_issue(task, result, message):
     """Stable codes for the owner-facing anomalies report, independent of UI locale."""
-    if task == "unfollow" and result == "ok" and "Action confirmed: Follow Back." in message:
+    if task == "unfollow" and result == "ok" and ("Action confirmed: Follow Back." in message or "Follow Back / Seguir también" in message):
         return "unexpected_followback"
-    if task == "cancel" and result == "review" and message.startswith("Outdated pending request:"):
+    if task == "cancel" and result == "review" and message.startswith(("Outdated pending request:", "Pendiente desactualizado:")):
         return "pending_already_following"
-    if task == "cancel" and result == "review" and message.startswith("The request no longer appears"):
+    if task == "cancel" and result == "review" and message.startswith(("The request no longer appears", "La solicitud ya no aparece")):
         return "pending_not_requested"
-    if result == "review" and message.startswith("This account follows you"):
+    if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
         return "mutual_before_action"
-    if result == "review" and message.startswith("The profile does not show"):
+    if result == "review" and message.startswith(("The profile does not show", "El perfil no muestra")):
         return "missing_profile_info"
     if result in ("review", "error", "blocked"):
         return "requires_manual_review"
