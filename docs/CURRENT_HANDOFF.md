@@ -1,9 +1,16 @@
+## v120.44 stable published, reconciled — October 14, 2026
+
+- Official stable GitHub release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.44 ; exact source `90337e23b8bb91b3b2720f73a958c85cea152f77`; successful governed workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38525933376 .
+- Verified seven published files: production-signed Android v120.44 APK, Windows integrated `InstaCleanerPro.exe` ZIP, standalone Desktop HTML, optional Desktop ZIP, logo, privacy and SHA256SUMS. Exact-commit Android emulator/Chromium rendering, integrated Windows, CI and artifact validation passed.
+- Owner's prior explicit authorization for v120.44 has been consumed (`authorized=false`, `status=published`). Current stable `v120.44`; development target `v120.45` is **not authorized for release**.
+- English-only UI remains work in progress on PR #88, excluded from the v120.44 published binaries. Preserve legacy persisted Focus and audit identifiers during localization. Source-only tests must not be interpreted as physical Windows/Samsung/real signed-in Instagram acceptance.
+
 ## Release and delivery rule — owner clarification 2026-10-12
 
 - Development proceeds on branches and PRs with automated tests and integration after validation, but **publishing a new GitHub Release requires an explicit instruction from the owner** (for example, "dale release"). Do not interpret "continúa" or "termina pendientes" as permission to publish.
 - **Never present a PR build, GitHub Actions artifact, or temporary preview ZIP as the owner's normal download/install method.** When the owner authorizes a release, publish through the governed signed Windows/Desktop/Android GitHub Releases pipeline, verify the release exists and assets are complete, then share links to the actual release assets.
 - The owner says **no one else has the app yet**. Do not assume a public user base until the owner explicitly says others have obtained it. Maintain compatibility and data protections nevertheless.
-- Without a release instruction, report implementation/QA status and leave v120.43 as the currently published version. No pending or automatic release authorization should be created by this policy documentation change.
+- Without a release instruction, report implementation/QA status and treat v120.44 as the currently published version. No pending or automatic release authorization should be created by this policy documentation change.
 
 ## v120.43 published — 2026-10-12
 

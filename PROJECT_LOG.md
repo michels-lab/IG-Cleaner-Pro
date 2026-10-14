@@ -1535,3 +1535,12 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Account recognition improved for labeled navigation avatars and own-profile Edit Profile fallback; login warning no longer silently stalls forever and automatic recognition can recover when the user opens the correct Chrome profile. Multiple/conflicting identities remain fail-closed.
 - The affected Automations and Profile Counts UI was converted to English; other historical screens still contain Spanish copy, which requires follow-on English-only audit. The real owner's Instagram DOM and physical Windows/Android acceptance remain **not validated**.
 - **Release**: last published stable remains `v120.43`; Windows test preview from run #38292268299 is available but not a release. No new version, APK or destructive Instagram changes published by this merge. Future v120.44 requires version bump, exact-commit QA and explicit authorization.
+
+
+## 2026-10-14 — Verified v120.44 publication, release authorization consumed
+
+- GitHub release https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.44 is a normal stable publication (not prerelease/draft), 2026-10-14 07:10:05 UTC, exact source `90337e23b8bb91b3b2720f73a958c85cea152f77`. Governed Actions workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38525933376 finished **SUCCESS**.
+- Seven expected files verified: `IG-Cleaner-Pro-Android-v120.44.apk` (7,900,232 bytes), `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.44.zip` (48,711,196 bytes), `IG-Cleaner-Pro-Desktop-v120.44.html` (3,347,216 bytes), optional desktop ZIP (1,419,292 bytes), logo, privacy and SHA256SUMS. Production APK signing identity, exact commit Android/Chromium visual evidence and Windows executable passed the governed gates.
+- Separate validated PR #89 fixed release candidate vs published stable artifact assertions. No user data, authentication secrets, Supabase production tables or Instagram follow relationships were changed.
+- After confirmed publication, consumed release-request authorization and recorded published run/commit, promoted `currentStableRelease=v120.44`, reserved `nextRelease=v120.45` with `authorized=false`. Desktop/Android development metadata now targets 120.45 only, not distributed as a release.
+- Live Instagram signed-in action flows, actual Windows owner machine and Samsung installation, account scoped sync, and full English-only UI remain pending. PR #88 is separate and **not** included in v120.44.
