@@ -14060,7 +14060,7 @@ function key(){const p=context();return 'igc_profile_counts_v1__'+encodeURICompo
 function normalize(u){const v=String(u||'').trim().replace(/^@/,'').toLowerCase();return USER.test(v)?v:''}
 function discoveredKey(){return 'igc_profile_discovered_v1__'+encodeURIComponent(context().owner)+'__'+encodeURIComponent(context().account)}
 function discovered(){try{const v=JSON.parse(window.localStorage.getItem(discoveredKey())||'null');return v?.schema==='igc-browser-following-v1'&&Array.isArray(v.usernames)?v.usernames.map(normalize).filter(Boolean):[]}catch{return []}}
-function members(){const seen=new Set(),automatic=discovered(),input=automatic.length?automatic:(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]);return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function members(){const seen=new Set(),imported=(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]),automatic=discovered(),input=imported.length?imported:automatic;return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
 function storeDiscovered(users,handle,complete){const uniq=[...new Set((users||[]).map(normalize).filter(Boolean))];if(!uniq.length)return;window.localStorage.setItem(discoveredKey(),JSON.stringify({schema:'igc-browser-following-v1',usernames:uniq,handle,complete:!!complete,updatedAt:new Date().toISOString()}))}
 function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
 function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
@@ -14138,7 +14138,7 @@ window.igcCountsRobotPoll=async function(){
   }
   if(state.owner){
    const follows=await bridgeRequest('following');
-   if(follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
+   if(state.queue_source==='instagram'&&follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
     storeDiscovered(follows.usernames,follows.handle,follows.complete);
    }
    const data=await bridgeRequest('results');
