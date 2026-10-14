@@ -60,7 +60,7 @@ DATA AND UPDATES
   antivirus, SmartScreen or Windows security controls to run an untrusted file.
 
 TECHNICAL VALIDATION
-CI tests the frozen EXE with --healthcheck, an offline Chromium mock Instagram
+CI tests the frozen EXE using InstaCleanerPro.exe --healthcheck, an offline Chromium mock Instagram
 flow, and Desktop/Android contracts. These checks are NOT a live user-session
 acceptance test. Keep BUILD-INFO.txt and EXECUTABLE-SHA256.txt with the EXE;
 they identify the candidate and its hash.
