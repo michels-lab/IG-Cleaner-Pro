@@ -9,6 +9,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import perform_visible_action, classify_followback_search, perform_visible_followback_audit
+from profile_counts_instagram import signed_in_handle
 
 try:
     from playwright.sync_api import sync_playwright
@@ -123,6 +124,28 @@ class RealBrowserSelectorTests(unittest.TestCase):
 
     def tearDown(self):
         self.context.close()
+
+    def test_home_owner_switcher_identifies_session_not_suggested_users(self):
+        # Mimics a real Desktop Home with collapsed icon-only Profile navigation.
+        # Positive proof is only the own-account row immediately next to Switch.
+        self.page.set_content("""<!doctype html><html><body>
+          <nav><a href="/explore/">Explore</a></nav>
+          <main><a href="/someone.else/">Feed post author</a></main>
+          <aside style="position:absolute;top:40px;right:20px;width:360px">
+            <section style="display:flex;height:70px;width:330px">
+              <a href="/realmichelduarte/">realmichelduarte</a>
+              <div role="button">Switch</div>
+            </section>
+            <strong>Suggested for you</strong>
+            <a href="/not.me/">not.me</a>
+          </aside></body></html>""")
+        self.assertEqual(signed_in_handle(self.page), "realmichelduarte")
+        self.page.locator("aside").evaluate("""aside => aside.insertAdjacentHTML(
+          'beforeend',
+          '<section style="display:flex;height:70px;width:330px"><a href="/another/">another</a><button>Switch</button></section>'
+        )""")
+        self.assertIsNone(signed_in_handle(self.page))
+
 
     def attempt(self, *, task="unfollow", locale="en", private=False,
                 account="my.profile", result="follow", protected=False, blocked=False,
