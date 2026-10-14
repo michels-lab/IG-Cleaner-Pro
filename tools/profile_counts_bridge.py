@@ -18,7 +18,8 @@ import time
 import webbrowser
 
 from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
-                                      write_following_cache, read_following_cache, reconcile_following_discovery)
+                                      write_following_cache, read_following_cache, reconcile_following_discovery,
+                                      verify_selected_owner_profile)
 from profile_actions import ActionRobot
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
@@ -201,6 +202,7 @@ class Collector:
                     # but never guess an identity from an arbitrary profile URL.
                     login_started = time.monotonic()
                     needs_attention_sent = False
+                    owner_profile_probed = False
                     while not self.stop_signal.is_set():
                         pages = [p for p in browser.pages if not p.is_closed()]
                         if any(challenge_detected(p) for p in pages):
@@ -213,7 +215,21 @@ class Collector:
                         handle = next(iter(identified), None)
                         if handle:
                             break
-                        if time.monotonic() - login_started > 40 and not needs_attention_sent:
+                        elapsed = time.monotonic() - login_started
+                        if (elapsed > 15 and not owner_profile_probed and
+                                self.expected_handle and not self.stop_signal.is_set()):
+                            # A collapsed Instagram Home can omit Profile nav.
+                            # Visit the *selected* own profile once and require
+                            # visible Edit profile evidence; expected alone is
+                            # never treated as proof of the signed-in account.
+                            owner_profile_probed = True
+                            try:
+                                handle = verify_selected_owner_profile(page, self.expected_handle)
+                            except Exception:
+                                handle = None  # transient/auth/navigation failures stay unverified
+                            if handle:
+                                break
+                        if elapsed > 40 and not needs_attention_sent:
                             # Keep Chrome open so the owner can finish logging in or
                             # reload, rather than closing the window mid-auth.
                             self._update("needs_attention",
