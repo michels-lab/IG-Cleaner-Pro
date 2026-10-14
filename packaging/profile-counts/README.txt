@@ -1,30 +1,66 @@
-# Insta Cleaner Pro — Aplicación Windows integrada (Preview)
+INSTA CLEANER PRO — WINDOWS APPLICATION
+Michel's Lab | TOOLS WITH IDENTITY.
 
-**Paquete de prueba; no es un release estable.** Verifica el archivo `BUILD-INFO.txt` para conocer el commit exacto del candidato. Contiene un único InstaCleanerPro.exe con la interfaz y el robot integrados. La estable pública v120.42 no contiene esta integración.
+This package contains the integrated Windows application. Use InstaCleanerPro.exe.
+No separate HTML, .cmd launcher or Python installation is required for normal use.
+Check BUILD-INFO.txt for the exact source commit and distribution identity. GitHub
+Releases is the official download channel. A ZIP from GitHub Actions or a PR is
+development evidence, not an official release.
 
-## Inicio único en Windows (sin .cmd ni programa auxiliar)
+GETTING STARTED
+1. Extract the complete ZIP to a folder you control.
+2. Double-click InstaCleanerPro.exe. It opens Insta Cleaner in its own Chrome
+   application window and starts the private local robot controller internally.
+3. Sign in to your IG Cleaner account if using optional cross-device sync, then
+   select the correct Instagram workspace. IG Cleaner login and Instagram login
+   are different identities.
+4. To collect visible counts, open Insights > Profile Counts and explicitly start
+   a collection. When a separate Chrome window appears, sign in to Instagram
+   directly at instagram.com. The application never asks you to type your
+   Instagram password into an IG Cleaner form.
+5. To perform account-changing actions, open Automations. Choose Cancel Sent
+   Requests or Unfollow Non-Followbacks, review the exact queue, exclusions and
+   pacing, then approve the batch. No account-changing job starts merely by
+   launching Insta Cleaner.
+6. Mutuals is human-review-only: Focus 20/30/40 does not automate unfollowing.
+   Followback Audit is optional, read-only, and never a prerequisite for Unfollow.
 
-1. Extrae el ZIP completo y haz doble clic en **InstaCleanerPro.exe**. Es la aplicación completa con su interfaz y el motor del robot integrados; no abras un HTML ni ejecutes un .cmd.
-2. Insta Cleaner abre una **ventana de aplicación**, sin las pestañas habituales de Chrome. Inicia sesión en IG Cleaner y selecciona tu perfil de Instagram. En el primer arranque se crea un espacio local persistente específico para esta aplicación.
-3. En **Automatizaciones**, elige Cancelar solicitudes enviadas o Dejar de seguir a quienes no te siguen. Revisa la cola y los perfiles protegidos, elige tamaños de tanda, descansos e intervalos, y pulsa **Ejecutar tanda seleccionada**. La app solicita tu aprobación antes de efectuar cambios.
-4. El robot se inicia **dentro del mismo InstaCleanerPro.exe** al ejecutar una tarea. Cuando necesite tu sesión de Instagram abrirá una ventana visible de Chrome, donde puedes iniciar sesión en el sitio auténtico; no se introducen contraseñas de Instagram en Insta Cleaner.
-5. **Pausar** y **Reanudar** funcionan desde la app. Hay progreso, errores y lista de resultados; no se repiten acciones confirmadas ni clics ambiguos. Favoritos/Omitir se comprueban antes de actuar. Cerrar la aplicación solicita una pausa y espera a que el robot finalice el punto seguro.
-6. En **Insights → Profile Counts** se conecta la sesión de Instagram de manera equivalente para recopilar las cifras públicas. **Mutuals** conserva exclusivamente Focos humanos; nunca ejecuta unfollows o cancelaciones.
+SAFETY AND EVIDENCE
+- Automated browser tests use simulated Instagram pages. They do NOT prove
+  correct behavior in a live owner's Instagram session. Begin with a small,
+  supervised batch only after checking the exact target profiles.
+- A protected/skipped account must not be acted on. The robot verifies signed-in
+  owner, exact target, visible button state and outcome, and stops on ambiguity,
+  account mismatch, login/challenge or platform restrictions. Do not bypass
+  challenges or reattempt ambiguous account-changing clicks.
+- Import complete Following and Followers exports before non-followback
+  automation. Partial exports do not establish a negative followback.
+- Pausing preserves progress. Successful actions are not repeated on resume.
+  Statuses can require manual verification; a browser click alone is not proof.
+- Instagram can change its website or restrict automated collection and actions.
+  No collection speed or uninterrupted execution is guaranteed.
 
-**IMPORTANTE:** Esta es una preview técnica, no una release estable. Las pruebas de GitHub son sobre navegadores con páginas simuladas. No se ha probado todavía con una sesión real del propietario; empieza con una tanda de 1 o 2 cuentas que quieras modificar conscientemente y comprueba el resultado. Instagram puede cambiar sus controles o restringir automatizaciones. Nunca intentes eludir verificaciones o restricciones.
+DATA AND UPDATES
+- The integrated application's browser profile is persistent under
+  %LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\
+- The local robot's browser cookies and journals live under
+  %USERPROFILE%\.ig-cleaner-pro\
+- Browser cookies and session files are private. Never upload or share them.
+- An earlier standalone HTML file may use a different storage origin. It is
+  NOT automatically migrated into the Windows application's profile. Export a
+  full backup from Vault and import it in the new app before retiring the old
+  file. Keep the old copy until lists, reviews, protections and Focus history
+  have been verified.
+- Original Instagram export ZIP/JSON/HTML input stays on your device. Optional
+  authenticated sync sends supported normalized app state to Supabase, not the
+  original ZIP. Cloud deletion and local backups are distinct operations.
+- Windows and Android do not run the same robot: Windows collection does not
+  automatically transfer newly collected third-party counts to Android.
+- This EXE is not a Microsoft Store-signed installation. Do not disable
+  antivirus, SmartScreen or Windows security controls to run an untrusted file.
 
-**Persistencia y actualización:** La interfaz integrada y sus datos se almacenan bajo `%LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\` y se mantienen en actualizaciones del mismo EXE. Los datos anteriores de una versión HTML en una ruta distinta **no se migran automáticamente**: expórtalos como respaldo e impórtalos en la nueva aplicación antes de hacer cambios; no borres el HTML viejo hasta confirmar que todo está presente. El robot sigue utilizando los datos existentes de `%USERPROFILE%\.ig-cleaner-pro\` para no perder sesiones o resultados previos.
-
-## Datos y límites
-- **No solicita credenciales a Insta Cleaner** ni usa la API de Meta. La contraseña de Instagram se escribe únicamente en la ventana auténtica de Chrome que abre el robot.
-- Google Chrome y el controlador solo se comunican a través de un servicio privado en `127.0.0.1`; el enlace local de lanzamiento contiene una clave temporal. No lo compartas.
-- La primera ejecución de una aplicación Windows no firmada puede mostrar advertencia del sistema. **No desactives tu antivirus ni protecciones de Windows** para usarla. Si no confías en la procedencia, no la ejecutes.
-- Browser login: `%USERPROFILE%\.ig-cleaner-pro\instagram-browser` (cookies privadas, no compartir). Resultados: `%USERPROFILE%\.ig-cleaner-pro\profile-counts` (CSV persistentes; evitar borrarlos).
-- El workspace de Insta Cleaner almacena otra parte de la información localmente. **Mover el HTML o usar otro perfil/navegador puede mostrar datos diferentes**. Guarda respaldos de tus listas y utiliza siempre la misma ubicación para abrirla.
-- Ejemplo configurable: máximo de 200 visitas en una ventana de 5 minutos, con 5 segundos entre perfiles (equivale a no más de unas 60 consultas en cinco minutos, antes de contar la carga de páginas). Adicionalmente se puede programar una pausa de 5 minutos **después de completar cada 200 visitas**, si así lo decides.
-- El registro local conserva los límites y descansos tras pausar o reiniciar; no reinicia la cuenta de visitas. Las visitas automáticas pueden estar restringidas por las condiciones de Instagram y provocar desafíos o restricciones, incluso con pausas. No se evaden restricciones ni se garantizan respuestas.
-- Los resultados solo se integran automáticamente en la app HTML de PC. La transferencia Desktop↔Android de esta nueva tabla aún está pendiente; los CSV siguen disponibles.
-- **No probado aún con una sesión real de Instagram ni en el equipo Windows del usuario.** Es una build de validación técnica.
-
-## Validación técnica
-La build Windows ejecuta `InstaCleanerPro.exe --healthcheck` en un runner Windows sin abrir Instagram, para confirmar que el ejecutable congelado puede importar Playwright e iniciar un servidor local. Esto **no sustituye** la prueba en navegador Chrome real ni Android.
+TECHNICAL VALIDATION
+CI tests the frozen EXE with --healthcheck, an offline Chromium mock Instagram
+flow, and Desktop/Android contracts. These checks are NOT a live user-session
+acceptance test. Keep BUILD-INFO.txt and EXECUTABLE-SHA256.txt with the EXE;
+they identify the candidate and its hash.
