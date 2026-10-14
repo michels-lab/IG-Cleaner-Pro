@@ -1553,3 +1553,12 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - **Destructive action safety:** cloud delete stays opt-in, verifies the exact newly localized phrase `DELETE CLOUD` and signs out after deletion to avoid immediate re-sync. No deletion executed in development.
 - Added `tests/android-native-english-contract.py` and `tests/english-ui-contract.py` to both CI and signed-release contracts; updated older Desktop/privacy assertions to match actual English UI without weakening export/deletion checks.
 - **Pending acceptance:** system-wide generated JS strings and robot feedback still have legacy Spanish; final rendered wide/narrow Desktop, Android and Windows integrated EXE tests must pass on exact PR head. Live owner-signed-in Instagram confirmation/cancellation and optional audit require supervised acceptance; no Instagram relationship changes were executed. This is **development only**: v120.44 remains the stable official download; no authorization to release v120.45.
+
+
+## 2026-10-14 — Static UI and collector CLI language audit (PR #92)
+
+- After PR #91 was merged with five successful exact-head checks, continued the remaining static Desktop language audit on unreleased v120.45.
+- Translated 42 long static instruction fragments and remaining labels in Review, Focus, Mutuals, Pending, Import, snapshot comparisons, Vault, diagnostics and confirmation dialogs. Audited 1,000+ rendered HTML source text nodes: zero still contain Spanish diacritics/inverted punctuation. This is **not** proof that all JS-generated text is English.
+- Translated `tools/profile_counts_robot.py` terminal prompts, CSV errors, progress and argument help. Kept the Spanish/French strings used to recognize Instagram UI and page errors untouched.
+- Expanded `tests/english-ui-contract.py` with static-HTML source text scan plus English CLI messages and multilingual parsing guard. CI should verify actual Desktop Chromium and Windows packaging as well as Android emulator before integration.
+- Still pending: full audit of JS-generated status/error dialogs and live UI acceptance. Real signed-in owner Chrome, physical Samsung, and full language UI checks are separate. No v120.45 release authorization.

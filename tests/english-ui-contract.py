@@ -50,4 +50,22 @@ assert 'lower.contains("foco")' in native
 ET.parse(strings)
 ET.parse(account)
 
+# Static HTML body copy must be English; do not scan JS payloads that preserve
+# Instagram's Spanish selectors or historical serialized review identifiers.
+import re
+static_ui = re.sub(r"<script\b[^>]*>[\s\S]*?</script>", "", ui, flags=re.I)
+static_ui = re.sub(r"<style\b[^>]*>[\s\S]*?</style>", "", static_ui, flags=re.I)
+visible_nodes = [m.group(1).strip() for m in re.finditer(r">([^<>]+)<", static_ui)]
+accented = [node for node in visible_nodes if re.search(r"[áéíóúñ¿¡ÁÉÍÓÚÑ]", node)]
+assert not accented, f"Untranslated static UI text nodes: {accented[:8]}"
+
+collector = (ROOT / "tools/profile_counts_robot.py").read_text(encoding="utf-8")
+for token in ("Sign in to Instagram in this window if needed.",
+              "The CSV is empty.", "The file contains no valid usernames.",
+              "Minimum delay between profile visits"):
+    assert token in collector, f"English collector CLI text missing: {token}"
+# Locale recognition is intentionally bilingual / multilingual, even if app is English.
+for token in ('seguidores?', 'abonnés', 'esta página no está disponible'):
+    assert token in collector, f"Existing Instagram locale recognizer removed: {token}"
+
 print("English UI, cloud-delete guard and legacy review compatibility passed.")

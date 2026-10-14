@@ -110,7 +110,7 @@ def read_queue(path: Path):
     with path.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         if not reader.fieldnames:
-            raise ValueError("El CSV está vacío.")
+            raise ValueError("The CSV is empty.")
         keys = {k.lower().strip(): k for k in reader.fieldnames}
         column = next((keys[k] for k in ("username", "usuario", "profile", "perfil") if k in keys), None)
         if not column:
@@ -189,7 +189,7 @@ def collect_visible_counts(page, username: str):
 def run(args):
     usernames = read_queue(args.input)
     if not usernames:
-        raise ValueError("No hay nombres de usuario válidos en el archivo.")
+        raise ValueError("The file contains no valid usernames.")
     results = read_results(args.output)
     max_count, window_minutes, min_delay = check_pacing(
         args.max_per_window if args.max_per_window is not None else args.per_hour,
@@ -203,7 +203,7 @@ def run(args):
                (args.retry_unavailable and results[u].get("status") in ("error", "unavailable", "login_required"))]
     if args.max_profiles:
         pending = pending[:args.max_profiles]
-    print(f"Perfiles en la cola: {len(usernames)}. Pendientes de esta ejecución: {len(pending)}.")
+    print(f"Profiles queued: {len(usernames)}. Remaining in this run: {len(pending)}.")
     print(f"Resultados guardados en {args.output}. Se reanuda sin borrar datos anteriores.")
     if not pending:
         return 0
@@ -222,8 +222,8 @@ def run(args):
         try:
             page = browser.pages[0] if browser.pages else browser.new_page()
             page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
-            print("Abre tu sesión de Instagram en esta ventana si hace falta.")
-            input("Cuando la cuenta esté lista, vuelve a esta terminal y presiona Enter para iniciar: ")
+            print("Sign in to Instagram in this window if needed.")
+            input("Once your account is ready, return to this terminal and press Enter to start: ")
             for index, username in enumerate(pending, 1):
                 while True:
                     waiting = max(wait_required(visits, max_count, window_minutes, min_delay),
@@ -240,7 +240,7 @@ def run(args):
                     rests = finish_batch_visit(rests_file, rests, pause_every, pause_minutes)
                 stamp = iso_now()
                 if status in ("blocked", "login_required"):
-                    print(f"Detenido en @{username}: {status}. Requiere revisión humana; no se evaden desafíos.")
+                    print(f"Stopped at @{username}: {status}. Manual review required; challenges will not be bypassed.")
                     # Do not retry automatically. Stop rather than hammering Instagram.
                     break
                 row = dict(username=username, followers="", following="", checked_at=stamp,
@@ -258,18 +258,18 @@ def run(args):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Recopila contadores visibles de Instagram con navegador local y sesión propia.")
+    parser = argparse.ArgumentParser(description="Collect visible Instagram profile counts using a local browser and your own session.")
     parser.add_argument("--input", required=True, type=Path, help="CSV exportado desde Insta Cleaner (username,profile_url).")
     parser.add_argument("--output", type=Path, default=Path("profile_counts_results.csv"), help="CSV de progreso/resultados persistentes.")
-    parser.add_argument("--per-hour", type=int, default=DEFAULT_COUNT, help="Compatibilidad anterior: máximo por hora si no usas --max-per-window.")
-    parser.add_argument("--max-per-window", type=int, help="Visitas máximas permitidas por ventana (1 a 10,000).")
+    parser.add_argument("--per-hour", type=int, default=DEFAULT_COUNT, help="Legacy compatibility: hourly maximum if --max-per-window is omitted.")
+    parser.add_argument("--max-per-window", type=int, help="Maximum profile visits per window (1 to 10,000).")
     parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES, help="Longitud de la ventana, en minutos (1 a 1,440).")
-    parser.add_argument("--min-delay-seconds", type=float, default=DEFAULT_DELAY_SECONDS, help="Espera mínima entre perfiles, en segundos (0 a 3,600).")
-    parser.add_argument("--pause-every", type=int, default=0, help="Opcional: descanso largo después de cada N perfiles; 0 desactiva.")
-    parser.add_argument("--pause-minutes", type=float, default=0, help="Duración de cada descanso largo, en minutos; 0 desactiva.")
-    parser.add_argument("--max-profiles", type=int, default=0, help="0: todos los pendientes; otro número: límite por ejecución.")
+    parser.add_argument("--min-delay-seconds", type=float, default=DEFAULT_DELAY_SECONDS, help="Minimum delay between profile visits in seconds (0 to 3,600).")
+    parser.add_argument("--pause-every", type=int, default=0, help="Optional longer break after every N profiles; 0 disables it.")
+    parser.add_argument("--pause-minutes", type=float, default=0, help="Duration of each longer break, in minutes; 0 disables it.")
+    parser.add_argument("--max-profiles", type=int, default=0, help="0: all pending profiles; otherwise limit profiles per run.")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser",
-                        help="Carpeta local con la sesión del navegador. Tratarla como privada.")
+                        help="Local browser session folder. Treat this as private data.")
     parser.add_argument("--retry-unavailable", action="store_true", help="Revisitar errores y perfiles sin datos; nunca repetir OK.")
     args = parser.parse_args(argv)
     try:
