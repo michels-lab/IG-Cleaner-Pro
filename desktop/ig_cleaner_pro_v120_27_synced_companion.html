@@ -4491,7 +4491,7 @@ function diagnoseState(){
   const pendingAll=pendingRows();
   const mutualAll=followersMutualRows();
   const activeCount=activeFocusBatch?.rows?.length||0;
-  if(activeCount)add('medium','Unconfirmed active batch',`${activeCount} profiles remain opened but unconfirmed since ${formatMaybeDate(activeFocusBatch.openedAt)}. If you already reviewed them, use Clear stuck batch or allow v71 lo limpie automáticamente.`,activeCount);
+  if(activeCount)add('medium','Unconfirmed active batch',`${activeCount} profiles remain opened but unconfirmed since ${formatMaybeDate(activeFocusBatch.openedAt)}. If they were already reviewed, clear the stuck batch or let the recovery workflow handle it automatically.`,activeCount);
 
   const staleActive=activeFocusBatch?.openedAt && Date.now()-activeFocusBatch.openedAt>3*3600000;
   if(staleActive)add('high','Stale active batch',`The active batch has been open for more than three hours. Recover its dialog or restore it.`,activeCount);
