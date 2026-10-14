@@ -44,6 +44,19 @@ assert(insightsStart<countsStart && source.indexOf('id="igcCountsRobotBridge"',i
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('2 profiles')),'Render should read Following from active workspace');
  assert.match(elements.igcCountsRows.innerHTML,/public\.user/);
+ // A large Following/Followers dataset must not be clipped by the visual page size.
+ const smallImport=ctx.followingRaw;
+ ctx.followingRaw=Array.from({length:50003},(_,i)=>({username:'large'+String(i).padStart(6,'0')}));
+ ctx.window.igcCountsSetPage(0,true);
+ assert(summary.some(t=>t.includes('50003 profiles')),
+  'Insights must include the entire 50k+ dataset, not just the visible page');
+ assert.match(elements.igcCountsRows.innerHTML,/large000000/);
+ ctx.window.igcCountsSetPage(1);
+ assert.match(elements.igcCountsRows.innerHTML,/large000250/,
+  'Results beyond the first 250 rows must be available by pagination');
+ ctx.followingRaw=smallImport;
+ ctx.window.igcCountsSetPage(0,true);
+
  ctx.window.igcCountsExportQueue();
  assert.equal(clicked,1,'Export should trigger actual browser download');
  const csv='username,followers,following,checked_at,source,status,approximate\n'+
