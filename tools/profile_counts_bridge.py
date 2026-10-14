@@ -93,7 +93,7 @@ class Collector:
                 return self.snapshot()
             if self.status in ("paused", "pausing") and not request.get("resume_requested"):
                 if owner != self.owner or account != self.account:
-                    raise ValueError("Hay otra cuenta pausada. No se mezclan los perfiles.")
+                    raise ValueError("Hay otra cuenta pausada. No se mezclan los profiles.")
                 return self.snapshot()
             self.pause_requested = False
             self.owner, self.account = owner, account
@@ -117,7 +117,7 @@ class Collector:
     def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
         if not isinstance(usernames, list) or not 1 <= len(usernames) <= MAX_QUEUE:
-            raise ValueError("La lista debe tener entre 1 y 10,000 perfiles.")
+            raise ValueError("La lista debe tener entre 1 y 10,000 profiles.")
         normalized, seen = [], set()
         for user in usernames:
             clean = valid_username(user)
@@ -241,7 +241,7 @@ class Collector:
                             self.total = len(retained)
                             self.discovery_complete = bool(complete)
                             self.message = ("Following detectados: "+str(len(retained))+
-                                            (" perfiles (lista provisional)." if not complete else " perfiles."))
+                                            (" profiles (provisional list)." if not complete else " profiles."))
                         write_following_cache(self.followings_path(), handle, retained, complete)
                     users, complete = read_following_visible(
                         page, handle, on_batch=save_batch, stop_signal=self.stop_signal)
@@ -324,7 +324,7 @@ class Collector:
                 unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
                 self._update("complete" if not unresolved and (not self.autonomous or self.discovery_complete) else "partial",
                              "Data collected. "+("Following complete." if self.discovery_complete else
-                             "La lista Following podría estar incomplete; se necesitará revisar el navegador."))
+                             "The Following list may be incomplete and requires browser review."))
         except Exception as exc:
             self._update("error", "Browser error: " + str(exc)[:240])
         finally:
@@ -537,7 +537,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
 def main():
     parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
-    parser.add_argument("--app", type=Path, help="Ruta del HTML Desktop (misma versión que ya usas).")
+    parser.add_argument("--app", type=Path, help="Path to your Desktop HTML file (same version as your app).")
     parser.add_argument("--healthcheck", action="store_true", help="Prueba empaquetado Playwright + servidor local, sin abrir Instagram.")
     parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
@@ -547,7 +547,7 @@ def main():
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             if not pw.chromium:
-                raise RuntimeError("Playwright no inicializó Chromium.")
+                raise RuntimeError("Playwright could not initialize Chromium.")
         probe = build_server(Collector(args.data_dir, args.session_dir), "offline-check-token")
         probe.server_close()
         print("PASS: runtime Playwright y servidor local disponibles (no prueba Instagram).")
