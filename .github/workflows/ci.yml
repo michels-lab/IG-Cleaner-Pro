@@ -96,23 +96,23 @@ jobs:
           assert m['releasePolicy']['automaticPublishFromMain'] is False
           assert m['releasePolicy']['explicitManualPublishRequired'] is True
           assert m['releasePolicy']['checksumsRequired'] is True
-          assert m['releasePolicy']['currentStableRelease']==f"v{m['channels']['android']['artifact'].removeprefix('IG-Cleaner-Pro-Android-v').removesuffix('.apk')}"
+          assert m['releasePolicy']['nextRelease']==f"v{m['channels']['android']['artifact'].removeprefix('IG-Cleaner-Pro-Android-v').removesuffix('.apk')}"
           assert m['releasePolicy']['nextRelease'] != m['releasePolicy']['currentStableRelease']
           assert isinstance(m['releasePolicy']['lastPublishedRun'],int) and m['releasePolicy']['lastPublishedRun']>0
           assert m['releasePolicy']['genericPublisher']=='.github/workflows/release.yml'
           assert m['releasePolicy']['githubPrerelease'] is False
           assert m['releasePolicy']['stableGithubReleaseIncludesLatestValidatedAndroidApk'] is True
-          assert m['channels']['desktop']['artifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['currentStableRelease']}.zip"
+          assert m['channels']['desktop']['artifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['nextRelease']}.zip"
           assert m['channels']['desktop']['entrypoint']=='IG-Cleaner-Pro.html'
           assert m['channels']['desktop']['includes']==[
               'assets/michel_duarte_avatar.jpg',
               'assets/michels-lab/official-lockup.png',
               'assets/ig-cleaner-pro/official-app-icon.png',
           ]
-          assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['currentStableRelease']}.apk"
+          assert m['channels']['android']['artifact']==f"IG-Cleaner-Pro-Android-{m['releasePolicy']['nextRelease']}.apk"
           assert m['channels']['desktop']['artifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.zip'
           assert m['channels']['desktop']['primaryArtifactTemplate']=='IG-Cleaner-Pro-Desktop-v{version}.html'
-          assert m['channels']['desktop']['primaryArtifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['currentStableRelease']}.html"
+          assert m['channels']['desktop']['primaryArtifact']==f"IG-Cleaner-Pro-Desktop-{m['releasePolicy']['nextRelease']}.html"
           assert m['channels']['desktop']['primaryFormat']=='html'
           assert m['channels']['desktop']['standaloneOffline'] is True
           assert m['channels']['desktop']['zipSecondary'] is True
