@@ -122,7 +122,7 @@ assert 'android:text="About"' in layout
 assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
 assert 'syncAction.setOnClickListener(view -> syncNow())' in main
 assert 'brandContext.setOnClickListener(view -> showInstagramProfileManager())' in main, "Account switch must be available from native header"
-assert 'brandContext.setContentDescription("Cambiar perfil de Instagram: "' in main, "Account switch requires accessible name"
+assert 'brandContext.setContentDescription("Switch Instagram profile: "' in main, "Account switch requires accessible name"
 assert 'android:id="@+id/brandContext"' in layout and 'android:focusable="true"' in layout, "Header profile switch must remain tappable"
 
 assert '@+id/appBrandTitle' in layout
