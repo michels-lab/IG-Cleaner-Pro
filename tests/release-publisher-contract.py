@@ -68,7 +68,9 @@ assert desktop["primaryArtifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.ht
 assert desktop["primaryFormat"]=="html"
 assert desktop["standaloneOffline"] is True
 assert desktop["zipSecondary"] is True
-assert desktop["primaryArtifact"]==f"IG-Cleaner-Pro-Desktop-{manifest['releasePolicy']['currentStableRelease']}.html"
+assert desktop["primaryArtifact"]==f"IG-Cleaner-Pro-Desktop-{policy['nextRelease']}.html"
+assert desktop["artifact"]==f"IG-Cleaner-Pro-Desktop-{policy['nextRelease']}.zip"
+assert android["artifact"]==f"IG-Cleaner-Pro-Android-{policy['nextRelease']}.apk"
 assert android["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
 assert policy["genericPublisher"]==".github/workflows/release.yml"
 assert policy["explicitManualPublishRequired"] is True
