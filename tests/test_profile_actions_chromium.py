@@ -214,13 +214,13 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt(result="followback")
         self.assertEqual(status, "ok", message)
         self.assertIn("Follow Back", message)
-        self.assertIn("aún te sigue", message)
+        self.assertIn("still follows you", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
 
     def test_mutual_public_unfollow_spanish_ends_seguir_tambien(self):
         status, message, events = self.attempt(locale="es", result="followback")
         self.assertEqual(status, "ok", message)
-        self.assertIn("Seguir también", message)
+        self.assertIn("Follow Back", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
 
     def test_private_english_extra_confirmation(self):
@@ -251,20 +251,20 @@ class RealBrowserSelectorTests(unittest.TestCase):
     def test_pending_list_outdated_but_now_following_no_click(self):
         status,message,events=self.attempt(task="cancel",pending_already_following=True)
         self.assertEqual(status,"review",message)
-        self.assertIn("Pendiente desactualizado",message)
+        self.assertIn("Outdated pending request",message)
         self.assertEqual(events,[])
 
     def test_pending_list_outdated_but_now_siguiendo_no_click(self):
         status,message,events=self.attempt(task="cancel",locale="es",
                                            pending_already_following=True)
         self.assertEqual(status,"review",message)
-        self.assertIn("Pendiente desactualizado",message)
+        self.assertIn("Outdated pending request",message)
         self.assertEqual(events,[])
 
     def test_missing_profile_relationship_no_click(self):
         status,message,events=self.attempt(task="cancel",missing_profile=True)
         self.assertEqual(status,"review",message)
-        self.assertIn("no muestra el estado necesario",message)
+        self.assertIn("does not show the state required",message)
         self.assertEqual(events,[])
 
     def test_pending_request_dialog_unfollow_english(self):
@@ -311,8 +311,8 @@ class RealBrowserSelectorTests(unittest.TestCase):
     def test_pending_request_follow_state_is_not_follow_back(self):
         status, message, events = self.attempt(task="cancel", request_unfollow=True)
         self.assertEqual(status, "ok", message)
-        self.assertIn("Follow / Seguir", message)
-        self.assertNotIn("La persona aún te sigue", message)
+        self.assertIn("Action confirmed: Follow.", message)
+        self.assertNotIn("person still follows you", message)
         self.assertEqual(events, ["open", "confirmed"])
 
     def test_request_cancel_english(self):
