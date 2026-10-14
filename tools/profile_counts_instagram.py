@@ -141,7 +141,8 @@ def signed_in_handle(page):
     own profile with an Edit profile button AND matching header username is
     alternate positive evidence, never an arbitrary URL or a Follow button.
     """
-    if page.locator('input[name="password"]').count():
+    passwords = page.locator('input[name="password"]')
+    if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
         return None
     via_nav = own_profile_from_anchors(visible_link_descriptors(page))
     via_switcher = own_profile_from_switcher_rows(visible_switcher_account_rows(page))
@@ -182,11 +183,15 @@ def verify_selected_owner_profile(page, expected_handle):
     expected = valid_username(expected_handle)
     if not expected or challenge_detected(page):
         return None
-    if page.locator('input[name="password"]').count():
+    passwords = page.locator('input[name="password"]')
+    if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
         return None
     page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=20000)
     page.wait_for_timeout(900)
-    if challenge_detected(page) or page.locator('input[name="password"]').count():
+    passwords = page.locator('input[name="password"]')
+    if challenge_detected(page) or any(
+        passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))
+    ):
         return None
     proven = own_profile_edit_identity(page)
     return expected if proven and proven.casefold() == expected.casefold() else None
