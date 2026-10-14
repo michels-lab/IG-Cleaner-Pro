@@ -81,6 +81,8 @@ jobs:
         run: python3 tests/android-native-english-contract.py
       - name: Verify translated Desktop UI and privacy safeguards
         run: python3 tests/english-ui-contract.py
+      - name: Verify official Windows package owner instructions
+        run: python3 tests/windows-package-readme-contract.py
       - name: Validate Android production-signing contract
         run: python tests/android-signing-contract.py
       - name: Validate generic release publisher
