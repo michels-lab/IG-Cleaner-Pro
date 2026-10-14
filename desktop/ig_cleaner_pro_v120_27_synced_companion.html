@@ -4261,7 +4261,7 @@ function pruneResolvedActiveFocusBatch(){
   return false;
 }
 function forceClearStuckFocusBatch(){
-  if(!activeFocusBatch&&!localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)){msg('No hay tanda atorada que borrar.','i');return;}
+  if(!activeFocusBatch&&!localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)){msg('No stuck batch to clear.','i');return;}
   if(!confirm('Delete the stuck active batch? This does NOT delete saved reviews or decisions. It only clears the active batch dialog.'))return;
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
@@ -4270,24 +4270,24 @@ function forceClearStuckFocusBatch(){
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
   renderModuleDashboard?.();
-  msg('Popup/tanda activa atorada borrada. Tus revisiones guardadas se conservan.','s');
+  msg('Stuck batch cleared. Your saved reviews are preserved.','s');
 }
 function recoverActiveFocusBatch(){
   if(cleanupResolvedActiveBatch('recover'))return;
-  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No hay tanda activa para recuperar.','w');return;}
+  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No active batch to recover.','w');return;}
   activeExtraReviewBatch=activeFocusBatch;
   if(typeof showSafeFocusPopup==='function')showSafeFocusPopup(activeFocusBatch.kind,activeFocusBatch.rows,activeFocusBatch.label);
   else showExtraFocusModal(activeFocusBatch.kind,activeFocusBatch.rows,activeFocusBatch.label);
 }
 function reopenActiveFocusBatch(){
-  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No hay tanda activa para reabrir.','w');return;}
+  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No active batch to reopen.','w');return;}
   activeFocusBatch.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   recordRowsHistory(activeFocusBatch.rows,'reopen',{kind:activeFocusBatch.kind,label:activeFocusBatch.label});
   logAction('reopen',`Reabrir tanda activa ${activeFocusBatch.label}: ${activeFocusBatch.rows.length}`,{count:activeFocusBatch.rows.length,source:activeFocusBatch.kind});
   forceLiveRefresh(`Reabiertos ${activeFocusBatch.rows.length} perfiles de tanda activa`);
 }
 function markActiveFocusNotReviewed(){
-  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No hay tanda activa.','w');return;}
+  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No active batch.','w');return;}
   activeExtraReviewBatch=activeFocusBatch;
   if(typeof markSafeFocusNotReviewed==='function')markSafeFocusNotReviewed();
   else if(typeof markExtraFocusNotReviewed==='function')markExtraFocusNotReviewed();
@@ -4300,7 +4300,7 @@ function cancelActiveFocusBatch(){
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
   renderModuleDashboard?.();
-  msg(`Tanda cancelada: ${count} perfiles de ${kind==='pending'?'Pending':'Mutual followers'} vuelven a quedar disponibles.`,'w');
+  msg(`Batch canceled: ${count} profiles from ${kind==='pending'?'Pending':'Mutual followers'} are available again.`,'w');
 }
 setInterval(renderActiveBatchDock,60000);
 
@@ -5176,7 +5176,7 @@ function dateMatches(row){
 
 function excludeMostRecentDate(){
   const {min,max}=getMinMaxDates();
-  if(!min||!max){msg('No hay fechas detectadas.','w');return;}
+  if(!min||!max){msg('No dates detected.','w');return;}
   const d=new Date(max+'T00:00:00');
   d.setDate(d.getDate()-1);
   const prev=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -5190,7 +5190,7 @@ function excludeMostRecentDate(){
 
 function setMostRecentDateOnly(){
   const {max}=getMinMaxDates();
-  if(!max){msg('No hay fechas detectadas.','w');return;}
+  if(!max){msg('No dates detected.','w');return;}
   document.getElementById('dateFrom').value=max;
   document.getElementById('dateTo').value=max;
   updateDateRange();
@@ -5528,7 +5528,7 @@ function showProtectedOnly(){
 
 function restoreBeforeProtected(){
   if(!previousFilterStateBeforeProtected){
-    msg('No hay una vista anterior guardada antes de protegidos. Usa “Ver todos” o “Vista default”.','w');
+    msg('No previous view was saved before the protected filter. Use View all or Default view.','w');
     return;
   }
   applyFilterState(previousFilterStateBeforeProtected);
@@ -6238,10 +6238,10 @@ function updateSessionPanel(){
 }
 
 function resetSessionStats(){
-  if(!confirm('¿Reiniciar contador de esta sesión? No borra revisados/protegidos, solo el contador.'))return;
+  if(!confirm('Reset the current session counter? Reviews and protected accounts will not be deleted.'))return;
   sessionStats={opened:0,openBatches:0,reopened:0,reopenBatches:0,reviewed:0,reviewedGood:0,reviewedBad:0,protected:0,unprotected:0,startedAt:Date.now()};
   updateSessionPanel();
-  msg('Contador de sesión reiniciado.','i');
+  msg('Session counter reset.','i');
 }
 
 function sessionDurationText(){
@@ -6294,12 +6294,12 @@ Seleccionados revisados relación mala: ${p.selectedReviewedBad}
 Seleccionados revisados relación buena: ${p.selectedReviewedGood}
 
 Se descargó un CSV con el resumen.`);
-  msg('Resumen de sesión exportado.','s');
+  msg('Session summary exported.','s');
 }
 
 function toggleSelect(username,on){if(on)selected.add(username);else selected.delete(username);renderTable();updateSessionPanel()}
 function toggleCurrentPage(on){getPageRows().forEach(r=>on?selected.add(r.username):selected.delete(r.username));renderTable();updateSessionPanel()}
-function selectCurrentPage(){getPageRows().forEach(r=>selected.add(r.username));renderTable();msg('Página actual seleccionada.','i')}
+function selectCurrentPage(){getPageRows().forEach(r=>selected.add(r.username));renderTable();msg('Current page selected.','i')}
 
 function selectNextN(n){
   let count=0;
@@ -6327,7 +6327,7 @@ function selectLastN(n){
   }
   renderTable();
   if(count===0)msg('No quedan cuentas sin seleccionar al final de la vista actual.','w');
-  else msg(`Seleccionados últimos ${count}. Total seleccionado: ${selected.size}`,'i');
+  else msg(`Selected last ${count}. Total selected: ${selected.size}`,'i');
 }
 
 function selectNextPendingN(n){
@@ -6340,8 +6340,8 @@ function selectNextPendingN(n){
     }
   }
   renderTable();
-  if(count===0)msg('No quedan pendientes sin seleccionar en la vista actual.','w');
-  else msg(`Seleccionados ${count} pendientes. Total seleccionado: ${selected.size}`,'s');
+  if(count===0)msg('No unselected pending profiles remain in this view.','w');
+  else msg(`Selected ${count} pending profiles. Total selected: ${selected.size}`,'s');
 }
 
 function selectAllFiltered(){filteredRows.forEach(r=>selected.add(r.username));renderTable();msg(`${filteredRows.length} cuentas filtradas seleccionadas.`,'i')}
@@ -6361,7 +6361,7 @@ function selectPriority(level){
 
 function selectRiskMediumHigh(){filteredRows.filter(r=>r.riskLevel==='medio'||r.riskLevel==='alto').forEach(r=>selected.add(r.username));renderTable();msg('Riesgo medio/alto seleccionado.','i')}
 function selectRiskHigh(){filteredRows.filter(r=>r.riskLevel==='alto').forEach(r=>selected.add(r.username));renderTable();msg('Riesgo alto seleccionado.','i')}
-function clearSelection(){selected.clear();renderTable();msg('Selección limpiada.','i')}
+function clearSelection(){selected.clear();renderTable();msg('Selection cleared.','i')}
 
 
 function showVerifyPopup(rows){
@@ -6540,7 +6540,7 @@ function renderLastActionClock(){
   const count=d.count?` · ${d.count} cuentas`:'';
   el.innerHTML=`<div class="clock-label">Last action</div>
     <div class="clock-main">${esc(actionTypeLabel(item.type))} hace ${esc(ago)}</div>
-    <div class="clock-sub">${esc(item.description||'acción guardada')}<br>${esc(formatActionDate(item.ts))}${count}${source}</div>`;
+    <div class="clock-sub">${esc(item.description||'saved action')}<br>${esc(formatActionDate(item.ts))}${count}${source}</div>`;
 }
 
 function loadDailyGoal(){
@@ -6588,13 +6588,13 @@ function snoozeLabel(row){
 }
 function snoozeSelectedDays(days){
   const rows=visibleSelectedRows();
-  if(!rows.length){msg('No hay seleccionados visibles para pausar.','w');return;}
+  if(!rows.length){msg('No visible selected profiles to pause.','w');return;}
   const until=Date.now()+days*24*60*60*1000;
   rows.forEach(r=>{snoozeMap[r.username]=until;selected.delete(r.username);});
   saveSnoozeMap();
   logAction('session',`Se pausaron ${rows.length} cuentas por ${days} días`,{count:rows.length,source:`pausa ${days} días`});
   applyFilters();
-  msg(`${rows.length} cuentas pausadas por ${days} días.`, 's');
+  msg(`${rows.length} accounts paused for ${days} days.`, 's');
 }
 function clearExpiredSnoozes(){
   let c=0;
@@ -6708,12 +6708,12 @@ function showReviewedBadNotClosed(){
 
 function exportTomorrowPendingCSV(){
   const rows=withTempMode('following',()=>buildRowsForMode('following').filter(r=>!r.followsBack&&!r.relationGood&&!protectedSet.has(r.username)&&!isSnoozed(r)&&!isDoneValid(r)));
-  if(!rows.length){msg('No hay pendientes exactos para mañana.','w');return;}
+  if(!rows.length){msg('No matching pending profiles for tomorrow.','w');return;}
   const headers=['usuario','perfil','fecha_follow','riesgo','prioridad','razones'];
   const csv=[headers.join(',')].concat(rows.map(r=>[r.username,r.href,formatDateFromTs(r.dateMain)||'sin_fecha',r.riskLevel,calcPriority(r).level,calcPriority(r).reasons.concat(r.riskReasons).join('; ')].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))).join('\n');
   downloadFile(`ig_pendientes_para_manana_${Date.now()}.csv`,csv,'text/csv;charset=utf-8');
   logAction('export',`Se exportaron ${rows.length} pendientes exactos para mañana`,{count:rows.length,source:'pendientes mañana'});
-  msg(`${rows.length} pendientes exactos exportados.`, 's');
+  msg(`${rows.length} exact pending profiles exported.`, 's');
 }
 
 
@@ -6779,7 +6779,7 @@ function renderActionLog(){
   }).join('');
 }
 function exportActionLogCSV(){
-  if(!actionLog.length){msg('No hay historial de acciones para exportar.','w');return;}
+  if(!actionLog.length){msg('No action history to export.','w');return;}
   const headers=['fecha_hora','tipo','modo','descripcion','cantidad','origen','detalle'];
   const csv=[headers.join(',')].concat(actionLog.map(item=>{
     const d=item.data||{};
@@ -6790,7 +6790,7 @@ function exportActionLogCSV(){
   msg('Historial de acciones exportado.','s');
 }
 function clearActionLog(){
-  if(!confirm('¿Borrar el historial guardado de acciones? Esto no borra revisados ni protegidos.'))return;
+  if(!confirm('Delete saved action history? This does not delete reviews or protected profiles.'))return;
   actionLog=[];
   saveActionLog();
   renderActionLog();
@@ -6825,7 +6825,7 @@ function renderFollowersActionLog(){
 }
 function exportFollowersActionLogCSV(){
   const items=followersActionLogItems();
-  if(!items.length){msg('No hay historial de Followers para exportar.','w');return;}
+  if(!items.length){msg('No Followers history to export.','w');return;}
   const headers=['fecha_hora','tipo','modo','descripcion','cantidad','origen','detalle'];
   const csv=[headers.join(',')].concat(items.map(item=>{
     const d=item.data||{};
@@ -6837,8 +6837,8 @@ function exportFollowersActionLogCSV(){
 }
 function clearFollowersActionLog(){
   const count=followersActionLogItems().length;
-  if(!count){msg('No hay historial de Followers para borrar.','i');return;}
-  if(!confirm(`¿Borrar ${count} acciones guardadas de Followers/Mutuos? Esto no borra revisiones, protegidos ni estados de perfiles.`))return;
+  if(!count){msg('No Followers history to delete.','i');return;}
+  if(!confirm(`Delete ${count} saved Followers/Mutuals actions? Reviews, protected accounts and profile state will remain intact.`))return;
   actionLog=(actionLog||[]).filter(item=>!isFollowersActionLogItem(item));
   saveActionLog();
   renderActionLog();
@@ -6868,7 +6868,7 @@ function rowsFromLastOpenedBatch(){
 function reopenLastOpenedBatch(){
   const rows=rowsFromLastOpenedBatch();
   if(!rows.length){
-    msg('No hay perfiles de la última tanda para volver a abrir.','w');
+    msg('No profiles from the last batch can be reopened.','w');
     return;
   }
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
@@ -6879,7 +6879,7 @@ function reopenLastOpenedBatch(){
   addBatchHistory('reabiertos', rows);
   logAction('reopen',`Se volvieron a abrir ${rows.length} perfiles de la tanda actual`,{count:rows.length,source:contextLabel(lastOpenedBatchMeta),originalOpenedAt:lastOpenedBatchMeta?.openedAt||null});
   forceLiveRefresh(`Reintentaste abrir ${rows.length} perfiles de la tanda actual`);
-  msg(`${rows.length} perfiles reabiertos. El popup queda abierto para que verifiques después.`, 'i');
+  msg(`${rows.length} profiles reopened. The confirmation dialog remains available.`, 'i');
 }
 
 
@@ -6891,7 +6891,7 @@ function closeVerifyPopup(clearBatch=false){
 
 function confirmOpenedVerified(){
   if(!lastOpenedBatch.length){
-    msg('No hay tanda abierta para marcar como verificada.','w');
+    msg('No opened batch to mark verified.','w');
     closeVerifyPopup();
     return;
   }
@@ -6927,7 +6927,7 @@ function confirmOpenedVerified(){
   closeVerifyPopup(true);
   renderAll();
   forceLiveRefresh(`${c} perfiles marcados como verificados desde popup`);
-  msg(`${c} perfiles de la tanda marcados como verificados: ${bad} ${labels.badShort}, ${good} ${labels.goodShort}.`,'s');
+  msg(`${c} batch profiles marked verified: ${bad} ${labels.badShort}, ${good} ${labels.goodShort}.`,'s');
 }
 
 
@@ -7052,7 +7052,7 @@ function selectRowsOnly(rows){
   renderTable();
   forceLiveRefresh(`${safeRows.length} seleccionados estrictos: solo no me siguen`);
   if(removed>0){
-    msg(`Blindaje activo: ${removed} perfiles descartados porque sí te siguen, ya estaban revisados o protegidos.`, 'w');
+    msg(`Protection active: ${removed} profiles excluded because they follow back, are already reviewed or protected.`, 'w');
   }
 }
 
@@ -7114,7 +7114,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   }
 
   if(!rows.length){
-    msg('Double Check: no hay NO ME SIGUE disponibles para abrir.', 'w');
+    msg('Double Check: no eligible non-followback profiles to open.', 'w');
     return;
   }
 
@@ -7127,14 +7127,14 @@ function openDoubleCheckNoMeSigueN(n=30){
 
   logAction('focus',`double check no me siguen ${n}: ${rows.length} perfiles abiertos`,{count:rows.length,source:'double_check_not_following',requested:n});
   forceLiveRefresh?.(`Double Check NO ME SIGUE: ${rows.length}/${n} perfiles abiertos`);
-  msg(`Double Check: abrí ${rows.length} perfiles NO ME SIGUE. La próxima tanda intentará abrir otros distintos.`, 's');
+  msg(`Double Check: opened ${rows.length} non-followbacks. The next batch will use different profiles.`, 's');
   renderDoubleCheckStats?.();
 }
 
 function resetDoubleCheckCycle(show=true){
   localStorage.removeItem(LS_DOUBLE_CHECK_SEEN);
   renderDoubleCheckStats?.();
-  if(show)msg('Ciclo Double Check reiniciado. Volverá a empezar desde los candidatos actuales.', 's');
+  if(show)msg('Double Check cycle reset. It will restart with currently eligible profiles.', 's');
 }
 
 function doubleCheckStats(){
@@ -7184,7 +7184,7 @@ function mainRecheckNotFollowingRows(){
 function openRecheckNotFollowingN(n=30){
   const rows=mainRecheckNotFollowingRows().slice(0,n);
   if(!rows.length){
-    msg('No hay NO ME SIGUE disponibles para reabrir: quizá están protegidos, pausados o en tanda activa.', 'w');
+    msg('No non-followback profiles to reopen: they may be protected, paused or in an active batch.', 'w');
     return;
   }
 
@@ -7193,7 +7193,7 @@ function openRecheckNotFollowingN(n=30){
   showSafeFocusPopup('main',rows,`revisión nueva no me siguen ${n}`);
   logAction('focus',`revisión nueva no me siguen ${n}: ${rows.length} perfiles abiertos`,{count:rows.length,source:'recheck_not_following',requested:n});
   forceLiveRefresh?.(`Revisión nueva NO ME SIGUE: ${rows.length}/${n} perfiles abiertos`);
-  msg(`Reabrí ${rows.length} perfiles que actualmente NO ME SIGUEN para revisar de nuevo.`, 's');
+  msg(`Reopened ${rows.length} current non-followbacks for recheck.`, 's');
 }
 
 function showReviewedNotFollowingForRecheck(){
@@ -7210,7 +7210,7 @@ function showReviewedNotFollowingForRecheck(){
   if(filter)filter.value='not_following_back';
   applyFilters();
   showPage('list');
-  msg('Mostrando NO ME SIGUE, incluyendo revisados. Usa “Revisar de nuevo 30” para reabrirlos.', 'i');
+  msg('Showing non-followback accounts, including reviewed profiles. Use Recheck 30 to reopen them.', 'i');
 }
 
 function countRecheckNotFollowing(){
@@ -7224,7 +7224,7 @@ function auditMainFocusLogic(){
   const changed=noMeSigue.filter(r=>doneSet.has(r.username)&&!isDoneValidForMode(r,'following'));
   const blocked=noMeSigue.filter(r=>!isMainFocusOpenable(r)).map(r=>({username:r.username,reason:mainFocusNoOpenReason(r)}));
   console.table(blocked.slice(0,50));
-  msg(`Auditoría foco: ${noMeSigue.length} NO ME SIGUE · ${openable.length} abribles · ${changed.length} cambiaron relación.`, 'i');
+  msg(`Focus audit: ${noMeSigue.length} non-followbacks · ${openable.length} eligible · ${changed.length} changed relationships.`, 'i');
   return {noMeSigue:noMeSigue.length,openable:openable.length,changed:changed.length,blocked};
 }
 
@@ -7322,8 +7322,8 @@ function runLogicAudit(show=true){
   if(show){
     const errors=issues.filter(i=>i.type==='error').length;
     const warns=issues.filter(i=>i.type==='warn').length;
-    if(!issues.length)msg('Auditoría limpia: no encontré huecos lógicos obvios.','s');
-    else msg(`Auditoría: ${errors} errores y ${warns} advertencias.`, errors?'e':'w');
+    if(!issues.length)msg('Audit clean: no obvious consistency gaps found.','s');
+    else msg(`Audit: ${errors} errors and ${warns} warnings.`, errors?'e':'w');
   }
   return issues;
 }
@@ -7433,7 +7433,7 @@ function autoCleanGarbageStates(show=true){
 
   if(show){
     if(cleaned)msg(`Auto-limpieza lista: ${cleaned} estados basura limpiados.`, 's');
-    else msg('Auto-limpieza: no había estados basura obvios que limpiar.', 'i');
+    else msg('Automatic cleanup: no obvious stale states to clear.', 'i');
   }
   return cleaned;
 }
@@ -7442,18 +7442,18 @@ function runAuditAndCleanup(){
   const before=runLogicAudit(false);
   const cleaned=autoCleanGarbageStates(false);
   const after=runLogicAudit(false);
-  msg(`Auditoría + limpieza: ${before.length} hallazgos iniciales · ${cleaned} limpiezas · ${after.length} hallazgos restantes.`, after.some(i=>i.type==='error')?'w':'s');
+  msg(`Audit + cleanup: ${before.length} initial findings · ${cleaned} fixes · ${after.length} remaining findings.`, after.some(i=>i.type==='error')?'w':'s');
 }
 
 function exportLogicAuditCSV(){
   const rows=lastLogicAuditRows?.length?lastLogicAuditRows:runLogicAudit(false);
-  if(!rows.length){msg('No hay hallazgos de auditoría para exportar.','i');return;}
+  if(!rows.length){msg('No audit findings to export.','i');return;}
   const headers=['tipo','modulo','usuario','problema','accion','codigo','severidad'];
   const csv=[headers.join(',')].concat(rows.map(r=>[
     r.type,r.module,r.username,r.problem,r.action,r.code||'',r.severity||''
   ].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','))).join('\n');
   downloadFile(`ig_auditoria_huecos_${Date.now()}.csv`,csv,'text/csv;charset=utf-8');
-  msg('Auditoría exportada.','s');
+  msg('Audit exported.','s');
 }
 
 function nextRecommendedBlockN(n=30,origin='recomendado'){
@@ -7483,7 +7483,7 @@ function nextRecommendedBlockN(n=30,origin='recomendado'){
     selected.clear();
     renderTable();
     forceLiveRefresh('Foco estricto sin candidatos: no hay pendientes que no te sigan');
-    msg('No hay candidatos estrictos: no encontré cuentas pendientes que tú sigas y que NO te sigan. No voy a rellenar con gente que sí te sigue.', 'w');
+    msg('No strict candidates: there are no unresolved accounts you follow that do not follow back. Mutuals will never be added to fill the batch.', 'w');
     return [];
   }
 
@@ -7508,7 +7508,7 @@ function focusModeN(n=30){
 
   const unsafe=chosen.filter(r=>r.followsBack || r.relationGood);
   if(unsafe.length){
-    msg(`ERROR bloqueado: había ${unsafe.length} perfiles que sí te siguen. No se abrirá la tanda.`, 'e');
+    msg(`Blocked: ${unsafe.length} profiles follow you back. This batch will not open.`, 'e');
     selected.clear();
     renderTable();
     return;
@@ -7524,7 +7524,7 @@ function focusModeN(n=30){
     sessionStats.openBatches+=1;
     addBatchHistory(`foco ${n}`, chosen);
     forceLiveRefresh(`Modo foco ${n}: ${chosen.length} perfiles abiertos y popup de confirmación activo`);
-    msg(`Foco ${n}: ${chosen.length} perfiles abiertos. Confirma la tanda cuando termines de revisarlos.`, 's');
+    msg(`Focus ${n}: ${chosen.length} profiles opened. Confirm the batch after reviewing them.`, 's');
   }
 }
 
@@ -7552,7 +7552,7 @@ function renderBatchHistory(){
   const el=document.getElementById('batchHistoryMini');
   if(!el)return;
   if(!batchHistory.length){
-    el.innerHTML='Sin tandas todavía.';
+    el.innerHTML='No batches yet.';
     return;
   }
   const labels=relationLabels();
@@ -7561,7 +7561,7 @@ function renderBatchHistory(){
 
 function undoLastVerificationBatch(){
   if(!lastVerifiedBatchForUndo.length){
-    msg('No hay una última tanda verificada para deshacer.','w');
+    msg('No previous verified batch can be undone.','w');
     return;
   }
   let c=0;
@@ -7576,7 +7576,7 @@ function undoLastVerificationBatch(){
   lastVerifiedBatchForUndo=[];
   logAction('undo',`Se deshizo la última verificación: ${c} cuentas`,{count:c,source:'deshacer'});
   renderAll();
-  msg(`Se deshizo la última verificación: ${c} cuentas dejaron de estar verificadas.`, 's');
+  msg(`Last verification undone: ${c} accounts are no longer marked verified.`, 's');
 }
 
 
@@ -7590,14 +7590,14 @@ function openSelectedPendingTabs(){
     const before=rows.length;
     rows=rows.filter(r=>!r.followsBack && !r.relationGood);
     const removed=before-rows.length;
-    if(removed>0)msg(`Blindaje: ${removed} perfiles que sí te siguen fueron excluidos antes de abrir.`, 'w');
+    if(removed>0)msg(`Protection: ${removed} mutual profiles excluded before opening.`, 'w');
   }
 
   if(!rows.length){
-    msg('No hay seleccionados visibles pendientes/no revisados para abrir.', 'w');
+    msg('No visible selected unreviewed profiles to open.', 'w');
     return;
   }
-  if(rows.length>50 && !confirm(`Vas a abrir ${rows.length} pestañas no revisadas. ¿Continuar?`))return;
+  if(rows.length>50 && !confirm(`You are about to open ${rows.length} unreviewed tabs. Continue?`))return;
   const ctx=nextOpenContext||{source:'manual',label:'manual'};
   nextOpenContext=null;
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
@@ -7607,16 +7607,16 @@ function openSelectedPendingTabs(){
   logAction('open',`Se abrieron ${rows.length} perfiles (${contextLabel(ctx)})`,{count:rows.length,source:contextLabel(ctx),bad:counts.bad,good:counts.good});
   showVerifyPopup(rows);
   addBatchHistory('no revisados', rows);
-  msg(`${rows.length} pestañas no revisadas abiertas.`, 's');
+  msg(`${rows.length} unreviewed tabs opened.`, 's');
 }
 
 function openAllSelectedTabs(){
   const rows=filteredRows.filter(r=>selected.has(r.username));
   if(!rows.length){
-    msg('No hay cuentas seleccionadas visibles para abrir.','w');
+    msg('No visible selected accounts to open.','w');
     return;
   }
-  if(rows.length>50 && !confirm(`Vas a abrir ${rows.length} pestañas seleccionadas. ¿Continuar?`))return;
+  if(rows.length>50 && !confirm(`You are about to open ${rows.length} selected tabs. Continue?`))return;
   const ctx={source:'todo seleccionado',label:'todo seleccionado'};
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   sessionStats.opened+=rows.length; sessionStats.openBatches+=1; forceLiveRefresh(`${rows.length} pestañas seleccionadas abiertas`);
@@ -7625,7 +7625,7 @@ function openAllSelectedTabs(){
   logAction('open',`Se abrieron ${rows.length} perfiles seleccionados`,{count:rows.length,source:'todo seleccionado',bad:counts.bad,good:counts.good});
   showVerifyPopup(rows);
   addBatchHistory('todo seleccionado', rows);
-  msg(`${rows.length} pestañas seleccionadas abiertas.`, 's');
+  msg(`${rows.length} selected tabs opened.`, 's');
 }
 
 // Alias por compatibilidad con versiones anteriores / atajos si existieran.
@@ -7697,19 +7697,19 @@ function protectSelected(){
   sessionStats.protected+=c;
   visibleSelectedRows().forEach(row=>selected.delete(row.username));
   logAction('protect',`Se protegieron ${c} seleccionados visibles`,{count:c,source:'manual'});
-  saveSet(LS_PROT,protectedSet);applyFilters();msg(`${c} seleccionados visibles protegidos / no volver a sugerir. Se quitaron de la selección.`, 's');
+  saveSet(LS_PROT,protectedSet);applyFilters();msg(`${c} visible selected profiles protected; they won't be suggested again. Removed from selection.`, 's');
 }
 function unprotectSelected(){
   let c=0;
   visibleSelectedRows().forEach(row=>{const u=row.username;if(protectedSet.has(u)){protectedSet.delete(u);c++;}});
   sessionStats.unprotected+=c;
   logAction('unprotect',`Se quitó protección a ${c} seleccionados visibles`,{count:c,source:'manual'});
-  saveSet(LS_PROT,protectedSet);applyFilters();msg('Protección quitada a seleccionados visibles.','i');
+  saveSet(LS_PROT,protectedSet);applyFilters();msg('Protection removed from visible selected profiles.','i');
 }
 
 function exportCSV(mode){
   const rows=mode==='selected'?filteredRows.filter(r=>selected.has(r.username)):filteredRows;
-  if(!rows.length){msg('No hay filas para exportar.','w');return;}
+  if(!rows.length){msg('No rows to export.','w');return;}
   const headers=['modo','usuario','perfil','relacion','prioridad','puntaje_prioridad','protegido','revisado','fecha_revision','motivo_revision','pausada_hasta','riesgo','puntaje_riesgo','razones_prioridad','razones_riesgo','fecha_principal','otra_fecha'];
   const csv=[headers.join(',')].concat(rows.map(r=>[
     currentMode,r.username,r.href,r.relation,calcPriority(r).level,calcPriority(r).score,protectedSet.has(r.username)?'si':'no',isDoneValid(r)?'si':'no',reviewedAtTs(r)?formatActionDate(reviewedAtTs(r)):'sin_revision',reviewReasonLabel(reviewReasonFor(r)),isSnoozed(r)?formatActionDate(snoozeUntil(r.username)):'',
@@ -7825,7 +7825,7 @@ function renderBackupStats(){
 }
 
 function clearLocalProgress(){
-  if(!confirm('¿Borrar protegidos, revisados y configuración guardada?'))return;
+  if(!confirm('Delete protected profiles, reviews and saved settings?'))return;
   protectedSet.clear();doneSet.clear();
   reviewedMeta={};actionLog=[];snoozeMap={};dailyGoal=0;pendingRequestsRaw=[];pendingOpenedSet=new Set();pendingReviewedMeta={};pendingSnoozeMap={};activeFocusBatch=null;profileHistory={};guidedSession100=null;internalSnapshot=null;snapLostFollowers=[];snapGainedFollowers=[];snapNewFollowing=[];snapRemovedFollowing=[];localStorage.removeItem(LS_PROT);localStorage.removeItem(LS_DONE);localStorage.removeItem(LS_REVIEW_META);localStorage.removeItem(LS_ACTION_LOG);localStorage.removeItem(LS_SNOOZE);localStorage.removeItem(LS_DAILY_GOAL);localStorage.removeItem(LS_PENDING_REQUESTS);localStorage.removeItem(LS_PENDING_OPENED);localStorage.removeItem(LS_PENDING_REVIEW_META);localStorage.removeItem(LS_PENDING_SNOOZE);localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);localStorage.removeItem(LS_PROFILE_HISTORY);localStorage.removeItem(LS_GUIDED_SESSION_100);localStorage.removeItem(LS_INTERNAL_SNAPSHOT);localStorage.removeItem(LS_CONFIG);
   applyFilters();renderBackupStats();msg('Progreso local borrado.','w');
@@ -10280,7 +10280,7 @@ function reopenExtraFocusBatch(){
 
 function markExtraFocusNotReviewed(){
   const b=activeExtraReviewBatch;
-  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return}
+  if(!b||!b.rows||!b.rows.length){msg('No active batch.','w');return}
   if(b.kind==='pending'){
     b.rows.forEach(r=>{
       pendingOpenedSet.delete(r.username);
@@ -10316,7 +10316,7 @@ function markExtraFocusNotReviewed(){
 
 function confirmExtraFocusReviewed(){
   const b=activeExtraReviewBatch;
-  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return}
+  if(!b||!b.rows||!b.rows.length){msg('No active batch.','w');return}
   const decision=document.getElementById('extraFocusDecision')?.value||'reviewed';
   if(b.kind==='pending'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} pending requests y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
   if(b.kind==='mutual'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} seguidores que sigo y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
@@ -10344,7 +10344,7 @@ function confirmExtraFocusReviewed(){
 }
 function snoozeExtraFocusBatch(days){
   const b=activeExtraReviewBatch;
-  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return}
+  if(!b||!b.rows||!b.rows.length){msg('No active batch.','w');return}
   const until=Date.now()+days*86400000;
   if(b.kind==='pending'){
     b.rows.forEach(r=>{pendingSnoozeMap[r.username]=until;recordProfileHistory(r.username,'snooze',{kind:'pending',label:b.label,days})});
@@ -10686,7 +10686,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   }
 
   if(!rows.length){
-    msg('Double Check: no hay NO ME SIGUE disponibles para abrir.', 'w');
+    msg('Double Check: no eligible non-followback profiles to open.', 'w');
     return;
   }
 
@@ -10853,7 +10853,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   }
 
   if(!rows.length){
-    msg('Double Check: no hay NO ME SIGUE disponibles para abrir.', 'w');
+    msg('Double Check: no eligible non-followback profiles to open.', 'w');
     return;
   }
 
