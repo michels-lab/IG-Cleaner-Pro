@@ -91,6 +91,16 @@ for (let i = 0; i < scripts.length; i++) {
   catch (err) { throw new Error('Inline script #' + i + ' syntax error: ' + err.message); }
 }
 
+// English presentation must not silently migrate or invalidate existing
+// Guided Session and Audit persisted identifiers.
+for (const token of [
+  "steps.find(s=>s.status==='pendiente'",
+  "status:p.length?'pendiente':'vacío'",
+  "status:m.length?'pendiente':'vacío'",
+  "i.module==='Seguidores que sigo'",
+  "esc(s.status==='pendiente'?'Pending'"
+]) requireToken(token, 'Localization must preserve persisted workflow status / audit keys');
+
 console.log('Desktop contract passed:', {
   bytes: Buffer.byteLength(html),
   staticIds: ids.length,
