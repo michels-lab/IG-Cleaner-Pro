@@ -30,7 +30,7 @@ from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    batch_wait, finish_batch_visit)
 
 MAX_REQUEST = 900_000
-MAX_QUEUE = 50_000
+MAX_IMPORT_CHUNK = 2_000  # transport limit per request, not an account-size limit
 
 
 class Collector:
@@ -38,6 +38,7 @@ class Collector:
         self.data_dir = data_dir
         self.session_dir = session_dir
         self.lock = threading.RLock()
+        self.browser_admission = threading.RLock()  # shared across all Chrome robots
         self.login_ready = threading.Event()
         self.stop_signal = threading.Event()
         self.pause_requested = False
@@ -62,6 +63,55 @@ class Collector:
         self.discover_following = False
         self.queue_source = ""
         self.current_profile = ""
+        self.actions = None
+        self.import_stage = None  # ephemeral, owner-scoped upload until commit
+
+    def begin_import(self, request):
+        """Prepare an atomic user-list transfer; never replace a running job."""
+        owner = str(request.get("owner") or "").strip()
+        account = str(request.get("account") or "").strip()
+        total = request.get("total")
+        if not owner or not account or len(owner) > 200 or len(account) > 120:
+            raise ValueError("Select a valid account before uploading.")
+        if type(total) is not int or total < 1:
+            raise ValueError("Import total must be a positive integer.")
+        with self.lock:
+            if (self.worker and self.worker.is_alive()) or (
+                self.actions and self.actions.worker and self.actions.worker.is_alive()
+            ):
+                raise ValueError("Pause the active Instagram robot before uploading another job.")
+            transfer = secrets.token_urlsafe(20)
+            self.import_stage = dict(owner=owner, account=account, total=total,
+                                     transfer=transfer, usernames=[], seen=set())
+            return {"transfer": transfer, "received": 0, "total": total}
+
+    def append_import(self, request):
+        """Bound a single HTTP request, not the overall relationship data size."""
+        users = request.get("usernames")
+        if not isinstance(users, list) or not 1 <= len(users) <= MAX_IMPORT_CHUNK:
+            raise ValueError("Send a chunk of 1 to 2,000 usernames.")
+        if any(not isinstance(u, str) or not valid_username(u) for u in users):
+            raise ValueError("Import contains invalid profile usernames.")
+        owner = str(request.get("owner") or "")
+        account = str(request.get("account") or "")
+        with self.lock:
+            stage = self.import_stage
+            if (not stage or stage["owner"] != owner or stage["account"] != account or
+                not secrets.compare_digest(stage["transfer"], str(request.get("transfer") or ""))):
+                raise ValueError("Import session or account mismatch.")
+            if request.get("offset") != len(stage["usernames"]):
+                raise ValueError("Import chunk is out of order; retry from the confirmed offset.")
+            if len(stage["usernames"]) + len(users) > stage["total"]:
+                raise ValueError("Import chunk exceeds the declared total.")
+            # Reject an entire invalid chunk atomically; never partially append.
+            normalized = [valid_username(u) for u in users]
+            if len(set(normalized)) != len(normalized) or any(
+                name in stage["seen"] for name in normalized
+            ):
+                raise ValueError("Duplicate username in imported chunks.")
+            stage["seen"].update(normalized)
+            stage["usernames"].extend(normalized)
+            return {"received": len(stage["usernames"]), "total": stage["total"]}
 
     def result_path(self):
         # No owner/usernames in filenames or URL paths.
@@ -84,16 +134,18 @@ class Collector:
         # Prefer the owner's already imported Following. Its list is source
         # data for this read-only counts scan, never proof of current followback.
         raw_users = request.get("usernames", [])
-        if not isinstance(raw_users, list) or len(raw_users) > MAX_QUEUE:
-            raise ValueError("The imported Following list must have at most 50,000 profiles.")
+        if not isinstance(raw_users, list):
+            raise ValueError("Imported usernames must be an array.")
+        transfer = request.get("transfer")
+        use_stage = request.get("use_staged_import") is True
+        discover = request.get("discover_following") is True
+        if use_stage and (raw_users or discover):
+            raise ValueError("Use either the staged import or optional browser discovery.")
         normalized = list(dict.fromkeys(
             u for value in raw_users if (u := valid_username(value))
         ))
-        discover = request.get("discover_following") is True
         if discover and normalized:
             raise ValueError("Choose imported profiles OR optional Instagram Following discovery.")
-        if not discover and not normalized:
-            raise ValueError("Import a Following list first, or explicitly choose optional discovery.")
         # Pacing is retained internally; novice users do not need to see settings.
         pacing = dict(max_per_window=request.get("max_per_window", DEFAULT_COUNT),
                       window_minutes=request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
@@ -102,7 +154,18 @@ class Collector:
             pacing["max_per_window"], pacing["window_minutes"], pacing["min_delay_seconds"])
         rest_count, rest_minutes = check_batch_rest(request.get("pause_every", 0),
                                                      request.get("pause_minutes", 0))
-        with self.lock:
+        with self.browser_admission, self.lock:
+            if self.actions and self.actions.worker and self.actions.worker.is_alive():
+                raise ValueError("An Instagram action robot is running. Pause it before Profile Counts.")
+            if use_stage:
+                stage = self.import_stage
+                if (not stage or stage["owner"] != owner or stage["account"] != account or
+                    not secrets.compare_digest(stage["transfer"], str(transfer or "")) or
+                    len(stage["usernames"]) != stage["total"]):
+                    raise ValueError("Imported profile upload is incomplete or belongs to another account.")
+                normalized = list(stage["usernames"])
+            if not discover and not normalized:
+                raise ValueError("Import Following profiles first or explicitly choose optional discovery.")
             if self.worker and self.worker.is_alive():
                 if owner != self.owner or account != self.account:
                     raise ValueError("Another Instagram account is currently active. Accounts will not be mixed.")
@@ -111,6 +174,8 @@ class Collector:
                 if owner != self.owner or account != self.account:
                     raise ValueError("Another account is paused; profiles will not be mixed.")
                 return self.snapshot()
+            if use_stage:
+                self.import_stage = None  # consumed only on successful job acceptance
             self.pause_requested = False
             self.owner, self.account = owner, account
             self.expected_handle = expected or ""
@@ -136,8 +201,8 @@ class Collector:
 
     def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
-        if not isinstance(usernames, list) or not 1 <= len(usernames) <= MAX_QUEUE:
-            raise ValueError("The queue must contain 1 to 50,000 profiles.")
+        if not isinstance(usernames, list) or not usernames:
+            raise ValueError("Provide at least one valid profile.")
         normalized, seen = [], set()
         for user in usernames:
             clean = valid_username(user)
@@ -160,7 +225,9 @@ class Collector:
             request.get("pause_every", 0),
             request.get("pause_minutes", 0),
         )
-        with self.lock:
+        with self.browser_admission, self.lock:
+            if self.actions and self.actions.worker and self.actions.worker.is_alive():
+                raise ValueError("Pause the active Instagram action robot before starting Profile Counts.")
             if self.worker and self.worker.is_alive():
                 raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
@@ -491,12 +558,15 @@ class Collector:
                 "discovery_complete": self.discovery_complete,
                 "queue_source": self.queue_source,
                 "discovered": len(self.usernames),
+                "queue_transport": "chunked" if self.queue_source == "imported" else "browser",
             }
 
     def following(self):
         with self.lock:
-            return {"usernames": list(self.usernames), "handle": self.detected_handle,
-                    "complete": self.discovery_complete}
+            # A directly imported queue is already in Desktop; avoid sending a
+            # potentially enormous duplicate JSON response every five seconds.
+            return {"usernames": list(self.usernames) if self.queue_source != "imported" else [],
+                    "handle": self.detected_handle, "complete": self.discovery_complete}
 
     def results(self):
         with self.lock:
@@ -508,6 +578,7 @@ class Collector:
 
 def build_server(collector: Collector, token: str, port: int = 0):
     actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
+    collector.actions = actions
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -558,7 +629,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -581,6 +652,10 @@ def build_server(collector: Collector, token: str, port: int = 0):
                     result = actions.skip(data)
                 elif self.path == "/api/start":
                     result = collector.start(data)
+                elif self.path == "/api/queue/init":
+                    result = collector.begin_import(data)
+                elif self.path == "/api/queue/append":
+                    result = collector.append_import(data)
                 elif self.path == "/api/auto":
                     result = collector.auto_start(data)
                 elif self.path == "/api/load":

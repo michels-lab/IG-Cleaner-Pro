@@ -7,6 +7,15 @@ new vm.Script(match[1],{filename:'igc-profile-counts-ui.js'});
 assert(source.includes('id="igcProfileCountsPanel"'),'Insights must expose Profile Counts');
 assert(source.includes('id="igcCountsImport"'),'Import control missing');
 assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot controls missing');
+const automationStart=source.indexOf('id="page-automations"');
+const insightsStart=source.indexOf('id="page-profileStats"');
+const robotStart=source.indexOf('id="igcCountsRobotBridge"');
+const countsStart=source.indexOf('id="igcCountsRows"');
+assert(automationStart>=0 && automationStart<robotStart && robotStart<insightsStart,
+ 'Every robot, including Profile Counts, must live within Automations');
+assert(insightsStart<countsStart && source.indexOf('id="igcCountsRobotBridge"',insightsStart)===-1,
+ 'Insights must contain counts results, not robot controls');
+
 
 (async ()=>{
  const store=new Map(),summary=[],elements={
@@ -35,6 +44,19 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('2 profiles')),'Render should read Following from active workspace');
  assert.match(elements.igcCountsRows.innerHTML,/public\.user/);
+ // A large Following/Followers dataset must not be clipped by the visual page size.
+ const smallImport=ctx.followingRaw;
+ ctx.followingRaw=Array.from({length:50003},(_,i)=>({username:'large'+String(i).padStart(6,'0')}));
+ ctx.window.igcCountsSetPage(0,true);
+ assert(summary.some(t=>t.includes('50003 profiles')),
+  'Insights must include the entire 50k+ dataset, not just the visible page');
+ assert.match(elements.igcCountsRows.innerHTML,/large000000/);
+ ctx.window.igcCountsSetPage(1);
+ assert.match(elements.igcCountsRows.innerHTML,/large000250/,
+  'Results beyond the first 250 rows must be available by pagination');
+ ctx.followingRaw=smallImport;
+ ctx.window.igcCountsSetPage(0,true);
+
  ctx.window.igcCountsExportQueue();
  assert.equal(clicked,1,'Export should trigger actual browser download');
  const csv='username,followers,following,checked_at,source,status,approximate\n'+
@@ -60,6 +82,7 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
 
  // Simulate the actual local control protocol, including account-scoped sync.
  const bridgeStore=new Map(),requests=[];
+ let staged=null;
  const robotElements={
   igcCountsRows:{innerHTML:''},
   igcCountsSummary:{replaceChildren(){},appendChild(){}},
@@ -87,7 +110,19 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
   assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijklmnop');
   const action=url.split('/').pop();
   let value={};
-  if(action==='start'){
+  if(action==='init' && url.endsWith('/queue/init')){
+   const b=JSON.parse(options.body);
+   staged={owner:b.owner,account:b.account,total:b.total,transfer:'fixture-token',usernames:[]};
+   value={transfer:staged.transfer,total:staged.total,received:0};
+  } else if(action==='append' && url.endsWith('/queue/append')){
+   const b=JSON.parse(options.body);
+   assert.equal(b.owner,staged.owner);
+   assert.equal(b.account,staged.account);
+   assert.equal(b.transfer,staged.transfer);
+   assert.equal(b.offset,staged.usernames.length);
+   staged.usernames.push(...b.usernames);
+   value={received:staged.usernames.length,total:staged.total};
+  } else if(action==='start'){
    value={status:'starting',message:'Starting',total:1,progress:0};
   } else if(action==='auto'){
    value={status:'starting',message:'Auto-detecting Instagram login',total:0,progress:0};
@@ -124,7 +159,10 @@ assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot contr
  const auto=requests.find(r=>r.url.endsWith('/auto'));
  assert(auto,'Automatic detection must begin without any Start click');
  assert.equal(JSON.parse(auto.options.body).account,'ig_A');
- assert.deepEqual(JSON.parse(auto.options.body).usernames,['public.user']);
+ assert.deepEqual(JSON.parse(auto.options.body).usernames,[]);
+ assert.equal(JSON.parse(auto.options.body).use_staged_import,true);
+ assert.equal(JSON.parse(auto.options.body).transfer,staged.transfer);
+ assert.deepEqual(staged.usernames,['public.user']);
  assert.equal(JSON.parse(auto.options.body).discover_following,false);
  await bridgeCtx.window.igcCountsRobotDiscover();
  const optional=requests.filter(r=>r.url.endsWith('/auto')).at(-1);

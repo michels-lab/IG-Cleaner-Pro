@@ -1,3 +1,19 @@
+# Profile Counts Robot — current v120.46 development workflow
+
+> **Current instructions supersede the historical v120.41–v120.45 notes below.** Stable v120.45 remains publicly available; this v120.46 reorganization is not released until the owner authorizes a new GitHub Release.
+
+1. Open **Automations → Automation Center → Profile Counts** in the integrated Windows app. **All robots** (Profile Counts, Cancel Pending, Unfollow and optional Followback Audit) now live in Automations.
+2. Import your Following/Followers relationship export once, in the selected Instagram workspace. The Profile Counts robot consumes the **already-imported** Following usernames directly; it does not need to reopen Instagram's Following popup. Use **Refresh Following from Instagram (optional)** only when you explicitly want a new browser-based list.
+3. When starting Profile Counts, the Desktop uploads the complete imported list to the local token-protected controller in account-scoped chunks (1,000 at a time; maximum 2,000 per HTTP request). No artificial global user-count limit is imposed on analysis queues; page rendering and network request sizes are not analysis limits.
+4. Chrome verifies the currently signed-in Instagram handle before visiting any imported profile to read visible public Followers/Following values. It pauses rather than continuing against an unverified identity/challenge.
+5. Open **Insights** for aggregated statistics, paginated Profile Counts **results**, comparisons, and exports. The table renders 250 rows per page to maintain responsiveness, but calculations include every imported username. Do not infer live followback from the historical export.
+6. Cancel Pending / Unfollow and Profile Counts **must not use the same persistent Chrome session simultaneously**. Local statistics and manual Focus review can proceed independently. Relationship-changing actions still require explicit approval.
+7. Large counts/history storage still needs an IndexedDB migration (#96) for strong scale across low-quota browsers. The existing backend queue and analysis logic no longer truncate at 50,000, but available device storage and Instagram restrictions remain physical limits. Chrome/Instagram live acceptance must still be tested with the owner's own session.
+
+---
+
+## Historical documentation (earlier development flows)
+
 > **Actualización de desarrollo — 2026-10-12 (no publicada):** El panel de Profile Counts muestra **Conectar Instagram**, los cinco controles de ritmo, **Guardar intervalos**, **Pausar** y **Reanudar**, además de métricas de analizados, correctos, pendientes, errores, sin datos y progreso porcentual. El acceso a Instagram se realiza en Chrome normal del robot de Windows; no se introduce la contraseña en la app. Conectar explícitamente inicia el descubrimiento; ya no se inicia una recopilación al abrir la página. Pausar espera a un punto seguro y conserva CSV/cola, y Reanudar solicita el mismo propietario y `account_key` antes de volver a consultar perfiles pendientes. Los límites de visitas previas permanecen en disco. La función autónoma, la lectura del DOM y las pausas requieren aceptación real del propietario. La última versión publicada continúa siendo **v120.42** hasta un nuevo release autorizado. Las tareas de cancelación de solicitudes y unfollow viven **separadas** en Automatizaciones y todavía no ejecutan cambios en Instagram.
 
 # Profile Counts — robot navegador y estadísticas por perfil
