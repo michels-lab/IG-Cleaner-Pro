@@ -1,3 +1,11 @@
+## v120.45 stable published — October 14, 2026
+
+- Official normal release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45 ; exact release source `5c58aa5e836da014a86e1bdecad9a30e97013d8f`; successful governed publication https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38648558721 .
+- Verified seven assets: integrated Windows `InstaCleanerPro.exe` ZIP, production-signed Android v120.45 APK, standalone Desktop HTML, secondary Desktop ZIP, product logo, privacy notice and SHA256SUMS. Exact-commit Windows EXE healthcheck, Desktop Chromium screenshots, Android emulator screenshots and release gates all passed.
+- Owner's specific instruction "dale release" was consumed after confirmed publication; current stable v120.45. Next development version v120.46 has **no release authorization**.
+- Windows Profile Counts now uses imported Following profiles by default, supports more than 11k profiles and makes Instagram Following discovery optional. Login identity detector recognizes Home Switch row. The owner's actual Chrome/Instagram end-to-end acceptance remains **unverified**; do not claim real Instagram actions or physical Android acceptance passed.
+- Do not present GitHub PR artifacts as releases; always use official GitHub Releases for installation.
+
 ## v120.44 stable published, reconciled — October 14, 2026
 
 - Official stable GitHub release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.44 ; exact source `90337e23b8bb91b3b2720f73a958c85cea152f77`; successful governed workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38525933376 .

@@ -1,12 +1,15 @@
 {
   "version": "120.45",
   "tag": "v120.45",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly said 'dale release' on 2026-10-14 following integration and 5/5 successful CI checks for PR #94. Publish the latest v120.45 development from main as an official stable GitHub Release only after all exact-commit Android, Desktop, Windows and signing gates pass.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.44",
-  "owner_acceptance_note": "Windows Profile Counts now uses the 11,869 already-imported Following profiles without reopening Following; real Instagram user-session scanning and physical Windows/Samsung acceptance are still pending. Publish for the owner to test, not as a claim of live Instagram acceptance. Preserve existing account data, production Android certificate, and release-gate failures."
+  "owner_acceptance_note": "Windows Profile Counts now uses the 11,869 already-imported Following profiles without reopening Following; real Instagram user-session scanning and physical Windows/Samsung acceptance are still pending. Publish for the owner to test, not as a claim of live Instagram acceptance. Preserve existing account data, production Android certificate, and release-gate failures.",
+  "published_run": 38648558721,
+  "published_commit": "5c58aa5e836da014a86e1bdecad9a30e97013d8f",
+  "completed_at_utc": "2026-10-14T22:40:11Z"
 }
