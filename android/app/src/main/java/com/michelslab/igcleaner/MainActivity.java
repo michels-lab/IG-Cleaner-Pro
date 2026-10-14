@@ -987,7 +987,7 @@ public final class MainActivity extends AppCompatActivity {
                 String otherKey = collision.optString("account_key");
                 mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle("Recuperar @" + username + " en Datos anteriores")
-                        .setMessage("The @username belongs to another profile. You can assign it to legacy data without deleting or mixing lists. The previous profile stays accessible as 'Unassigned' con todo su historial independiente.\n\n¿Reasignar solamente el nombre?")
+                        .setMessage("The @username belongs to another profile. You can assign it to legacy data without deleting or mixing lists. The previous profile stays accessible as 'Unassigned' with its independent history.\n\nReassign only the username?")
                         .setNegativeButton("Cancelar", null)
                         .setPositiveButton("Reasignar @usuario", (dialog, which) ->
                                 persistInstagramUsername(key, username, expected, otherKey))
@@ -1033,7 +1033,7 @@ public final class MainActivity extends AppCompatActivity {
             Snackbar.make(content, "Sign in to export the backup.", Snackbar.LENGTH_LONG).show();
             return;
         }
-        setGlobalStatus("EXPORTANDO • respaldo de " + label);
+        setGlobalStatus("EXPORTING • backup of " + label);
         runAsync(() -> {
             JSONArray accountRows = api.getUnscoped(
                     "instagram_accounts?select=*&account_key=eq." + key);
@@ -1060,8 +1060,8 @@ public final class MainActivity extends AppCompatActivity {
                     "application/json",
                     payload.toString(2).getBytes(StandardCharsets.UTF_8));
             mainHandler.post(() -> {
-                setGlobalStatus("RESPALDO GUARDADO • " + saved);
-                Snackbar.make(content, "Respaldo: " + saved, Snackbar.LENGTH_LONG).show();
+                setGlobalStatus("BACKUP SAVED • " + saved);
+                Snackbar.make(content, "Backup: " + saved, Snackbar.LENGTH_LONG).show();
                 if (onSaved != null) onSaved.run();
             });
         }, true);
@@ -1087,8 +1087,8 @@ public final class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> new MaterialAlertDialogBuilder(this)
                     .setTitle("Back up before deleting " + label)
                     .setItems(new String[]{
-                        "Save respaldo sincronizado y continuar",
-                        "Continue sin respaldo (se perderá el historial sincronizado)"
+                        "Save synced backup and continue",
+                        "Continue without backup (synced history will be lost)"
                     }, (dialog, which) -> {
                         if (which == 0) exportSelectedInstagramProfileBackup(key, label,
                                 () -> showFinalInstagramDeleteConfirmation(key, username, label));
@@ -1108,7 +1108,7 @@ public final class MainActivity extends AppCompatActivity {
         typed.setPadding(dp(18), dp(12), dp(18), dp(12));
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Permanently delete " + label)
-                .setMessage("Borra listas, revisiones, Focus e historial sincronizados SOLO de este perfil. Datos anteriores y las demás cuentas no cambian.\\n\\nEscribe exactamente " + required + " para confirmar.")
+                .setMessage("Deletes synced lists, reviews, Focus batches and history ONLY for this profile. Legacy data and other accounts remain unchanged.\\n\\nType exactly " + required + " to confirm.")
                 .setView(typed)
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Delete profile", (dialog, which) -> {
