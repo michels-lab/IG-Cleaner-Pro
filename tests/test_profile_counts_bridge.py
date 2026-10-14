@@ -256,10 +256,10 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         c.stop_signal.wait = lambda seconds: False
         try:
             with patch.dict(sys.modules, {"playwright":fake_playwright,
-                                          "playwright.sync_api":fake_sync}), \\
-                 patch("profile_counts_bridge.challenge_detected", return_value=False), \\
-                 patch("profile_counts_bridge.signed_in_handle", return_value="realmichelduarte"), \\
-                 patch("profile_counts_bridge.read_following_visible", side_effect=discovery), \\
+                                          "playwright.sync_api":fake_sync}), \
+                 patch("profile_counts_bridge.challenge_detected", return_value=False), \
+                 patch("profile_counts_bridge.signed_in_handle", return_value="realmichelduarte"), \
+                 patch("profile_counts_bridge.read_following_visible", side_effect=discovery), \
                  patch("profile_counts_bridge.collect_visible_counts",
                        return_value=("ok",(45,11,False))):
                 c._run()
