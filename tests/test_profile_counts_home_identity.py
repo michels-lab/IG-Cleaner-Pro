@@ -9,7 +9,8 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_counts_instagram import (signed_in_handle, own_profile_from_switcher_rows)
+from profile_counts_instagram import (signed_in_handle, own_profile_from_switcher_rows,
+                                      verify_selected_owner_profile)
 
 try:
     from playwright.sync_api import sync_playwright
@@ -98,6 +99,24 @@ class HomeIdentityChromiumTests(unittest.TestCase):
     def test_nav_only_legacy_layout_still_works(self):
         self.home(include_switch=False, nav="realmichelduarte")
         self.assertEqual(signed_in_handle(self.page), "realmichelduarte")
+
+    def test_selected_owner_page_needs_edit_profile_button(self):
+        # Offline Instagram URL navigation; no real site is contacted.
+        self.page.unroute("**/*")
+        def profile_route(route):
+            owner = '<button>Edit profile</button>' if owner_has_edit[0] else '<button>Follow</button>'
+            route.fulfill(status=200, content_type="text/html", body=(
+                '<html><body><header><h2>realmichelduarte</h2>' + owner +
+                '</header></body></html>'
+            ))
+        owner_has_edit=[True]
+        self.page.route("https://www.instagram.com/**", profile_route)
+        self.assertEqual(verify_selected_owner_profile(self.page, "realmichelduarte"),
+                         "realmichelduarte")
+        owner_has_edit[0]=False
+        self.assertIsNone(verify_selected_owner_profile(self.page, "realmichelduarte"))
+        owner_has_edit[0]=True
+        self.assertIsNone(verify_selected_owner_profile(self.page, "different.user"))
 
 
 if __name__ == "__main__":
