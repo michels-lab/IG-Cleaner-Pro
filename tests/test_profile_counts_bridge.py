@@ -217,6 +217,59 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(c.snapshot()["status"], "complete")
         self.assertEqual(c.snapshot()["progress"], 1)
 
+
+    def test_missing_following_keeps_chrome_open_and_recovers(self):
+        import types
+        from unittest.mock import patch
+        from profile_counts_instagram import FollowingControlUnavailable
+
+        events = []
+        class FakePage:
+            def goto(self, *args, **kwargs): pass
+            def is_closed(self): return False
+        class FakeBrowser:
+            pages = [FakePage()]
+            def close(self): events.append("close")
+        browser = FakeBrowser()
+        class FakeSync:
+            def __enter__(self):
+                self.chromium = types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw: browser)
+                return self
+            def __exit__(self, *exc): pass
+        fake_sync = types.ModuleType("playwright.sync_api")
+        fake_sync.sync_playwright = lambda: FakeSync()
+        fake_playwright = types.ModuleType("playwright")
+        fake_playwright.sync_api = fake_sync
+
+        c = self.collector
+        c.owner, c.account, c.expected_handle = "owner-A", "ig-A", "realmichelduarte"
+        c.autonomous = True
+        c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
+        def discovery(*args, **kwargs):
+            if "waiting" not in events:
+                events.append("waiting")
+                raise FollowingControlUnavailable("Following not found")
+            self.assertNotIn("close", events, "Chrome must stay open during manual recovery")
+            return ["friend.user"], True
+        original_wait = c.stop_signal.wait
+        c.stop_signal.wait = lambda seconds: False
+        try:
+            with patch.dict(sys.modules, {"playwright":fake_playwright,
+                                          "playwright.sync_api":fake_sync}), \\
+                 patch("profile_counts_bridge.challenge_detected", return_value=False), \\
+                 patch("profile_counts_bridge.signed_in_handle", return_value="realmichelduarte"), \\
+                 patch("profile_counts_bridge.read_following_visible", side_effect=discovery), \\
+                 patch("profile_counts_bridge.collect_visible_counts",
+                       return_value=("ok",(45,11,False))):
+                c._run()
+        finally:
+            c.stop_signal.wait = original_wait
+        self.assertIn("waiting", events)
+        self.assertEqual(c.snapshot()["status"], "complete")
+        self.assertEqual(c.snapshot()["successful"], 1)
+        self.assertEqual(events[-1], "close")
+
     def test_autonomous_partial_discovery_resumes_same_account_checkpoint(self):
         import types
         from unittest.mock import patch
