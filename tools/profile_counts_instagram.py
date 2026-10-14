@@ -116,7 +116,8 @@ def visible_switcher_account_rows(page):
       for (const el of document.querySelectorAll('button,[role="button"],a,span,div')) {
         if (el.childElementCount > 3) continue;
         const label = (el.getAttribute('aria-label') || el.textContent || '').trim();
-        if (label.length > 30 || !switchLabel.test(label) || !visible(el)) continue;
+        if (label.length > 30 || !switchLabel.test(label) || !visible(el) ||
+            el.closest('[role="dialog"]')) continue;
         let parent = el.parentElement;
         for (let depth=0; parent && depth<7; depth++, parent=parent.parentElement) {
           const r=parent.getBoundingClientRect();
@@ -144,22 +145,49 @@ def signed_in_handle(page):
         return None
     via_nav = own_profile_from_anchors(visible_link_descriptors(page))
     via_switcher = own_profile_from_switcher_rows(visible_switcher_account_rows(page))
-    from_own_page = None
-    candidate = user_from_href(getattr(page, "url", ""))
-    if candidate:
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
-            controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
-            names = header.locator("h1,h2").all_inner_texts()
-            if sum(c.count() for c in controls) == 1 and any(
-                str(n).strip().lstrip("@").casefold() == candidate for n in names
-            ):
-                from_own_page = candidate
+    from_own_page = own_profile_edit_identity(page)
     identities = {h.casefold() for h in (via_nav, via_switcher, from_own_page) if h}
     if len(identities) != 1:
         return None  # never guess if trusted identity signals disagree or vanish
     return next(iter(identities))
+
+
+def own_profile_edit_identity(page):
+    """A named own-profile header AND Edit profile control prove ownership.
+
+    A URL or username heading on someone else's public profile never suffices.
+    """
+    candidate = user_from_href(getattr(page, "url", ""))
+    if not candidate:
+        return None
+    header = page.locator("header").first
+    if not header.count() or not header.is_visible():
+        return None
+    edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
+    controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
+    names = header.locator("h1,h2,[role=heading]").all_inner_texts()
+    if sum(c.count() for c in controls) == 1 and any(
+        str(n).strip().lstrip("@").casefold() == candidate for n in names
+    ):
+        return candidate
+    return None
+
+
+def verify_selected_owner_profile(page, expected_handle):
+    """One read-only direct profile visit if Home has no verified identity.
+
+    The selected @handle is a destination, NEVER ownership proof. A matching
+    header and visible Edit profile control are required. No API/clicks.
+    """
+    expected = valid_username(expected_handle)
+    if not expected or challenge_detected(page):
+        return None
+    page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=45000)
+    page.wait_for_timeout(900)
+    if challenge_detected(page):
+        return None
+    proven = own_profile_edit_identity(page)
+    return expected if proven and proven.casefold() == expected.casefold() else None
 
 
 def challenge_detected(page):
