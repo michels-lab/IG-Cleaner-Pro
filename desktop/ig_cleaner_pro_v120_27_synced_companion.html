@@ -3732,8 +3732,18 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     </div>
 </div></div></div><div class="page" id="page-automations"><div class="igc-page-flow">
 <div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage every Instagram robot in one workspace. Insights is for analysis; Mutuals remains human-only Focus.</p></div>
+<div class="panel" id="igcAutomationsOverview">
+<div class="title">Automation Center · All Robots</div>
+<p class="note">Every Instagram browser robot is controlled here. Review saved statistics under Insights. Only one robot may navigate the active Instagram session at a time; local analysis is independent.</p>
+<div class="btnrow" id="igcAutomationRobotNav">
+<button class="btn primary" type="button" onclick="document.getElementById('igcAutomationsProfileCountsPanel').scrollIntoView({behavior:'smooth',block:'start'})">◎ Profile Counts</button>
+<button class="btn" type="button" onclick="igcAutoChoose('cancel');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Cancel Pending Requests</button>
+<button class="btn" type="button" onclick="igcAutoChoose('unfollow');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Unfollow</button>
+<button class="btn" type="button" onclick="igcAutoChoose('audit');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Followback Audit (optional)</button>
+</div>
+</div>
 <div class="panel" id="igcAutoPanel">
-<div class="title">Instagram action robot · Local Chrome</div>
+<div class="title">Account Action Robots · Local Chrome</div>
 <p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
 <div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Unfollow · Not Following Back</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancel Sent Requests</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Protected Profiles</button><button type="button" class="btn" onclick="igcAutoChoose('audit')">🔎 Verify Followback (Optional)</button></div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
