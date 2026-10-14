@@ -258,6 +258,7 @@ jobs:
           python3 tests/android-contract.py
           python3 tests/android-native-english-contract.py
           python3 tests/english-ui-contract.py
+          python3 tests/windows-package-readme-contract.py
           python3 tests/android-signing-contract.py
           python3 tests/release-publisher-contract.py
           python3 tests/standalone-desktop-contract.py
