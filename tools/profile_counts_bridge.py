@@ -38,6 +38,7 @@ class Collector:
         self.data_dir = data_dir
         self.session_dir = session_dir
         self.lock = threading.RLock()
+        self.browser_admission = threading.RLock()  # shared across all Chrome robots
         self.login_ready = threading.Event()
         self.stop_signal = threading.Event()
         self.pause_requested = False
@@ -153,7 +154,7 @@ class Collector:
             pacing["max_per_window"], pacing["window_minutes"], pacing["min_delay_seconds"])
         rest_count, rest_minutes = check_batch_rest(request.get("pause_every", 0),
                                                      request.get("pause_minutes", 0))
-        with self.lock:
+        with self.browser_admission, self.lock:
             if self.actions and self.actions.worker and self.actions.worker.is_alive():
                 raise ValueError("An Instagram action robot is running. Pause it before Profile Counts.")
             if use_stage:
@@ -224,7 +225,9 @@ class Collector:
             request.get("pause_every", 0),
             request.get("pause_minutes", 0),
         )
-        with self.lock:
+        with self.browser_admission, self.lock:
+            if self.actions and self.actions.worker and self.actions.worker.is_alive():
+                raise ValueError("Pause the active Instagram action robot before starting Profile Counts.")
             if self.worker and self.worker.is_alive():
                 raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
