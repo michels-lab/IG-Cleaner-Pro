@@ -299,7 +299,7 @@ class ActionSafetyTests(unittest.TestCase):
                      "expected_handle":"my.profile", "task":"unfollow",
                      "targets":["one.user"],"batch_size":30,
                      "gap_seconds":10,"rest_minutes":5}
-            with self.assertRaisesRegex(ValueError, "aprobada"):
+            with self.assertRaisesRegex(ValueError, "explicitly approved"):
                 actions.start(payload)
             payload["confirmation"]="unfollow:1"
             with self.assertRaisesRegex(ValueError, "Followers"):
