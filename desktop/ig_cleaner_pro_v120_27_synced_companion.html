@@ -4575,7 +4575,7 @@ function runStateDiagnosis(showMessage=true){
 function renderGuidedSessionMini(){
   if(!guidedSession100)return '<p class="muted">No hay sesión guiada activa.</p>';
   const steps=guidedSession100.steps||[];
-  return `<div class="guided-session-steps">${steps.map((s,i)=>`<div class="guided-step"><b>${s.rows?.length||0}</b><span>${i+1}. ${esc(s.title||s.kind)} · ${esc(s.status||'pending')}</span></div>`).join('')}</div>`;
+  return `<div class="guided-session-steps">${steps.map((s,i)=>`<div class="guided-step"><b>${s.rows?.length||0}</b><span>${i+1}. ${esc(s.title||s.kind)} · ${esc(s.status==='pendiente'?'Pending':s.status==='vacío'?'Empty':s.status||'Pending')}</span></div>`).join('')}</div>`;
 }
 
 function mainSessionCandidates(){
@@ -4598,9 +4598,9 @@ function buildGuidedSession100(){
     createdAt:Date.now(),
     currentIndex:0,
     steps:[
-      {kind:'pending',title:'Pending requests',label:'100-profile session · pending',rows:p.map(safeBatchRow),status:p.length?'pending':'empty'},
-      {kind:'mutual',title:'Mutual followers',label:'100-profile session · mutual followers',rows:m.map(safeBatchRow),status:m.length?'pending':'empty'},
-      {kind:'main',title:'Accounts that do not follow back',label:'100-profile session · non-followback',rows:f.map(safeBatchRow),status:f.length?'pending':'empty'}
+      {kind:'pending',title:'Pending requests',label:'100-profile session · pending',rows:p.map(safeBatchRow),status:p.length?'pendiente':'vacío'},
+      {kind:'mutual',title:'Mutual followers',label:'100-profile session · mutual followers',rows:m.map(safeBatchRow),status:m.length?'pendiente':'vacío'},
+      {kind:'main',title:'Accounts that do not follow back',label:'100-profile session · non-followback',rows:f.map(safeBatchRow),status:f.length?'pendiente':'vacío'}
     ]
   };
 }
@@ -4618,7 +4618,7 @@ function startGuidedSession100(){
 function currentGuidedStep(){
   if(!guidedSession100)return null;
   const steps=guidedSession100.steps||[];
-  return steps.find(s=>s.status==='pending'&&s.rows&&s.rows.length)||null;
+  return steps.find(s=>s.status==='pendiente'&&s.rows&&s.rows.length)||null;
 }
 function continueGuidedSession100(){
   if(!guidedSession100){msg('No active guided session. Start a 100-profile session first.','w');return;}
@@ -5252,7 +5252,7 @@ function calcPriority(row){
   if(row.riskCodes && row.riskCodes.includes('spam_word')){score+=18;why.push('spam/scam');}
   if(row.riskCodes && row.riskCodes.includes('many_numbers')){score+=8;why.push('muchos números');}
 
-  if(!isDoneValid(row)){score+=8;why.push('pending');}
+  if(!isDoneValid(row)){score+=8;why.push('pendiente');}
   if(row.dateMain===0){score+=5;why.push('sin fecha');}
 
   score=Math.max(0,Math.min(100,Math.round(score)));
@@ -7312,7 +7312,7 @@ function runLogicAudit(show=true){
       const active=typeof isInActiveFocus==='function'&&isInActiveFocus(r,'mutual');
       const openable=typeof isMutualOpenableForFocus==='function'?isMutualOpenableForFocus(r):(!r.done&&!r.protected&&!isSnoozed(r)&&!active);
       if(!r.done&&!r.protected&&!isSnoozed(r)&&!active&&!openable){
-        auditPush(issues,'warn','Mutual followers',r.username,'Mutuo pendiente pero no entra a foco por historial o bloqueo interno','Limpiar bloqueo temporal si aplica',{code:'mutual_not_openable'});
+        auditPush(issues,'warn','Seguidores que sigo',r.username,'Mutuo pendiente pero no entra a foco por historial o bloqueo interno','Limpiar bloqueo temporal si aplica',{code:'mutual_not_openable'});
       }
     });
   }catch(e){}
@@ -7336,7 +7336,7 @@ function renderLogicAudit(issues=lastLogicAuditRows){
   const warns=issues.filter(i=>i.type==='warn').length;
   const main=issues.filter(i=>i.module==='Lista').length;
   const pending=issues.filter(i=>i.module==='Pending').length;
-  const mutual=issues.filter(i=>i.module==='Mutual followers').length;
+  const mutual=issues.filter(i=>i.module==='Seguidores que sigo').length;
   summary.innerHTML=`
     <div class="audit-kpi ${errors?'hot':'ok'}"><b>${errors}</b><span>errores</span></div>
     <div class="audit-kpi ${warns?'warn':'ok'}"><b>${warns}</b><span>advertencias</span></div>
