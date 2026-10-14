@@ -1,3 +1,12 @@
+## 2026-10-14 — Live owner screenshot: Chrome signed in but Instagram Home account not detected (development fix)
+
+- Owner's Windows v120.44 screenshot shows Instagram Home displaying the signed-in account with **Switch** in the right-hand account row, while Insta Cleaner Insights → Profile Counts remains at zero and reports identity not yet verified. This is live evidence of the symptom, **not** acceptance of a corrected build.
+- Root cause in source: `signed_in_handle` relied on a semantic Profile navigation anchor or Edit profile inside a profile header; the Home account/switcher row is not recognized, particularly with collapsed/nonsemantic Instagram navigation.
+- Development branch `fix/ig-home-switcher-login-20261014` detects a **visible, compact row** containing one valid Instagram profile link adjacent to a Switch / Cambiar control. Multiple or conflicting candidate handles, hidden controls, login forms, arbitrary suggested accounts and nav-vs-switcher disagreement fail closed. Existing semantic nav recognition remains.
+- If Home still has no positive identity after a wait, the collector makes **at most one read-only visit** to the exact selected Instagram profile. Only a matching header and an **Edit profile** control prove ownership; a URL or preselected handle alone is never accepted. This does not trigger follow/unfollow/cancel, bypass a challenge or use private APIs.
+- Added offline Chromium Home-account fixtures for positive Switch/Cambiar, collapsed nav, suggested profiles, hidden/login/ambiguous controls, conflict, and strict Edit-profile fallback. GitHub exact-head CI and the user's actual installed Windows session still require validation.
+- Preserve existing account scopes/history and mark all real Instagram acceptance as pending. Development v120.45 only; stable v120.44 remains published until a separate explicit release request.
+
 ## 2026-10-12 — JWT expired during Desktop profile registry sync (user screenshot; development fix)
 
 - User supplied screenshot of **Cuenta y sincronización** signed in to an IG Cleaner login, but cloud list profile registry failed with **JWT expired**. Source root cause: the shared Web sync client restored tokens as connected, only attempted a refresh after an HTTP 401/403, lacked proactive expiry handling/single-flight rotation and left the sign-in form hidden if rotation failed. Android's native client also refreshed only reactively and could accept an older WebView token after native rotation.
