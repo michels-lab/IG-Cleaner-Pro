@@ -182,9 +182,11 @@ def verify_selected_owner_profile(page, expected_handle):
     expected = valid_username(expected_handle)
     if not expected or challenge_detected(page):
         return None
-    page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=45000)
+    if page.locator('input[name="password"]').count():
+        return None
+    page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=20000)
     page.wait_for_timeout(900)
-    if challenge_detected(page):
+    if challenge_detected(page) or page.locator('input[name="password"]').count():
         return None
     proven = own_profile_edit_identity(page)
     return expected if proven and proven.casefold() == expected.casefold() else None
