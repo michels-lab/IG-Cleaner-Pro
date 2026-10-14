@@ -41,8 +41,12 @@ for token in (
     assert token in privacy, f"Privacy documentation token missing: {token}"
 
 stable_desktop = manifest["channels"]["desktop"]["artifact"]
-current = manifest["releasePolicy"]["currentStableRelease"]
-assert stable_desktop == f"IG-Cleaner-Pro-Desktop-{current}.zip"
+candidate = manifest["releasePolicy"]["nextRelease"]
+# Manifest channels describe the NEXT release candidate. currentStableRelease
+# refers to the previously published version and must not be substituted.
+assert stable_desktop == f"IG-Cleaner-Pro-Desktop-{candidate}.zip"
+assert manifest["channels"]["desktop"]["primaryArtifact"] == f"IG-Cleaner-Pro-Desktop-{candidate}.html"
+assert manifest["channels"]["android"]["artifact"] == f"IG-Cleaner-Pro-Android-{candidate}.apk"
 assert "release/distribution-manifest.json" in migration
 assert "IG-Cleaner-Pro-Desktop-v{version}.zip" in migration
 assert manifest["channels"]["desktop"]["artifactTemplate"] == "IG-Cleaner-Pro-Desktop-v{version}.zip"
