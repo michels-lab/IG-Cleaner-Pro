@@ -12,7 +12,7 @@ const {chromium}=require("playwright");
  const html=path.resolve(process.argv[2]||"");
  assert(fs.existsSync(html) && html.endsWith(".html"),"Pass generated standalone HTML");
  const token="integration-test-only-secret-abcdefghijklmnopqrstuvwxyz";
- let identity=null,queries=0;
+ let identity=null,queries=0,staging=null,appendCalls=0;
  const results=[{username:"public.user",followers:"8765",following:"432",
   checked_at:"2026-10-12T02:00:00+00:00",source:"instagram_visible_profile_browser",
   approximate:"false",status:"ok"}];
@@ -33,10 +33,31 @@ const {chromium}=require("playwright");
    {status:"idle",message:"Ready",owner:"",account:"",progress:0,total:0,per_hour:50});return}
   if(req.url==="/api/results"){send(200,{rows:results});return}
   if(req.url==="/api/following"){send(200,{handle:"fixture.owner",complete:false,usernames:[]});return}
+  if(req.url==="/api/queue/init"&&req.method==="POST"){
+   const chunks=[];for await(const chunk of req)chunks.push(chunk);
+   const body=JSON.parse(Buffer.concat(chunks).toString("utf8"));
+   assert.equal(body.total,1);
+   staging={owner:body.owner,account:body.account,transfer:"test-transfer",usernames:[]};
+   send(200,{transfer:staging.transfer,total:body.total,received:0});
+   return;
+  }
+  if(req.url==="/api/queue/append"&&req.method==="POST"){
+   const chunks=[];for await(const chunk of req)chunks.push(chunk);
+   const body=JSON.parse(Buffer.concat(chunks).toString("utf8"));
+   assert.equal(body.transfer,staging.transfer);
+   assert.equal(body.offset,staging.usernames.length);
+   staging.usernames.push(...body.usernames);
+   appendCalls++;
+   send(200,{received:staging.usernames.length,total:1});
+   return;
+  }
   if(req.url==="/api/auto"&&req.method==="POST"){
    const chunks=[];for await(const chunk of req)chunks.push(chunk);
    const body=JSON.parse(Buffer.concat(chunks).toString("utf8"));
-   assert.deepEqual(body.usernames,["public.user"],"Imported Following should be passed without rediscovery");
+   assert.deepEqual(body.usernames,[],"Imported list is transferred through validated chunks");
+   assert.equal(body.use_staged_import,true);
+   assert.equal(body.transfer,staging.transfer);
+   assert.deepEqual(staging.usernames,["public.user"],"All imported usernames must reach the robot");
    assert.equal(body.discover_following,false,"Following browser discovery must be opt-in");
    assert.equal(body.max_per_window,50);
    assert.equal(body.window_minutes,60);
@@ -62,13 +83,17 @@ const {chromium}=require("playwright");
   await page.locator("#igcAppShell").waitFor({state:"visible",timeout:15000});
   await page.evaluate(()=>{
    followingRaw=[{username:"public.user"}]; // Use existing imported Following list.
-   showPage("profileStats");
+   showPage("automations");
    window.igcCountsRender();
   });
-  assert(await page.locator("#igcCountsRobotActions").isVisible(),
+  assert(await page.locator("#page-automations #igcCountsRobotActions").isVisible(),
    "Pacing, Pause and Resume controls must be visible");
-  assert(await page.locator("#igcCountsResume").isVisible());
-  await page.locator("#igcCountsRobotConnect button").first().click();
+  assert(await page.locator("#page-automations #igcCountsResume").isVisible());
+  assert(await page.locator("#page-profileStats #igcCountsRobotActions").count()===0,
+   "Insights must not contain robot controls");
+  assert(await page.locator("#page-profileStats #igcCountsSummary").count()===1,
+   "Insights keeps complete numerical results");
+  await page.locator("#page-automations #igcCountsRobotConnect button").first().click();
   // Explicit connect starts counts on the existing import; no Following dialog.
 
   const deadline=Date.now()+8000;
@@ -84,7 +109,8 @@ const {chromium}=require("playwright");
     }));
     throw Error("Real browser never automatically connected: "+JSON.stringify({diagnostics,queries,errors}));
   }
-  await page.evaluate(()=>window.igcCountsRobotPoll());
+  assert.equal(appendCalls,1,"The imported profile must be uploaded in a staging chunk");
+  await page.evaluate(()=>{showPage("profileStats");return window.igcCountsRobotPoll()});
   await page.waitForFunction(()=>document.querySelector("#igcCountsRows")?.textContent.includes("8,765"),
    {timeout:10000});
   const row=await page.locator("#igcCountsRows").innerText();
