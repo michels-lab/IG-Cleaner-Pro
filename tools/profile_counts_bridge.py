@@ -102,13 +102,14 @@ class Collector:
                 raise ValueError("Import chunk is out of order; retry from the confirmed offset.")
             if len(stage["usernames"]) + len(users) > stage["total"]:
                 raise ValueError("Import chunk exceeds the declared total.")
-            # The UI already deduplicates users. Fail instead of dropping data.
-            for u in users:
-                name = valid_username(u)
-                if name in stage["seen"]:
-                    raise ValueError("Duplicate username in imported chunks.")
-                stage["seen"].add(name)
-                stage["usernames"].append(name)
+            # Reject an entire invalid chunk atomically; never partially append.
+            normalized = [valid_username(u) for u in users]
+            if len(set(normalized)) != len(normalized) or any(
+                name in stage["seen"] for name in normalized
+            ):
+                raise ValueError("Duplicate username in imported chunks.")
+            stage["seen"].update(normalized)
+            stage["usernames"].extend(normalized)
             return {"received": len(stage["usernames"]), "total": stage["total"]}
 
     def result_path(self):
@@ -554,12 +555,15 @@ class Collector:
                 "discovery_complete": self.discovery_complete,
                 "queue_source": self.queue_source,
                 "discovered": len(self.usernames),
+                "queue_transport": "chunked" if self.queue_source == "imported" else "browser",
             }
 
     def following(self):
         with self.lock:
-            return {"usernames": list(self.usernames), "handle": self.detected_handle,
-                    "complete": self.discovery_complete}
+            # A directly imported queue is already in Desktop; avoid sending a
+            # potentially enormous duplicate JSON response every five seconds.
+            return {"usernames": list(self.usernames) if self.queue_source == "instagram" else [],
+                    "handle": self.detected_handle, "complete": self.discovery_complete}
 
     def results(self):
         with self.lock:
