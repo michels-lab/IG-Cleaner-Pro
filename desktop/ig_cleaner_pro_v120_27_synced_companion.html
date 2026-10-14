@@ -2929,15 +2929,15 @@ window.IGC_INSTAGRAM_PROFILES={
 document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.render());
 </script>
 
-<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><div class="igc-instagram-rail"><label for="igcInstagramIdentity">INSTAGRAM</label><div class="igc-profile-current"><span class="igc-profile-current-caption">PERFIL ACTIVO</span><strong id="igcInstagramActiveFullName" aria-live="polite">Previous data</strong></div><div class="igc-profile-select-row"><select id="igcInstagramIdentity" aria-label="Switch Instagram account" onchange="IGC_INSTAGRAM_PROFILES.switch(this.value)"><option value="legacy">Previous data</option></select></div><div class="igc-profile-actions"><button type="button" title="Añadir perfil de Instagram" onclick="igcAddInstagramProfile()">＋ Añadir</button><button type="button" title="Editar @usuario del Instagram seleccionado" aria-label="Editar @usuario" onclick="igcEditInstagramProfile()">✎ Editar</button><button type="button" title="Export selected Instagram backup" aria-label="Respaldo Instagram" onclick="igcExportSelectedInstagramProfile()">↓ Respaldo</button><button type="button" id="igcDeleteInstagramButton" title="Delete selected Instagram account" aria-label="Delete selected Instagram account" onclick="igcDeleteInstagramProfile()" disabled>× Eliminar</button><button type="button" id="igcRefreshInstagramButton" title="Refresh your cloud account profiles" onclick="igcRefreshInstagramProfiles()">⟳ Actualizar perfiles</button></div><div id="igcInstagramIdentitySummary" aria-live="polite"></div><div id="igcInstagramCloudStatus" role="status" aria-live="polite">To see all profiles, connect your account in Account.</div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button><button class="navbtn" id="tab-automations" onclick="showPage('automations')" title="Automations"><span class="igc-nav-icon">⚙</span><span class="igc-nav-label">Automations</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><div class="igc-engine-badge">Engine v119 · UI v120.44</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Decide qué revisar, abre una tanda y vuelve aquí a confirmar.</p></div><button class="igc-command-btn igc-header-about" id="aboutDeveloperBtn" title="About" type="button" aria-haspopup="dialog">ⓘ About</button><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Import</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>Una lectura rápida de tus tres flujos principales antes de empezar una tanda.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>¿Qué quieres hacer ahora?</h3><p>Empieza por una sesión de revisión o entra directo al módulo que necesitas.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Abre una tanda de Review sobre cuentas que tú sigues.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Clean up Following</b><small>Trabaja sobre las cuentas que sigues con filtros y estados.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>Followers que también sigues, con su propio Focus, historial y sesión.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>Personas que te siguen pero tú no sigues, en un workspace independiente.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Pending requests</b><small>Revisa solicitudes que siguen sin resolverse.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Abre relaciones que cambiaron desde el ZIP anterior o desde tu última revisión.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
-<div class="title">🧭 Dashboard por módulo</div>
+<div class="igc-shell" id="igcAppShell"><aside class="igc-rail"><div class="igc-brand"><div class="igc-brand-mark" aria-label="Instagram Cleaner Pro logo"><img alt="" src="assets/ig-cleaner-pro/official-app-icon.png"/></div><div class="igc-brand-copy"><b>Instagram Cleaner Pro</b><span>Michel's Lab</span></div></div><div class="igc-instagram-rail"><label for="igcInstagramIdentity">INSTAGRAM</label><div class="igc-profile-current"><span class="igc-profile-current-caption">ACTIVE PROFILE</span><strong id="igcInstagramActiveFullName" aria-live="polite">Previous data</strong></div><div class="igc-profile-select-row"><select id="igcInstagramIdentity" aria-label="Switch Instagram account" onchange="IGC_INSTAGRAM_PROFILES.switch(this.value)"><option value="legacy">Previous data</option></select></div><div class="igc-profile-actions"><button type="button" title="Añadir perfil de Instagram" onclick="igcAddInstagramProfile()">＋ Añadir</button><button type="button" title="Editar @usuario del Instagram seleccionado" aria-label="Editar @usuario" onclick="igcEditInstagramProfile()">✎ Editar</button><button type="button" title="Export selected Instagram backup" aria-label="Respaldo Instagram" onclick="igcExportSelectedInstagramProfile()">↓ Respaldo</button><button type="button" id="igcDeleteInstagramButton" title="Delete selected Instagram account" aria-label="Delete selected Instagram account" onclick="igcDeleteInstagramProfile()" disabled>× Eliminar</button><button type="button" id="igcRefreshInstagramButton" title="Refresh your cloud account profiles" onclick="igcRefreshInstagramProfiles()">⟳ Actualizar perfiles</button></div><div id="igcInstagramIdentitySummary" aria-live="polite"></div><div id="igcInstagramCloudStatus" role="status" aria-live="polite">To see all profiles, connect your account in Account.</div></div><button class="navbtn active" id="tab-moduleDashboard" onclick="showPage('moduleDashboard')" title="Home"><span class="igc-nav-icon">⌘</span><span class="igc-nav-label">Home</span></button><div class="igc-nav-group"><div class="igc-nav-cap">WORK</div><button class="navbtn" id="tab-list" onclick="showPage('list')" title="Review"><span class="igc-nav-icon">◎</span><span class="igc-nav-label">Review</span></button><button class="navbtn" id="tab-followersMutual" onclick="showPage('followersMutual')" title="Mutuals"><span class="igc-nav-icon">◉</span><span class="igc-nav-label">Mutuals</span></button><button class="navbtn" id="tab-followersFans" onclick="showPage('followersFans')" title="Followers que no sigo"><span class="igc-nav-icon">○</span><span class="igc-nav-label">Followers</span></button><button class="navbtn" id="tab-pendingRequests" onclick="showPage('pendingRequests')" title="Pending"><span class="igc-nav-icon">◌</span><span class="igc-nav-label">Pending</span></button><button class="navbtn" id="tab-automations" onclick="showPage('automations')" title="Automations"><span class="igc-nav-icon">⚙</span><span class="igc-nav-label">Automations</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">DATA</div><button class="navbtn" id="tab-upload" onclick="showPage('upload')" title="Import"><span class="igc-nav-icon">⇩</span><span class="igc-nav-label">Import</span></button><button class="navbtn" id="tab-profileStats" onclick="showPage('profileStats')" title="Insights"><span class="igc-nav-icon">◫</span><span class="igc-nav-label">Insights</span></button><button class="navbtn" id="tab-compare" onclick="showPage('compare')" title="Changes"><span class="igc-nav-icon">↔</span><span class="igc-nav-label">Changes</span></button></div><div class="igc-nav-group"><div class="igc-nav-cap">SYSTEM</div><button class="navbtn" id="tab-backup" onclick="showPage('backup')" title="Vault"><span class="igc-nav-icon">◇</span><span class="igc-nav-label">Vault</span></button><button class="navbtn" id="tab-diag" onclick="showPage('diag')" title="Health"><span class="igc-nav-icon">◈</span><span class="igc-nav-label">Health</span></button></div><div class="igc-rail-bottom"><div class="igc-engine-badge">Engine v119 · UI v120.44</div></div></aside><div class="igc-stage"><header class="igc-commandbar"><div class="igc-context"><div class="igc-context-eyebrow">RELATIONSHIP WORKSPACE</div><h1 id="igcWorkspaceTitle">Command Center</h1><p id="igcWorkspaceSubtitle">Choose what to review, open a batch, then return to confirm.</p></div><button class="igc-command-btn igc-header-about" id="aboutDeveloperBtn" title="About" type="button" aria-haspopup="dialog">ⓘ About</button><div class="igc-command-actions" id="igcContextActions"><button class="igc-command-btn quiet" onclick="showPage('upload')" type="button">Import</button></div></header><main class="igc-workspace"><div class="page active" id="page-moduleDashboard"><div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Command Center</h2><p>A quick overview of your three main workflows before starting a batch.</p></div><section class="igc-launch-deck"><div class="igc-launch-intro"><h3>What would you like to do next?</h3><p>Start a review session or jump straight to the module you need.</p></div><div class="igc-launch-grid"><button class="igc-launch-card gold" onclick="focusMode30()" type="button"><span class="igc-launch-tag">FOCUS</span><b>Following · Foco 30</b><small>Open a Review batch for accounts you follow.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('list')" type="button"><span class="igc-launch-tag">REVIEW</span><b>Clean up Following</b><small>Review accounts you follow using filters and status.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('followersMutual')" type="button"><span class="igc-launch-tag">MUTUALS</span><b>Mutuals</b><small>People who follow you and whom you follow back, with separate Focus, history and sessions.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card blue" onclick="showPage('followersFans')" type="button"><span class="igc-launch-tag">FOLLOWERS</span><b>Followers que no sigues</b><small>People who follow you but whom you do not follow, in a separate workspace.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card violet" onclick="showPage('pendingRequests')" type="button"><span class="igc-launch-tag">PENDING</span><b>Pending requests</b><small>Review unresolved follow requests.</small><span class="igc-launch-arrow">→</span></button><button class="igc-launch-card cyan" onclick="showPage('compare')" type="button"><span class="igc-launch-tag">CHANGES</span><b>Solo cambios nuevos</b><small>Open relationships that changed since the previous ZIP or your last review.</small><span class="igc-launch-arrow">→</span></button></div></section><div class="panel">
+<div class="title">🧭 Module dashboard</div>
 <div class="note">
       Vista rápida separada por flujo: limpieza de following, pending requests y seguidores que sigo. No usa notas manuales: solo estados, decisiones rápidas, progreso y siguiente acción recomendada.
     </div>
 <div class="module-dashboard" id="moduleDashboardGrid">
 <div class="module-card">
 <h3>🧹 Following cleanup</h3>
-<div class="module-sub">Cuentas que sigues, especialmente las que no te siguen de vuelta.</div>
+<div class="module-sub">Accounts you follow, especially those who do not follow back.</div>
 <div class="module-kpis">
 <div class="module-kpi"><b>0</b><span>no me siguen</span></div>
 <div class="module-kpi"><b>0</b><span>pendientes</span></div>
@@ -2956,32 +2956,32 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 
 
 
-<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWING WORKSPACE</div><h2>Review</h2><p>Esta sección trabaja únicamente con las cuentas que tú sigues. Los followers viven en su propio módulo.</p></div><div class="panel igc-review-summary">
+<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWING WORKSPACE</div><h2>Review</h2><p>This section only covers accounts you follow. Your followers have their own module.</p></div><div class="panel igc-review-summary">
 <div class="title">Following — estado de limpieza</div>
-<div class="igc-section-purpose">Foco, Recheck, Double Check, protección y revisión de las cuentas que tú sigues viven aquí.</div>
+<div class="igc-section-purpose">Focus, Recheck, Double Check, protection and reviews for accounts you follow are managed here.</div>
 <div class="statrow" id="statsRow"></div>
 </div><div class="panel v113-critical-panel" id="v113CriticalPanel">
-<div class="title">🚨 Resumen de prioridad crítica</div>
+<div class="title">🚨 Critical priority overview</div>
 <div class="v113-critical-head">
 <div>
-<b id="v113CriticalBadge">Sin calcular</b>
-<span>Diagnóstico agregado de las cuentas críticas reales.</span>
+<b id="v113CriticalBadge">Not calculated</b>
+<span>Aggregate diagnostics for genuinely critical accounts.</span>
 </div>
 <button class="btn" onclick="v113RefreshAll(true)">Actualizar</button>
 </div>
 <div class="v113-critical-grid" id="v113CriticalGrid"></div>
 <div class="v113-critical-plan" id="v113CriticalPlan"></div>
 </div><div class="panel pro-quick-panel">
-<div class="title">⚡ Foco y segunda revisión</div>
+<div class="title">⚡ Focus and second review</div>
 <div class="focuslab-note igc-second-review-note"><b>Sistema conservado:</b> Foco trabaja pendientes; <b>Review again</b> y <b>Double Check</b> permiten volver a validar cuentas que ya pasaron por revisión, manteniendo sus ciclos separados y el popup de confirmación.</div>
 <div class="workflow-grid">
 <button class="workflow-card focus" data-focus-card="main" onclick="focusMode30()">
 <b>💡 Foco 30</b>
-<span>Selecciona y abre SOLO cuentas que no te siguen. No rellena con perfiles que sí te siguen.</span>
+<span>Select and open ONLY accounts that do not follow you back. Never pad the batch with mutuals.</span>
 </button>
 <button class="workflow-card warning" data-focus-card="recheck" onclick="openRecheckNotFollowingN(30)">
 <b>🔁 Revisar de nuevo 30</b>
-<span>Abre 30 NO ME SIGUE aunque ya estén revisados y siempre muestra confirmación al terminar.</span>
+<span>Open 30 non-followback accounts, even if already reviewed, and always ask for confirmation afterward.</span>
 </button>
 <button class="workflow-card focus" data-focus-card="double" onclick="openDoubleCheckNoMeSigueN(30)">
 <b>🧿 Double Check 30</b>
@@ -2993,11 +2993,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </button>
 <button class="workflow-card" data-focus-card="pendingBadFilter" onclick="showPendingBadDirect()">
 <b>🔥 High-risk pending</b>
-<span>Ve directo a lo que todavía falta resolver.</span>
+<span>Jump straight to unresolved accounts.</span>
 </button>
 <button class="workflow-card" data-focus-card="allUsersView" onclick="showAllUsersDirect()">
-<b>👥 Ver todos</b>
-<span>Limpia todos los filtros y vuelve a la vista completa.</span>
+<b>👥 View all</b>
+<span>Clear every filter and return to the full list.</span>
 </button>
 <button class="workflow-card" data-focus-card="finishSession" onclick="finishSession()">
 <b>🏁 Sign out</b>
@@ -3005,7 +3005,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </button>
 <button class="workflow-card focus" data-focus-card="reviewedBadNotClosed" onclick="showReviewedBadNotClosed()">
 <b>✅ Rev. + no me siguen + no cerradas</b>
-<span>Filtro directo para cuentas ya revisadas que no te siguen y que no parecen cerradas.</span>
+<span>Direct filter for reviewed non-followback accounts that do not appear inactive.</span>
 </button>
 </div>
 <div class="focuslab-kpi-row" id="doubleCheckStats" style="margin-top:12px"></div>
@@ -3014,7 +3014,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" onclick="resetRecheckCycle()">Reiniciar ciclo Revisar de nuevo</button>
 </div>
 </div><div class="panel">
-<div class="title">🧾 Sesión actual, selección y verificación en vivo</div>
+<div class="title">🧾 Current session, selection and live verification</div>
 <div class="session-grid" id="sessionStatsPanel">
 <div class="session-card"><b>0</b><span>seleccionados</span></div>
 <div class="session-card"><b>0</b><span>seleccionados verificados</span></div>
@@ -3359,8 +3359,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div></div><div class="live-sidepanel" id="liveSidePanel">
 <div class="last-action-clock" id="lastActionClock">
 <div class="clock-label">Última acción</div>
-<div class="clock-main">Sin acciones todavía</div>
-<div class="clock-sub">Cuando uses foco, abras, revises o protejas, aparecerá aquí.</div>
+<div class="clock-main">No actions yet</div>
+<div class="clock-sub">Focus sessions, openings, reviews and protected accounts will appear here.</div>
 </div>
 <div class="title">📌 En vivo</div>
 <div class="live-mini-grid" id="floatingSessionStats">
@@ -3378,14 +3378,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div>
 <div data-lite-goal="main"></div>
-<div class="batch-history" id="batchHistoryMini">Sin tandas todavía.</div>
+<div class="batch-history" id="batchHistoryMini">No batches yet.</div>
 <div class="recent-activity-panel">
 <div class="recent-activity-title">📈 Actividad reciente</div>
 <div class="recent-grid" id="recentActivityStats">
 <div class="recent-kpi"><b>0</b><span>revisadas hoy</span></div>
 <div class="recent-kpi"><b>0</b><span>últimas 24 h</span></div>
 </div>
-<div class="recent-note" id="recentActivityNote">Sin historial todavía.</div>
+<div class="recent-note" id="recentActivityNote">No history yet.</div>
 </div>
 <div class="advanced-panel">
 <div class="advanced-title">🎯 Meta diaria</div>
@@ -3401,7 +3401,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div>
 <div class="advanced-panel">
-<div class="advanced-title">⚙️ Ritmo y estimación</div>
+<div class="advanced-title">⚙️ Pace and estimate</div>
 <div class="pace-grid" id="pacePanel">
 <div class="pace-kpi"><b>0/h</b><span>ritmo 1 h</span></div>
 <div class="pace-kpi"><b>—</b><span>tiempo restante</span></div>
@@ -3409,25 +3409,25 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="advanced-note" id="paceNote">Not enough data.</div>
 </div>
 <div class="advanced-panel">
-<div class="advanced-title">🚦 Semáforo de seguridad</div>
+<div class="advanced-title">🚦 Safety indicator</div>
 <div class="safety-grid" id="safetyPanel">
 <div class="safety-kpi safe"><b>OK</b><span>ritmo seguro</span></div>
 <div class="safety-kpi"><b>0</b><span>abiertos 1 h</span></div>
 </div>
-<div class="advanced-note" id="safetyNote">Solo es una alerta visual; tú decides cuándo pausar.</div>
+<div class="advanced-note" id="safetyNote">This is only a visual warning. You decide when to pause.</div>
 </div>
 <div class="advanced-panel">
-<div class="advanced-title">📅 Resumen por día</div>
-<div class="daily-summary-list" id="dailySummaryList">Sin historial suficiente.</div>
+<div class="advanced-title">📅 Daily summary</div>
+<div class="daily-summary-list" id="dailySummaryList">Not enough history yet.</div>
 </div>
 <div class="action-log-panel">
 <div class="action-log-head">
 <div class="action-log-title">🕓 Historial guardado</div>
 </div>
-<div class="action-log-list" id="actionLogList">Sin acciones guardadas.</div>
+<div class="action-log-list" id="actionLogList">No saved actions.</div>
 <div class="action-log-buttons">
 <button class="btn" onclick="exportActionLogCSV()">Exportar</button>
-<button class="btn red" onclick="clearActionLog()">Borrar</button>
+<button class="btn red" onclick="clearActionLog()">Delete</button>
 </div>
 </div>
 <div class="side-control-center">
@@ -3443,7 +3443,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn orange" onclick="nextRecommendedBlock30()">Rec. 30</button>
 <button class="btn orange" onclick="nextRecommendedBlock40()">Rec. 40</button>
 </div>
-<div class="side-control-title">👁 Vistas rápidas</div>
+<div class="side-control-title">👁 Quick views</div>
 <div class="side-action-grid two">
 <button class="btn" onclick="showAllUsersDirect()">Ver todos</button>
 <button class="btn red" onclick="showPendingBadDirect()">High-risk pending</button>
@@ -3474,7 +3474,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div></div><div class="page page-section-live" id="page-followersMutual">
 <div class="igc-page-flow">
-  <div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWERS WORKSPACE</div><h2>Mutuals</h2><p>Solo personas que te siguen y que tú también sigues. Este módulo no mezcla followers que tú no sigues.</p></div>
+  <div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWERS WORKSPACE</div><h2>Mutuals</h2><p>Only mutual followers. People you do not follow are handled separately.</p></div>
   <div class="focuslab-grid followers-mutual-section">
 <div class="panel followers-focus-highlight">
 <div class="title">Mutuos · followers que también sigues</div>
@@ -3485,7 +3485,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="workflow-grid">
 <button class="workflow-card recommended" data-focus-card="mutualRecommended" onclick="followersMutualSmartBatch(30)">
 <b>🧠 Tanda recomendada 30</b>
-<span>Abre una tanda balanceada con prioridad automática dentro de esta tab.</span>
+<span>Open a balanced batch with automatic priority in this tab.</span>
 </button>
 <button class="workflow-card focus" data-focus-card="mutualFocus30" onclick="followersMutualFocusN(30)">
 <b>💡 Foco 30</b>
@@ -3493,22 +3493,22 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </button>
 <button class="workflow-card warning" data-focus-card="mutualRisk30" onclick="followersMutualRiskN(30)">
 <b>⚠ Riesgo 30</b>
-<span>Abre solo perfiles de riesgo medio/alto dentro de Seguidores que sigo.</span>
+<span>Open only medium- and high-risk mutual profiles.</span>
 </button>
 <button class="workflow-card info" data-focus-card="mutualBlocked" onclick="viewBlockedFocus('mutual')">
 <b>🧩 Ver no abribles</b>
-<span>Muestra qué perfiles están bloqueados para foco y por qué razón.</span>
+<span>Show profiles excluded from Focus and the reason.</span>
 </button>
 <button class="workflow-card" data-focus-card="mutualAll" onclick="showPage('followersFans')">
 <b>👥 Followers que no sigo</b>
-<span>Abre el workspace independiente de followers que tú no sigues.</span>
+<span>Open the independent workspace for followers you do not follow.</span>
 </button>
 </div>
 </div>
 <div class="quick-decision-panel">
 <div class="quick-decision-box">
 <b>👁️ Vistas rápidas — Seguidores que sigo</b>
-<div class="hint">Estos botones solo cambian la vista/filtro. No abren perfiles ni guardan decisiones.</div>
+<div class="hint">These buttons only change the view or filter. They do not open profiles or save decisions.</div>
 <div class="quick-decision-actions">
 <button class="quick-chip blue" onclick="quickMutualView('active')">Active unreviewed</button>
 <button class="quick-chip green" onclick="quickMutualView('reviewed')">Revisados</button>
@@ -3534,30 +3534,30 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" onclick="exportFollowersMutualCSV()">⬇ Export analysis</button>
 <button class="btn" onclick="exportMutualDecisionsCSV()">⬇ Export decisions</button>
 </div>
-<div class="focuslab-mini-table"><table><thead><tr><th>Usuario</th><th>Perfil</th><th>Relación</th><th>Fecha follower</th><th>Reviewed</th><th>Decisión</th><th>Fecha revisión</th><th>Historial</th><th>Riesgo</th><th>Razones</th><th>Estado</th></tr></thead><tbody id="followersMutualTableBody"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Carga followers y following para ver esta pestaña.</td></tr></tbody></table></div>
+<div class="focuslab-mini-table"><table><thead><tr><th>Usuario</th><th>Perfil</th><th>Relación</th><th>Fecha follower</th><th>Reviewed</th><th>Decisión</th><th>Fecha revisión</th><th>Historial</th><th>Riesgo</th><th>Razones</th><th>Estado</th></tr></thead><tbody id="followersMutualTableBody"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Import your Followers and Following to use this tab.</td></tr></tbody></table></div>
 </div>
 </div>
 </div>
 <div class="section-live-panel section-module-panel live-sidepanel igc-module-sidebar followers-mutual-live" id="mutualRealtimePanel"></div>
 </div><div class="page page-section-live" id="page-followersFans">
 <div class="igc-page-flow">
-  <div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWERS WORKSPACE</div><h2>Followers que no sigo</h2><p>Personas que te siguen pero tú no sigues. Se revisan aquí, separadas de Mutuals, Review y Pending.</p></div>
+  <div class="igc-page-head"><div class="igc-page-eyebrow">FOLLOWERS WORKSPACE</div><h2>Followers que no sigo</h2><p>People who follow you but whom you do not follow. Review them separately from Mutuals, Review and Pending.</p></div>
   <div class="panel pro-quick-panel section-workflow-panel igc-followers-workflow">
     <div class="title">⚡ Flujo rápido — Followers que no sigo</div>
     <div class="workflow-grid">
-      <button class="workflow-card recommended" data-focus-card="followersRecommended" onclick="followersSmartBatch(30)"><b>🧠 Tanda recomendada 30</b><span>Abre una tanda priorizada únicamente con followers que tú no sigues.</span></button>
-      <button class="workflow-card focus" data-focus-card="followersFocus30" onclick="followersFocusN(30)"><b>💡 Foco 30</b><span>Abre 30 perfiles abribles de este módulo y deja activa la confirmación.</span></button>
-      <button class="workflow-card warning" data-focus-card="followersRisk30" onclick="followersFocusRiskN(30)"><b>⚠ Riesgo 30</b><span>Abre primero perfiles de riesgo medio/alto dentro de este módulo.</span></button>
-      <button class="workflow-card info" data-focus-card="followersBlocked" onclick="viewFollowersBlockedFocus()"><b>🧩 Ver no abribles</b><span>Muestra revisados, protegidos, pausados o perfiles que ya están en una tanda.</span></button>
-      <button class="workflow-card" onclick="showPage('followersMutual')"><b>👥 Ir a Mutuals</b><span>Abre por separado los followers que tú también sigues.</span></button>
+      <button class="workflow-card recommended" data-focus-card="followersRecommended" onclick="followersSmartBatch(30)"><b>🧠 Tanda recomendada 30</b><span>Open a prioritized batch of followers you do not follow.</span></button>
+      <button class="workflow-card focus" data-focus-card="followersFocus30" onclick="followersFocusN(30)"><b>💡 Foco 30</b><span>Open 30 available profiles in this module, then confirm your review.</span></button>
+      <button class="workflow-card warning" data-focus-card="followersRisk30" onclick="followersFocusRiskN(30)"><b>⚠ Riesgo 30</b><span>Open medium- and high-risk profiles first.</span></button>
+      <button class="workflow-card info" data-focus-card="followersBlocked" onclick="viewFollowersBlockedFocus()"><b>🧩 Ver no abribles</b><span>Show reviewed, protected, paused or already-batched profiles.</span></button>
+      <button class="workflow-card" onclick="showPage('followersMutual')"><b>👥 Ir a Mutuals</b><span>Open mutual followers in their own workspace.</span></button>
     </div>
     <div class="focuslab-actions clean-actions igc-followers-focus-sizes"><div class="action-group-label">Tamaño de foco</div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',40)">👁 View next</button></div><button class="btn" onclick="viewFollowersAvailableFocus()">🎯 Ver abribles</button><div class="igc-prepared-focus-status" data-igc-prepared-kind="followers"></div></div>
   </div>
   <div class="panel">
-    <div class="igc-followers-hero"><div><h3>Followers que no sigues</h3><p>Esta tabla contiene exclusivamente personas que te siguen y que tú no sigues.</p></div><button class="btn" onclick="renderFollowersAllWorkspace()">Actualizar</button></div>
+    <div class="igc-followers-hero"><div><h3>Followers que no sigues</h3><p>This table contains only people who follow you and whom you do not follow.</p></div><button class="btn" onclick="renderFollowersAllWorkspace()">Actualizar</button></div>
     <div class="igc-followers-kpis" id="followersAllStats"></div>
     <div class="igc-followers-toolbar"><input id="followersAllSearch" oninput="renderFollowersAllWorkspace()" placeholder="Search @username" type="text"/><select id="followersAllFilter" onchange="renderFollowersAllWorkspace()"><option value="all">Todos</option><option value="available_focus">Abribles por foco</option><option value="blocked_focus">No abribles por foco</option><option value="risk_high">Riesgo alto</option><option value="risk">Riesgo medio/alto</option><option value="unreviewed">Unreviewed</option><option value="reviewed">Revisados</option><option value="protected">Protegidos</option><option value="snoozed">Pausados</option></select></div>
-    <div class="igc-followers-table-wrap"><table><thead><tr><th>Usuario</th><th>Relación</th><th>Desde</th><th>Riesgo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="followersAllTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Carga followers para ver esta vista.</td></tr></tbody></table></div>
+    <div class="igc-followers-table-wrap"><table><thead><tr><th>Usuario</th><th>Relación</th><th>Desde</th><th>Riesgo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="followersAllTableBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Import Followers to see this view.</td></tr></tbody></table></div>
   </div>
 </div>
 <div class="section-live-panel section-module-panel live-sidepanel igc-module-sidebar followers-fans-live" id="followersFansRealtimePanel"></div>
@@ -3570,17 +3570,17 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="title">📨 Pending follow requests — tab especial</div>
 <div class="focuslab-note">Sube tu archivo <b>pending_follow_requests.json</b>. Esta pestaña queda dedicada solo a solicitudes pendientes: a quién seguiste, quién no te ha aceptado, qué perfiles se ven raros y cuáles conviene revisar primero. Los focos 20/30/40 empiezan por las solicitudes más antiguas. Un foco SIEMPRE abre perfiles en pestañas y deja abierta la confirmación; no es un botón para seleccionar gente. Los focos se usan aquí arriba en la tab; el panel de la derecha queda fijo solo para seguir tu sesión sin perder el avance. También cruza pending contra tus exports cargados de following/followers para detectar quién probablemente ya aceptó o quién ya te sigue.</div>
 <div class="pending-upload-card">
-<div class="upload" onclick="document.getElementById('pendingInput').click()"><b>📨 Pending follow requests</b><small>Archivo de Instagram: pending_follow_requests.json</small><div class="filelist" id="pendingFilesLabel">Sin archivo</div></div>
+<div class="upload" onclick="document.getElementById('pendingInput').click()"><b>📨 Pending follow requests</b><small>Archivo de Instagram: pending_follow_requests.json</small><div class="filelist" id="pendingFilesLabel">No file</div></div>
 <div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Procesar pending</button><button class="btn" onclick="renderPendingRequests()">Actualizar</button><button class="btn" onclick="clearPendingOpened()">Reiniciar abiertos no revisados</button></div>
 </div>
 <input accept=".json,.html,.txt" id="pendingInput" multiple="" onchange="v113UploadChanged(\'pendingInput\',\'pendingFilesLabel\')" type="file"/>
-<div class="focuslab-kpi-row" id="pendingStats"><div class="focuslab-kpi"><b>0</b><span>pending</span></div><div class="focuslab-kpi"><b>0</b><span>sin abrir</span></div><div class="focuslab-kpi"><b>0</b><span>abiertos</span></div><div class="focuslab-kpi"><b>0</b><span>riesgo medio/alto</span></div><div class="focuslab-kpi"><b>0</b><span>antiguos</span></div></div>
+<div class="focuslab-kpi-row" id="pendingStats"><div class="focuslab-kpi"><b>0</b><span>pending</span></div><div class="focuslab-kpi"><b>0</b><span>not opened</span></div><div class="focuslab-kpi"><b>0</b><span>abiertos</span></div><div class="focuslab-kpi"><b>0</b><span>riesgo medio/alto</span></div><div class="focuslab-kpi"><b>0</b><span>antiguos</span></div></div>
 <div class="panel pro-quick-panel section-workflow-panel">
 <div class="title">⚡ Flujo rápido — Pending requests</div>
 <div class="workflow-grid">
 <button class="workflow-card recommended" data-focus-card="pendingRecommended" onclick="pendingSmartBatch(30)">
 <b>🧠 Tanda recomendada 30</b>
-<span>Abre una tanda priorizada automáticamente con pending útiles para revisar.</span>
+<span>Open a prioritized batch of pending requests ready for review.</span>
 </button>
 <button class="workflow-card focus" data-focus-card="pendingFocus30" onclick="pendingFocusN(30)">
 <b>💡 Foco 30</b>
@@ -3588,22 +3588,22 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </button>
 <button class="workflow-card warning" data-focus-card="pendingRisk30" onclick="pendingFocusRiskN(30)">
 <b>⚠ Riesgo 30</b>
-<span>Abre solo pending de riesgo medio/alto para revisar primero lo más dudoso.</span>
+<span>Open only medium- and high-risk pending requests to inspect uncertain cases first.</span>
 </button>
 <button class="workflow-card info" data-focus-card="pendingBlocked" onclick="viewBlockedFocus('pending')">
 <b>🧩 Ver no abribles</b>
-<span>Muestra qué pending no pueden abrirse por foco y cuál es el bloqueo.</span>
+<span>Show pending requests excluded from Focus and why.</span>
 </button>
 <button class="workflow-card" data-focus-card="pendingAccepted" onclick="markDetectedAcceptedPending()">
 <b>✅ Aceptados detectados</b>
-<span>Revisa rápido los casos que el cruce actual detecta como probablemente aceptados.</span>
+<span>Quickly inspect requests that current data suggests were accepted.</span>
 </button>
 </div>
 </div>
 <div class="quick-decision-panel">
 <div class="quick-decision-box">
 <b>👁️ Vistas rápidas — Pending</b>
-<div class="hint">Estos botones solo cambian la vista/filtro. No abren perfiles ni guardan decisiones.</div>
+<div class="hint">These buttons only change the view or filter. They do not open profiles or save decisions.</div>
 <div class="quick-decision-actions">
 <button class="quick-chip blue" onclick="quickPendingView('active')">Active unreviewed</button>
 <button class="quick-chip blue" onclick="quickPendingView('reviewed')">Revisados</button>
@@ -3617,7 +3617,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div>
 <div class="focus-filterbar">
-<div><label>Filtro</label><select id="pendingInternalFilter" onchange="renderPendingRequests()"><option value="active">Active unreviewed</option><option value="available_focus">Abribles por foco</option><option value="blocked_focus">No abribles por foco</option><option value="all">Todos</option><option value="unopened">Unopened</option><option value="opened">Abiertos no revisados</option><option value="reviewed">Revisados</option><option value="snoozed">Pausados</option><option value="old90">+90 días</option><option value="old180">+180 días</option><option value="risk">Riesgo medio/alto</option><option value="accepted">Ya me aceptó</option><option value="still_pending">Still pending</option><option value="closed">Perfil cerrado</option><option value="detected_accepted">Detectados como aceptados</option><option value="detected_follows_me">Detectados como followers</option><option value="not_in_current_following">No aparecen en following actual</option><option value="expired_snooze">Pausas vencidas</option><option value="needs_attention">Necesita atención</option></select></div>
+<div><label>Filtro</label><select id="pendingInternalFilter" onchange="renderPendingRequests()"><option value="active">Active unreviewed</option><option value="available_focus">Abribles por foco</option><option value="blocked_focus">No abribles por foco</option><option value="all">Todos</option><option value="unopened">Unopened</option><option value="opened">Abiertos no revisados</option><option value="reviewed">Revisados</option><option value="snoozed">Pausados</option><option value="old90">+90 días</option><option value="old180">+180 días</option><option value="risk">Riesgo medio/alto</option><option value="accepted">Request accepted</option><option value="still_pending">Still pending</option><option value="closed">Inactive profile</option><option value="detected_accepted">Detectados como aceptados</option><option value="detected_follows_me">Detectados como followers</option><option value="not_in_current_following">No aparecen en following actual</option><option value="expired_snooze">Pausas vencidas</option><option value="needs_attention">Necesita atención</option></select></div>
 <div><label>Riesgo mínimo</label><select id="pendingRiskFilter" onchange="renderPendingRequests()"><option value="all">Todos</option><option value="medio">Medio/alto</option><option value="alto">Alto</option></select></div>
 <div><label>Edad mínima</label><select id="pendingAgeFilter" onchange="renderPendingRequests()"><option value="0">Cualquier edad</option><option value="30">+30 días</option><option value="60">+60 días</option><option value="90">+90 días</option><option value="180">+180 días</option></select></div>
 <div><label>Search username</label><input id="pendingSearchBox" oninput="renderPendingRequests()" placeholder="@usuario o nombre"/></div>
@@ -3648,18 +3648,18 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="audit-kpi"><b>—</b><span>sin auditar</span></div>
 </div>
 <div class="audit-list" id="logicAuditList">
-<div class="audit-item">Todavía no hay auditoría. Usa “Auditar huecos lógicos”.</div>
+<div class="audit-item">No audit yet. Use “Audit logical gaps”.</div>
 </div>
 </div></div><div class="section-live-panel section-module-panel live-sidepanel igc-module-sidebar" id="pendingRealtimePanel"></div></div><div class="page" id="page-upload">
 
 
 
 
-<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Importar datos</h2><p>Carga tus exports de Instagram y deja que IG Cleaner detecte el formato y la cobertura.</p></div><div class="panel igc-zip-primary" id="igcZipImportPanel">
+<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Import data</h2><p>Carga tus exports de Instagram y deja que IG Cleaner detecte el formato y la cobertura.</p></div><div class="panel igc-zip-primary" id="igcZipImportPanel">
   <div class="igc-zip-head">
     <div class="igc-zip-head-copy">
-      <div class="igc-zip-kicker">Importación principal</div>
-      <h3>📦 Importar export completo de Instagram</h3>
+      <div class="igc-zip-kicker">Primary import</div>
+      <h3>📦 Import full Instagram export</h3>
       <p>Selecciona directamente el archivo <b>.zip</b> que descargas de Instagram. IG Cleaner lo abre localmente, encuentra Following, todos los Followers, Pending y los demás exports compatibles, y prepara el análisis automáticamente.</p>
     </div>
     <div class="igc-recommended-pill">Recomendado</div>
@@ -3667,9 +3667,9 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <div class="igc-zip-drop" id="igcZipDrop" tabindex="0" role="button" aria-label="Seleccionar archivo ZIP de Instagram" onclick="document.getElementById('instagramZipInput').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('instagramZipInput').click()}" ondragover="igcZipDrag(event,true)" ondragleave="igcZipDrag(event,false)" ondrop="igcZipDropFile(event)">
     <div>
       <div class="igc-zip-icon">🗜️</div>
-      <b>Arrastra aquí el ZIP de Instagram</b>
+      <b>Drop your Instagram ZIP here</b>
       <span>o haz clic para seleccionarlo. No necesitas descomprimir nada manualmente.</span>
-      <small>Todo se procesa localmente en este navegador · no se sube el ZIP a ningún servidor</small>
+      <small>Everything is processed locally in your browser · the ZIP is not uploaded to a server</small>
     </div>
   </div>
   <input id="instagramZipInput" type="file" accept=".zip,application/zip,application/x-zip-compressed" onchange="igcHandleZipInput(this.files&&this.files[0])"/>
@@ -3684,30 +3684,30 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <summary>Importación manual / alternativa <small>Following y Followers por separado</small></summary>
   <div class="igc-manual-import-body">
 <div class="panel">
-<div class="title">📂 Cargar archivos exportados de Instagram</div>
+<div class="title">📂 Load exported Instagram files</div>
 <div class="grid2">
 <div class="upload" onclick="document.getElementById('followingInput').click()">
 <b>📤 Following</b>
-<small>JSON o HTML · detección automática por contenido</small>
-<div class="filelist" id="followingFilesLabel">Sin archivos</div>
+<small>JSON or HTML · automatic content detection</small>
+<div class="filelist" id="followingFilesLabel">No files</div>
 </div>
 <div class="upload" onclick="document.getElementById('followersInput').click()">
 <b>📥 Followers</b>
 <small>JSON o HTML · followers_1, followers_2, etc.</small>
-<div class="filelist" id="followersFilesLabel">Sin archivos</div>
+<div class="filelist" id="followersFilesLabel">No files</div>
 </div>
 </div>
 <div class="v113-upload-status" id="v113UploadStatus">
 <b>Estado de carga:</b> esperando following y followers.
     </div>
 <div class="v116-detect-box" id="v116DetectedFormats">
-<b>Detección automática:</b> al elegir archivos aquí verás si son JSON o HTML y qué tipo de export detectó la app.
+<b>Automatic detection:</b> al elegir archivos aquí verás si son JSON o HTML y qué tipo de export detectó la app.
     </div>
 <input accept=".json,.html,.txt" id="followingInput" multiple="" onchange="v113UploadChanged(\'followingInput\',\'followingFilesLabel\')" type="file"/>
 <input accept=".json,.html,.txt" id="followersInput" multiple="" onchange="v113UploadChanged(\'followersInput\',\'followersFilesLabel\')" type="file"/>
 <div class="btnrow">
 <button class="btn primary" onclick="processFiles()">⚡ Procesar y comparar</button>
-<button class="btn" onclick="showPage('diag')">🔬 Ver diagnóstico</button>
+<button class="btn" onclick="showPage('diag')">🔬 View diagnostics</button>
 <button class="btn purple" onclick="startGuidedSession100()">🎯 Sesión guiada 100</button>
 <button class="btn red" onclick="clearLoadedData()">🗑 Limpiar archivos cargados</button>
 </div>
@@ -3721,10 +3721,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     </div>
 <div class="btnrow" style="margin-top:12px">
 <label class="btn purple">📦 Elegir exports <input accept=".json,.html,.htm,.txt" id="v116ExtraInput" multiple="" onchange="v116PreviewExtraFiles(this)" type="file"/></label>
-<button class="btn primary" onclick="v116AnalyzeExtraExports()">🔎 Analizar archivos</button>
-<button class="btn" onclick="v116ClearExtraAnalysis()">Limpiar análisis</button>
+<button class="btn primary" onclick="v116AnalyzeExtraExports()">🔎 Analyze files</button>
+<button class="btn" onclick="v116ClearExtraAnalysis()">Clear analysis</button>
 </div>
-<div class="v116-extra-summary" id="v116ExtraSummary">Sin archivos analizados.</div>
+<div class="v116-extra-summary" id="v116ExtraSummary">No analyzed files.</div>
 </div><div class="panel">
 <div class="title">🔒 Seguridad</div>
 <div class="note">
@@ -3830,7 +3830,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p class="note" id="igcCountsManualHelp">En Windows utiliza el lanzador local para configurar tandas y pausas desde esta pantalla, o como alternativa el CLI <code>python tools/profile_counts_robot.py --input cola.csv --output resultados.csv --max-per-window 200 --window-minutes 5 --min-delay-seconds 5</code>. Se respetan ambos límites; los retrasos de carga aumentan el tiempo real. El robot se detiene si Instagram solicita verificación. La PC debe permanecer abierta. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instrucciones</a>.</p>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
 <input type="search" id="igcCountsQuery" placeholder="Search @username" style="min-width:160px;flex:1" oninput="igcCountsRender()">
-<select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pending</option><option value="ok">Con datos</option><option value="other">Sin datos / error</option></select>
+<select id="igcCountsFilter" aria-label="Filtrar por estado" onchange="igcCountsRender()"><option value="all">Todos</option><option value="pending">Pending</option><option value="ok">Con datos</option><option value="other">No data / error</option></select>
 </div>
 <div style="overflow:auto;max-height:520px">
 <table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
@@ -3840,12 +3840,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="note" id="igcCountsFootnote"></div>
 </div><div class="panel">
-<div class="title">🧠 Conclusión del perfil</div>
+<div class="title">🧠 Profile conclusion</div>
 <div class="profile-conclusion" id="profileConclusion">
       Carga tus archivos para generar un diagnóstico completo.
     </div>
 </div><div class="panel">
-<div class="title">📈 Progreso estimado según verificados</div>
+<div class="title">📈 Estimated progress based on verified profiles</div>
 <div class="progress-card" id="estimatedProgressPanel">
       Carga tus archivos para calcular avance.
     </div>
@@ -3853,43 +3853,43 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="title">🧭 Plan de limpieza recomendado</div>
 <div class="kpi-note" id="cleaningPlan">Carga tus archivos para generar un plan.</div>
 </div><div class="stats-grid" id="profileStatsCards">
-<div class="bigmetric"><b>0</b><span>Sin datos</span><small>Carga following y followers primero.</small></div>
+<div class="bigmetric"><b>0</b><span>No data</span><small>Carga following y followers primero.</small></div>
 </div><div class="stats-grid-2">
 <div class="panel">
 <div class="title">🔁 Reciprocidad</div>
-<div class="kpi-note" id="reciprocityBars">Sin datos.</div>
+<div class="kpi-note" id="reciprocityBars">No data.</div>
 </div>
 <div class="panel">
 <div class="title">🚦 Riesgo y prioridad</div>
-<div class="kpi-note" id="riskPriorityBars">Sin datos.</div>
+<div class="kpi-note" id="riskPriorityBars">No data.</div>
 </div>
 </div><div class="stats-grid-2">
 <div class="panel">
-<div class="title">📅 Actividad por mes — cuentas que seguiste</div>
-<div class="kpi-note" id="followingTimelineBars">Sin datos.</div>
+<div class="title">📅 Monthly activity — accounts you followed</div>
+<div class="kpi-note" id="followingTimelineBars">No data.</div>
 </div>
 <div class="panel">
-<div class="title">📅 Actividad por mes — seguidores recibidos</div>
-<div class="kpi-note" id="followersTimelineBars">Sin datos.</div>
+<div class="title">📅 Monthly activity — followers gained</div>
+<div class="kpi-note" id="followersTimelineBars">No data.</div>
 </div>
 </div><div class="stats-grid-2">
 <div class="panel">
 <div class="title">🔥 Top 10 prioridad — following</div>
-<div class="toplist" id="topPriorityFollowing">Sin datos.</div>
+<div class="toplist" id="topPriorityFollowing">No data.</div>
 </div>
 <div class="panel">
 <div class="title">🧼 Top 10 riesgo — followers</div>
-<div class="toplist" id="topRiskFollowers">Sin datos.</div>
+<div class="toplist" id="topRiskFollowers">No data.</div>
 </div>
 </div></div></div><div class="page" id="page-compare">
 
 
 
 
-<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Changes</h2><p>Compara snapshots y exports para detectar cambios de relación con el tiempo.</p></div>
+<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>Changes</h2><p>Compare snapshots and exports to detect relationship changes over time.</p></div>
 <div class="panel igc-new-changes-panel">
 <div class="title">⚡ Solo cambios nuevos</div>
-<div class="note">Usa el ZIP/snapshot anterior y tu última revisión para abrir únicamente relaciones que realmente cambiaron. No crea un segundo motor de Focus.</div>
+<div class="note">Use the previous ZIP/snapshot and last review to open only genuinely changed relationships. Focus remains the same engine.</div>
 <div class="igc-new-changes-grid">
 <button class="igc-new-change-btn" onclick="igcOpenNewChanges('main',30)"><b>Review · cambios nuevos</b><small>NO ME SIGUE nuevos o relaciones que cambiaron desde ZIP/revisión.</small></button>
 <button class="igc-new-change-btn" onclick="igcOpenNewChanges('mutual',30)"><b>Mutuals · cambios nuevos</b><small>Nuevos mutuals o cambios recientes dentro de tus mutuos actuales.</small></button>
@@ -3904,14 +3904,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
       Guarda el estado actual dentro del navegador para compararlo después contra una exportación nueva. Esto sirve para detectar cambios sin tener que buscar manualmente el archivo viejo.
     </div>
 <div class="btnrow">
-<button class="btn primary" onclick="saveInternalSnapshot()">📌 Guardar snapshot actual</button>
+<button class="btn primary" onclick="saveInternalSnapshot()">📌 Save current snapshot</button>
 <button class="btn" onclick="runSnapshotComparison()">🔍 Comparar actual vs snapshot</button>
 <button class="btn orange" onclick="selectSnapshotLostIFollow()">Seleccionar snapshot: me dejaron y yo sigo</button>
-<button class="btn red" onclick="clearInternalSnapshot()">🗑 Borrar snapshot</button>
-<span class="date" id="snapshotLabel">Sin snapshot interno</span>
+<button class="btn red" onclick="clearInternalSnapshot()">🗑 Delete snapshot</button>
+<span class="date" id="snapshotLabel">No internal snapshot</span>
 </div>
 <div class="statrow" id="snapshotStats" style="margin-top:12px">
-<div class="stat"><b>0</b><span>sin snapshot</span></div>
+<div class="stat"><b>0</b><span>no snapshot</span></div>
 </div>
 </div><div class="panel">
 <div class="title">🕓 Comparar followers antiguos vs followers actuales</div>
@@ -3923,10 +3923,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" onclick="runFollowersComparison()">🔍 Comparar ahora</button>
 <button class="btn orange" onclick="selectLostFollowersIFollow()">Seleccionar los que me dejaron de seguir y yo sigo</button>
 <button class="btn red" onclick="clearOldFollowersCompare()">🗑 Limpiar antiguos</button>
-<span class="date" id="oldFollowersLabel">Sin archivos antiguos</span>
+<span class="date" id="oldFollowersLabel">No older files</span>
 </div>
 </div><div class="panel">
-<div class="title">Resultado de comparación</div>
+<div class="title">Comparison results</div>
 <div class="statrow" id="compareStats">
 <div class="stat"><b>0</b><span>followers antiguos</span></div>
 <div class="stat"><b>0</b><span>followers actuales</span></div>
@@ -3940,15 +3940,15 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div><div class="compare-grid">
 <div class="panel">
 <div class="title" style="color:var(--red)">❌ Te dejaron de seguir</div>
-<div class="mini-list" id="lostFollowersList">Sin comparación.</div>
+<div class="mini-list" id="lostFollowersList">No comparison yet.</div>
 </div>
 <div class="panel">
-<div class="title" style="color:var(--green)">🆕 Nuevos seguidores</div>
-<div class="mini-list" id="gainedFollowersList">Sin comparación.</div>
+<div class="title" style="color:var(--green)">🆕 New followers</div>
+<div class="mini-list" id="gainedFollowersList">No comparison yet.</div>
 </div>
 <div class="panel">
-<div class="title">✅ Siguen siguiéndote</div>
-<div class="mini-list" id="stayedFollowersList">Sin comparación.</div>
+<div class="title">✅ Still following you</div>
+<div class="mini-list" id="stayedFollowersList">No comparison yet.</div>
 </div>
 </div></div></div><div class="page" id="page-backup">
 
@@ -3961,14 +3961,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <button class="btn primary" onclick="exportFullBackup()">⬇ Exportar respaldo completo</button>
 <label class="btn purple">⬆ Importar respaldo completo <input accept=".json" onchange="importFullBackup(this)" type="file"/></label>
-<button class="btn red" onclick="clearLocalProgress()">🗑 Borrar protegidos/revisados/configuración</button>
+<button class="btn red" onclick="clearLocalProgress()">🗑 Delete protected/reviews/settings</button>
 </div>
 </div><div class="panel igc-portable-report-panel">
-<div class="title">📄 Reporte HTML portátil</div>
+<div class="title">📄 Portable HTML report</div>
 <div class="note">
       Exporta una fotografía navegable del estado actual de IG Cleaner. El archivo funciona por sí solo en cualquier navegador e incluye perfiles con enlace directo a Instagram, revisión, decisión, evidencia, cambios e historial.
     </div>
-<div class="igc-portable-report-stats" id="igcPortableReportStats"><div class="igc-portable-report-empty">Importa datos para preparar el reporte.</div></div>
+<div class="igc-portable-report-stats" id="igcPortableReportStats"><div class="igc-portable-report-empty">Import data to prepare the report.</div></div>
 <div class="btnrow">
 <button class="btn primary" onclick="igcExportPortableHtmlReport()">⬇ Exportar reporte HTML completo</button>
 </div>
@@ -3977,20 +3977,20 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="statrow" id="backupStats"></div>
 </div></div></div><div class="page" id="page-diag">
 
-<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>System Health</h2><p>Diagnóstico del estado interno, tandas y consistencia de la app.</p></div><div class="panel">
-<div class="title">🔬 Diagnóstico de estado</div>
+<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO</div><h2>System Health</h2><p>App state, batch and consistency diagnostics.</p></div><div class="panel">
+<div class="title">🔬 State diagnostics</div>
 <div class="note">
       Revisa inconsistencias internas: tandas abiertas sin confirmar, pausas vencidas, revisados sin fecha, protegidos sin revisión e historial automático por usuario.
     </div>
 <div class="diag-actions">
 <button class="btn primary" onclick="runStateDiagnosis()">🔬 Diagnosticar ahora</button>
-<button class="btn orange" onclick="restoreAllUnconfirmed()">♻ Restaurar abiertos sin confirmar</button>
+<button class="btn orange" onclick="restoreAllUnconfirmed()">♻ Restore unconfirmed openings</button>
 <button class="btn purple" onclick="startGuidedSession100()">🎯 Iniciar sesión guiada 100</button>
 <button class="btn" onclick="exportProfileHistoryCSV()">⬇ Exportar historial automático</button>
-<button class="btn" onclick="renderDiag()">📄 Ver archivos cargados</button>
+<button class="btn" onclick="renderDiag()">📄 View loaded files</button>
 </div>
 <div id="diagStateBox"></div>
-<div class="diag" id="diagBox">Todavía no has procesado archivos.</div>
+<div class="diag" id="diagBox">No files processed yet.</div>
 </div></div></div></main></div></div>
 
 
@@ -4002,7 +4002,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 
 <div class="verify-modal-backdrop" id="verifyModalBackdrop">
 <div class="verify-modal">
-<h3>¿Estos enlaces ya quedaron verificados?</h3>
+<h3>Have you verified these links?</h3>
 <p id="verifyModalText">
       Se abrió una tanda de perfiles. Cuando termines de revisarlos en Instagram, puedes marcarlos aquí como verificados/revisados.
     </p>
@@ -4010,7 +4010,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="control" style="margin:10px 0">
 <label>Motivo de revisión para esta tanda</label>
 <select id="verifyReasonSelect">
-<option value="">Sin motivo específico</option>
+<option value="">No specific reason</option>
 <option value="cerrada">Cerrada / no abre</option>
 <option value="fake">Fake / bot</option>
 <option value="no_interesa">No me interesa</option>
@@ -4021,7 +4021,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <button class="btn green" onclick="confirmOpenedVerified()">✔ Sí, marcar estos como verificados</button>
 <button class="btn orange" onclick="reopenLastOpenedBatch()">🔁 Volver a abrir perfiles</button>
-<button class="btn" onclick="closeVerifyPopup()">Todavía no</button>
+<button class="btn" onclick="closeVerifyPopup()">Not yet</button>
 <button class="btn red" onclick="closeVerifyPopup(true)">No volver a preguntar en esta tanda</button>
 </div>
 </div>
@@ -4058,15 +4058,15 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </button>
 <button class="post-process-card" onclick="goAfterProcess('moduleDashboard')">
 <b>🎯 Dashboard módulos</b>
-<span>Ver resumen general de módulos y sesión.</span>
+<span>See a summary of modules and sessions.</span>
 </button>
 <button class="post-process-card" onclick="goAfterProcess('profileStats')">
 <b>📊 Estadísticas</b>
-<span>Ver diagnóstico y lectura del perfil.</span>
+<span>See profile diagnostics and insights.</span>
 </button>
 <button class="post-process-card" onclick="goAfterProcess('diag')">
 <b>🔬 Diagnóstico</b>
-<span>Revisar si los archivos se leyeron bien.</span>
+<span>Verify that your files were imported correctly.</span>
 </button>
 </div>
 </div>
@@ -6531,7 +6531,7 @@ function renderLastActionClock(){
   if(!el)return;
   const item=lastActionItem();
   if(!item){
-    el.innerHTML=`<div class="clock-label">Última acción</div><div class="clock-main">Sin acciones todavía</div><div class="clock-sub">Cuando uses foco, abras, revises o protejas, aparecerá aquí.</div>`;
+    el.innerHTML=`<div class="clock-label">Última acción</div><div class="clock-main">No actions yet</div><div class="clock-sub">Focus sessions, openings, reviews and protected accounts will appear here.</div>`;
     return;
   }
   const ago=formatDuration(Date.now()-item.ts);
@@ -7939,7 +7939,7 @@ function monthKey(ts){
 }
 
 function timelineBars(rows){
-  if(!rows.length)return '<div class="kpi-note">Sin datos.</div>';
+  if(!rows.length)return '<div class="kpi-note">No data.</div>';
   const by={};
   rows.forEach(r=>{const k=monthKey(r.dateMain);by[k]=(by[k]||0)+1;});
   const keys=Object.keys(by).sort().slice(-12);
@@ -8545,7 +8545,7 @@ function renderSnapshotInfo(){
 
   if(!internalSnapshot){
     label.textContent='Sin snapshot interno';
-    stats.innerHTML='<div class="stat"><b>0</b><span>sin snapshot</span></div>';
+    stats.innerHTML='<div class="stat"><b>0</b><span>no snapshot</span></div>';
     return;
   }
 
@@ -9376,7 +9376,7 @@ function clearModuleActionLog(kind){
   msg('Historial de la sección borrado.','w');
 }
 function igcSidebarHistoryBlock(kind,label){
-  return `<div class="action-log-panel igc-sidebar-history"><div class="action-log-head"><div class="action-log-title">🕓 Historial guardado — ${esc(label)}</div></div><div class="action-log-list">${igcModuleHistoryHTML(kind)}</div><div class="action-log-buttons"><button class="btn" onclick="exportModuleActionLogCSV('${kind}')">Exportar</button><button class="btn red" onclick="clearModuleActionLog('${kind}')">Borrar</button></div></div>`;
+  return `<div class="action-log-panel igc-sidebar-history"><div class="action-log-head"><div class="action-log-title">🕓 Historial guardado — ${esc(label)}</div></div><div class="action-log-list">${igcModuleHistoryHTML(kind)}</div><div class="action-log-buttons"><button class="btn" onclick="exportModuleActionLogCSV('${kind}')">Exportar</button><button class="btn red" onclick="clearModuleActionLog('${kind}')">Delete</button></div></div>`;
 }
 function igcRelativeAgo(ts){
   const ms=Math.max(0,Date.now()-Number(ts||0));
@@ -9465,7 +9465,7 @@ function igcStandardActivityTop(kind,label){
         <div class="igc-open-kpi"><b>${m.h3}</b><span>últimas 3 horas</span></div>
       </div>
     </div>
-    <div class="action-log-panel igc-sidebar-history igc-standard-history"><div class="action-log-head"><div class="action-log-title">🕓 Historial de acciones — ${esc(label)}</div></div><div class="action-log-list">${igcModuleHistoryHTML(kind,24)}</div><div class="action-log-buttons"><button class="btn" onclick="exportModuleActionLogCSV('${kind}')">Exportar</button><button class="btn red" onclick="clearModuleActionLog('${kind}')">Borrar</button></div></div>
+    <div class="action-log-panel igc-sidebar-history igc-standard-history"><div class="action-log-head"><div class="action-log-title">🕓 Historial de acciones — ${esc(label)}</div></div><div class="action-log-list">${igcModuleHistoryHTML(kind,24)}</div><div class="action-log-buttons"><button class="btn" onclick="exportModuleActionLogCSV('${kind}')">Exportar</button><button class="btn red" onclick="clearModuleActionLog('${kind}')">Delete</button></div></div>
   </div>`;
 }
 function ensureReviewStandardSidebar(){
@@ -9508,7 +9508,7 @@ function renderPendingRealtimePanel(){
     <div class="side-control-center">
       <div class="side-control-title">⚡ Modo foco</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="pending"></div>
       <div class="side-control-title">🎯 Preparar tanda</div><div class="side-action-grid two"><button class="btn orange" onclick="pendingSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="pendingFocusRiskN(30)">⚠ Riesgo 30</button></div>
-      <div class="side-control-title">👁 Vistas rápidas</div><div class="side-action-grid two"><button class="btn" onclick="quickPendingView('active')">Activos</button><button class="btn green" onclick="quickPendingView('reviewed')">Revisados</button><button class="btn orange" onclick="quickPendingView('still_pending')">Siguen pending</button><button class="btn green" onclick="quickPendingView('detected_accepted')">Aceptados</button><button class="btn" onclick="viewAvailableFocus('pending')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('pending')">No abribles</button></div>
+      <div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="quickPendingView('active')">Activos</button><button class="btn green" onclick="quickPendingView('reviewed')">Revisados</button><button class="btn orange" onclick="quickPendingView('still_pending')">Siguen pending</button><button class="btn green" onclick="quickPendingView('detected_accepted')">Aceptados</button><button class="btn" onclick="viewAvailableFocus('pending')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('pending')">No abribles</button></div>
       <div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('pending')">Recuperar tanda</button><button class="btn red" onclick="cancelSectionActiveBatch('pending')">Cancelar activa</button><button class="btn" onclick="renderPendingRequests()">Actualizar</button><button class="btn" onclick="exportPendingDecisionsCSV()">Export decisions</button></div>
     </div>`;
 }
@@ -9528,7 +9528,7 @@ function renderMutualRealtimePanel(){
       {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'mutuos'}
     ])}<div class="session-insight"><b>Mutuals:</b> ${rows.length} perfiles · ${pendingLive} pendientes · ${available} abribles ahora.</div></div>
     ${igcSidebarActiveBatch('mutual')}
-    <div class="side-control-center"><div class="side-control-title">⚡ Modo foco</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="mutual"></div><div class="side-control-title">🎯 Preparar tanda</div><div class="side-action-grid two"><button class="btn orange" onclick="followersMutualSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersMutualRiskN(30)">⚠ Riesgo 30</button></div><div class="side-control-title">👁 Vistas rápidas</div><div class="side-action-grid two"><button class="btn" onclick="quickMutualView('active')">Activos</button><button class="btn green" onclick="quickMutualView('reviewed')">Revisados</button><button class="btn purple" onclick="quickMutualView('protected')">Protegidos</button><button class="btn red" onclick="quickMutualView('risk_high')">Riesgo alto</button><button class="btn" onclick="viewAvailableFocus('mutual')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('mutual')">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('mutual')">Recuperar tanda</button><button class="btn red" onclick="cancelSectionActiveBatch('mutual')">Cancelar activa</button><button class="btn" onclick="renderFollowersMutualTab()">Actualizar</button><button class="btn" onclick="exportMutualDecisionsCSV()">Export decisions</button></div></div>`;
+    <div class="side-control-center"><div class="side-control-title">⚡ Modo foco</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="mutual"></div><div class="side-control-title">🎯 Preparar tanda</div><div class="side-action-grid two"><button class="btn orange" onclick="followersMutualSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersMutualRiskN(30)">⚠ Riesgo 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="quickMutualView('active')">Activos</button><button class="btn green" onclick="quickMutualView('reviewed')">Revisados</button><button class="btn purple" onclick="quickMutualView('protected')">Protegidos</button><button class="btn red" onclick="quickMutualView('risk_high')">Riesgo alto</button><button class="btn" onclick="viewAvailableFocus('mutual')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('mutual')">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('mutual')">Recuperar tanda</button><button class="btn red" onclick="cancelSectionActiveBatch('mutual')">Cancelar activa</button><button class="btn" onclick="renderFollowersMutualTab()">Actualizar</button><button class="btn" onclick="exportMutualDecisionsCSV()">Export decisions</button></div></div>`;
 }
 function renderFollowersRealtimePanel(){
   const el=document.getElementById('followersFansRealtimePanel');if(!el)return;
@@ -9546,7 +9546,7 @@ function renderFollowersRealtimePanel(){
       {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'followers'}
     ])}<div class="session-insight"><b>Followers que no sigo:</b> ${rows.length} perfiles · ${pendingLive} pendientes · ${available} abribles ahora.</div></div>
     ${igcSidebarActiveBatch('followers')}
-    <div class="side-control-center"><div class="side-control-title">⚡ Modo foco</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="followers"></div><div class="side-control-title">🎯 Preparar tanda</div><div class="side-action-grid two"><button class="btn orange" onclick="followersSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersFocusRiskN(30)">⚠ Riesgo 30</button></div><div class="side-control-title">👁 Vistas rápidas</div><div class="side-action-grid two"><button class="btn" onclick="document.getElementById('followersAllFilter').value='all';renderFollowersAllWorkspace()">Todos</button><button class="btn red" onclick="document.getElementById('followersAllFilter').value='risk_high';renderFollowersAllWorkspace()">Riesgo alto</button><button class="btn green" onclick="document.getElementById('followersAllFilter').value='reviewed';renderFollowersAllWorkspace()">Revisados</button><button class="btn purple" onclick="document.getElementById('followersAllFilter').value='protected';renderFollowersAllWorkspace()">Protegidos</button><button class="btn" onclick="viewFollowersAvailableFocus()">Abribles</button><button class="btn orange" onclick="viewFollowersBlockedFocus()">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('followers')">Recuperar tanda</button><button class="btn red" onclick="cancelSectionActiveBatch('followers')">Cancelar activa</button><button class="btn" onclick="renderFollowersAllWorkspace()">Actualizar</button><button class="btn" onclick="exportModuleActionLogCSV('followers')">Exportar historial</button></div></div>`;
+    <div class="side-control-center"><div class="side-control-title">⚡ Modo foco</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(20)">💡 Foco 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(30)">💡 Foco 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(40)">💡 Foco 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="followers"></div><div class="side-control-title">🎯 Preparar tanda</div><div class="side-action-grid two"><button class="btn orange" onclick="followersSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersFocusRiskN(30)">⚠ Riesgo 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="document.getElementById('followersAllFilter').value='all';renderFollowersAllWorkspace()">Todos</button><button class="btn red" onclick="document.getElementById('followersAllFilter').value='risk_high';renderFollowersAllWorkspace()">Riesgo alto</button><button class="btn green" onclick="document.getElementById('followersAllFilter').value='reviewed';renderFollowersAllWorkspace()">Revisados</button><button class="btn purple" onclick="document.getElementById('followersAllFilter').value='protected';renderFollowersAllWorkspace()">Protegidos</button><button class="btn" onclick="viewFollowersAvailableFocus()">Abribles</button><button class="btn orange" onclick="viewFollowersBlockedFocus()">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('followers')">Recuperar tanda</button><button class="btn red" onclick="cancelSectionActiveBatch('followers')">Cancelar activa</button><button class="btn" onclick="renderFollowersAllWorkspace()">Actualizar</button><button class="btn" onclick="exportModuleActionLogCSV('followers')">Exportar historial</button></div></div>`;
 }
 function renderSectionRealtimePanels(){renderPendingRealtimePanel();renderMutualRealtimePanel();renderFollowersRealtimePanel();renderReviewRealtimePanel?.()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(renderSectionRealtimePanels,120));else setTimeout(renderSectionRealtimePanels,120);
@@ -9838,7 +9838,7 @@ function renderFollowersSessionPanel(){
   const last=lastActionForSource(['followers']);
   if(activeFocusBatch?.kind==='followers' && activeFocusBatch.rows?.length){
     const pending=activeFocusBatchPendingRows?activeFocusBatchPendingRows(activeFocusBatch):activeFocusBatch.rows;
-    note.innerHTML=`<b>Tanda activa en Followers:</b> ${esc(activeFocusBatch.label||'Followers')} · ${pending.length} pendientes de confirmar. <button class="btn small-focus" onclick="recoverActiveFocusBatch()">Recuperar tanda</button> <button class="btn" onclick="reopenActiveFocusBatch()">Volver a abrir</button>`;
+    note.innerHTML=`<b>Tanda activa en Followers:</b> ${esc(activeFocusBatch.label||'Followers')} · ${pending.length} pendientes de confirmar. <button class="btn small-focus" onclick="recoverActiveFocusBatch()">Recuperar tanda</button> <button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button>`;
   }else{
     note.innerHTML=`<b>Última acción en Followers:</b> ${esc(formatLastActionText(last))}`;
   }
@@ -10729,7 +10729,7 @@ function safeFocusPopupRecheck(kind,rows,label){
 
   const confirmBox=document.getElementById('safeFocusConfirmText');
   if(confirmBox){
-    confirmBox.innerHTML=`<b>Confirmación segura:</b> esta tanda tiene ${safeRows.length} perfiles de NO ME SIGUE para double check. Guardar decisión actualizará la revisión con la opción elegida.`;
+    confirmBox.innerHTML=`<b>Safe confirmation:</b> esta tanda tiene ${safeRows.length} perfiles de NO ME SIGUE para double check. Guardar decisión actualizará la revisión con la opción elegida.`;
   }
 
   popup.style.display='flex';
@@ -11046,7 +11046,7 @@ function resetDoubleCheckCycle(show=true){
 <div class="modal" id="extraFocusModal">
 <div class="modalbox">
 <button class="x" onclick="closeExtraFocusModal()">×</button>
-<h3 id="extraFocusTitle">Revisión de foco</h3>
+<h3 id="extraFocusTitle">Focus review</h3>
 <p class="muted" id="extraFocusText"></p>
 
 
@@ -11054,16 +11054,16 @@ function resetDoubleCheckCycle(show=true){
 
 <div class="igc-review-body"><div class="igc-review-sidebar"><div class="pending-confirm-warning" id="focusConfirmWarning" style="display:none"><b>Importante:</b> estos perfiles NO se marcarán como revisados hasta que confirmes “Sí pude revisar”. Si Instagram no abrió todo o no cargaron perfiles, usa “Volver a abrir” o “No pude revisar todavía”.</div><div class="focus-review-grid">
 <div>
-<label class="tiny">Decisión / motivo</label>
+<label class="tiny">Decision / reason</label>
 <select id="extraFocusDecision">
 <option value="reviewed">Revisado / verificado</option>
 <option value="still_pending">Sigue pendiente</option>
-<option value="accepted">Ya me aceptó</option>
+<option value="accepted">Request accepted</option>
 <option value="keep">Conservar / se ve bien</option>
 <option value="suspicious_keep">Sospechoso pero conservar</option>
 <option value="fake">Probable fake</option>
-<option value="closed">Perfil cerrado / no aparece</option>
-<option value="skip">Revisar después</option>
+<option value="closed">Inactive / unavailable profile</option>
+<option value="skip">Review later</option>
 </select>
 </div>
 </div><div class="focus-review-actions">
@@ -11072,14 +11072,14 @@ function resetDoubleCheckCycle(show=true){
 <button class="btn orange" id="extraFocusNotReviewedBtn" onclick="markExtraFocusNotReviewed()">❌ No pude revisar todavía</button>
 <button class="btn orange" onclick="snoozeExtraFocusBatch(7)">⏸ Pausar 7 días</button>
 <button class="btn orange" onclick="snoozeExtraFocusBatch(30)">⏸ Pausar 30 días</button>
-<button class="btn red" onclick="closeExtraFocusModal()">Cerrar sin marcar</button>
+<button class="btn red" onclick="closeExtraFocusModal()">Close without marking</button>
 </div></div><div class="focus-review-list" id="extraFocusList"></div></div></div>
 </div>
 <div class="safe-focus-popup" id="safeFocusPopup">
 <div class="safe-focus-box">
 <div class="safe-focus-head">
 <div>
-<h3 id="safeFocusTitle">Revisión de foco</h3>
+<h3 id="safeFocusTitle">Focus review</h3>
 <p class="muted" id="safeFocusText"></p>
 </div>
 <button class="safe-focus-close" onclick="closeSafeFocusPopup()">×</button>
@@ -11091,25 +11091,25 @@ function resetDoubleCheckCycle(show=true){
 
 <div class="igc-review-body"><div class="igc-review-sidebar"><div class="safe-focus-warning"><b>Importante:</b> abrir perfiles NO marca nada como revisado. Solo se guarda cuando confirmas que sí pudiste revisar. Si no cargaron las pestañas, usa “Volver a abrir” o “No pude revisar todavía”.</div><div class="safe-focus-controls">
 <div>
-<label>Decisión / motivo</label>
+<label>Decision / reason</label>
 <select id="safeFocusDecision">
 <option value="reviewed">Revisado / verificado</option>
 <option value="still_pending">Sigue pendiente</option>
-<option value="accepted">Ya me aceptó</option>
+<option value="accepted">Request accepted</option>
 <option value="keep">Conservar / se ve bien</option>
 <option value="suspicious_keep">Sospechoso pero conservar</option>
 <option value="fake">Probable fake</option>
-<option value="closed">Perfil cerrado / no aparece</option>
-<option value="skip">Revisar después</option>
+<option value="closed">Inactive / unavailable profile</option>
+<option value="skip">Review later</option>
 </select>
 </div>
-</div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Confirmación segura:</b> revisa las pestañas antes de guardar. Nada se marca hasta que confirmes.</div><div class="safe-focus-actions">
+</div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Safe confirmation:</b> revisa las pestañas antes de guardar. Nada se marca hasta que confirmes.</div><div class="safe-focus-actions">
 <button class="btn primary" onclick="confirmSafeFocusReviewed()">✅ Sí pude revisar / guardar decisión</button>
 <button class="btn" onclick="reopenSafeFocusBatch()">🔁 Volver a abrir perfiles</button>
 <button class="btn orange" onclick="markSafeFocusNotReviewed()">❌ No pude revisar todavía</button>
 <button class="btn orange" onclick="snoozeSafeFocusBatch(7)">⏸ Pausar 7 días</button>
 <button class="btn orange" onclick="snoozeSafeFocusBatch(30)">⏸ Pausar 30 días</button>
-<button class="btn red" onclick="closeSafeFocusPopup()">Cerrar sin marcar</button>
+<button class="btn red" onclick="closeSafeFocusPopup()">Close without marking</button>
 </div></div><div class="safe-focus-list" id="safeFocusList"></div></div></div>
 </div>
 <script>
@@ -11258,7 +11258,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
 }
 </script>
 <div class="active-batch-dock" id="activeBatchDock">
-<h3>⚠️ Tanda activa sin confirmar</h3>
+<h3>⚠️ Active unconfirmed batch</h3>
 <p id="activeBatchText">Hay una tanda abierta pendiente de confirmar.</p>
 <div class="active-batch-grid">
 <div class="active-batch-mini"><b id="activeBatchCount">0</b><span>perfiles</span></div>
@@ -11267,10 +11267,10 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
 </div>
 <div class="active-batch-actions">
 <button class="btn primary" onclick="recoverActiveFocusBatch()">Recuperar tanda</button>
-<button class="btn" onclick="reopenActiveFocusBatch()">Volver a abrir</button>
-<button class="btn orange" onclick="markActiveFocusNotReviewed()">No pude revisar</button>
-<button class="btn red" onclick="cancelActiveFocusBatch()">Cancelar tanda</button><button class="btn red" onclick="forceClearActiveBatchOnly()">Borrar tanda activa</button>
-<button class="btn red" onclick="forceClearStuckFocusBatch()">Borrar tanda atorada</button>
+<button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button>
+<button class="btn orange" onclick="markActiveFocusNotReviewed()">Could not review</button>
+<button class="btn red" onclick="cancelActiveFocusBatch()">Cancelar tanda</button><button class="btn red" onclick="forceClearActiveBatchOnly()">Delete active batch</button>
+<button class="btn red" onclick="forceClearStuckFocusBatch()">Delete stuck batch</button>
 </div>
 </div>
 <script>
@@ -12158,13 +12158,13 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   }
   async function updateCoreDetection(){
     const seq=++V116.previewSeq, box=document.getElementById('v116DetectedFormats');if(!box)return;
-    box.innerHTML='<b>Detección automática:</b> verificando archivos…';
+    box.innerHTML='<b>Automatic detection:</b> verificando archivos…';
     const [fw,fr,pd]=await Promise.all([inspectInput('followingInput','following'),inspectInput('followersInput','followers'),inspectInput('pendingInput','pending_follow_requests')]);
     if(seq!==V116.previewSeq)return;
     const all=[...fw,...fr,...pd];
-    if(!all.length){box.innerHTML='<b>Detección automática:</b> todavía no hay archivos seleccionados.';return}
+    if(!all.length){box.innerHTML='<b>Automatic detection:</b> todavía no hay archivos seleccionados.';return}
     const bad=all.filter(x=>!x.ok).length;
-    box.innerHTML=`<b>Detección automática:</b> ${all.length} archivo(s) · ${bad?`<span style="color:#ff9aac">${bad} con conflicto</span>`:'todos coinciden con su cargador'}<div class="v116-detect-grid">${all.map(rowHTML).join('')}</div>`;
+    box.innerHTML=`<b>Automatic detection:</b> ${all.length} archivo(s) · ${bad?`<span style="color:#ff9aac">${bad} con conflicto</span>`:'todos coinciden con su cargador'}<div class="v116-detect-grid">${all.map(rowHTML).join('')}</div>`;
   }
   const oldUploadChanged=window.v113UploadChanged;
   window.v113UploadChanged=function(inputId,labelId){
@@ -12415,7 +12415,7 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
     </div>
   </div>
 </div>
-<div class="aboutMetaActions"><button class="btn" id="aboutPrivacyBtn">Privacidad</button><button class="btn" id="aboutLegalBtn">Legal</button><button class="btn" id="aboutVersionBtn">Versión</button></div>
+<div class="aboutMetaActions"><button class="btn" id="aboutPrivacyBtn">Privacidad</button><button class="btn" id="aboutLegalBtn">Legal</button><button class="btn" id="aboutVersionBtn">Version</button></div>
 <div class="aboutFooter">© 2026 Michel Armando Duarte Flores / Michel's Lab · All rights reserved.</div>
 </section>
 </div>
@@ -12427,7 +12427,7 @@ tr.v119-html-unknown td{background:rgba(145,160,255,.035)}
 La disponibilidad del código fuente, la distribución de una build HTML o la publicación del código con fines de demostración, portafolio, educación o revisión no concede permiso para copiar, modificar, redistribuir, rebrandear, vender, sublicenciar ni incorporar IG Cleaner Pro —o partes sustanciales de este— en otro producto sin autorización expresa y por escrito del titular de los derechos.
 
 IG Cleaner Pro es una herramienta independiente y no está afiliada, patrocinada ni respaldada por Instagram ni por Meta Platforms, Inc.</div>
-<div class="legalActions"><button class="btn primary" id="legalClose">Cerrar</button></div>
+<div class="legalActions"><button class="btn primary" id="legalClose">Close</button></div>
 </section>
 </div>
 <div aria-hidden="true" class="privacyOverlay" id="privacyOverlay">
@@ -12447,20 +12447,20 @@ Antes de un reset o migración destructiva, exporta un respaldo desde Vault. Cam
 
 GESTIÓN DE DATOS SINCRONIZADOS
 Puedes exportar a JSON todos los datos que esta cuenta tiene actualmente en la nube o borrar todas sus filas sincronizadas. El borrado de nube no elimina el ZIP/JSON/HTML original ni respaldos locales independientes. Después de borrar la nube, la app cierra la sesión para impedir que el auto-sync vuelva a cargar inmediatamente el estado local.</div>
-<div id="privacyDataStatus" class="legalCopy" style="margin-top:12px">Inicia sesión en Cuenta para exportar o borrar datos sincronizados.</div>
-<div class="legalActions"><button class="btn green" id="privacyExportCloud">Exportar datos de nube</button><button class="btn red" id="privacyDeleteCloud">Borrar datos de nube</button><button class="btn primary" id="privacyClose">Cerrar</button></div>
+<div id="privacyDataStatus" class="legalCopy" style="margin-top:12px">Sign in under Account to export or delete synced data.</div>
+<div class="legalActions"><button class="btn green" id="privacyExportCloud">Export cloud data</button><button class="btn red" id="privacyDeleteCloud">Delete cloud data</button><button class="btn primary" id="privacyClose">Close</button></div>
 </section>
 </div>
 <div aria-hidden="true" class="versionOverlay" id="versionOverlay">
 <section aria-labelledby="versionTitle" aria-modal="true" class="versionDialog" role="dialog">
 <h3 id="versionTitle">Instagram Cleaner Pro · UI v120.44</h3>
 <div class="versionGrid">
-<div class="detailBlock"><span>Producto</span><b>IG Cleaner Pro</b><div>Herramienta local de análisis y limpieza de exports de Instagram.</div></div>
-<div class="detailBlock"><span>Versión</span><b>Engine v119 · UI v120.44</b><div>ZIP primary · JSON/HTML autodetect · precise dates · follow-order · evidence · ZIP changes · focus intelligence · portable HTML report · snapshot timeline · editable Focus · profile dossier · cross-device audit log · state audit · performance cache · import delta · JSON intact</div></div>
-<div class="detailBlock"><span>Runtime</span><b>Web / HTML local</b><div>Procesamiento en el navegador, sin backend y sin login de Instagram.</div></div>
+<div class="detailBlock"><span>Producto</span><b>IG Cleaner Pro</b><div>Local analysis and cleanup tool for Instagram exports.</div></div>
+<div class="detailBlock"><span>Version</span><b>Engine v119 · UI v120.44</b><div>ZIP primary · JSON/HTML autodetect · precise dates · follow-order · evidence · ZIP changes · focus intelligence · portable HTML report · snapshot timeline · editable Focus · profile dossier · cross-device audit log · state audit · performance cache · import delta · JSON intact</div></div>
+<div class="detailBlock"><span>Runtime</span><b>Web / HTML local</b><div>Browser-based processing; Instagram sign-in is not needed for local import.</div></div>
 <div class="detailBlock"><span>Autor</span><b>Michel Armando Duarte Flores</b><div>Michel's Lab</div></div>
 </div>
-<div class="legalActions"><button class="btn primary" id="versionClose">Cerrar</button></div>
+<div class="legalActions"><button class="btn primary" id="versionClose">Close</button></div>
 </section>
 </div>
 <script id="igc-about-js">
@@ -12923,10 +12923,10 @@ window.igcExportPortableHtmlReport=function(){
 </style>
 <div class="igc-focus-preview-overlay" id="igcFocusPreviewOverlay" aria-hidden="true">
   <section class="igc-focus-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="igcFocusPreviewTitle">
-    <div class="igc-focus-preview-head"><div><div class="igc-focus-preview-kicker">SIGUIENTE FOCO · TANDA CONGELADA</div><h3 id="igcFocusPreviewTitle">Vista previa</h3><p id="igcFocusPreviewMeta">Los perfiles que ves aquí son exactamente los que abrirá este Foco.</p></div><button class="igc-focus-preview-close" type="button" onclick="igcCloseFocusPreview()">×</button></div>
+    <div class="igc-focus-preview-head"><div><div class="igc-focus-preview-kicker">SIGUIENTE FOCO · TANDA CONGELADA</div><h3 id="igcFocusPreviewTitle">Vista previa</h3><p id="igcFocusPreviewMeta">These are the exact profiles this Focus batch will open.</p></div><button class="igc-focus-preview-close" type="button" onclick="igcCloseFocusPreview()">×</button></div>
     <div class="igc-focus-preview-summary" id="igcFocusPreviewSummary"></div>
     <div class="igc-focus-preview-list" id="igcFocusPreviewList"></div>
-    <div class="igc-focus-preview-actions"><button class="btn" id="igcFocusPreviewRegenerate" type="button" onclick="igcRegenerateFocusPreview()">↻ Regenerar tanda</button><button class="btn red" id="igcFocusPreviewDiscard" type="button" onclick="igcDiscardFocusPreview()">Descartar</button><button class="btn primary" id="igcFocusPreviewOpen" type="button" onclick="igcOpenFocusPreviewBatch()">Abrir estos perfiles</button></div>
+    <div class="igc-focus-preview-actions"><button class="btn" id="igcFocusPreviewRegenerate" type="button" onclick="igcRegenerateFocusPreview()">↻ Regenerar tanda</button><button class="btn red" id="igcFocusPreviewDiscard" type="button" onclick="igcDiscardFocusPreview()">Descartar</button><button class="btn primary" id="igcFocusPreviewOpen" type="button" onclick="igcOpenFocusPreviewBatch()">Open these profiles</button></div>
   </section>
 </div>
 <script id="igc-v12024-frozen-focus-preview-js">
