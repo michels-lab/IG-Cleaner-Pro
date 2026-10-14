@@ -48,7 +48,7 @@ def _read_json(path: Path, default):
             raise ValueError("Tipo de registro incorrecto.")
         return value
     except (OSError, ValueError, TypeError) as exc:
-        raise ValueError("Registro del robot dañado: revisa antes de continuar.") from exc
+        raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
 def _users(raw):
@@ -58,7 +58,7 @@ def _users(raw):
     for item in raw:
         user = valid_username(item)
         if not user:
-            raise ValueError("La tanda contiene un nombre de usuario inválido.")
+            raise ValueError("The batch contains an invalid username.")
         if user not in out:
             out.append(user)
     return out
@@ -73,7 +73,7 @@ def _visible_named_control(root, words, roles=("button", "menuitem"), text_fallb
             matches = root.get_by_role(role, name=label)
             try:
                 if matches.count() > 8:
-                    raise RuntimeError("Demasiados controles similares; requiere revisión.")
+                    raise RuntimeError("Too many matching controls; manual review required.")
                 seen.extend(matches.nth(i) for i in range(matches.count())
                             if matches.nth(i).is_visible())
             except RuntimeError:
@@ -84,7 +84,7 @@ def _visible_named_control(root, words, roles=("button", "menuitem"), text_fallb
             try:
                 matches = root.get_by_text(label, exact=True)
                 if matches.count() > 8:
-                    raise RuntimeError("Demasiados textos equivalentes; requiere revisión.")
+                    raise RuntimeError("Too many matching text labels; manual review required.")
                 seen.extend(matches.nth(i) for i in range(matches.count())
                             if matches.nth(i).is_visible())
             except RuntimeError:
@@ -94,7 +94,7 @@ def _visible_named_control(root, words, roles=("button", "menuitem"), text_fallb
         if len(seen) == 1:
             return seen[0]
         if len(seen) > 1:
-            raise RuntimeError("Hay múltiples opciones equivalentes; no se hará clic a ciegas.")
+            raise RuntimeError("Multiple equivalent options were found. No ambiguous click will be performed.")
     return None
 
 
@@ -115,7 +115,7 @@ def _unfollow_option(page):
             visible = []
         if visible:
             if len(visible) > 1:
-                raise RuntimeError("Hay varios menús abiertos; revisar manualmente.")
+                raise RuntimeError("Multiple menus are open; manual review required.")
             return _visible_named_control(visible[0], names, text_fallback=True)
     # Some Instagram menus are rendered as plain DOM without a menu role.
     # Only do a global search after verifying the user's active session AND
@@ -128,11 +128,11 @@ def _visible_dialog(page):
     dialogs = page.locator('[role="dialog"]')
     total = dialogs.count()
     if total > 12:
-        raise RuntimeError("Demasiados diálogos; requiere revisión.")
+        raise RuntimeError("Too many dialogs; manual review required.")
     open_dialogs = [dialogs.nth(i) for i in range(total)
                     if dialogs.nth(i).is_visible()]
     if len(open_dialogs) > 1:
-        raise RuntimeError("Varios diálogos visibles; no se ejecutará un clic ambiguo.")
+        raise RuntimeError("Multiple dialogs are visible. No ambiguous click will be performed.")
     return open_dialogs[0] if open_dialogs else None
 
 
@@ -188,33 +188,33 @@ def _verify_final_state(page, expected_handle, *, checks=3):
     """Allow short UI settling but never infer success from a completed click."""
     for _ in range(checks):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
-            return "blocked", "Instagram mostró acceso/verificación tras la acción."
+            return "blocked", "Instagram requested verification after the action."
         if signed_in_handle(page) != expected_handle:
-            return "blocked", "La cuenta de Instagram cambió durante la acción."
+            return "blocked", "The active Instagram account changed during the action."
         header = page.locator("header").first
         if header.count() and header.is_visible():
             state = _follow_state(header)
             if state == "follow_back":
-                return "ok", ("Acción confirmada: Follow Back / Seguir también. "
-                              "La persona aún te sigue, pero tú ya no la sigues.")
+                return "ok", ("Action confirmed: Follow Back. "
+                              "The person still follows you, but you no longer follow them.")
             if state == "follow":
-                return "ok", ("Acción confirmada: Follow / Seguir. "
-                              "Ya no la sigues; el perfil no muestra followback.")
+                return "ok", ("Action confirmed: Follow. "
+                              "You no longer follow this account; it does not show a followback.")
         page.wait_for_timeout(650)
-    return "review", "Estado final ambiguo: no repetir esta operación automáticamente."
+    return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
 
 def _action_issue(task, result, message):
     """Stable codes for the owner-facing anomalies report, independent of UI locale."""
-    if task == "unfollow" and result == "ok" and "Follow Back / Seguir también" in message:
+    if task == "unfollow" and result == "ok" and ("Action confirmed: Follow Back." in message or "Follow Back / Seguir también" in message):
         return "unexpected_followback"
-    if task == "cancel" and result == "review" and message.startswith("Pendiente desactualizado:"):
+    if task == "cancel" and result == "review" and message.startswith(("Outdated pending request:", "Pendiente desactualizado:")):
         return "pending_already_following"
-    if task == "cancel" and result == "review" and message.startswith("La solicitud ya no aparece"):
+    if task == "cancel" and result == "review" and message.startswith(("The request no longer appears", "La solicitud ya no aparece")):
         return "pending_not_requested"
-    if result == "review" and message.startswith("El perfil indica que ya te sigue"):
+    if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
         return "mutual_before_action"
-    if result == "review" and message.startswith("El perfil no muestra"):
+    if result == "review" and message.startswith(("The profile does not show", "El perfil no muestra")):
         return "missing_profile_info"
     if result in ("review", "error", "blocked"):
         return "requires_manual_review"
@@ -229,37 +229,37 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     what is actually shown rather than assuming any profile privacy state.
     """
     if task not in TASKS:
-        raise ValueError("Acción desconocida.")
+        raise ValueError("Unknown action.")
     page.goto("https://www.instagram.com/" + username + "/", wait_until="domcontentloaded",
               timeout=45000)
     page.wait_for_timeout(1000)
     if challenge_detected(page) or page.locator('input[name="password"]').count():
-        return "blocked", "Instagram solicitó acceso o verificación."
+        return "blocked", "Instagram requested verification."
     if signed_in_handle(page) != expected_handle:
-        return "blocked", "No se puede verificar el Instagram activo; ninguna acción realizada."
+        return "blocked", "The active Instagram account cannot be verified. No action was performed."
     url = urlparse(page.url)
     if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").lower() != username:
-        return "blocked", "Instagram redirigió a otro perfil."
+        return "blocked", "Instagram redirected to another profile."
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
-        return "blocked", "No se encontró la cabecera del perfil."
+        return "blocked", "The profile header could not be found."
     if task == "unfollow" and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
-        return "review", "El perfil indica que ya te sigue; requiere revisión."
+        return "review", "This account follows you; review required."
     active = (_visible_button(header, [r"Following", r"Siguiendo"])
               if task == "unfollow" else
               _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
         if task == "cancel":
             if _visible_button(header, [r"Following", r"Siguiendo"]):
-                return "review", ("Pendiente desactualizado: Instagram muestra Siguiendo / Following; "
-                                  "la solicitud ya fue aceptada. No se modificó el seguimiento.")
+                return "review", ("Outdated pending request: Instagram now shows Following; "
+                                  "the follow request was accepted. No relationship was changed.")
             if _follow_state(header):
-                return "review", ("La solicitud ya no aparece como Requested / Solicitado; "
-                                  "no se realizó ningún cambio.")
-        return "review", "El perfil no muestra el estado necesario para esta acción."
+                return "review", ("The request no longer appears as Requested; "
+                                  "no change was made.")
+        return "review", "The profile does not show the state required for this action."
     if can_act and not can_act(username):
-        return "skipped", "Omitido o protegido antes del primer clic."
+        return "skipped", "Skipped or protected before the first click."
     active.click(timeout=10000)
     page.wait_for_timeout(450)
 
@@ -271,7 +271,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             # Rare layouts change directly on the first click. Do not guess.
             return _verify_final_state(page, expected_handle)
         if can_act and not can_act(username):
-            return "review", "Se abrió el menú, pero la protección cambió; revisar antes de continuar."
+            return "review", "Menu opened, but protection changed. Review before continuing."
         choice.click(timeout=10000)
         page.wait_for_timeout(650)
         # Public: new Follow button should be visible already.
@@ -286,10 +286,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
                     text_fallback=True)
             if confirm:
                 if can_act and not can_act(username):
-                    return "review", "Confirmación privada pendiente; protección cambió."
+                    return "review", "Private confirmation pending; protection changed."
                 confirm.click(timeout=10000)
                 return _verify_final_state(page, expected_handle)
-        return "review", "No se pudo confirmar si el perfil requiere otro paso; no se repetirá el clic."
+        return "review", "Could not confirm whether another step is required. The click will not be repeated."
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
     # and explicit Cancel Request confirmation.
@@ -297,9 +297,9 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if dialog is not None:
         choice = _request_cancel_confirmation(dialog, username)
         if choice is None:
-            return "review", "La confirmación no demuestra que sea la solicitud pendiente del perfil; no se hará clic."
+            return "review", "The dialog does not clearly identify this pending request. No click was performed."
         if can_act and not can_act(username):
-            return "review", "Protección modificada antes de cancelar solicitud."
+            return "review", "Protection changed before canceling the request."
         choice.click(timeout=10000)
     return _verify_final_state(page, expected_handle)
 
@@ -442,18 +442,18 @@ class ActionRobot:
         if not expected:
             raise ValueError("Asigna el @Instagram activo antes de operar.")
         if task not in TASKS or not targets:
-            raise ValueError("Selecciona una tarea con perfiles válidos.")
+            raise ValueError("Select a job containing valid profiles.")
         count = int(data.get("batch_size", 30))
         if count != data.get("batch_size", 30) or not 1 <= count <= 1000:
-            raise ValueError("El tamaño de tanda debe estar entre 1 y 1,000.")
+            raise ValueError("The batch size must be between 1 and 1,000.")
         max_count, window, delay = check_pacing(count, ACTION_WINDOW_MINUTES,
                                                  data.get("gap_seconds", 10))
         rest_input = data.get("rest_minutes", 5)
         every, rest = check_batch_rest(count if rest_input else 0, rest_input)
         if data.get("confirmation") != task + ":" + str(len(targets)):
-            raise ValueError("La tanda no fue aprobada explícitamente.")
+            raise ValueError("The batch was not explicitly approved.")
         if task == "unfollow" and data.get("followers_evidence") is not True:
-            raise ValueError("No se verificó una lista completa de Followers.")
+            raise ValueError("A complete Followers list has not been verified.")
         with self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Ya hay un robot de acciones activo.")
@@ -544,11 +544,11 @@ class ActionRobot:
                 page = browser.pages[0] if browser.pages else browser.new_page()
                 page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
                 with self.lock:
-                    self.status, self.message = "login", "Inicia sesión en Chrome como @" + self.handle
+                    self.status, self.message = "login", "Sign in to Chrome as @" + self.handle
                 while not self.stop_event.is_set():
                     if challenge_detected(page):
                         with self.lock:
-                            self.status, self.message = "blocked", "Instagram exige verificación."
+                            self.status, self.message = "blocked", "Instagram requires verification."
                         return
                     signed = signed_in_handle(page)
                     if signed:
@@ -607,7 +607,7 @@ class ActionRobot:
                                 lambda name: not self.stop_event.is_set() and
                                 not self._protected_for(name) and name not in self.skipped)
                     except Exception as exc:
-                        result, details = "error", "No se verificó la acción: " + str(exc)[:200]
+                        result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
                         visits = finish_visit(visits_file, visits)
                         rests = finish_batch_visit(
@@ -637,11 +637,11 @@ class ActionRobot:
                                     journal.get(u, {}).get("status") != "ok"
                                     for u in self.targets)
                     self.status = "partial" if remaining else "complete"
-                    self.message = ("Tanda revisada: hay perfiles que requieren verificación manual."
-                                    if remaining else "Tanda terminada; resultados guardados.")
+                    self.message = ("Batch reviewed: some profiles require manual verification."
+                                    if remaining else "Batch complete; results saved.")
         except Exception as exc:
             with self.lock:
-                self.status, self.message = "error", "Robot detenido: " + str(exc)[:220]
+                self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
         finally:
             with self.lock:
                 self.current, self.wait_until = "", 0

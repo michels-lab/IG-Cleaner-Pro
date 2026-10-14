@@ -77,7 +77,7 @@ class Collector:
             raise ValueError("Falta identidad de la cuenta activa de Insta Cleaner.")
         expected = valid_username(request.get("expected_handle") or "")
         if request.get("expected_handle") and not expected:
-            raise ValueError("El nombre de Instagram esperado es inválido.")
+            raise ValueError("The expected Instagram username is invalid.")
         # Pacing is retained internally; novice users do not need to see settings.
         pacing = dict(max_per_window=request.get("max_per_window", DEFAULT_COUNT),
                       window_minutes=request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
@@ -89,11 +89,11 @@ class Collector:
         with self.lock:
             if self.worker and self.worker.is_alive():
                 if owner != self.owner or account != self.account:
-                    raise ValueError("Hay otra cuenta en ejecución. No se mezclan los perfiles.")
+                    raise ValueError("Another Instagram account is currently active. Accounts will not be mixed.")
                 return self.snapshot()
             if self.status in ("paused", "pausing") and not request.get("resume_requested"):
                 if owner != self.owner or account != self.account:
-                    raise ValueError("Hay otra cuenta pausada. No se mezclan los perfiles.")
+                    raise ValueError("Hay otra cuenta pausada. No se mezclan los profiles.")
                 return self.snapshot()
             self.pause_requested = False
             self.owner, self.account = owner, account
@@ -117,7 +117,7 @@ class Collector:
     def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
         if not isinstance(usernames, list) or not 1 <= len(usernames) <= MAX_QUEUE:
-            raise ValueError("La lista debe tener entre 1 y 10,000 perfiles.")
+            raise ValueError("La lista debe tener entre 1 y 10,000 profiles.")
         normalized, seen = [], set()
         for user in usernames:
             clean = valid_username(user)
@@ -126,7 +126,7 @@ class Collector:
             normalized.append(clean)
             seen.add(clean)
         if not normalized:
-            raise ValueError("No se encontraron nombres de usuario válidos.")
+            raise ValueError("No valid usernames were found.")
         owner = str(request.get("owner") or "").strip()
         account = str(request.get("account") or "").strip()
         if not owner or not account or len(owner) > 200 or len(account) > 120:
@@ -142,7 +142,7 @@ class Collector:
         )
         with self.lock:
             if self.worker and self.worker.is_alive():
-                raise ValueError("Ya existe una recopilación activa. Detenla antes de iniciar otra.")
+                raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
             self.autonomous = False
             self.detected_handle = ""
@@ -195,7 +195,7 @@ class Collector:
                 page = browser.pages[0] if browser.pages else browser.new_page()
                 page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
                 if self.autonomous:
-                    self._update("login", "Inicia sesión en Instagram; detectaré tu cuenta automáticamente.")
+                    self._update("login", "Sign in to Instagram; your account will be detected automatically.")
                     # Instagram changes its sidebar markup and may open the
                     # logged-in profile in another tab. Check every browser tab,
                     # but never guess an identity from an arbitrary profile URL.
@@ -226,9 +226,9 @@ class Collector:
                     self.detected_handle = handle
                     if self.expected_handle and self.expected_handle != handle:
                         self._update("account_mismatch",
-                                     "Instagram abierto: @"+handle+
-                                     ". Insta Cleaner tiene @"+self.expected_handle+
-                                     " seleccionado. No se mezclarán cuentas.")
+                                     "Instagram signed in as: @"+handle+
+                                     ". Insta Cleaner currently selected: @"+self.expected_handle+
+                                     " selected. Accounts will not be mixed.")
                         return
                     cached = read_following_cache(self.followings_path(), handle)
                     self.usernames = cached
@@ -241,7 +241,7 @@ class Collector:
                             self.total = len(retained)
                             self.discovery_complete = bool(complete)
                             self.message = ("Following detectados: "+str(len(retained))+
-                                            (" perfiles (lista provisional)." if not complete else " perfiles."))
+                                            (" profiles (provisional list)." if not complete else " profiles."))
                         write_following_cache(self.followings_path(), handle, retained, complete)
                     users, complete = read_following_visible(
                         page, handle, on_batch=save_batch, stop_signal=self.stop_signal)
@@ -250,15 +250,15 @@ class Collector:
                     users = list(self.usernames)
                     if not users:
                         self._update("needs_attention",
-                                     "No pude leer la lista Following visible. Comprueba Instagram; no inventaré perfiles.")
+                                     "Could not read the visible Following list. Check Instagram; no profiles will be invented.")
                         return
                     if self.stop_signal.is_set():
-                        self._update("paused", "Búsqueda interrumpida; lista parcial guardada.")
+                        self._update("paused", "Search interrupted; partial Following list saved.")
                         return
-                    self._update("running", "Lista Following "+("completa" if complete else "parcial")+
-                                 "; recopilando cifras...")
+                    self._update("running", "Following list "+("complete" if complete else "partial")+
+                                 "; collecting visible counts...")
                 else:
-                    self._update("login", "Inicia sesión en Instagram y pulsa Ya inicié sesión.")
+                    self._update("login", "Sign in to Instagram and select I have signed in.")
                     while not self.stop_signal.is_set() and not self.login_ready.wait(0.25):
                         pass
                     if self.stop_signal.is_set():
@@ -304,7 +304,7 @@ class Collector:
                         rests = finish_batch_visit(rests_file, rests, self.pause_every,
                                                    self.pause_minutes)
                     if status in ("login_required", "blocked"):
-                        self._update("blocked", "Instagram solicitó acceso/verificación o limitó las consultas. Se detuvo sin evasión.")
+                        self._update("blocked", "Instagram required verification or limited requests. The job stopped without attempting to bypass restrictions.")
                         return
                     row = {
                         "username": username, "followers": "", "following": "",
@@ -317,16 +317,16 @@ class Collector:
                     saved[username] = row
                     save_results(self.result_path(), saved)
                     completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
-                    self._update("running", f"@{username}: {status}. Completados {completed}/{self.total}.", completed)
+                    self._update("running", f"@{username}: {status}. Completed {completed}/{self.total}.", completed)
                 if self.stop_signal.is_set():
-                    self._update("paused", "Pausado; se guardó el avance.")
+                    self._update("paused", "Paused; progress was saved.")
                     return
                 unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
                 self._update("complete" if not unresolved and (not self.autonomous or self.discovery_complete) else "partial",
-                             "Datos recopilados. "+("Following completo." if self.discovery_complete else
-                             "La lista Following podría estar incompleta; se necesitará revisar el navegador."))
+                             "Data collected. "+("Following complete." if self.discovery_complete else
+                             "The Following list may be incomplete and requires browser review."))
         except Exception as exc:
-            self._update("error", "El navegador falló: " + str(exc)[:240])
+            self._update("error", "Browser error: " + str(exc)[:240])
         finally:
             with self.lock:
                 self.wait_until = 0
@@ -340,9 +340,9 @@ class Collector:
     def resume(self):
         with self.lock:
             if self.status != "login":
-                raise ValueError("No hay una ventana de inicio de sesión pendiente.")
+                raise ValueError("There is no pending Instagram sign-in window.")
             self.login_ready.set()
-            self.message = "Preparando las consultas..."
+            self.message = "Preparing requests..."
             return self.snapshot()
 
     def stop(self):
@@ -351,7 +351,7 @@ class Collector:
             if self.worker and self.worker.is_alive():
                 self.pause_requested = True
                 self.status = "pausing"
-                self.message = "Pausando después de la visita actual; guardando resultados..."
+                self.message = "Pausing after the current profile; saving results..."
                 self.stop_signal.set()
             return self.snapshot()
 
@@ -362,9 +362,9 @@ class Collector:
             if not owner or not account or owner != self.owner or account != self.account:
                 raise ValueError("Selecciona el mismo usuario y perfil de Instagram antes de reanudar.")
             if self.worker and self.worker.is_alive():
-                raise ValueError("El robot sigue pausando. Espera a que termine la visita actual.")
+                raise ValueError("The robot is still pausing. Finish the current visit before resuming.")
             if self.status not in ("paused", "partial", "error"):
-                raise ValueError("No hay una recopilación pausada para reanudar.")
+                raise ValueError("There is no paused collection to resume.")
             request = dict(request)
             request["expected_handle"] = self.expected_handle
             request["resume_requested"] = True
@@ -458,7 +458,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 self._send(403, {"error": "Solo se admite la app local."})
                 return False
             if not secrets.compare_digest(self.headers.get("X-IGC-Bridge-Token", ""), token):
-                self._send(403, {"error": "Token local inválido."})
+                self._send(403, {"error": "Invalid local access token."})
                 return False
             return True
 
@@ -491,11 +491,11 @@ def build_server(collector: Collector, token: str, port: int = 0):
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if length < 0 or length > MAX_REQUEST:
-                    raise ValueError("La lista excede el tamaño máximo.")
+                    raise ValueError("The list exceeds the maximum size.")
                 body = self.rfile.read(length)
                 data = json.loads(body or b"{}")
                 if not isinstance(data, dict):
-                    raise ValueError("Solicitud inválida.")
+                    raise ValueError("Invalid request.")
                 if self.path == "/api/actions/start":
                     result = actions.start(data)
                 elif self.path == "/api/actions/continue":
@@ -537,7 +537,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
 def main():
     parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
-    parser.add_argument("--app", type=Path, help="Ruta del HTML Desktop (misma versión que ya usas).")
+    parser.add_argument("--app", type=Path, help="Path to your Desktop HTML file (same version as your app).")
     parser.add_argument("--healthcheck", action="store_true", help="Prueba empaquetado Playwright + servidor local, sin abrir Instagram.")
     parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
@@ -547,7 +547,7 @@ def main():
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             if not pw.chromium:
-                raise RuntimeError("Playwright no inicializó Chromium.")
+                raise RuntimeError("Playwright could not initialize Chromium.")
         probe = build_server(Collector(args.data_dir, args.session_dir), "offline-check-token")
         probe.server_close()
         print("PASS: runtime Playwright y servidor local disponibles (no prueba Instagram).")

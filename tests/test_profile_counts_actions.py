@@ -204,9 +204,18 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(page.header.clicker.clicked,0)
 
     def test_followback_anomaly_has_dedicated_issue_code(self):
-        result="Acción confirmada: Follow Back / Seguir también. La persona aún te sigue."
-        self.assertEqual(_action_issue("unfollow","ok",result),"unexpected_followback")
-        self.assertEqual(_action_issue("unfollow","ok","Follow / Seguir"),"")
+        # Old on-disk messages must still classify after the UI switches to English.
+        legacy="Acción confirmada: Follow Back / Seguir también. La persona aún te sigue."
+        current="Action confirmed: Follow Back. The person still follows you."
+        self.assertEqual(_action_issue("unfollow","ok",legacy),"unexpected_followback")
+        self.assertEqual(_action_issue("unfollow","ok",current),"unexpected_followback")
+        self.assertEqual(_action_issue("unfollow","ok","Action confirmed: Follow."),"")
+        self.assertEqual(_action_issue("cancel","review",
+            "Outdated pending request: Instagram now shows Following;"),
+            "pending_already_following")
+        self.assertEqual(_action_issue("cancel","review",
+            "Pendiente desactualizado: Instagram muestra Following"),
+            "pending_already_following")
 
     def test_persisted_exception_report_survives_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -290,7 +299,7 @@ class ActionSafetyTests(unittest.TestCase):
                      "expected_handle":"my.profile", "task":"unfollow",
                      "targets":["one.user"],"batch_size":30,
                      "gap_seconds":10,"rest_minutes":5}
-            with self.assertRaisesRegex(ValueError, "aprobada"):
+            with self.assertRaisesRegex(ValueError, "explicitly approved"):
                 actions.start(payload)
             payload["confirmation"]="unfollow:1"
             with self.assertRaisesRegex(ValueError, "Followers"):

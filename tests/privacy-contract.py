@@ -19,12 +19,12 @@ for token in (
     'window.igcPrivacyExportCloudData',
     'window.igcPrivacyDeleteCloudData',
     "IGC_SYNC_TABLES",
-    "BORRAR NUBE",
+    "DELETE CLOUD",
     "user_id=not.is.null",
     "S.session=null",
     "ig-cleaner-cloud-export-v1",
-    'El export original de Instagram (ZIP/JSON/HTML) se procesa localmente',
-    'localStorage y IndexedDB',
+    'Original Instagram ZIP/JSON/HTML exports are processed locally',
+    'localStorage and IndexedDB',
 ):
     assert token in html, f"Privacy surface token missing: {token}"
 
@@ -50,4 +50,6 @@ assert "release/distribution-manifest.json" in migration
 assert "IG-Cleaner-Pro-Desktop-v{version}.zip" in migration
 assert manifest["channels"]["desktop"]["artifactTemplate"] == "IG-Cleaner-Pro-Desktop-v{version}.zip"
 
+assert 'BORRAR NUBE' not in html, "Old Spanish destructive confirmation must be absent"
+assert 'type DELETE CLOUD' in html, "English destructive confirmation prompt must be visible"
 print("Privacy/data-handling contract passed.")

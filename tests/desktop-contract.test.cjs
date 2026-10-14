@@ -42,9 +42,9 @@ for (const token of [
 ]) requireToken(token, 'Persistent-state compatibility token missing');
 
 for (const token of [
-  'Revisar de nuevo 30',
+  '🔁 Recheck 30',
   'Double Check 30',
-  'Ver NO ME SIGUE revisados',
+  '👁 View reviewed non-followback accounts',
   'Followers',
   'Mutuals',
   'Pending',
@@ -90,6 +90,16 @@ for (let i = 0; i < scripts.length; i++) {
   try { new Function(scripts[i]); }
   catch (err) { throw new Error('Inline script #' + i + ' syntax error: ' + err.message); }
 }
+
+// English presentation must not silently migrate or invalidate existing
+// Guided Session and Audit persisted identifiers.
+for (const token of [
+  "steps.find(s=>s.status==='pendiente'",
+  "status:p.length?'pendiente':'vacío'",
+  "status:m.length?'pendiente':'vacío'",
+  "i.module==='Seguidores que sigo'",
+  "esc(s.status==='pendiente'?'Pending'"
+]) requireToken(token, 'Localization must preserve persisted workflow status / audit keys');
 
 console.log('Desktop contract passed:', {
   bytes: Buffer.byteLength(html),
