@@ -90,8 +90,10 @@ def own_profile_from_switcher_rows(rows):
     for row in rows:
         handles = {u for href in row.get("hrefs", [])
                    if (u := user_from_href(href))}
+        if not handles:
+            continue
         if len(handles) != 1:
-            return None if handles else (None if identities else None)
+            return None
         identities.update(handles)
     return next(iter(identities)) if len(identities) == 1 else None
 
