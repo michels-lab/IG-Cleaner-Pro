@@ -1,3 +1,11 @@
+## 2026-10-14 — Windows package owner guidance release drift
+
+- Audited the `packaging/profile-counts/README.txt` that the **governed signed Windows distribution ZIP includes**. It incorrectly called the package a technical preview, said stable v120.42 had no integrated EXE, and provided Spanish UI/launcher instructions even though official v120.44 already ships `InstaCleanerPro.exe`.
+- Rewrote bundled README in English as a version-independent integrated Windows guide, accurately separating IG Cleaner and Instagram logins, optional read-only Followback Audit, explicit approval for account-changing jobs, human-only Mutuals, local backup migration and documented Supabase sync boundary.
+- Preserved cautious disclosure: offline simulated Chromium DOM/EXE smoke tests do **not** prove actual owner Instagram live session or physical Windows operation. No platform protections are disabled, no credentials or private data are copied into GitHub.
+- Added `tests/windows-package-readme-contract.py` to CI and signed-release contract to prevent stale preview, legacy `.cmd` advice or false download instructions from returning.
+- **Source only:** official published v120.44 asset cannot be retroactively changed by this work. New packaging must undergo future exact-commit validation and a separately owner-authorized release.
+
 ## 2026-10-11 — Auth email template/SMTP configuration gap (production blocker)
 
 - Owner-reported Gmail **Confirm your email address** with link instead of expected OTP: redirect `localhost:3000` refused and `otp_expired`; Brevo fallback sender `realmichelduarte@12366255.brevosend.com` landed in Spam. Repo native/Desktop code calls `/auth/v1/otp` and expects six-digit `/verify` token, so hosted email templates must switch `{{ .ConfirmationURL }}` to `{{ .Token }}` for BOTH signup and magic-link flows.
