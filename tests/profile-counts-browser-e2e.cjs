@@ -124,7 +124,7 @@ const {chromium}=require("playwright");
     const q=indexedDB.open("ig_cleaner_profile_counts_v2",1);
     q.onsuccess=()=>{
      const db=q.result,tx=db.transaction("records","readonly");
-     const item=tx.objectStore("records").get(scope+"\\u0000public.user");
+     const item=tx.objectStore("records").get(scope+String.fromCharCode(0)+"public.user");
      item.onsuccess=()=>{resolve(item.result?.record);db.close()};
      item.onerror=()=>reject(item.error);
     };q.onerror=()=>reject(q.error)
