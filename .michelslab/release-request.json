@@ -8,5 +8,11 @@
   "github_prerelease": false,
   "status": "authorized",
   "previous_stable_release": "v120.43",
-  "owner_acceptance_note": "Real Instagram session/browser actions remain unverified; full English-only UI work is subsequent and is not part of v120.44. CI must validate exact source and signed Android before publishing."
+  "owner_acceptance_note": "Real Instagram session/browser actions remain unverified; full English-only UI work is subsequent and is not part of v120.44. CI must validate exact source and signed Android before publishing.",
+  "governed_retry": {
+    "date": "2026-10-14",
+    "reason": "Owner-authorized v120.44 retry after validated PR #89 fixed incorrect candidate-vs-stable artifact assertions; re-run exact-commit Desktop/Android rendered UI, integrated Windows and signed Android release gates.",
+    "hotfix_pr": 89,
+    "expected_prior_stable": "v120.43"
+  }
 }
