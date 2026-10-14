@@ -1,4 +1,4 @@
-// IG Cleaner Android v120.44 — unified account/session + complete list sync
+// IG Cleaner Android v120.45 — unified account/session + complete list sync
 plugins { id("com.android.application") }
 
 val releaseKeystorePath = System.getenv("IGC_ANDROID_KEYSTORE_PATH")
@@ -32,8 +32,8 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12044
-        versionName = "120.44"
+        versionCode = 12045
+        versionName = "120.45"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
