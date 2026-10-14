@@ -32,11 +32,12 @@ const {chromium}=require("playwright");
    owner:identity.owner,account:identity.account,progress:1,total:1,per_hour:50}:
    {status:"idle",message:"Ready",owner:"",account:"",progress:0,total:0,per_hour:50});return}
   if(req.url==="/api/results"){send(200,{rows:results});return}
-  if(req.url==="/api/following"){send(200,{handle:"fixture.owner",complete:true,usernames:["public.user"]});return}
+  if(req.url==="/api/following"){send(200,{handle:"fixture.owner",complete:false,usernames:[]});return}
   if(req.url==="/api/auto"&&req.method==="POST"){
    const chunks=[];for await(const chunk of req)chunks.push(chunk);
    const body=JSON.parse(Buffer.concat(chunks).toString("utf8"));
-   assert(!("usernames" in body),"No imported Following CSV or manual queue allowed");
+   assert.deepEqual(body.usernames,["public.user"],"Imported Following should be passed without rediscovery");
+   assert.equal(body.discover_following,false,"Following browser discovery must be opt-in");
    assert.equal(body.max_per_window,50);
    assert.equal(body.window_minutes,60);
    assert.equal(body.min_delay_seconds,72);
@@ -60,15 +61,15 @@ const {chromium}=require("playwright");
    {waitUntil:"domcontentloaded",timeout:60000});
   await page.locator("#igcAppShell").waitFor({state:"visible",timeout:15000});
   await page.evaluate(()=>{
-   followingRaw=[]; // No Instagram export provided: browser discovery supplies the handles
+   followingRaw=[{username:"public.user"}]; // Use existing imported Following list.
    showPage("profileStats");
    window.igcCountsRender();
   });
   assert(await page.locator("#igcCountsRobotActions").isVisible(),
    "Pacing, Pause and Resume controls must be visible");
   assert(await page.locator("#igcCountsResume").isVisible());
-  await page.locator("#igcCountsRobotConnect button").click();
-  // Explicit connect starts the robot; no imported Following CSV needed.
+  await page.locator("#igcCountsRobotConnect button").first().click();
+  // Explicit connect starts counts on the existing import; no Following dialog.
 
   const deadline=Date.now()+8000;
   while(queries<1&&Date.now()<deadline)
@@ -97,7 +98,7 @@ const {chromium}=require("playwright");
   assert.equal(localState.records["public.user"].followers,"8765");
   assert(errors.filter(e=>e.includes("igcCounts")).length===0,
    "UI JavaScript exceptions: "+JSON.stringify(errors));
-  console.log("PASS: real file:// Chromium auto-started robot, discovered mock Following with no CSV and stored follower counts.");
+  console.log("PASS: real file:// Chromium sent imported Following to robot without rediscovery and stored follower counts.");
   await context.close();
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(err=>{console.error(err);process.exitCode=1});

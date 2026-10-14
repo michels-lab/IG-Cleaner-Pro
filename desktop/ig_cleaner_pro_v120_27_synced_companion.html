@@ -3792,13 +3792,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div><div class="panel" id="igcProfileCountsPanel">
 <div class="title">◎ Profile Counts — Visible Instagram data</div>
-<p class="note">Connect the Windows robot and sign in using the Chrome window it opens. Review progress and pause/resume whenever needed. Instagram may restrict automated browsing.</p>
+<p class="note">The Windows robot uses your imported Following list; it verifies your Instagram session and reads each profile’s visible counts. It will not reopen your Following list unless you explicitly request a refresh.</p>
 <div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Automatic Instagram profile collection</strong>
-<p id="igcCountsRobotStatus" class="note" aria-live="polite">Once you sign in to Instagram, the robot detects the accounts you follow and their visible profile counts.</p>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
 <div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
 <button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
+<button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
 <a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45" target="_blank" rel="noopener">Get Windows app</a>
 </div>
 <div id="igcCountsRobotMetrics" class="igc-counts-stats" aria-live="polite">
@@ -14059,7 +14060,7 @@ function key(){const p=context();return 'igc_profile_counts_v1__'+encodeURICompo
 function normalize(u){const v=String(u||'').trim().replace(/^@/,'').toLowerCase();return USER.test(v)?v:''}
 function discoveredKey(){return 'igc_profile_discovered_v1__'+encodeURIComponent(context().owner)+'__'+encodeURIComponent(context().account)}
 function discovered(){try{const v=JSON.parse(window.localStorage.getItem(discoveredKey())||'null');return v?.schema==='igc-browser-following-v1'&&Array.isArray(v.usernames)?v.usernames.map(normalize).filter(Boolean):[]}catch{return []}}
-function members(){const seen=new Set(),automatic=discovered(),input=automatic.length?automatic:(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]);return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
+function members(){const seen=new Set(),imported=(typeof followingRaw!=='undefined'&&Array.isArray(followingRaw)?followingRaw.map(r=>r.username):[]),automatic=discovered(),input=imported.length?imported:automatic;return input.map(normalize).filter(u=>{if(!u||seen.has(u))return false;seen.add(u);return true})}
 function storeDiscovered(users,handle,complete){const uniq=[...new Set((users||[]).map(normalize).filter(Boolean))];if(!uniq.length)return;window.localStorage.setItem(discoveredKey(),JSON.stringify({schema:'igc-browser-following-v1',usernames:uniq,handle,complete:!!complete,updatedAt:new Date().toISOString()}))}
 function read(){try{const o=JSON.parse(window.localStorage.getItem(key())||'null');return o?.schema===SCHEMA&&o.records&&typeof o.records==='object'?o.records:{}}catch{return{}}}
 function write(records){window.localStorage.setItem(key(),JSON.stringify({schema:SCHEMA,records,updatedAt:new Date().toISOString()}))}
@@ -14137,7 +14138,7 @@ window.igcCountsRobotPoll=async function(){
   }
   if(state.owner){
    const follows=await bridgeRequest('following');
-   if(follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
+   if(state.queue_source==='instagram'&&follows.handle&&Array.isArray(follows.usernames)&&follows.usernames.length){
     storeDiscovered(follows.usernames,follows.handle,follows.complete);
    }
    const data=await bridgeRequest('results');
@@ -14244,7 +14245,15 @@ window.igcCountsRobotConnect=async function(){
   robotStatus('Open InstaCleanerPro.exe from the Windows ZIP; its local service is built in.',true);
   return;
  }
- await window.igcCountsRobotAuto(true);
+ await window.igcCountsRobotAuto(true,false);
+};
+window.igcCountsRobotDiscover=async function(){
+ if(!robot){
+  robotStatus('Open InstaCleanerPro.exe on Windows.',true);return;
+ }
+ // Optional discovery is an explicit owner request, never a prerequisite
+ // for processing the already imported Following list.
+ await window.igcCountsRobotAuto(true,true);
 };
 window.igcCountsRobotContinue=async function(){
  if(!robot){robotStatus('Open InstaCleanerPro.exe on Windows.',true);return}
@@ -14270,7 +14279,7 @@ window.igcCountsRobotSaveConfig=async function(){
  }catch(e){robotStatus(e.message,true)}
 };
 let igcRobotAutoIdentity='';
-window.igcCountsRobotAuto=async function(force=false){
+window.igcCountsRobotAuto=async function(force=false,discoverFollowing=false){
  if(!robot)return;
  const ctx=context(),id=ctx.owner+'__'+ctx.account;
  if(igcRobotAutoIdentity===id&&!force)return;
@@ -14295,9 +14304,20 @@ window.igcCountsRobotAuto=async function(force=false){
   try{cached_handle=normalize(JSON.parse(window.localStorage.getItem(discoveredKey())||'null')?.handle||'')}catch(e){}
   const expected_handle=normalize(profile?.username||cached_handle||'');
   const pacing=robotConfig();
-  await bridgeRequest('auto',{owner:ctx.owner,account:ctx.account,expected_handle,...pacing});
+  const usernames=discoverFollowing?[]:members();
+  if(!discoverFollowing&&!usernames.length){
+   robotStatus('Import your Following list first, or choose the optional Instagram discovery button.',true);
+   return;
+  }
+  await bridgeRequest('auto',{
+   owner:ctx.owner,account:ctx.account,expected_handle,
+   usernames,discover_following:discoverFollowing,...pacing
+  });
   igcRobotAutoIdentity=id;
-  robotStatus('Opening Instagram; your session and Following will be detected automatically.');
+  robotStatus(discoverFollowing
+   ?'Opening Instagram to refresh Following; your existing records remain saved.'
+   :'Opening Instagram to verify your session and scan '+usernames.length+
+     ' imported profiles without reopening Following.');
  }catch(e){robotStatus('Could not start automatic collection: '+e.message,true)}
 };
 if(robot&&robot.port>0&&robot.port<=65535){

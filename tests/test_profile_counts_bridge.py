@@ -106,13 +106,85 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         # Browser interaction is simulated; user credentials are never supplied.
         self.collector._run=lambda: self.collector._update("complete","Fixture finished",0)
         state=self.request("/api/auto",body={
-            "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram"
+            "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram","discover_following":True
         })
         self.collector.worker.join(2)
         self.assertTrue(state["autonomous"])
         self.assertEqual(state["total"],0)
         self.assertEqual(self.request("/api/following")["usernames"],[])
         self.assertEqual(self.request("/api/status")["status"],"complete")
+
+    def test_imported_11869_profiles_are_valid_and_not_truncated(self):
+        # Real user's Following exceeds the previous 10k queue limit.
+        c = self.collector
+        c._run = lambda: c._update("complete", "Fixture finished", 0)
+        usernames = [f"user{i:05d}" for i in range(11869)]
+        result = self.request("/api/auto", body={
+            "owner": "owner-A", "account": "ig-one",
+            "expected_handle": "realmichelduarte", "usernames": usernames,
+            "discover_following": False,
+        })
+        c.worker.join(timeout=3)
+        self.assertEqual(result["total"], 11869)
+        self.assertEqual(c.usernames, usernames)
+        self.assertFalse(c.discover_following)
+        self.assertEqual(c.queue_source, "imported")
+
+    def test_automatic_discovery_needs_explicit_opt_in(self):
+        with self.assertRaises(HTTPError) as error:
+            self.request("/api/auto",body={
+                "owner":"A","account":"ig-one","expected_handle":"realmichelduarte",
+                "usernames":[], "discover_following":False
+            })
+        self.assertEqual(error.exception.code,400)
+        with self.assertRaises(HTTPError) as error:
+            self.request("/api/auto",body={
+                "owner":"A","account":"ig-one","expected_handle":"realmichelduarte",
+                "usernames":["user.one"], "discover_following":True
+            })
+        self.assertEqual(error.exception.code,400)
+
+    def test_imported_count_collection_never_opens_following(self):
+        import types
+        from unittest.mock import patch
+        class FakePage:
+            def goto(self,*args,**kwargs): pass
+            def is_closed(self): return False
+        class FakeBrowser:
+            pages=[FakePage()]
+            def close(self):pass
+        class FakeSync:
+            def __enter__(self):
+                self.chromium=types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw:FakeBrowser())
+                return self
+            def __exit__(self,*exc):pass
+        fake_module=types.ModuleType("playwright.sync_api")
+        fake_module.sync_playwright=lambda:FakeSync()
+        fake_playwright=types.ModuleType("playwright")
+        fake_playwright.sync_api=fake_module
+        c=self.collector
+        c.owner, c.account = "A", "ig"
+        c.expected_handle="realmichelduarte"
+        c.autonomous=True
+        c.discover_following=False
+        c.queue_source="imported"
+        c.usernames=["friend.one","friend.two"]
+        c.total=2
+        c.max_per_window,c.window_minutes,c.min_delay_seconds=50,60,0
+        with patch.dict(sys.modules,{"playwright":fake_playwright,
+                                      "playwright.sync_api":fake_module}), \
+             patch("profile_counts_bridge.challenge_detected",return_value=False), \
+             patch("profile_counts_bridge.signed_in_handle",return_value="realmichelduarte"), \
+             patch("profile_counts_bridge.read_following_visible",
+                   side_effect=AssertionError("Following should not open for imported data")), \
+             patch("profile_counts_bridge.collect_visible_counts",
+                   return_value=("ok",(130,78,False))):
+            c._run()
+        self.assertEqual(c.snapshot()["status"],"complete")
+        self.assertEqual(c.snapshot()["progress"],2)
+        self.assertEqual(c.snapshot()["queue_source"],"imported")
+        self.assertFalse(c.snapshot()["discovery_complete"])
 
     def test_autonomous_full_pipeline_without_csv_or_manual_resume(self):
         import types
@@ -144,6 +216,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector.account="ig_A"
         self.collector.expected_handle="own.profile"
         self.collector.autonomous=True
+        self.collector.discover_following=True
         self.collector.max_per_window=50
         self.collector.window_minutes=60
         self.collector.min_delay_seconds=0
@@ -188,6 +261,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         c = self.collector
         c.owner, c.account, c.expected_handle = "owner-A", "ig-A", "my.profile"
         c.autonomous = True
+        c.discover_following = True
         c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
         seen = []
         original = c._update
@@ -217,6 +291,60 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(c.snapshot()["status"], "complete")
         self.assertEqual(c.snapshot()["progress"], 1)
 
+
+    def test_missing_following_keeps_chrome_open_and_recovers(self):
+        import types
+        from unittest.mock import patch
+        from profile_counts_instagram import FollowingControlUnavailable
+
+        events = []
+        class FakePage:
+            def goto(self, *args, **kwargs): pass
+            def is_closed(self): return False
+        class FakeBrowser:
+            pages = [FakePage()]
+            def close(self): events.append("close")
+        browser = FakeBrowser()
+        class FakeSync:
+            def __enter__(self):
+                self.chromium = types.SimpleNamespace(
+                    launch_persistent_context=lambda **kw: browser)
+                return self
+            def __exit__(self, *exc): pass
+        fake_sync = types.ModuleType("playwright.sync_api")
+        fake_sync.sync_playwright = lambda: FakeSync()
+        fake_playwright = types.ModuleType("playwright")
+        fake_playwright.sync_api = fake_sync
+
+        c = self.collector
+        c.owner, c.account, c.expected_handle = "owner-A", "ig-A", "realmichelduarte"
+        c.autonomous = True
+        c.discover_following = True
+        c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
+        def discovery(*args, **kwargs):
+            if "waiting" not in events:
+                events.append("waiting")
+                raise FollowingControlUnavailable("Following not found")
+            self.assertNotIn("close", events, "Chrome must stay open during manual recovery")
+            return ["friend.user"], True
+        original_wait = c.stop_signal.wait
+        c.stop_signal.wait = lambda seconds: False
+        try:
+            with patch.dict(sys.modules, {"playwright":fake_playwright,
+                                          "playwright.sync_api":fake_sync}), \
+                 patch("profile_counts_bridge.challenge_detected", return_value=False), \
+                 patch("profile_counts_bridge.signed_in_handle", return_value="realmichelduarte"), \
+                 patch("profile_counts_bridge.read_following_visible", side_effect=discovery), \
+                 patch("profile_counts_bridge.collect_visible_counts",
+                       return_value=("ok",(45,11,False))):
+                c._run()
+        finally:
+            c.stop_signal.wait = original_wait
+        self.assertIn("waiting", events)
+        self.assertEqual(c.snapshot()["status"], "complete")
+        self.assertEqual(c.snapshot()["successful"], 1)
+        self.assertEqual(events[-1], "close")
+
     def test_autonomous_partial_discovery_resumes_same_account_checkpoint(self):
         import types
         from unittest.mock import patch
@@ -243,6 +371,7 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         c = self.collector
         c.owner, c.account, c.expected_handle = "owner_A", "ig_A", "own.profile"
         c.autonomous = True
+        c.discover_following = True
         c.max_per_window, c.window_minutes, c.min_delay_seconds = 50, 60, 0
         write_following_cache(c.followings_path(), "own.profile",
                               ["old.friend", "still.friend"], False)
@@ -278,12 +407,14 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.collector._run=hold
         try:
             response=self.request("/api/auto",body={
-                "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram"
+                "owner":"owner-A","account":"ig-one","expected_handle":"my.instagram",
+                "discover_following":True
             })
             self.assertEqual(response["account"],"ig-one")
             with self.assertRaises(HTTPError) as exc:
                 self.request("/api/auto",body={
-                    "owner":"owner-A","account":"ig-two","expected_handle":"another.instagram"
+                    "owner":"owner-A","account":"ig-two","expected_handle":"another.instagram",
+                    "discover_following":True
                 })
             self.assertEqual(exc.exception.code,400)
             self.assertEqual(self.request("/api/status")["account"],"ig-one")
@@ -295,7 +426,8 @@ class ProfileCountsBridgeTests(unittest.TestCase):
             self.collector.stop_signal.wait(2)
             self.collector._update("paused", "Fixture paused")
         self.collector._run = stop_at_checkpoint
-        self.request("/api/auto", body={"owner":"A","account":"ig-one"})
+        self.request("/api/auto", body={"owner":"A","account":"ig-one",
+                                           "discover_following":True})
         cfg = {"owner":"A","account":"ig-one","max_per_window":200,
                "window_minutes":5,"min_delay_seconds":5,"pause_every":10,
                "pause_minutes":2}

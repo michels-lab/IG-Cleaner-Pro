@@ -18,7 +18,8 @@ import time
 import webbrowser
 
 from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
-                                      write_following_cache, read_following_cache, reconcile_following_discovery)
+                                      write_following_cache, read_following_cache, reconcile_following_discovery,
+                                      verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
@@ -29,7 +30,7 @@ from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    batch_wait, finish_batch_visit)
 
 MAX_REQUEST = 900_000
-MAX_QUEUE = 10_000
+MAX_QUEUE = 50_000
 
 
 class Collector:
@@ -42,7 +43,7 @@ class Collector:
         self.pause_requested = False
         self.worker = None
         self.status = "idle"
-        self.message = "Sin tarea activa"
+        self.message = "No active job"
         self.progress = 0
         self.total = 0
         self.owner = ""
@@ -58,6 +59,8 @@ class Collector:
         self.expected_handle = ""
         self.detected_handle = ""
         self.discovery_complete = False
+        self.discover_following = False
+        self.queue_source = ""
         self.current_profile = ""
 
     def result_path(self):
@@ -74,10 +77,23 @@ class Collector:
         owner = str(request.get("owner") or "").strip()
         account = str(request.get("account") or "").strip()
         if not owner or not account or len(owner)>200 or len(account)>120:
-            raise ValueError("Falta identidad de la cuenta activa de Insta Cleaner.")
+            raise ValueError("Select a valid IG Cleaner login and Instagram workspace.")
         expected = valid_username(request.get("expected_handle") or "")
         if request.get("expected_handle") and not expected:
             raise ValueError("The expected Instagram username is invalid.")
+        # Prefer the owner's already imported Following. Its list is source
+        # data for this read-only counts scan, never proof of current followback.
+        raw_users = request.get("usernames", [])
+        if not isinstance(raw_users, list) or len(raw_users) > MAX_QUEUE:
+            raise ValueError("The imported Following list must have at most 50,000 profiles.")
+        normalized = list(dict.fromkeys(
+            u for value in raw_users if (u := valid_username(value))
+        ))
+        discover = request.get("discover_following") is True
+        if discover and normalized:
+            raise ValueError("Choose imported profiles OR optional Instagram Following discovery.")
+        if not discover and not normalized:
+            raise ValueError("Import a Following list first, or explicitly choose optional discovery.")
         # Pacing is retained internally; novice users do not need to see settings.
         pacing = dict(max_per_window=request.get("max_per_window", DEFAULT_COUNT),
                       window_minutes=request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
@@ -93,21 +109,25 @@ class Collector:
                 return self.snapshot()
             if self.status in ("paused", "pausing") and not request.get("resume_requested"):
                 if owner != self.owner or account != self.account:
-                    raise ValueError("Hay otra cuenta pausada. No se mezclan los profiles.")
+                    raise ValueError("Another account is paused; profiles will not be mixed.")
                 return self.snapshot()
             self.pause_requested = False
             self.owner, self.account = owner, account
             self.expected_handle = expected or ""
             self.autonomous = True
             self.detected_handle = ""
+            self.discover_following = discover
+            self.queue_source = "instagram" if discover else "imported"
             self.discovery_complete = False
-            self.usernames = []
-            self.total = self.progress = 0
+            self.usernames = [] if discover else normalized
+            self.total = len(self.usernames)
+            saved = read_results(self.result_path())
+            self.progress = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
             self.wait_until = 0
             self.current_profile = ""
-            self.message = "Abriendo Instagram para reconocer tu cuenta..."
+            self.message = "Opening Instagram to verify your session..."
             self.status = "starting"
             self.stop_signal.clear()
             self.worker = threading.Thread(target=self._run, daemon=True)
@@ -117,7 +137,7 @@ class Collector:
     def start(self, request: dict, load_only: bool = False):
         usernames = request.get("usernames")
         if not isinstance(usernames, list) or not 1 <= len(usernames) <= MAX_QUEUE:
-            raise ValueError("La lista debe tener entre 1 y 10,000 profiles.")
+            raise ValueError("The queue must contain 1 to 50,000 profiles.")
         normalized, seen = [], set()
         for user in usernames:
             clean = valid_username(user)
@@ -145,6 +165,8 @@ class Collector:
                 raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
             self.autonomous = False
+            self.discover_following = False
+            self.queue_source = "imported"
             self.detected_handle = ""
             self.discovery_complete = False
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
@@ -201,6 +223,7 @@ class Collector:
                     # but never guess an identity from an arbitrary profile URL.
                     login_started = time.monotonic()
                     needs_attention_sent = False
+                    owner_profile_probed = False
                     while not self.stop_signal.is_set():
                         pages = [p for p in browser.pages if not p.is_closed()]
                         if any(challenge_detected(p) for p in pages):
@@ -213,7 +236,21 @@ class Collector:
                         handle = next(iter(identified), None)
                         if handle:
                             break
-                        if time.monotonic() - login_started > 40 and not needs_attention_sent:
+                        elapsed = time.monotonic() - login_started
+                        if (elapsed > 15 and not owner_profile_probed and
+                                self.expected_handle and not self.stop_signal.is_set()):
+                            # A collapsed Instagram Home can omit Profile nav.
+                            # Visit the *selected* own profile once and require
+                            # visible Edit profile evidence; expected alone is
+                            # never treated as proof of the signed-in account.
+                            owner_profile_probed = True
+                            try:
+                                handle = verify_selected_owner_profile(page, self.expected_handle)
+                            except Exception:
+                                handle = None  # transient/auth/navigation failures stay unverified
+                            if handle:
+                                break
+                        if elapsed > 40 and not needs_attention_sent:
                             # Keep Chrome open so the owner can finish logging in or
                             # reload, rather than closing the window mid-auth.
                             self._update("needs_attention",
@@ -221,7 +258,7 @@ class Collector:
                             needs_attention_sent = True
                         self.stop_signal.wait(3)
                     if self.stop_signal.is_set():
-                        self._update("paused", "Detenido antes de iniciar.")
+                        self._update("paused", "Stopped before starting.")
                         return
                     self.detected_handle = handle
                     if self.expected_handle and self.expected_handle != handle:
@@ -230,39 +267,68 @@ class Collector:
                                      ". Insta Cleaner currently selected: @"+self.expected_handle+
                                      " selected. Accounts will not be mixed.")
                         return
-                    cached = read_following_cache(self.followings_path(), handle)
-                    self.usernames = cached
-                    self.total = len(cached)
-                    self._update("discovering", "Leyendo tu lista Following de @"+handle+"...")
-                    def save_batch(users, complete):
-                        retained = reconcile_following_discovery(cached, users, complete)
-                        with self.lock:
-                            self.usernames = retained
-                            self.total = len(retained)
-                            self.discovery_complete = bool(complete)
-                            self.message = ("Following detectados: "+str(len(retained))+
-                                            (" profiles (provisional list)." if not complete else " profiles."))
-                        write_following_cache(self.followings_path(), handle, retained, complete)
-                    users, complete = read_following_visible(
-                        page, handle, on_batch=save_batch, stop_signal=self.stop_signal)
-                    save_batch(users, complete)
-                    # Visit the reconciled queue, not the shortened browser snapshot.
-                    users = list(self.usernames)
-                    if not users:
-                        self._update("needs_attention",
-                                     "Could not read the visible Following list. Check Instagram; no profiles will be invented.")
-                        return
-                    if self.stop_signal.is_set():
-                        self._update("paused", "Search interrupted; partial Following list saved.")
-                        return
-                    self._update("running", "Following list "+("complete" if complete else "partial")+
-                                 "; collecting visible counts...")
+
+                    if not self.discover_following:
+                        if not self.usernames:
+                            self._update("needs_attention", "No imported Following list was provided.")
+                            return
+                        self._update(
+                            "running",
+                            f"Verified @{handle}. Reading counts for {len(self.usernames):,} "
+                            "already imported profiles; Following discovery is not required."
+                        )
+                    else:
+                        cached = read_following_cache(self.followings_path(), handle)
+                        self.usernames = cached
+                        self.total = len(cached)
+                        self._update("discovering", "Reading the Following list of @"+handle+"...")
+                        def save_batch(users, complete):
+                            retained = reconcile_following_discovery(cached, users, complete)
+                            with self.lock:
+                                self.usernames = retained
+                                self.total = len(retained)
+                                self.discovery_complete = bool(complete)
+                                self.message = ("Following profiles found: "+str(len(retained))+
+                                                (" profiles (provisional list)." if not complete else " profiles."))
+                            write_following_cache(self.followings_path(), handle, retained, complete)
+                        # A recognized owner does not guarantee Instagram exposes
+                        # a /following/ anchor. Keep Chrome open and allow the owner
+                        # to open Following manually; retry without erasing caches.
+                        while not self.stop_signal.is_set():
+                            try:
+                                users, complete = read_following_visible(
+                                    page, handle, on_batch=save_batch,
+                                    stop_signal=self.stop_signal)
+                                break
+                            except FollowingControlUnavailable as exc:
+                                self._update(
+                                    "needs_attention",
+                                    str(exc) + " Open Following on your own profile "
+                                    "in the Instagram Chrome window. Detection will retry "
+                                    "automatically; your saved counts are preserved."
+                                )
+                                self.stop_signal.wait(4)
+                        if self.stop_signal.is_set():
+                            self._update("paused", "Collection paused; saved results were preserved.")
+                            return
+                        save_batch(users, complete)
+                        # Visit the reconciled queue, not the shortened browser snapshot.
+                        users = list(self.usernames)
+                        if not users:
+                            self._update("needs_attention",
+                                         "Could not read the visible Following list. Check Instagram; no profiles will be invented.")
+                            return
+                        if self.stop_signal.is_set():
+                            self._update("paused", "Search interrupted; partial Following list saved.")
+                            return
+                        self._update("running", "Following list "+("complete" if complete else "partial")+
+                                     "; collecting visible counts...")
                 else:
                     self._update("login", "Sign in to Instagram and select I have signed in.")
                     while not self.stop_signal.is_set() and not self.login_ready.wait(0.25):
                         pass
                     if self.stop_signal.is_set():
-                        self._update("paused", "Detenido antes de iniciar.")
+                        self._update("paused", "Stopped before starting.")
                         return
 
                 saved = read_results(self.result_path())
@@ -271,10 +337,10 @@ class Collector:
                 rests_file = batch_path(self.result_path())
                 rests = load_batch_state(rests_file)
                 remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
-                self._update("running", "Consultando perfiles visibles...")
+                self._update("running", "Checking visible Instagram profiles...")
                 for index, username in enumerate(remaining, 1):
                     if self.stop_signal.is_set():
-                        self._update("paused", "Pausado; los resultados quedan guardados.")
+                        self._update("paused", "Paused; saved results were preserved.")
                         return
                     while True:
                         waiting = max(
@@ -289,7 +355,7 @@ class Collector:
                             self.message = (f"Pausa programada: {int(waiting + 0.999)} s antes de "
                                             f"@{username}.")
                         if self.stop_signal.wait(waiting):
-                            self._update("paused", "Pausado; los resultados quedan guardados.")
+                            self._update("paused", "Paused; saved results were preserved.")
                             return
                     with self.lock:
                         self.wait_until = 0
@@ -322,7 +388,11 @@ class Collector:
                     self._update("paused", "Paused; progress was saved.")
                     return
                 unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
-                self._update("complete" if not unresolved and (not self.autonomous or self.discovery_complete) else "partial",
+                self._update("complete" if not unresolved and
+                             (self.queue_source == "imported" or not self.autonomous or self.discovery_complete)
+                             else "partial",
+                             "Imported profile counts processed. The import is a snapshot, not proof of live followback."
+                             if self.queue_source == "imported" else
                              "Data collected. "+("Following complete." if self.discovery_complete else
                              "The Following list may be incomplete and requires browser review."))
         except Exception as exc:
@@ -360,13 +430,15 @@ class Collector:
         with self.lock:
             owner, account = str(request.get("owner") or ""), str(request.get("account") or "")
             if not owner or not account or owner != self.owner or account != self.account:
-                raise ValueError("Selecciona el mismo usuario y perfil de Instagram antes de reanudar.")
+                raise ValueError("Select the same app login and Instagram account before resuming.")
             if self.worker and self.worker.is_alive():
                 raise ValueError("The robot is still pausing. Finish the current visit before resuming.")
             if self.status not in ("paused", "partial", "error"):
                 raise ValueError("There is no paused collection to resume.")
             request = dict(request)
             request["expected_handle"] = self.expected_handle
+            request["discover_following"] = self.discover_following
+            request["usernames"] = [] if self.discover_following else list(self.usernames)
             request["resume_requested"] = True
         return self.auto_start(request)
 
@@ -380,10 +452,10 @@ class Collector:
             request.get("pause_every", 0), request.get("pause_minutes", 0))
         with self.lock:
             if not owner or owner != self.owner or account != self.account:
-                raise ValueError("Los tiempos pertenecen a otro usuario o Instagram.")
+                raise ValueError("Pacing settings belong to a different login or Instagram account.")
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
-            self.message = "Tiempos guardados; se aplican desde la siguiente visita."
+            self.message = "Pacing saved; settings apply from the next profile."
             return self.snapshot()
 
     def snapshot(self):
@@ -417,6 +489,7 @@ class Collector:
                 "autonomous": self.autonomous,
                 "detected_handle": self.detected_handle,
                 "discovery_complete": self.discovery_complete,
+                "queue_source": self.queue_source,
                 "discovered": len(self.usernames),
             }
 

@@ -79,6 +79,61 @@ def visible_link_descriptors(page):
         }))""")
 
 
+def own_profile_from_switcher_rows(rows):
+    """A visible compact Switch-account row is positive owner identity evidence.
+
+    Use only ordinary profile links in the SAME small row as the Switch
+    control, not unrelated suggested accounts or usernames in feed posts.
+    Conflicting rows/links fail closed.
+    """
+    identities = set()
+    for row in rows:
+        handles = {u for href in row.get("hrefs", [])
+                   if (u := user_from_href(href))}
+        if not handles:
+            continue
+        if len(handles) != 1:
+            return None
+        identities.update(handles)
+    return next(iter(identities)) if len(identities) == 1 else None
+
+
+def visible_switcher_account_rows(page):
+    """Read compact visible own-account / Switch rows on Instagram Home.
+
+    The desktop Home recommendations rail shows the signed-in user adjacent
+    to a Switch control even when Instagram hides/restructures Profile nav.
+    Never infer identity from 'Suggested for you' links alone.
+    """
+    return page.evaluate("""() => {
+      const visible = (node) => {
+        const r = node.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.bottom > 0 &&
+          r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+      };
+      const switchLabel = /^(?:switch|cambiar|cambiar cuenta|changer|wechseln)$/i;
+      const rows = [], keys = new Set();
+      for (const el of document.querySelectorAll('button,[role="button"],a,span,div')) {
+        if (el.childElementCount > 3) continue;
+        const label = (el.getAttribute('aria-label') || el.textContent || '').trim();
+        if (label.length > 30 || !switchLabel.test(label) || !visible(el) ||
+            el.closest('[role="dialog"]')) continue;
+        let parent = el.parentElement;
+        for (let depth=0; parent && depth<7; depth++, parent=parent.parentElement) {
+          const r=parent.getBoundingClientRect();
+          if (r.width > 760 || r.height > 200) break;
+          const hrefs=[...parent.querySelectorAll('a[href]')]
+            .filter(visible).map(a => a.getAttribute('href') || '');
+          if (!hrefs.length) continue;
+          const key=hrefs.join('|');
+          if (!keys.has(key)) { rows.push({hrefs}); keys.add(key); }
+          break;
+        }
+      }
+      return rows;
+    }""")
+
+
 def signed_in_handle(page):
     """Return exactly one visibly proven logged-in identity, or None.
 
@@ -86,24 +141,60 @@ def signed_in_handle(page):
     own profile with an Edit profile button AND matching header username is
     alternate positive evidence, never an arbitrary URL or a Follow button.
     """
-    if page.locator('input[name="password"]').count():
+    passwords = page.locator('input[name="password"]')
+    if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
         return None
     via_nav = own_profile_from_anchors(visible_link_descriptors(page))
-    from_own_page = None
+    via_switcher = own_profile_from_switcher_rows(visible_switcher_account_rows(page))
+    from_own_page = own_profile_edit_identity(page)
+    identities = {h.casefold() for h in (via_nav, via_switcher, from_own_page) if h}
+    if len(identities) != 1:
+        return None  # never guess if trusted identity signals disagree or vanish
+    return next(iter(identities))
+
+
+def own_profile_edit_identity(page):
+    """A named own-profile header AND Edit profile control prove ownership.
+
+    A URL or username heading on someone else's public profile never suffices.
+    """
     candidate = user_from_href(getattr(page, "url", ""))
-    if candidate:
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
-            controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
-            names = header.locator("h1,h2").all_inner_texts()
-            if sum(c.count() for c in controls) == 1 and any(
-                str(n).strip().lstrip("@").casefold() == candidate for n in names
-            ):
-                from_own_page = candidate
-    if via_nav and from_own_page and via_nav != from_own_page:
-        return None  # two conflicting visible identities; never guess
-    return via_nav or from_own_page
+    if not candidate:
+        return None
+    header = page.locator("header").first
+    if not header.count() or not header.is_visible():
+        return None
+    edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
+    controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
+    names = header.locator("h1,h2,[role=heading]").all_inner_texts()
+    if sum(c.count() for c in controls) == 1 and any(
+        str(n).strip().lstrip("@").casefold() == candidate for n in names
+    ):
+        return candidate
+    return None
+
+
+def verify_selected_owner_profile(page, expected_handle):
+    """One read-only direct profile visit if Home has no verified identity.
+
+    The selected @handle is a destination, NEVER ownership proof. A matching
+    header and visible Edit profile control are required. No API/clicks.
+    """
+    expected = valid_username(expected_handle)
+    if not expected or challenge_detected(page):
+        return None
+    passwords = page.locator('input[name="password"]')
+    if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
+        return None
+    page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=20000)
+    page.wait_for_timeout(900)
+    passwords = page.locator('input[name="password"]')
+    if challenge_detected(page) or any(
+        passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))
+    ):
+        return None
+    proven = own_profile_edit_identity(page)
+    return expected if proven and proven.casefold() == expected.casefold() else None
 
 
 def challenge_detected(page):
@@ -177,6 +268,71 @@ def reconcile_following_discovery(cached, observed, complete):
     ))
 
 
+
+class FollowingControlUnavailable(RuntimeError):
+    """Visible owner Following control is missing/ambiguous; wait for human help."""
+
+
+FOLLOWING_WORD = re.compile(r"\b(?:following|seguidos|seguidas|suivis|abonnements)\b", re.I)
+
+
+def _visible_following_dialog(page):
+    """Only accept an actual visible Following dialog; not unrelated popups."""
+    dialogs = page.locator('[role="dialog"]')
+    for i in range(min(dialogs.count(), 6)):
+        dialog = dialogs.nth(i)
+        if not dialog.is_visible():
+            continue
+        label = " ".join(filter(None, (
+            dialog.get_attribute("aria-label") or "",
+            dialog.get_attribute("title") or "",
+            dialog.inner_text(timeout=2000)[:180],
+        )))
+        if FOLLOWING_WORD.search(label):
+            return dialog
+    return None
+
+
+def _owner_following_control(page, own):
+    """Find the owner's Following control within the profile header only.
+
+    Instagram renders it as an anchor, button or nonsemantic clickable text
+    depending on screen and language. Never click a feed/suggested profile.
+    """
+    header = page.locator("header").first
+    if not header.count() or not header.is_visible():
+        return None
+    selectors = ('a[href*="/following"]', "a", "button", '[role="button"]')
+    for selector in selectors:
+        controls = header.locator(selector)
+        for i in range(min(controls.count(), 24)):
+            el = controls.nth(i)
+            if not el.is_visible():
+                continue
+            href = el.get_attribute("href") or ""
+            label = " ".join(filter(None, (
+                el.get_attribute("aria-label") or "",
+                el.get_attribute("title") or "",
+                el.inner_text(timeout=2000)[:100],
+            )))
+            if href and re.search(r"/following/?(?:\?|$)", href, re.I):
+                if not re.search(r"^/(?:"+re.escape(own)+r")/following/?", href, re.I):
+                    continue
+                return el
+            if FOLLOWING_WORD.search(label) and len(label) <= 130:
+                return el
+    # Some Instagram versions attach their click handler to a generic parent,
+    # and only a small 'following' text label is exposed inside the header.
+    labels = header.get_by_text(FOLLOWING_WORD)
+    for i in range(min(labels.count(), 18)):
+        el = labels.nth(i)
+        if el.is_visible():
+            label = el.inner_text(timeout=2000).strip()
+            if len(label) <= 60 and FOLLOWING_WORD.search(label):
+                return el
+    return None
+
+
 def read_following_visible(page, username, on_batch=None, stop_signal=None,
                            max_scrolls=2500):
     """Read visible profile anchors in the Following dialog as it scrolls.
@@ -186,29 +342,46 @@ def read_following_visible(page, username, on_batch=None, stop_signal=None,
     """
     own = valid_username(username)
     if not own:
-        raise ValueError("Cuenta activa de Instagram inválida.")
-    page.goto(following_page_url(own), wait_until="domcontentloaded", timeout=45000)
-    page.wait_for_timeout(900)
+        raise ValueError("Invalid selected Instagram account.")
+    # When a user has manually opened Following to help the robot, do not
+    # navigate away and destroy the open dialog on the next check.
+    on_own_profile = user_from_href(page.url) == own
+    if not on_own_profile:
+        page.goto(following_page_url(own), wait_until="domcontentloaded", timeout=45000)
+        page.wait_for_timeout(900)
     if challenge_detected(page):
-        raise RuntimeError("Instagram solicita verificación o limita el acceso.")
-    links = page.locator('a[href*="/following/"]')
-    candidate = None
-    for i in range(min(links.count(), 12)):
-        link = links.nth(i)
-        href = link.get_attribute("href") or ""
-        if re.search(r"/" + re.escape(own) + r"/following/?(?:\?|$)", href, re.I):
-            candidate = link
-            break
-    if candidate is None:
-        raise RuntimeError("No está visible el enlace Following de la cuenta iniciada.")
-    expected = expected_following_count(
-        candidate.get_attribute("title"),
-        candidate.get_attribute("aria-label"),
-        candidate.inner_text(timeout=3000),
-    )
-    candidate.click(timeout=12000)
-    dialog = page.locator('[role="dialog"]').last
-    dialog.wait_for(state="visible", timeout=12000)
+        raise RuntimeError("Instagram requested verification or restricted access.")
+    if user_from_href(page.url) != own:
+        raise FollowingControlUnavailable("Instagram did not display the selected owner's profile.")
+    # URL alone is never owner/session proof, including for manual dialog use.
+    if signed_in_handle(page) != own and own_profile_edit_identity(page) != own:
+        raise FollowingControlUnavailable("The signed-in Instagram owner could not be verified on the profile page.")
+    dialog = _visible_following_dialog(page)
+    control = _owner_following_control(page, own)
+    expected = None
+    if control is not None:
+        expected = expected_following_count(
+            control.get_attribute("title"),
+            control.get_attribute("aria-label"),
+            control.inner_text(timeout=3000),
+        )
+    if dialog is None:
+        if control is None:
+            raise FollowingControlUnavailable(
+                "The Following control is not visible in the owner's profile header."
+            )
+        control.click(timeout=12000)
+        try:
+            page.locator('[role="dialog"]').last.wait_for(state="visible", timeout=7000)
+        except Exception as exc:
+            raise FollowingControlUnavailable(
+                "The Following list did not open. Open it manually in Chrome."
+            ) from exc
+        dialog = _visible_following_dialog(page)
+        if dialog is None:
+            raise FollowingControlUnavailable(
+                "The visible popup was not the owner's Following list."
+            )
 
     seen = set()
     collected = []
