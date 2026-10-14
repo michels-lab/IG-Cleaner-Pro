@@ -90,6 +90,13 @@ class HomeIdentityChromiumTests(unittest.TestCase):
                 self.home(**options)
                 self.assertIsNone(signed_in_handle(self.page))
 
+    def test_hidden_password_field_does_not_hide_signed_in_owner(self):
+        self.home()
+        self.page.locator("body").evaluate("""body => body.insertAdjacentHTML(
+          'beforeend', '<form style="display:none"><input name="password" type="password"></form>'
+        )""")
+        self.assertEqual(signed_in_handle(self.page), "realmichelduarte")
+
     def test_multiple_switcher_owners_or_nav_conflict_fail_closed(self):
         self.home(multiple=True)
         self.assertIsNone(signed_in_handle(self.page))
