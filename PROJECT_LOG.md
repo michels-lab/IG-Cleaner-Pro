@@ -1,3 +1,11 @@
+## 2026-10-14 — v120.46 unified Automations implementation merged into main
+
+- **MERGED:** PR #97 (superseding PR #95), squash merge `16c78ba84e6d110c7ef7ba8d6b2498f9078d0286`; changes are now in `main` only, **not yet published as a release**.
+- The **exact PR head** `c0c33d9efeb1bd90c836783af8b928bfa6bf5320` passed all five gates: Profile Counts tests (38655858892), Desktop rendered UI (38655858890), integrated Windows EXE (38655858854), Android About emulator UI (38655858876) and IG Cleaner CI (38655858859).
+- **Owner requirements implemented:** every robot now starts under Automations → Automation Center; Insights retains analytical results and pagination without reducing counted profiles. Chunked owner-scoped imported lists remove the former 50,000-person queue ceiling. Shared browser-admission locking prevents simultaneous Chrome actions/collection.
+- **Still open:** browser localStorage quota can restrict very large historical data retention despite arbitrary list caps being removed. Issue #96 tracks an IndexedDB migration with high-volume synthetic tests and safe legacy history migration. End-to-end real Instagram session acceptance remains pending.
+- Published stable release is **v120.45**; next development v120.46 has **no release authorization**.
+
 ## 2026-10-14 — v120.46 development: unify Automations, remove relationship dataset ceilings
 
 - Owner reaffirmed two non-negotiable requirements: the number of people following or followed **must not impose an arbitrary dataset-count cap on analyses**; and **all Instagram robots must be accessible in the Automations area**, not split between Insights and Automations.
