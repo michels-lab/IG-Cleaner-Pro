@@ -102,6 +102,79 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(len(rows),1)
         self.assertEqual(rows[0]["followers"],"333")
 
+    def test_chunked_import_has_no_total_profile_ceiling(self):
+        # A dataset beyond 50,000 is accepted using bounded, ordered chunks.
+        c = self.collector
+        c._run = lambda: c._update("complete", "Offline fixture finished", 0)
+        total = 50003
+        owner, account = "owner-A", "ig-one"
+        stage = c.begin_import({"owner": owner, "account": account, "total": total})
+        self.assertEqual(stage["received"], 0)
+        usernames = [f"p{i:06d}" for i in range(total)]
+        for offset in range(0, total, 2000):
+            chunk = usernames[offset:offset+2000]
+            state = c.append_import({"owner": owner, "account": account,
+                                     "transfer": stage["transfer"], "offset": offset,
+                                     "usernames": chunk})
+            self.assertEqual(state["received"], offset+len(chunk))
+        result = c.auto_start({"owner": owner, "account": account,
+                               "expected_handle": "realmichelduarte",
+                               "use_staged_import": True, "transfer": stage["transfer"]})
+        c.worker.join(timeout=3)
+        self.assertEqual(result["total"], total)
+        self.assertEqual(c.usernames[0], "p000000")
+        self.assertEqual(c.usernames[-1], "p050002")
+        self.assertIsNone(c.import_stage)
+        self.assertEqual(c.following()["usernames"], [])
+        self.assertEqual(result["queue_transport"], "chunked")
+
+    def test_chunk_api_is_account_scoped_and_atomic(self):
+        b = {"owner": "A", "account": "ig_one", "total": 3}
+        stage = self.request("/api/queue/init", body=b)
+        with self.assertRaises(HTTPError) as mismatch:
+            self.request("/api/queue/append", body={
+                **b, "account": "ig_two", "transfer": stage["transfer"],
+                "offset": 0, "usernames": ["first.user"]})
+        self.assertEqual(mismatch.exception.code, 400)
+        one = self.request("/api/queue/append", body={
+            **b, "transfer": stage["transfer"], "offset": 0,
+            "usernames": ["first.user"]})
+        self.assertEqual(one["received"], 1)
+        with self.assertRaises(HTTPError) as duplicate:
+            self.request("/api/queue/append", body={
+                **b, "transfer": stage["transfer"], "offset": 1,
+                "usernames": ["second.user", "first.user"]})
+        self.assertEqual(duplicate.exception.code, 400)
+        # Failed chunks never partially append.
+        self.assertEqual(len(self.collector.import_stage["usernames"]), 1)
+        with self.assertRaises(HTTPError) as incomplete:
+            self.request("/api/auto", body={
+                **b, "use_staged_import": True, "transfer": stage["transfer"]})
+        self.assertEqual(incomplete.exception.code, 400)
+        completed = self.request("/api/queue/append", body={
+            **b, "transfer": stage["transfer"], "offset": 1,
+            "usernames": ["second.user", "third.user"]})
+        self.assertEqual(completed["received"], 3)
+        self.collector._run = lambda: self.collector._update("complete", "fixture", 0)
+        launched = self.request("/api/auto", body={
+            **b, "expected_handle": "own.profile", "use_staged_import": True,
+            "transfer": stage["transfer"]})
+        self.collector.worker.join(timeout=3)
+        self.assertEqual(launched["total"], 3)
+        self.assertEqual(self.collector.usernames, ["first.user", "second.user", "third.user"])
+
+    def test_action_robot_prevents_parallel_counts_browser(self):
+        # Both robots use the same persistent Chrome profile. Never race.
+        c = self.collector
+        class FakeWorker:
+            def is_alive(self): return True
+        c.actions.worker = FakeWorker()
+        with self.assertRaises(ValueError):
+            c.begin_import({"owner":"A","account":"ig","total":10})
+        with self.assertRaises(ValueError):
+            c.auto_start({"owner":"A","account":"ig","usernames":["friend.user"]})
+        self.assertEqual(c.status, "idle")
+
     def test_autonomous_start_needs_no_csv_or_click(self):
         # Browser interaction is simulated; user credentials are never supplied.
         self.collector._run=lambda: self.collector._update("complete","Fixture finished",0)
