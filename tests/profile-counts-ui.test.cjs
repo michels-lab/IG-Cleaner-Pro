@@ -97,11 +97,11 @@ assert(insightsStart<countsStart && source.indexOf('id="igcCountsRobotBridge"',i
   assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijklmnop');
   const action=url.split('/').pop();
   let value={};
-  if(action==='queue/init'){
+  if(action==='init' && url.endsWith('/queue/init')){
    const b=JSON.parse(options.body);
    staged={owner:b.owner,account:b.account,total:b.total,transfer:'fixture-token',usernames:[]};
    value={transfer:staged.transfer,total:staged.total,received:0};
-  } else if(action==='queue/append'){
+  } else if(action==='append' && url.endsWith('/queue/append')){
    const b=JSON.parse(options.body);
    assert.equal(b.owner,staged.owner);
    assert.equal(b.account,staged.account);
