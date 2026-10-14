@@ -14063,14 +14063,14 @@ setTimeout(install,0);
 <!-- v120.27: Supabase-backed Desktop ↔ Android sync center; existing relationship parsers unchanged. -->
 
 <style id="igc-profile-counts-style">
-#igcProfileCountsPanel .note{line-height:1.6;max-width:100%}
-#igcProfileCountsPanel .igc-counts-stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-#igcProfileCountsPanel .igc-counts-stats span{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;border-radius:10px}
-#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
-#igcProfileCountsPanel .igc-counts-table a{color:var(--accent)}
-#igcProfileCountsPanel .igc-counts-table th{position:sticky;top:0;background:var(--surface)}
-#igcProfileCountsPanel .igc-counts-table td:nth-child(2),#igcProfileCountsPanel .igc-counts-table td:nth-child(3){text-align:right}
-@media(max-width:620px){#igcProfileCountsPanel .igc-counts-table th,#igcProfileCountsPanel .igc-counts-table td{padding:8px 5px;font-size:11px}}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .note{line-height:1.6;max-width:100%}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-stats span{background:var(--surface2);border:1px solid var(--border);padding:8px 12px;border-radius:10px}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table th,:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table a{color:var(--accent)}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table th{position:sticky;top:0;background:var(--surface)}
+:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table td:nth-child(2),:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table td:nth-child(3){text-align:right}
+@media(max-width:620px){:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table th,:is(#igcProfileCountsPanel,#igcAutomationsProfileCountsPanel) .igc-counts-table td{padding:8px 5px;font-size:11px}}
 </style>
 <script id="igc-profile-counts-ui">
 (function(){
