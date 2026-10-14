@@ -3021,7 +3021,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="session-card"><b>0</b><span>seleccionados pendientes</span></div>
 <div class="session-card"><b>0</b><span>verificados que no me siguen</span></div>
 <div class="session-card"><b>0</b><span>verificados que sí me siguen</span></div>
-<div class="session-card"><b>0</b><span>abiertos sesión</span></div>
+<div class="session-card"><b>0</b><span>opened this session</span></div>
 </div>
 <div class="session-insight" id="sessionInsight">
       Selecciona cuentas para ver el desglose en vivo.
@@ -3708,7 +3708,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <button class="btn primary" onclick="processFiles()">⚡ Procesar y comparar</button>
 <button class="btn" onclick="showPage('diag')">🔬 View diagnostics</button>
-<button class="btn purple" onclick="startGuidedSession100()">🎯 Sesión guiada 100</button>
+<button class="btn purple" onclick="startGuidedSession100()">🎯 Guided 100-profile session</button>
 <button class="btn red" onclick="clearLoadedData()">🗑 Limpiar archivos cargados</button>
 </div>
 </div>
@@ -4491,16 +4491,16 @@ function diagnoseState(){
   const pendingAll=pendingRows();
   const mutualAll=followersMutualRows();
   const activeCount=activeFocusBatch?.rows?.length||0;
-  if(activeCount)add('medium','Unconfirmed active batch',`${activeCount} perfiles siguen como abierto sin confirmar desde ${formatMaybeDate(activeFocusBatch.openedAt)}. Si ya confirmaste, usa Borrar tanda atorada o deja que v71 lo limpie automáticamente.`,activeCount);
+  if(activeCount)add('medium','Unconfirmed active batch',`${activeCount} profiles remain opened but unconfirmed since ${formatMaybeDate(activeFocusBatch.openedAt)}. If you already reviewed them, use Clear stuck batch or allow v71 lo limpie automáticamente.`,activeCount);
 
   const staleActive=activeFocusBatch?.openedAt && Date.now()-activeFocusBatch.openedAt>3*3600000;
-  if(staleActive)add('high','Stale active batch',`La tanda activa lleva más de 3 horas abierta. Recupera el popup o restaúrala.`,activeCount);
+  if(staleActive)add('high','Stale active batch',`The active batch has been open for more than three hours. Recover its dialog or restore it.`,activeCount);
 
   const pendingMissingDate=Object.entries(pendingReviewedMeta||{}).filter(([u,m])=>m&&!m.reviewedAt).length;
-  if(pendingMissingDate)add('high','Pending requests reviewed without a date',`${pendingMissingDate} pending tienen decisión pero no fecha de revisión.`,pendingMissingDate);
+  if(pendingMissingDate)add('high','Pending requests reviewed without a date',`${pendingMissingDate} pending requests have a decision but no review date.`,pendingMissingDate);
 
   const pendingLegacy=pendingAll.filter(r=>r.opened&&!r.reviewed&&!isInActiveFocus(r,'pending')).length;
-  if(pendingLegacy)add('medium','Legacy opened/unreviewed pending requests',`${pendingLegacy} pending quedaron como abiertos sin revisión en el sistema viejo. Puedes restaurarlos.`,pendingLegacy);
+  if(pendingLegacy)add('medium','Legacy opened/unreviewed pending requests',`${pendingLegacy} requests were left opened but unreviewed in the legacy workflow. You can restore them.`,pendingLegacy);
 
   const pendingStillListed=pendingAll.filter(r=>r.reviewed&&!pendingCrossStatus(r).inFollowing).length;
   if(pendingStillListed)add('low','Reviewed requests still appear as pending',`${pendingStillListed} pending revisados siguen sin aparecer como aceptados en el export actual. Puede ser normal si siguen pendientes.`,pendingStillListed);
@@ -4509,16 +4509,16 @@ function diagnoseState(){
   if(pendingExpired)add('medium','Pausas vencidas en Pending',`${pendingExpired} pausas de pending ya vencieron.`,pendingExpired);
 
   const mutualProtectedNotReviewed=mutualAll.filter(r=>r.protected&&!r.done).length;
-  if(mutualProtectedNotReviewed)add('medium','Protected mutuals without reviews',`${mutualProtectedNotReviewed} seguidores que sigo están protegidos pero no aparecen como revisados.`,mutualProtectedNotReviewed);
+  if(mutualProtectedNotReviewed)add('medium','Protected mutuals without reviews',`${mutualProtectedNotReviewed} mutual followers are protected but not marked reviewed.`,mutualProtectedNotReviewed);
 
   const mutualDoneNoDate=mutualAll.filter(r=>r.done&&!reviewedAtTsForMode(r,'followers')).length;
-  if(mutualDoneNoDate)add('high','Reviewed mutuals without a date',`${mutualDoneNoDate} seguidores que sigo están revisados pero no tienen fecha válida.`,mutualDoneNoDate);
+  if(mutualDoneNoDate)add('high','Reviewed mutuals without a date',`${mutualDoneNoDate} mutual followers are marked reviewed without a valid review date.`,mutualDoneNoDate);
 
   const mutualExpired=Object.keys(snoozeMap||{}).filter(u=>snoozeMap[u]&&snoozeMap[u]<=Date.now()).length;
   if(mutualExpired)add('medium','Pausas vencidas generales',`${mutualExpired} pausas generales ya vencieron.`,mutualExpired);
 
   const doneNoMeta=[...doneSet].filter(u=>!reviewedMeta[u]).length;
-  if(doneNoMeta)add('medium','Reviewed profiles missing metadata',`${doneNoMeta} usuarios están en revisados pero no tienen metadata inteligente.`,doneNoMeta);
+  if(doneNoMeta)add('medium','Reviewed profiles missing metadata',`${doneNoMeta} profiles are marked reviewed but have no review metadata.`,doneNoMeta);
 
   const repeatedUnconfirmed=Object.values(profileHistory||{}).filter(h=>(h.unconfirmed||0)>=2&&!h.reviewed).length;
   const temporarilyAvoided=Object.values(profileHistory||{}).filter(h=>(h.unconfirmed||0)>0 && h.lastOpened && hoursSince(h.lastOpened)<3).length;
@@ -4526,7 +4526,7 @@ function diagnoseState(){
   if(temporarilyAvoided)add('low','Perfiles evitados temporalmente por historial',`${temporarilyAvoided} perfiles no se priorizan porque quedaron sin confirmar recientemente.`,temporarilyAvoided);
 
   const problems=problemPendingCount()+problemMutualCount()+problemMainCount();
-  if(problems)add('low','Review queue needs attention',`${problems} perfiles caen en reglas de atención: riesgo, pausas vencidas, aceptados detectados o limbo.`,problems);
+  if(problems)add('low','Review queue needs attention',`${problems} profiles need attention due to risk, expired pauses, detected accepted requests or ambiguous status.`,problems);
 
   return {
     issues,
@@ -4552,28 +4552,28 @@ function runStateDiagnosis(showMessage=true){
     <div class="diag-dashboard">
       <div class="diag-card"><b>${issues.length}</b><span>issues detectados</span></div>
       <div class="diag-card"><b>${c.active}</b><span>abiertos sin confirmar</span></div>
-      <div class="diag-card"><b>${c.pendingProblems}</b><span>pending atención</span></div>
-      <div class="diag-card"><b>${c.mutualProblems}</b><span>mutuos atención</span></div>
-      <div class="diag-card"><b>${c.mainProblems}</b><span>seguidos atención</span></div>
-      <div class="diag-card"><b>${c.history}</b><span>historial automático</span></div>
+      <div class="diag-card"><b>${c.pendingProblems}</b><span>pending needs attention</span></div>
+      <div class="diag-card"><b>${c.mutualProblems}</b><span>mutuals needing attention</span></div>
+      <div class="diag-card"><b>${c.mainProblems}</b><span>following needs attention</span></div>
+      <div class="diag-card"><b>${c.history}</b><span>automatic history</span></div>
       <div class="diag-card"><b>${c.pendingLeft}</b><span>pending vivos</span></div>
       <div class="diag-card"><b>${c.mutualLeft}</b><span>mutuos vivos</span></div>
     </div>
     <div class="guided-session-box">
-      <b>🎯 Sesión guiada 100</b>
+      <b>🎯 Guided 100-profile session</b>
       <p class="muted">Arma una sesión balanceada: Pending antiguos/relevantes, Seguidores que sigo y Seguidos que no me siguen. Abre un bloque a la vez con confirmación segura. En v70 el orden usa historial automático para no repetir rápido perfiles que ya quedaron sin confirmar.</p>
-      <button class="btn purple" onclick="startGuidedSession100()">Iniciar / recalcular sesión 100</button>
-      <button class="btn" onclick="continueGuidedSession100()">Continuar sesión pendiente</button>
-      <button class="btn red" onclick="cancelGuidedSession100()">Cancelar sesión guiada</button>
+      <button class="btn purple" onclick="startGuidedSession100()">Start / recalculate 100-profile session</button>
+      <button class="btn" onclick="continueGuidedSession100()">Continue pending session</button>
+      <button class="btn red" onclick="cancelGuidedSession100()">Cancel guided session</button>
       ${renderGuidedSessionMini()}
     </div>
     <div class="diag-list">
       ${issues.length?issues.map(i=>`<div class="diag-issue ${i.level}"><h4>${esc(i.title)} <span class="badge ${i.level==='high'?'bred':i.level==='medium'?'borange':'bblue'}">${i.count}</span></h4><p>${esc(i.detail)}</p></div>`).join(''):'<div class="diag-issue low"><h4>Todo limpio</h4><p>No encontré inconsistencias importantes con el estado actual.</p></div>'}
     </div>`;
-  if(showMessage)msg(`Diagnóstico listo: ${issues.length} issues.`,issues.length?'w':'s');
+  if(showMessage)msg(`Diagnostics ready: ${issues.length} issues.`,issues.length?'w':'s');
 }
 function renderGuidedSessionMini(){
-  if(!guidedSession100)return '<p class="muted">No hay sesión guiada activa.</p>';
+  if(!guidedSession100)return '<p class="muted">No active guided session.</p>';
   const steps=guidedSession100.steps||[];
   return `<div class="guided-session-steps">${steps.map((s,i)=>`<div class="guided-step"><b>${s.rows?.length||0}</b><span>${i+1}. ${esc(s.title||s.kind)} · ${esc(s.status==='pendiente'?'Pending':s.status==='vacío'?'Empty':s.status||'Pending')}</span></div>`).join('')}</div>`;
 }
@@ -4887,7 +4887,7 @@ function showPostProcessNavPopup(){
   try{pendingCount=Array.isArray(pendingRequestsRaw) ? pendingRequestsRaw.length : 0;}catch{}
 
   if(sub){
-    sub.innerHTML=`Ya terminé de procesar tus archivos. Elige a qué pestaña quieres ir ahora.`;
+    sub.innerHTML=`Your files are processed. Choose which tab to open next.`;
   }
   if(kpis){
     kpis.innerHTML=`
@@ -4896,7 +4896,7 @@ function showPostProcessNavPopup(){
       <div class="post-process-kpi"><b>${rowsCount}</b><span>filas lista</span></div>
       <div class="post-process-kpi"><b>${mutualCount}</b><span>seguidores que sigo</span></div>
       <div class="post-process-kpi"><b>${pendingCount}</b><span>pending cargados</span></div>
-      <div class="post-process-kpi"><b>${diagData.length}</b><span>archivos leídos</span></div>
+      <div class="post-process-kpi"><b>${diagData.length}</b><span>files read</span></div>
     `;
   }
 
@@ -5786,7 +5786,7 @@ function renderStats(){
     <div class="stat"><b>${done}</b><span>revisados vigentes</span></div>
     <div class="stat"><b style="color:var(--orange)">${recheck}</b><span>revisables de nuevo</span></div>
     <div class="stat"><b style="color:var(--purple)">${prot}</b><span>protegidos</span></div>
-    <div class="stat"><b style="color:var(--red)">${critical}</b><span>prioridad crítica</span></div>
+    <div class="stat"><b style="color:var(--red)">${critical}</b><span>critical priority</span></div>
   `;
 }
 
@@ -5857,7 +5857,7 @@ function renderTable(){
   const pages=pageSize==='all'?1:Math.max(1,Math.ceil(filteredRows.length/size));
   const hiddenLatestInfo=(document.getElementById('hideLatestDay')?.checked && getMinMaxDates().max)?` · fecha reciente/hoy oculta`:``;
   const hiddenDoneInfo=document.getElementById('hideDone')?.checked?` · verificados ocultos`:``;
-  const reviewRangeInfo=(document.getElementById('reviewedFrom')?.value||document.getElementById('reviewedTo')?.value)?` · filtro revisión activo`:``;
+  const reviewRangeInfo=(document.getElementById('reviewedFrom')?.value||document.getElementById('reviewedTo')?.value)?` · review filter active`:``;
   document.getElementById('tableInfo').textContent=`${filteredRows.length} visibles de ${allRows.length} · ${visibleSelectedRows().length} seleccionados visibles · ${hiddenSelectedCount()} fuera de vista${hiddenDoneInfo}${hiddenLatestInfo}${reviewRangeInfo}`;
   document.getElementById('pageInfo').textContent=`Page ${currentPage}/${pages}`;
   updateSessionPanel();
@@ -5964,7 +5964,7 @@ function isPossibleRefollow(row){
 }
 function possibleRefollowReason(row){
   if(!isPossibleRefollow(row))return '';
-  return `posible re-follow accidental: fecha actual (${formatDateFromTs(row.dateMain)}) posterior a revisión`;
+  return `possible accidental re-follow: current follow date (${formatDateFromTs(row.dateMain)}) is later than review date`;
 }
 function showProbablyClosed(){
   const hd=document.getElementById('hideDone'); if(hd)hd.checked=false;
@@ -6044,7 +6044,7 @@ function renderAlwaysAccountSummary(){
     </div>
 
     <div class="always-section">
-      <div class="always-section-title">Cómo cambian al revisar</div>
+      <div class="always-section-title">How counts change after reviewing</div>
       <div class="always-grid">
         <div class="always-kpi warn"><b>${s.unresolvedBad}</b><span>no me siguen pendientes</span></div>
         <div class="always-kpi ok"><b>${s.resolvedBad}</b><span>no me siguen ya resueltos</span></div>
@@ -6168,7 +6168,7 @@ function updateSessionPanel(){
     <div class="session-card"><b style="color:var(--orange)">${p.selectedPending}</b><span>visibles pendientes</span></div>
     <div class="session-card"><b style="color:var(--red)">${p.selectedReviewedBad}</b><span>${labels.verifiedBad}</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.selectedReviewedGood}</b><span>${labels.verifiedGood}</span></div>
-    <div class="session-card"><b style="color:var(--blue)">${sessionStats.opened}</b><span>abiertos sesión</span></div>
+    <div class="session-card"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
     <div class="session-card"><b style="color:var(--red)">${p.selectedPendingBad}</b><span>${labels.pendingBad}</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.selectedPendingGood}</b><span>${labels.pendingGood}</span></div>
     <div class="session-card"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>verificados sesión</span></div>
@@ -6210,7 +6210,7 @@ function updateSessionPanel(){
   const floatInsight=document.getElementById('floatingSessionInsight');
   if(floatStats){
     floatStats.innerHTML=`
-      <div class="live-mini"><b style="color:var(--blue)">${sessionStats.opened}</b><span>abiertos sesión</span></div>
+      <div class="live-mini"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
       <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>verificados sesión</span></div>
       <div class="live-mini"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>malos pendientes</span></div>
       <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resueltos sesión</span></div>
