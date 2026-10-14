@@ -3058,7 +3058,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <option value="reviewed_bad_not_closed">Reviewed non-followbacks · active</option>
 <option value="pending">Pending</option>
 <option value="changed_reviewed">Reviewed but relationship changed</option>
-<option value="probably_closed">Probablemente cerrada</option>
+<option value="probably_closed">Likely inactive</option>
 <option value="possible_refollow">Posible re-follow accidental</option>
 <option value="snoozed">Pausadas temporalmente</option>
 <option value="priority_critical">Critical priority</option>
@@ -3079,7 +3079,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <option value="long_username">Username largo</option>
 <option value="missing_date">No date</option>
 <option value="no_followback">Doesn't follow back</option>
-<option value="probably_closed">Probablemente cerrada</option>
+<option value="probably_closed">Likely inactive</option>
 <option value="possible_refollow">Posible re-follow</option>
 </select>
 </div>
@@ -3324,7 +3324,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <th class="col-protected filter-mini"><select onchange="document.getElementById('excelProtected').value=this.value;applyFilters()"><option value="all">All</option><option value="protected">Protected</option><option value="unprotected">Unprotected</option></select></th>
 <th class="col-done filter-mini"><select onchange="document.getElementById('excelReviewed').value=this.value;applyFilters()"><option value="all">All</option><option value="reviewed">Verified</option><option value="pending">Pending</option><option value="changed">Changed</option></select></th>
 <th class="col-reviewedAt filter-mini"><select onchange="setReviewedQuickFilter(this.value);this.value='all'"><option value="all">Filter</option><option value="today">Today</option><option value="last24">24 h</option><option value="clear">Clear</option></select></th>
-<th class="col-reviewReason filter-mini"><select onchange="document.getElementById('reviewReasonFilter').value=this.value;applyFilters()"><option value="all">All</option><option value="">No reason</option><option value="cerrada">Cerrada</option><option value="fake">Fake</option><option value="no_interesa">Not interested</option><option value="conservar">Conservar</option><option value="duda">Duda</option></select></th>
+<th class="col-reviewReason filter-mini"><select onchange="document.getElementById('reviewReasonFilter').value=this.value;applyFilters()"><option value="all">All</option><option value="">No reason</option><option value="cerrada">Inactive</option><option value="fake">Fake</option><option value="no_interesa">Not interested</option><option value="conservar">Conservar</option><option value="duda">Duda</option></select></th>
 <th class="col-snooze filter-mini"><select onchange="setSnoozeQuickFilter(this.value);this.value='all'"><option value="all">Filter</option><option value="snoozed">Pausadas</option><option value="clear_expired">Clear expired</option></select></th>
 <th class="col-user filter-mini"><input oninput="document.getElementById('searchInput').value=this.value;applyFilters()" placeholder="Filter username" type="text"/></th>
 <th class="col-profile"></th>
@@ -3522,7 +3522,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 </div>
 <div class="focus-filterbar">
-<div><label>Filter</label><select id="mutualInternalFilter" onchange="renderFollowersMutualTab()"><option value="active">Active unreviewed</option><option value="available_focus">Eligible for Focus</option><option value="blocked_focus">Blocked from Focus</option><option value="all">All</option><option value="unreviewed">Unreviewed</option><option value="reviewed">Reviewed</option><option value="protected">Protected</option><option value="snoozed">Pausados</option><option value="risk">Medium/high risk</option><option value="risk_high">High risk</option><option value="closed">Prob. cerrados</option><option value="expired_snooze">Pausas vencidas</option><option value="needs_attention">Needs attention</option></select></div>
+<div><label>Filter</label><select id="mutualInternalFilter" onchange="renderFollowersMutualTab()"><option value="active">Active unreviewed</option><option value="available_focus">Eligible for Focus</option><option value="blocked_focus">Blocked from Focus</option><option value="all">All</option><option value="unreviewed">Unreviewed</option><option value="reviewed">Reviewed</option><option value="protected">Protected</option><option value="snoozed">Pausados</option><option value="risk">Medium/high risk</option><option value="risk_high">High risk</option><option value="closed">Likely inactive</option><option value="expired_snooze">Pausas vencidas</option><option value="needs_attention">Needs attention</option></select></div>
 <div><label>Minimal risk</label><select id="mutualRiskFilter" onchange="renderFollowersMutualTab()"><option value="all">All</option><option value="medio">Medio/alto</option><option value="alto">Alto</option></select></div>
 <div><label>Antigüedad</label><select id="mutualAgeFilter" onchange="renderFollowersMutualTab()"><option value="0">Cualquier fecha</option><option value="30">+30 days</option><option value="90">+90 days</option><option value="180">+180 days</option><option value="365">+1 year</option></select></div>
 <div><label>Search username</label><input id="mutualSearchBox" oninput="renderFollowersMutualTab()" placeholder="@username"/></div>
