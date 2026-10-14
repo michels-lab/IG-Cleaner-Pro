@@ -1,3 +1,12 @@
+## v120.46 development merged — 2026-10-14 (NOT PUBLISHED)
+
+- PR #97 merged into main, squash commit `16c78ba84e6d110c7ef7ba8d6b2498f9078d0286`. Owner demanded all robots in **Automations**, Profile Counts analysis and results under **Insights**, and no dataset-size cap based on Following/Followers totals.
+- Implemented Automation Center links to Profile Counts, Cancel Pending Requests, Unfollow and optional Followback Audit. Profile Counts control panel and Chrome robot moved from Insights to Automations; Insights now contains only results, aggregates, paginated 250-row presentation, charts and CSV exports.
+- Large imported lists are transmitted in staged, account-scoped, atomic requests (1,000 per browser request / 2,000 server maximum). No global 50,000-profile imported queue cap; full imported list contributes to analytics. Action batch/rate limits remain independent of dataset cardinality. A shared Chrome admission lock prevents concurrent robots on the same session.
+- Exact-head gates: Profile Counts #38655858892 PASS, Desktop #38655858890 PASS, Windows #38655858854 PASS, Android About #38655858876 PASS, CI #38655858859 PASS.
+- Large historical Profile Counts persistence still uses localStorage; do not assert infinite storage. IndexedDB migration tracked in #96. Live account acceptance and physical device checks remain open.
+- Official stable **v120.45** remains published; **v120.46 not authorized** for release. Publish only on a separate explicit owner instruction through the exact-commit gated pipeline.
+
 ## v120.45 stable published — October 14, 2026
 
 - Official normal release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45 ; exact release source `5c58aa5e836da014a86e1bdecad9a30e97013d8f`; successful governed publication https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38648558721 .
