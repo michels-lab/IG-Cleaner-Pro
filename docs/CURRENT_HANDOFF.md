@@ -1,3 +1,15 @@
+## 2026-10-15 — Interactive Windows Setup contract evidence
+
+- Added exact-candidate interactive UIAutomation script and captured PNG proving EULA acceptance/decline is enforced, rather than only static licence-source assertions. Runs before the silent install/upgrade/runtime/uninstall test in Windows preview and governed release CI.
+- Evidence must be checked against the latest PR head before calling wizard validation complete. No official release, Authenticode signature or automatic updater authorization.
+
+## 2026-10-15 — Native Windows Setup integration (v120.47 development)
+
+- User requested a proper installer instead of having to extract and run `InstaCleanerPro.exe`. New `packaging/windows-installer/InstaCleanerPro.iss` follows the Michel's Lab master Windows installer experience standard: branded native wizard, real proprietary license, optional shortcuts, start menu, taskbar guide and uninstaller.
+- Builds still bundle the same integrated PyInstaller application + Chrome Companion, but the versioned **Setup.exe** is now the primary Windows artifact. Prior ZIP is optional secondary compatibility only. App/robot data outside the installation directory persists across manual upgrades and uninstalls. No automatic background updater, Authenticode signature or real Chrome-session acceptance is claimed.
+- Source of truth: `release/distribution-manifest.json`; CI uses `tools/build_windows_installer.ps1`, `tools/test_windows_installer.ps1` and `tests/windows-installer-contract.py`; published v120.46 remains unchanged and v120.47 has no release authorization.
+- Require exact PR SHA BUILD/INSTALL/installed LAUNCH and real interactive wizard evidence, then governed stable publication only on explicit owner request.
+
 ## 2026-10-15 — Persist longitudinal Profile Counts history inside Insta Cleaner (development v120.47)
 
 - After PR #104 introduced the Chrome Companion's first-pass unmeasured priority, explicit oldest-first second audit, and append-only local Chrome history, an integration gap remained: Insta Cleaner Desktop imported only the **single newest** row per username, silently discarding older dated snapshots from the Chrome Companion's full-history CSV. The user needs repeated audits and reliable comparisons over time.

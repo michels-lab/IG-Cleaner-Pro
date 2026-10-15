@@ -1,0 +1,20 @@
+Insta Cleaner Pro — Pin to the Windows taskbar / Anclar a la barra de tareas
+Michel's Lab · TOOLS WITH IDENTITY.
+
+ENGLISH
+1. Finish installation, then launch Insta Cleaner Pro from the Start menu.
+2. Right-click the app's icon on the Windows taskbar.
+3. Choose "Pin to taskbar". On some Windows builds, find the app in Start,
+   right-click it and choose "More" → "Pin to taskbar".
+4. To remove it later, right-click the taskbar icon and choose "Unpin from taskbar".
+
+ESPAÑOL
+1. Termina la instalación y abre Insta Cleaner Pro desde el menú Inicio.
+2. Haz clic derecho sobre el icono de la aplicación en la barra de tareas.
+3. Selecciona "Anclar a la barra de tareas". En algunas versiones de Windows,
+   búscala en Inicio, haz clic derecho y selecciona "Más" → "Anclar a la barra de tareas".
+4. Para quitarla después, haz clic derecho sobre su icono y elige
+   "Desanclar de la barra de tareas".
+
+This guide is optional. The installer never pins taskbar icons automatically.
+Esta guía es opcional. El instalador nunca ancla iconos de forma automática.

@@ -11,6 +11,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 | Desktop (Windows/macOS/Linux browser) | `IG-Cleaner-Pro-Desktop-v120.46.html` | Open locally in a modern browser; single self-contained offline HTML includes official branding. |
 | Android | `IG-Cleaner-Pro-Android-v120.46.apk` | Signed release APK; Android package `com.michelslab.igcleaner`. |
 | Windows automatic Instagram collector | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.46.zip` | Extract the ZIP and launch the integrated `InstaCleanerPro.exe`; no CMD launcher. User-signed-in Chrome is used only for explicitly requested robot jobs, and real Instagram owner-session acceptance remains pending. |
+| Windows integrated app + robots | `IG-Cleaner-Pro-Windows-Setup-v120.47.exe` (next candidate, not yet published) | Michel's Lab installer with real EULA, Start menu, optional desktop shortcut and data-safe uninstall. The official v120.46 remains a portable ZIP until release is separately authorized. |
 | Desktop optional full bundle | `IG-Cleaner-Pro-Desktop-v120.46.zip` | Includes separate assets; direct HTML is the preferred simple download. |
 
 Desktop and Android belong to the same product and preserve historical review and Focus workflows. Release CI verified Desktop Chromium Home/About rendering, Android-emulator Home/About and Focus data tests, 99 Supabase isolation/roundtrip assertions, artifact integrity and Android signing. **Physical Samsung installation, real Instagram ZIP import, Focus batches and cloud round-trip remain unverified on the user's device**; see [device acceptance #24](https://github.com/michels-lab/IG-Cleaner-Pro/issues/24).
@@ -34,7 +35,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Published v120.46 is official; v120.47 remains development-only until the owner explicitly authorizes a new release.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Published v120.46 is official; v120.47 adds an unreleased native Windows Setup candidate and remains development-only until the owner explicitly authorizes a new release.**
 
 ## Identity and licensing
 

@@ -1,4 +1,14 @@
-# Insta Cleaner Pro — Integrated Windows application
+# Insta Cleaner Pro — Installed Windows application
+
+**Recommended Windows delivery (next authorized stable release only):** run `IG-Cleaner-Pro-Windows-Setup-v<version>.exe`. The Michel's Lab installer provides a welcome screen, complete product license with required acceptance, optional desktop shortcut, Start menu entry, optional taskbar pinning instructions, and Windows uninstall. Chrome remains required.
+
+The application launches as **Insta Cleaner Pro** from Start. It includes the integrated UI and robot controller; no additional Python/Playwright install or CMD launcher is required. `chrome-extension` is installed in the application directory; activating it in your ordinary Chrome remains manual. The installer does **not** automatically sign in to Instagram, switch accounts, install browser extensions or take relationship-changing actions.
+
+**Preserving your existing work:** updates reuse a stable per-user install path and preserve app data under `%LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\` and legacy robot records/sessions under `%USERPROFILE%\.ig-cleaner-pro\`. The uninstaller removes installed program files and shortcuts, **not** these user data directories. Export your app backup before a major update or if you change browser/profile. No automatic self-updater exists yet; later Setup versions can be installed over the existing copy.
+
+**Published version distinction:** v120.46 is still the official portable ZIP, not an installer. This Setup workflow is a v120.47 development candidate and requires separate owner release authorization and exact-build QA before publication.
+
+## Optional previous portable form
 
 This package contains the Windows application `InstaCleanerPro.exe`, including the Desktop workspace and local Chrome robot controller. Check `BUILD-INFO.txt` for the exact source commit. GitHub Releases is the installation channel; this README alone is not evidence that a candidate has been published.
 

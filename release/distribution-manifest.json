@@ -36,11 +36,11 @@
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     },
     "windowsRobot": {
-      "artifact": "IG-Cleaner-Pro-Automatic-Robot-Windows-v120.47.zip",
-      "artifactTemplate": "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip",
+      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.47.exe",
+      "artifactTemplate": "IG-Cleaner-Pro-Windows-Setup-v{version}.exe",
       "transport": "github-release",
       "runtime": "local-windows-chrome",
-      "execution": "double-click InstaCleanerPro.exe (bundled UI + local robot)",
+      "execution": "install Setup.exe, then launch Insta Cleaner Pro from Start (integrated UI + robots)",
       "liveInstagramOwnerAcceptance": "not-yet-validated",
       "chromeCompanion": {
         "directory": "chrome-extension",
@@ -51,7 +51,19 @@
         "privateApi": false,
         "autoFollowOrUnfollow": false,
         "physicalInstagramAcceptance": "not-yet-validated"
-      }
+      },
+      "installation": "inno-setup-per-user",
+      "appId": "{E4D8F690-4D44-4C9E-8E6B-BCDD2879F08C}",
+      "installerSource": "packaging/windows-installer/InstaCleanerPro.iss",
+      "license": "LICENSE.txt",
+      "preservesExistingData": [
+        "%LOCALAPPDATA%\\Michels Lab\\Insta Cleaner Pro\\",
+        "%USERPROFILE%\\.ig-cleaner-pro\\"
+      ],
+      "portableLegacyZipTemplate": "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip",
+      "installTests": "build, silent install, installed healthcheck/startup, data-safe uninstall",
+      "authenticode": "not-configured; do not claim signed",
+      "autoUpdater": "not-implemented; new Setup versions provide manual in-place upgrades"
     }
   },
   "browserState": {

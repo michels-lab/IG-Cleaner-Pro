@@ -1,3 +1,10 @@
+## 2026-10-15 — Windows robot distribution: installable Setup candidate
+
+- Declared per-user Inno Setup as the primary Windows robot distribution (existing Chrome/Playwright integrated EXE remains private installer payload, portable ZIP optional); no MS Store packaging, new external service, provider permissions or new signing secrets.
+- Installer uses official product icon, complete `LICENSE.txt` (acceptance gate), user-controlled desktop shortcut, final taskbar pin guidance, Start menu/uninstaller. Persistent user workspaces under `%LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\` and original `%USERPROFILE%\.ig-cleaner-pro\` remain untouched on uninstall/upgrade.
+- CI candidates perform static contract and actual signed-in-free silent installation, launch installed binary via `--healthcheck` and `--smoke-startup`, then uninstall and confirm persistent sentinel; separate rendered wizard testing, Authenticode, auto-updater and live Instagram remain **pending**. No release authorized.
+- Future official Windows asset name `IG-Cleaner-Pro-Windows-Setup-v{version}.exe` must exist on same unified product release as Desktop HTML and Android APK; legacy ZIP is secondary. Update Michel's Lab master installer/distribution registries.
+
 ## 2026-10-11 — Auth email template/SMTP configuration gap (production blocker)
 
 - Owner-reported Gmail **Confirm your email address** with link instead of expected OTP: redirect `localhost:3000` refused and `otp_expired`; Brevo fallback sender `realmichelduarte@12366255.brevosend.com` landed in Spam. Repo native/Desktop code calls `/auth/v1/otp` and expects six-digit `/verify` token, so hosted email templates must switch `{{ .ConfirmationURL }}` to `{{ .Token }}` for BOTH signup and magic-link flows.

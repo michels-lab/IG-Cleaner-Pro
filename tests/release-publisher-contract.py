@@ -59,7 +59,13 @@ for token in (
     assert token in workflow, f"Integrated Windows release contract missing: {token}"
 assert 'Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd' not in workflow
 assert 'pyinstaller --clean --noconfirm --onefile --collect-all playwright --name IGCleanerProfileCounts' not in workflow
-assert manifest["channels"]["windowsRobot"]["execution"] == "double-click InstaCleanerPro.exe (bundled UI + local robot)"
+assert manifest["channels"]["windowsRobot"]["installation"] == "inno-setup-per-user"
+assert manifest["channels"]["windowsRobot"]["execution"].startswith("install Setup.exe")
+assert manifest["channels"]["windowsRobot"]["artifactTemplate"] == "IG-Cleaner-Pro-Windows-Setup-v{version}.exe"
+assert "tools/build_windows_installer.ps1" in workflow
+assert "tools/test_windows_installer.ps1" in workflow
+assert 'gh release view "$TAG" --json assets' in workflow
+assert "IG-Cleaner-Pro-Windows-Setup-v" in workflow
 
 desktop=manifest["channels"]["desktop"]
 android=manifest["channels"]["android"]
