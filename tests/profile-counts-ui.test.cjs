@@ -24,6 +24,8 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
   igcCountsRows:{innerHTML:''},
   igcCountsSummary:{replaceChildren(){summary.length=0},appendChild(e){summary.push(e.textContent)}},
   igcCountsFootnote:{textContent:'',style:{}},
+  igcCountsHistoryUser:{value:'public.user'},
+  igcCountsHistoryView:{textContent:'',style:{}},
   igcCountsQuery:{value:''},
   igcCountsFilter:{value:'all'}
  };
@@ -70,11 +72,30 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(input.value,'');
  assert.match(elements.igcCountsRows.innerHTML,/1,234/, 'Import must render counts: '+elements.igcCountsFootnote.textContent+' keys='+JSON.stringify(Array.from(store.keys())));
  assert(summary.some(s=>s.includes('1 with data')));
- const onlyKey=Array.from(store.keys())[0];
+ const onlyKey=Array.from(store.keys()).find(k=>k.startsWith('igc_profile_counts_v1__'));
  assert(onlyKey.includes('owner_A')&&onlyKey.includes('ig_A'));
  const saved=JSON.parse(store.get(onlyKey));
  assert.equal(saved.records['public.user'].followers,'1234');
  assert.equal(saved.records['unrelated'],undefined,'Do not import profiles outside active Following');
+ const initialHistoryKey=Array.from(store.keys()).find(k=>k.startsWith('igc_profile_counts_history_fallback_v1__'));
+ assert(initialHistoryKey,'Imported measurements need an independent historical archive');
+ assert.equal(JSON.parse(store.get(initialHistoryKey)).length,1);
+ // A second audit CSV can contain older and newer rows. All persist.
+ const timelineCsv='username,followers,following,checked_at,source,status,approximate\n'+
+  'public.user,900,123,2026-01-01T09:00:00Z,chrome-extension,ok,false\n'+
+  'public.user,1400,250,2026-10-14T09:00:00Z,chrome-extension,ok,false\n'+
+  'unrelated,900,900,2026-10-15T09:00:00Z,chrome-extension,ok,false\n';
+ await ctx.window.igcCountsImportFile({files:[{text:async()=>timelineCsv}],value:'history'});
+ const afterHistory=JSON.parse(store.get(onlyKey));
+ assert.equal(afterHistory.records['public.user'].followers,'1400','Newest count must win');
+ const archived=JSON.parse(store.get(initialHistoryKey));
+ assert.equal(archived.filter(row=>row.username==='public.user').length,3,
+  'First and two re-audit measurements must all survive');
+ await ctx.window.igcCountsViewHistory();
+ assert.match(elements.igcCountsHistoryView.textContent,/3 saved measurements/);
+ assert.match(elements.igcCountsHistoryView.textContent,/Δ followers 166/);
+ await ctx.window.igcCountsExportHistory();
+ assert.equal(clicked,2,'Full dated history must be exportable in Automations');
  identity.active='ig_B';
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('0 with data')),'Sibling Instagram must not inherit counts');
@@ -231,6 +252,9 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert(dataKey,'Profile counts must be saved independent of pacing preferences');
  const bridgeSaved=JSON.parse(bridgeStore.get(dataKey));
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
+ const robotHistoryKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_counts_history_fallback_v1__'));
+ assert(robotHistoryKey,'Automated counts must be saved to history before latest update');
+ assert.equal(JSON.parse(bridgeStore.get(robotHistoryKey))[0].followers,'3456');
  const followingKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_discovered_v1__'));
  assert.equal(followingKey,undefined,'Imported snapshots must not be mislabeled as a fresh browser discovery');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
