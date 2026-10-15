@@ -47,6 +47,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
+      - name: Reject Instagram reCAPTCHA login loops without navigation or bypass
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_profile_counts_recaptcha.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Instagram CAPTCHA safety regression failed." }
       - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |

@@ -16,6 +16,7 @@ on:
       - 'tests/automations-execution.test.cjs'
       - 'tests/automations-issues.test.cjs'
       - 'tests/test_profile_counts_actions.py'
+      - 'tests/test_profile_counts_recaptcha.py'
       - 'tests/mutual-focus-ratio.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
   push:

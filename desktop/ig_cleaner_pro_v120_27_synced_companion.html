@@ -14333,9 +14333,16 @@ window.igcCountsRobotPoll=async function(){
   if(resume)resume.disabled=state.running||!['paused','partial','error'].includes(state.status);
   const pacing=' · '+state.max_per_window+' profiles / '+state.window_minutes+' min · '+state.min_delay_seconds+' s between profiles'+(state.pause_every?' · rest '+state.pause_minutes+' min every '+state.pause_every:'');
   const stalled=state.status==='needs_attention';
-  robotStatus((stalled
-    ? 'Instagram login could not be verified yet. Sign in or reload Instagram in the Chrome opened by Insta Cleaner. Detection continues automatically; you can Pause at any time.'
-    : (state.message||state.status))+' · '+good+'/'+total+' with counts ('+percentage+'% analyzed)'+pacing,stalled);
+  const verificationWaiting=state.status==='needs_verification';
+  const verificationBlocked=state.status==='blocked'&&/recaptcha|security verification/i.test(state.message||'');
+  robotStatus((verificationWaiting
+    ? (state.message||'Complete Instagram security verification manually in the visible Chrome window. The robot will not navigate during the check.')
+    : verificationBlocked
+      ? 'Instagram requires manual security verification. The robot stopped without changing your account. First confirm you can sign in at instagram.com in regular Chrome; do not repeatedly restart the robot. Your saved results remain intact.'
+      : stalled
+        ? 'Instagram login could not be verified yet. Sign in using the Chrome opened by Insta Cleaner; detection will not navigate away from login. You can Pause at any time.'
+        : (state.message||state.status))+' · '+good+'/'+total+' with counts ('+percentage+'% analyzed)'+pacing,
+    stalled||verificationBlocked||verificationWaiting);
  }catch(e){countsStorageError(e)}
  finally{robotBusy=false}
 };
