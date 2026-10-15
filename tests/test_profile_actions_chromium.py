@@ -302,7 +302,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
             visits.append(uri)
             html = owner if uri.rstrip("/").endswith("/my.profile") else target
             request.fulfill(status=200, content_type="text/html", body=html)
-        self.page.route("https://www.instagram.com/**", route)
+        self.context.route("https://www.instagram.com/**", route)
         status, message = perform_visible_action(self.page, "target.user", task,
                                                   "my.profile", lambda _: True)
         return status, message, self.page.evaluate("window.__steps"), visits
@@ -341,7 +341,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
         ).replace('>Following</button>', '>Requested</button>')
         owner = ('<html><body><header><h2>my.profile</h2>'
                  '<button>Edit profile</button></header></body></html>')
-        self.page.route("https://www.instagram.com/**",
+        self.context.route("https://www.instagram.com/**",
             lambda route: route.fulfill(
                 status=200, content_type="text/html",
                 body=owner if route.request.url.rstrip("/").endswith("/my.profile")
@@ -358,7 +358,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
         ).replace('>Following</button>', '>Requested</button>')
         impostor = ('<html><body><header><h2>impostor.account</h2>'
                     '<button>Edit profile</button></header></body></html>')
-        self.page.route("https://www.instagram.com/**",
+        self.context.route("https://www.instagram.com/**",
             lambda route: route.fulfill(
                 status=200, content_type="text/html",
                 body=impostor if route.request.url.rstrip("/").endswith("/my.profile")
