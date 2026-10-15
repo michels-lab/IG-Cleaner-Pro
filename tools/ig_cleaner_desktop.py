@@ -130,9 +130,34 @@ def stop_safely(server) -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Insta Cleaner Pro Windows con robot integrado")
     parser.add_argument("--healthcheck", action="store_true")
+    parser.add_argument("--smoke-startup", action="store_true",
+                        help="Initialize the installed UI and local controller without Instagram.")
     args = parser.parse_args(argv)
     try:
         source = bundled_html()
+        if args.smoke_startup:
+            # Test the REAL installed executable's file:// and local backend
+            # startup path. No sign-in, network calls, browser automation, or
+            # destructive workspace resets. Used by silent Setup acceptance.
+            home = app_home()
+            page = prepare_html(source, home / BUNDLED_HTML)
+            if page.stat().st_size < 100_000:
+                raise RuntimeError("The installed interface is incomplete.")
+            browser = chrome_path()
+            if not browser.is_file():
+                raise FileNotFoundError("Chrome is required for the Windows app.")
+            chrome_workspace = home / "workspace-browser"
+            chrome_workspace.mkdir(parents=True, exist_ok=True)
+            legacy = Path.home() / ".ig-cleaner-pro"
+            server = build_server(Collector(legacy / "profile-counts",
+                                            legacy / "instagram-browser"),
+                                  "installer-smoke-session-token", 0)
+            try:
+                assert server.server_address[0] == "127.0.0.1"
+            finally:
+                server.server_close()
+            print("PASS: installed UI origin, Chrome, workspace and loopback server.")
+            return 0
         if args.healthcheck:
             if not source.is_file() or source.stat().st_size < 100_000:
                 raise RuntimeError("Falta la interfaz Desktop dentro del ejecutable.")
