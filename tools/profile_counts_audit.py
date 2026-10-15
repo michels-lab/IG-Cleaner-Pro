@@ -107,6 +107,42 @@ def append_dated_reading(path: Path, row: dict) -> None:
         os.fsync(file.fileno())
 
 
+def seed_latest_readings(path: Path, saved: dict) -> int:
+    """Migrate old one-reading-per-profile Windows results without losing dates.
+
+    Safe to repeat after interruptions: append only missing dated successes.
+    The old latest-results CSV stays unmodified.
+    """
+    seen = set()
+    if path.is_file():
+        with path.open("r", encoding="utf-8-sig", newline="") as source:
+            for row in csv.DictReader(source):
+                seen.add(tuple(str(row.get(k, "")) for k in
+                               ("username", "checked_at", "followers", "following")))
+    additions = []
+    for row in saved.values():
+        if row.get("status") != "ok" or any(not str(row.get(k, "")) for k in
+                                               ("username", "checked_at", "followers", "following")):
+            continue
+        identity = tuple(str(row.get(k, "")) for k in
+                         ("username", "checked_at", "followers", "following"))
+        if identity not in seen:
+            additions.append(row)
+            seen.add(identity)
+    if not additions:
+        return 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    is_new = not path.exists() or path.stat().st_size == 0
+    with path.open("a", encoding="utf-8", newline="") as target:
+        writer = csv.DictWriter(target, fieldnames=COLUMNS, extrasaction="ignore")
+        if is_new:
+            writer.writeheader()
+        writer.writerows(additions)
+        target.flush()
+        os.fsync(target.fileno())
+    return len(additions)
+
+
 def read_dated_page(path: Path, offset: int, size: int) -> dict:
     if not isinstance(offset, int) or not isinstance(size, int) or offset < 0 or not 1 <= size <= 2000:
         raise ValueError("History pagination must use a nonnegative offset and size 1–2,000.")
