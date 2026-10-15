@@ -146,7 +146,61 @@
       status: "ok", approximate: String(data.followers.approximate || data.following.approximate)
     };
   }
-  const api = { username, profileFromUrl, parseCount, csvRows, importQueue, exportCsv, extractVisibleProfile };
+  // Keep a complete dated local measurement history. A new pass never deletes
+  // the preceding count; imported older single-record stores migrate lazily.
+  function validMeasurement(record) {
+    return !!record && record.status === "ok" &&
+      /^\d+$/.test(String(record.followers || "")) &&
+      /^\d+$/.test(String(record.following || "")) &&
+      Number.isFinite(Date.parse(record.checked_at || ""));
+  }
+  function firstPassQueue(queue, records) {
+    // Never-measured first, incomplete/unavailable second. Already measured last.
+    const names = [...new Set(queue || [])];
+    const data = records || {};
+    const never = names.filter(u => !data[u]);
+    const incomplete = names.filter(u => data[u] && !validMeasurement(data[u]));
+    return [...never, ...incomplete];
+  }
+  function oldestFirst(queue, records) {
+    const data = records || {};
+    return [...new Set(queue || [])].filter(u => validMeasurement(data[u]))
+      .sort((a,b) => Date.parse(data[a].checked_at) - Date.parse(data[b].checked_at)
+        || a.localeCompare(b));
+  }
+  function appendMeasurement(records, history, record) {
+    const user = username(record?.username);
+    if (!user || !validMeasurement(record)) throw Error("Only complete dated measurements may be saved.");
+    const previous = records[user];
+    const timeline = Array.isArray(history[user]) ? history[user] : [];
+    // Preserve historical measurements, including rows from releases predating history.
+    if (validMeasurement(previous) && !timeline.some(row =>
+        row.checked_at === previous.checked_at && row.followers === previous.followers &&
+        row.following === previous.following)) timeline.push({...previous});
+    if (!timeline.some(row => row.checked_at === record.checked_at &&
+        row.followers === record.followers && row.following === record.following))
+      timeline.push({...record});
+    history[user] = timeline;
+    records[user] = {...record};
+    return {previous:validMeasurement(previous) ? {...previous} : null,
+      followers_delta:validMeasurement(previous) ?
+        Number(record.followers) - Number(previous.followers) : null,
+      following_delta:validMeasurement(previous) ?
+        Number(record.following) - Number(previous.following) : null};
+  }
+  function historyCsv(history, queue) {
+    const headers = ["username","followers","following","checked_at","source","status","approximate"];
+    const lines = [headers.join(",")];
+    for (const user of [...new Set(queue || [])]) {
+      for (const row of history[user] || []) {
+        if (!validMeasurement(row)) continue;
+        lines.push(headers.map(k => csvCell(row[k])).join(","));
+      }
+    }
+    return lines.join("\r\n") + "\r\n";
+  }
+  const api = { username, profileFromUrl, parseCount, csvRows, importQueue, exportCsv, extractVisibleProfile,
+    validMeasurement, firstPassQueue, oldestFirst, appendMeasurement, historyCsv };
   root.IGC_CAPTURE = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
