@@ -88,10 +88,17 @@ class ReCaptchaRegressionTests(unittest.TestCase):
         detector = (root / "tools/profile_counts_instagram.py").read_text(encoding="utf-8")
         self.assertIn("safe_to_probe_owner_from_home(page)", bridge)
         self.assertIn("any(challenge_detected(p) for p in pages)", bridge)
+        self.assertIn('"needs_verification"', bridge)
+        self.assertIn("self.stop_signal.wait(3)", bridge)
+        self.assertIn("safe_to_probe_owner_from_home(page)", bridge)
         self.assertIn("any(challenge_detected(tab) for tab in browser.pages", actions)
         self.assertIn('"blocked"', actions)
         self.assertIn('"/auth_platform/recaptcha"', detector)
         self.assertNotIn("captcha_solver", detector)
+        ui = (root / "desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(
+            encoding="utf-8")
+        self.assertIn("verificationWaiting=state.status==='needs_verification'", ui)
+        self.assertIn("The robot will not navigate during the check.", ui)
 
 
 if __name__ == "__main__":
