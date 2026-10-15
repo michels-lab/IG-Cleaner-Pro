@@ -63,7 +63,9 @@
       "portableLegacyZipTemplate": "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip",
       "installTests": "build, silent install, installed healthcheck/startup, data-safe uninstall",
       "authenticode": "not-configured; do not claim signed",
-      "autoUpdater": "not-implemented; new Setup versions provide manual in-place upgrades"
+      "autoUpdater": "anonymous GitHub stable release check at launch and on request; SHA-256 verified opt-in download and user-confirmed native Setup launch; no silent installation",
+      "backupPolicy": "local UI and robot result journals ZIP before Setup; browser session stays in place, never exported with passwords/cookies",
+      "updateFeed": "https://api.github.com/repos/michels-lab/IG-Cleaner-Pro/releases/latest"
     }
   },
   "browserState": {
