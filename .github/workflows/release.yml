@@ -125,6 +125,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
+      - name: Validate durable oldest-first re-audit and dated Windows history
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
       - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |
