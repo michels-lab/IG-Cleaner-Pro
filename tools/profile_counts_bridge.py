@@ -243,8 +243,8 @@ class Collector:
             saved = read_results(self.result_path())
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
-            self.message = ("Registros guardados recuperados; pulsa Iniciar para continuar."
-                            if load_only else "Iniciando navegador visible...")
+            self.message = ("Saved results restored; select Start to continue."
+                            if load_only else "Opening visible browser...")
             self.status = "idle" if load_only else "starting"
             self.stop_signal.clear()
             self.pause_requested = False
@@ -684,10 +684,10 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
+    parser = argparse.ArgumentParser(description="Local Insta Cleaner bridge for the visible Instagram browser robot.")
     parser.add_argument("--app", type=Path, help="Path to your Desktop HTML file (same version as your app).")
     parser.add_argument("--healthcheck", action="store_true", help="Check bundled Playwright and local server without opening Instagram.")
-    parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
+    parser.add_argument("--port", type=int, default=0, help="Local port (0 selects an available port).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser")
     args = parser.parse_args()
@@ -698,15 +698,15 @@ def main():
                 raise RuntimeError("Playwright could not initialize Chromium.")
         probe = build_server(Collector(args.data_dir, args.session_dir), "offline-check-token")
         probe.server_close()
-        print("PASS: runtime Playwright y servidor local disponibles (no prueba Instagram).")
+        print("PASS: Playwright and local server available (not a live Instagram test).")
         return
     if not args.app or not args.app.is_file() or args.app.suffix.lower() != ".html":
-        parser.error("--app necesita un archivo Desktop HTML existente.")
+        parser.error("--app requires an existing Desktop HTML file.")
     secret = secrets.token_urlsafe(32)
     collector = Collector(args.data_dir, args.session_dir)
     server = build_server(collector, secret, args.port)
     port = server.server_port
-    print(f"Robot local preparado. Puerto: {port}. No se expone a Internet.")
+    print(f"Local robot ready. Port: {port}. The server is not exposed to the internet.")
     print("Do not share this launch link: it contains a temporary local controller token.")
     webbrowser.open(args.app.resolve().as_uri() + "#igc-robot=" + str(port) + "." + secret)
     try:
