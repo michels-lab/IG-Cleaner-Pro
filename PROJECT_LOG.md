@@ -1,3 +1,10 @@
+## 2026-10-14 — PR #99 merged after reported Windows v120.46 failures
+
+- Main squash `298bf52e7230fba22501a1ac24852023ec4aafda`; exact PR head `9e8ee7e511e0c7e5f07dbed2a0965add95d806f2`. 5/5 CI passed (counts, Windows integrated executable, Desktop rendered UI, Android emulator, general CI).
+- Fixed imported Profile Counts list rejection for `http`-prefix usernames; fixed failing owner session verification on target profiles without Profile nav using a strict separate owner proof tab; moved the whole Profile Counts results experience to Automations.
+- Confirmed no pending request was canceled in the owner's reported 1/40 screenshot. Existing safe no-click errors may be retried only in separately authorized future batches; unknown post-click states are not repeated.
+- v120.47 remains unreleased. Current official stable v120.46 still has the user-reported bugs. Live Instagram session acceptance is an outstanding physical test.
+
 ## 2026-10-14 — v120.47 corrective development after real v120.46 Windows feedback
 
 - Owner screenshots exposed two real failures on Windows stable v120.46: **Cancel Sent Requests** processed 1/40 and blocked because owner identity disappeared on a target profile (no request was canceled); **Profile Counts** failed before launch with “Import contains invalid profile usernames.” Owner again clarified *all of Profile Counts*, including its collected per-person results, belongs in **Automations**, not Insights.
