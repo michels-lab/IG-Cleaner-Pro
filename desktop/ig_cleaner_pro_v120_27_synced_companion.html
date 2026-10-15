@@ -14460,20 +14460,30 @@ function robotStatus(message,bad=false){
 }
 async function applyRobotRows(rows){
  await countsHydrate();
- const allowed=new Set(members()),current=read(),changes=[];
+ const allowed=new Set(members()),current=read(),archive=[],changes=[];
  let applied=0;
  for(const r of rows||[]){
   const u=normalize(r.username),f=validCount(r.followers),g=validCount(r.following);
   if(!u||!allowed.has(u)||f===null||g===null||!['ok','unavailable','error'].includes(r.status))continue;
   if(r.status==='ok'&&(f===''||g===''))continue;
   const stamp=String(r.checked_at||'');
-  if(!/^\d{4}-\d\d-\d\dT/.test(stamp))continue;
+  if(!/^\d{4}-\d\d-\d\dT/.test(stamp)||!Number.isFinite(Date.parse(stamp)))continue;
+  const incoming={username:u,followers:f,following:g,checked_at:stamp,
+   status:r.status,source:'instagram_visible_profile_browser',
+   approximate:r.approximate===true||r.approximate==='true'};
   if(current[u]?.checked_at && current[u].checked_at>=stamp)continue;
-  current[u]={username:u,followers:f,following:g,checked_at:stamp,
-   status:r.status,source:'instagram_visible_profile_browser',approximate:r.approximate===true||r.approximate==='true'};
+  if(historyValid(current[u]))archive.push(current[u]);
+  if(historyValid(incoming))archive.push(incoming);
+  changes.push([u,incoming]);
   applied++;
  }
- if(applied){write(current);window.igcCountsRender()}
+ if(changes.length){
+  // A failed historical write must never falsely claim that old data was kept.
+  await historyPersist(archive);
+  for(const [u,r] of changes)current[u]=r;
+  await write(current,changes);
+  window.igcCountsRender();
+ }
  return applied;
 }
 window.igcCountsGetRecord=function(username){
