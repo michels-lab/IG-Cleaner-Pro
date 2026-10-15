@@ -8,7 +8,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_counts_instagram import challenge_detected, safe_to_probe_owner_from_home
+from profile_counts_instagram import challenge_detected, safe_to_probe_owner_from_home, preserve_instagram_auth_page
 
 
 class FakeLocator:
@@ -61,6 +61,21 @@ class ReCaptchaRegressionTests(unittest.TestCase):
                 self.assertTrue(challenge_detected(FakePage(
                     "https://www.instagram.com/", body=message)))
 
+    def test_restored_chrome_auth_tab_is_not_reloaded_on_launch(self):
+        for url in (
+            "https://www.instagram.com/auth_platform/recaptcha?apc=fixture",
+            "https://www.instagram.com/accounts/login/",
+            "https://www.instagram.com/challenge/",
+            "https://www.instagram.com/checkpoint/",
+        ):
+            with self.subTest(url=url):
+                self.assertTrue(preserve_instagram_auth_page(FakePage(url)))
+        self.assertTrue(preserve_instagram_auth_page(FakePage(
+            "https://www.instagram.com/", password=True)))
+        self.assertFalse(preserve_instagram_auth_page(FakePage(
+            "https://www.instagram.com/friend/")))
+        self.assertFalse(preserve_instagram_auth_page(FakePage("about:blank")))
+
     def test_login_and_redirect_never_trigger_automated_owner_probe(self):
         for page in (
             FakePage("https://www.instagram.com/accounts/login/"),
@@ -87,6 +102,8 @@ class ReCaptchaRegressionTests(unittest.TestCase):
         actions = (root / "tools/profile_actions.py").read_text(encoding="utf-8")
         detector = (root / "tools/profile_counts_instagram.py").read_text(encoding="utf-8")
         self.assertIn("safe_to_probe_owner_from_home(page)", bridge)
+        self.assertIn("preserve_instagram_auth_page(page)", bridge)
+        self.assertIn("preserve_instagram_auth_page(page)", actions)
         self.assertIn("any(challenge_detected(p) for p in pages)", bridge)
         self.assertIn('"needs_verification"', bridge)
         self.assertIn("self.stop_signal.wait(3)", bridge)
