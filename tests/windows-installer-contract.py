@@ -61,7 +61,7 @@ assert 'home / BUNDLED_HTML' in launcher
 assert 'legacy = Path.home() / ".ig-cleaner-pro"' in launcher
 smoke = (ROOT / "tools/test_windows_installer.ps1").read_text(encoding="utf-8")
 for token in ("--healthcheck", "--smoke-startup", "unins000.exe",
-              "installer-test-user-data-do-not-delete.txt", "Start Menu",
+              "installer-test-user-data-do-not-delete.txt", "Start menu",
               "Legacy", "/VERYSILENT"):
     if token == "Legacy":
         assert "$legacy" in smoke
