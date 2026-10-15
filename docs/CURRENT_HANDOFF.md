@@ -1,3 +1,9 @@
+## 2026-10-15 — Pending Requests uncertain cancellation safe refresh (v120.48 development)
+
+- Existing v120.47 Pending Requests robot may click and then fail to confirm because Instagram's current page has stale Requested UI. Historical `review/error/blocked` journal entries are not replayed; manually inspect any reported username under Automations → Issues, Open profile, without running a second cancellation.
+- New branch `fix/pending-request-readonly-recheck-20261015`: **one** read-only target-profile refresh after a cancellation click whose state remains unverified; require a correct Instagram target URL, verified owner, and Follow/Follow Back state to mark confirmed. Other states—including Following/Requested, redirects, challenge/login and errors—stop safely without re-clicking. UI exposes `pending_cancel_unverified` clearly in English with manual review link.
+- Chromium regression coverage asserts a delayed successful change can be recognized without a second Instagram action. No real owner session tested. Published v120.47 is unchanged; release needs explicit authorization for later versions.
+
 ## 2026-10-15 — Official stable v120.47 RELEASED, future version unrequested
 
 - GitHub release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47 (2026-10-15 22:01:27 UTC). Verified exact commit `9d252f70c40145602bb7ad44ef74ffbf26bc5181`; governed publisher run `38813431832` completed successfully. Required Windows Setup EXE, Android production-signed APK, Desktop single HTML/ZIP, portable compatibility ZIP, checksum files, logo and privacy notice all exist as public release assets.
