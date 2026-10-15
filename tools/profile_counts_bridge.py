@@ -23,6 +23,9 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
 from profile_actions import ActionRobot
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
+from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
+                                  resume_cycle, mark_attempt, append_dated_reading,
+                                  read_dated_page)
 from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    register_visit, finish_visit, wait_required,
                                    DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS,
@@ -65,6 +68,8 @@ class Collector:
         self.current_profile = ""
         self.actions = None
         self.import_stage = None  # ephemeral, owner-scoped upload until commit
+        self.audit_mode = "first_pass"
+        self.audit_cycle = None
 
     def begin_import(self, request):
         """Prepare an atomic user-list transfer; never replace a running job."""
@@ -179,7 +184,14 @@ class Collector:
             self.pause_requested = False
             self.owner, self.account = owner, account
             self.expected_handle = expected or ""
+            audit_mode = request.get("audit_mode", "first_pass")
+            if audit_mode not in ("first_pass", "oldest_first"):
+                raise ValueError("Unsupported Profile Counts audit mode.")
+            if audit_mode == "oldest_first" and discover:
+                raise ValueError("Re-audits require the already imported Following list.")
             self.autonomous = True
+            self.audit_mode = audit_mode
+            self.audit_cycle = None
             self.detected_handle = ""
             self.discover_following = discover
             self.queue_source = "instagram" if discover else "imported"
@@ -187,7 +199,14 @@ class Collector:
             self.usernames = [] if discover else normalized
             self.total = len(self.usernames)
             saved = read_results(self.result_path())
-            self.progress = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
+            if self.audit_mode == "oldest_first":
+                cycle_file = audit_cycle_path(self.result_path())
+                self.audit_cycle = (resume_cycle(cycle_file, self.usernames)
+                                    if request.get("resume_requested") else
+                                    new_cycle(cycle_file, self.usernames, saved))
+                self.progress = len(self.audit_cycle["done"])
+            else:
+                self.progress = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
             self.wait_until = 0
@@ -232,6 +251,8 @@ class Collector:
                 raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
             self.autonomous = False
+            self.audit_mode = "first_pass"
+            self.audit_cycle = None
             self.discover_following = False
             self.queue_source = "imported"
             self.detected_handle = ""
@@ -424,8 +445,16 @@ class Collector:
                 visits = load_history(visits_file, saved)
                 rests_file = batch_path(self.result_path())
                 rests = load_batch_state(rests_file)
-                remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
-                self._update("running", "Checking visible Instagram profiles...")
+                if self.audit_mode == "oldest_first":
+                    if not self.audit_cycle:
+                        raise RuntimeError("A user-confirmed re-audit cycle is required.")
+                    done = set(self.audit_cycle["done"])
+                    remaining = [u for u in self.audit_cycle["targets"] if u not in done]
+                else:
+                    remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
+                self._update("running", "Re-auditing oldest measurements..."
+                             if self.audit_mode == "oldest_first" else
+                             "Checking visible Instagram profiles...")
                 for index, username in enumerate(remaining, 1):
                     if self.stop_signal.is_set():
                         self._update("paused", "Paused; saved results were preserved.")
@@ -468,14 +497,35 @@ class Collector:
                     if counts:
                         row.update(followers=str(counts[0]), following=str(counts[1]),
                                    approximate=str(bool(counts[2])).lower())
-                    saved[username] = row
-                    save_results(self.result_path(), saved)
-                    completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
-                    self._update("running", f"@{username}: {status}. Completed {completed}/{self.total}.", completed)
+                    # A later blocked/failed recheck never erases the last
+                    # successful observation from the latest-results index.
+                    previous = saved.get(username, {})
+                    if previous.get("status") != "ok" or status == "ok":
+                        if status == "ok":
+                            append_dated_reading(dated_history_path(self.result_path()), row)
+                        saved[username] = row
+                        save_results(self.result_path(), saved)
+                    if self.audit_mode == "oldest_first":
+                        # Journal completion AFTER all durable per-profile writes.
+                        self.audit_cycle = mark_attempt(audit_cycle_path(self.result_path()),
+                                                        self.audit_cycle, username)
+                        completed = len(self.audit_cycle["done"])
+                        denominator = len(self.audit_cycle["targets"])
+                    else:
+                        completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
+                        denominator = self.total
+                    self._update("running", f"@{username}: {status}. Completed {completed}/{denominator}.", completed)
                 if self.stop_signal.is_set():
                     self._update("paused", "Paused; progress was saved.")
                     return
                 unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
+                if self.audit_mode == "oldest_first":
+                    done = len(self.audit_cycle["done"])
+                    total = len(self.audit_cycle["targets"])
+                    self._update("complete" if done == total else "partial",
+                                 f"Re-audit completed {done}/{total} selected profiles. "
+                                 "All valid dated readings were preserved.")
+                    return
                 self._update("complete" if not unresolved and
                              (self.queue_source == "imported" or not self.autonomous or self.discovery_complete)
                              else "partial",
@@ -528,6 +578,7 @@ class Collector:
             request["discover_following"] = self.discover_following
             request["usernames"] = [] if self.discover_following else list(self.usernames)
             request["resume_requested"] = True
+            request["audit_mode"] = self.audit_mode
         return self.auto_start(request)
 
     def update_config(self, request: dict):
@@ -564,7 +615,10 @@ class Collector:
                 "status": self.status,
                 "message": self.message,
                 "progress": self.progress,
-                "total": self.total,
+                "total": len(self.audit_cycle["targets"]) if self.audit_cycle else self.total,
+                "audit_mode": self.audit_mode,
+                "audit_completed": len(self.audit_cycle["done"]) if self.audit_cycle else 0,
+                "audit_total": len(self.audit_cycle["targets"]) if self.audit_cycle else 0,
                 "max_per_window": self.max_per_window,
                 "window_minutes": self.window_minutes,
                 "min_delay_seconds": self.min_delay_seconds,
@@ -588,6 +642,12 @@ class Collector:
             # potentially enormous duplicate JSON response every five seconds.
             return {"usernames": list(self.usernames) if self.queue_source != "imported" else [],
                     "handle": self.detected_handle, "complete": self.discovery_complete}
+
+    def dated_history(self, offset=0, size=1000):
+        with self.lock:
+            if not self.owner or not self.account:
+                return {"rows": [], "next_offset": None}
+            return read_dated_page(dated_history_path(self.result_path()), offset, size)
 
     def results(self):
         with self.lock:
@@ -640,6 +700,15 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 self._send(200, collector.snapshot())
             elif self.path == "/api/results":
                 self._send(200, {"rows": collector.results()})
+            elif self.path.startswith("/api/history?"):
+                from urllib.parse import urlsplit, parse_qs
+                qs = parse_qs(urlsplit(self.path).query)
+                try:
+                    offset = int(qs.get("offset", ["0"])[0])
+                    size = int(qs.get("size", ["1000"])[0])
+                    self._send(200, collector.dated_history(offset, size))
+                except (ValueError, TypeError) as exc:
+                    self._send(400, {"error": str(exc)})
             elif self.path == "/api/following":
                 self._send(200, collector.following())
             elif self.path == "/api/actions/status":
