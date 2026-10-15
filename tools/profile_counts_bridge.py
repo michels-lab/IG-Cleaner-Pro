@@ -17,7 +17,7 @@ import threading
 import time
 import webbrowser
 
-from profile_counts_instagram import (signed_in_handle, challenge_detected, safe_to_probe_owner_from_home, read_following_visible,
+from profile_counts_instagram import (signed_in_handle, challenge_detected, safe_to_probe_owner_from_home, preserve_instagram_auth_page, read_following_visible,
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot
@@ -281,8 +281,13 @@ class Collector:
                         browser = pw.chromium.launch_persistent_context(**launch_args)
                     except Exception:
                         browser = pw.chromium.launch_persistent_context(channel="chrome", **launch_args)
-                page = browser.pages[0] if browser.pages else browser.new_page()
-                page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
+                # Persistent Chrome may reopen at Instagram's manual CAPTCHA or
+                # login screen. Never force Home over an active human challenge.
+                open_pages = [p for p in browser.pages if not p.is_closed()]
+                page = next((p for p in open_pages if preserve_instagram_auth_page(p)),
+                            open_pages[0] if open_pages else browser.new_page())
+                if not preserve_instagram_auth_page(page):
+                    page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45_000)
                 if self.autonomous:
                     self._update("login", "Sign in to Instagram; your account will be detected automatically.")
                     # Instagram changes its sidebar markup and may open the
