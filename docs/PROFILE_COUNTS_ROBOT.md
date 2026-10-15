@@ -6,9 +6,9 @@ Windows also stores verified successful values append-only in an account-scoped 
 
 This does not resolve Instagram CAPTCHA loops in the separate Playwright Chrome profile, and does not automate follow/unfollow/cancel operations. If the separate Chrome cannot verify the account, use the already provided manual read-only Chrome Companion or CSV history workflows. Live owner Chrome acceptance and any cross-device Android history sync remain open, not implied by offline CI.
 
-# Profile Counts Robot — current Windows guidance (v120.47 development)
+# Profile Counts Robot — current Windows guidance (v120.47 stable)
 
-> Current official GitHub Release is **v120.46**. Changes described below for v120.47 require a separate explicit owner release instruction and are NOT yet in the installed build. Historical v120.41–v120.45 instructions are retained below for context only.
+> The official [v120.47 GitHub Release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47) includes the installed Windows Setup, dated Profile Counts history and oldest-first second audit. The post-release v120.48 Pending Requests batch fixes are still **unpublished**. Historical v120.41–v120.45 instructions below are retained as background, not current release status.
 
 1. Open **Automations → Automation Center → Profile Counts** in the integrated Windows app. **All robots** (Profile Counts, Cancel Pending, Unfollow and optional Followback Audit) live in Automations.
 2. Import the Following/Followers export into the correct Instagram workspace. The Profile Counts robot consumes **already-imported** Following usernames; Instagram Following discovery is entirely optional.
