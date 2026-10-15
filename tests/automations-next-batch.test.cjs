@@ -40,6 +40,13 @@ const ctx={
   fetch:async(url,opts)=>{
     const op=url.split("/").at(-1);
     assert.equal(opts.headers["X-IGC-Bridge-Token"],"abcdefghijklmnopqrstuvwxy");
+    if(op==="history"){
+      const data=JSON.parse(opts.body);
+      return {ok:true,json:async()=>({
+        owner:data.owner,account:data.account,task:data.task,
+        attempted_usernames:state.attempted_usernames
+      })};
+    }
     if(op==="start"){const payload=JSON.parse(opts.body);post.push(payload);
       state={...state,status:"starting",total:payload.targets.length,rows:payload.targets.map(username=>({username})),remaining:payload.targets.length};}
     return {ok:true,json:async()=>state};
