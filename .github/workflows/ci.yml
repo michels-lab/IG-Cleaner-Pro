@@ -85,6 +85,11 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
       - name: Verify native Windows Setup update feed, SHA-256, cancellation, backups and loopback owner consent
         run: python3 -m unittest discover -s tests -p 'test_windows_updater.py' -v
+      - name: Verify Pending second/third batches and imports in offline browser controller
+        run: |
+          node tests/automations-next-batch.test.cjs
+          node tests/pending-focus-reimport.test.cjs
+          python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
       - name: Verify Windows-only updater dialog and required click-to-install
         run: node tests/windows-updater-ui.test.cjs
       - name: Validate Chrome Companion least-privilege extension, parser and local CSV flow
