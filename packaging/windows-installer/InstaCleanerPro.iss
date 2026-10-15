@@ -70,7 +70,7 @@ Source: "TaskbarPinning.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{userprograms}\Insta Cleaner Pro"; Filename: "{app}\InstaCleanerPro.exe"; IconFilename: "{app}\InstaCleanerPro.exe"
-Name: "{userdesktop}\Insta Cleaner Pro"; Filename: "{app}\InstaCleanerPro.exe"; IconFilename: "{app}\InstaCleanerPro.exe"; Tasks: desktopicon
+Name: "{autodesktop}\Insta Cleaner Pro"; Filename: "{app}\InstaCleanerPro.exe"; IconFilename: "{app}\InstaCleanerPro.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; GroupDescription: "{cm:OptionalShortcuts}"; Flags: unchecked
