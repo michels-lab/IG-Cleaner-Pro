@@ -2,6 +2,7 @@
 
 - Existing v120.47 Pending Requests robot may click and then fail to confirm because Instagram's current page has stale Requested UI. Historical `review/error/blocked` journal entries are not replayed; manually inspect any reported username under Automations → Issues, Open profile, without running a second cancellation.
 - New branch `fix/pending-request-readonly-recheck-20261015`: **one** read-only target-profile refresh after a cancellation click whose state remains unverified; require a correct Instagram target URL, verified owner, and Follow/Follow Back state to mark confirmed. Other states—including Following/Requested, redirects, challenge/login and errors—stop safely without re-clicking. UI exposes `pending_cancel_unverified` clearly in English with manual review link.
+- **Windows preview after stable publication:** `tools/build_windows_installer.ps1` supports an explicit `-AllowCurrentStablePreview` only in the unreleased preview workflow, when the packaged Android metadata remains the current stable v120.47 and nextRelease is reserved for v120.48. Governed stable release publication never passes the override and remains version-locked.
 - Chromium regression coverage asserts a delayed successful change can be recognized without a second Instagram action. No real owner session tested. Published v120.47 is unchanged; release needs explicit authorization for later versions.
 
 ## 2026-10-15 — Official stable v120.47 RELEASED, future version unrequested
