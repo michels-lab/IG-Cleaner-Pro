@@ -1,3 +1,10 @@
+## 2026-10-15 — Windows Profile Counts oldest-first re-audit (v120.47 development)
+
+- Existing `main` already has independent IndexedDB history under `ig_cleaner_profile_counts_history_v1`, a per-profile viewer/deltas and CSV export; do not merge conflicting old PR #106 over it.
+- Candidate branch `feat/profile-counts-windows-reaudit-20261015` implements an explicit oldest-first second audit using the imported Following queue, with never-successful users prioritized, frozen crash-resumable cycle state and full per-account dated Windows CSV. Previous successful latest measurements are not overwritten on failed rechecks; pre-upgrade latest values are archived non-destructively.
+- Automations retains all robots and offers re-audit and safe paginated Windows-history synchronization. Neither accounts nor total Following sizes are arbitrarily capped; request batching is capped at 2,000 rows. Live Instagram challenges still require manual human verification; no CAPTCHA bypass.
+- Test gates: `tests/test_profile_counts_audit.py`, `tests/profile-counts-ui.test.cjs`, Windows native/Chromium suite and setup INSTALL/LAUNCH/UPGRADE/UNINSTALL; exact-head evidence before merge. Published stable remains v120.46 until explicit separate release authorization.
+
 ## 2026-10-15 — Cross-app Windows installer source validator follow-up
 
 - Windows Setup candidate on `main` passed same-commit Windows INSTALL/LAUNCH/UPGRADE/UNINSTALL, Desktop Chromium, Android emulator and CI; public release remains v120.46, no v120.47 authorization.
