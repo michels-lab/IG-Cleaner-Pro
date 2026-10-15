@@ -1,3 +1,10 @@
+## 2026-10-15 — Owner follow-up: persistent counts and oldest-first re-audit
+
+- Each username's Followers and Following readings are saved with timestamp and precision, not overwritten on a new audit.
+- The first pass queues never-measured accounts ahead of incomplete accounts and skips already measured ones.
+- Once the first pass is complete, owner can begin a second and later audit with profiles ordered by oldest last review and no duplicate profile within a cycle. Cycle position and full dated counts history are stored locally per workspace.
+- Separate latest-count and full-history exports exist; repeated measurements show per-metric deltas. Offline tests pending exact head; do not claim real live Instagram acceptance.
+
 ## 2026-10-15 — Regular Chrome Companion for Profile Counts (v120.47 development, no release)
 
 - Owner explicitly instructed to **build**, not just propose, a way for Insta Cleaner to work with Instagram in their regular Chrome. Prior owner evidence: Instagram already works in regular Chrome and the official mobile app, while the separate Playwright-driven robot Chrome loops through /auth_platform/recaptcha. PRs #102/#103 previously integrated safe challenge detection and manual CSV fallback; neither made the separate automated browser trusted.
