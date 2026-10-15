@@ -89,8 +89,19 @@ class ProfileCountsReauditTests(unittest.TestCase):
                 self.assertEqual(collector.audit_cycle["done"], ["newprofile"])
                 self.assertEqual(collector.audit_cycle["targets"],
                                  ["newprofile", "old", "newer"])
-                collector.status = "complete"
-                fresh = collector.auto_start(request)
+                # New process, same owner and Instagram: a new explicit click
+                # resumes the frozen queue instead of discarding the journal.
+                reopened = Collector(Path(temp), Path(temp) / "session")
+                reopened.owner, reopened.account = "owner1", "account1"
+                after_restart = reopened.auto_start(request)
+                self.assertEqual(after_restart["audit_completed"], 1)
+                self.assertEqual(reopened.audit_cycle["targets"],
+                                 ["newprofile", "old", "newer"])
+                cycle_path = audit_cycle_path(reopened.result_path())
+                mark_attempt(cycle_path, reopened.audit_cycle, "old")
+                mark_attempt(cycle_path, reopened.audit_cycle, "newer")
+                reopened.status = "complete"
+                fresh = reopened.auto_start(request)
                 self.assertEqual(fresh["audit_completed"], 0)
                 saved = read_dated_page(dated_history_path(collector.result_path()), 0, 10)
                 self.assertEqual({r["followers"] for r in saved["rows"]}, {"100", "200"})
