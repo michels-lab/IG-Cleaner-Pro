@@ -33,21 +33,29 @@ a{color:var(--accent)}.separator{height:1px;background:var(--line);margin:12px 0
 <div class="stats" style="margin-top:10px">
 <div><span class="value" id="queueSize">0</span><div class="small muted">Queued</div></div>
 <div><span class="value" id="savedSize">0</span><div class="small muted">Captured</div></div>
-<div><span class="value" id="remainingSize">0</span><div class="small muted">Remaining</div></div>
+<div><span class="value" id="remainingSize">0</span><div class="small muted">First-pass remaining</div></div>
+<div><span class="value" id="roundRemaining">—</span><div class="small muted">Re-audit remaining</div></div>
 </div>
+<div class="small muted" id="mode" style="margin-top:10px">First pass · unmeasured first</div>
 <div class="buttons">
 <button id="next" class="primary" type="button">2 · Open next profile</button>
 <button id="capture" type="button">3 · Capture visible counts</button>
 </div>
+<div class="separator"></div>
+<div class="buttons">
+<button id="reAudit" type="button">Start oldest-first re-audit</button>
+</div>
+<div class="helper small">Available after the first pass. Each cycle checks previously measured profiles, prioritizing the oldest measurements, and keeps a dated history of every successful capture.</div>
 <div class="small muted" id="current" style="margin-top:10px">Open an Instagram profile in this Chrome window, then capture its visible counters.</div>
 </section>
 <section class="panel">
 <label>4 · Save for Insta Cleaner → Automations → Profile Counts</label>
 <div class="buttons">
-<button id="export" type="button">Export results CSV</button>
+<button id="export" type="button">Export latest results CSV</button>
+<button id="historyExport" type="button">Export dated history CSV</button>
 <button id="clear" type="button">Clear this workspace</button>
 </div>
-<p class="small muted">Export includes verified visible counters only. Compact numbers (K/M) are marked approximate. Import CSV in Insta Cleaner; existing saved results and other workspaces are preserved.</p>
+<p class="small muted">The latest CSV imports into Insta Cleaner. The history CSV keeps all dated measurements for later comparisons, including how Followers and Following changed. Compact counts (K/M) are marked approximate. Nothing is erased when starting another audit.</p>
 <div id="status" role="status" aria-live="polite">Ready. No Instagram password, cookies or browsing history are read or transferred.</div>
 </section>
 </main><script src="collector.js"></script><script src="popup.js"></script></body></html>
