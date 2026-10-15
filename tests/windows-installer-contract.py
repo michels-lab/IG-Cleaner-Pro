@@ -23,7 +23,7 @@ for value in (
     "WizardStyle=modern", "PrivilegesRequired=lowest",
     "UsePreviousAppDir=yes", "Uninstallable=yes",
     "Flags: unchecked", 'Tasks: desktopicon',
-    'skipifsilent unchecked', "TaskbarPinning.txt",
+    'skipifsilent unchecked', "TaskbarPinning.txt", '{autodesktop}',
     'chrome-extension\\*', "InstaCleanerPro.exe",
     "VersionInfoCompany=Michel's Lab",
 ):
