@@ -41,6 +41,17 @@ const {chromium}=require("playwright");
   assert.match(await page.locator("#igcSyncAccount").innerText(),/first@example\.test/);
   await page.getByRole("button",{name:"Cambiar cuenta"}).click();
   const modal=page.locator("#igcLoginChooser");
+  // The chooser is scheduled by the UI after the button click; assert the
+  // settled visible result, not a race against the next microtask/frame.
+  await modal.waitFor({state:"visible",timeout:15000}).catch(async error=>{
+   const snapshot=await page.evaluate(()=>({
+    signedIn:document.querySelector("#igcSyncSignedIn")?.offsetParent!==null,
+    chooser:document.querySelector("#igcLoginChooser")?.getAttribute("style"),
+    owner:JSON.parse(localStorage.getItem("igc_v12027_supabase_session")||"null")?.user?.email
+   }));
+   throw new Error("Switch Account chooser never became visible: "+
+      JSON.stringify(snapshot)+"; "+error.message);
+  });
   assert(await modal.isVisible(),"Switch Account must open a chooser, not sign out");
   const options=modal.locator("button");
   assert((await options.count())>=4,"Two logins, add and cancel expected");
