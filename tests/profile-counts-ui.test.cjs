@@ -93,6 +93,9 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
   igcCountsRobotStatus:{textContent:'',style:{}},
   igcCountsRobotProgress:{value:0},
   igcCountsRobotActions:{style:{display:'none'}},
+  igcCountsManualCSV:{style:{display:'none'}},
+  igcCountsManualHelp:{style:{display:'none'}},
+  igcCountsAuthFallback:{style:{display:'none'}},
   igcCountsRobotMax:{value:'200'},
   igcCountsRobotWindow:{value:'5'},
   igcCountsRobotGap:{value:'5'},
@@ -106,6 +109,7 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
   igcCountsPause:{disabled:false},igcCountsResume:{disabled:false}
  };
  const bridgeIdentity={owner:'owner_A',active:'ig_A'};
+ let statusOverride=null;
  const mockFetch=async(url,options)=>{
   requests.push({url,options});
   assert.match(url,/^http:\/\/127\.0\.0\.1:32111\/api\//);
@@ -133,7 +137,7 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
   } else if(action==='load'){
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
-   value={status:'complete',message:'Done',owner:'owner_A',account:'ig_A',queue_source:'imported',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
+   value=statusOverride||{status:'complete',message:'Done',owner:'owner_A',account:'ig_A',queue_source:'imported',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
   } else if(action==='results'){
    value={rows:[
     {username:'public.user',followers:'3456',following:'789',status:'ok',
@@ -156,6 +160,15 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  };
  vm.createContext(bridgeCtx);vm.runInContext(match[1],bridgeCtx);
  assert.equal(robotElements.igcCountsRobotActions.style.display,'flex','Pacing, pause and resume must be visible');
+ assert.equal(robotElements.igcCountsManualCSV.style.display,'flex',
+  'Manual import/export must be visible even when Windows bot is connected');
+ assert.equal(robotElements.igcCountsManualHelp.style.display,'block',
+  'Manual recovery instructions must remain visible while the bot is connected');
+ assert.match(source,/id="igcCountsAuthFallback"/);
+ assert.match(source,/Review Pending manually/);
+ assert.match(source,/Review Following manually/);
+ assert.match(source,/onclick="showPage\('pendingRequests'\)"/);
+ assert.match(source,/onclick="showPage\('list'\)"/);
  assert.match(source,/id="igcCountsResume"/,'Explicit Resume button should be visible');
  await bridgeCtx.window.igcCountsRobotConnect();
  const auto=requests.find(r=>r.url.endsWith('/auto'));
@@ -189,6 +202,20 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.match(robotElements.igcCountsRobotPaceNote.textContent,/2 min after every 10/);
  await bridgeCtx.window.igcCountsRobotPoll();
  assert.match(robotElements.igcCountsMetricSuccess.textContent,/Verified: 1/);
+ assert.equal(robotElements.igcCountsAuthFallback.style.display,'none',
+  'Manual CAPTCHA advice should not obscure ordinary successful collections');
+ statusOverride={status:'needs_verification',message:'Instagram requires manual CAPTCHA/security verification.',running:true,
+  owner:'owner_A',account:'ig_A',total:1,progress:0,successful:0,analyzed:0,pending:1,
+  max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
+ await bridgeCtx.window.igcCountsRobotPoll();
+ assert.equal(robotElements.igcCountsAuthFallback.style.display,'block',
+  'CAPTCHA must expose a functional manual-workflow fallback');
+ assert.match(robotElements.igcCountsRobotStatus.textContent,/CAPTCHA/);
+ assert.equal(robotElements.igcCountsResume.disabled,true,'An active CAPTCHA must not enable Resume');
+ statusOverride=null;
+ await bridgeCtx.window.igcCountsRobotPoll();
+ assert.equal(robotElements.igcCountsAuthFallback.style.display,'none',
+  'Manual auth warning must clear when ordinary robot status returns');
  assert.equal(robotElements.igcCountsRobotProgress.value,100,'Robot completion percentage must be visible');
  await bridgeCtx.window.igcCountsRobotSaveConfig();
  assert(requests.some(r=>r.url.endsWith('/config')),'Saved pacing must reach active controller');
