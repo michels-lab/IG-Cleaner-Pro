@@ -333,6 +333,42 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertFalse(any("/my.profile/" in u for u in visits),
                          "Strong conflicting nav identity must immediately stop actions")
 
+    def test_cancel_pending_succeeds_with_collapsed_profile_nav_and_verified_owner_tab(self):
+        # Real user case: Home identifies the owner, but nav disappears on
+        # target profiles. A read-only own-profile tab must prove identity.
+        target = fake_profile(request_unfollow=True).replace(
+            '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>', ''
+        ).replace('>Following</button>', '>Requested</button>')
+        owner = ('<html><body><header><h2>my.profile</h2>'
+                 '<button>Edit profile</button></header></body></html>')
+        self.page.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(
+                status=200, content_type="text/html",
+                body=owner if route.request.url.rstrip("/").endswith("/my.profile")
+                     else target))
+        status,message=perform_visible_action(
+            self.page,"target.user","cancel","my.profile",lambda _:True)
+        self.assertEqual(status,"ok",message)
+        self.assertEqual(self.page.evaluate("window.__steps"),["open","confirmed"])
+        self.page.unroute_all()
+
+    def test_cancel_pending_wrong_owner_cannot_click_with_hidden_nav(self):
+        target = fake_profile(request_unfollow=True).replace(
+            '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>', ''
+        ).replace('>Following</button>', '>Requested</button>')
+        impostor = ('<html><body><header><h2>impostor.account</h2>'
+                    '<button>Edit profile</button></header></body></html>')
+        self.page.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(
+                status=200, content_type="text/html",
+                body=impostor if route.request.url.rstrip("/").endswith("/my.profile")
+                     else target))
+        status,message=perform_visible_action(
+            self.page,"target.user","cancel","my.profile",lambda _:True)
+        self.assertEqual(status,"blocked",message)
+        self.assertEqual(self.page.evaluate("window.__steps"),[])
+        self.page.unroute_all()
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
