@@ -288,7 +288,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
             '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>',
             ('<nav><a href="/someone.else/" aria-label="Profile">Profile</a></nav>'
              if misleading_nav else
-             '<nav><button aria-label="Profile">☻</button></nav>')
+             '<nav><button aria-label="Profile">☻</button></nav>'))
         if task == "cancel":
             target = target.replace('document.querySelector("#relationship")', 'document.querySelector("#relationship")')
             target = target.replace(
