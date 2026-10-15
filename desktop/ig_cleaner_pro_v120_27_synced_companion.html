@@ -14654,6 +14654,8 @@ window.igcCountsRobotSyncHistory=async function(){
    if(context().owner!==ctx.owner||context().account!==ctx.account)
     throw Error('Instagram workspace changed during history synchronization.');
    const page=await bridgeRequest('history?offset='+offset+'&size=1000');
+   if(context().owner!==ctx.owner||context().account!==ctx.account)
+    throw Error('Instagram workspace changed during history synchronization.');
    if(!Array.isArray(page.rows))throw Error('Windows returned invalid history data.');
    if(page.rows.length){await historyPersist(page.rows);total+=page.rows.length}
    robotStatus('Synchronizing Windows dated measurements: '+total+' rows saved.');
@@ -14667,21 +14669,21 @@ window.igcCountsRobotSyncHistory=async function(){
 };
 window.igcCountsRobotConnect=async function(){
  if(!robot){
-  robotStatus('Open InstaCleanerPro.exe from the Windows ZIP; its local service is built in.',true);
+  robotStatus('Open the installed Insta Cleaner Pro application from Windows Start; the local robot service is integrated.',true);
   return;
  }
  await window.igcCountsRobotAuto(true,false);
 };
 window.igcCountsRobotDiscover=async function(){
  if(!robot){
-  robotStatus('Open InstaCleanerPro.exe on Windows.',true);return;
+  robotStatus('Open the installed Insta Cleaner Pro Windows application.',true);return;
  }
  // Optional discovery is an explicit owner request, never a prerequisite
  // for processing the already imported Following list.
  await window.igcCountsRobotAuto(true,true);
 };
 window.igcCountsRobotContinue=async function(){
- if(!robot){robotStatus('Open InstaCleanerPro.exe on Windows.',true);return}
+ if(!robot){robotStatus('Open the installed Insta Cleaner Pro Windows application.',true);return}
  try{
   const ctx=context();
   const result=await bridgeRequest('continue',{owner:ctx.owner,account:ctx.account,...robotConfig()});
