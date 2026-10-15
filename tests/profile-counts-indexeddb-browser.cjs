@@ -84,6 +84,35 @@ const {chromium}=require("playwright");
   await page.reload({waitUntil:"domcontentloaded"});
   await page.evaluate(()=>window.igcCountsStorageReady());
   assert.equal((await idbRecord("new.user"))?.followers,"1200","Persisted records survive browser reload");
+  // Previously the offline audit fallback silently retained only 12,000.
+  // Reconcile every recoverable old event without deleting the old backup.
+  await page.evaluate(()=>{
+   const events=Array.from({length:12031},(_,i)=>({
+    id:"legacy-audit-"+i,ts:1700000000000+i,username:"audit"+i,
+    action:"reviewed",deviceId:"old-device",deviceType:"desktop",
+    module:"review",meta:{}
+   }));
+   localStorage.setItem("igc_v12026_audit_events_fallback",JSON.stringify(events));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  const auditCount=await page.evaluate(async()=>{
+   const start=Date.now();
+   while(Date.now()-start<20000){
+    const db=await new Promise((res,rej)=>{const q=indexedDB.open("ig_cleaner_cross_device_audit",1);
+     q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+    let n=0;
+    try{n=await new Promise((res,rej)=>{
+     const q=db.transaction("events","readonly").objectStore("events").count();
+     q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+    finally{db.close()}
+    if(n>=12031)return n;
+    await new Promise(r=>setTimeout(r,400));
+   }
+   return 0;
+  });
+  assert(auditCount>=12031,"Legacy audit lost events above the previous 12k cutoff: "+auditCount);
+  assert(await page.evaluate(()=>localStorage.getItem("igc_v12026_audit_events_fallback")!==null),
+   "Audit fallback backup was destroyed during reconciliation");
   assert(errors.filter(e=>/igcCounts|IndexedDB/.test(e)).length===0,
    "Unexpected application errors: "+errors.join(" | "));
   console.log("PASS: account-scoped IndexedDB migration, backup, durable CSV, reload");
