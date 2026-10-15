@@ -90,7 +90,7 @@ jobs:
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
-          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --name InstaCleanerPro tools/ig_cleaner_desktop.py
+          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --add-data "release/android-signing.json;metadata" --name InstaCleanerPro tools/ig_cleaner_desktop.py
       - name: Test the frozen executable without contacting Instagram
         shell: pwsh
         run: |
