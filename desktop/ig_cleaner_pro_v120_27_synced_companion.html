@@ -3829,6 +3829,16 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsRender()">Refresh results</button>
 </div>
 <p class="note" id="igcCountsManualHelp">Manual CSV import/export remains available even when the Windows robot is connected or Instagram rejects its Chrome session. Historical counts are not proof of live followback. Do not mark a pending request canceled unless Instagram confirms it. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Recovery instructions</a>.</p>
+<div class="panel" id="igcChromeCompanion" style="margin-top:14px">
+ <div class="title">Chrome Companion · Your regular Chrome session</div>
+ <p class="note">If Instagram works in normal Chrome but blocks the separate robot Chrome, use the optional read-only extension included in the extracted official Windows ZIP, inside <code>chrome-extension</code>. It reads visible counters only when you click Capture; it does not cancel requests or unfollow.</p>
+ <div class="btnrow">
+  <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Export Following queue CSV</button>
+  <label class="btn" style="cursor:pointer">④ Import captured results CSV<input type="file" accept=".csv,text/csv" style="display:none" onchange="igcCountsImportFile(this)"></label>
+  <a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/packaging/chrome-extension/README.md" target="_blank" rel="noopener noreferrer">Extension setup guide</a>
+ </div>
+ <p class="note">② In Chrome: <code>chrome://extensions</code> → Developer mode → Load unpacked → select <code>chrome-extension</code> from the extracted ZIP. ③ Open an Instagram profile, capture visible Followers/Following and export CSV from the extension. This uses your signed-in normal Chrome and requires no password or cookie sharing. It is a manually operated Profile Counts path, not a background bot.</p>
+</div>
 
 </div>
 <div class="panel" id="igcProfileCountsPanel">
