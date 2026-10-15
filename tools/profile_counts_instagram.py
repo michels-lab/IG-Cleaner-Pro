@@ -240,6 +240,31 @@ def safe_to_probe_owner_from_home(page):
         return False
 
 
+def preserve_instagram_auth_page(page):
+    """Do not refresh or navigate away from a restored human login/checkpoint.
+
+    Persistent Chrome may reopen directly at /auth_platform/recaptcha or Login.
+    A forced page.goto(Home) at startup disrupts that verification. Existing
+    signed-in profile pages remain eligible for normal owner checks.
+    """
+    location = urlparse(getattr(page, "url", "") or "")
+    if location.hostname not in ("instagram.com", "www.instagram.com"):
+        return False
+    path = location.path.casefold().rstrip("/")
+    if any(path == prefix or path.startswith(prefix + "/") for prefix in (
+        "/accounts/login", "/accounts/signup", "/auth_platform",
+        "/challenge", "/checkpoint",
+    )):
+        return True
+    if challenge_detected(page):
+        return True
+    try:
+        fields = page.locator('input[type="password"], input[name="password"]')
+        return any(fields.nth(i).is_visible() for i in range(min(fields.count(), 6)))
+    except Exception:
+        return False
+
+
 def following_page_url(username):
     return f"https://www.instagram.com/{username}/"
 
