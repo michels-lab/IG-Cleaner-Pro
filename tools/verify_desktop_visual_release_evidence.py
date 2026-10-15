@@ -16,9 +16,13 @@ def verify(root:Path, sha:str, html:Path):
     assert manifest.get("source_commit") == sha, "Desktop screenshot source SHA mismatch"
     assert digest(html) == manifest.get("html_sha256"), "Screenshot HTML differs from release Desktop HTML"
     shots = manifest.get("screenshots")
-    assert len(shots)==6, "Missing real Home/About/Desktop screenshot coverage"
+    # The live Desktop capture now includes Automations/manual-recovery in
+    # addition to Home and both About surfaces at both viewport sizes. This
+    # validator must require ALL eight, not reject stronger real evidence.
+    assert isinstance(shots,list) and len(shots)==8, "Missing real Home/About/Automations screenshot coverage"
     expected={(surface,viewport,section) for viewport in ("compact","wide")
-              for surface,section in (("home","initial"),("about","initial"),("about","socials"))}
+              for surface,section in (("home","initial"),("about","initial"),
+                                      ("about","socials"),("automations","manual-recovery"))}
     visited=set()
     seen={}
     for shot in shots:
@@ -41,7 +45,7 @@ def verify(root:Path, sha:str, html:Path):
         assert old is None or old == shot["viewport"], "Reused screenshot across screen sizes"
         seen[shot["sha256"]] = shot["viewport"]
     assert visited==expected
-    print("PASS: exact-commit Desktop Home/About in real browser, two viewport classes and six validated PNGs")
+    print("PASS: exact-commit Desktop Home/About/Automations recovery in real browser, two viewport classes and eight validated PNGs")
 
 if __name__=="__main__":
     ap=argparse.ArgumentParser()
