@@ -12,6 +12,8 @@ on:
       - 'tests/test_profile_counts_bridge.py'
       - 'tests/test_profile_counts_pacing.py'
       - 'tests/profile-counts-ui.test.cjs'
+      - 'packaging/chrome-extension/**'
+      - 'tests/chrome-companion.test.cjs'
       - 'tests/automations-planner.test.cjs'
       - 'tests/automations-execution.test.cjs'
       - 'tests/automations-issues.test.cjs'
@@ -51,6 +53,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
       - name: Desktop Insights CSV and account isolation
         run: node tests/profile-counts-ui.test.cjs
+      - name: Verify regular Chrome Companion is read-only, scoped and CSV-compatible
+        run: node tests/chrome-companion.test.cjs
       - name: Automations planner protected/skip/account isolation
         run: node tests/automations-planner.test.cjs
       - name: Automations Chrome action-control integration
