@@ -99,6 +99,11 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(elements.igcAutoResume.disabled,true,
    'Blocked CAPTCHA should not be retried through Resume');
  assert.match(elements.igcAutoLiveStatus.textContent,/security check/);
+ context.owner='owner_B';context.active='ig_B';
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcActionAuthFallback.style.display,'none',
+  'CAPTCHA recovery UI must not leak across Instagram accounts');
+ context.owner='owner_A';context.active='ig_A';
  p.status='paused';p.message='Progress saved';
  await ctx.window.igcAutoPoll();
  assert.equal(elements.igcActionAuthFallback.style.display,'none');
