@@ -1,15 +1,12 @@
 {
-  "version": "120.45",
-  "tag": "v120.45",
-  "authorized": false,
-  "authorization_source": "Owner explicitly said 'dale release' on 2026-10-14 following integration and 5/5 successful CI checks for PR #94. Publish the latest v120.45 development from main as an official stable GitHub Release only after all exact-commit Android, Desktop, Windows and signing gates pass.",
+  "version": "120.46",
+  "tag": "v120.46",
+  "authorized": true,
+  "authorization_source": "Owner explicitly instructed 'termina lo pendiente y dale release' on 2026-10-14. PR #97 unified all robots into Automations and scalable imported queues; PR #98 completed IndexedDB/account-scoped Profile Counts historical data migration, lossless audit fallback and large-dataset Chromium gates; both merged after 5/5 exact-head CI checks. Owner authorizes official stable v120.46 after exact-release-commit Windows integrated EXE, Desktop, Android UI, signing and checksums verification.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.44",
-  "owner_acceptance_note": "Windows Profile Counts now uses the 11,869 already-imported Following profiles without reopening Following; real Instagram user-session scanning and physical Windows/Samsung acceptance are still pending. Publish for the owner to test, not as a claim of live Instagram acceptance. Preserve existing account data, production Android certificate, and release-gate failures.",
-  "published_run": 38648558721,
-  "published_commit": "5c58aa5e836da014a86e1bdecad9a30e97013d8f",
-  "completed_at_utc": "2026-10-14T22:40:11Z"
+  "status": "requested",
+  "previous_stable_release": "v120.45",
+  "owner_acceptance_note": "This release contains unbounded logical Following/Followers analyses, chunked imported queue, unified Automations, IndexedDB migration/backup retention and new 250k browser regression gate. Instagram live signed-in collection and account-changing actions on the owner's PC are not physically verified; do not claim them. Preserve cookies/history/legacy localStorage backup and production Android signing identity. No bypass of rate limits or security challenges."
 }
