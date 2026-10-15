@@ -198,12 +198,44 @@ def verify_selected_owner_profile(page, expected_handle):
 
 
 def challenge_detected(page):
-    url = (page.url or "").lower()
-    if "/challenge/" in url or "/checkpoint/" in url:
+    """Recognize real Instagram security interstitials without interacting with them.
+
+    Instagram's /auth_platform/recaptcha?apc=... is a separate route from its
+    older /challenge/ and /checkpoint/ screens. Never attempt account actions,
+    own-profile probing, or repeated navigation while it is visible.
+    """
+    path = urlparse(getattr(page, "url", "") or "").path.casefold().rstrip("/")
+    if any(path == prefix or path.startswith(prefix + "/") for prefix in (
+        "/challenge", "/checkpoint", "/auth_platform/recaptcha",
+    )):
         return True
     try:
-        text = page.locator("body").inner_text(timeout=2500).lower()
-        return any(marker in text for marker in BLOCK_MARKERS)
+        text = page.locator("body").inner_text(timeout=2500).casefold()
+        return any(marker in text for marker in BLOCK_MARKERS) or any(
+            phrase in text for phrase in (
+                "i'm not a robot", "i’m not a robot", "recaptcha enterprise",
+                "verify you are human", "verify you're human",
+            )
+        )
+    except Exception:
+        return False
+
+
+def safe_to_probe_owner_from_home(page):
+    """Never navigate off a live login/CAPTCHA screen to infer owner identity.
+
+    The optional read-only profile probe is only appropriate from actual
+    Instagram Home with no visible password field. Do not interrupt sign-in,
+    login challenges, or an in-progress authentication redirect.
+    """
+    location = urlparse(getattr(page, "url", "") or "")
+    if location.hostname not in ("instagram.com", "www.instagram.com"):
+        return False
+    if location.path not in ("", "/") or challenge_detected(page):
+        return False
+    try:
+        fields = page.locator('input[type="password"], input[name="password"]')
+        return not any(fields.nth(i).is_visible() for i in range(min(fields.count(), 6)))
     except Exception:
         return False
 
