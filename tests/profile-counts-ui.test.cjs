@@ -235,7 +235,12 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(followingKey,undefined,'Imported snapshots must not be mislabeled as a fresh browser discovery');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
  bridgeIdentity.active='ig_B';
+ statusOverride={status:'needs_verification',message:'Instagram requested CAPTCHA',running:true,
+  owner:'owner_A',account:'ig_A',total:1,progress:0};
  await bridgeCtx.window.igcCountsRobotPoll();
+ assert.equal(robotElements.igcCountsAuthFallback.style.display,'none',
+  'Owner A CAPTCHA warning must not leak into owner B workspace');
+ statusOverride=null;
  assert.equal(Array.from(bridgeStore.keys()).filter(k=>k.startsWith('igc_profile_counts_v1__')).length,1,
   'Polling another active Instagram must not save foreign profile-count results');
  assert.match(robotElements.igcCountsRobotStatus.textContent,/another Instagram/);
