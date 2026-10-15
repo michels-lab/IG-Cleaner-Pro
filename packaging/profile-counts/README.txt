@@ -1,3 +1,7 @@
+## v120.47 Windows read-only re-audits and dated history
+
+In **Automations → Profile Counts**, use **Start oldest-first re-audit** after the initial survey or whenever you want new readings. Profiles never successfully measured are prioritized, then the oldest previously measured ones. The Windows robot retains every successful timestamped count, resuming an interrupted second audit without restarting from zero. Click **Sync Windows dated history** to transfer all saved Windows readings (paginated with no overall profile cap) into this app's local measurement history; existing dated CSV export and per-profile comparisons continue working. Errors/reCAPTCHA do not erase earlier verified counts and must not be bypassed.
+
 # Insta Cleaner Pro — Installed Windows application
 
 **Recommended Windows delivery (next authorized stable release only):** run `IG-Cleaner-Pro-Windows-Setup-v<version>.exe`. The Michel's Lab installer provides a welcome screen, complete product license with required acceptance, optional desktop shortcut, Start menu entry, optional taskbar pinning instructions, and Windows uninstall. Chrome remains required.

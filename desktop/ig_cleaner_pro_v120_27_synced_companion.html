@@ -3813,6 +3813,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" id="igcCountsResume" type="button" onclick="igcCountsRobotContinue()">▶ Resume</button>
 <button class="btn" type="button" onclick="igcCountsRobotPoll()">⟳ Refresh progress</button>
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Restore saved results</button>
+<button class="btn" type="button" onclick="igcCountsRobotReaudit()">Start oldest-first re-audit</button>
+<button class="btn" type="button" onclick="igcCountsRobotSyncHistory()">Sync Windows dated history</button>
 </div>
 <p id="igcCountsRobotPaceNote" class="note">You can customize and save pacing for each account.</p>
 <div id="igcCountsAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin-top:12px">
@@ -14421,6 +14423,7 @@ window.igcCountsImportFile=async function(input){
    const existing=updates.get(username)||current[username];
    if(existing?.checked_at&&Number.isFinite(Date.parse(existing.checked_at))&&
       Date.parse(existing.checked_at)>=Date.parse(stamp)){older++;continue}
+   if(historyValid(existing)&&row.status!=='ok'){older++;continue}
    updates.set(username,row);
   }
   for(const [username] of updates)if(historyValid(current[username]))archive.push(current[username]);
@@ -14474,6 +14477,7 @@ async function applyRobotRows(rows){
    approximate:r.approximate===true||r.approximate==='true'};
   if(current[u]?.checked_at&&Number.isFinite(Date.parse(current[u].checked_at))&&
      Date.parse(current[u].checked_at)>=Date.parse(stamp))continue;
+  if(historyValid(current[u])&&incoming.status!=='ok')continue;
   if(historyValid(current[u]))archive.push(current[u]);
   if(historyValid(incoming))archive.push(incoming);
   changes.push([u,incoming]);
@@ -14525,7 +14529,10 @@ window.igcCountsRobotPoll=async function(){
   const good=Number(state.successful??state.progress??0),total=Number(state.total||0);
   const analyzed=Number(state.analyzed??good),errors=Number(state.errors||0);
   const unavailable=Number(state.unavailable||0),pending=Number(state.pending??Math.max(0,total-analyzed));
-  const percentage=total?Math.round(Math.min(total,analyzed)/total*100):0;
+  const isReaudit=state.audit_mode==='oldest_first',
+   auditDone=Number(state.audit_completed||0),
+   effectiveDone=isReaudit?auditDone:analyzed;
+  const percentage=total?Math.round(Math.min(total,effectiveDone)/total*100):0;
   const bar=document.getElementById('igcCountsRobotProgress');if(bar)bar.value=percentage;
   for(const [id,value] of [
    ['igcCountsMetricAnalyzed','Analyzed: '+analyzed+' / '+total],
@@ -14535,9 +14542,11 @@ window.igcCountsRobotPoll=async function(){
    ['igcCountsMetricUnavailable','Unavailable: '+unavailable],
    ['igcCountsMetricRemaining','Remaining: '+(state.remaining??Math.max(0,total-good))]
   ]){const e=document.getElementById(id);if(e)e.textContent=value}
-  const percent=document.getElementById('igcCountsRobotPercent');if(percent)percent.textContent=percentage+'% analyzed'+(!state.discovery_complete?' · Following provisional':'');
+  const percent=document.getElementById('igcCountsRobotPercent');if(percent)percent.textContent=percentage+(isReaudit?'% re-audited':'% analyzed')+
+   (!state.discovery_complete&&state.queue_source==='instagram'?' · Following provisional':'');
   const current=document.getElementById('igcCountsRobotCurrent');
-  if(current)current.textContent=(state.current_profile?'Checking @'+state.current_profile+' · ':'')+
+  if(current)current.textContent=(isReaudit?'Oldest-first cycle '+auditDone+'/'+(state.audit_total||total)+' · ':'')+
+   (state.current_profile?'Checking @'+state.current_profile+' · ':'')+
    (state.wait_seconds?'Next visit in '+state.wait_seconds+' s · ':'')+
    'Status: '+state.status+(state.detected_handle?' · @'+state.detected_handle:'');
   const pause=document.getElementById('igcCountsPause'),resume=document.getElementById('igcCountsResume');
@@ -14626,23 +14635,55 @@ window.igcCountsRobotStop=async function(){
  try{const result=await bridgeRequest('stop',{});robotStatus(result.message);await window.igcCountsRobotPoll()}
  catch(e){robotStatus(e.message,true)}
 };
+window.igcCountsRobotReaudit=async function(){
+ if(!robot){robotStatus('Open the installed Insta Cleaner Pro Windows app.',true);return}
+ if(!members().length){robotStatus('Load Following for the active Instagram workspace first.',true);return}
+ await window.igcCountsRobotAuto(true,false,true);
+};
+window.igcCountsRobotSyncHistory=async function(){
+ if(!robot){robotStatus('Open the installed Windows app to sync saved measurements.',true);return}
+ const ctx=context();
+ try{
+  const state=await bridgeRequest('status');
+  if(state.owner!==ctx.owner||state.account!==ctx.account)
+   throw Error('Windows robot identity differs from the selected Instagram workspace.');
+  await countsHydrate();
+  let offset=0,total=0;
+  const seen=new Set();
+  while(true){
+   if(context().owner!==ctx.owner||context().account!==ctx.account)
+    throw Error('Instagram workspace changed during history synchronization.');
+   const page=await bridgeRequest('history?offset='+offset+'&size=1000');
+   if(context().owner!==ctx.owner||context().account!==ctx.account)
+    throw Error('Instagram workspace changed during history synchronization.');
+   if(!Array.isArray(page.rows))throw Error('Windows returned invalid history data.');
+   if(page.rows.length){await historyPersist(page.rows);total+=page.rows.length}
+   robotStatus('Synchronizing Windows dated measurements: '+total+' rows saved.');
+   if(page.next_offset==null)break;
+   if(!Number.isSafeInteger(page.next_offset)||page.next_offset<=offset||seen.has(page.next_offset))
+    throw Error('Windows returned a repeated or invalid history cursor.');
+   seen.add(page.next_offset);offset=page.next_offset;
+  }
+  robotStatus('Synchronized '+total+' dated Windows measurements; previous history preserved.');
+ }catch(e){countsStorageError(e)}
+};
 window.igcCountsRobotConnect=async function(){
  if(!robot){
-  robotStatus('Open InstaCleanerPro.exe from the Windows ZIP; its local service is built in.',true);
+  robotStatus('Open the installed Insta Cleaner Pro application from Windows Start; the local robot service is integrated.',true);
   return;
  }
  await window.igcCountsRobotAuto(true,false);
 };
 window.igcCountsRobotDiscover=async function(){
  if(!robot){
-  robotStatus('Open InstaCleanerPro.exe on Windows.',true);return;
+  robotStatus('Open the installed Insta Cleaner Pro Windows application.',true);return;
  }
  // Optional discovery is an explicit owner request, never a prerequisite
  // for processing the already imported Following list.
  await window.igcCountsRobotAuto(true,true);
 };
 window.igcCountsRobotContinue=async function(){
- if(!robot){robotStatus('Open InstaCleanerPro.exe on Windows.',true);return}
+ if(!robot){robotStatus('Open the installed Insta Cleaner Pro Windows application.',true);return}
  try{
   const ctx=context();
   const result=await bridgeRequest('continue',{owner:ctx.owner,account:ctx.account,...robotConfig()});
@@ -14665,12 +14706,13 @@ window.igcCountsRobotSaveConfig=async function(){
  }catch(e){robotStatus(e.message,true)}
 };
 let igcRobotAutoIdentity='';
-window.igcCountsRobotAuto=async function(force=false,discoverFollowing=false){
+window.igcCountsRobotAuto=async function(force=false,discoverFollowing=false,reaudit=false){
  if(!robot)return;
  const ctx=context(),id=ctx.owner+'__'+ctx.account;
  if(igcRobotAutoIdentity===id&&!force)return;
  try{
   const state=await bridgeRequest('status');
+  if(reaudit&&discoverFollowing)throw Error('Re-audit requires imported Following.');
   if(state.running){
    if(state.owner!==ctx.owner||state.account!==ctx.account){
     robotStatus('An active collection belongs to a different Instagram; results will not be mixed.',true);
@@ -14717,11 +14759,13 @@ window.igcCountsRobotAuto=async function(force=false,discoverFollowing=false){
   }
   await bridgeRequest('auto',{
    owner:ctx.owner,account:ctx.account,expected_handle,
-   usernames:[],discover_following:discoverFollowing,...upload,...pacing
+   usernames:[],discover_following:discoverFollowing,
+   audit_mode:reaudit?'oldest_first':'first_pass',...upload,...pacing
   });
   igcRobotAutoIdentity=id;
   robotStatus(discoverFollowing
    ?'Opening Instagram to refresh Following; your existing records remain saved.'
+   :reaudit?'Starting oldest-first re-audit of '+usernames.length+' imported profiles. Unmeasured profiles go first.'
    :'Opening Instagram to verify your session and scan '+usernames.length+
      ' imported profiles without reopening Following.');
  }catch(e){robotStatus('Could not start automatic collection: '+e.message,true)}

@@ -7,6 +7,8 @@ new vm.Script(match[1],{filename:'igc-profile-counts-ui.js'});
 assert(source.includes('id="igcProfileCountsPanel"'),'Automations must expose Profile Counts results');
 assert(source.includes('id="igcCountsImport"'),'Import control missing');
 assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot controls missing');
+assert(source.includes('onclick="igcCountsRobotReaudit()"'),'Oldest-first robot button missing from Automations');
+assert(source.includes('onclick="igcCountsRobotSyncHistory()"'),'Windows dated history sync missing from Automations');
 const automationStart=source.indexOf('id="page-automations"');
 const insightsStart=source.indexOf('id="page-profileStats"');
 const robotStart=source.indexOf('id="igcCountsRobotBridge"');
@@ -96,6 +98,13 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.match(elements.igcCountsHistoryView.textContent,/Δ followers 166/);
  await ctx.window.igcCountsExportHistory();
  assert.equal(clicked,2,'Full dated history must be exportable in Automations');
+ const failedRecheck='username,followers,following,checked_at,source,status,approximate\n'+
+   'public.user,,,2026-10-15T20:00:00Z,windows,error,false\n';
+ await ctx.window.igcCountsImportFile({files:[{text:async()=>failedRecheck}],value:'failed'});
+ assert.equal(JSON.parse(store.get(onlyKey)).records['public.user'].followers,'1400',
+  'A failed second audit must never erase the last verified count');
+ assert.equal(JSON.parse(store.get(initialHistoryKey)).length,3,
+  'A failed attempt must not invent or erase valid dated readings');
  identity.active='ig_B';
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('0 with data')),'Sibling Instagram must not inherit counts');
@@ -159,7 +168,11 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
    value={status:'idle',message:'Saved rows loaded',owner:'owner_A',account:'ig_A',total:1,progress:1};
   } else if(action==='status'){
    value=statusOverride||{status:'complete',message:'Done',owner:'owner_A',account:'ig_A',queue_source:'imported',total:1,progress:1,max_per_window:200,window_minutes:5,min_delay_seconds:5,pause_every:10,pause_minutes:2};
-  } else if(action==='results'){
+  } else if(url.includes('/api/history?')){
+    value={rows:[{username:'public.user',followers:'2222',following:'123',
+      checked_at:'2026-05-10T10:00:00Z',status:'ok',source:'windows',approximate:'false'}],
+      next_offset:null};
+   } else if(action==='results'){
    value={rows:[
     {username:'public.user',followers:'3456',following:'789',status:'ok',
      checked_at:'2026-10-12T01:00:00+00:00',approximate:'false'},
@@ -204,6 +217,19 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  const optional=requests.filter(r=>r.url.endsWith('/auto')).at(-1);
  assert.equal(JSON.parse(optional.options.body).discover_following,true,'Following refresh must require an explicit owner click');
  assert.deepEqual(JSON.parse(optional.options.body).usernames,[]);
+ await bridgeCtx.window.igcCountsRobotReaudit();
+ const secondAudit=requests.filter(r=>r.url.endsWith('/auto')).at(-1);
+ assert.equal(JSON.parse(secondAudit.options.body).audit_mode,'oldest_first',
+  'Read-only re-audit requires explicit action');
+ assert.equal(JSON.parse(secondAudit.options.body).use_staged_import,true,
+  'Re-audit uses imported Following without browser re-discovery');
+ await bridgeCtx.window.igcCountsRobotSyncHistory();
+ assert(requests.some(r=>r.url.includes('/api/history?offset=0&size=1000')),
+  'Paginated token-protected local history retrieval expected');
+ const afterSync=Array.from(bridgeStore.entries()).filter(([k])=>
+  k.startsWith('igc_profile_counts_history_fallback_v1__'));
+ assert(afterSync.some(([,v])=>JSON.parse(v).some(row=>row.followers==='2222')),
+  'Windows dated measurement must be archived in the active Instagram workspace');
  await bridgeCtx.window.igcCountsRobotStart();
  const start=requests.find(r=>r.url.endsWith('/start'));
  assert(start,'Direct Start must submit a localhost POST');
@@ -254,7 +280,9 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
  const robotHistoryKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_counts_history_fallback_v1__'));
  assert(robotHistoryKey,'Automated counts must be saved to history before latest update');
- assert.equal(JSON.parse(bridgeStore.get(robotHistoryKey))[0].followers,'3456');
+ const datedRobot=JSON.parse(bridgeStore.get(robotHistoryKey));
+ assert(datedRobot.some(row=>row.followers==='2222')&&datedRobot.some(row=>row.followers==='3456'),
+  'Imported older Windows reading and newer robot observation must coexist');
  const followingKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_discovered_v1__'));
  assert.equal(followingKey,undefined,'Imported snapshots must not be mislabeled as a fresh browser discovery');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');

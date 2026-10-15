@@ -81,6 +81,8 @@ jobs:
         run: python3 tests/android-native-english-contract.py
       - name: Verify translated Desktop UI and privacy safeguards
         run: python3 tests/english-ui-contract.py
+      - name: Verify Windows Profile Counts re-audit cycle, history and cross-owner isolation
+        run: python3 -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
       - name: Validate Chrome Companion least-privilege extension, parser and local CSV flow
         run: node tests/chrome-companion.test.cjs
       - name: Verify Windows Automations guidance and English controller errors
