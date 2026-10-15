@@ -1,3 +1,11 @@
+## 2026-10-15 — Official stable v120.47 RELEASED, future version unrequested
+
+- GitHub release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47 (2026-10-15 22:01:27 UTC). Verified exact commit `9d252f70c40145602bb7ad44ef74ffbf26bc5181`; governed publisher run `38813431832` completed successfully. Required Windows Setup EXE, Android production-signed APK, Desktop single HTML/ZIP, portable compatibility ZIP, checksum files, logo and privacy notice all exist as public release assets.
+- First release attempt was correctly blocked due to old six-screenshot assertion while real Desktop automation now captures eight. Visual verifier was updated to require all eight real Home/About/Automations screenshot files across both viewport classes. Rerun passed exact-commit visual QA and Windows installed Setup acceptance; real signed stable Android APK and checksums passed publishing.
+- Owner's request has been marked `authorized=false,status=published` to prevent unintentional re-publication. Distribution manifest now sets `currentStableRelease=v120.47`, `nextRelease=v120.48` (reserved only; not an owner release request). The tested v120.47 source is immutable under tag; do not retroactively rewrite published binaries.
+- Remaining acceptance: owner physical Windows/Chrome login and Instagram robots, updater on a real Windows installation, Android physical-device installation, and Windows Authenticode. No CAPTCHA bypass or claims of live user account proof.
+- Next work should begin on a new branch/version and only release after explicit owner instruction.
+
 ## 2026-10-15 — Windows checked updater (v120.47 candidate, NOT published)
 
 - Branch `feat/windows-verified-updater-20261015` implements installed Windows-only Updates action in the fixed header; visibility strictly gated on native loopback session fragment (no Windows installer in Android/standalone browser). About remains visible and independent.
