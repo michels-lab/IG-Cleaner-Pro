@@ -47,7 +47,7 @@ const ctx={
      const request=JSON.parse(opts.body);posts.push(request);
      state={...state,owner:request.owner,account:request.account,task:request.task,
        status:"starting",running:false,total:request.targets.length,
-       remaining:request.targets.length,
+       remaining:request.targets.length,attempted_usernames:first60,
        rows:request.targets.map(username=>({username}))};
    }
    return {ok:true,json:async()=>state};
