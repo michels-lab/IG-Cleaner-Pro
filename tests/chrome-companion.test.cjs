@@ -15,6 +15,8 @@ assert.equal(manifest.host_permissions,undefined,"No broad Instagram site permis
 assert(!("content_scripts" in manifest),"No always-on background scraping");
 assert(!("background" in manifest),"Do not run autonomous browser jobs");
 assert(html.includes('id="capture"')&&html.includes('id="export"'));
+assert(html.includes('id="reAudit"') && html.includes('id="historyExport"'));
+assert(html.includes('id="roundRemaining"'));
 const desktop=fs.readFileSync(path.join(__dirname,"../desktop/ig_cleaner_pro_v120_27_synced_companion.html"),"utf8");
 assert(desktop.includes('id="igcChromeCompanion"'),"Companion must be discoverable in Automations");
 assert(desktop.includes('onclick="igcCountsExportQueue()"'),"Following queue export must be present");
@@ -44,6 +46,28 @@ assert.deepEqual(C.parseCount("1,2 mil"),{count:"1200",approximate:true});
 assert.deepEqual(C.parseCount("1.234.567"),{count:"1234567",approximate:false});
 assert.equal(C.parseCount("text"),null);
 assert.equal(C.parseCount("unknown"),null);
+const oldRows={
+  "two.user":{username:"two.user",followers:"22",following:"35",
+    checked_at:"2026-04-01T00:00:00Z",status:"ok"},
+  "one.user":{username:"one.user",followers:"11",following:"15",
+    checked_at:"2025-01-01T00:00:00Z",status:"ok"},
+  "incomplete":{username:"incomplete",status:"unavailable"}
+};
+assert.deepEqual(C.firstPassQueue(["two.user","missing","incomplete","one.user"],oldRows),
+ ["missing","incomplete"],"Never measured before incomplete; complete records skipped");
+assert.deepEqual(C.oldestFirst(["two.user","one.user","missing","incomplete"],oldRows),
+ ["one.user","two.user"],"Second audit starts from the oldest last measurement");
+const historyRows={};const latest={};
+const a={...oldRows["one.user"]},newer={...a,followers:"17",following:"18",
+ checked_at:"2026-10-15T09:00:00Z"};
+C.appendMeasurement(latest,historyRows,a);
+const changes=C.appendMeasurement(latest,historyRows,newer);
+assert.equal(changes.followers_delta,6);
+assert.equal(changes.following_delta,3);
+assert.equal(latest["one.user"].followers,"17");
+assert.equal(historyRows["one.user"].length,2);
+assert.equal(C.historyCsv(historyRows,["one.user"]).split("\r\n").length,4,
+ "Dated export must contain both original and subsequent count snapshots");
 assert.deepEqual(C.importQueue('username,profile_url\r\n"a.user","https://instagram.com/a.user/"\r\n"b.user",\r\na.user,\r\n'),
  ["a.user","b.user"]);
 assert.throws(()=>C.importQueue("profile_url\nhttps://instagram.com/x/"),/username/);
@@ -81,8 +105,8 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
 
 (async () => {
  const elements={};
- for(const id of ["workspace","queueFile","next","capture","export","clear",
-  "queueSize","savedSize","remainingSize","status","current"]) {
+ for(const id of ["workspace","queueFile","next","capture","export","historyExport","reAudit","clear",
+  "queueSize","savedSize","remainingSize","roundRemaining","mode","status","current"]) {
    elements[id]={value:"",textContent:"",disabled:false,className:"",files:[],
       handlers:{},addEventListener(kind,fn){this.handlers[kind]=fn;}};
  }
@@ -127,6 +151,9 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
  activeTab.url="https://www.instagram.com/real.user/";
  await elements.capture.handlers.click();
  assert.equal(elements.savedSize.textContent,"1");
+ assert.equal(elements.remainingSize.textContent,"1");
+ assert.equal(elements.reAudit.disabled,true,
+  "Second audit is unavailable until all missing profiles are measured");
  assert.equal(history.injections.length,2);
  assert.equal(history.injections[0].target.tabId,12);
  assert.equal(history.injections[0].files[0],"collector.js");
@@ -135,10 +162,42 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
  await elements.export.handlers.click();
  assert.equal(history.downloads.length,1);
  assert.match(history.downloads[0].filename,/owner.one/);
+ // Completing the first pass unlocks one deliberately started oldest-first
+ // cycle; re-audits retain every historical record.
+ activeTab.url="https://www.instagram.com/second.user/";
+ result={...extracted,username:"second.user",followers:"100",
+  following:"70",checked_at:"2025-10-01T12:00:00.000Z"};
+ await elements.capture.handlers.click();
+ assert.equal(elements.savedSize.textContent,"2");
+ assert.equal(elements.remainingSize.textContent,"0");
+ assert.equal(elements.reAudit.disabled,false);
+ await elements.reAudit.handlers.click();
+ assert.match(elements.mode.textContent,/Re-audit/);
+ assert.equal(elements.roundRemaining.textContent,"2");
+ await elements.next.handlers.click();
+ assert.equal(history.navigations.at(-1),"https://www.instagram.com/second.user/",
+  "The second audit starts with the oldest measured profile");
+ activeTab.url="https://www.instagram.com/second.user/";
+ result={...result,followers:"104",following:"73",
+  checked_at:"2026-10-15T12:00:00.000Z"};
+ await elements.capture.handlers.click();
+ assert.equal(elements.roundRemaining.textContent,"1");
+ assert.equal(elements.reAudit.disabled,true);
+ assert.match(elements.status.textContent,/followers \+4/);
+ await elements.next.handlers.click();
+ assert.equal(history.navigations.at(-1),"https://www.instagram.com/real.user/",
+  "The same profile must not be revisited twice in one audit cycle");
+ await elements.historyExport.handlers.click();
+ assert.equal(history.downloads.length,2);
+ assert.match(history.downloads[1].filename,/History-owner.one/);
+ const savedHistory=persistent.get("igc_chrome_counts_v1__owner.one");
+ assert.equal(savedHistory.history["second.user"].length,2);
+ assert.equal(savedHistory.history["second.user"][0].followers,"100");
+ assert.equal(savedHistory.history["second.user"][1].followers,"104");
  activeTab.url="https://www.instagram.com/accounts/login/";
  await elements.capture.handlers.click();
  assert.match(elements.status.textContent,/profile/);
- assert.equal(elements.savedSize.textContent,"1","Failed capture cannot replace records");
+ assert.equal(elements.savedSize.textContent,"2","Failed capture cannot replace records");
  // A different workspace must not inherit imported queues or results.
  elements.workspace.value="owner.two";
  await elements.workspace.handlers.change();
@@ -146,7 +205,9 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
  assert.equal(elements.queueSize.textContent,"0");
  elements.workspace.value="owner.one";
  await elements.workspace.handlers.change();
- assert.equal(elements.savedSize.textContent,"1");
+ assert.equal(elements.savedSize.textContent,"2");
+ assert.equal(elements.roundRemaining.textContent,"1",
+  "Re-audit cycle progress must survive popup reopening and workspace selection");
  await elements.clear.handlers.click();
  assert.equal(elements.savedSize.textContent,"0");
  assert.equal(persistent.get(scoped).records["real.user"],undefined);
