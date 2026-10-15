@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Insta Cleaner Pro · Chrome Companion",
+  "version": "120.47.0",
+  "description": "Read visible Instagram profile counts in your regular Chrome session. Manual review only; no automated account changes.",
+  "action": {
+    "default_title": "Insta Cleaner Pro · Profile Counts",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab", "scripting", "storage", "unlimitedStorage", "downloads"]
+}
