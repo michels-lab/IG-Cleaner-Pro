@@ -3775,7 +3775,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p id="igcAutoIssueStatus" class="note" role="status" aria-live="polite">Unexpected relationships and missing evidence will appear here for manual review.</p>
 <div class="btnrow">
 <label>Task <select id="igcAutoIssueTask" onchange="igcAutoRenderIssues()"><option value="unfollow">Not Following Back</option><option value="cancel">Sent Requests</option><option value="audit">Followback Audit</option></select></label>
-<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="missing_profile_info">Missing evidence</option></select></label>
+<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="missing_profile_info">Missing evidence</option></select></label>
 <input id="igcAutoIssueSearch" type="search" placeholder="Find @username in issues" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
 </div>
 <div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;text-align:left">
@@ -15070,6 +15070,7 @@ const issueLabels={
  unexpected_followback:"Unexpected Follow Back: this account follows you",
  pending_already_following:"Stale request: now following",
  pending_not_requested:"Not a pending request anymore",
+ pending_cancel_unverified:"Cancellation click sent; status not confirmed after read-only refresh",
  mutual_before_action:"This account follows you; no unfollow action was taken",
  missing_profile_info:"Insufficient profile evidence; nothing clicked",
  requires_manual_review:"Could not verify; manual review required"
@@ -15118,6 +15119,11 @@ window.igcAutoRenderIssues=function(){
   const detail=document.createElement("div");detail.className="note";
   detail.textContent=issue.message||issue.status||"";
   reason.appendChild(detail);
+  if(selected==="cancel"&&issue.issue==="pending_cancel_unverified"){
+   const recovery=document.createElement("div");recovery.className="note";
+   recovery.textContent="The click may have succeeded. Open the profile to inspect Follow / Requested; do not re-run Cancel Request automatically.";
+   reason.appendChild(recovery);
+  }
   const profile=document.createElement("a");profile.className="btn";
   profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
   profile.textContent="↗ Open profile";actions.appendChild(profile);
