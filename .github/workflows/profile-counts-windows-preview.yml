@@ -17,6 +17,9 @@ on:
       - 'tools/ig_cleaner_desktop.py'
       - 'tests/test_native_desktop.py'
       - 'tests/test_profile_actions_chromium.py'
+      - 'tests/test_action_batch_history.py'
+      - 'tests/automations-next-batch.test.cjs'
+      - 'tests/pending-focus-reimport.test.cjs'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -60,6 +63,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup dependency install failed." }
           python tests/windows-installer-contract.py
           if ($LASTEXITCODE -ne 0) { throw "Installer/brand/EULA contract failed." }
+      - name: Verify Pending import, focus, third-batch and no-click replay protections
+        shell: pwsh
+        run: |
+          node tests/automations-next-batch.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Automations action batch selection failed." }
+          node tests/pending-focus-reimport.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
+          python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Persisted prior-batch exclusions failed." }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
