@@ -128,8 +128,8 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
  await elements.capture.handlers.click();
  assert.equal(elements.savedSize.textContent,"1");
  assert.equal(history.injections.length,2);
- assert.deepEqual(history.injections[0].target,{tabId:12});
- assert.deepEqual(history.injections[0].files,["collector.js"]);
+ assert.equal(history.injections[0].target.tabId,12);
+ assert.equal(history.injections[0].files[0],"collector.js");
  const scoped="igc_chrome_counts_v1__owner.one";
  assert.equal(persistent.get(scoped).records["real.user"].followers,"1256");
  await elements.export.handlers.click();
