@@ -1,3 +1,13 @@
+## 2026-10-14 — v120.46 development: large historical Profile Counts + cross-device audit migration
+
+- Owner explicitly authorized completion and release of v120.46. Publication is **gated by exact-head CI, Android production signing, Windows EXE and Desktop artifacts**; authorization is not proof that a release succeeded.
+- PR #98 implements owner/account-scoped IndexedDB records in the Desktop Profile Counts UI, transactional 500-record chunk writes, idempotent legacy localStorage migration and non-destructive backup retention. Storage/quota errors are shown; data is not silently dropped. Successful imports and robot results now await durable writes.
+- CSV results export uses streaming file writes when available, or bounded-content segments before Blob fallback.
+- Cross-device audit reconciles legacy fallback events into IndexedDB and removes the 12,000-event cutoff. Explicit errors replace silent fallback quota failures.
+- New browser tests cover v120.45 legacy count migration, IndexedDB persistence/reload, account isolation, 50k/100k/250k aggregate/pagination correctness and 12,031 historical audit events. Unit/visual/Windows/Android checks remain required before merge.
+- PR #97 already delivered unified Automations, large chunked imported queues and shared Chrome locks. Real Instagram acceptance, physical hardware validation and actual device storage constraints remain separate.
+- Latest normal published release remains v120.45 until the governed v120.46 publication is confirmed.
+
 ## 2026-10-14 — v120.46 unified Automations implementation merged into main
 
 - **MERGED:** PR #97 (superseding PR #95), squash merge `16c78ba84e6d110c7ef7ba8d6b2498f9078d0286`; changes are now in `main` only, **not yet published as a release**.
