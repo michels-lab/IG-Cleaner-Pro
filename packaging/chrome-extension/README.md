@@ -12,7 +12,15 @@ This is an **unpacked Manifest V3 extension** for your *regular, already signed-
 6. Choose **Export results CSV** in the extension, then use Insta Cleaner **Automations → Profile Counts → Import CSV results**. This CSV includes precisely the seven columns the app expects: `username,followers,following,checked_at,source,status,approximate`. Results are restricted to the selected workspace and your imported Following list. An incomplete/missing header counter is not saved.
 7. Saved rows survive reopening the Chrome popup. Importing a new queue does not delete previously captured counts. Clearing a workspace requires confirmation, affects only that locally labelled workspace and does not delete Insta Cleaner's imported exports/history.
 
-## Security and acceptance boundaries
+## Historical measurements and oldest-first second audit
+
+The first pass always prioritizes never-measured imported profiles, then incomplete/unavailable profiles. It skips already measured profiles. Each successful profile capture preserves its **Followers and Following** values, measurement timestamp, precision, and preceding snapshots.
+
+Once the first pass is complete, click **Start oldest-first re-audit**. A dated cycle is created containing all measured profiles, ordered by their **oldest most recent measurement**. Every profile is visited **at most once per cycle**, with navigation and capture only after your clicks. A failed capture never counts as an updated measurement; the profile remains eligible until an accurate reading is saved. Cycle progress persists when reopening the extension. At the end you can start a third (or later) audit sorted by the oldest available last measurement again.
+
+The popup displays the increase/decrease in Followers and Following compared to the previous capture. **Export latest results CSV** gives Insta Cleaner the current values; **Export dated history CSV** includes all prior successful measurements, even profiles no longer in the current Following queue. Starting another cycle and importing a new queue do not erase history. The optional **Clear this workspace** action remains a confirmed destructive deletion.
+
+
 
 - Only read-only visible profile header counters are parsed. The extension **cannot** cancel a request, unfollow, follow, like, scrape DMs, or claim Instagram has approved automated browsing. It uses `activeTab` and `scripting` only after your explicit click, plus `storage`, `unlimitedStorage` and `downloads`; **no host permissions, cookies, debugger or network permissions**.
 - Chrome normal account login already succeeds for the owner, but this does **not** guarantee that Instagram will always show visible counts on every page or that Chrome will allow every navigation. Never keep retrying Instagram challenges. The extension does not solve CAPTCHA or login issues.
