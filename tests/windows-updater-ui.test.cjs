@@ -48,36 +48,36 @@ const build=()=>{
  assert.equal(normal.elements.igcWindowsUpdatesButton.style.display,'inline-flex',
    'Native Windows app must expose Updates in fixed header');
  normal.elements.igcWindowsUpdatesButton.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(normal.elements.igcWindowsUpdatesOverlay['aria-hidden'],'false');
  assert(normal.calls.some(x=>x.url.endsWith('/status')));
  normal.elements.igcWindowsUpdatesCheck.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert(normal.calls.some(x=>x.url.endsWith('/check')&&x.opts.method==='POST'));
  normal.setCurrent({status:'update_available',current:'120.47',latest:'v120.48',progress:0,
   message:'A verified Setup exists',notes:'<script>alert(1)</script>',
   release_url:'https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.48'});
  normal.elements.igcWindowsUpdatesButton.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(normal.elements.igcWindowsUpdatesNotes.textContent,'<script>alert(1)</script>',
    'Untrusted release notes must be text, never injected as HTML');
  assert.equal(normal.elements.igcWindowsUpdatesButton.textContent,'↻ Updates available');
  assert.equal(normal.elements.igcWindowsUpdatesDownload.disabled,false);
  normal.elements.igcWindowsUpdatesDownload.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert(normal.calls.some(x=>x.url.endsWith('/download')&&x.opts.method==='POST'));
  normal.setCurrent({status:'ready_to_install',current:'120.47',latest:'v120.48',progress:100,
   message:'Verified installer'});
  normal.elements.igcWindowsUpdatesButton.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  const before=normal.calls.filter(x=>x.url.endsWith('/install')).length;
  normal.elements.igcWindowsUpdatesInstall.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(normal.calls.filter(x=>x.url.endsWith('/install')).length,before,
    'Owner declining Setup cannot trigger install');
  normal.ctx.window.confirm=()=>true;
  normal.elements.igcWindowsUpdatesInstall.handlers.click();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  const installs=normal.calls.filter(x=>x.url.endsWith('/install'));
  assert.equal(installs.length,1,'Confirmed Setup launch must call local protected endpoint once');
  assert.equal(JSON.parse(installs[0].opts.body).confirm,'run_installer');
