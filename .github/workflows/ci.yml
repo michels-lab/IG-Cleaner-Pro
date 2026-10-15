@@ -88,6 +88,7 @@ jobs:
       - name: Verify Pending second/third batches and imports in offline browser controller
         run: |
           node tests/automations-next-batch.test.cjs
+          node tests/automations-cold-start.test.cjs
           node tests/pending-focus-reimport.test.cjs
           python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
       - name: Verify Windows-only updater dialog and required click-to-install

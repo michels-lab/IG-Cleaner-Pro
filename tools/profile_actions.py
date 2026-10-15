@@ -485,10 +485,35 @@ class ActionRobot:
         self.current = ""
         self.wait_until = 0.0
 
-    def _base(self, task=None):
-        ident = "\0".join((self.owner, self.account, task or self.task))
+    def _base_for(self, owner, account, task):
+        ident = "\0".join((owner, account, task))
         digest = hashlib.sha256(ident.encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("instagram-actions-" + digest + ".json")
+
+    def _base(self, task=None):
+        return self._base_for(self.owner, self.account, task or self.task)
+
+    def attempted_history(self, data):
+        """Read a named owner/account/task journal even on a fresh Windows launch.
+
+        The normal snapshot has no active task until the first job starts.
+        A cold-start selection must not assume that means past actions vanished.
+        This read never opens Chrome, alters protection, or replays a click.
+        """
+        owner = str(data.get("owner") or "").strip()
+        account = str(data.get("account") or "").strip()
+        task = str(data.get("task") or "")
+        if (not owner or not account or len(owner) > 200 or len(account) > 120
+                or task not in TASKS):
+            raise ValueError("Select a valid owner, Instagram workspace and action task.")
+        with self.lock:
+            journal = _read_json(self._base_for(owner, account, task), {})
+        attempted = sorted(user for user, record in journal.items()
+            if valid_username(user) == user and isinstance(record, dict)
+            and record.get("status") in ("ok", "review", "error", "blocked")
+            and not _preclick_identity_blocked(record))
+        return {"owner": owner, "account": account, "task": task,
+                "attempted_usernames": attempted}
 
     def _protection_file(self):
         ident = "\0".join((self.owner, self.account))

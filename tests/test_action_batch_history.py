@@ -67,6 +67,31 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,"already attempted"):
                     robot.start(self._request(["pending.clicked"]))
 
+    def test_read_prior_attempts_on_fresh_windows_launch_without_starting_worker(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            existing = self._action(root)
+            from profile_actions import _atomic_json
+            _atomic_json(existing._base_for("owner1", "ig_account_1", "cancel"), {
+                "already.done": {"status": "ok"},
+                "uncertain.click": {"status": "review", "message": "Click may have occurred."},
+                "before.click": {"status": "blocked", "message":
+                    "The active Instagram account cannot be verified. No action was performed."}
+            })
+            cold = self._action(root)
+            self.assertEqual(cold.status, "idle")
+            scope = {"owner": "owner1", "account": "ig_account_1", "task": "cancel"}
+            data = cold.attempted_history(scope)
+            self.assertEqual(data["attempted_usernames"], ["already.done", "uncertain.click"])
+            self.assertIsNone(cold.worker)
+            self.assertEqual(cold.targets, [])
+            for changed in ({"account": "another_account"}, {"owner": "another_owner"},
+                            {"task": "unfollow"}):
+                other = {**scope, **changed}
+                self.assertEqual(cold.attempted_history(other)["attempted_usernames"], [])
+            with self.assertRaisesRegex(ValueError, "valid owner"):
+                cold.attempted_history({**scope, "task": "invalid"})
+
     def test_journal_is_owner_and_task_scoped(self):
         with TemporaryDirectory() as temporary:
             robot=self._action(Path(temporary))
