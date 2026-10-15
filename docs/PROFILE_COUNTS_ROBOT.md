@@ -1,14 +1,22 @@
-# Profile Counts Robot — current v120.46 development workflow
+# Profile Counts Robot — current Windows guidance (v120.47 development)
 
-> **Current instructions supersede the historical v120.41–v120.45 notes below.** Stable v120.45 remains publicly available; this v120.46 reorganization is not released until the owner authorizes a new GitHub Release.
+> Current official GitHub Release is **v120.46**. Changes described below for v120.47 require a separate explicit owner release instruction and are NOT yet in the installed build. Historical v120.41–v120.45 instructions are retained below for context only.
 
-1. Open **Automations → Automation Center → Profile Counts** in the integrated Windows app. **All robots** (Profile Counts, Cancel Pending, Unfollow and optional Followback Audit) now live in Automations.
-2. Import your Following/Followers relationship export once, in the selected Instagram workspace. The Profile Counts robot consumes the **already-imported** Following usernames directly; it does not need to reopen Instagram's Following popup. Use **Refresh Following from Instagram (optional)** only when you explicitly want a new browser-based list.
-3. When starting Profile Counts, the Desktop uploads the complete imported list to the local token-protected controller in account-scoped chunks (1,000 at a time; maximum 2,000 per HTTP request). No artificial global user-count limit is imposed on analysis queues; page rendering and network request sizes are not analysis limits.
-4. Chrome verifies the currently signed-in Instagram handle before visiting any imported profile to read visible public Followers/Following values. It pauses rather than continuing against an unverified identity/challenge.
-5. Open **Insights** for aggregated statistics, paginated Profile Counts **results**, comparisons, and exports. The table renders 250 rows per page to maintain responsiveness, but calculations include every imported username. Do not infer live followback from the historical export.
-6. Cancel Pending / Unfollow and Profile Counts **must not use the same persistent Chrome session simultaneously**. Local statistics and manual Focus review can proceed independently. Relationship-changing actions still require explicit approval.
-7. Large counts/history storage still needs an IndexedDB migration (#96) for strong scale across low-quota browsers. The existing backend queue and analysis logic no longer truncate at 50,000, but available device storage and Instagram restrictions remain physical limits. Chrome/Instagram live acceptance must still be tested with the owner's own session.
+1. Open **Automations → Automation Center → Profile Counts** in the integrated Windows app. **All robots** (Profile Counts, Cancel Pending, Unfollow and optional Followback Audit) live in Automations.
+2. Import the Following/Followers export into the correct Instagram workspace. The Profile Counts robot consumes **already-imported** Following usernames; Instagram Following discovery is entirely optional.
+3. All imported profiles are staged in account-scoped chunks, not truncated at a fixed follower/following threshold. The full per-profile Profile Counts results, filters, pagination and exports are in **Automations**; **Insights** contains aggregate account statistics only. Historical counts are not proof of live followback.
+4. The robot uses a visible Chrome window with its **own persistent browser profile**, separate from the user's normal Chrome. Instagram login happens only on instagram.com. A normal Chrome login does not automatically transfer session cookies to the robot.
+5. If Instagram shows a security checkpoint or **/auth_platform/recaptcha**, Profile Counts **stops navigation and waits** while the user handles the verification manually in the visible Chrome window. It does not solve CAPTCHA, refresh the challenge, probe an owner's profile, or collect anything while the checkpoint is active. Use **Pause** to end the job safely and keep saved progress.
+6. Account-changing robots **stop without clicks** on a verification challenge and require a separate explicitly approved batch after normal account access is restored. Never assume a completed CAPTCHA means Instagram accepted the login; the session and exact account identity must still be verified.
+7. Other tabs/Chrome robots must not share navigation simultaneously. Original exports remain local, owner/account-scoped history uses IndexedDB without silently deleting legacy data, and the Windows counts do **not** automatically synchronize to Android.
+
+## If CAPTCHA succeeds but Instagram sends you back to Login
+
+- Do not repeatedly restart the robot or spam login attempts. If the app is on v120.46, the development fix is not installed yet.
+- Close/pause the robot and open **https://www.instagram.com/** in **ordinary Chrome**, with no automation running. This distinguishes a general Instagram authentication issue from the app's separate browser profile. If regular Chrome also loops, use Instagram's official account-access/recovery options and allow any security review to complete.
+- If regular Chrome works but the separate robot Chrome cannot sign in, report that distinction to development. Do not copy, upload, export or reset the robot's private session/cookies, and do not delete `%USERPROFILE%\\.ig-cleaner-pro` or clear Insta Cleaner storage. A successful regular Chrome login cannot be reused automatically by Insta Cleaner.
+- A human may complete the challenge in the visible robot Chrome window; Insta Cleaner must not click it or bypass it. If verification still returns to the login page, there is no guaranteed app-side fix for Instagram's refusal to establish that browser session.
+- Retry only when Instagram permits normal access and after verifying the selected @account. Do not proceed with Cancel Pending/Unfollow until session identity is positively confirmed and a new batch is explicitly authorized.
 
 ---
 
