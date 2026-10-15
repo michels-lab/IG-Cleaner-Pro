@@ -1,3 +1,11 @@
+## v120.47 Windows second audit — explicit, dated and resumable
+
+The installed Windows robot in **Automations → Profile Counts** now exposes **Start oldest-first re-audit** as a separate, user-initiated read-only operation. It scans the imported Following list (no mandatory Instagram Following re-discovery), first profiles lacking successful measurements, then previously measured profiles ordered by oldest saved successful timestamp. Pacing and pause controls are unchanged and still enforced, even for previously measured profiles. A dedicated account-scoped `.reaudit.json` records the frozen queue and completed attempts; an interrupted job is resumed when the user explicitly restarts or resumes that re-audit. A newly completed cycle permits a new chronological cycle.
+
+Windows also stores verified successful values append-only in an account-scoped `.dated.csv`, preserving pre-upgrade latest readings and all future checks. Unavailable/error measurements do not erase valid last-successful counts. **Sync Windows dated history** imports the complete history into the local workspace's dated IndexedDB archive in bounded pages, and the existing per-profile history view/export remains available in Automations, including usernames no longer followed. Changing Instagram workspaces halts the import instead of mixing records.
+
+This does not resolve Instagram CAPTCHA loops in the separate Playwright Chrome profile, and does not automate follow/unfollow/cancel operations. If the separate Chrome cannot verify the account, use the already provided manual read-only Chrome Companion or CSV history workflows. Live owner Chrome acceptance and any cross-device Android history sync remain open, not implied by offline CI.
+
 # Profile Counts Robot — current Windows guidance (v120.47 development)
 
 > Current official GitHub Release is **v120.46**. Changes described below for v120.47 require a separate explicit owner release instruction and are NOT yet in the installed build. Historical v120.41–v120.45 instructions are retained below for context only.
