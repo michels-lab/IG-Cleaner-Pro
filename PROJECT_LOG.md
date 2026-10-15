@@ -1,3 +1,11 @@
+## 2026-10-15 — Preserve Profile Counts re-audit history inside Desktop Automations (v120.47 development)
+
+- The Chrome Companion already preserved dated snapshots, but importing its CSV into the main Desktop app replaced only the latest per-profile reading and discarded earlier timestamps. This blocked longitudinal comparisons from the main Automations workspace.
+- Added an additive IndexedDB schema upgrade (records untouched; new `history` store, scoped by app login and Instagram profile) with distinct timestamp/values identity and chunked non-truncating writes. Legacy environments use an explicit-error localStorage fallback rather than silently lose dated snapshots.
+- Importing `Export dated history CSV` now preserves old, baseline and new snapshots, and uses only the newest successful reading for the current profile counts. A later `unavailable`/error result never overwrites previously verified figures. Reimporting an identical history is idempotent.
+- Added **Export dated history CSV** in Automations → Profile Counts to retrieve the entire local per-workspace timeline, plus offline regression fixtures for older/newer imports, duplicates, protection of verified counts and real export action. No arbitrary account-size limit, account-relationship changes, or Instagram access in tests.
+- Independent Windows Playwright robot still cannot re-measure completed profiles as a separate autonomous second audit; only the human-operated Chrome Companion currently supports oldest-first repeated visits. Keep this explicitly pending, along with real owner Chrome/Instagram acceptance and v120.47 release authorization.
+
 ## 2026-10-15 — Priority and longitudinal re-audits for Chrome Companion (v120.47 development)
 
 - Owner clarified that Profile Counts must keep prior counts for each profile, **prioritize never-measured**, and then allow a **second audit prioritized by oldest previous review/measurement**.
