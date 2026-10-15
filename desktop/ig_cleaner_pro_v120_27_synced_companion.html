@@ -14225,13 +14225,27 @@ async function countsHistoryRows(db,scope){
   tx.onabort=()=>reject(tx.error||Error('Profile Counts history read aborted'));
  });
 }
-async function saveDatedHistory(rows){
- const scope=key(),db=await countsDb();
- if(!db)throw Error('Dated Profile Counts history needs IndexedDB. No measurements were replaced.');
+function historyFallbackKey(scope){return 'igc_profile_counts_history_v1__'+scope}
+function localHistoryRows(scope){
  try{
-  // Migrate every pre-history latest success before importing re-audit rows.
-  // Idempotent composite keys ensure reimport does not duplicate snapshots.
-  await countsHistoryPersist(db,scope,[...Object.values(read()),...rows]);
+  const parsed=JSON.parse(window.localStorage.getItem(historyFallbackKey(scope))||'[]');
+  if(!Array.isArray(parsed))throw Error('History format is invalid');
+  return parsed;
+ }catch(e){throw Error('Cannot read existing dated history: '+e.message)}
+}
+async function saveDatedHistory(rows){
+ const scope=key(),db=await countsDb(),add=[...Object.values(read()),...rows].filter(historicalCountValid);
+ if(!db){
+  // Keep legacy file:// and limited WebView environments usable. A quota error
+  // is surfaced, never silently truncated; the IndexedDB path has no row cap.
+  const indexed=new Map(localHistoryRows(scope).map(r=>[historyId(scope,r),r]));
+  for(const r of add)indexed.set(historyId(scope,r),r);
+  window.localStorage.setItem(historyFallbackKey(scope),JSON.stringify([...indexed.values()]));
+  return;
+ }
+ try{
+  // Additive migration of every pre-history latest result before fresh imports.
+  await countsHistoryPersist(db,scope,add);
  }finally{db.close()}
 }
 function newerCounts(a,b){return String(a?.checked_at||'')>=String(b?.checked_at||'')}
@@ -14309,12 +14323,16 @@ window.igcCountsExportHistory=async function(){
  try{
   await countsHydrate();
   const scope=key(),db=await countsDb();
-  if(!db)throw Error('Dated history export needs IndexedDB.');
   let rows;
-  try{
-   await countsHistoryPersist(db,scope,Object.values(read()));
-   rows=await countsHistoryRows(db,scope);
-  }finally{db.close()}
+  if(!db){
+   await saveDatedHistory([]);
+   rows=localHistoryRows(scope);
+  }else{
+   try{
+    await countsHistoryPersist(db,scope,Object.values(read()));
+    rows=await countsHistoryRows(db,scope);
+   }finally{db.close()}
+  }
   rows.sort((a,b)=>a.username.localeCompare(b.username)||Date.parse(a.checked_at)-Date.parse(b.checked_at));
   await downloadLargeCSV(filename('dated-history'),function*(){yield COLUMNS;for(const r of rows)yield COLUMNS.map(k=>r[k]??'')});
   setMessage('Exported '+rows.length+' dated profile measurements from this Instagram workspace.');
