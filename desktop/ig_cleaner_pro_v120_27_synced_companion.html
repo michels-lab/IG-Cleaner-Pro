@@ -15003,12 +15003,27 @@ function actionConfig(task,targets){
          protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
          confirmation:task+":"+targets.length};
 }
+async function refreshActionHistoryForStart(task){
+ // Always query the durable journal, including after Windows restarts.
+ // Background polling is not a reliable prerequisite: it may be busy,
+ // display an idle task, or swallow a transient connectivity error.
+ const before=scope(),owner=actionOwner();
+ const result=await requestAction("history",{...owner,task});
+ if(before!==scope()||mode!==task)throw Error("Account or task changed during batch preparation. Please try again.");
+ if(result.owner!==owner.owner||result.account!==owner.account||
+    result.task!==task||!Array.isArray(result.attempted_usernames))
+  throw Error("Robot history did not match the selected Instagram account. No actions started.");
+ const names=result.attempted_usernames.map(norm);
+ if(names.some(u=>!u))throw Error("Robot history contains an invalid username. No actions started.");
+ localStorage.setItem(actionAttemptedKey(task),JSON.stringify([...new Set(names)]));
+ return result;
+}
 window.igcAutoStart=async function(){
  if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
  try{
-  // Refresh the latest Windows journal before selecting the next batch.
-  // This is read-only; it never clicks Follow, Unfollow or Cancel.
-  if(actionBridge)await window.igcAutoPoll();
+  // Fail closed unless the latest persisted owner/account/task history
+  // is known. Never trust a stale in-memory batch or an idle snapshot.
+  await refreshActionHistoryForStart(mode);
   const targets=selectedActionTargets(),data=actionConfig(mode,targets);
   const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
   const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
