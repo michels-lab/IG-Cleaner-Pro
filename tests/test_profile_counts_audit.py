@@ -60,6 +60,19 @@ class ProfileCountsReauditTests(unittest.TestCase):
             self.assertEqual(renewed["targets"], ["new", "recent", "old"])
             self.assertEqual(renewed["done"], [])
 
+    def test_append_only_progress_does_not_rewrite_large_queue(self):
+        with TemporaryDirectory() as temp:
+            path = audit_cycle_path(Path(temp) / "large.csv")
+            users = [f"user.{i}" for i in range(3000)]
+            cycle = new_cycle(path, users, {})
+            initial = path.read_bytes()
+            for user in users[:30]:
+                mark_attempt(path, cycle, user)
+            self.assertEqual(path.read_bytes(), initial,
+                             "Immutable queue should never be rewritten for each visited profile")
+            self.assertEqual(len(resume_cycle(path, users)["done"]), 30)
+            self.assertEqual(len(list(path.parent.glob("*.done"))), 1)
+
     def test_windows_collector_explicit_cycle_resume_and_new_cycle(self):
         with TemporaryDirectory() as temp:
             collector = Collector(Path(temp), Path(temp) / "session")
@@ -127,9 +140,9 @@ class ProfileCountsReauditTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "differs"):
                 resume_cycle(p, ["two"])
             loaded = json.loads(p.read_text(encoding="utf-8"))
-            loaded["done"] = ["outsider"]
-            p.write_text(json.dumps(loaded), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "differs"):
+            done_file = p.with_name(p.name + "." + loaded["cycle_id"] + ".done")
+            done_file.write_text("outsider\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid"):
                 resume_cycle(p, ["one", "two"])
 
     def test_archive_legacy_and_new_snapshots_idempotently(self):
