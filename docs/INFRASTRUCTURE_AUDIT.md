@@ -1,3 +1,10 @@
+## 2026-10-15 — Opt-in verified native Windows Setup updater
+
+- The native updater uses GitHub public stable release metadata at a product-specific URL and checks official release SHA256SUMS. No new API tokens/secrets, Instagram access, cloud services, Supabase data mutations, update signing keys or remote privileged system changes. GET availability checks are automatic but optional downloads and Setup launch require foreground owner actions and session-only localhost capability.
+- Installer checksum is checked while streaming and immediately before invocation. App UI and robot CSV/JSON/done journal snapshots are archived locally before launch; Chromium browser workspace, original Instagram ZIP, cookies and passwords are **not** included in the backup. Native Inno Setup is already designed to preserve old user data and can be cancelled. The updater reports `installer_started` rather than falsely claiming update success.
+- Authenticode certificate/signature are **not configured** and the updater does not promise Windows publisher signature; SHA-256 guards integrity relative to official GitHub publication but is not a signature substitute. Owner real-machine update and physical Instagram sessions remain unvalidated.
+- Work is source-level v120.47 development, no GitHub release was published.
+
 ## 2026-10-15 — Windows robot distribution: installable Setup candidate
 
 - Declared per-user Inno Setup as the primary Windows robot distribution (existing Chrome/Playwright integrated EXE remains private installer payload, portable ZIP optional); no MS Store packaging, new external service, provider permissions or new signing secrets.
