@@ -236,6 +236,43 @@ def _verify_final_state(page, expected_handle, *, checks=3):
 
 
 
+def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
+    """Confirm a clicked pending-request cancellation by *reading*, never clicking.
+
+    Instagram sometimes keeps a stale Requested header immediately after the
+    click, even when the server has accepted it. A single fresh profile load
+    may reveal Follow / Follow Back; only that is a confirmed cancellation.
+    A remaining Requested / Following / unknown state stays a manual review.
+    Never make a second relationship-changing click or silently retry.
+    """
+    prefix = "Pending cancellation unverified after read-only refresh: "
+    target = "https://www.instagram.com/" + username + "/"
+    try:
+        page.goto(target, wait_until="domcontentloaded", timeout=45000)
+        page.wait_for_timeout(750)
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return "review", prefix + "Instagram redirected away from the target; do not repeat the action."
+        result, message = _verify_final_state(page, expected_handle, checks=2)
+        if result == "ok":
+            return "ok", ("Cancel Request confirmed after a read-only profile refresh. " + message)
+        if result == "blocked":
+            return result, message + " Cancellation may already have occurred; do not repeat it."
+        header = page.locator("header").first
+        if header.count() and header.is_visible():
+            if _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]):
+                return "review", prefix + ("Instagram still displays Requested. "
+                                            "Do not repeat; check the profile manually.")
+            if _visible_button(header, [r"Following", r"Siguiendo"]):
+                return "review", prefix + ("Instagram now displays Following, not a cancelled request. "
+                                            "Review the relationship manually.")
+        return "review", prefix + "No unambiguous Follow state was visible. Do not repeat the action."
+    except Exception as exc:
+        return "review", prefix + ("The target could not be checked safely (" +
+                                     str(exc)[:100] + "). Do not repeat the action.")
+
+
 def _preclick_identity_blocked(entry):
     """Only retry historical failures that explicitly prove no click occurred.
 
@@ -258,6 +295,8 @@ def _action_issue(task, result, message):
         return "pending_already_following"
     if task == "cancel" and result == "review" and message.startswith(("The request no longer appears", "La solicitud ya no aparece")):
         return "pending_not_requested"
+    if task == "cancel" and result == "review" and message.startswith("Pending cancellation unverified after read-only refresh:"):
+        return "pending_cancel_unverified"
     if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
         return "mutual_before_action"
     if result == "review" and message.startswith(("The profile does not show", "El perfil no muestra")):
@@ -355,7 +394,12 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before Cancel Request confirmation. No final click was performed."
         choice.click(timeout=10000)
-    return _verify_final_state(page, expected_handle)
+    # A click may have succeeded even if Instagram's client UI has not caught
+    # up. A *read-only* fresh profile load may confirm it; never click again.
+    result, details = _verify_final_state(page, expected_handle)
+    if result != "review":
+        return result, details
+    return _verify_cancel_after_readonly_refresh(page, username, expected_handle)
 
 
 
