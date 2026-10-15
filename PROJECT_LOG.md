@@ -1,3 +1,13 @@
+## 2026-10-15 — Live Instagram reCAPTCHA login loop; v120.47 safety and login UX fix (unreleased)
+
+- Owner's **real Windows Chrome screenshot** shows Instagram's `/auth_platform/recaptcha` with an “I'm not a robot” checkbox. Owner reports completing the CAPTCHA returns to Login. This is evidence of a real **authentication/security challenge**, NOT proof that Instagram accepted the session, and NOT a successful robot action.
+- Confirmed source defect: `challenge_detected` recognized `/challenge/` and `/checkpoint/` but NOT `/auth_platform/recaptcha`. Profile Counts could wait without recognizing the challenge and, after 15 seconds, attempt an optional own-profile navigation while a person was trying to sign in.
+- Fixed challenge recognition by route and visible security copy. A new `safe_to_probe_owner_from_home` guard only permits the one-time read-only own-profile identity probe from actual Instagram Home with no login/password/challenge screen.
+- Profile Counts now reports `needs_verification`, holds navigation while Chrome remains open for **human-only CAPTCHA handling**, and resumes ordinary identity checks only after challenge disappearance. If Instagram loops back to Login, no collection or account action is allowed without positive account identity verification. User may Pause; saved queues/history are not destroyed.
+- Cancel Pending/Unfollow actions now fail closed on a challenge in any browser tab during login, rather than trying to proceed or automatically solving it. No change to action-confirmation gates, rate limiting, protected accounts, journal integrity or session isolation.
+- New offline URL/body/security and login-page probe regression: `tests/test_profile_counts_recaptcha.py`, triggered by Profile Counts CI and Windows EXE workflow. Updated Automations status and `docs/PROFILE_COUNTS_ROBOT.md` recovery advice, including normal-vs-robot Chrome profile distinction and no cookie upload, CAPTCHA bypass or storage deletion.
+- No real login was attempted by development. Whether Instagram will accept the separate Playwright/Chrome session remains outside the app's control and must be tested only by the owner. Official stable remains **v120.46**, next v120.47 has **no release authorization**.
+
 ## 2026-10-15 — v120.47 Automations Windows English + documentation regression gates (development only)
 
 - Continued from official stable v120.46 and merged PR #99 (v120.47 source). Verified that the source already includes the Python Profile Counts `http`-prefix username fix, independent read-only owner identity proof for account actions, and per-profile results in Automations. These remain **unreleased** and unaccepted on a real Instagram session.
