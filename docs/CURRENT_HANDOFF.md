@@ -1,3 +1,10 @@
+## 2026-10-15 — Windows checked updater (v120.47 candidate, NOT published)
+
+- Branch `feat/windows-verified-updater-20261015` implements installed Windows-only Updates action in the fixed header; visibility strictly gated on native loopback session fragment (no Windows installer in Android/standalone browser). About remains visible and independent.
+- `tools/windows_updater.py` checks GitHub's anonymous official stable feed on launch/manual request. Download requires user click, validates exact SHA-256 + declared asset size and hostname; Setup launch requires another explicit confirmation and local app/robot backup first. Chrome cookies/profiles are not copied into backup. No automatic install, no claim that launching Setup proves installation; no Authenticode signer yet.
+- Embedded real package version via `--add-data release/android-signing.json;metadata`; native backend exposes authenticated update endpoints. Tests: Python `tests/test_windows_updater.py`, Node `tests/windows-updater-ui.test.cjs`, Windows Setup install/launch smoke and Desktop/Android rendered CI. Live owner Windows acceptance remains separate.
+- Existing second-audit Profile Counts PR #111 merged in main `9ab8a399`; outdated conflicting PR #106 closed without merge. Official stable remains v120.46. No release authorization.
+
 ## 2026-10-15 — Windows Profile Counts oldest-first re-audit (v120.47 development)
 
 - Existing `main` already has independent IndexedDB history under `ig_cleaner_profile_counts_history_v1`, a per-profile viewer/deltas and CSV export; do not merge conflicting old PR #106 over it.
