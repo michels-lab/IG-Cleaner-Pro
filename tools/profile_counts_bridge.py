@@ -674,7 +674,7 @@ class Collector:
             return [saved[u] for u in self.usernames if u in saved]
 
 
-def build_server(collector: Collector, token: str, port: int = 0):
+def build_server(collector: Collector, token: str, port: int = 0, updater=None):
     actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
     collector.actions = actions
     class Handler(BaseHTTPRequestHandler):
@@ -730,13 +730,16 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 self._send(200, collector.following())
             elif self.path == "/api/actions/status":
                 self._send(200, actions.snapshot())
+            elif self.path == "/api/update/status":
+                self._send(200, updater.snapshot() if updater else
+                           {"status":"unavailable","message":"Native Windows updater is not attached."})
             else:
                 self._send(404, {"error": "Ruta desconocida."})
 
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -747,7 +750,22 @@ def build_server(collector: Collector, token: str, port: int = 0):
                 data = json.loads(body or b"{}")
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request.")
-                if self.path == "/api/actions/start":
+                if self.path.startswith("/api/update/"):
+                    if updater is None:
+                        raise ValueError("Windows updates are available only in the installed application.")
+                    if self.path == "/api/update/check":
+                        result = updater.check()
+                    elif self.path == "/api/update/download":
+                        result = updater.download()
+                    elif self.path == "/api/update/cancel":
+                        result = updater.cancel_download()
+                    elif self.path == "/api/update/install":
+                        if data.get("confirm") != "run_installer":
+                            raise ValueError("Installing a verified update requires explicit owner confirmation.")
+                        result = updater.install()
+                    else:
+                        raise ValueError("Unknown update action.")
+                elif self.path == "/api/actions/start":
                     result = actions.start(data)
                 elif self.path == "/api/actions/continue":
                     result = actions.start(data, resume=True)
