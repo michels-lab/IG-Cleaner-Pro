@@ -12,7 +12,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import threading
 from urllib.parse import urlparse
@@ -25,6 +24,10 @@ SETUP_PATTERN = re.compile(r"IG-Cleaner-Pro-Windows-Setup-v(\d+\.\d+)\.exe$")
 VERSION = re.compile(r"v(\d+)\.(\d+)$")
 SHA = re.compile(r"^[0-9a-fA-F]{64}$")
 MAX_SETUP_BYTES = 12 * 1024**3  # Installer artifact safety limit, NOT profile/data limit.
+
+
+def running_on_windows() -> bool:
+    return os.name == "nt"
 
 
 def numeric_version(value: str) -> tuple[int, int]:
@@ -246,7 +249,7 @@ class WindowsUpdater:
             if self.state["status"] != "ready_to_install" or not self.downloaded or not self.expected_sha:
                 raise ValueError("There is no downloaded, verified Setup ready to install.")
             installer,expected = self.downloaded,self.expected_sha
-        if os.name != "nt":
+        if not running_on_windows():
             raise RuntimeError("Windows Setup can only be launched on Windows.")
         if _sha256(installer) != expected:
             raise ValueError("The downloaded Setup changed after verification; installation was blocked.")
