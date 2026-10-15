@@ -35,6 +35,8 @@ If Instagram works in your regular Chrome but reCAPTCHA loops in the separate ro
 3. With Instagram already signed in in this same regular Chrome, use **Open next profile**, wait for the visible header to load, and click **Capture visible counts**. Repeat with explicit clicks for each profile.
 4. In the extension, **Export results CSV**. Back in **Automations → Profile Counts** select **Import captured results CSV**. Existing imported Following and stored Profile Counts records are preserved; records unrelated to the active Following list are ignored.
 
+After completing all never-measured or incomplete profiles, use **Start oldest-first re-audit** to review the profiles with the **oldest last-count date first**. The extension tracks each re-audit cycle and keeps every previous measurement (followers, following, time, precision); a profile is measured only once in the current cycle. Export the latest values as the normal Insta Cleaner import CSV, and optionally export the complete dated history for change comparisons. Importing a new Following list does not reset old measurements.
+
 The extension uses only temporary `activeTab` permission after a click and local browser storage. It has no Instagram site-wide host permissions and never reads/transfers cookies, collects passwords, solves CAPTCHA, or performs a follow/unfollow/cancel action. Missing profile counters are not marked successful; K/M counts are flagged approximate. All data stays on your PC. Read `chrome-extension/README.md` for exact instructions and limitations. This **does not** provide an autonomous replacement for Cancel Pending or Unfollow. It is a manual read-only recovery path until Instagram permits account interaction through an accepted integration.
 
 ## Security and acceptance
