@@ -11,6 +11,7 @@ for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])eleme
 for(const id of ['igcAutoStatus','igcAutoLiveStatus'])elements[id]={textContent:''};
 for(const [id,value] of Object.entries({igcAutoSearch:'',igcAutoBatch:'2',igcAutoRest:'5',igcAutoGap:'5'}))elements[id]={value};
 elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};
+elements.igcActionAuthFallback={style:{display:'none'}};
 const document={hidden:false,getElementById:id=>elements[id]||null,
  createElement:tag=>({tag,children:[],textContent:'',appendChild(node){this.children.push(node)},
   addEventListener(type,fn){if(type==='click')this.click=fn}})};
@@ -89,5 +90,18 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(ctx.window.igcAutoSwitchGuard(),false,
   'Active job for a different account still blocks identity change');
+ context.owner='owner_A';context.active='ig_A';
+ p.running=false;p.status='blocked';
+ p.message='Instagram requested a reCAPTCHA or account security check. The robot stopped before performing actions.';
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcActionAuthFallback.style.display,'block',
+   'Human CAPTCHA block must expose safe manual Pending/Following options');
+ assert.equal(elements.igcAutoResume.disabled,true,
+   'Blocked CAPTCHA should not be retried through Resume');
+ assert.match(elements.igcAutoLiveStatus.textContent,/security check/);
+ p.status='paused';p.message='Progress saved';
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcActionAuthFallback.style.display,'none');
+ assert.equal(elements.igcAutoResume.disabled,false);
  console.log('Automations action execution, owner switching guard, pause and partial HTML gate: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
