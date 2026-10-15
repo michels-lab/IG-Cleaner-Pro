@@ -17,8 +17,13 @@ foreach ($name in @("InstaCleanerPro.exe","README.txt","BUILD-INFO.txt","EXECUTA
 $expected = (Get-Content (Join-Path $payload "EXECUTABLE-SHA256.txt") -Raw).Trim().ToLowerInvariant()
 $actual = (Get-FileHash (Join-Path $payload "InstaCleanerPro.exe") -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($expected -ne $actual) { throw "Embedded robot executable checksum mismatch" }
-$compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-if (!(Test-Path $compiler)) { throw "Inno Setup 6 is required. Install with 'choco install innosetup --yes --no-progress'." }
+$paths = @(
+  "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+  "${env:ProgramFiles}\Inno Setup 7\ISCC.exe",
+  "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe"
+)
+$compiler = $paths | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (!$compiler) { throw "Inno Setup compiler was not found after installing the Chocolatey dependency." }
 & $compiler "/DMyAppVersion=$Version" "/DPayloadDir=$payload" "packaging/windows-installer/InstaCleanerPro.iss"
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed with $LASTEXITCODE" }
 $filename = "IG-Cleaner-Pro-Windows-Setup-v$Version.exe"
