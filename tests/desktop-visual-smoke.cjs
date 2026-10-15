@@ -185,6 +185,32 @@ const {chromium} = require("playwright");
       await capture("about","socials");
       await page.locator("#aboutDeveloperClose").click();
       assert(!(await modal.isVisible()),"About close action must work");
+
+      // Capture the actual changed Automations screen at both viewports.
+      // Fixture exposes the human-only recovery surface; no live Instagram
+      // verification is attempted and no robot action is authorized.
+      await page.evaluate(() => {
+        showPage('automations');
+        document.getElementById('igcCountsAuthFallback').style.display='block';
+        document.getElementById('igcActionAuthFallback').style.display='block';
+        document.getElementById('igcCountsManualCSV').style.display='flex';
+        document.getElementById('igcCountsManualHelp').style.display='block';
+      });
+      const recovery=page.locator('#igcCountsAuthFallback');
+      const manual=page.locator('#igcCountsManualCSV');
+      await recovery.scrollIntoViewIfNeeded();
+      assert(await recovery.isVisible(), 'Automations must expose manual CAPTCHA recovery');
+      assert(await manual.isVisible(), 'Manual CSV tools must remain available');
+      const recoveryBox=await recovery.boundingBox();
+      assert(recoveryBox && recoveryBox.width>=200 && recoveryBox.width<=viewport.width+2,
+        'CAPTCHA recovery panel clips on '+viewport.name+': '+JSON.stringify(recoveryBox));
+      const pendingManual=recovery.getByRole('button',{name:'Review Pending manually'});
+      assert(await pendingManual.isVisible(), 'Manual Pending review action is missing');
+      await capture('automations','manual-recovery');
+      await pendingManual.click();
+      assert(await page.locator('#page-pendingRequests').isVisible(),
+        'Manual recovery must navigate to Pending, not start an action robot');
+      await page.evaluate(() => showPage('automations'));
       if (viewport.name === "wide") {
         // Exercise real account switches and reload persistence without a real
         // Instagram export or backend credentials. Same usernames must never
@@ -253,6 +279,6 @@ const {chromium} = require("playwright");
     physical_device_acceptance:"not_claimed"
   };
   fs.writeFileSync(path.join(destination,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
-  assert.equal(shots.length,6);
-  console.log("SUCCESS: Desktop Home+About six runtime screenshots and loaded studio/socials verified");
+  assert.equal(shots.length,8);
+  console.log("SUCCESS: Desktop Home, About and Automations/manual recovery eight runtime screenshots verified");
 })().catch(err=>{console.error(err);process.exitCode=1});
