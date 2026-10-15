@@ -1,3 +1,5 @@
+**Follow-up root cause found during implementation (2026-10-15):** both Profile Counts and ActionRobot called `page.goto("https://www.instagram.com/")` unconditionally when opening persistent Chrome. This could overwrite a restored `/auth_platform/recaptcha` or Login page BEFORE challenge detection. Added `preserve_instagram_auth_page` and prioritize an existing authentication tab so launch never navigates it away; offline tests cover restored CAPTCHA/Login tabs and ordinary profile pages. This does not authenticate the user or bypass Instagram's security controls. Release remains unauthorised.
+
 ## 2026-10-15 — Live Instagram reCAPTCHA login loop; v120.47 safety and login UX fix (unreleased)
 
 - Owner's **real Windows Chrome screenshot** shows Instagram's `/auth_platform/recaptcha` with an “I'm not a robot” checkbox. Owner reports completing the CAPTCHA returns to Login. This is evidence of a real **authentication/security challenge**, NOT proof that Instagram accepted the session, and NOT a successful robot action.
