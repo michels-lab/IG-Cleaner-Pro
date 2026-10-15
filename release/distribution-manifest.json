@@ -41,7 +41,17 @@
       "transport": "github-release",
       "runtime": "local-windows-chrome",
       "execution": "double-click InstaCleanerPro.exe (bundled UI + local robot)",
-      "liveInstagramOwnerAcceptance": "not-yet-validated"
+      "liveInstagramOwnerAcceptance": "not-yet-validated",
+      "chromeCompanion": {
+        "directory": "chrome-extension",
+        "mode": "read-only-user-operated-profile-counts",
+        "bundledWithWindowsZip": true,
+        "separateChromeSession": false,
+        "cookieTransfer": false,
+        "privateApi": false,
+        "autoFollowOrUnfollow": false,
+        "physicalInstagramAcceptance": "not-yet-validated"
+      }
     }
   },
   "browserState": {
