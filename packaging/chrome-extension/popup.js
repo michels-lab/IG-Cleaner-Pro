@@ -84,7 +84,7 @@
     $("export").disabled = busy || !valid;
     $("historyExport").disabled = busy || !valid;
     $("reAudit").disabled = busy || !!firstRemaining.length || !state.queue.length ||
-      (state.audit && auditRemaining.length > 0);
+      !!(state.audit && auditRemaining.length > 0);
     $("mode").textContent = state.audit ? "Re-audit · oldest first" : "First pass · unmeasured first";
     $("roundRemaining").textContent = state.audit ? String(auditRemaining.length) : "—";
     $("current").textContent = !state.queue.length
