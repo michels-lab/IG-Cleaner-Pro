@@ -1,3 +1,10 @@
+## 2026-10-15 — Priority and longitudinal re-audits for Chrome Companion (v120.47 development)
+
+- Owner clarified that Profile Counts must keep prior counts for each profile, **prioritize never-measured**, and then allow a **second audit prioritized by oldest previous review/measurement**.
+- Updated Chrome Companion to store each successful Followers and Following snapshot with checked_at, source and precision per username, preserving history even after a queue refresh. The popup first-pass queue sorts never-measured before incomplete and skips complete measurements; a user-initiated oldest-first re-audit snapshots a bounded per-cycle ordered target list and records completed profiles without repeats. Re-audits re-sort by the last saved timestamp on every newly started cycle.
+- Exports latest valid Profile Counts rows for existing Automations import and a separate dated CSV of all historical snapshots; displays both numerical deltas after a repeated measurement. Migrates prior single-snapshot extension records into historical timelines without deletion.
+- Extended automated VM tests to cover ordering, both re-audit modes, per-cycle persistence, change deltas, and preserving older snapshots. Verification must be judged from the exact GitHub PR head; no real Instagram counts collected and no release authorized.
+
 ## 2026-10-15 — Regular Chrome Companion for Profile Counts (v120.47 development, no release)
 
 - Owner explicitly instructed to **build**, not just propose, a way for Insta Cleaner to work with Instagram in their regular Chrome. Prior owner evidence: Instagram already works in regular Chrome and the official mobile app, while the separate Playwright-driven robot Chrome loops through /auth_platform/recaptcha. PRs #102/#103 previously integrated safe challenge detection and manual CSV fallback; neither made the separate automated browser trusted.
