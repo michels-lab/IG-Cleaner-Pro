@@ -3764,6 +3764,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot disconnected. Open InstaCleanerPro.exe on Windows to start the local service.</p>
+<div id="igcActionAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin:12px 0">
+<strong>Instagram verification is blocking the action robot.</strong>
+<p class="note">Regular Chrome and the Instagram mobile app may work even when this separate robot browser is rejected. Do not repeatedly retry CAPTCHA or an unverified batch. No cancellation or unfollow is confirmed by this warning.</p>
+<div class="btnrow"><button type="button" class="btn" onclick="showPage('pendingRequests')">Review Pending manually</button>
+<button type="button" class="btn" onclick="showPage('list')">Review Following manually</button></div></div>
 <progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Batch progress"></progress>
 <div class="panel" id="igcAutoIssuesPanel" style="margin-top:14px" aria-label="Issue Review">
 <div class="title">Issue Review <span id="igcAutoIssueTotal" class="note" aria-live="polite">0</span></div>
@@ -3785,9 +3790,9 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p class="note">Every part of Profile Counts is here: collect, pace, monitor, inspect individual Followers / Following values and export the results. Insights is for account-wide analyses only. No new Following export is required.</p>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Automatic Instagram profile collection</strong>
-<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate. Starting a robot opens a separate Chrome profile and may require its own Instagram verification.</p>
 <div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
-<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
+<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">▶ Start Profile Counts in separate Chrome</button>
 <button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
 <a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46" target="_blank" rel="noopener">Get Windows app</a>
 </div>
@@ -3810,6 +3815,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Restore saved results</button>
 </div>
 <p id="igcCountsRobotPaceNote" class="note">You can customize and save pacing for each account.</p>
+<div id="igcCountsAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin-top:12px">
+<strong>Instagram login/verification requires manual attention.</strong>
+<p class="note">The robot cannot confirm a logged-in account. If regular Chrome works but this separate Chrome asks for CAPTCHA repeatedly, pause the robot and use your imported lists. Never copy cookies or delete session folders to fix it.</p>
+<div class="btnrow"><button type="button" class="btn" onclick="igcCountsRobotStop()">⏸ Pause robot safely</button>
+<button type="button" class="btn" onclick="showPage('pendingRequests')">Review Pending manually</button>
+<button type="button" class="btn" onclick="showPage('list')">Review Following manually</button></div></div>
 </div>
 <div class="btnrow" id="igcCountsManualCSV">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Export robot queue</button>
@@ -3817,7 +3828,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsExportResults()">Export CSV results</button>
 <button class="btn" type="button" onclick="igcCountsRender()">Refresh results</button>
 </div>
-<p class="note" id="igcCountsManualHelp">On Windows, start the local robot here or use the optional CLI to process an exported queue. The robot pauses for Instagram verification and preserves saved results. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instructions</a>.</p>
+<p class="note" id="igcCountsManualHelp">Manual CSV import/export remains available even when the Windows robot is connected or Instagram rejects its Chrome session. Historical counts are not proof of live followback. Do not mark a pending request canceled unless Instagram confirms it. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Recovery instructions</a>.</p>
 
 </div>
 <div class="panel" id="igcProfileCountsPanel">
@@ -14335,6 +14346,8 @@ window.igcCountsRobotPoll=async function(){
   const stalled=state.status==='needs_attention';
   const verificationWaiting=state.status==='needs_verification';
   const verificationBlocked=state.status==='blocked'&&/recaptcha|security verification/i.test(state.message||'');
+  const fallback=document.getElementById('igcCountsAuthFallback');
+  if(fallback)fallback.style.display=(verificationWaiting||verificationBlocked||stalled)?'block':'none';
   robotStatus((verificationWaiting
     ? (state.message||'Complete Instagram security verification manually in the visible Chrome window. The robot will not navigate during the check.')
     : verificationBlocked
@@ -14516,8 +14529,10 @@ if(robot&&robot.port>0&&robot.port<=65535){
  window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
  if(controls)controls.style.display='flex';
- const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='none';
- const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='none';
+ // Manual import/export remains available when the separate Chrome session
+ // fails Instagram verification. Do not hide non-robot work behind its login.
+ const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='flex';
+ const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='block';
  window.igcCountsRobotPreview();
  setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
  setTimeout(()=>window.igcCountsRobotPoll(),1000);
@@ -14768,13 +14783,16 @@ window.igcAutoPoll=async function(){
   }
   const bar=document.getElementById("igcAutoProgress");
   if(bar)bar.value=state.total?Math.round(100*(state.total-state.remaining)/state.total):0;
+  const authBlocked=state.status==="blocked"&&/recaptcha|security check|verification/i.test(state.message||"");
+  const authHelp=document.getElementById("igcActionAuthFallback");
+  if(authHelp)authHelp.style.display=authBlocked?"block":"none";
   const info=document.getElementById("igcAutoLiveStatus");
   if(info)info.textContent="Status: "+state.status+" · "+(state.message||"")+
       (state.current_profile?" · @"+state.current_profile:"")+
       (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":"");
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
-  if(resume)resume.disabled=state.running||!["paused","blocked","review","error"].includes(state.status);
+  if(resume)resume.disabled=state.running||authBlocked||!["paused","blocked","review","error"].includes(state.status);
   window.igcAutoRender();
  }catch(e){
   const el=document.getElementById("igcAutoLiveStatus");
