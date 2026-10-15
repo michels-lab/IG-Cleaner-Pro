@@ -1,3 +1,11 @@
+## v120.47 development — fixes for owner screenshots (not yet released)
+
+- Live owner screenshot: Actions → Sent Requests blocked at first profile because the target profile hid the account identity navigation. Reported 1/40 processed, 0 confirmed. Never interpret this as a cancellation; no action performed. Fix is strict same-context own-profile Edit-profile proof in a separate read-only Chrome tab, with fail-closed wrong-account checks.
+- Live owner screenshot: Profile Counts rejected imported usernames before Chrome started. Root cause: Python `valid_username` erroneously parsed legitimate `http`-prefix usernames as URLs. Corrected URL recognition and tests.
+- All Profile Counts, including the per-profile results table and exports, is now in Automations. Insights is strictly aggregate analysis.
+- Account-changing actions retain explicit batch approval, per-click identity protection, and no replay of uncertain operations. Safe no-click historical session failures can be reattempted on owner-authorized new batch.
+- Stable v120.46 does not include fixes. v120.47 not yet published. No real Instagram acceptance, only offline synthetic DOM tests.
+
 ## Published stable v120.46 — October 14, 2026 (Mexico) / October 15 UTC
 
 - Official verified normal GitHub Release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46, exact source SHA `4550635e7435002915b47472452c4c74aba1bc04`, successful governed workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38658477664 .
