@@ -2,6 +2,8 @@ name: Insta Cleaner integrated Windows app preview
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - 'tools/profile_counts_robot.py'
