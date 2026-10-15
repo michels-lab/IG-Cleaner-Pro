@@ -25,7 +25,7 @@ from profile_actions import ActionRobot
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
                                   resume_cycle, mark_attempt, append_dated_reading,
-                                  read_dated_page)
+                                  seed_latest_readings, read_dated_page)
 from profile_counts_pacing import (check_pacing, history_path, load_history,
                                    register_visit, finish_visit, wait_required,
                                    DEFAULT_COUNT, DEFAULT_WINDOW_MINUTES, DEFAULT_DELAY_SECONDS,
@@ -199,6 +199,9 @@ class Collector:
             self.usernames = [] if discover else normalized
             self.total = len(self.usernames)
             saved = read_results(self.result_path())
+            # One-time, additive legacy migration: imported prior successes
+            # appear in dated history before any later recheck can change them.
+            seed_latest_readings(dated_history_path(self.result_path()), saved)
             if self.audit_mode == "oldest_first":
                 cycle_file = audit_cycle_path(self.result_path())
                 self.audit_cycle = (resume_cycle(cycle_file, self.usernames)
@@ -262,6 +265,7 @@ class Collector:
             self.wait_until = 0
             self.current_profile = ""
             saved = read_results(self.result_path())
+            seed_latest_readings(dated_history_path(self.result_path()), saved)
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
             self.message = ("Saved results restored; select Start to continue."
