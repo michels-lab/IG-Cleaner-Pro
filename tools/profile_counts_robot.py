@@ -96,7 +96,9 @@ def parse_profile_counts(*texts: str):
 
 def valid_username(raw):
     value = str(raw or "").strip().lstrip("@")
-    if value.startswith("http"):
+    # 'http.cat', 'httpshop' and similar are valid Instagram handles.
+    # Only a real absolute URL with scheme delimiter should be parsed as one.
+    if value.lower().startswith(("http://", "https://")):
         parsed = urlparse(value)
         if parsed.hostname not in ("www.instagram.com", "instagram.com"):
             return None
