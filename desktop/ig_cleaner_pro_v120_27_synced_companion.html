@@ -3764,6 +3764,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot disconnected. Open InstaCleanerPro.exe on Windows to start the local service.</p>
+<div id="igcActionAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin:12px 0">
+<strong>Instagram verification is blocking the action robot.</strong>
+<p class="note">Regular Chrome and the Instagram mobile app may work even when this separate robot browser is rejected. Do not repeatedly retry CAPTCHA or an unverified batch. No cancellation or unfollow is confirmed by this warning.</p>
+<div class="btnrow"><button type="button" class="btn" onclick="showPage('pendingRequests')">Review Pending manually</button>
+<button type="button" class="btn" onclick="showPage('list')">Review Following manually</button></div></div>
 <progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Batch progress"></progress>
 <div class="panel" id="igcAutoIssuesPanel" style="margin-top:14px" aria-label="Issue Review">
 <div class="title">Issue Review <span id="igcAutoIssueTotal" class="note" aria-live="polite">0</span></div>
@@ -3785,9 +3790,9 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p class="note">Every part of Profile Counts is here: collect, pace, monitor, inspect individual Followers / Following values and export the results. Insights is for account-wide analyses only. No new Following export is required.</p>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Automatic Instagram profile collection</strong>
-<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
+<p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate. Starting a robot opens a separate Chrome profile and may require its own Instagram verification.</p>
 <div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
-<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
+<button class="btn primary" type="button" onclick="igcCountsRobotConnect()">▶ Start Profile Counts in separate Chrome</button>
 <button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
 <a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46" target="_blank" rel="noopener">Get Windows app</a>
 </div>
@@ -3810,6 +3815,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsRobotLoad()">↻ Restore saved results</button>
 </div>
 <p id="igcCountsRobotPaceNote" class="note">You can customize and save pacing for each account.</p>
+<div id="igcCountsAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin-top:12px">
+<strong>Instagram login/verification requires manual attention.</strong>
+<p class="note">The robot cannot confirm a logged-in account. If regular Chrome works but this separate Chrome asks for CAPTCHA repeatedly, pause the robot and use your imported lists. Never copy cookies or delete session folders to fix it.</p>
+<div class="btnrow"><button type="button" class="btn" onclick="igcCountsRobotStop()">⏸ Pause robot safely</button>
+<button type="button" class="btn" onclick="showPage('pendingRequests')">Review Pending manually</button>
+<button type="button" class="btn" onclick="showPage('list')">Review Following manually</button></div></div>
 </div>
 <div class="btnrow" id="igcCountsManualCSV">
 <button class="btn primary" type="button" onclick="igcCountsExportQueue()">① Export robot queue</button>
@@ -3817,7 +3828,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcCountsExportResults()">Export CSV results</button>
 <button class="btn" type="button" onclick="igcCountsRender()">Refresh results</button>
 </div>
-<p class="note" id="igcCountsManualHelp">On Windows, start the local robot here or use the optional CLI to process an exported queue. The robot pauses for Instagram verification and preserves saved results. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instructions</a>.</p>
+<p class="note" id="igcCountsManualHelp">Manual CSV import/export remains available even when the Windows robot is connected or Instagram rejects its Chrome session. Historical counts are not proof of live followback. Do not mark a pending request canceled unless Instagram confirms it. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Recovery instructions</a>.</p>
 
 </div>
 <div class="panel" id="igcProfileCountsPanel">
@@ -14233,9 +14244,9 @@ async function downloadLargeCSV(name,rows){
 function parseCSV(text){const rows=[],row=[];let field='',quoted=false;text=String(text||'').replace(/^\uFEFF/,'');for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"')quoted=true;else if(c===','){row.push(field);field=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row.slice());row.length=0;field=''}else field+=c}if(quoted)throw Error('CSV entrecomillado incompleto');if(field||row.length){row.push(field);rows.push(row)}return rows}
 function validCount(v){const s=String(v??'').trim();return s===''?'':(/^\d{1,15}$/.test(s)&&Number.isSafeInteger(Number(s))?s:null)}
 function setMessage(msg,bad=false){const node=document.getElementById('igcCountsFootnote');if(node){node.textContent=msg;node.style.color=bad?'var(--red)':'var(--muted)'}}
-window.igcCountsExportQueue=function(){const users=members();if(!users.length){setMessage('Primero importa o sincroniza tu lista Following en este Instagram.',true);return}download(filename('cola'),[['username','profile_url'],...users.map(u=>[u,'https://www.instagram.com/'+u+'/'])]);setMessage('Exported queue of '+users.length+' profiles for the browser robot.')};
+window.igcCountsExportQueue=function(){const users=members();if(!users.length){setMessage('Import or sync the Following list for the selected Instagram account first.',true);return}download(filename('cola'),[['username','profile_url'],...users.map(u=>[u,'https://www.instagram.com/'+u+'/'])]);setMessage('Exported queue of '+users.length+' profiles for the browser robot.')};
 window.igcCountsExportResults=async function(){try{await countsHydrate();const all=read(),users=members();await downloadLargeCSV(filename('resultados'),function*(){yield COLUMNS;for(const u of users){const r=all[u]||{};yield [u,r.followers??'',r.following??'',r.checked_at??'',r.source??'',r.status??'pending',r.approximate??'false']}});setMessage('Exported '+users.length+' profiles; missing counts remain empty.')}catch(e){countsStorageError(e)}};
-window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV requiere username, followers, following, checked_at y status.');const allowed=new Set(members());if(!allowed.size)throw Error('Primero carga Following en el Instagram activo.');await countsHydrate();const current=read(),changes=[];let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};changes.push([username,current[username]]);imported++}await write(current,changes);window.igcCountsRender();setMessage('Saved '+imported+' results. Ignored '+ignored+' (foreign profiles, invalid, or stale).')}catch(err){countsStorageError(err)}finally{input.value=''}};
+window.igcCountsImportFile=async function(input){const file=input?.files?.[0];if(!file)return;try{const rows=parseCSV(await file.text()),headers=(rows.shift()||[]).map(s=>s.trim().toLowerCase());const indexes=Object.fromEntries(COLUMNS.map(n=>[n,headers.indexOf(n)]));if(['username','followers','following','checked_at','status'].some(n=>indexes[n]<0))throw Error('CSV must contain username, followers, following, checked_at and status.');const allowed=new Set(members());if(!allowed.size)throw Error('Load the Following list in the active Instagram workspace first.');await countsHydrate();const current=read(),changes=[];let imported=0,ignored=0;for(const cells of rows){const get=n=>indexes[n]<0?'':String(cells[indexes[n]]??'').trim(),username=normalize(get('username'));if(!username||!allowed.has(username)){ignored++;continue}const followers=validCount(get('followers')),following=validCount(get('following')),status=get('status').toLowerCase(),stamp=get('checked_at');if(followers===null||following===null||!['ok','error','unavailable'].includes(status)||(status==='ok'&&(followers===''||following===''))||!/^\d{4}-\d\d-\d\dT/.test(stamp)){ignored++;continue}if(current[username]?.checked_at&&current[username].checked_at>stamp){ignored++;continue}current[username]={username,followers,following,checked_at:stamp,source:get('source')||'instagram_visible_profile_browser',status,approximate:get('approximate')==='true'};changes.push([username,current[username]]);imported++}await write(current,changes);window.igcCountsRender();setMessage('Saved '+imported+' results. Ignored '+ignored+' (foreign profiles, invalid, or stale).')}catch(err){countsStorageError(err)}finally{input.value=''}};
 let countsPage=0;
 window.igcCountsSetPage=function(next,reset=false){countsPage=reset?0:Math.max(0,countsPage+next);window.igcCountsRender()};
 window.igcCountsRender=function(){const body=document.getElementById('igcCountsRows'),sum=document.getElementById('igcCountsSummary');if(!body||!sum)return;const users=members(),stored=read(),measured=users.filter(u=>stored[u]?.status==='ok').length,failed=users.filter(u=>stored[u]&&stored[u].status!=='ok').length;sum.replaceChildren();for(const label of [users.length+' profiles in Following',measured+' with data',(users.length-measured-failed)+' pending',failed+' unavailable / error']){const el=document.createElement('span');el.textContent=label;sum.appendChild(el)}const q=String(document.getElementById('igcCountsQuery')?.value||'').toLowerCase(),filter=document.getElementById('igcCountsFilter')?.value||'all',chosen=users.filter(u=>{const s=stored[u]?.status||'pending';return u.includes(q)&&(filter==='all'||(filter==='pending'&&s==='pending')||(filter==='ok'&&s==='ok')||(filter==='other'&&s!=='ok'&&s!=='pending'))});const pageSize=250,totalPages=Math.max(1,Math.ceil(chosen.length/pageSize));countsPage=Math.min(countsPage,totalPages-1);const offset=countsPage*pageSize;body.innerHTML=chosen.slice(offset,offset+pageSize).map(u=>{const r=stored[u]||{},status=r.status||'pending',stamp=r.checked_at?new Date(r.checked_at):null,date=stamp&&!Number.isNaN(stamp.getTime())?stamp.toLocaleString('es-MX'):'—',fmt=n=>(n===undefined||n===null||n==='')?'—':Number(n).toLocaleString('es-MX'),suffix=r.approximate?' ≈':'';return '<tr><td><a href="https://www.instagram.com/'+u+'/" target="_blank" rel="noopener noreferrer">@'+esc(u)+'</a></td><td>'+esc(fmt(r.followers))+suffix+'</td><td>'+esc(fmt(r.following))+suffix+'</td><td>'+esc(date)+'</td><td>'+esc(status)+'</td></tr>'}).join('')||'<tr><td colspan="5">No profiles match these filters.</td></tr>';const info=document.getElementById('igcCountsPageInfo');if(info)info.textContent='Page '+(countsPage+1)+' / '+totalPages+' · '+chosen.length.toLocaleString('en-US')+' profiles';const prev=document.getElementById('igcCountsPagePrev'),next=document.getElementById('igcCountsPageNext');if(prev)prev.disabled=countsPage===0;if(next)next.disabled=countsPage>=totalPages-1;setMessage('Showing '+(chosen.length?offset+1:0)+'–'+Math.min(chosen.length,offset+pageSize)+' of '+chosen.length+' matches. All imported profiles are included in analytics; pages limit only rendered rows.')};
@@ -14299,6 +14310,8 @@ window.igcCountsRobotPoll=async function(){
   const state=await bridgeRequest('status');
   const ctx=context();
   if(state.owner && (state.owner!==ctx.owner||state.account!==ctx.account)){
+   const fallback=document.getElementById('igcCountsAuthFallback');
+   if(fallback)fallback.style.display='none';
    robotStatus('The robot belongs to another Instagram workspace. Select the correct account before syncing.',true);return;
   }
   if(state.owner){
@@ -14335,6 +14348,8 @@ window.igcCountsRobotPoll=async function(){
   const stalled=state.status==='needs_attention';
   const verificationWaiting=state.status==='needs_verification';
   const verificationBlocked=state.status==='blocked'&&/recaptcha|security verification/i.test(state.message||'');
+  const fallback=document.getElementById('igcCountsAuthFallback');
+  if(fallback)fallback.style.display=(verificationWaiting||verificationBlocked||stalled)?'block':'none';
   robotStatus((verificationWaiting
     ? (state.message||'Complete Instagram security verification manually in the visible Chrome window. The robot will not navigate during the check.')
     : verificationBlocked
@@ -14516,8 +14531,10 @@ if(robot&&robot.port>0&&robot.port<=65535){
  window.igcCountsRobotRestoreConfig();
  const controls=document.getElementById('igcCountsRobotActions');
  if(controls)controls.style.display='flex';
- const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='none';
- const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='none';
+ // Manual import/export remains available when the separate Chrome session
+ // fails Instagram verification. Do not hide non-robot work behind its login.
+ const manuals=document.getElementById('igcCountsManualCSV');if(manuals)manuals.style.display='flex';
+ const manualHelp=document.getElementById('igcCountsManualHelp');if(manualHelp)manualHelp.style.display='block';
  window.igcCountsRobotPreview();
  setInterval(()=>{if(!document.hidden)window.igcCountsRobotPoll()},5000);
  setTimeout(()=>window.igcCountsRobotPoll(),1000);
@@ -14743,6 +14760,8 @@ window.igcAutoPoll=async function(){
   // job belonging to A must still prevent B from changing identities.
   actionState=state;
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
+   const fallback=document.getElementById("igcActionAuthFallback");
+   if(fallback)fallback.style.display="none";
    const text=document.getElementById("igcAutoLiveStatus");
    if(text)text.textContent=state.running
      ?"A job is running for another Instagram account; pause it before switching."
@@ -14768,13 +14787,16 @@ window.igcAutoPoll=async function(){
   }
   const bar=document.getElementById("igcAutoProgress");
   if(bar)bar.value=state.total?Math.round(100*(state.total-state.remaining)/state.total):0;
+  const authBlocked=state.status==="blocked"&&/recaptcha|security check|verification/i.test(state.message||"");
+  const authHelp=document.getElementById("igcActionAuthFallback");
+  if(authHelp)authHelp.style.display=authBlocked?"block":"none";
   const info=document.getElementById("igcAutoLiveStatus");
   if(info)info.textContent="Status: "+state.status+" · "+(state.message||"")+
       (state.current_profile?" · @"+state.current_profile:"")+
       (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":"");
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
-  if(resume)resume.disabled=state.running||!["paused","blocked","review","error"].includes(state.status);
+  if(resume)resume.disabled=state.running||authBlocked||!["paused","blocked","review","error"].includes(state.status);
   window.igcAutoRender();
  }catch(e){
   const el=document.getElementById("igcAutoLiveStatus");
