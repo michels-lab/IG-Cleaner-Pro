@@ -64,7 +64,7 @@ assert.match(C.extractVisibleProfile(doc("100 followers","50 following"),
  "https://www.instagram.com/accounts/login/").error,/profile page/);
 assert.match(C.exportCsv({"real.user":extracted},["real.user"]),
  /real\.user,1256,1200,.*instagram_visible_profile_extension,ok,true/);
-assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").length,3,
+assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").length,2,
  "Unknown usernames should not add rows");
 
 (async () => {
