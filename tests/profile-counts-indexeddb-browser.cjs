@@ -71,6 +71,43 @@ const {chromium}=require("playwright");
    await window.igcCountsImportFile({files:[{text:async()=>contents}],value:"new"});
   },csv);
   assert.equal((await idbRecord("new.user"))?.followers,"1200","CSV import persisted to IndexedDB");
+  // Re-audit import: older rows are archived, never allowed to downgrade latest.
+  // The prior v120.47 latest count is also retained in the new append-only DB.
+  const historyCsv="username,followers,following,checked_at,source,status,approximate\n"+
+   "new.user,1000,500,2026-01-09T09:00:00Z,chrome-companion,ok,false\n"+
+   "new.user,1300,650,2026-10-15T09:00:00Z,chrome-companion,ok,false\n"+
+   "legacy.user,200,30,2026-01-01T09:00:00Z,chrome-companion,ok,false\n"+
+   "foreign.user,999,999,2026-10-15T09:00:00Z,chrome-companion,ok,false\n";
+  await page.evaluate(async content=>{
+    await window.igcCountsImportFile({files:[{text:async()=>content}],value:"history"});
+  },historyCsv);
+  assert.equal((await idbRecord("new.user"))?.followers,"1300",
+    "Re-audit must keep newest measurement as current count");
+  assert.equal((await idbRecord("legacy.user"))?.followers,"201",
+    "An older re-audit must not overwrite migrated v120.45 data");
+  const historyFor=async username=>page.evaluate(async({scope,username})=>{
+   const db=await new Promise((res,rej)=>{const q=indexedDB.open("ig_cleaner_profile_counts_history_v1",1);
+    q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+   try{return await new Promise((res,rej)=>{
+    const tx=db.transaction("measurements","readonly");
+    const q=tx.objectStore("measurements").index("profile")
+      .getAll(IDBKeyRange.only(scope+String.fromCharCode(0)+username));
+    q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+   finally{db.close()}
+  },{scope:key,username});
+  const newHistory=await historyFor("new.user");
+  assert.equal(newHistory.length,3,
+    "Initial count + older snapshot + newer snapshot must all persist independently");
+  assert.deepEqual(newHistory.map(r=>r.followers).sort(),["1000","1200","1300"]);
+  assert.equal((await historyFor("foreign.user")).length,0,
+    "Foreign profiles may not enter measurement history");
+  await page.evaluate(()=>{
+   document.getElementById("igcCountsHistoryUser").value="new.user";
+  });
+  await page.evaluate(()=>window.igcCountsViewHistory());
+  const timeline=await page.locator("#igcCountsHistoryView").innerText();
+  assert(timeline.includes("3 saved measurements")&&timeline.includes("Δ followers"),
+    "Automations must display a dated comparison after re-audit import");
   const other=key+"__different-instagram";
   const alien=await page.evaluate(async scope=>{
    const db=await new Promise((res,rej)=>{const q=indexedDB.open("ig_cleaner_profile_counts_v2");
@@ -83,7 +120,8 @@ const {chromium}=require("playwright");
   assert.equal(alien,0,"Records from another Instagram account must not be mixed");
   await page.reload({waitUntil:"domcontentloaded"});
   await page.evaluate(()=>window.igcCountsStorageReady());
-  assert.equal((await idbRecord("new.user"))?.followers,"1200","Persisted records survive browser reload");
+  assert.equal((await idbRecord("new.user"))?.followers,"1300","Persisted latest survives browser reload");
+  assert.equal((await historyFor("new.user")).length,3,"Historical snapshots survive reload");
   // Previously the offline audit fallback silently retained only 12,000.
   // Reconcile every recoverable old event without deleting the old backup.
   await page.evaluate(()=>{
