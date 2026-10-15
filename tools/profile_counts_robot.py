@@ -212,7 +212,7 @@ def run(args):
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as e:
-        raise ValueError("Instala Playwright con: python -m pip install playwright && python -m playwright install chromium") from e
+        raise ValueError("Install Playwright with: python -m pip install playwright && python -m playwright install chromium") from e
 
     args.session_dir.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
@@ -261,7 +261,7 @@ def run(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Collect visible Instagram profile counts using a local browser and your own session.")
-    parser.add_argument("--input", required=True, type=Path, help="CSV exportado desde Insta Cleaner (username,profile_url).")
+    parser.add_argument("--input", required=True, type=Path, help="CSV exported by Insta Cleaner (username,profile_url).")
     parser.add_argument("--output", type=Path, default=Path("profile_counts_results.csv"), help="Persistent results and progress CSV.")
     parser.add_argument("--per-hour", type=int, default=DEFAULT_COUNT, help="Legacy compatibility: hourly maximum if --max-per-window is omitted.")
     parser.add_argument("--max-per-window", type=int, help="Maximum profile visits per window (1 to 10,000).")
@@ -281,11 +281,11 @@ def main(argv=None):
     except ValueError as exc:
         parser.error(str(exc))
     if args.max_profiles < 0:
-        parser.error("--max-profiles no puede ser negativo")
+        parser.error("--max-profiles cannot be negative")
     try:
         return run(args)
     except (ValueError, KeyboardInterrupt) as exc:
-        print(f"Se detuvo: {exc}", file=sys.stderr)
+        print(f"Stopped: {exc}", file=sys.stderr)
         return 1
 
 
