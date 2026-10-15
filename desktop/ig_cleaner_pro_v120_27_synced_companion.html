@@ -6073,7 +6073,7 @@ function renderAlwaysAccountSummary(){
         <div class="always-kpi warn"><b>${s.unresolvedBad}</b><span>Unreviewed non-followbacks</span></div>
         <div class="always-kpi ok"><b>${s.resolvedBad}</b><span>no me siguen ya resueltos</span></div>
         <div class="always-kpi ok"><b>${s.wouldLookGood}</b><span>buenas/resueltas</span></div>
-        <div class="always-kpi neutral"><b>${s.reviewed}</b><span>revisados following</span></div>
+        <div class="always-kpi neutral"><b>${s.reviewed}</b><span>Reviewed Following</span></div>
       </div>
       <div class="always-progress"><div class="always-progress-fill" style="width:${progressWidth}%"></div></div>
       <div class="always-progress-label">
@@ -7829,8 +7829,8 @@ function importFullBackup(input){
 function renderBackupStats(){
   document.getElementById('backupStats').innerHTML=`
     <div class="stat"><b>${protectedSet.size}</b><span>protegidos</span></div>
-    <div class="stat"><b>${doneSet.size}</b><span>revisados guardados</span></div>
-    <div class="stat"><b>${Object.keys(reviewedMeta).length}</b><span>revisados inteligentes</span></div>
+    <div class="stat"><b>${doneSet.size}</b><span>Saved reviews</span></div>
+    <div class="stat"><b>${Object.keys(reviewedMeta).length}</b><span>Verified reviews</span></div>
     <div class="stat"><b>${Object.values(reviewedMeta).filter(m=>m&&m.reviewedAt).length}</b><span>con fecha revisión</span></div>
     <div class="stat"><b>${followingRaw.length}</b><span>following cargados</span></div>
     <div class="stat"><b>${followersRaw.length}</b><span>followers cargados</span></div>
@@ -8526,7 +8526,7 @@ function saveInternalSnapshot(){
 }
 
 function clearInternalSnapshot(){
-  if(!confirm('¿Borrar snapshot interno guardado?'))return;
+  if(!confirm('Delete the saved internal snapshot?'))return;
   internalSnapshot=null;
   snapLostFollowers=[];snapGainedFollowers=[];snapNewFollowing=[];snapRemovedFollowing=[];
   localStorage.removeItem(LS_INTERNAL_SNAPSHOT);
@@ -8818,7 +8818,7 @@ function renderPendingSessionPanel(){
   const paused=pendingSnoozedActiveCount();
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${snoozeToday}</b><span>pausas hoy</span></div>
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
@@ -8838,7 +8838,7 @@ function renderMutualSessionPanel(){
   const paused=mutualSnoozedActiveCount();
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${snoozeToday}</b><span>pausas hoy</span></div>
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
@@ -9392,7 +9392,7 @@ function clearModuleActionLog(kind){
   const items=igcModuleActionItems(kind);
   if(!items.length){msg('No hay historial de esta sección para borrar.','i');return;}
   const ids=new Set(items.map(i=>i.id));
-  if(!confirm(`¿Borrar ${items.length} acciones guardadas de ${igcModuleLabel(kind)}? No borra revisiones ni estados de perfiles.`))return;
+  if(!confirm(`Delete ${items.length} saved actions from ${igcModuleLabel(kind)}? This will not delete reviews or profile states.`))return;
   actionLog=(actionLog||[]).filter(i=>!ids.has(i.id));
   saveActionLog();
   renderActionLog();
@@ -9854,7 +9854,7 @@ function renderFollowersSessionPanel(){
   const inBatch=rows.filter(r=>isInActiveFocus(r,'followers')).length;
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${protectedCount}</b><span>protegidos</span></div>
     <div class="tab-session-card"><b>${available}</b><span>abribles</span></div>
@@ -10342,8 +10342,8 @@ function confirmExtraFocusReviewed(){
   const b=activeExtraReviewBatch;
   if(!b||!b.rows||!b.rows.length){msg('No active batch.','w');return}
   const decision=document.getElementById('extraFocusDecision')?.value||'reviewed';
-  if(b.kind==='pending'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} pending requests y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
-  if(b.kind==='mutual'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} seguidores que sigo y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
+  if(b.kind==='pending'&&!confirm(`Did you actually review these ${b.rows.length} pending requests and want to save them as "${pendingDecisionLabel(decision)}"?\n\nIf tabs failed to load or you did not review them, cancel and choose "Could not review yet".`))return;
+  if(b.kind==='mutual'&&!confirm(`Did you actually review these ${b.rows.length} mutual followers and want to save them as "${pendingDecisionLabel(decision)}"?\n\nIf tabs failed to load or you did not review them, cancel and choose "Could not review yet".`))return;
   const now=Date.now();
   // Cierra visualmente de inmediato; luego guarda y re-renderiza.
   closeSafeFocusPopup();
@@ -12760,7 +12760,7 @@ window.igcHandleZipInput=async function(file){
   if(identity&&identity.active!=='legacy'){
     const account=identity.accounts.find(x=>x.account_key===identity.active);
     if(!identity.verified){msg('Confirma primero el perfil de Instagram mediante sincronización.','w');return false}
-    if(!confirm('¿Importar '+String(file.name||'este ZIP')+' en '+(account?.username?'@'+account.username:'el Instagram seleccionado')+'? No se mezclarán las listas de otros perfiles.'))return false;
+    if(!confirm('Import '+String(file.name||'this ZIP')+' into '+ (account?.username?'@'+account.username:'the selected Instagram profile')+'? Lists from other Instagram profiles will remain separate.'))return false;
   }
   if(!/\.zip$/i.test(file.name||'')){zipError('Selecciona el archivo .zip completo que entrega Instagram.');return}
   ZIP_STATE.busy=true;ZIP_STATE.file=file;ZIP_STATE.entries=[];ZIP_STATE.groups={};
@@ -13061,7 +13061,7 @@ async function saveSnap(s){if(!s||!(s.following?.length||s.followers?.length||s.
 async function saveCurrent(zipName='',source='zip'){if(!(followingRaw.length||followersRaw.length||pendingRequestsRaw.length))return null;return saveSnap(currentSnapshot(zipName,source))}
 async function refreshSnaps(){H.snapshots=(await dbAll()).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));renderSnapshotPanel();return H.snapshots}
 window.igcV125SaveCurrentSnapshot=async()=>{const s=await saveCurrent('','manual');msg(s?'Snapshot actual guardado en historial.':'No hay datos actuales para guardar.',s?'s':'w')};
-window.igcV125DeleteSnapshot=async id=>{if(!confirm('¿Eliminar este snapshot del historial?'))return;await dbDelete(id);await refreshSnaps()};
+window.igcV125DeleteSnapshot=async id=>{if(!confirm('Delete this snapshot from history?'))return;await dbDelete(id);await refreshSnaps()};
 function ensurePanels(){
   const compare=document.querySelector('#page-compare .igc-page-flow');if(compare&&!document.getElementById('igcV125SnapshotPanel')){const sec=document.createElement('section');sec.id='igcV125SnapshotPanel';sec.className='panel igc-v125-panel';sec.innerHTML=`<div class="igc-v125-panel-head"><div><h3>🕓 Historial real de snapshots</h3><p>Cada ZIP queda como un estado consultable. Puedes comparar cualquier par sin limitarte al “anterior vs actual”.</p></div><span class="igc-v125-perf-badge" id="igcV125StorageBadge">IndexedDB</span></div><div class="igc-v125-controls"><label>Snapshot anterior<select id="igcV125SnapA"></select></label><label>Snapshot posterior<select id="igcV125SnapB"></select></label><button class="btn primary" type="button" onclick="igcV125CompareSelected()">Comparar snapshots</button><button class="btn" type="button" onclick="igcV125SaveCurrentSnapshot()">Guardar estado actual</button></div><div id="igcV125CompareResults"></div><div class="igc-v125-history" id="igcV125SnapshotHistory"></div>`;const first=compare.querySelector('.panel');first?first.insertAdjacentElement('beforebegin',sec):compare.appendChild(sec)}
   const diag=document.querySelector('#page-diag .igc-page-flow');if(diag&&!document.getElementById('igcV125AuditPanel')){const sec=document.createElement('section');sec.id='igcV125AuditPanel';sec.className='panel igc-v125-panel';sec.innerHTML=`<div class="igc-v125-panel-head"><div><h3>🧪 Auditoría de contradicciones</h3><p>Busca estados incompatibles: perfiles resueltos dentro de tandas, protegidos que siguen preparados, metadata huérfana y relaciones no verificables que llegaron a Focus.</p></div><span class="igc-v125-perf-badge" id="igcV125PerfBadge">Performance mode</span></div><div class="btnrow"><button class="btn primary" onclick="igcV125RunAudit()">Auditar estado</button><button class="btn" onclick="igcV125RepairSafe()">Auto-reparar casos seguros</button></div><div class="igc-v125-grid" id="igcV125AuditStats"></div><div class="igc-v125-audit-list" id="igcV125AuditList"></div>`;diag.insertAdjacentElement('afterbegin',sec)}
@@ -13856,7 +13856,7 @@ window.igcAddInstagramProfile=async function(){
    window.IGC_INSTAGRAM_PROFILES.switch('legacy');return;
   }
   if(!legacy?.username){
-   const useLegacy=confirm('¿@'+username+' corresponde a tus datos que ya tenías antes?\n\nAceptar: USAR DATOS ANTERIORES (conservar las listas y revisiones).\n\nCancelar: '+(existing?'abrir el perfil ya registrado':'crear un perfil NUEVO vacío')+'.');
+   const useLegacy=confirm('Does @'+username+' belong to your previously imported data?\n\nOK: USE PREVIOUS DATA (preserve lists and reviews).\n\nCancel: '+(existing?'open the existing profile':'create a NEW empty profile')+'.');
    if(useLegacy){
     if(await igcSetInstagramUsername('legacy',username))window.IGC_INSTAGRAM_PROFILES.switch('legacy');
     return;
@@ -13919,10 +13919,10 @@ window.igcDeleteInstagramProfile=async function(){
   if(!row)throw Error('Este perfil ya no está disponible. Actualiza e intenta de nuevo.');
   username=row.username||'';
   const display=username?'@'+username:(row.label||'Perfil sin @usuario');
-  const choice=confirm('Vas a eliminar PERMANENTEMENTE '+display+' y sus listas, revisiones, Focus e historial sincronizados.\n\n¿Quieres EXPORTAR un respaldo individual antes?\n\nAceptar = exportar primero. Cancelar = continuar sin respaldo.');
+  const choice=confirm('You are about to PERMANENTLY delete '+display+' and its synced lists, reviews, Focus and history.\n\nWould you like to EXPORT an individual backup first?\n\nOK = export backup first. Cancel = continue without backup.');
   if(choice){
    await window.igcExportSelectedInstagramProfile();
-   if(!confirm('Comprueba que guardaste el archivo de respaldo antes de continuar.\n\n¿Seguir con la eliminación de '+display+'?'))return;
+   if(!confirm('Confirm your backup file was saved before continuing.\n\nContinue deleting '+display+'?'))return;
   }
   const required=username?'ELIMINAR @'+username:'BORRAR '+key.slice(-6);
   const typed=prompt('Solo se eliminará '+display+'. Datos anteriores y otros Instagram no cambian.\n\nEscribe exactamente '+required+' para confirmar:');
@@ -13940,7 +13940,7 @@ window.igcDeleteInstagramProfile=async function(){
  finally{S.busy=false;}
 };
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
-async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
