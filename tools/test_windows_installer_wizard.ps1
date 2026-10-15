@@ -81,7 +81,7 @@ function Select-Item([System.Windows.Automation.AutomationElement]$item){
   Invoke-Item $item
 }
 try{
-  $proc=Start-Process -FilePath $setup -ArgumentList @('/SP-','/CURRENTUSER') -PassThru
+  $proc=Start-Process -FilePath $setup -ArgumentList @('/SP-','/CURRENTUSER','/LANG=english') -PassThru
   $window=$null
   for($i=0;$i -lt 70;$i++){
     Start-Sleep -Milliseconds 300
