@@ -38,11 +38,16 @@ try {
   if (!(Test-Path $ui)) { throw "Installed runtime did not prepare its persistent UI" }
   if ((Get-Item $ui).Length -lt 100000) { throw "Installed UI was incomplete" }
   if (!(Test-Path $marker)) { throw "Setup erased existing user data" }
+  # Exercise the upgrade/reinstall path with the SAME stable AppId and folder.
+  RunBounded $setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/DIR="'+$prefix+'"')) 'In-place upgrade'
+  if (!(Test-Path $exe) -or !(Test-Path $marker) -or !(Test-Path $ui)) {
+    throw "In-place setup replaced or lost the persisted workspace"
+  }
   RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Uninstall'
   if (Test-Path $exe) { throw "Installed executable remained after uninstall" }
   if (!(Test-Path $marker)) { throw "Uninstall deleted local review/import data" }
   if ($legacyWasPresent -and !(Test-Path $legacy)) { throw "Uninstall deleted legacy robot data" }
-  Write-Host "PASS: BUILD payload, INSTALL, installed HEALTHCHECK/STARTUP, START-MENU, UNINSTALL and data preservation. Instagram live session was NOT tested."
+  Write-Host "PASS: BUILD payload, INSTALL, installed HEALTHCHECK/STARTUP, START-MENU, IN-PLACE UPGRADE, UNINSTALL and data preservation. Instagram live session was NOT tested."
 }
 finally {
   if (Test-Path $marker) { Remove-Item $marker -Force }
