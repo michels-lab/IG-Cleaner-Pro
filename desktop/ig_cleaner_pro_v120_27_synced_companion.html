@@ -4918,7 +4918,7 @@ function showPostProcessNavPopup(){
       <div class="post-process-kpi"><b>${followingRaw.length}</b><span>following</span></div>
       <div class="post-process-kpi"><b>${followersRaw.length}</b><span>followers</span></div>
       <div class="post-process-kpi"><b>${rowsCount}</b><span>filas lista</span></div>
-      <div class="post-process-kpi"><b>${mutualCount}</b><span>seguidores que sigo</span></div>
+      <div class="post-process-kpi"><b>${mutualCount}</b><span>Mutual followers</span></div>
       <div class="post-process-kpi"><b>${pendingCount}</b><span>pending cargados</span></div>
       <div class="post-process-kpi"><b>${diagData.length}</b><span>files read</span></div>
     `;
@@ -5806,8 +5806,8 @@ function renderStats(){
     <div class="stat"><b>${total}</b><span>siguiendo</span></div>
     <div class="stat"><b style="color:var(--orange)">${rawBad}</b><span>no me siguen real</span></div>
     <div class="stat"><b style="color:var(--blue)">${rawGood}</b><span>sí me siguen real</span></div>
-    <div class="stat"><b style="color:var(--red)">${effectiveBadCount}</b><span>malas pendientes</span></div>
-    <div class="stat"><b>${done}</b><span>revisados vigentes</span></div>
+    <div class="stat"><b style="color:var(--red)">${effectiveBadCount}</b><span>Pending non-followbacks</span></div>
+    <div class="stat"><b>${done}</b><span>Currently reviewed</span></div>
     <div class="stat"><b style="color:var(--orange)">${recheck}</b><span>revisables de nuevo</span></div>
     <div class="stat"><b style="color:var(--purple)">${prot}</b><span>protegidos</span></div>
     <div class="stat"><b style="color:var(--red)">${critical}</b><span>critical priority</span></div>
@@ -6070,10 +6070,10 @@ function renderAlwaysAccountSummary(){
     <div class="always-section">
       <div class="always-section-title">How counts change after reviewing</div>
       <div class="always-grid">
-        <div class="always-kpi warn"><b>${s.unresolvedBad}</b><span>no me siguen pendientes</span></div>
+        <div class="always-kpi warn"><b>${s.unresolvedBad}</b><span>Unreviewed non-followbacks</span></div>
         <div class="always-kpi ok"><b>${s.resolvedBad}</b><span>no me siguen ya resueltos</span></div>
         <div class="always-kpi ok"><b>${s.wouldLookGood}</b><span>buenas/resueltas</span></div>
-        <div class="always-kpi neutral"><b>${s.reviewed}</b><span>revisados following</span></div>
+        <div class="always-kpi neutral"><b>${s.reviewed}</b><span>Reviewed Following</span></div>
       </div>
       <div class="always-progress"><div class="always-progress-fill" style="width:${progressWidth}%"></div></div>
       <div class="always-progress-label">
@@ -6189,7 +6189,7 @@ function updateSessionPanel(){
   if(el)el.innerHTML=`
     <div class="session-card"><b>${p.selectedTotal}</b><span>seleccionados visibles</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.selectedReviewed}</b><span>visibles verificados</span></div>
-    <div class="session-card"><b style="color:var(--orange)">${p.selectedPending}</b><span>visibles pendientes</span></div>
+    <div class="session-card"><b style="color:var(--orange)">${p.selectedPending}</b><span>Visible pending</span></div>
     <div class="session-card"><b style="color:var(--red)">${p.selectedReviewedBad}</b><span>${labels.verifiedBad}</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.selectedReviewedGood}</b><span>${labels.verifiedGood}</span></div>
     <div class="session-card"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
@@ -6205,7 +6205,7 @@ function updateSessionPanel(){
     <div class="session-card"><b style="color:var(--red)">${p.totalReviewedBad}</b><span>total ${labels.badShort}</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.totalReviewedGood}</b><span>total ${labels.goodShort}</span></div>
     <div class="session-card"><b>${p.visibleReviewed}</b><span>visibles verificados</span></div>
-    <div class="session-card"><b style="color:var(--orange)">${p.visiblePending}</b><span>visibles pendientes</span></div>
+    <div class="session-card"><b style="color:var(--orange)">${p.visiblePending}</b><span>Visible pending</span></div>
     <div class="session-card"><b style="color:var(--orange)">${p.changed}</b><span>cambiaron relación</span></div>
     <div class="session-card"><b style="color:#cbd5e1">${probClosedTotal}</b><span>probablemente cerradas</span></div>
     <div class="session-card"><b style="color:var(--orange)">${refollowTotal}</b><span>posible re-follow</span></div>
@@ -6236,13 +6236,13 @@ function updateSessionPanel(){
     floatStats.innerHTML=`
       <div class="live-mini"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
       <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>verificados sesión</span></div>
-      <div class="live-mini"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>malos pendientes</span></div>
+      <div class="live-mini"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>Pending non-followbacks</span></div>
       <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resueltos sesión</span></div>
       <div class="live-mini"><b>${sessionStats.openBatches}</b><span>tandas abiertas</span></div>
       <div class="live-mini"><b style="color:var(--orange)">${sessionStats.reopened||0}</b><span>reabiertos</span></div>
       <div class="live-mini"><b style="color:var(--purple)">${sessionStats.protected}</b><span>protegidos sesión</span></div>
       <div class="live-mini"><b>${p.selectedTotal}</b><span>seleccionados visibles</span></div>
-      <div class="live-mini"><b style="color:var(--orange)">${p.selectedPending}</b><span>pendientes visibles</span></div>
+      <div class="live-mini"><b style="color:var(--orange)">${p.selectedPending}</b><span>Visible pending</span></div>
       <div class="live-mini"><b style="color:#cbd5e1">${probClosedTotal}</b><span>prob. cerradas</span></div>
       <div class="live-mini"><b style="color:var(--orange)">${refollowTotal}</b><span>re-follow</span></div>
     `;
@@ -6400,7 +6400,7 @@ function showVerifyPopup(rows){
   const bad=pending.length-good;
   const labels=relationLabels();
 
-  text.innerHTML=`Se abrió una tanda de <b>${rows.length}</b> perfiles. De esos, <b>${pending.length}</b> están pendientes de verificar: <span style="color:var(--red)">${bad}</span> ${labels.bad} y <span style="color:var(--green)">${good}</span> ${labels.good}.<br><br>Cuando termines de revisarlos en Instagram, marca aquí para guardarlos como verificados inteligentes. Si no se abrieron todos, usa “Volver a abrir perfiles” antes de verificar.`;
+  text.innerHTML=`Opened a batch of <b>${rows.length}</b> profiles. Of these, <b>${pending.length}</b> still need verification: <span style="color:var(--red)">${bad}</span> ${labels.bad} and <span style="color:var(--green)">${good}</span> ${labels.good}.<br><br>After reviewing them on Instagram, confirm here to save their verified results. If some tabs did not open, use Reopen profiles before confirming.`;
   list.innerHTML=rows.slice(0,80).map(r=>`<div>@${esc(r.username)} · ${esc(r.relation)} · ${isDoneValid(r)?'ya verificado':'pending'}</div>`).join('') + (rows.length>80?`<div>... y ${rows.length-80} más</div>`:'');
   backdrop.style.display='flex';
 }
@@ -6662,7 +6662,7 @@ function renderPacePanel(){
     <div class="pace-kpi"><b>${three}/h</b><span>revisadas 3 h</span></div>
     <div class="pace-kpi"><b>${openHour}/h</b><span>abiertas última h</span></div>
     <div class="pace-kpi"><b>${openThree}/h</b><span>abiertas 3 h</span></div>
-    <div class="pace-kpi"><b>${remaining}</b><span>pendientes reales</span></div>
+    <div class="pace-kpi"><b>${remaining}</b><span>Actually pending</span></div>
     <div class="pace-kpi"><b>${eta}</b><span>tiempo estimado</span></div>`;
   if(note)note.textContent=rate>0?`Estimación usando el ritmo de ${three?'las últimas 3 horas':'la última hora'}.`:'Sin ritmo suficiente para estimar.';
 }
@@ -7130,7 +7130,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   if(!rows.length){
     const total=doubleCheckNoMeSigueRows(true).length;
     if(total>0){
-      if(confirm(`Ya no quedan perfiles nuevos para double check. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo. ¿Reiniciar ciclo y abrir desde el inicio?`)){
+      if(confirm(`No new profiles remain for Double Check. There are ${total} non-followbacks, but all have already appeared in this cycle. Reset the cycle and start over?`)){
         resetDoubleCheckCycle(false);
         rows=doubleCheckNoMeSigueRows(false).slice(0,n);
       }
@@ -7366,7 +7366,7 @@ function renderLogicAudit(issues=lastLogicAuditRows){
     <div class="audit-kpi ${warns?'warn':'ok'}"><b>${warns}</b><span>advertencias</span></div>
     <div class="audit-kpi"><b>${main}</b><span>lista</span></div>
     <div class="audit-kpi"><b>${pending}</b><span>pending</span></div>
-    <div class="audit-kpi"><b>${mutual}</b><span>seguidores que sigo</span></div>
+    <div class="audit-kpi"><b>${mutual}</b><span>Mutual followers</span></div>
     <div class="audit-kpi ${issues.length?'warn':'ok'}"><b>${issues.length}</b><span>total</span></div>
   `;  if(!issues.length){
     list.innerHTML='<div class="audit-item ok"><b>Sin huecos obvios.</b><br>No encontré estados basura ni casos fuera de foco por error.</div>';
@@ -7829,8 +7829,8 @@ function importFullBackup(input){
 function renderBackupStats(){
   document.getElementById('backupStats').innerHTML=`
     <div class="stat"><b>${protectedSet.size}</b><span>protegidos</span></div>
-    <div class="stat"><b>${doneSet.size}</b><span>revisados guardados</span></div>
-    <div class="stat"><b>${Object.keys(reviewedMeta).length}</b><span>revisados inteligentes</span></div>
+    <div class="stat"><b>${doneSet.size}</b><span>Saved reviews</span></div>
+    <div class="stat"><b>${Object.keys(reviewedMeta).length}</b><span>Verified reviews</span></div>
     <div class="stat"><b>${Object.values(reviewedMeta).filter(m=>m&&m.reviewedAt).length}</b><span>con fecha revisión</span></div>
     <div class="stat"><b>${followingRaw.length}</b><span>following cargados</span></div>
     <div class="stat"><b>${followersRaw.length}</b><span>followers cargados</span></div>
@@ -8312,17 +8312,17 @@ function renderEstimatedProgress(followingRows,followerRows){
 
     <div class="progress-grid">
       <div class="progress-kpi"><b>${followingReviewed}</b><span>following verificados</span></div>
-      <div class="progress-kpi"><b style="color:var(--orange)">${followingPending}</b><span>following pendientes</span></div>
-      <div class="progress-kpi"><b style="color:var(--red)">${followingPendingBad}</b><span>pendientes no me siguen</span></div>
-      <div class="progress-kpi"><b style="color:var(--green)">${followingPendingGood}</b><span>pendientes sí me siguen</span></div>
+      <div class="progress-kpi"><b style="color:var(--orange)">${followingPending}</b><span>Following pending review</span></div>
+      <div class="progress-kpi"><b style="color:var(--red)">${followingPendingBad}</b><span>Non-followbacks pending review</span></div>
+      <div class="progress-kpi"><b style="color:var(--green)">${followingPendingGood}</b><span>Followers pending review</span></div>
 
       <div class="progress-kpi"><b style="color:var(--red)">${followingReviewedBad}</b><span>verificados resueltos</span></div>
       <div class="progress-kpi"><b style="color:var(--green)">${followingReviewedGood}</b><span>verificados buenos</span></div>
-      <div class="progress-kpi"><b style="color:var(--red)">${criticalPending}</b><span>críticos pendientes</span></div>
+      <div class="progress-kpi"><b style="color:var(--red)">${criticalPending}</b><span>Critical items pending review</span></div>
       <div class="progress-kpi"><b style="color:var(--orange)">${priorityPending}</b><span>alta+ pendiente</span></div>
 
       <div class="progress-kpi"><b>${followersReviewed}</b><span>followers verificados</span></div>
-      <div class="progress-kpi"><b style="color:var(--orange)">${followersPending}</b><span>followers pendientes</span></div>
+      <div class="progress-kpi"><b style="color:var(--orange)">${followersPending}</b><span>Followers pending review</span></div>
       <div class="progress-kpi"><b style="color:var(--red)">${followersHighRiskPending}</b><span>followers riesgo alto pendiente</span></div>
       <div class="progress-kpi"><b>${followersPct}%</b><span>avance followers</span></div>
       <div class="progress-kpi"><b style="color:#cbd5e1">${followingProbClosed}</b><span>following prob. cerradas</span></div>
@@ -8526,7 +8526,7 @@ function saveInternalSnapshot(){
 }
 
 function clearInternalSnapshot(){
-  if(!confirm('¿Borrar snapshot interno guardado?'))return;
+  if(!confirm('Delete the saved internal snapshot?'))return;
   internalSnapshot=null;
   snapLostFollowers=[];snapGainedFollowers=[];snapNewFollowing=[];snapRemovedFollowing=[];
   localStorage.removeItem(LS_INTERNAL_SNAPSHOT);
@@ -8579,7 +8579,7 @@ function renderSnapshotInfo(){
     <div class="stat"><b>${internalSnapshot.followers?.length||0}</b><span>followers en snapshot</span></div>
     <div class="stat"><b>${followersRaw.length}</b><span>followers actuales</span></div>
     <div class="stat"><b style="color:var(--red)">${snapLostFollowers.length}</b><span>unfollowed you</span></div>
-    <div class="stat"><b style="color:var(--green)">${snapGainedFollowers.length}</b><span>nuevos seguidores</span></div>
+    <div class="stat"><b style="color:var(--green)">${snapGainedFollowers.length}</b><span>New followers</span></div>
     <div class="stat"><b style="color:var(--orange)">${snapLostFollowers.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>te dejaron y tú los sigues</span></div>
     <div class="stat"><b>${snapNewFollowing.length}</b><span>nuevos following</span></div>
     <div class="stat"><b>${snapRemovedFollowing.length}</b><span>ya no sigues</span></div>
@@ -8654,7 +8654,7 @@ function renderCompare(){
     <div class="stat"><b>${oldFollowersRaw.length}</b><span>followers antiguos</span></div>
     <div class="stat"><b>${currentCount}</b><span>followers actuales</span></div>
     <div class="stat"><b style="color:var(--red)">${compareLost.length}</b><span>unfollowed you</span></div>
-    <div class="stat"><b style="color:var(--green)">${compareGained.length}</b><span>nuevos seguidores</span></div>
+    <div class="stat"><b style="color:var(--green)">${compareGained.length}</b><span>New followers</span></div>
     <div class="stat"><b>${compareStayed.length}</b><span>se quedaron</span></div>
     <div class="stat"><b style="color:var(--orange)">${compareLost.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>te dejaron y tú los sigues</span></div>
   `;
@@ -8818,7 +8818,7 @@ function renderPendingSessionPanel(){
   const paused=pendingSnoozedActiveCount();
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${snoozeToday}</b><span>pausas hoy</span></div>
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
@@ -8838,7 +8838,7 @@ function renderMutualSessionPanel(){
   const paused=mutualSnoozedActiveCount();
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${snoozeToday}</b><span>pausas hoy</span></div>
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
@@ -9065,7 +9065,7 @@ function openAlternativeFocus(kind,n=30,sourceLabel='foco alternativo'){
 function offerAlternativeFocus(kind,n,label){
   const f=focusFunnelData(kind);
   if(f.available>0){
-    if(confirm(`${label}: no hay candidatos para ese foco específico, pero hay ${f.available} abribles por foco en el módulo.\\n\\n¿Abrir una tanda alternativa de ${Math.min(n,f.available)}?`)){
+    if(confirm(`${label}: there are no candidates for that Focus type, but ${f.available} profiles are available in this module.\\n\\nOpen an alternative batch of ${Math.min(n,f.available)}?`)){
       return openAlternativeFocus(kind,n,label);
     }
   }else{
@@ -9392,7 +9392,7 @@ function clearModuleActionLog(kind){
   const items=igcModuleActionItems(kind);
   if(!items.length){msg('No hay historial de esta sección para borrar.','i');return;}
   const ids=new Set(items.map(i=>i.id));
-  if(!confirm(`¿Borrar ${items.length} acciones guardadas de ${igcModuleLabel(kind)}? No borra revisiones ni estados de perfiles.`))return;
+  if(!confirm(`Delete ${items.length} saved actions from ${igcModuleLabel(kind)}? This will not delete reviews or profile states.`))return;
   actionLog=(actionLog||[]).filter(i=>!ids.has(i.id));
   saveActionLog();
   renderActionLog();
@@ -9454,7 +9454,7 @@ function igcSidebarActiveBatch(kind){
   const active=activeFocusBatch?.kind===kind && activeFocusBatch?.rows?.length;
   if(!active)return '';
   const left=typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch):activeFocusBatch.rows;
-  return `<div class="session-insight igc-active-side-note"><b>Tanda activa:</b> ${esc(activeFocusBatch.label||kind)} · ${left.length} pendientes de confirmar.<div class="side-action-grid two"><button class="btn primary" onclick="recoverActiveFocusBatch()">Recuperar</button><button class="btn" onclick="reopenActiveFocusBatch()">Reabrir</button></div></div>`;
+  return `<div class="session-insight igc-active-side-note"><b>Active batch:</b> ${esc(activeFocusBatch.label||kind)} · ${left.length} awaiting confirmation.<div class="side-action-grid two"><button class="btn primary" onclick="recoverActiveFocusBatch()">Recover</button><button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button></div></div>`;
 }
 function igcOpenedCount(kind,since){
   return igcModuleActionItems(kind)
@@ -9527,7 +9527,7 @@ function renderPendingRealtimePanel(){
     ${igcStandardActivityTop('pending','Pending')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
       {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'resueltos'},{value:activeCount,label:'en tanda activa'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:accepted,label:'aceptados detectados'},{value:riskHigh,label:'riesgo alto'},{value:old90,label:'+90 días'}
-    ])}<div class="session-insight"><b>Pending:</b> ${pendingLive} solicitudes siguen pendientes de revisión · ${available} pueden abrirse ahora.</div></div>
+    ])}<div class="session-insight"><b>Pending:</b> ${pendingLive} requests still need review · ${available} can be opened now.</div></div>
     ${igcSidebarActiveBatch('pending')}
     <div class="side-control-center">
       <div class="side-control-title">⚡ Focus mode</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(20)">💡 Focus 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(30)">💡 Focus 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="pendingFocusN(40)">💡 Focus 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('pending',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="pending"></div>
@@ -9550,7 +9550,7 @@ function renderMutualRealtimePanel(){
   el.innerHTML=`${igcStandardActivityTop('mutual','Mutuals')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
       {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'mutuos'}
-    ])}<div class="session-insight"><b>Mutuals:</b> ${rows.length} perfiles · ${pendingLive} pendientes · ${available} abribles ahora.</div></div>
+    ])}<div class="session-insight"><b>Mutuals:</b> ${rows.length} profiles · ${pendingLive} pending · ${available} available to open now.</div></div>
     ${igcSidebarActiveBatch('mutual')}
     <div class="side-control-center"><div class="side-control-title">⚡ Focus mode</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(20)">💡 Focus 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(30)">💡 Focus 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(40)">💡 Focus 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="mutual"></div><div class="side-control-title">🎯 Prepare batch</div><div class="side-action-grid two"><button class="btn orange" onclick="followersMutualSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersMutualRiskN(30)">⚠ Risk 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="quickMutualView('active')">Activos</button><button class="btn green" onclick="quickMutualView('reviewed')">Reviewed</button><button class="btn purple" onclick="quickMutualView('protected')">Protected</button><button class="btn red" onclick="quickMutualView('risk_high')">High risk</button><button class="btn" onclick="viewAvailableFocus('mutual')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('mutual')">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('mutual')">Recover batch</button><button class="btn red" onclick="cancelSectionActiveBatch('mutual')">Cancelar activa</button><button class="btn" onclick="renderFollowersMutualTab()">Actualizar</button><button class="btn" onclick="exportMutualDecisionsCSV()">Export decisions</button></div></div>`;
 }
@@ -9568,7 +9568,7 @@ function renderFollowersRealtimePanel(){
   el.innerHTML=`${igcStandardActivityTop('followers','Followers que no sigo')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
       {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'followers'}
-    ])}<div class="session-insight"><b>Followers que no sigo:</b> ${rows.length} perfiles · ${pendingLive} pendientes · ${available} abribles ahora.</div></div>
+    ])}<div class="session-insight"><b>Followers I don't follow:</b> ${rows.length} profiles · ${pendingLive} pending · ${available} available to open now.</div></div>
     ${igcSidebarActiveBatch('followers')}
     <div class="side-control-center"><div class="side-control-title">⚡ Focus mode</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(20)">💡 Focus 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(30)">💡 Focus 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(40)">💡 Focus 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="followers"></div><div class="side-control-title">🎯 Prepare batch</div><div class="side-action-grid two"><button class="btn orange" onclick="followersSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersFocusRiskN(30)">⚠ Risk 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="document.getElementById('followersAllFilter').value='all';renderFollowersAllWorkspace()">All</button><button class="btn red" onclick="document.getElementById('followersAllFilter').value='risk_high';renderFollowersAllWorkspace()">High risk</button><button class="btn green" onclick="document.getElementById('followersAllFilter').value='reviewed';renderFollowersAllWorkspace()">Reviewed</button><button class="btn purple" onclick="document.getElementById('followersAllFilter').value='protected';renderFollowersAllWorkspace()">Protected</button><button class="btn" onclick="viewFollowersAvailableFocus()">Abribles</button><button class="btn orange" onclick="viewFollowersBlockedFocus()">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('followers')">Recover batch</button><button class="btn red" onclick="cancelSectionActiveBatch('followers')">Cancelar activa</button><button class="btn" onclick="renderFollowersAllWorkspace()">Actualizar</button><button class="btn" onclick="exportModuleActionLogCSV('followers')">Exportar historial</button></div></div>`;
 }
@@ -9733,7 +9733,7 @@ function pendingSmartBatch(n){
   renderPendingRequests();
 }
 
-function renderPendingRequests(){renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>sin revisar</span></div><div class="focuslab-kpi"><b>${shown}</b><span>mostrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;if(!rows.length){body.innerHTML=allRows.length
+function renderPendingRequests(){renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>Unreviewed</span></div><div class="focuslab-kpi"><b>${shown}</b><span>mostrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;if(!rows.length){body.innerHTML=allRows.length
   ? `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Hay ${allRows.length} Pending cargados, pero ninguno coincide con los filtros actuales. Cambia la vista a “Todos”.</td></tr>`
   : '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay Pending cargados. Importa el ZIP completo de Instagram o usa la carga manual.</td></tr>';return}body.innerHTML=rows.slice(0,300).map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const blockReason=pendingNoOpenReason(r);
     const status=r.reviewed?'revisado':(r.snoozed?'pausado':(isInActiveFocus(r,'pending')?'abierto sin confirmar':(r.opened?'abierto':'sin abrir')));const revBadge=r.reviewed?'<span class="badge bgreen">Sí</span>':'<span class="badge bblue">No</span>';const decisionBadge=r.reviewed?`<span class="badge bpurple">${esc(r.reviewLabel)}</span>`:'<span class="muted">—</span>';const revDate=r.reviewDate?new Date(r.reviewDate).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}):'—';return`<tr class="${r.reviewed?'done':''}"><td><span class="focuslab-status ${isInActiveFocus(r,'pending')?'status-unconfirmed':(r.reviewed||r.snoozed||r.opened?'opened':'pending')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td><td>${revBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(revDate)}</span></td><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td>${esc(r.name||'—')}</td><td><span class="date">${esc(formatDateFromTs(r.timestamp)||'sin fecha')}</span></td><td>${pendingCrossBadge(r)}</td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td></tr>`}).join('')}
@@ -9854,7 +9854,7 @@ function renderFollowersSessionPanel(){
   const inBatch=rows.filter(r=>isInActiveFocus(r,'followers')).length;
   panel.innerHTML=`
     <div class="tab-session-card"><b>${openToday}</b><span>tandas hoy</span></div>
-    <div class="tab-session-card"><b>${reviewedToday}</b><span>revisados hoy</span></div>
+    <div class="tab-session-card"><b>${reviewedToday}</b><span>Reviewed today</span></div>
     <div class="tab-session-card"><b>${reopenToday}</b><span>reabiertos hoy</span></div>
     <div class="tab-session-card"><b>${protectedCount}</b><span>protegidos</span></div>
     <div class="tab-session-card"><b>${available}</b><span>abribles</span></div>
@@ -9862,13 +9862,13 @@ function renderFollowersSessionPanel(){
   const last=lastActionForSource(['followers']);
   if(activeFocusBatch?.kind==='followers' && activeFocusBatch.rows?.length){
     const pending=activeFocusBatchPendingRows?activeFocusBatchPendingRows(activeFocusBatch):activeFocusBatch.rows;
-    note.innerHTML=`<b>Tanda activa en Followers:</b> ${esc(activeFocusBatch.label||'Followers')} · ${pending.length} pendientes de confirmar. <button class="btn small-focus" onclick="recoverActiveFocusBatch()">Recover batch</button> <button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button>`;
+    note.innerHTML=`<b>Active Followers batch:</b> ${esc(activeFocusBatch.label||'Followers')} · ${pending.length} awaiting confirmation. <button class="btn small-focus" onclick="recoverActiveFocusBatch()">Recover batch</button> <button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button>`;
   }else{
     note.innerHTML=`<b>Última acción en Followers:</b> ${esc(formatLastActionText(last))}`;
   }
 }
 
-function renderFollowersFocus(){const rows=followersAnalysisRows();const total=rows.length,high=rows.filter(r=>r.riskLevel==='alto').length,med=rows.filter(r=>r.riskLevel==='medio').length,fans=rows.filter(r=>!r.iFollow).length,pending=rows.filter(r=>!r.done&&!r.protected).length;const stats=document.getElementById('followersFocusStats');if(stats)stats.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>followers</span></div><div class="focuslab-kpi"><b>${high}</b><span>high risk</span></div><div class="focuslab-kpi"><b>${med}</b><span>medium risk</span></div><div class="focuslab-kpi"><b>${fans}</b><span>no los sigo</span></div><div class="focuslab-kpi"><b>${pending}</b><span>sin revisar</span></div>`;const body=document.getElementById('followersFocusTableBody');if(!body)return;if(!rows.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">Carga followers para ver este análisis.</td></tr>';return}const tableRows=rows.filter(r=>['alto','medio'].includes(r.riskLevel)||!r.iFollow).slice(0,300);body.innerHTML=tableRows.map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const status=r.done?'revisado':(r.protected?'protegido':(isInActiveFocus(r,'mutual')?'abierto sin confirmar':'pending'));return`<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge ${r.iFollow?'bgreen':'bpurple'}">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td><td><span class="focuslab-status ${status==='abierto sin confirmar'?'status-unconfirmed':(status==='pending'?'pending':'opened')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">No hay followers sospechosos según estos filtros.</td></tr>'}
+function renderFollowersFocus(){const rows=followersAnalysisRows();const total=rows.length,high=rows.filter(r=>r.riskLevel==='alto').length,med=rows.filter(r=>r.riskLevel==='medio').length,fans=rows.filter(r=>!r.iFollow).length,pending=rows.filter(r=>!r.done&&!r.protected).length;const stats=document.getElementById('followersFocusStats');if(stats)stats.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>followers</span></div><div class="focuslab-kpi"><b>${high}</b><span>high risk</span></div><div class="focuslab-kpi"><b>${med}</b><span>medium risk</span></div><div class="focuslab-kpi"><b>${fans}</b><span>no los sigo</span></div><div class="focuslab-kpi"><b>${pending}</b><span>Unreviewed</span></div>`;const body=document.getElementById('followersFocusTableBody');if(!body)return;if(!rows.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">Carga followers para ver este análisis.</td></tr>';return}const tableRows=rows.filter(r=>['alto','medio'].includes(r.riskLevel)||!r.iFollow).slice(0,300);body.innerHTML=tableRows.map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const status=r.done?'revisado':(r.protected?'protegido':(isInActiveFocus(r,'mutual')?'abierto sin confirmar':'pending'));return`<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge ${r.iFollow?'bgreen':'bpurple'}">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td><td><span class="focuslab-status ${status==='abierto sin confirmar'?'status-unconfirmed':(status==='pending'?'pending':'opened')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px">No hay followers sospechosos según estos filtros.</td></tr>'}
 function exportFollowersFocusCSV(){const rows=followersAnalysisRows();if(!rows.length){msg('Carga followers primero.','w');return}const headers=['usuario','perfil','relacion','fecha_follower','riesgo','puntaje','razones','revisado','protegido'];const csv=[headers.join(',')].concat(rows.map(r=>[r.username,r.href,r.relation,formatDateFromTs(r.dateMain)||'',r.riskLevel,r.riskScore,r.riskReasons.join('; '),r.done?'si':'no',r.protected?'si':'no'].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))).join('\n');downloadFile(`ig_followers_focus_analysis_${Date.now()}.csv`,csv,'text/csv;charset=utf-8');msg('Análisis de followers exportado.','s')}
 
 
@@ -10005,7 +10005,7 @@ function renderFollowersMutualTab(){
   if(stats)stats.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>mutuos</span></div><div class="focuslab-kpi"><b>${high}</b><span>high risk</span></div><div class="focuslab-kpi"><b>${shown}</b><span>mostrados</span></div><div class="focuslab-kpi"><b>${reviewed}</b><span>reviewed</span></div><div class="focuslab-kpi"><b>${pending}</b><span>pending</span></div>`;
   const body=document.getElementById('followersMutualTableBody');
   if(!body)return;
-  if(!rows.length){body.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay resultados con el filtro actual. Cambia a “Todos” o “Activos sin revisar”.</td></tr>';return;}
+  if(!rows.length){body.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No results match this filter. Try All or Active unreviewed.</td></tr>';return;}
   const tableRows=rows.slice(0,300);
   body.innerHTML=tableRows.map(r=>{
     const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';
@@ -10013,7 +10013,7 @@ function renderFollowersMutualTab(){
     const ratio=igcMutualRatioInfo(r),ratioLabel=ratio?(' · '+ratio.ratio.toFixed(1)+'× siguiendo/seguidores'+(ratio.approximate?' ≈':'') ):'';
     const status=r.done?'revisado':(r.protected?'protegido':'pending');
     const reviewedText=mutualReviewStatusLabel(r);const decisionText=mutualReviewDecisionLabel(r);const reviewedDate=mutualReviewDateLabel(r);const reviewedBadge=r.done?'<span class="badge bgreen">Sí, revisado</span>':'<span class="badge bblue">No revisado</span>';const decisionBadge=r.done?`<span class="badge bpurple">${esc(decisionText)}</span>`:'<span class="muted">—</span>';return `<tr class="${r.done?'done':''}"><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td><span class="badge bgreen">${esc(r.relation)}</span></td><td><span class="date">${esc(formatDateFromTs(r.dateMain)||'sin fecha')}</span></td><td>${reviewedBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(reviewedDate)}</span></td><td><div class="reason">${esc(historyFocusLabel(r))}</div></td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · ')+ratioLabel)}</div></td><td><span class="focuslab-status ${status==='pending'?'pending':'opened'}">${esc(status)}</span></td></tr>`
-  }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay seguidores que sigo con este filtro.</td></tr>';
+  }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No mutual followers match this filter.</td></tr>';
 }
 function exportFollowersMutualCSV(){
   const rows=followersMutualRows();
@@ -10046,7 +10046,7 @@ function renderFollowersAllWorkspace(){
     <div class="igc-followers-kpi"><b>${all.length}</b><span>followers que no sigo</span></div>
     <div class="igc-followers-kpi"><b>${available}</b><span>abribles</span></div>
     <div class="igc-followers-kpi"><b>${high}</b><span>high risk</span></div>
-    <div class="igc-followers-kpi"><b>${unreviewed}</b><span>sin revisar</span></div>
+    <div class="igc-followers-kpi"><b>${unreviewed}</b><span>Unreviewed</span></div>
     <div class="igc-followers-kpi"><b>${reviewed}</b><span>reviewed</span></div>`;
   if(!all.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No hay followers que tú no sigas con los exports cargados.</td></tr>';return;}
   const q=(document.getElementById('followersAllSearch')?.value||'').trim().toLowerCase();
@@ -10237,7 +10237,7 @@ function igcBatchQuality(rows,kind='main'){
 }
 function igcConfirmBatchQuality(rows,kind='main',label=''){
   const q=igcBatchQuality(rows,kind);if(!q.total)return false;
-  return confirm([`VISTA PREVIA DE TANDA · ${label||kind}`,'',`${q.total} perfiles`,`${q.confirmed} con relación verificable`,`${q.changes} con cambios nuevos`,`${q.historical} con contexto histórico`,`${q.unverifiable} no verificables`,`${q.stable} relaciones estables`,`${q.neverReviewed} nunca revisados`,'',q.unverifiable?'Hay perfiles NO VERIFICABLES: no deben interpretarse como no-followback confirmado.':'No detecté perfiles no verificables en esta tanda.','','¿Abrir estas pestañas?'].join('\n'));
+  return confirm([`BATCH PREVIEW · ${label||kind}`,'',`${q.total} profiles`,`${q.confirmed} with verifiable relationships`,`${q.changes} with recent changes`,`${q.historical} with historical context`,`${q.unverifiable} unverifiable`,`${q.stable} stable relationships`,`${q.neverReviewed} never reviewed`,'',q.unverifiable?'Some profiles are UNVERIFIABLE; do not treat them as confirmed non-followbacks.':'No unverifiable profiles were detected in this batch.','','Open these tabs?'].join('\n'));
 }
 function igcNewChangeRows(kind='main'){
   if(kind==='pending')return pendingRows().filter(r=>igcIsNewChange(r,'pending')&&!r.reviewed&&!r.snoozed&&!isInActiveFocus(r,'pending'));
@@ -10342,8 +10342,8 @@ function confirmExtraFocusReviewed(){
   const b=activeExtraReviewBatch;
   if(!b||!b.rows||!b.rows.length){msg('No active batch.','w');return}
   const decision=document.getElementById('extraFocusDecision')?.value||'reviewed';
-  if(b.kind==='pending'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} pending requests y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
-  if(b.kind==='mutual'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} seguidores que sigo y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
+  if(b.kind==='pending'&&!confirm(`Did you actually review these ${b.rows.length} pending requests and want to save them as "${pendingDecisionLabel(decision)}"?\n\nIf tabs failed to load or you did not review them, cancel and choose "Could not review yet".`))return;
+  if(b.kind==='mutual'&&!confirm(`Did you actually review these ${b.rows.length} mutual followers and want to save them as "${pendingDecisionLabel(decision)}"?\n\nIf tabs failed to load or you did not review them, cancel and choose "Could not review yet".`))return;
   const now=Date.now();
   // Cierra visualmente de inmediato; luego guarda y re-renderiza.
   closeSafeFocusPopup();
@@ -10478,7 +10478,7 @@ function renderNextSessionPlan(f,p,m){
     <div class="module-actions">
       <button class="btn green" onclick="quickPendingView('detected_accepted')">Pending aceptados detectados</button>
       <button class="btn" onclick="quickPendingView('reviewed')">Pending revisados</button>
-      <button class="btn orange" onclick="quickPendingView('still_pending')">Pending siguen pendientes</button>
+      <button class="btn orange" onclick="quickPendingView('still_pending')">Requests still pending</button>
       <button class="btn red" onclick="quickPendingView('closed')">Pending cerrados</button>
       <button class="btn" onclick="quickMutualView('protected')">Mutuos protegidos</button>
       <button class="btn red" onclick="quickMutualView('risk_high')">Mutuos riesgo alto</button>
@@ -10490,12 +10490,12 @@ function renderNextSessionPlan(f,p,m){
     <div class="next-session-plan">
       <div class="next-session-item"><b>${fN}</b><span>following/no me siguen</span></div>
       <div class="next-session-item"><b>${pN}</b><span>pending requests</span></div>
-      <div class="next-session-item"><b>${mN}</b><span>seguidores que sigo</span></div>
+      <div class="next-session-item"><b>${mN}</b><span>Mutual followers</span></div>
     </div>
     <div class="module-insight">Recomendación: empieza por el módulo con prioridad más alta; si Pending tiene aceptados detectados, limpia eso primero porque es decisión rápida.</div>
     <div class="module-actions">
       <button class="btn primary" onclick="showPage('pendingRequests')">Ir a Pending</button>
-      <button class="btn" onclick="showPage('followersMutual')">Ir a Seguidores que sigo</button>
+      <button class="btn" onclick="showPage('followersMutual')">Go to Mutuals</button>
       <button class="btn" onclick="showPage('list')">Ir a Lista principal</button>
     </div>
   </div>`;
@@ -10701,7 +10701,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   if(!rows.length){
     const total=doubleCheckNoMeSigueRowsV94(true).length;
     if(total>0){
-      const restart=confirm(`Ya no quedan perfiles nuevos para Double Check. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
+      const restart=confirm(`No new profiles remain for Double Check. There are ${total} non-followbacks, but all have already appeared in this cycle.\n\nReset the cycle and open profiles from the beginning?`);
       if(restart){
         resetDoubleCheckCycle(false);
         rows=doubleCheckNoMeSigueRowsV94(false).slice(0,n);
@@ -10846,7 +10846,7 @@ function openRecheckNotFollowingN(n=30){
   if(!rows.length){
     const total=recheckCandidateRowsByCycle('recheck',true).length;
     if(total>0){
-      const restart=confirm(`Ya no quedan perfiles nuevos para “Revisar de nuevo”. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
+      const restart=confirm(`No new profiles remain for Recheck. There are ${total} non-followbacks, but all have already appeared in this cycle.\n\nReset the cycle and open profiles from the beginning?`);
       if(restart){
         localStorage.removeItem(doubleCheckCycleKey('recheck'));
         rows=recheckCandidateRowsByCycle('recheck',false).slice(0,n);
@@ -10868,7 +10868,7 @@ function openDoubleCheckNoMeSigueN(n=30){
   if(!rows.length){
     const total=recheckCandidateRowsByCycle('double',true).length;
     if(total>0){
-      const restart=confirm(`Ya no quedan perfiles nuevos para Double Check. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
+      const restart=confirm(`No new profiles remain for Double Check. There are ${total} non-followbacks, but all have already appeared in this cycle.\n\nReset the cycle and open profiles from the beginning?`);
       if(restart){
         resetDoubleCheckCycle(false);
         rows=recheckCandidateRowsByCycle('double',false).slice(0,n);
@@ -10974,7 +10974,7 @@ function v96ShowRecheckConfirmPopup(rows,label){
   if(title)title.textContent=label.includes('double')?'Double Check NO ME SIGUE':'Revisar de nuevo NO ME SIGUE';
   if(text)text.textContent=`Se abrieron ${rows.length} perfiles. Revisa Instagram y regresa aquí para confirmar.`;
   if(decision)decision.value='reviewed';
-  if(preview){const q=igcBatchQuality(rows,'main');preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} no verificables · ${q.stable} estables.`;}
+  if(preview){const q=igcBatchQuality(rows,'main');preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   list.innerHTML=rows.map(r=>{const why=igcWhyOpened(r,'main',label),hist=igcProfileHistoryText(r,'main'),rev=igcReviewChangeInfo(r,'main'),stable=igcStableRelationInfo(r,'main');return `
     <div class="safe-focus-row">
       <div class="igc-focus-ident">
@@ -10997,7 +10997,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
     const total=v96NoMeSigueRowsForRecheck(mode,true).length;
     if(total>0){
       const label=mode==='double'?'Double Check':'Revisar de nuevo';
-      const restart=confirm(`Ya no quedan perfiles nuevos para ${label}. Hay ${total} NO ME SIGUE en total, pero ya pasaron por este ciclo.\n\n¿Reiniciar ciclo y abrir desde el inicio?`);
+      const restart=confirm(`No new profiles remain for ${label}. There are ${total} non-followbacks, but all have already appeared in this cycle.\n\nReset the cycle and open profiles from the beginning?`);
       if(restart){
         localStorage.removeItem(key);
         if(mode==='double')localStorage.setItem('ig_cleaner_double_check_epoch',String(Date.now()));
@@ -11150,7 +11150,7 @@ function showSafeFocusPopup(kind,rows,label){
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
-  const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} no verificables · ${q.stable} estables.`;}
+  const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   const list=document.getElementById('safeFocusList');
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
@@ -11185,7 +11185,7 @@ function confirmSafeFocusReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
   const decision=document.getElementById('safeFocusDecision')?.value||'reviewed';
   const sectionLabel=b.kind==='pending'?'Pending Requests':(b.kind==='followers'?'Followers':(b.kind==='mutual'?'Mutuos':'Following'));
-  if(!confirm(`CONFIRMACIÓN MASIVA\n\nSección: ${sectionLabel}\nPerfiles: ${b.rows.length}\nDecisión: ${pendingDecisionLabel(decision)}\n\nEsto guardará la decisión y sacará esta tanda de pendientes vivos.\n\n¿Confirmas que SÍ pudiste revisar las pestañas?`))return;
+  if(!confirm(`BULK CONFIRMATION\n\nSection: ${sectionLabel}\nProfiles: ${b.rows.length}\nDecision: ${pendingDecisionLabel(decision)}\n\nThis will save your decision and remove this batch from the live pending queue.\n\nConfirm that you actually reviewed the tabs?`))return;
   const now=Date.now();
   closeExtraFocusModal();
   closeFocusDialogAfterDecision?.();
@@ -12760,7 +12760,7 @@ window.igcHandleZipInput=async function(file){
   if(identity&&identity.active!=='legacy'){
     const account=identity.accounts.find(x=>x.account_key===identity.active);
     if(!identity.verified){msg('Confirma primero el perfil de Instagram mediante sincronización.','w');return false}
-    if(!confirm('¿Importar '+String(file.name||'este ZIP')+' en '+(account?.username?'@'+account.username:'el Instagram seleccionado')+'? No se mezclarán las listas de otros perfiles.'))return false;
+    if(!confirm('Import '+String(file.name||'this ZIP')+' into '+ (account?.username?'@'+account.username:'the selected Instagram profile')+'? Lists from other Instagram profiles will remain separate.'))return false;
   }
   if(!/\.zip$/i.test(file.name||'')){zipError('Selecciona el archivo .zip completo que entrega Instagram.');return}
   ZIP_STATE.busy=true;ZIP_STATE.file=file;ZIP_STATE.entries=[];ZIP_STATE.groups={};
@@ -12878,7 +12878,7 @@ window.igcRenderPortableReportStats=function(){
   const host=document.getElementById('igcPortableReportStats');if(!host)return;
   const secs=r24Snapshot(),total=secs.reduce((n,s)=>n+s.rows.length,0);
   if(!total){host.innerHTML='<div class="igc-portable-report-empty">Importa un ZIP o archivos de Instagram para preparar el reporte.</div>';return}
-  host.innerHTML=secs.filter(s=>!s.optional||s.rows.length).map(s=>`<div class="igc-portable-report-kpi ${s.key==='unknown'&&s.rows.length?'warn':''}"><b>${s.stats.total}</b><span>${r24Esc(s.title)} · ${s.stats.reviewed} revisados · ${s.stats.pending+s.stats.recheck} pendientes</span></div>`).join('');
+  host.innerHTML=secs.filter(s=>!s.optional||s.rows.length).map(s=>`<div class="igc-portable-report-kpi ${s.key==='unknown'&&s.rows.length?'warn':''}"><b>${s.stats.total}</b><span>${r24Esc(s.title)} · ${s.stats.reviewed} reviewed · ${s.stats.pending+s.stats.recheck} pending</span></div>`).join('');
 };
 function r24RowData(row,kind){
   const review=r24ReviewInfo(row,kind),u=row.username||'',href=r24Profile(u,row.href||row.url||'');
@@ -12902,7 +12902,7 @@ function r24ReportHtml(sections){
   const body=visible.map(r24SectionHtml).join('');
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IG Cleaner Pro · Reporte ${r24Esc(generated.toLocaleDateString('es-MX'))}</title><style>
 :root{--bg:#071019;--panel:#0d1825;--panel2:#101f2f;--line:#213449;--text:#edf5ff;--muted:#8ea1b8;--blue:#76caff;--green:#6ee7b7;--gold:#efc66f;--red:#ff8192}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% -10%,#173754 0,transparent 30%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}.shell{max-width:1800px;margin:auto;padding:28px}.hero{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#11273b,#0b1622);padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.hero .eyebrow,.section-head .eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:900}.hero h1{margin:7px 0 4px;font-size:30px}.hero p,.section-head p{color:var(--muted);margin:0;line-height:1.5}.summary{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:10px;margin:18px 0}.summary div,.nav a{border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:15px;padding:13px}.summary b,.nav b{display:block;font-size:23px}.summary span,.nav span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:800;margin-top:4px}.nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.nav a{text-decoration:none;color:var(--text)}.nav a:hover{border-color:#4b789c}.tools{position:sticky;top:0;z-index:20;display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;padding:10px;border:1px solid var(--line);border-radius:16px;background:rgba(7,16,25,.94);backdrop-filter:blur(12px)}.tools input,.tools select{background:#0d1b29;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;outline:none}.tools input{flex:1;min-width:220px}.report-section{margin:18px 0;border:1px solid var(--line);background:var(--panel);border-radius:20px;overflow:hidden}.section-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;padding:18px 20px;border-bottom:1px solid var(--line)}.section-head h2{margin:4px 0;font-size:20px}.section-counts{text-align:right}.section-counts b{display:block;font-size:26px}.section-counts span,.section-counts small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1450px}th{position:sticky;top:61px;background:#0a1520;color:#8195ad;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:10px;border-bottom:1px solid var(--line)}td{padding:10px;border-bottom:1px solid rgba(255,255,255,.055);font-size:11px;vertical-align:top;line-height:1.45}tbody tr:hover{background:rgba(118,202,255,.035)}td.user{white-space:nowrap}td.user a{color:var(--blue);font-weight:900;text-decoration:none}.status{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;white-space:nowrap}.status.ok{color:var(--green);border-color:rgba(110,231,183,.34);background:rgba(110,231,183,.07)}.status.warn{color:var(--gold);border-color:rgba(239,198,111,.34);background:rgba(239,198,111,.07)}.status.pending{color:#b6c5d8}.flags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.flags span{font-size:8px;border:1px solid var(--line);border-radius:999px;padding:2px 5px;color:var(--muted)}td.wide{max-width:360px}.muted{color:var(--muted)}tr[hidden]{display:none}.empty td{text-align:center;color:var(--muted);padding:24px}.footer{color:#72869e;font-size:10px;text-align:center;padding:18px}@media(max-width:800px){.shell{padding:12px}.summary{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}.section-counts{text-align:left}.tools{top:0}th{top:61px}}
-</style></head><body><main class="shell"><header class="hero"><span class="eyebrow">IG CLEANER PRO · PORTABLE STATUS REPORT</span><h1>Estado de relaciones y revisión</h1><p>Generado el ${r24Esc(generated.toLocaleString('es-MX',{dateStyle:'long',timeStyle:'short'}))}. Los enlaces abren directamente el perfil de Instagram; este archivo no necesita IG Cleaner para funcionar.</p><div class="summary"><div><b>${total}</b><span>perfiles en listas</span></div><div><b>${reviewed}</b><span>revisados vigentes</span></div><div><b>${pending}</b><span>pendientes / recheck</span></div></div><nav class="nav">${nav}</nav></header><div class="tools"><input id="search" type="search" placeholder="Search @username, decision, context or change…"><select id="status"><option value="all">Todos los estados</option><option value="pending">No revisados</option><option value="reviewed">Reviewed</option><option value="recheck">Review again</option></select></div>${body}<div class="footer">IG Cleaner Pro · Michel's Lab · snapshot local exportado desde tu navegador</div></main><script>
+</style></head><body><main class="shell"><header class="hero"><span class="eyebrow">IG CLEANER PRO · PORTABLE STATUS REPORT</span><h1>Relationship and review status</h1><p>Generated ${r24Esc(generated.toLocaleString('en-US',{dateStyle:'long',timeStyle:'short'}))}. Links open Instagram profiles directly; this report works without IG Cleaner.</p><div class="summary"><div><b>${total}</b><span>Profiles in lists</span></div><div><b>${reviewed}</b><span>Currently reviewed</span></div><div><b>${pending}</b><span>Pending / recheck</span></div></div><nav class="nav">${nav}</nav></header><div class="tools"><input id="search" type="search" placeholder="Search @username, decision, context or change…"><select id="status"><option value="all">All statuses</option><option value="pending">Unreviewed</option><option value="reviewed">Reviewed</option><option value="recheck">Review again</option></select></div>${body}<div class="footer">IG Cleaner Pro · Michel's Lab · local snapshot exported from your browser</div></main><script>
 (()=>{const q=document.getElementById('search'),s=document.getElementById('status');function apply(){const term=(q.value||'').trim().toLowerCase(),status=s.value;document.querySelectorAll('.report-section').forEach(sec=>{let n=0;sec.querySelectorAll('tbody tr[data-search]').forEach(tr=>{const ok=(!term||tr.dataset.search.includes(term))&&(status==='all'||tr.dataset.status===status);tr.hidden=!ok;if(ok)n++});const c=sec.querySelector('.visible-count');if(c)c.textContent=n})}q.addEventListener('input',apply);s.addEventListener('change',apply)})();
 <\/script>
 \n\n</body></html>`;
@@ -13061,7 +13061,7 @@ async function saveSnap(s){if(!s||!(s.following?.length||s.followers?.length||s.
 async function saveCurrent(zipName='',source='zip'){if(!(followingRaw.length||followersRaw.length||pendingRequestsRaw.length))return null;return saveSnap(currentSnapshot(zipName,source))}
 async function refreshSnaps(){H.snapshots=(await dbAll()).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));renderSnapshotPanel();return H.snapshots}
 window.igcV125SaveCurrentSnapshot=async()=>{const s=await saveCurrent('','manual');msg(s?'Snapshot actual guardado en historial.':'No hay datos actuales para guardar.',s?'s':'w')};
-window.igcV125DeleteSnapshot=async id=>{if(!confirm('¿Eliminar este snapshot del historial?'))return;await dbDelete(id);await refreshSnaps()};
+window.igcV125DeleteSnapshot=async id=>{if(!confirm('Delete this snapshot from history?'))return;await dbDelete(id);await refreshSnaps()};
 function ensurePanels(){
   const compare=document.querySelector('#page-compare .igc-page-flow');if(compare&&!document.getElementById('igcV125SnapshotPanel')){const sec=document.createElement('section');sec.id='igcV125SnapshotPanel';sec.className='panel igc-v125-panel';sec.innerHTML=`<div class="igc-v125-panel-head"><div><h3>🕓 Historial real de snapshots</h3><p>Cada ZIP queda como un estado consultable. Puedes comparar cualquier par sin limitarte al “anterior vs actual”.</p></div><span class="igc-v125-perf-badge" id="igcV125StorageBadge">IndexedDB</span></div><div class="igc-v125-controls"><label>Snapshot anterior<select id="igcV125SnapA"></select></label><label>Snapshot posterior<select id="igcV125SnapB"></select></label><button class="btn primary" type="button" onclick="igcV125CompareSelected()">Comparar snapshots</button><button class="btn" type="button" onclick="igcV125SaveCurrentSnapshot()">Guardar estado actual</button></div><div id="igcV125CompareResults"></div><div class="igc-v125-history" id="igcV125SnapshotHistory"></div>`;const first=compare.querySelector('.panel');first?first.insertAdjacentElement('beforebegin',sec):compare.appendChild(sec)}
   const diag=document.querySelector('#page-diag .igc-page-flow');if(diag&&!document.getElementById('igcV125AuditPanel')){const sec=document.createElement('section');sec.id='igcV125AuditPanel';sec.className='panel igc-v125-panel';sec.innerHTML=`<div class="igc-v125-panel-head"><div><h3>🧪 Auditoría de contradicciones</h3><p>Busca estados incompatibles: perfiles resueltos dentro de tandas, protegidos que siguen preparados, metadata huérfana y relaciones no verificables que llegaron a Focus.</p></div><span class="igc-v125-perf-badge" id="igcV125PerfBadge">Performance mode</span></div><div class="btnrow"><button class="btn primary" onclick="igcV125RunAudit()">Auditar estado</button><button class="btn" onclick="igcV125RepairSafe()">Auto-reparar casos seguros</button></div><div class="igc-v125-grid" id="igcV125AuditStats"></div><div class="igc-v125-audit-list" id="igcV125AuditList"></div>`;diag.insertAdjacentElement('afterbegin',sec)}
@@ -13429,7 +13429,7 @@ window.igcPrivacyDeleteCloudData=async function(){
   if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
   try{
     await ensureAuth();
-    if(!confirm('Esto borrará TODOS los datos sincronizados de esta cuenta en la nube. Tus exports originales y respaldos locales independientes no se borrarán. ¿Continuar?'))return;
+    if(!confirm('This will delete ALL synced cloud data for this account. Your original exports and independent local backups will not be deleted. Continue?'))return;
     const typed=prompt('Confirmación final: type DELETE CLOUD');
     if(String(typed||'').trim().toUpperCase()!=='DELETE CLOUD'){privacyDataStatus('Deletion canceled.');return}
     S.busy=true;
@@ -13770,7 +13770,7 @@ async function refreshInstagramAccounts(){
   if(!Array.isArray(rows))throw new Error('La nube devolvió una respuesta de perfiles inválida');
  }catch(error){
   const detail=String(error?.message||error);
-  registry.setCloudStatus('No se pudo cargar toda la lista: '+detail+'. Ve a Cuenta y verifica tu sesión; también puedes pulsar Actualizar perfiles.','error');
+  registry.setCloudStatus('Unable to load the complete profile list: '+detail+'. Open Account to check your session, or select Refresh profiles.','error');
   throw new Error('No se pudieron cargar los perfiles de Instagram: '+detail);
  }
  const profiles=rows;
@@ -13815,7 +13815,7 @@ async function igcSetInstagramUsername(key,username){
  let transfer=null;
  if(conflict){
   if(key!=='legacy')throw Error('@'+username+' ya está registrado en otro Instagram.');
-  const approved=confirm('El @usuario ya está asociado a otro perfil.\n\nAceptar: asignar @'+username+' a Datos anteriores SIN mover ni borrar datos. El otro perfil quedará sin @usuario, pero conservará sus listas y revisiones.\n\nCancelar: no cambiar nada.');
+  const approved=confirm('This Instagram @username is already assigned to another profile.\n\nOK: assign @'+username+' to Previous data WITHOUT moving or deleting records. The other profile will become unnamed while keeping its lists and reviews.\n\nCancel: make no changes.');
   if(!approved)return false;
   transfer=conflict.account_key;
  }
@@ -13856,7 +13856,7 @@ window.igcAddInstagramProfile=async function(){
    window.IGC_INSTAGRAM_PROFILES.switch('legacy');return;
   }
   if(!legacy?.username){
-   const useLegacy=confirm('¿@'+username+' corresponde a tus datos que ya tenías antes?\n\nAceptar: USAR DATOS ANTERIORES (conservar las listas y revisiones).\n\nCancelar: '+(existing?'abrir el perfil ya registrado':'crear un perfil NUEVO vacío')+'.');
+   const useLegacy=confirm('Does @'+username+' belong to your previously imported data?\n\nOK: USE PREVIOUS DATA (preserve lists and reviews).\n\nCancel: '+(existing?'open the existing profile':'create a NEW empty profile')+'.');
    if(useLegacy){
     if(await igcSetInstagramUsername('legacy',username))window.IGC_INSTAGRAM_PROFILES.switch('legacy');
     return;
@@ -13919,10 +13919,10 @@ window.igcDeleteInstagramProfile=async function(){
   if(!row)throw Error('Este perfil ya no está disponible. Actualiza e intenta de nuevo.');
   username=row.username||'';
   const display=username?'@'+username:(row.label||'Perfil sin @usuario');
-  const choice=confirm('Vas a eliminar PERMANENTEMENTE '+display+' y sus listas, revisiones, Focus e historial sincronizados.\n\n¿Quieres EXPORTAR un respaldo individual antes?\n\nAceptar = exportar primero. Cancelar = continuar sin respaldo.');
+  const choice=confirm('You are about to PERMANENTLY delete '+display+' and its synced lists, reviews, Focus and history.\n\nWould you like to EXPORT an individual backup first?\n\nOK = export backup first. Cancel = continue without backup.');
   if(choice){
    await window.igcExportSelectedInstagramProfile();
-   if(!confirm('Comprueba que guardaste el archivo de respaldo antes de continuar.\n\n¿Seguir con la eliminación de '+display+'?'))return;
+   if(!confirm('Confirm your backup file was saved before continuing.\n\nContinue deleting '+display+'?'))return;
   }
   const required=username?'ELIMINAR @'+username:'BORRAR '+key.slice(-6);
   const typed=prompt('Solo se eliminará '+display+'. Datos anteriores y otros Instagram no cambian.\n\nEscribe exactamente '+required+' para confirmar:');
@@ -13940,7 +13940,7 @@ window.igcDeleteInstagramProfile=async function(){
  finally{S.busy=false;}
 };
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
-async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Sincronizando listas, revisiones y Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};

@@ -1640,3 +1640,11 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Translated `tools/profile_counts_robot.py` terminal prompts, CSV errors, progress and argument help. Kept the Spanish/French strings used to recognize Instagram UI and page errors untouched.
 - Expanded `tests/english-ui-contract.py` with static-HTML source text scan plus English CLI messages and multilingual parsing guard. CI should verify actual Desktop Chromium and Windows packaging as well as Android emulator before integration.
 - Still pending: full audit of JS-generated status/error dialogs and live UI acceptance. Real signed-in owner Chrome, physical Samsung, and full language UI checks are separate. No v120.45 release authorization.
+
+## 2026-10-15 — v120.47 dynamic Desktop English pass (development branch, not published)
+
+- Source audit after PR #99 found many Spanish **rendered runtime strings** in Focus, Review, Mutuals, Pending, snapshots, account recovery, cloud delete confirmations, portable status reports and followback KPIs despite earlier static-only English checks.
+- `fix/v12047-dynamic-english-desktop-20261015` translates more than 100 runtime occurrences using text-only substitutions (not changes to review IDs or saved state): active-batch notices, protection/verification prompts, Double Check/Recheck reset requests, filters and export report labels, migration dialogs and destructive-action confirmations.
+- Adds positive/negative dynamic-copy assertions to the existing `tests/english-ui-contract.py`; preserved historical `pendiente` and `Seguidores que sigo` keys as well as bilingual Instagram DOM parsing.
+- The language pass has NOT been verified on the owner's full real dataset or all reachable UI states. Exact-head Desktop Chromium, Windows EXE, Android emulator and CI must be green before integration. Untranslated secondary runtime messages elsewhere may remain and continue to be tracked under #86.
+- Public stable remains **v120.46**, and newer v120.47 development cannot be published without an explicit release instruction.
