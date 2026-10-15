@@ -204,9 +204,19 @@ class Collector:
             seed_latest_readings(dated_history_path(self.result_path()), saved)
             if self.audit_mode == "oldest_first":
                 cycle_file = audit_cycle_path(self.result_path())
-                self.audit_cycle = (resume_cycle(cycle_file, self.usernames)
-                                    if request.get("resume_requested") else
-                                    new_cycle(cycle_file, self.usernames, saved))
+                # A user-reopened Windows session continues an unfinished
+                # cycle with its original frozen order. A completed cycle
+                # starts a genuinely new oldest-first pass on explicit click.
+                previous = (resume_cycle(cycle_file, self.usernames)
+                            if cycle_file.is_file() else None)
+                if request.get("resume_requested") and previous is None:
+                    raise ValueError("No previous re-audit cycle exists to resume.")
+                if request.get("resume_requested") and previous is not None:
+                    self.audit_cycle = previous
+                elif previous and len(previous["done"]) < len(previous["targets"]):
+                    self.audit_cycle = previous
+                else:
+                    self.audit_cycle = new_cycle(cycle_file, self.usernames, saved)
                 self.progress = len(self.audit_cycle["done"])
             else:
                 self.progress = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
@@ -214,7 +224,10 @@ class Collector:
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
             self.wait_until = 0
             self.current_profile = ""
-            self.message = "Opening Instagram to verify your session..."
+            self.message = ("Resuming "+str(len(self.audit_cycle["done"]))+"/"+
+                            str(len(self.audit_cycle["targets"]))+" dated re-audit profiles..."
+                            if self.audit_cycle and self.audit_cycle["done"] else
+                            "Opening Instagram to verify your session...")
             self.status = "starting"
             self.stop_signal.clear()
             self.worker = threading.Thread(target=self._run, daemon=True)
