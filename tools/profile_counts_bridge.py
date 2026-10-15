@@ -294,8 +294,22 @@ class Collector:
                     while not self.stop_signal.is_set():
                         pages = [p for p in browser.pages if not p.is_closed()]
                         if any(challenge_detected(p) for p in pages):
-                            self._update("blocked", "Instagram opened a security verification or reCAPTCHA. Collection stopped without attempting a bypass. Sign in manually and resolve account access before approving another batch.")
-                            return
+                            # A real security checkpoint belongs to the user
+                            # and Instagram. Do not navigate, probe identity,
+                            # refresh, or resume collection while it is visible.
+                            # Keep Chrome open for optional HUMAN verification.
+                            # If Instagram redirects to login again, detection
+                            # remains idle until ownership is positively proven.
+                            self._update(
+                                "needs_verification",
+                                "Instagram requires manual CAPTCHA/security verification. "
+                                "The robot is waiting without navigating or changing accounts. "
+                                "If verification returns to login, do not repeatedly retry the robot; "
+                                "check Instagram account access in regular Chrome. "
+                                "You can Pause safely; saved results remain intact."
+                            )
+                            self.stop_signal.wait(3)
+                            continue
                         identified = {u for p in pages if (u := signed_in_handle(p))}
                         if len(identified) > 1:
                             self._update("account_mismatch", "Different Instagram sessions were detected. Close extra accounts and retry.")
