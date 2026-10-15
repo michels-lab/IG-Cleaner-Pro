@@ -1,3 +1,11 @@
+## Published stable v120.46 — October 14, 2026 (Mexico) / October 15 UTC
+
+- Official verified normal GitHub Release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46, exact source SHA `4550635e7435002915b47472452c4c74aba1bc04`, successful governed workflow https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38658477664 .
+- All four release jobs succeeded: release authorization, exact-commit Desktop/Android visual proof, Windows integrated executable, and production-signed Android plus release artifact publication. Seven stable assets exist: Windows integrated ZIP, production-signed Android APK, standalone Desktop HTML, Desktop ZIP, logo, privacy notice, SHA256SUMS.
+- Unified Automations robots and Insights analytics (#97), chunked imported queues and shared Chrome locking. Profile Counts now uses IndexedDB with non-destructive v120.45 legacy localStorage migration, bounded transactions, scalable CSV and audit legacy fallbacks (#98, issue #96 completed).
+- Tests passed 50k/100k/250k synthetic relationship lists and 12,031 migrated audit history records in offline Chromium. These **are not** proof of live Instagram actions on the owner's actual PC; real signed-in Chrome and physical Android acceptance remain pending.
+- Current stable `v120.46`; next development `v120.47` is **not authorized** for release. No automatic publishing, keep persistent Android keystore and historical backups intact.
+
 ## v120.46 development merged — 2026-10-14 (NOT PUBLISHED)
 
 - PR #97 merged into main, squash commit `16c78ba84e6d110c7ef7ba8d6b2498f9078d0286`. Owner demanded all robots in **Automations**, Profile Counts analysis and results under **Insights**, and no dataset-size cap based on Following/Followers totals.

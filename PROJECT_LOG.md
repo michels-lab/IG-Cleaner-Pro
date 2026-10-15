@@ -1,3 +1,10 @@
+## 2026-10-14 — v120.46 officially published
+
+- Owner-authorized stable v120.46 published, normal GitHub Release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46 .
+- Exact publication source `4550635e7435002915b47472452c4c74aba1bc04`, governed workflow #38658477664 **success** with all four jobs green and all seven assets verified. Signed Android APK, integrated Windows EXE ZIP, Desktop HTML/ZIP, logo, privacy and checksums.
+- PR #98 merged as `7939dafc61fa2b578e7b2ae2d433dbb2dae7d500`; issue #96 closed. Updated source baseline to unsigned/unreleased v120.47 with `authorized=false`.
+- Remaining external acceptance: user's physical Windows/Instagram session and Android installation; quota depends on available device storage rather than arbitrary application-level follower counts.
+
 ## 2026-10-14 — v120.46 development: large historical Profile Counts + cross-device audit migration
 
 - Owner explicitly authorized completion and release of v120.46. Publication is **gated by exact-head CI, Android production signing, Windows EXE and Desktop artifacts**; authorization is not proof that a release succeeded.
