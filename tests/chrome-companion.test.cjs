@@ -114,8 +114,9 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
  vm.createContext(browser);
  vm.runInContext(popup,browser);
  document.readyFn();
- await Promise.resolve();
- await Promise.resolve();
+ // The Chrome popup restores its prior workspace asynchronously. Allow
+ // storage.get, storage.set and render to settle before simulating a click.
+ await new Promise(resolve => setImmediate(resolve));
  assert.equal(history.navigations.length,0,"No autonomous Chrome navigation after loading popup");
  elements.queueFile.files=[{text:async()=>"username\nreal.user\nsecond.user\nreal.user\n"}];
  await elements.queueFile.handlers.change();
