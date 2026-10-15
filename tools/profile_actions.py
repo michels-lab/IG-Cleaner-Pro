@@ -16,7 +16,7 @@ import threading
 import time
 from urllib.parse import urlparse
 
-from profile_counts_instagram import signed_in_handle, challenge_detected
+from profile_counts_instagram import signed_in_handle, challenge_detected, verify_selected_owner_profile
 from profile_counts_robot import valid_username
 from profile_counts_pacing import (
     check_pacing, check_batch_rest, history_path, batch_path, load_history,
@@ -184,13 +184,44 @@ def _follow_state(header):
     return None
 
 
+
+def _verified_action_owner(page, expected_handle):
+    """Fail-closed session proof for collapsed Instagram sidebar layouts.
+
+    On another user's profile, Instagram often hides the nav Profile href
+    even though the session is signed in. Inspect a separate, read-only tab in
+    the SAME persistent Chrome context. Require matching owner header AND an
+    Edit profile control; URL, target username, or a stored handle alone never
+    prove ownership. Keep the target page (and any menu) untouched.
+    """
+    if challenge_detected(page):
+        return False
+    passwords = page.locator('input[name="password"]')
+    if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
+        return False
+    identified = signed_in_handle(page)
+    if identified is not None:
+        return identified.casefold() == expected_handle.casefold()
+    check = None
+    try:
+        check = page.context.new_page()
+        return verify_selected_owner_profile(check, expected_handle) == expected_handle
+    except Exception:
+        return False
+    finally:
+        if check is not None:
+            try:
+                check.close()
+            except Exception:
+                pass
+
 def _verify_final_state(page, expected_handle, *, checks=3):
     """Allow short UI settling but never infer success from a completed click."""
     for _ in range(checks):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification after the action."
-        if signed_in_handle(page) != expected_handle:
-            return "blocked", "The active Instagram account changed during the action."
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
         header = page.locator("header").first
         if header.count() and header.is_visible():
             state = _follow_state(header)
@@ -203,6 +234,21 @@ def _verify_final_state(page, expected_handle, *, checks=3):
         page.wait_for_timeout(650)
     return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
+
+
+def _preclick_identity_blocked(entry):
+    """Only retry historical failures that explicitly prove no click occurred.
+
+    Unknown 'blocked', errors and review states are never replayed:
+    they could represent actions already applied on Instagram.
+    """
+    if not isinstance(entry, dict) or entry.get("status") != "blocked":
+        return False
+    message = str(entry.get("message") or "")
+    return (
+        message.startswith("The active Instagram account cannot be verified. No action was performed.")
+        or message == "Instagram session verification failed before the first click. No action performed."
+    )
 
 def _action_issue(task, result, message):
     """Stable codes for the owner-facing anomalies report, independent of UI locale."""
@@ -235,8 +281,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     page.wait_for_timeout(1000)
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requested verification."
-    if signed_in_handle(page) != expected_handle:
-        return "blocked", "The active Instagram account cannot be verified. No action was performed."
+    if not _verified_action_owner(page, expected_handle):
+        return "blocked", "The active Instagram account cannot be verified. No action was performed. Open your own profile in Chrome and confirm Edit profile appears."
     url = urlparse(page.url)
     if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").lower() != username:
         return "blocked", "Instagram redirected to another profile."
@@ -260,6 +306,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         return "review", "The profile does not show the state required for this action."
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
+    if not _verified_action_owner(page, expected_handle):
+        return "blocked", "Instagram session verification failed before the first click. No action performed."
     active.click(timeout=10000)
     page.wait_for_timeout(450)
 
@@ -272,6 +320,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             return _verify_final_state(page, expected_handle)
         if can_act and not can_act(username):
             return "review", "Menu opened, but protection changed. Review before continuing."
+        if not _verified_action_owner(page, expected_handle):
+            return "review", "Session could not be reverified before the final Unfollow click. Inspect the open menu manually."
         choice.click(timeout=10000)
         page.wait_for_timeout(650)
         # Public: new Follow button should be visible already.
@@ -287,6 +337,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             if confirm:
                 if can_act and not can_act(username):
                     return "review", "Private confirmation pending; protection changed."
+                if not _verified_action_owner(page, expected_handle):
+                    return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
                 confirm.click(timeout=10000)
                 return _verify_final_state(page, expected_handle)
         return "review", "Could not confirm whether another step is required. The click will not be repeated."
@@ -300,6 +352,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             return "review", "The dialog does not clearly identify this pending request. No click was performed."
         if can_act and not can_act(username):
             return "review", "Protection changed before canceling the request."
+        if not _verified_action_owner(page, expected_handle):
+            return "review", "Session could not be reverified before Cancel Request confirmation. No final click was performed."
         choice.click(timeout=10000)
     return _verify_final_state(page, expected_handle)
 
@@ -570,10 +624,16 @@ class ActionRobot:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
                         return
-                    # Ambiguous results may have clicked already: never replay
-                    # them automatically, even on Resume.
+                    # Safe pre-click login failures are retryable after a user
+                    # explicitly starts another batch. Never replay ambiguous
+                    # or potentially clicked results automatically.
+                    previous = journal.get(user, {})
+                    if _preclick_identity_blocked(previous):
+                        journal.pop(user, None)
+                        _atomic_json(path, journal)
+                        previous = {}
                     if (self._protected_for(user) or user in self.skipped or
-                        journal.get(user, {}).get("status") in ("ok", "review", "error", "blocked")):
+                        previous.get("status") in ("ok", "review", "error", "blocked")):
                         continue
                     while not self.stop_event.is_set():
                         delay = max(wait_required(visits, self.max_count, self.window_minutes,

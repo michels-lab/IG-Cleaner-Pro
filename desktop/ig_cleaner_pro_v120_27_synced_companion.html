@@ -3734,7 +3734,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage every Instagram robot in one workspace. Insights is for analysis; Mutuals remains human-only Focus.</p></div>
 <div class="panel" id="igcAutomationsOverview">
 <div class="title">Automation Center · All Robots</div>
-<p class="note">Every Instagram browser robot is controlled here. Review saved statistics under Insights. Only one robot may navigate the active Instagram session at a time; local analysis is independent.</p>
+<p class="note">Run and inspect all Instagram robots here, including every Profile Counts record. Insights is reserved for account-wide analytics. Only one robot may navigate Instagram at a time; local analysis is independent.</p>
 <div class="btnrow" id="igcAutomationRobotNav">
 <button class="btn primary" type="button" onclick="document.getElementById('igcAutomationsProfileCountsPanel').scrollIntoView({behavior:'smooth',block:'start'})">◎ Profile Counts</button>
 <button class="btn" type="button" onclick="igcAutoChoose('cancel');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Cancel Pending Requests</button>
@@ -3771,7 +3771,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <label>Task <select id="igcAutoIssueTask" onchange="igcAutoRenderIssues()"><option value="unfollow">Not Following Back</option><option value="cancel">Sent Requests</option><option value="audit">Followback Audit</option></select></label>
 <label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="missing_profile_info">Missing evidence</option></select></label>
-<input id="igcAutoIssueSearch" type="search" placeholder="Find @username en incidencias" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
+<input id="igcAutoIssueSearch" type="search" placeholder="Find @username in issues" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
 </div>
 <div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;text-align:left">
 <thead><tr><th>Profile</th><th>Reason / Result</th><th>Actions</th></tr></thead>
@@ -3782,14 +3782,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="panel" id="igcAutomationsProfileCountsPanel">
 <div class="title">◎ Profile Counts Robot · Local Chrome</div>
-<p class="note">This is the home for every Instagram robot. Profile Counts reads visible follower and following statistics for accounts already in your imported list. Insights shows the resulting analysis; no new Following export is required.</p>
+<p class="note">Every part of Profile Counts is here: collect, pace, monitor, inspect individual Followers / Following values and export the results. Insights is for account-wide analyses only. No new Following export is required.</p>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Automatic Instagram profile collection</strong>
 <p id="igcCountsRobotStatus" class="note" aria-live="polite">Uses your imported Following profiles to read visible Instagram counts. Optional browser discovery is separate.</p>
 <div class="btnrow" id="igcCountsRobotConnect" style="margin:8px 0">
 <button class="btn primary" type="button" onclick="igcCountsRobotConnect()">↗ Connect Instagram / Open Chrome</button>
 <button class="btn" type="button" onclick="igcCountsRobotDiscover()" title="Optional: refresh the Following list from visible Instagram, not required for imported profiles">Refresh Following from Instagram (optional)</button>
-<a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.45" target="_blank" rel="noopener">Get Windows app</a>
+<a class="btn" href="https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46" target="_blank" rel="noopener">Get Windows app</a>
 </div>
 <div id="igcCountsRobotMetrics" class="igc-counts-stats" aria-live="polite">
 <span id="igcCountsMetricAnalyzed">Analyzed: 0</span><span id="igcCountsMetricSuccess">Verified: 0</span><span id="igcCountsMetricPending">Pending: —</span><span id="igcCountsMetricErrors">Errors: 0</span><span id="igcCountsMetricUnavailable">Unavailable: 0</span><span id="igcCountsMetricRemaining">Remaining: —</span>
@@ -3820,6 +3820,28 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p class="note" id="igcCountsManualHelp">On Windows, start the local robot here or use the optional CLI to process an exported queue. The robot pauses for Instagram verification and preserves saved results. <a href="https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/PROFILE_COUNTS_ROBOT.md" target="_blank" rel="noopener">Instructions</a>.</p>
 
 </div>
+<div class="panel" id="igcProfileCountsPanel">
+<div class="title">◎ Profile Counts · Collected Results</div>
+<p class="note">All imported profiles are included in the calculations, regardless of account size. These collected results belong to the Profile Counts robot in Automations.</p>
+<div class="btnrow"><button class="btn" type="button" onclick="igcCountsExportResults()">Export all results CSV</button><button class="btn" type="button" onclick="igcCountsRender()">Refresh collected results</button></div>
+<div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
+<input type="search" id="igcCountsQuery" placeholder="Search @username" style="min-width:160px;flex:1" oninput="igcCountsSetPage(0,true)">
+<select id="igcCountsFilter" aria-label="Filter by status" onchange="igcCountsSetPage(0)"><option value="all">All</option><option value="pending">Pending</option><option value="ok">With data</option><option value="other">No data / error</option></select>
+</div>
+<div style="overflow:auto;max-height:520px">
+<table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
+<thead><tr><th>@Username</th><th>Followers</th><th>Following</th><th>Checked</th><th>Status</th></tr></thead>
+<tbody id="igcCountsRows"><tr><td colspan="5">Import Following to get started.</td></tr></tbody>
+</table>
+</div>
+<div class="btnrow" id="igcCountsPagination" aria-label="Profile Counts result pages">
+<button class="btn" id="igcCountsPagePrev" type="button" onclick="igcCountsSetPage(-1)">← Previous</button>
+<span class="note" id="igcCountsPageInfo" aria-live="polite">Page 1</span>
+<button class="btn" id="igcCountsPageNext" type="button" onclick="igcCountsSetPage(1)">Next →</button>
+</div>
+<div class="note" id="igcCountsFootnote"></div>
+</div>
 </div></div><div class="page" id="page-profileStats">
 
 
@@ -3841,27 +3863,6 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn red" onclick="selectStatsCritical()">Select critical priority</button>
 <button class="btn purple" onclick="selectStatsHighRiskFollowers()">View high-risk followers</button>
 </div>
-</div><div class="panel" id="igcProfileCountsPanel">
-<div class="title">◎ Profile Counts Results</div>
-<p class="note">These results include every imported profile in calculations, regardless of the number of Following or Followers. Run or pause the Profile Counts robot under Automations.</p>
-<div class="btnrow"><button class="btn" type="button" onclick="showPage('automations')">Open Profile Counts Robot in Automations →</button><button class="btn" type="button" onclick="igcCountsExportResults()">Export all results CSV</button></div>
-<div class="igc-counts-stats" id="igcCountsSummary" aria-live="polite"></div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0">
-<input type="search" id="igcCountsQuery" placeholder="Search @username" style="min-width:160px;flex:1" oninput="igcCountsSetPage(0,true)">
-<select id="igcCountsFilter" aria-label="Filter by status" onchange="igcCountsSetPage(0)"><option value="all">All</option><option value="pending">Pending</option><option value="ok">With data</option><option value="other">No data / error</option></select>
-</div>
-<div style="overflow:auto;max-height:520px">
-<table class="igc-counts-table" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums">
-<thead><tr><th>@Username</th><th>Followers</th><th>Following</th><th>Checked</th><th>Status</th></tr></thead>
-<tbody id="igcCountsRows"><tr><td colspan="5">Import Following to get started.</td></tr></tbody>
-</table>
-</div>
-<div class="btnrow" id="igcCountsPagination" aria-label="Profile Counts result pages">
-<button class="btn" id="igcCountsPagePrev" type="button" onclick="igcCountsSetPage(-1)">← Previous</button>
-<span class="note" id="igcCountsPageInfo" aria-live="polite">Page 1</span>
-<button class="btn" id="igcCountsPageNext" type="button" onclick="igcCountsSetPage(1)">Next →</button>
-</div>
-<div class="note" id="igcCountsFootnote"></div>
 </div><div class="panel">
 <div class="title">🧠 Profile conclusion</div>
 <div class="profile-conclusion" id="profileConclusion">
@@ -14516,7 +14517,7 @@ if(robot&&robot.port>0&&robot.port<=65535){
 }
 window.igcCountsRobotRestoreConfig();
 window.igcCountsRobotPreview();
-const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='profileStats'){window.igcCountsRobotRestoreConfig();window.igcCountsRobotPreview();window.igcCountsRender()}return result};
+const orig=window.showPage;if(typeof orig==='function')window.showPage=function(id){const result=orig.apply(this,arguments);if(id==='automations'){window.igcCountsRobotRestoreConfig();window.igcCountsRobotPreview();window.igcCountsRender()}return result};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{igcCountsRender();countsHydrate().then(()=>igcCountsRender()).catch(countsStorageError)});else{igcCountsRender();countsHydrate().then(()=>igcCountsRender()).catch(countsStorageError)}
 })();
 </script>

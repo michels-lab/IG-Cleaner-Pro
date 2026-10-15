@@ -91,8 +91,10 @@ const {chromium}=require("playwright");
   assert(await page.locator("#page-automations #igcCountsResume").isVisible());
   assert(await page.locator("#page-profileStats #igcCountsRobotActions").count()===0,
    "Insights must not contain robot controls");
-  assert(await page.locator("#page-profileStats #igcCountsSummary").count()===1,
-   "Insights keeps complete numerical results");
+  assert(await page.locator("#page-profileStats #igcCountsSummary").count()===0,
+   "Insights must not host individual Profile Counts results");
+  assert(await page.locator("#page-automations #igcCountsSummary").count()===1,
+   "Automations must host all Profile Counts results and monitoring controls");
   await page.locator("#page-automations #igcCountsRobotConnect button").first().click();
   // Explicit connect starts counts on the existing import; no Following dialog.
 
@@ -110,7 +112,7 @@ const {chromium}=require("playwright");
     throw Error("Real browser never automatically connected: "+JSON.stringify({diagnostics,queries,errors}));
   }
   assert.equal(appendCalls,1,"The imported profile must be uploaded in a staging chunk");
-  await page.evaluate(()=>{showPage("profileStats");return window.igcCountsRobotPoll()});
+  await page.evaluate(()=>{showPage("automations");return window.igcCountsRobotPoll()});
   await page.waitForFunction(()=>document.querySelector("#igcCountsRows")?.textContent.includes("8,765"),
    {timeout:10000});
   const row=await page.locator("#igcCountsRows").innerText();

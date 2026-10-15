@@ -4,7 +4,7 @@ const source=fs.readFileSync(path.join(__dirname,'../desktop/ig_cleaner_pro_v120
 const match=source.match(/<script id="igc-profile-counts-ui">([\s\S]*?)<\/script>/);
 assert(match,'Profile Counts script missing from canonical Desktop source');
 new vm.Script(match[1],{filename:'igc-profile-counts-ui.js'});
-assert(source.includes('id="igcProfileCountsPanel"'),'Insights must expose Profile Counts');
+assert(source.includes('id="igcProfileCountsPanel"'),'Automations must expose Profile Counts results');
 assert(source.includes('id="igcCountsImport"'),'Import control missing');
 assert(source.includes('id="igcCountsRobotActions"'),'Direct browser robot controls missing');
 const automationStart=source.indexOf('id="page-automations"');
@@ -13,8 +13,10 @@ const robotStart=source.indexOf('id="igcCountsRobotBridge"');
 const countsStart=source.indexOf('id="igcCountsRows"');
 assert(automationStart>=0 && automationStart<robotStart && robotStart<insightsStart,
  'Every robot, including Profile Counts, must live within Automations');
-assert(insightsStart<countsStart && source.indexOf('id="igcCountsRobotBridge"',insightsStart)===-1,
- 'Insights must contain counts results, not robot controls');
+assert(robotStart<countsStart && countsStart<insightsStart &&
+ source.indexOf('id="igcProfileCountsPanel"',insightsStart)===-1 &&
+ source.indexOf('id="igcCountsRobotBridge"',insightsStart)===-1,
+ 'All Profile Counts controls, rows and exports must be in Automations; Insights is analytics only');
 
 
 (async ()=>{

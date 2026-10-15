@@ -279,6 +279,96 @@ class RealBrowserSelectorTests(unittest.TestCase):
             "A profile URL must never prove the active account without matching owner controls")
         self.page.unroute_all()
 
+
+    def _collapsed_profile_nav_attempt(self, *, task="cancel", proven_owner="my.profile",
+                                       misleading_nav=False):
+        """Other-user profile has no semantic Profile link, like owner screenshot."""
+        target = fake_profile(account="my.profile", request_unfollow=(task == "cancel"))
+        target = target.replace(
+            '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>',
+            ('<nav><a href="/someone.else/" aria-label="Profile">Profile</a></nav>'
+             if misleading_nav else
+             '<nav><button aria-label="Profile">☻</button></nav>'))
+        if task == "cancel":
+            target = target.replace('document.querySelector("#relationship")', 'document.querySelector("#relationship")')
+            target = target.replace(
+                '<button id="relationship" onclick="openRelationship()">Following</button>',
+                '<button id="relationship" onclick="openRelationship()">Requested</button>')
+        owner = (f'<html><body><header><h2>{proven_owner}</h2>'
+                 '<button>Edit profile</button></header></body></html>')
+        visits = []
+        def route(request):
+            uri = request.request.url
+            visits.append(uri)
+            html = owner if uri.rstrip("/").endswith("/my.profile") else target
+            request.fulfill(status=200, content_type="text/html", body=html)
+        self.context.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(self.page, "target.user", task,
+                                                  "my.profile", lambda _: True)
+        return status, message, self.page.evaluate("window.__steps"), visits
+
+    def test_cancel_pending_with_collapsed_profile_sidebar_verified_via_readonly_tab(self):
+        status, message, events, visits = self._collapsed_profile_nav_attempt()
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(events, ["open", "confirmed"])
+        self.assertTrue(any("/my.profile/" in u for u in visits),
+                        "A read-only own-profile proof must be checked")
+
+    def test_unfollow_with_collapsed_profile_sidebar_verified_via_readonly_tab(self):
+        status, message, events, visits = self._collapsed_profile_nav_attempt(task="unfollow")
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(events, ["open", "unfollow", "confirmed"])
+        self.assertTrue(any("/my.profile/" in u for u in visits))
+
+    def test_collapsed_sidebar_wrong_logged_in_owner_never_clicks(self):
+        status, message, events, visits = self._collapsed_profile_nav_attempt(proven_owner="different.account")
+        self.assertEqual(status, "blocked", message)
+        self.assertEqual(events, [])
+        self.assertTrue(any("/my.profile/" in u for u in visits))
+
+    def test_conflicting_semantic_nav_identity_never_falls_back_to_suggested_owner(self):
+        status, message, events, visits = self._collapsed_profile_nav_attempt(misleading_nav=True)
+        self.assertEqual(status, "blocked", message)
+        self.assertEqual(events, [])
+        self.assertFalse(any("/my.profile/" in u for u in visits),
+                         "Strong conflicting nav identity must immediately stop actions")
+
+    def test_cancel_pending_succeeds_with_collapsed_profile_nav_and_verified_owner_tab(self):
+        # Real user case: Home identifies the owner, but nav disappears on
+        # target profiles. A read-only own-profile tab must prove identity.
+        target = fake_profile(request_unfollow=True).replace(
+            '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>', ''
+        ).replace('>Following</button>', '>Requested</button>')
+        owner = ('<html><body><header><h2>my.profile</h2>'
+                 '<button>Edit profile</button></header></body></html>')
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(
+                status=200, content_type="text/html",
+                body=owner if route.request.url.rstrip("/").endswith("/my.profile")
+                     else target))
+        status,message=perform_visible_action(
+            self.page,"target.user","cancel","my.profile",lambda _:True)
+        self.assertEqual(status,"ok",message)
+        self.assertEqual(self.page.evaluate("window.__steps"),["open","confirmed"])
+        self.page.unroute_all()
+
+    def test_cancel_pending_wrong_owner_cannot_click_with_hidden_nav(self):
+        target = fake_profile(request_unfollow=True).replace(
+            '<nav><a href="/my.profile/" aria-label="Profile">Profile</a></nav>', ''
+        ).replace('>Following</button>', '>Requested</button>')
+        impostor = ('<html><body><header><h2>impostor.account</h2>'
+                    '<button>Edit profile</button></header></body></html>')
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(
+                status=200, content_type="text/html",
+                body=impostor if route.request.url.rstrip("/").endswith("/my.profile")
+                     else target))
+        status,message=perform_visible_action(
+            self.page,"target.user","cancel","my.profile",lambda _:True)
+        self.assertEqual(status,"blocked",message)
+        self.assertEqual(self.page.evaluate("window.__steps"),[])
+        self.page.unroute_all()
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)

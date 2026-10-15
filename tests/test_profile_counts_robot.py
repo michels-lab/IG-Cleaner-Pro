@@ -71,6 +71,15 @@ class InstagramVisibleDiscoveryTests(unittest.TestCase):
 
 
 class ProfileCountsRobotTests(unittest.TestCase):
+    def test_valid_http_prefix_usernames_are_not_mistaken_for_urls(self):
+        # Reported v120.46 failure: a legitimate username beginning 'http'
+        # was misread as a web URL and rejected during staged upload.
+        for handle in ("http.cat", "http", "httpshop", "http__user", "HTTP.profile", "@http.user"):
+            expected = handle.lstrip("@").lower()
+            self.assertEqual(valid_username(handle), expected)
+        self.assertEqual(valid_username("https://www.instagram.com/http.cat/"), "http.cat")
+        self.assertIsNone(valid_username("https://example.com/http.cat/"))
+
     def test_visible_meta_english(self):
         self.assertEqual(parse_profile_counts(
             "999 Posts, 1,234 Followers, 567 Following - See Instagram photos"), (1234, 567, False))
