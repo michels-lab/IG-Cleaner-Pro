@@ -15217,7 +15217,7 @@ window.igcAutoRender=function(){
  const stats=document.getElementById("igcAutoMetrics");
  if(stats){
   stats.replaceChildren();
-  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Already attempted: "+attemptedCount,"Protected: "+protectedCount,"Skipped: "+skippedCount]){
+  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Protected: "+protectedCount,"Skipped: "+skippedCount,"Already attempted: "+attemptedCount]){
    const item=document.createElement("span");item.textContent=label;stats.appendChild(item);
   }
  }
