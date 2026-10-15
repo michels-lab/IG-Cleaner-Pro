@@ -97,9 +97,13 @@ def resume_cycle(path: Path, usernames: list[str]) -> dict:
         or len(targets) != len(set(targets)) or any(u not in allowed for u in targets)):
         raise ValueError("The saved re-audit queue differs from this Instagram workspace; start a new cycle.")
     done_file = _done_path(path, cycle)
-    with done_file.open("r", encoding="utf-8") if done_file.is_file() else __import__("contextlib").nullcontext([]) as saved:
-        done = saved.read().splitlines() if done_file.is_file() else []
-    if len(done) != len(set(done)) or any(u not in targets for u in done):
+    if done_file.is_file():
+        with done_file.open("r", encoding="utf-8") as saved:
+            done = saved.read().splitlines()
+    else:
+        done = []
+    target_set = set(targets)
+    if len(done) != len(set(done)) or any(u not in target_set for u in done):
         raise ValueError("The saved re-audit progress log is invalid. No counts were deleted.")
     return _runtime(cycle, done)
 
