@@ -12,6 +12,7 @@ guide = (ROOT / "packaging/windows-installer/TaskbarPinning.txt").read_text(enco
 manifest = json.loads((ROOT / "release/distribution-manifest.json").read_text(encoding="utf-8"))
 win = manifest["channels"]["windowsRobot"]
 assert script.is_file() and (ROOT / "tools/test_windows_installer.ps1").is_file()
+assert (ROOT / "tools/test_windows_installer_wizard.ps1").is_file()
 assert len(license_text) >= 600 and "Michel Armando Duarte Flores" in license_text
 assert "All Rights Reserved" in license_text
 for value in (
@@ -47,6 +48,8 @@ for path in [
         "tools/test_windows_installer.ps1",
         "IG-Cleaner-Pro-Windows-Setup-v",
         "tests/windows-installer-contract.py",
+        "tools/test_windows_installer_wizard.ps1",
+        "IG-Cleaner-Pro-Installer-EULA.png",
     ):
         assert token in w, f"{path}: missing {token}"
 release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
