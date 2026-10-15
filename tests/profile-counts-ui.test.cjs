@@ -77,9 +77,9 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(saved.records['public.user'].followers,'1234');
  assert.equal(saved.records['unrelated'],undefined,'Do not import profiles outside active Following');
 
- const historicalImport='username,followers,following,checked_at,source,status,approximate\\n'+
-  'public.user,900,300,2026-10-10T09:00:00Z,manual_history,ok,false\\n'+
-  'public.user,1500,225,2026-10-13T09:00:00Z,manual_history,ok,false\\n';
+ const historicalImport='username,followers,following,checked_at,source,status,approximate\n'+
+  'public.user,900,300,2026-10-10T09:00:00Z,manual_history,ok,false\n'+
+  'public.user,1500,225,2026-10-13T09:00:00Z,manual_history,ok,false\n';
  await ctx.window.igcCountsImportFile({files:[{text:async()=>historicalImport}],value:''});
  const historyKey=Array.from(store.keys()).find(k=>k.startsWith('igc_profile_counts_history_v1__'));
  assert(historyKey,'Dated measurements must be isolated in a durable workspace history');
@@ -91,8 +91,8 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  await ctx.window.igcCountsImportFile({files:[{text:async()=>historicalImport}],value:''});
  timeline=JSON.parse(store.get(historyKey)).filter(r=>r.username==='public.user');
  assert.equal(timeline.length,3,'Reimporting the same historical CSV is idempotent');
- const laterUnavailable='username,followers,following,checked_at,status\\n'+
-  'public.user,,,2026-10-15T09:00:00Z,unavailable\\n';
+ const laterUnavailable='username,followers,following,checked_at,status\n'+
+  'public.user,,,2026-10-15T09:00:00Z,unavailable\n';
  await ctx.window.igcCountsImportFile({files:[{text:async()=>laterUnavailable}],value:''});
  assert.equal(JSON.parse(store.get(onlyKey)).records['public.user'].followers,'1500',
   'An inaccessible revisit cannot erase the last verified counts');
