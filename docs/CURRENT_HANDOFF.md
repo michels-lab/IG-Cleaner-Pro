@@ -1,3 +1,9 @@
+## 2026-10-15 — Main app now imports and exports dated Profile Counts timelines (development PR)
+
+- Chrome Companion second-audit history was previously **only in the extension**; the Desktop CSV importer discarded snapshots older than the latest row. This continuation adds an additive IndexedDB `history` object store scoped to app login and Instagram workspace and a corresponding **Export dated history CSV** button in Automations.
+- CSV imports accept full historical snapshot files, keep all valid dated `ok` readings, deduplicate repeated snapshot imports and retain last verified values when a later profile is inaccessible. Older baseline data is migrated before replacement. The original current-result storage remains unchanged; environments lacking IndexedDB use explicit-error local fallback.
+- New offline tests cover these cases and no active Instagram account was used. Distinguish this from the separate Playwright Windows robot's still-missing automated oldest-first re-audit, and from the Chrome extension's already-implemented manual oldest-first cycles. Await exact-head CI and do **not** publish v120.47 without independent explicit authorization.
+
 ## 2026-10-15 — Owner follow-up: persistent counts and oldest-first re-audit
 
 - Each username's Followers and Following readings are saved with timestamp and precision, not overwritten on a new audit.
