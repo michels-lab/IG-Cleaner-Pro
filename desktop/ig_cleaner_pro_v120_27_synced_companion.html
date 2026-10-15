@@ -3571,7 +3571,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="focuslab-note">Import your file <b>pending_follow_requests.json</b>. This workspace covers only pending follow requests, prioritizing older requests and suspicious profiles. Focus 20/30/40 opens profile tabs and requires review confirmation; the fixed panel tracks progress. It also compares Pending with imported Following and Followers to flag requests that may have been accepted.</div>
 <div class="pending-upload-card">
 <div class="upload" onclick="document.getElementById('pendingInput').click()"><b>📨 Pending follow requests</b><small>Instagram file: pending_follow_requests.json</small><div class="filelist" id="pendingFilesLabel">No file</div></div>
-<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Procesar pending</button><button class="btn" onclick="renderPendingRequests()">Actualizar</button><button class="btn" onclick="clearPendingOpened()">Reset opened, unreviewed</button></div>
+<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Process pending</button><button class="btn" onclick="renderPendingRequests()">Refresh</button><button class="btn" onclick="recoverSectionActiveBatch('pending')">Recover current batch</button><button class="btn" onclick="clearPendingOpened()">Reset opened, unreviewed</button></div>
 </div>
 <input accept=".json,.html,.txt" id="pendingInput" multiple="" onchange="v113UploadChanged(\'pendingInput\',\'pendingFilesLabel\')" type="file"/>
 <div class="focuslab-kpi-row" id="pendingStats"><div class="focuslab-kpi"><b>0</b><span>pending</span></div><div class="focuslab-kpi"><b>0</b><span>not opened</span></div><div class="focuslab-kpi"><b>0</b><span>opened</span></div><div class="focuslab-kpi"><b>0</b><span>riesgo medio/alto</span></div><div class="focuslab-kpi"><b>0</b><span>antiguos</span></div></div>
@@ -3758,7 +3758,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Run Selected Batch</button>
 <button class="btn orange" id="igcAutoPause" type="button" onclick="igcAutoPause()">⏸ Pause</button>
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
-<button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ New Batch</button>
+<button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
+<button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
 <button class="btn" type="button" onclick="igcAutoPoll()">⟳ Refresh</button>
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
@@ -3783,6 +3784,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <tbody id="igcAutoIssueRows"></tbody></table></div>
 </div>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
+<div class="btnrow" style="align-items:center;gap:8px;margin-top:8px">
+ <button class="btn" type="button" onclick="igcAutoPageMove(-1)">← Previous</button>
+ <span class="note" id="igcAutoPageStatus" role="status" aria-live="polite">Page 1</span>
+ <button class="btn" type="button" onclick="igcAutoPageMove(1)">Next →</button>
+</div>
 <p class="note">Skip excludes a profile from the current batch; protection persists until removed. Mutuals are human-only Focus lists, never automated account changes.</p>
 </div>
 <div class="panel" id="igcAutomationsProfileCountsPanel">
@@ -11142,7 +11148,7 @@ function resetDoubleCheckCycle(show=true){
 
 
 
-<div class="igc-review-body"><div class="igc-review-sidebar"><div class="safe-focus-warning"><b>Important:</b> Opening profiles does NOT mark them reviewed. Your decision is saved only after confirmation. If the tabs failed, use Reopen or Couldn't review yet.</div><div class="safe-focus-controls">
+<div class="igc-review-body"><div class="igc-review-sidebar"><div class="safe-focus-warning"><b>Important:</b> Chrome can block mass tab openings after the first batch. Every username in the list has a direct Open link that works with a separate user click. A popup request does NOT prove the profile was opened, nor does it mark it reviewed. Confirm only after checking the actual profile; otherwise select Couldn't review yet.</div><div class="safe-focus-controls">
 <div>
 <label>Decision / reason</label>
 <select id="safeFocusDecision">
@@ -11175,7 +11181,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
   const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
-  const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='followers'?`Se abrieron ${rows.length} followers. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='mutual'?`Se abrieron ${rows.length} followers mutuos. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:`Se abrieron ${rows.length} seguidos que no te siguen. Revisa las pestañas de Instagram y regresa aquí para confirmar.`));
+  const text=`Requested ${rows.length} profile tabs for ${kind}. Chrome may block repeated popups, especially after multiple batches. If any tab did not open, use the direct Open link beside that username below. Save the decision only after actually reviewing profiles.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
@@ -11184,7 +11190,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Reabiertos ${b.rows.length} perfiles de ${b.label}`)}
+function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
   if(b.kind==='pending'){
@@ -11294,18 +11300,23 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   setActiveFocusBatch(kind,rows,label);
 
   // Los focos SIEMPRE abren perfiles. No son selección.
+  // Browser popup policy can block a second/third 20–40-tab burst. We cannot
+  // infer success from window.open(...,noopener), which returns null even for
+  // successful openings. Preserve direct user-gesture links in the review
+  // popup and NEVER mark these profiles reviewed from a popup attempt.
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
   // La confirmación SIEMPRE queda activa.
   showSafeFocusPopup(kind,rows,label);
 
   const expected=target||rows.length;
-  logAction('focus',`${label}: ${rows.length} perfiles abiertos`,{count:rows.length,source:label,requested:expected});
-  forceLiveRefresh(`${label}: ${rows.length}/${expected} perfiles abiertos · confirmación activa`);
+  logAction('focus',`${label}: ${rows.length} tabs requested; browser may block popups`,
+            {count:rows.length,source:label,requested:expected});
+  forceLiveRefresh(`${label}: ${rows.length}/${expected} profile tabs requested · verify browser and use direct links if blocked`);
   if(rows.length<expected){
-    msg(`${label}: solo había ${rows.length} perfiles abribles de ${expected}.`, 'w');
+    msg(`${label}: ${rows.length}/${expected} available. Open blocked tabs using the links in the review dialog.`,'w');
   }else{
-    msg(`${label}: ${rows.length} perfiles abiertos.`, 's');
+    msg(`${label}: requested ${rows.length} tabs. If Chrome blocked them, use the per-profile Open links in the review dialog.`,'i');
   }
   return true;
 }
@@ -13037,7 +13048,17 @@ window.igcRegenerateFocusPreview=function(){const made=make(view.kind,view.n,tru
 window.igcDiscardFocusPreview=function(){if(view.key)delete prepared[view.key];save();status();igcCloseFocusPreview();msg('Vista previa descartada. El siguiente Foco volverá a calcularse normalmente.','i')};
 window.igcCloseFocusPreview=function(){const el=document.getElementById('igcFocusPreviewOverlay');if(el){el.classList.remove('open');el.setAttribute('aria-hidden','true')}};
 window.igcOpenFocusPreviewBatch=function(){const b=prepared[view.key];if(!b)return;const state=igcTryOpenPreparedFocus(b.kind,b.n);if(state==='opened')igcCloseFocusPreview()};
-window.igcTryOpenPreparedFocus=function(kind,n){const k=key(kind,n),b=prepared[k];if(!b)return 'none';const live=rowsFor(b),stale=b.signature!==dataSignature()||live.missing.length>0||live.rows.length!==b.usernames.length;if(stale){render(b,true);msg(`Foco ${n}: la vista previa cambió. Regenera antes de abrir; no sustituí ningún perfil.`, 'w');return 'stale'}const ok=openConfirmedFocusRows(live.rows,`${label(kind)} foco ${n} · preparado`,kind,n,{skipQuality:true,exact:true});if(ok){delete prepared[k];save();status();return 'opened'}return 'stale'};
+window.igcTryOpenPreparedFocus=function(kind,n){const k=key(kind,n),b=prepared[k];if(!b)return 'none';const live=rowsFor(b),stale=b.signature!==dataSignature()||live.missing.length>0||live.rows.length!==b.usernames.length;if(stale){
+  // Reimports can change the underlying Instagram lists after the first or
+  // second Focus batch. Never leave a frozen old set permanently blocking
+  // "Focus 20/30/40": regenerate a visible exact-username preview, requiring
+  // a fresh explicit Open click on the preview (no silent substitutions).
+  const fresh=make(kind,n,false);
+  if(!fresh){igcCloseFocusPreview();return 'stale'}
+  render(fresh.batch,false);
+  msg(`Focus ${n}: imports or reviews changed. Updated the preview with current profiles; review it and click Open these profiles.`,'w');
+  return 'stale'
+ }const ok=openConfirmedFocusRows(live.rows,`${label(kind)} foco ${n} · preparado`,kind,n,{skipQuality:true,exact:true});if(ok){delete prepared[k];save();status();return 'opened'}return 'stale'};
 window.igcPreparedFocusState=prepared;
 const oldProcess=window.processFiles;if(typeof oldProcess==='function')window.processFiles=async function(){const r=await oldProcess.apply(this,arguments);status();return r};
 const oldZip=window.igcHandleZipInput;if(typeof oldZip==='function')window.igcHandleZipInput=async function(){const before=dataSignature(),r=await oldZip.apply(this,arguments);if(before!==dataSignature())status();return r};
@@ -14794,7 +14815,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 "use strict";
 // This module is intentionally review-only until the browser action runner
 // passes live, owner-approved acceptance. No profile-changing network requests.
-let mode="unfollow",identity="",skips={unfollow:new Set(),cancel:new Set(),audit:new Set()};
+let mode="unfollow",identity="",actionPage=1,skips={unfollow:new Set(),cancel:new Set(),audit:new Set()};
 const choices=["unfollow","cancel","protected","audit"];
 function norm(value){const v=String(value||"").trim().replace(/^@/,"").toLowerCase();return /^[a-z0-9._]{1,30}$/.test(v)?v:""}
 function scope(){
@@ -14845,14 +14866,36 @@ function inputs(){
 }
 function refreshScope(){
  const active=scope();
- if(identity!==active){identity=active;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
+ if(identity!==active){identity=active;actionPage=1;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
 }
+function actionAttemptedKey(task){return "igc_actions_attempted_v1__"+scope()+"__"+task}
+function priorAttempts(task){
+ let saved=[];
+ try{saved=JSON.parse(localStorage.getItem(actionAttemptedKey(task))||"[]")}catch{}
+ const used=new Set(Array.isArray(saved)?saved.map(norm).filter(Boolean):[]);
+ const ctx=actionOwner();
+ if(actionState?.task===task&&actionState.owner===ctx.owner&&actionState.account===ctx.account){
+  for(const user of actionState.attempted_usernames||[])if(norm(user))used.add(norm(user));
+ }
+ return used;
+}
+window.igcAutoPageMove=function(direction){
+ actionPage=Math.max(1,actionPage+Number(direction||0));window.igcAutoRender();
+};
+window.igcAutoOpenPendingReviewBatch=function(){
+ if(mode!=="cancel"){setStatus("Choose Cancel Pending Requests first.");return}
+ if(actionState?.running){setStatus("Pause the active Instagram robot before opening review tabs.");return}
+ const count=Math.max(1,Math.min(40,Number(document.getElementById("igcAutoBatch")?.value)||30));
+ // Review and opening tabs never invokes a cancellation action.
+ window.showPage("pendingRequests");
+ pendingFocusN(count);
+};
 function setStatus(text){
  const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
 }
 window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
- mode=next;
+ mode=next;actionPage=1;
  const search=document.getElementById("igcAutoSearch");if(search)search.value="";
  const issuesTask=document.getElementById("igcAutoIssueTask");
  if(issuesTask&&next!=="protected")issuesTask.value=next;
@@ -14932,7 +14975,9 @@ function selectedActionTargets(){
  refreshScope();
  const limit=Number(document.getElementById("igcAutoBatch")?.value||30);
  if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error("Choose 1–1,000 profiles per batch.");
- return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&!skips[r.kind].has(r.username))
+ const attempted=priorAttempts(mode);
+ return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&
+     !skips[r.kind].has(r.username)&&!attempted.has(r.username))
      .map(r=>r.username))].slice(0,limit);
 }
 function actionConfig(task,targets){
@@ -14961,6 +15006,9 @@ function actionConfig(task,targets){
 window.igcAutoStart=async function(){
  if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
  try{
+  // Refresh the latest Windows journal before selecting the next batch.
+  // This is read-only; it never clicks Follow, Unfollow or Cancel.
+  if(actionBridge)await window.igcAutoPoll();
   const targets=selectedActionTargets(),data=actionConfig(mode,targets);
   const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
   const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
@@ -15002,6 +15050,13 @@ window.igcAutoPoll=async function(){
   // A paused job belonging to A must not trap the user in B, and an active
   // job belonging to A must still prevent B from changing identities.
   actionState=state;
+  if(state.owner===ctx.owner&&state.account===ctx.account&&
+     ["cancel","unfollow","audit"].includes(state.task)&&Array.isArray(state.attempted_usernames)){
+   // Fully persisted server journal spans past batches; never rely on
+   // state.rows (which covers only the latest batch).
+   localStorage.setItem(actionAttemptedKey(state.task),
+     JSON.stringify(state.attempted_usernames.map(norm).filter(Boolean)));
+  }
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
    const fallback=document.getElementById("igcActionAuthFallback");
    if(fallback)fallback.style.display="none";
@@ -15148,13 +15203,21 @@ window.igcAutoRender=function(){
  refreshScope();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ const attempted=mode==="protected"?new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
- const readyCount=Math.max(0,all.length-protectedCount-skippedCount);
+ const attemptedCount=all.filter(r=>attempted.has(r.username)).length;
+ const readyCount=all.filter(r=>!isProtected(r.kind,r.username)&&
+    !skips[r.kind].has(r.username)&&!attempted.has(r.username)).length;
+ const perPage=100,pages=Math.max(1,Math.ceil(list.length/perPage));
+ actionPage=Math.min(Math.max(1,actionPage),pages);
+ const pageStatus=document.getElementById("igcAutoPageStatus");
+ if(pageStatus)pageStatus.textContent="Page "+actionPage+" / "+pages+
+   " · "+list.length+" profiles (all imports, no display cutoff)";
  const stats=document.getElementById("igcAutoMetrics");
  if(stats){
   stats.replaceChildren();
-  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Protected: "+protectedCount,"Skipped: "+skippedCount,"Execution errors: —"]){
+  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Protected: "+protectedCount,"Skipped: "+skippedCount,"Already attempted: "+attemptedCount]){
    const item=document.createElement("span");item.textContent=label;stats.appendChild(item);
   }
  }
@@ -15174,7 +15237,7 @@ window.igcAutoRender=function(){
   }
  }catch{}
  root.replaceChildren();
- const visible=list.slice(0,300);
+ const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
  if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
  for(const item of visible){
   const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),actions=document.createElement("td");
@@ -15183,6 +15246,7 @@ window.igcAutoRender=function(){
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
+     attempted.has(item.username)?"Already attempted · inspect journal":
      live.audit_relation==="follows_you"?"✓ Follows you (verified)":
      live.audit_relation==="not_following"?"✓ Not following you (verified)":
      live.status==="ok"?"✓ Completed":

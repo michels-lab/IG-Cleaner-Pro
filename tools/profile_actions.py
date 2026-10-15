@@ -562,6 +562,11 @@ class ActionRobot:
             if resume and self.status not in ("paused", "error", "review", "blocked"):
                 raise ValueError("There is no paused task to resume.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            if not resume:
+                previous = self._journal()
+                if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
+                       and not _preclick_identity_blocked(record) for user in targets):
+                    raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
             if not resume:
                 self.skipped.clear()
@@ -592,6 +597,12 @@ class ActionRobot:
         with self.lock:
             journal = self._journal() if self.owner and self.task else {}
             rows = {u: journal.get(u, {}) for u in self.targets}
+            # Persisted action journal spans ALL earlier batches, not merely
+            # the latest 30 selected targets. Send usernames only, no secrets.
+            attempted_usernames = sorted(u for u, record in journal.items()
+                if isinstance(record, dict)
+                and record.get("status") in ("ok", "review", "error", "blocked")
+                and not _preclick_identity_blocked(record))
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
@@ -616,6 +627,7 @@ class ActionRobot:
                     "pending": pending, "successful": successful,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
+                    "attempted_usernames": attempted_usernames,
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),

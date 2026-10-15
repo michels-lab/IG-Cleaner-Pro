@@ -1,3 +1,11 @@
+## 2026-10-15 — v120.48 Pending batch and cancellation work (development only)
+
+- Candidate branch `fix/pending-request-readonly-recheck-20261015`: fix last-batch replay after the second batch by exposing the persisted per-account/action ActionRobot attempted journal and excluding all prior attempted rows from new selections, then fetching the latest journal before new batch authorization. A signed-in Chrome robot still only performs actions after explicit user confirmation; uncertain click outcomes remain excluded rather than silently retried.
+- Imported Pending list is no longer UI-truncated at 300 rows: Automations displays 100-row pages and supports all imported entries; **Open next Pending review batch** opens read-only Pending Focus with visible confirmation (independent of the cancellation robot). Frozen Focus previews after a new ZIP or JSON import regenerate into a *new visible preview* requiring another click, avoiding both a permanent stale lock and silent substitutions. **Recover current batch** opens prior unconfirmed review; individual profile links survive Chrome popup blocking.
+- Uncertain cancellation gets one safe read-only post-click profile reload, confirms only a visible Follow / Follow Back state and matching owner, reports otherwise as `pending_cancel_unverified` for manual review. No auto-Cancel retry or CAPTCHA bypass.
+- Required tests: `tests/test_action_batch_history.py`, `tests/automations-next-batch.test.cjs`, `tests/pending-focus-reimport.test.cjs`, `tests/test_profile_actions_chromium.py` plus Windows installer and Desktop/Android CI.
+- Current public release stays v120.47. Actual owner Chrome popup settings, current export and live Instagram session are unknown; offline tests cannot certify those.
+
 ## 2026-10-15 — Pending Requests uncertain cancellation safe refresh (v120.48 development)
 
 - Existing v120.47 Pending Requests robot may click and then fail to confirm because Instagram's current page has stale Requested UI. Historical `review/error/blocked` journal entries are not replayed; manually inspect any reported username under Automations → Issues, Open profile, without running a second cancellation.
