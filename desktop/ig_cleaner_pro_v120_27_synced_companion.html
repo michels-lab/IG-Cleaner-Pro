@@ -3571,7 +3571,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="focuslab-note">Import your file <b>pending_follow_requests.json</b>. This workspace covers only pending follow requests, prioritizing older requests and suspicious profiles. Focus 20/30/40 opens profile tabs and requires review confirmation; the fixed panel tracks progress. It also compares Pending with imported Following and Followers to flag requests that may have been accepted.</div>
 <div class="pending-upload-card">
 <div class="upload" onclick="document.getElementById('pendingInput').click()"><b>📨 Pending follow requests</b><small>Instagram file: pending_follow_requests.json</small><div class="filelist" id="pendingFilesLabel">No file</div></div>
-<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Procesar pending</button><button class="btn" onclick="renderPendingRequests()">Actualizar</button><button class="btn" onclick="clearPendingOpened()">Reset opened, unreviewed</button></div>
+<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Process pending</button><button class="btn" onclick="renderPendingRequests()">Refresh</button><button class="btn" onclick="recoverSectionActiveBatch('pending')">Recover current batch</button><button class="btn" onclick="clearPendingOpened()">Reset opened, unreviewed</button></div>
 </div>
 <input accept=".json,.html,.txt" id="pendingInput" multiple="" onchange="v113UploadChanged(\'pendingInput\',\'pendingFilesLabel\')" type="file"/>
 <div class="focuslab-kpi-row" id="pendingStats"><div class="focuslab-kpi"><b>0</b><span>pending</span></div><div class="focuslab-kpi"><b>0</b><span>not opened</span></div><div class="focuslab-kpi"><b>0</b><span>opened</span></div><div class="focuslab-kpi"><b>0</b><span>riesgo medio/alto</span></div><div class="focuslab-kpi"><b>0</b><span>antiguos</span></div></div>
@@ -11142,7 +11142,7 @@ function resetDoubleCheckCycle(show=true){
 
 
 
-<div class="igc-review-body"><div class="igc-review-sidebar"><div class="safe-focus-warning"><b>Important:</b> Opening profiles does NOT mark them reviewed. Your decision is saved only after confirmation. If the tabs failed, use Reopen or Couldn't review yet.</div><div class="safe-focus-controls">
+<div class="igc-review-body"><div class="igc-review-sidebar"><div class="safe-focus-warning"><b>Important:</b> Chrome can block mass tab openings after the first batch. Every username in the list has a direct Open link that works with a separate user click. A popup request does NOT prove the profile was opened, nor does it mark it reviewed. Confirm only after checking the actual profile; otherwise select Couldn't review yet.</div><div class="safe-focus-controls">
 <div>
 <label>Decision / reason</label>
 <select id="safeFocusDecision">
@@ -11175,7 +11175,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
   const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
-  const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='followers'?`Se abrieron ${rows.length} followers. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='mutual'?`Se abrieron ${rows.length} followers mutuos. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:`Se abrieron ${rows.length} seguidos que no te siguen. Revisa las pestañas de Instagram y regresa aquí para confirmar.`));
+  const text=`Requested ${rows.length} profile tabs for ${kind}. Chrome may block repeated popups, especially after multiple batches. If any tab did not open, use the direct Open link beside that username below. Save the decision only after actually reviewing profiles.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
@@ -11184,7 +11184,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Reabiertos ${b.rows.length} perfiles de ${b.label}`)}
+function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
   if(b.kind==='pending'){
@@ -11294,18 +11294,23 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   setActiveFocusBatch(kind,rows,label);
 
   // Los focos SIEMPRE abren perfiles. No son selección.
+  // Browser popup policy can block a second/third 20–40-tab burst. We cannot
+  // infer success from window.open(...,noopener), which returns null even for
+  // successful openings. Preserve direct user-gesture links in the review
+  // popup and NEVER mark these profiles reviewed from a popup attempt.
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
   // La confirmación SIEMPRE queda activa.
   showSafeFocusPopup(kind,rows,label);
 
   const expected=target||rows.length;
-  logAction('focus',`${label}: ${rows.length} perfiles abiertos`,{count:rows.length,source:label,requested:expected});
-  forceLiveRefresh(`${label}: ${rows.length}/${expected} perfiles abiertos · confirmación activa`);
+  logAction('focus',`${label}: ${rows.length} tabs requested; browser may block popups`,
+            {count:rows.length,source:label,requested:expected});
+  forceLiveRefresh(`${label}: ${rows.length}/${expected} profile tabs requested · verify browser and use direct links if blocked`);
   if(rows.length<expected){
-    msg(`${label}: solo había ${rows.length} perfiles abribles de ${expected}.`, 'w');
+    msg(`${label}: ${rows.length}/${expected} available. Open blocked tabs using the links in the review dialog.`,'w');
   }else{
-    msg(`${label}: ${rows.length} perfiles abiertos.`, 's');
+    msg(`${label}: requested ${rows.length} tabs. If Chrome blocked them, use the per-profile Open links in the review dialog.`,'i');
   }
   return true;
 }
@@ -13037,7 +13042,17 @@ window.igcRegenerateFocusPreview=function(){const made=make(view.kind,view.n,tru
 window.igcDiscardFocusPreview=function(){if(view.key)delete prepared[view.key];save();status();igcCloseFocusPreview();msg('Vista previa descartada. El siguiente Foco volverá a calcularse normalmente.','i')};
 window.igcCloseFocusPreview=function(){const el=document.getElementById('igcFocusPreviewOverlay');if(el){el.classList.remove('open');el.setAttribute('aria-hidden','true')}};
 window.igcOpenFocusPreviewBatch=function(){const b=prepared[view.key];if(!b)return;const state=igcTryOpenPreparedFocus(b.kind,b.n);if(state==='opened')igcCloseFocusPreview()};
-window.igcTryOpenPreparedFocus=function(kind,n){const k=key(kind,n),b=prepared[k];if(!b)return 'none';const live=rowsFor(b),stale=b.signature!==dataSignature()||live.missing.length>0||live.rows.length!==b.usernames.length;if(stale){render(b,true);msg(`Foco ${n}: la vista previa cambió. Regenera antes de abrir; no sustituí ningún perfil.`, 'w');return 'stale'}const ok=openConfirmedFocusRows(live.rows,`${label(kind)} foco ${n} · preparado`,kind,n,{skipQuality:true,exact:true});if(ok){delete prepared[k];save();status();return 'opened'}return 'stale'};
+window.igcTryOpenPreparedFocus=function(kind,n){const k=key(kind,n),b=prepared[k];if(!b)return 'none';const live=rowsFor(b),stale=b.signature!==dataSignature()||live.missing.length>0||live.rows.length!==b.usernames.length;if(stale){
+  // Reimports can change the underlying Instagram lists after the first or
+  // second Focus batch. Never leave a frozen old set permanently blocking
+  // "Focus 20/30/40": regenerate a visible exact-username preview, requiring
+  // a fresh explicit Open click on the preview (no silent substitutions).
+  const fresh=make(kind,n,false);
+  if(!fresh){igcCloseFocusPreview();return 'stale'}
+  render(fresh.batch,false);
+  msg(`Focus ${n}: imports or reviews changed. Updated the preview with current profiles; review it and click Open these profiles.`,'w');
+  return 'stale'
+ }const ok=openConfirmedFocusRows(live.rows,`${label(kind)} foco ${n} · preparado`,kind,n,{skipQuality:true,exact:true});if(ok){delete prepared[k];save();status();return 'opened'}return 'stale'};
 window.igcPreparedFocusState=prepared;
 const oldProcess=window.processFiles;if(typeof oldProcess==='function')window.processFiles=async function(){const r=await oldProcess.apply(this,arguments);status();return r};
 const oldZip=window.igcHandleZipInput;if(typeof oldZip==='function')window.igcHandleZipInput=async function(){const before=dataSignature(),r=await oldZip.apply(this,arguments);if(before!==dataSignature())status();return r};
