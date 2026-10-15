@@ -1,3 +1,9 @@
+## 2026-10-15 — Reconcile new Windows installer against master governance audit
+
+- Exact merged installable Windows Setup candidate passed all four main-commit UI/Windows/Android/CI workflows; the separate Michel's Lab governance run failed its cross-app installer source check.
+- Root cause in IG Cleaner: master validator requires canonical product name within full legal license and bilingual taskbar guide, and a `{autodesktop}` shortcut scoped by `Tasks: desktopicon`; the branch's installer used `{userdesktop}` while its manifest registered a longer Windows-specific product alias. Corrected the taskbar guide legal name, Inno icon constant, and local contract. The master registry requires the exact canonical license name `IG Cleaner Pro` (separate PR).
+- Unrelated FoamLens taskbar-guide contract also failed in the same audit and remains outside this IG Cleaner change. Verify new merged main and master governance run before closing.
+
 ## 2026-10-15 — Real native installer wizard/EULA visual gate added
 
 - Extended the Windows Setup CI with `tools/test_windows_installer_wizard.ps1`: launches the actual interactive Inno wizard in English, navigates to the shipped LICENSE.txt page, requires the **accept / decline** radio controls, captures the real wizard screenshot, proves Next is disabled until acceptance, enabled on accept, disabled on decline, then closes without installing. Screenshot is retained in Windows validation artifacts (separate from published release files).

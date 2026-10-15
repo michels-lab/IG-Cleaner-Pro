@@ -1,3 +1,8 @@
+## 2026-10-15 — Cross-app Windows installer source validator follow-up
+
+- Windows Setup candidate on `main` passed same-commit Windows INSTALL/LAUNCH/UPGRADE/UNINSTALL, Desktop Chromium, Android emulator and CI; public release remains v120.46, no v120.47 authorization.
+- Governance checker rejected mismatched product alias and `{userdesktop}` token despite per-user shortcut semantics. Fix in IG Cleaner branch: canonical `IG Cleaner Pro` label in bilingual guide + use `{autodesktop}` for optional icon. Complementary master registry PR changes product key to canonical license identity. No robot behavior changed. Master audit still has unrelated FoamLens failure, to be tracked separately.
+
 ## 2026-10-15 — Interactive Windows Setup contract evidence
 
 - Added exact-candidate interactive UIAutomation script and captured PNG proving EULA acceptance/decline is enforced, rather than only static licence-source assertions. Runs before the silent install/upgrade/runtime/uninstall test in Windows preview and governed release CI.
