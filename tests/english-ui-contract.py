@@ -68,4 +68,26 @@ for token in ("Sign in to Instagram in this window if needed.",
 for token in ('seguidores?', 'abonnés', 'esta página no está disponible'):
     assert token in collector, f"Existing Instagram locale recognizer removed: {token}"
 
+# Runtime-generated owner dialogs and exported portable reports are part of the UI.
+# This regression set intentionally avoids immutable legacy IDs and Instagram DOM
+# recognition strings, which must continue accepting Spanish.
+for message in (
+    "Opened a batch of", "No new profiles remain for Double Check",
+    "No results match this filter", "BATCH PREVIEW",
+    "Some profiles are UNVERIFIABLE", "BULK CONFIRMATION",
+    "This will delete ALL synced cloud data",
+    "Relationship and review status", "Unable to load the complete profile list",
+    "Syncing lists, reviews and Focus",
+):
+    assert message in ui, f"Missing English generated UI message: {message}"
+for obsolete in (
+    "Se abrió una tanda", "Ya no quedan perfiles nuevos",
+    "No hay resultados con el filtro actual", "CONFIRMACIÓN MASIVA",
+    "¿Seguro que SÍ pudiste revisar", "¿Reiniciar ciclo",
+    "Esto borrará TODOS", "Estado de relaciones y revisión",
+    "No se pudo cargar toda la lista", "¿Importar ",
+    "Sincronizando listas, revisiones y Focus",
+):
+    assert obsolete not in ui, f"Untranslated owner-visible dynamic copy: {obsolete}"
+
 print("English UI, cloud-delete guard and legacy review compatibility passed.")
