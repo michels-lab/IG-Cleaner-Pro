@@ -14310,6 +14310,8 @@ window.igcCountsRobotPoll=async function(){
   const state=await bridgeRequest('status');
   const ctx=context();
   if(state.owner && (state.owner!==ctx.owner||state.account!==ctx.account)){
+   const fallback=document.getElementById('igcCountsAuthFallback');
+   if(fallback)fallback.style.display='none';
    robotStatus('The robot belongs to another Instagram workspace. Select the correct account before syncing.',true);return;
   }
   if(state.owner){
@@ -14758,6 +14760,8 @@ window.igcAutoPoll=async function(){
   // job belonging to A must still prevent B from changing identities.
   actionState=state;
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
+   const fallback=document.getElementById("igcActionAuthFallback");
+   if(fallback)fallback.style.display="none";
    const text=document.getElementById("igcAutoLiveStatus");
    if(text)text.textContent=state.running
      ?"A job is running for another Instagram account; pause it before switching."
