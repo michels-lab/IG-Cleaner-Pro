@@ -14253,7 +14253,7 @@ async function historyRead(username){
  if(!db){
   const rows=JSON.parse(window.localStorage.getItem(historyKey())||'[]');
   return rows.filter(r=>!u||r.username===u).sort((a,b)=>
-   String(a.checked_at).localeCompare(String(b.checked_at)));
+   Date.parse(a.checked_at)-Date.parse(b.checked_at));
  }
  try{return await new Promise((resolve,reject)=>{
   const rows=[],tx=db.transaction(HISTORY_STORE,'readonly');
@@ -14262,7 +14262,7 @@ async function historyRead(username){
    store.index('scope').openCursor(IDBKeyRange.only(scope));
   request.onsuccess=()=>{const c=request.result;if(!c)return;rows.push(c.value);c.continue()};
   request.onerror=()=>reject(request.error||Error('Cannot read dated measurements'));
-  tx.oncomplete=()=>resolve(rows.sort((a,b)=>String(a.checked_at).localeCompare(String(b.checked_at))));
+  tx.oncomplete=()=>resolve(rows.sort((a,b)=>Date.parse(a.checked_at)-Date.parse(b.checked_at)));
   tx.onabort=()=>reject(tx.error||Error('History read aborted'));
   tx.onerror=()=>reject(tx.error||Error('History read failed'));
  })}finally{db.close()}
@@ -14300,8 +14300,7 @@ window.igcCountsViewHistory=async function(){
 window.igcCountsExportHistory=async function(){
  try{
   await countsHydrate();
-  const all=read(),users=members(),allowed=new Set(users);
-  const rows=await historyRead();
+  const all=read(),rows=await historyRead();
   const seen=new Set(rows.map(r=>r.id));
   for(const [u,old] of Object.entries(all)){if(historyValid(old)){
    const id=historyId(key(),old);
