@@ -280,7 +280,9 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(bridgeSaved.records['public.user'].followers,'3456');
  const robotHistoryKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_counts_history_fallback_v1__'));
  assert(robotHistoryKey,'Automated counts must be saved to history before latest update');
- assert.equal(JSON.parse(bridgeStore.get(robotHistoryKey))[0].followers,'3456');
+ const datedRobot=JSON.parse(bridgeStore.get(robotHistoryKey));
+ assert(datedRobot.some(row=>row.followers==='2222')&&datedRobot.some(row=>row.followers==='3456'),
+  'Imported older Windows reading and newer robot observation must coexist');
  const followingKey=Array.from(bridgeStore.keys()).find(k=>k.startsWith('igc_profile_discovered_v1__'));
  assert.equal(followingKey,undefined,'Imported snapshots must not be mislabeled as a fresh browser discovery');
  assert.equal(bridgeSaved.records.outside,undefined,'Bridge must not import outside current Following');
