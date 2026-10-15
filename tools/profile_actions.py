@@ -235,6 +235,21 @@ def _verify_final_state(page, expected_handle, *, checks=3):
     return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
 
+
+def _preclick_identity_blocked(entry):
+    """Only retry historical failures that explicitly prove no click occurred.
+
+    Unknown 'blocked', errors and review states are never replayed:
+    they could represent actions already applied on Instagram.
+    """
+    if not isinstance(entry, dict) or entry.get("status") != "blocked":
+        return False
+    message = str(entry.get("message") or "")
+    return (
+        message.startswith("The active Instagram account cannot be verified. No action was performed.")
+        or message == "Instagram session verification failed before the first click. No action performed."
+    )
+
 def _action_issue(task, result, message):
     """Stable codes for the owner-facing anomalies report, independent of UI locale."""
     if task == "unfollow" and result == "ok" and ("Action confirmed: Follow Back." in message or "Follow Back / Seguir también" in message):
@@ -609,10 +624,16 @@ class ActionRobot:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
                         return
-                    # Ambiguous results may have clicked already: never replay
-                    # them automatically, even on Resume.
+                    # Safe pre-click login failures are retryable after a user
+                    # explicitly starts another batch. Never replay ambiguous
+                    # or potentially clicked results automatically.
+                    previous = journal.get(user, {})
+                    if _preclick_identity_blocked(previous):
+                        journal.pop(user, None)
+                        _atomic_json(path, journal)
+                        previous = {}
                     if (self._protected_for(user) or user in self.skipped or
-                        journal.get(user, {}).get("status") in ("ok", "review", "error", "blocked")):
+                        previous.get("status") in ("ok", "review", "error", "blocked")):
                         continue
                     while not self.stop_event.is_set():
                         delay = max(wait_required(visits, self.max_count, self.window_minutes,
