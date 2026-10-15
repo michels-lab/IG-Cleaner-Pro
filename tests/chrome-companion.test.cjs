@@ -15,6 +15,18 @@ assert.equal(manifest.host_permissions,undefined,"No broad Instagram site permis
 assert(!("content_scripts" in manifest),"No always-on background scraping");
 assert(!("background" in manifest),"Do not run autonomous browser jobs");
 assert(html.includes('id="capture"')&&html.includes('id="export"'));
+const desktop=fs.readFileSync(path.join(__dirname,"../desktop/ig_cleaner_pro_v120_27_synced_companion.html"),"utf8");
+assert(desktop.includes('id="igcChromeCompanion"'),"Companion must be discoverable in Automations");
+assert(desktop.includes('onclick="igcCountsExportQueue()"'),"Following queue export must be present");
+assert(desktop.includes('onchange="igcCountsImportFile(this)"'),"CSV results must be importable");
+const win=fs.readFileSync(path.join(__dirname,"../.github/workflows/profile-counts-windows-preview.yml"),"utf8");
+const release=fs.readFileSync(path.join(__dirname,"../.github/workflows/release.yml"),"utf8");
+for(const workflow of [win,release]){
+ assert(workflow.includes("Copy-Item packaging/chrome-extension artifacts/profile-counts-preview/chrome-extension -Recurse -Force"),
+  "The owner Windows ZIP must physically include the unpacked extension");
+ assert(workflow.includes("node tests/chrome-companion.test.cjs"),
+  "The Chrome extension must be tested before packaging");
+}
 for(const prohibited of [
  "chrome.cookies", "chrome.debugger", "chrome.webRequest",
  "fetch(", "XMLHttpRequest", "chrome.tabs.create("
@@ -75,7 +87,7 @@ assert.equal(C.exportCsv({"real.user":extracted},["other.user"]).split("\r\n").l
       handlers:{},addEventListener(kind,fn){this.handlers[kind]=fn;}};
  }
  elements.workspace.value="owner.one";
- const persistent=new Map();
+ const persistent=new Map([["igc_chrome_last_workspace_v1","owner.one"]]);
  const history={navigations:[],injections:[],downloads:[]};
  let activeTab={id:12,url:"https://www.instagram.com/real.user/"};
  let result={...extracted};
