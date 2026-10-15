@@ -9,9 +9,27 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_actions import ActionRobot, perform_visible_action, _action_issue, _atomic_json
+from profile_actions import ActionRobot, perform_visible_action, _action_issue, _atomic_json, _preclick_identity_blocked
 from profile_counts_bridge import Collector
 
+
+class NoClickIdentityRecoveryTests(unittest.TestCase):
+    def test_only_proven_preclick_failures_may_retry_on_new_authorized_batch(self):
+        self.assertTrue(_preclick_identity_blocked({
+            "status":"blocked",
+            "message":"The active Instagram account cannot be verified. No action was performed."
+        }))
+        self.assertTrue(_preclick_identity_blocked({
+            "status":"blocked",
+            "message":"The active Instagram account cannot be verified. No action was performed. Open your own profile in Chrome and confirm Edit profile appears."
+        }))
+        for entry in [
+            {"status":"blocked","message":"Instagram requested verification after the action."},
+            {"status":"blocked","message":"The active Instagram account changed during the action."},
+            {"status":"review","message":"Final state is ambiguous."},
+            {"status":"ok","message":"Action confirmed."},
+        ]:
+            self.assertFalse(_preclick_identity_blocked(entry))
 
 class FakeButton:
     def __init__(self, click):
