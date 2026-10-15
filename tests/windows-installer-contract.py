@@ -43,6 +43,13 @@ assert "SHA-256" in win["autoUpdater"] and "user-confirmed" in win["autoUpdater"
 assert (ROOT / "tools/windows_updater.py").is_file()
 assert (ROOT / "tests/test_windows_updater.py").is_file()
 assert (ROOT / "tests/windows-updater-ui.test.cjs").is_file()
+preview_installer = (ROOT / ".github/workflows/profile-counts-windows-preview.yml").read_text(encoding="utf-8")
+official_installer = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+builder = (ROOT / "tools/build_windows_installer.ps1").read_text(encoding="utf-8")
+assert '[switch]$AllowCurrentStablePreview' in builder
+assert '$manifest.releasePolicy.currentStableRelease -ne "v$Version"' in builder
+assert '-AllowCurrentStablePreview' in preview_installer
+assert '-AllowCurrentStablePreview' not in official_installer, "Stable publisher must not use preview version override"
 for path in [
     ".github/workflows/profile-counts-windows-preview.yml",
     ".github/workflows/release.yml",
