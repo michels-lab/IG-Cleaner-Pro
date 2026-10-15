@@ -27,6 +27,9 @@ const mockFetch=async(url,options)=>{
  const data=options.body?JSON.parse(options.body):null;
  calls.push({type,data,url});
  assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijabcdefgh');
+ if(type==='history')return {ok:true,json:async()=>({
+   owner:context.owner,account:context.active,task:data.task,attempted_usernames:[]
+ })};
  return {ok:true,json:async()=>type==='status'?p:{...p,message:'fixture action started'}};
 };
 const localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};
