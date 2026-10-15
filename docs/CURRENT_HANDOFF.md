@@ -1,3 +1,11 @@
+## v120.47 follow-up: English Windows controller and authoritative Automations guidance — 2026-10-15
+
+- Development branch `fix/v12047-english-automation-packaging-20261015` follows merged PR #99. The latest official public/stable download is **v120.46**, whose reported Windows Profile Counts/Pending failures are not fixed in the published binaries. No v120.47 release authorization was given in this continuation.
+- Corrected user-facing action-controller, Profile Counts bridge and robot messages to English while preserving Spanish Instagram button/DOM recognition and legacy journal matching. No Instagram action algorithm, quotas, state schema, or session permission was deliberately changed.
+- The Windows ZIP README now states that **all robots and the per-profile Profile Counts results/filter/export workspace are in Automations**. Insights contains account-level aggregates only. Updated the README's IndexedDB persistence description and removed the obsolete issue #96 pending-migration claim.
+- Added `tests/windows-automations-owner-contract.py` to CI and the governed release contract; it checks the package guide, strict account errors, missing-file errors and compatibility vocabulary.
+- **Validation not yet complete at this point:** require exact branch/PR head CI, Windows EXE, Desktop rendered UI and Android emulator before merge. Real signed-in Instagram action/collection on the owner's Windows PC is still unverified, and no account request has been canceled during this work.
+
 ## v120.47 Windows corrective fixes merged — 2026-10-14
 
 - PR #99 merged into main, commit `298bf52e7230fba22501a1ac24852023ec4aafda`. Exact PR head `9e8ee7e511e0c7e5f07dbed2a0965add95d806f2` passed all five required GitHub checks: Profile Counts #38662603218, Windows #38662603179, Desktop #38662603260 (successful rerun for unrelated Switch Accounts intermittence), Android #38662603207, and full CI #38662603208.

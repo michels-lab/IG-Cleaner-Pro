@@ -53,7 +53,7 @@ def _read_json(path: Path, default):
 
 def _users(raw):
     if not isinstance(raw, list) or len(raw) > MAX_ACTIONS_PER_JOB:
-        raise ValueError("La tanda debe incluir hasta 1,000 perfiles.")
+        raise ValueError("The batch must contain no more than 1,000 profiles.")
     out = []
     for item in raw:
         user = valid_username(item)
@@ -437,7 +437,7 @@ class ActionRobot:
         self.window_minutes = ACTION_WINDOW_MINUTES
         self.min_delay_seconds = 10.0
         self.rest_minutes = 5.0
-        self.status, self.message = "idle", "Sin acciones activas"
+        self.status, self.message = "idle", "No active actions"
         self.current = ""
         self.wait_until = 0.0
 
@@ -467,7 +467,7 @@ class ActionRobot:
         # owner/profile; never allow a UI switch to overwrite another scope.
         with self.lock:
             if not self.owner or (owner, account) != (self.owner, self.account):
-                raise ValueError("Selecciona la misma cuenta para actualizar protegidos.")
+                raise ValueError("Select the same account to update protected profiles.")
             names = _users(data.get("protected", []))
             protected = self._protected()
             # Additive while running: a concurrent UI update can only protect.
@@ -478,10 +478,10 @@ class ActionRobot:
     def skip(self, data):
         with self.lock:
             if (str(data.get("owner") or ""), str(data.get("account") or "")) != (self.owner, self.account):
-                raise ValueError("La tanda de acciones pertenece a otro Instagram.")
+                raise ValueError("The action batch belongs to another Instagram account.")
             user = valid_username(data.get("username"))
             if not user or user not in self.targets:
-                raise ValueError("El perfil no forma parte de esta tanda.")
+                raise ValueError("This profile is not in the current batch.")
             self.skipped.add(user)
             return self.snapshot()
 
@@ -492,9 +492,9 @@ class ActionRobot:
         task = str(data.get("task") or "")
         targets = _users(data.get("targets"))
         if not owner or not account or len(owner) > 200 or len(account) > 120:
-            raise ValueError("Elige primero el usuario de Insta Cleaner y su Instagram.")
+            raise ValueError("Select an Insta Cleaner login and Instagram workspace first.")
         if not expected:
-            raise ValueError("Asigna el @Instagram activo antes de operar.")
+            raise ValueError("Assign the active Instagram @handle before starting.")
         if task not in TASKS or not targets:
             raise ValueError("Select a job containing valid profiles.")
         count = int(data.get("batch_size", 30))
@@ -510,13 +510,13 @@ class ActionRobot:
             raise ValueError("A complete Followers list has not been verified.")
         with self.collector.browser_admission, self.lock:
             if self.worker and self.worker.is_alive():
-                raise ValueError("Ya hay un robot de acciones activo.")
+                raise ValueError("An Instagram action robot is already running.")
             if self.collector.worker and self.collector.worker.is_alive():
-                raise ValueError("Termina o pausa Profile Counts antes de ejecutar acciones.")
+                raise ValueError("Finish or pause Profile Counts before starting an action robot.")
             if resume and (owner, account, task) != (self.owner, self.account, self.task):
-                raise ValueError("No se puede reanudar otra tarea o cuenta.")
+                raise ValueError("Cannot resume a different task or account.")
             if resume and self.status not in ("paused", "error", "review", "blocked"):
-                raise ValueError("No hay una tarea pausada para reanudar.")
+                raise ValueError("There is no paused task to resume.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             self.targets = targets
             if not resume:
@@ -530,7 +530,7 @@ class ActionRobot:
                 saved_protected.update(self._protected())
             _atomic_json(self._protection_file(), sorted(saved_protected))
             self.stop_event.clear()
-            self.status, self.message = "starting", "Abriendo Instagram en Chrome…"
+            self.status, self.message = "starting", "Opening Instagram in Chrome…"
             self.worker = threading.Thread(target=self._run, daemon=True)
             self.worker.start()
             return self.snapshot()
@@ -538,9 +538,9 @@ class ActionRobot:
     def pause(self, data):
         with self.lock:
             if (str(data.get("owner") or ""), str(data.get("account") or "")) != (self.owner, self.account):
-                raise ValueError("La tarea corresponde a otro Instagram.")
+                raise ValueError("The task belongs to another Instagram account.")
             if self.worker and self.worker.is_alive():
-                self.status, self.message = "pausing", "Pausando tras la visita actual…"
+                self.status, self.message = "pausing", "Pausing after the current visit…"
                 self.stop_event.set()
             return self.snapshot()
 
@@ -608,7 +608,7 @@ class ActionRobot:
                     if signed:
                         if signed != self.handle:
                             with self.lock:
-                                self.status, self.message = "blocked", "Chrome usa @" + signed + " y se esperaba @" + self.handle
+                                self.status, self.message = "blocked", "Chrome is signed in as @" + signed + "; expected @" + self.handle
                             return
                         break
                     self.stop_event.wait(3)
@@ -622,7 +622,7 @@ class ActionRobot:
                 rests = load_batch_state(rests_file)
                 for user in self.targets:
                     if self.stop_event.is_set():
-                        with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
+                        with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
                     # Safe pre-click login failures are retryable after a user
                     # explicitly starts another batch. Never replay ambiguous
@@ -643,15 +643,15 @@ class ActionRobot:
                         if delay <= 0: break
                         with self.lock:
                             self.status, self.wait_until = "waiting", time.time() + delay
-                            self.message = "Pausa programada: " + str(int(delay+0.999)) + " s"
+                            self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
                         self.stop_event.wait(min(delay, 2.0))
                     if self.stop_event.is_set():
-                        with self.lock: self.status, self.message = "paused", "Progreso guardado; pulsa Reanudar."
+                        with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
                     with self.lock:
                         self.wait_until = 0
                         self.current = user
-                        self.status, self.message = "running", "Consultando @" + user
+                        self.status, self.message = "running", "Checking @" + user
                     if self._protected_for(user) or user in self.skipped:
                         continue
                     visits = register_visit(visits_file, visits)

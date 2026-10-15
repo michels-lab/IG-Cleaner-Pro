@@ -215,7 +215,7 @@ class Collector:
         owner = str(request.get("owner") or "").strip()
         account = str(request.get("account") or "").strip()
         if not owner or not account or len(owner) > 200 or len(account) > 120:
-            raise ValueError("Se requiere identidad de propietario e Instagram activo.")
+            raise ValueError("An Insta Cleaner owner and active Instagram workspace are required.")
         count, minutes, delay = check_pacing(
             request.get("max_per_window", request.get("per_hour", DEFAULT_COUNT)),
             request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
@@ -243,8 +243,8 @@ class Collector:
             saved = read_results(self.result_path())
             self.total = len(normalized)
             self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
-            self.message = ("Registros guardados recuperados; pulsa Iniciar para continuar."
-                            if load_only else "Iniciando navegador visible...")
+            self.message = ("Saved results restored; select Start to continue."
+                            if load_only else "Opening visible browser...")
             self.status = "idle" if load_only else "starting"
             self.stop_signal.clear()
             self.pause_requested = False
@@ -599,7 +599,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
         def _authorized(self):
             if self.headers.get("Origin") not in (None, "null"):
-                self._send(403, {"error": "Solo se admite la app local."})
+                self._send(403, {"error": "Only the local Insta Cleaner app is allowed."})
                 return False
             if not secrets.compare_digest(self.headers.get("X-IGC-Bridge-Token", ""), token):
                 self._send(403, {"error": "Invalid local access token."})
@@ -684,10 +684,10 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
+    parser = argparse.ArgumentParser(description="Local Insta Cleaner bridge for the visible Instagram browser robot.")
     parser.add_argument("--app", type=Path, help="Path to your Desktop HTML file (same version as your app).")
-    parser.add_argument("--healthcheck", action="store_true", help="Prueba empaquetado Playwright + servidor local, sin abrir Instagram.")
-    parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
+    parser.add_argument("--healthcheck", action="store_true", help="Check bundled Playwright and local server without opening Instagram.")
+    parser.add_argument("--port", type=int, default=0, help="Local port (0 selects an available port).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser")
     args = parser.parse_args()
@@ -698,22 +698,22 @@ def main():
                 raise RuntimeError("Playwright could not initialize Chromium.")
         probe = build_server(Collector(args.data_dir, args.session_dir), "offline-check-token")
         probe.server_close()
-        print("PASS: runtime Playwright y servidor local disponibles (no prueba Instagram).")
+        print("PASS: Playwright and local server available (not a live Instagram test).")
         return
     if not args.app or not args.app.is_file() or args.app.suffix.lower() != ".html":
-        parser.error("--app necesita un archivo Desktop HTML existente.")
+        parser.error("--app requires an existing Desktop HTML file.")
     secret = secrets.token_urlsafe(32)
     collector = Collector(args.data_dir, args.session_dir)
     server = build_server(collector, secret, args.port)
     port = server.server_port
-    print(f"Robot local preparado. Puerto: {port}. No se expone a Internet.")
-    print("No compartas el enlace de inicio: contiene una clave temporal del controlador local.")
+    print(f"Local robot ready. Port: {port}. The server is not exposed to the internet.")
+    print("Do not share this launch link: it contains a temporary local controller token.")
     webbrowser.open(args.app.resolve().as_uri() + "#igc-robot=" + str(port) + "." + secret)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         collector.stop()
-        print("Robot detenido. Los resultados se conservan para retomarlos.")
+        print("Robot stopped. Saved results remain available for resuming.")
     finally:
         server.server_close()
 

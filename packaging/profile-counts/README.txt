@@ -12,14 +12,14 @@ This package contains the Windows application `InstaCleanerPro.exe`, including t
    - **Followback Audit:** optional read-only verification on selected profiles.
 4. When a robot needs Instagram, the integrated app opens a separate visible Chrome window. Sign in directly on Instagram if required; never enter an Instagram password in Insta Cleaner.
 5. **Pause / Resume** and task progress are controlled inside Automations. Only one robot may navigate the active Instagram Chrome session at a time, so the two browser robots cannot corrupt one another's navigation. Your local analytics and manual review can continue separately.
-6. Open **Insights** for statistics, Profile Counts results, comparisons and CSV exports. A paginated table displays manageable groups of rows but aggregates and exports operate on the complete imported list. **Mutuals** remains manual Focus only.
+6. Stay in **Automations → Automation Center** for Profile Counts progress, individual results, filters, pagination and CSV exports. **Insights** contains aggregate account statistics and charts, not the Profile Counts robot or its per-profile results. All counts and exports cover the full imported list. **Mutuals** remains manual Focus only.
 
 ## Account data, persistence and protection
 
 - Windows workspace data is stored under `%LOCALAPPDATA%\Michels Lab\Insta Cleaner Pro\`. The Chrome session and Profile Counts results use existing directories beneath `%USERPROFILE%\.ig-cleaner-pro\` to preserve prior records.
 - Changing a browser, file origin or login can show a different local workspace. Back up your imported Following/Followers files before making changes. Do not delete an older HTML workspace before confirming any migration.
 - No Meta private API or password collection is used. The integrated interface talks only to the local token-protected controller on `127.0.0.1`.
-- Relationship analysis has no fixed application-level following/follower-count threshold; transport is chunked. Large histories remain constrained by actual browser memory/storage resources. A separate IndexedDB migration for historically large Profile Counts records is tracked in issue #96. Never assume stored snapshots prove *current* live followback.
+- Relationship analysis has no fixed application-level following/follower-count threshold; transport is chunked. Large histories remain constrained by actual browser memory/storage resources. Profile Counts now stores owner/account-scoped records in IndexedDB and preserves legacy localStorage data during migration. Storage failures must be surfaced, not silently discard history. Never assume stored snapshots prove *current* live followback.
 - Action batches have deliberate safety/pacing limits that are unrelated to how many Followers or Following your account can **analyze**.
 - Pausing and resuming preserve verified progress and pacing history. Uncertain clicks are not automatically replayed. Instagram can restrict automated browsing even with pauses, and the app does not bypass challenges.
 - Profile Counts results from Windows do **not yet** automatically sync into Android.
@@ -27,7 +27,7 @@ This package contains the Windows application `InstaCleanerPro.exe`, including t
 ## Security and acceptance
 
 - Chrome is required. Do not disable Windows security or antivirus protections to run an unsigned Windows binary.
-- Automated tests use offline Instagram fixtures, an installed Windows EXE healthcheck, and Android emulator / Desktop Chromium checks. They do **not** prove successful actions against the owner's real signed-in Instagram or physical devices.
+- Automated tests use simulated offline Instagram fixtures, an installed Windows EXE healthcheck, and Android emulator / Desktop Chromium checks. They do **not** prove successful actions against the owner's real signed-in Instagram or physical devices.
 - Begin with a small explicitly approved batch. Monitor account identity, logged outcomes, and any verification challenges.
 
 ## Offline executable healthcheck

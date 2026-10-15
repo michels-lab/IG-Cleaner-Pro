@@ -108,7 +108,7 @@ def valid_username(raw):
 
 def read_queue(path: Path):
     if not path.is_file():
-        raise ValueError(f"No existe la lista de perfiles: {path}")
+        raise ValueError(f"Profile queue file not found: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         if not reader.fieldnames:
@@ -116,7 +116,7 @@ def read_queue(path: Path):
         keys = {k.lower().strip(): k for k in reader.fieldnames}
         column = next((keys[k] for k in ("username", "usuario", "profile", "perfil") if k in keys), None)
         if not column:
-            raise ValueError("Falta la columna username del CSV de Insta Cleaner.")
+            raise ValueError("The Insta Cleaner CSV must contain a username column.")
         seen, usernames = set(), []
         for row in reader:
             user = valid_username(row.get(column))
@@ -206,13 +206,13 @@ def run(args):
     if args.max_profiles:
         pending = pending[:args.max_profiles]
     print(f"Profiles queued: {len(usernames)}. Remaining in this run: {len(pending)}.")
-    print(f"Resultados guardados en {args.output}. Se reanuda sin borrar datos anteriores.")
+    print(f"Results saved to {args.output}. Resuming will preserve earlier records.")
     if not pending:
         return 0
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as e:
-        raise ValueError("Instala Playwright con: python -m pip install playwright && python -m playwright install chromium") from e
+        raise ValueError("Install Playwright with: python -m pip install playwright && python -m playwright install chromium") from e
 
     args.session_dir.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
@@ -261,18 +261,18 @@ def run(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Collect visible Instagram profile counts using a local browser and your own session.")
-    parser.add_argument("--input", required=True, type=Path, help="CSV exportado desde Insta Cleaner (username,profile_url).")
-    parser.add_argument("--output", type=Path, default=Path("profile_counts_results.csv"), help="CSV de progreso/resultados persistentes.")
+    parser.add_argument("--input", required=True, type=Path, help="CSV exported by Insta Cleaner (username,profile_url).")
+    parser.add_argument("--output", type=Path, default=Path("profile_counts_results.csv"), help="Persistent results and progress CSV.")
     parser.add_argument("--per-hour", type=int, default=DEFAULT_COUNT, help="Legacy compatibility: hourly maximum if --max-per-window is omitted.")
     parser.add_argument("--max-per-window", type=int, help="Maximum profile visits per window (1 to 10,000).")
-    parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES, help="Longitud de la ventana, en minutos (1 a 1,440).")
+    parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES, help="Pacing window length in minutes (1 to 1,440).")
     parser.add_argument("--min-delay-seconds", type=float, default=DEFAULT_DELAY_SECONDS, help="Minimum delay between profile visits in seconds (0 to 3,600).")
     parser.add_argument("--pause-every", type=int, default=0, help="Optional longer break after every N profiles; 0 disables it.")
     parser.add_argument("--pause-minutes", type=float, default=0, help="Duration of each longer break, in minutes; 0 disables it.")
     parser.add_argument("--max-profiles", type=int, default=0, help="0: all pending profiles; otherwise limit profiles per run.")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser",
                         help="Local browser session folder. Treat this as private data.")
-    parser.add_argument("--retry-unavailable", action="store_true", help="Revisitar errores y perfiles sin datos; nunca repetir OK.")
+    parser.add_argument("--retry-unavailable", action="store_true", help="Revisit errors and unavailable profiles; never repeat successful results.")
     args = parser.parse_args(argv)
     try:
         check_pacing(args.max_per_window if args.max_per_window is not None else args.per_hour,
@@ -281,11 +281,11 @@ def main(argv=None):
     except ValueError as exc:
         parser.error(str(exc))
     if args.max_profiles < 0:
-        parser.error("--max-profiles no puede ser negativo")
+        parser.error("--max-profiles cannot be negative")
     try:
         return run(args)
     except (ValueError, KeyboardInterrupt) as exc:
-        print(f"Se detuvo: {exc}", file=sys.stderr)
+        print(f"Stopped: {exc}", file=sys.stderr)
         return 1
 
 

@@ -54,6 +54,9 @@ The IG Cleaner sign-in is NOT the Instagram profile identity. An authenticated u
 
 ## Validation
 
+- All browser robots and the individual Profile Counts history/results/export UI belong in **Automations**; **Insights** is for aggregate account analysis. Do not relocate robots or their per-profile results into Insights.
+- User-facing new Desktop/Windows controller messages must be English. Keep non-English Instagram DOM vocabulary and old journal classification for robust parsing and backward compatibility.
+
 Inspect current CI/workflows and run the strongest relevant current-commit checks. Desktop/local-Web changes must validate import/state migration and the affected interaction flow. Android changes must build the real app path and keep device-only parity/sync/export behavior explicitly open until actually tested.
 
 Supabase changes require RLS/data-boundary reasoning and, when possible, real-provider isolation/round-trip evidence.
@@ -76,9 +79,9 @@ Do not bump versions or publish releases unless explicitly assigned.
 - A normal/stable release must publish with GitHub `prerelease=false`; never silently substitute a prerelease.
 - Do not publish an Android stable artifact whose installed package/version identity still says beta or whose signing continuity is not established.
 - Once persistent Android signing is configured, every normal IG Cleaner Pro GitHub release must include the latest validated signed Android APK unless the user explicitly requests a desktop-only release.
-- Current stable release: **v120.44**. Current next publication target from the manifest: **v120.45** (not authorized for release).
+- As verified on 2026-10-15, official stable GitHub Release was **v120.46**, while **v120.47** was development-only. Always recheck GitHub Releases and `release/distribution-manifest.json` rather than treating this dated note as live release authority.
 - Use `.github/workflows/release.yml` as the generic governed publisher for v120.35+; do not create a new version-specific publisher unless a concrete compatibility exception requires it.
-- A merge/version bump never authorizes a release. v120.44 was published on 2026-10-14 following the owner's existing explicit authorization and full automated QA; its authorization is consumed. v120.45 requires a fresh explicit release instruction.
+- A merge/version bump never authorizes a release. The owner's v120.46 authorization was consumed by publication; v120.47 needs a separate explicit release instruction. No PR/Actions ZIP is an official owner installation.
 
 ## Intelligent brand adoption
 
