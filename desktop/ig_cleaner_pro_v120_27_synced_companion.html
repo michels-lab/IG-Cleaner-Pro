@@ -14273,14 +14273,15 @@ async function profileTimeline(u){
  // history import. Its original backup and most recent reading are preserved.
  if(historyValid(latest)&&!rows.some(r=>historyId(key(),r)===historyId(key(),latest)))
   rows.push({...latest});
- return rows.sort((a,b)=>String(a.checked_at).localeCompare(String(b.checked_at)));
+ return rows.sort((a,b)=>Date.parse(a.checked_at)-Date.parse(b.checked_at));
 }
 window.igcCountsViewHistory=async function(){
  const target=document.getElementById('igcCountsHistoryView');
  if(!target)return;
  const u=normalize(document.getElementById('igcCountsHistoryUser')?.value);
  if(!u){target.textContent='Enter a valid @username to view measurement history.';return}
- if(!members().includes(u)){target.textContent='This profile is not in the active Instagram Following list.';return}
+ // Historical profiles remain inspectable even after they leave Following.
+ // The database is scoped by the selected Insta Cleaner owner/account.
  try{
   await countsHydrate();
   const rows=await profileTimeline(u);
@@ -14302,22 +14303,22 @@ window.igcCountsExportHistory=async function(){
   const all=read(),users=members(),allowed=new Set(users);
   const rows=await historyRead();
   const seen=new Set(rows.map(r=>r.id));
-  for(const u of users){const old=all[u];if(historyValid(old)){
+  for(const [u,old] of Object.entries(all)){if(historyValid(old)){
    const id=historyId(key(),old);
    if(!seen.has(id)){rows.push({...old,id});seen.add(id)}
   }}
   rows.sort((a,b)=>a.username.localeCompare(b.username)||
-   String(a.checked_at).localeCompare(String(b.checked_at)));
+   Date.parse(a.checked_at)-Date.parse(b.checked_at));
   await downloadLargeCSV(filename('historical-measurements'),function*(){
    yield COLUMNS;
-   for(const r of rows)if(allowed.has(r.username)&&historyValid(r))
+   for(const r of rows)if(historyValid(r))
     yield COLUMNS.map(c=>r[c]??'');
   });
-  setMessage('Exported all dated measurements for '+users.length+' active Following profiles. Previous scans remain available.');
+  setMessage('Exported all dated measurements in this Instagram workspace, including historical profiles no longer in Following.');
  }catch(e){countsStorageError(e)}
 };
 
-function newerCounts(a,b){return String(a?.checked_at||'')>=String(b?.checked_at||'')}
+function newerCounts(a,b){return Date.parse(a?.checked_at||'')>=Date.parse(b?.checked_at||'')}
 async function countsHydrate(){
  const scope=key();
  if(hydration.has(scope))return hydration.get(scope);
@@ -14419,7 +14420,8 @@ window.igcCountsImportFile=async function(input){
    // Older rows still belong in the historical archive, not the latest column.
    if(historyValid(row))archive.push(row);
    const existing=updates.get(username)||current[username];
-   if(existing?.checked_at&&String(existing.checked_at)>=stamp){older++;continue}
+   if(existing?.checked_at&&Number.isFinite(Date.parse(existing.checked_at))&&
+      Date.parse(existing.checked_at)>=Date.parse(stamp)){older++;continue}
    updates.set(username,row);
   }
   for(const [username] of updates)if(historyValid(current[username]))archive.push(current[username]);
@@ -14471,7 +14473,8 @@ async function applyRobotRows(rows){
   const incoming={username:u,followers:f,following:g,checked_at:stamp,
    status:r.status,source:'instagram_visible_profile_browser',
    approximate:r.approximate===true||r.approximate==='true'};
-  if(current[u]?.checked_at && current[u].checked_at>=stamp)continue;
+  if(current[u]?.checked_at&&Number.isFinite(Date.parse(current[u].checked_at))&&
+     Date.parse(current[u].checked_at)>=Date.parse(stamp))continue;
   if(historyValid(current[u]))archive.push(current[u]);
   if(historyValid(incoming))archive.push(incoming);
   changes.push([u,incoming]);
