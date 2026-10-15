@@ -14404,21 +14404,28 @@ function robotStatus(message,bad=false){
 }
 async function applyRobotRows(rows){
  await countsHydrate();
- const allowed=new Set(members()),current=read(),changes=[];
- let applied=0;
+ const allowed=new Set(members()),current={...read()},changes=new Map(),historyRows=[];
  for(const r of rows||[]){
   const u=normalize(r.username),f=validCount(r.followers),g=validCount(r.following);
   if(!u||!allowed.has(u)||f===null||g===null||!['ok','unavailable','error'].includes(r.status))continue;
   if(r.status==='ok'&&(f===''||g===''))continue;
   const stamp=String(r.checked_at||'');
-  if(!/^\d{4}-\d\d-\d\dT/.test(stamp))continue;
-  if(current[u]?.checked_at && current[u].checked_at>=stamp)continue;
-  current[u]={username:u,followers:f,following:g,checked_at:stamp,
-   status:r.status,source:'instagram_visible_profile_browser',approximate:r.approximate===true||r.approximate==='true'};
-  applied++;
+  if(!/^\d{4}-\d\d-\d\dT/.test(stamp)||!Number.isFinite(Date.parse(stamp)))continue;
+  const row={username:u,followers:f,following:g,checked_at:stamp,status:r.status,
+   source:'instagram_visible_profile_browser',approximate:r.approximate===true||r.approximate==='true'};
+  const prev=current[u];
+  // Preserve the most recent VERIFIED counts even if a later visit fails.
+  if((prev?.checked_at && Date.parse(prev.checked_at)>=Date.parse(stamp))||
+     (prev?.status==='ok'&&row.status!=='ok'))continue;
+  if(row.status==='ok')historyRows.push(row);
+  current[u]=row;changes.set(u,row);
  }
- if(applied){write(current);window.igcCountsRender()}
- return applied;
+ if(changes.size){
+  if(historyRows.length)await saveDatedHistory(historyRows);
+  await write(current,[...changes]);
+  window.igcCountsRender();
+ }
+ return changes.size;
 }
 window.igcCountsGetRecord=function(username){
  const u=normalize(username);return u?read()[u]||null:null;
