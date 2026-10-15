@@ -600,9 +600,14 @@ class ActionRobot:
                 with self.lock:
                     self.status, self.message = "login", "Sign in to Chrome as @" + self.handle
                 while not self.stop_event.is_set():
-                    if challenge_detected(page):
+                    if any(challenge_detected(tab) for tab in browser.pages if not tab.is_closed()):
                         with self.lock:
-                            self.status, self.message = "blocked", "Instagram requires verification."
+                            self.status, self.message = (
+                                "blocked",
+                                "Instagram requested a reCAPTCHA or account security check. "
+                                "The robot stopped before performing actions. Complete account "
+                                "verification manually; no automatic challenge retries are allowed."
+                            )
                         return
                     signed = signed_in_handle(page)
                     if signed:
