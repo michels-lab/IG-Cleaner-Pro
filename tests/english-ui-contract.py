@@ -97,7 +97,7 @@ for new_label in (
     ">Paused</button>", ">Expired pauses</button>", ">Medium/high</option>",
     ">Any date</option>", ">Any age</option>", ">Username</th>",
     ">Reasons</th>", ">Requested on</th>", ">Current cross-check</th>",
-    ">Go to Mutuals</b>", ">Possibly accepted</button>",
+    "Go to Mutuals</b>", ">Possibly accepted</button>",
     ">Refresh</button>", ">Import pending_follow_requests.json to begin.</td>",
 ):
     assert new_label in ui, f"Missing translated Pending/Mutuals label: {new_label}"
