@@ -130,6 +130,13 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
+      - name: Test verified GitHub Windows updater and opt-in install UX (offline)
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_windows_updater.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Native Windows updater security tests failed." }
+          node tests/windows-updater-ui.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Windows Update dialog acceptance tests failed." }
       - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |
@@ -148,7 +155,7 @@ jobs:
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
-          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --name InstaCleanerPro tools/ig_cleaner_desktop.py
+          pyinstaller --clean --noconfirm --onefile --windowed --collect-all playwright --icon desktop/assets/ig-cleaner-pro/official-app-icon.ico --add-data "artifacts/profile-counts-preview/IG-Cleaner-Pro.html;ui" --add-data "release/android-signing.json;metadata" --name InstaCleanerPro tools/ig_cleaner_desktop.py
       - name: Test the frozen executable without contacting Instagram
         shell: pwsh
         run: |

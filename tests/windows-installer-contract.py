@@ -37,7 +37,12 @@ assert win["artifact"] == f"IG-Cleaner-Pro-Windows-Setup-{manifest['releasePolic
 assert win["portableLegacyZipTemplate"] == "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip"
 assert win["installation"] == "inno-setup-per-user"
 assert win["authenticode"].startswith("not-configured")
-assert win["autoUpdater"].startswith("not-implemented")
+assert win["autoUpdater"].startswith("anonymous GitHub stable release check")
+assert win["updateFeed"] == "https://api.github.com/repos/michels-lab/IG-Cleaner-Pro/releases/latest"
+assert "SHA-256" in win["autoUpdater"] and "user-confirmed" in win["autoUpdater"]
+assert (ROOT / "tools/windows_updater.py").is_file()
+assert (ROOT / "tests/test_windows_updater.py").is_file()
+assert (ROOT / "tests/windows-updater-ui.test.cjs").is_file()
 for path in [
     ".github/workflows/profile-counts-windows-preview.yml",
     ".github/workflows/release.yml",

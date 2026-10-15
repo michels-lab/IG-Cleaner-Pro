@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -20,10 +21,23 @@ import time
 import secrets
 
 from profile_counts_bridge import Collector, build_server
+from windows_updater import WindowsUpdater, numeric_version
 
 
 APP_NAME = "Insta Cleaner Pro"
 BUNDLED_HTML = "IG-Cleaner-Pro.html"
+BUNDLED_VERSION = "android-signing.json"
+
+
+def app_version() -> str:
+    """Read the actual packaged version, never assume the public release tag."""
+    root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+    metadata = root / "metadata" / BUNDLED_VERSION
+    if not metadata.is_file() and not getattr(sys, "frozen", False):
+        metadata = root / "release" / BUNDLED_VERSION
+    value = str(json.loads(metadata.read_text(encoding="utf-8"))["versionName"])
+    numeric_version("v"+value)
+    return value
 
 
 def app_home() -> Path:
@@ -149,9 +163,10 @@ def main(argv=None) -> int:
             chrome_workspace = home / "workspace-browser"
             chrome_workspace.mkdir(parents=True, exist_ok=True)
             legacy = Path.home() / ".ig-cleaner-pro"
+            manager = WindowsUpdater(app_version(),home,legacy / "profile-counts")
             server = build_server(Collector(legacy / "profile-counts",
                                             legacy / "instagram-browser"),
-                                  "installer-smoke-session-token", 0)
+                                  "installer-smoke-session-token", 0, updater=manager)
             try:
                 assert server.server_address[0] == "127.0.0.1"
             finally:
@@ -165,6 +180,8 @@ def main(argv=None) -> int:
             with sync_playwright() as playwright:
                 if not playwright.chromium:
                     raise RuntimeError("No se empaquetó el controlador de Chrome.")
+            if not app_version():
+                raise RuntimeError("The governed native release metadata is missing.")
             server = build_server(Collector(app_home() / "robot-data", app_home() / "instagram-browser"),
                                   "healthcheck-token")
             server.server_close()
@@ -183,9 +200,13 @@ def main(argv=None) -> int:
             legacy = Path.home() / ".ig-cleaner-pro"
             collector = Collector(legacy / "profile-counts", legacy / "instagram-browser")
             token = secrets.token_urlsafe(32)
-            server = build_server(collector, token, 0)
+            updater = WindowsUpdater(app_version(), home, legacy / "profile-counts")
+            server = build_server(collector, token, 0, updater=updater)
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
+            # Version awareness starts automatically, but never downloads,
+            # installs or changes Instagram state without explicit approval.
+            updater.check()
             try:
                 chrome = subprocess.Popen(chrome_app_args(browser, page, chrome_workspace,
                                                          server.server_port, token))
