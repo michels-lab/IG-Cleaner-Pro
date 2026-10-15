@@ -1,3 +1,11 @@
+## v120.47 Windows corrective fixes merged — 2026-10-14
+
+- PR #99 merged into main, commit `298bf52e7230fba22501a1ac24852023ec4aafda`. Exact PR head `9e8ee7e511e0c7e5f07dbed2a0965add95d806f2` passed all five required GitHub checks: Profile Counts #38662603218, Windows #38662603179, Desktop #38662603260 (successful rerun for unrelated Switch Accounts intermittence), Android #38662603207, and full CI #38662603208.
+- Bug A: Python profile-count validator rejected ordinary `http`-prefix usernames as URLs; corrected and covered by staged-import regression. No data cap or truncation introduced.
+- Bug B: Cancel Sent Requests lost owner identity when Instagram hid target-page Profile navigation; uses a separate, read-only same-context owner tab with **Edit profile** proof, never clicks when wrong owner. Only definitely no-click blocked historical entries may be retried on another owner-approved batch.
+- Product location: complete Profile Counts robot and *individual result table* (filters, export, pagination) now under Automations. Insights retains account-wide analysis.
+- **NOT PUBLISHED**: stable GitHub Release remains v120.46; fixes are in main for next v120.47 release. Require separate explicit owner release authorization and governed publisher validation before download. User's real Chrome/Instagram session and actual cancellation acceptance remain unverified.
+
 ## v120.47 development — fixes for owner screenshots (not yet released)
 
 - Live owner screenshot: Actions → Sent Requests blocked at first profile because the target profile hid the account identity navigation. Reported 1/40 processed, 0 confirmed. Never interpret this as a cancellation; no action performed. Fix is strict same-context own-profile Edit-profile proof in a separate read-only Chrome tab, with fail-closed wrong-account checks.
