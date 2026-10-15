@@ -14191,6 +14191,132 @@ async function countsPersist(db,scope,entries){
   });
  }
 }
+// Separate append-only history database keeps current-profile indexes and
+// legacy backups untouched. No arbitrary account/profile limit is imposed.
+const HISTORY_DB='ig_cleaner_profile_counts_history_v1',HISTORY_STORE='measurements';
+function historyKey(){return 'igc_profile_counts_history_fallback_v1__'+key()}
+function historyId(scope,r){return scope+'\u0000'+r.username+'\u0000'+r.checked_at+'\u0000'+r.followers+'\u0000'+r.following}
+function historyValid(r){return !!r&&r.status==='ok'&&normalize(r.username)&&
+ validCount(r.followers)!==null&&validCount(r.followers)!==''&&
+ validCount(r.following)!==null&&validCount(r.following)!==''&&
+ /^\d{4}-\d\d-\d\dT/.test(String(r.checked_at||''))&&
+ Number.isFinite(Date.parse(r.checked_at))}
+function historyDb(){
+ if(typeof indexedDB==='undefined')return Promise.resolve(null);
+ return new Promise((resolve,reject)=>{
+  const q=indexedDB.open(HISTORY_DB,1);
+  q.onupgradeneeded=()=>{const db=q.result;if(!db.objectStoreNames.contains(HISTORY_STORE)){
+   const st=db.createObjectStore(HISTORY_STORE,{keyPath:'id'});
+   st.createIndex('scope','scope',{unique:false});
+   st.createIndex('profile','profile',{unique:false});
+  }};
+  q.onsuccess=()=>resolve(q.result);
+  q.onerror=()=>reject(q.error||Error('Measurement history database is unavailable'));
+  q.onblocked=()=>reject(Error('Close other Insta Cleaner windows blocking a history database upgrade'));
+ });
+}
+async function historyPersist(entries){
+ const scope=key(),rows=(entries||[]).filter(historyValid).map(r=>({
+  id:historyId(scope,r),scope,profile:scope+'\u0000'+r.username,
+  username:r.username,followers:String(r.followers),following:String(r.following),
+  checked_at:r.checked_at,source:r.source||'instagram_visible_profile_browser',
+  status:'ok',approximate:r.approximate===true||r.approximate==='true'
+ }));
+ if(!rows.length)return 0;
+ const db=await historyDb();
+ if(!db){
+  // Compatibility mode for environments without IndexedDB. Explicit quota
+  // errors are surfaced; history is never truncated to a fixed record count.
+  const name=historyKey(),previous=JSON.parse(window.localStorage.getItem(name)||'[]');
+  const merged=new Map(previous.map(r=>[r.id,r]));
+  for(const row of rows)merged.set(row.id,row);
+  window.localStorage.setItem(name,JSON.stringify([...merged.values()]));
+  return rows.length;
+ }
+ try{
+  for(let i=0;i<rows.length;i+=500){
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction(HISTORY_STORE,'readwrite'),st=tx.objectStore(HISTORY_STORE);
+    for(const row of rows.slice(i,i+500))st.put(row);
+    tx.oncomplete=resolve;
+    tx.onabort=()=>reject(tx.error||Error('History storage transaction was aborted'));
+    tx.onerror=()=>reject(tx.error||Error('History storage transaction failed'));
+   });
+  }
+  return rows.length;
+ }finally{db.close()}
+}
+async function historyRead(username){
+ const scope=key(),u=username?normalize(username):'';
+ if(username&&!u)return [];
+ const db=await historyDb();
+ if(!db){
+  const rows=JSON.parse(window.localStorage.getItem(historyKey())||'[]');
+  return rows.filter(r=>!u||r.username===u).sort((a,b)=>
+   String(a.checked_at).localeCompare(String(b.checked_at)));
+ }
+ try{return await new Promise((resolve,reject)=>{
+  const rows=[],tx=db.transaction(HISTORY_STORE,'readonly');
+  const store=tx.objectStore(HISTORY_STORE);
+  const request=u?store.index('profile').openCursor(IDBKeyRange.only(scope+'\u0000'+u)):
+   store.index('scope').openCursor(IDBKeyRange.only(scope));
+  request.onsuccess=()=>{const c=request.result;if(!c)return;rows.push(c.value);c.continue()};
+  request.onerror=()=>reject(request.error||Error('Cannot read dated measurements'));
+  tx.oncomplete=()=>resolve(rows.sort((a,b)=>String(a.checked_at).localeCompare(String(b.checked_at))));
+  tx.onabort=()=>reject(tx.error||Error('History read aborted'));
+  tx.onerror=()=>reject(tx.error||Error('History read failed'));
+ })}finally{db.close()}
+}
+async function profileTimeline(u){
+ const rows=await historyRead(u),latest=read()[u];
+ // A v120.46 latest-only record can be viewed/exported even before a new
+ // history import. Its original backup and most recent reading are preserved.
+ if(historyValid(latest)&&!rows.some(r=>historyId(key(),r)===historyId(key(),latest)))
+  rows.push({...latest});
+ return rows.sort((a,b)=>String(a.checked_at).localeCompare(String(b.checked_at)));
+}
+window.igcCountsViewHistory=async function(){
+ const target=document.getElementById('igcCountsHistoryView');
+ if(!target)return;
+ const u=normalize(document.getElementById('igcCountsHistoryUser')?.value);
+ if(!u){target.textContent='Enter a valid @username to view measurement history.';return}
+ if(!members().includes(u)){target.textContent='This profile is not in the active Instagram Following list.';return}
+ try{
+  await countsHydrate();
+  const rows=await profileTimeline(u);
+  if(!rows.length){target.textContent='No successful dated measurements for @'+u+'.';return}
+  const recent=rows.slice(-10);
+  target.textContent='@'+u+' · '+rows.length+' saved measurements (showing most recent '+recent.length+')\n'+
+   recent.map((r,i)=>{
+    const before=recent[i-1];
+    const diff=before?' · Δ followers '+(Number(r.followers)-Number(before.followers))+
+     ' · Δ following '+(Number(r.following)-Number(before.following)):'';
+    return r.checked_at+' · '+r.followers+' followers · '+r.following+' following'+
+      (r.approximate?' (approx.)':'')+diff;
+   }).join('\n');
+ }catch(e){countsStorageError(e)}
+};
+window.igcCountsExportHistory=async function(){
+ try{
+  await countsHydrate();
+  const all=read(),users=members(),allowed=new Set(users);
+  const rows=await historyRead();
+  const seen=new Set(rows.map(r=>r.id));
+  for(const u of users){const old=all[u];if(historyValid(old)){
+   const id=historyId(key(),old);
+   if(!seen.has(id)){rows.push({...old,id});seen.add(id)}
+  }}
+  rows.sort((a,b)=>a.username.localeCompare(b.username)||
+   String(a.checked_at).localeCompare(String(b.checked_at)));
+  await downloadLargeCSV(filename('historical-measurements'),function*(){
+   yield COLUMNS;
+   for(const r of rows)if(allowed.has(r.username)&&historyValid(r))
+    yield COLUMNS.map(c=>r[c]??'');
+  });
+  setMessage('Exported all dated measurements for '+users.length+' active Following profiles. Previous scans remain available.');
+ }catch(e){countsStorageError(e)}
+};
+
 function newerCounts(a,b){return String(a?.checked_at||'')>=String(b?.checked_at||'')}
 async function countsHydrate(){
  const scope=key();
