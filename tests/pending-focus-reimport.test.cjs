@@ -18,7 +18,7 @@ const ctx={
   allMainFocusOpenableRows:()=>[],
   igcBatchQuality:rows=>({total:rows.length,confirmed:rows.length,
     changes:0,historical:0,unverifiable:0,stable:0}),
-  igcWhyOpened:()=>"",igcProfileHistoryText:()=>"",focusContextHtml:()=>"",
+  igcWhyOpened:()=>"",igcProfileHistoryText:()=>"",focusContextHtml:()=>"",focusContextText:()=>"",
   esc:String,
   openConfirmedFocusRows:(rows)=>{opens.push(rows.map(r=>r.username));return true},
   msg:(message)=>messages.push(message),
