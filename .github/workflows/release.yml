@@ -96,7 +96,7 @@ jobs:
   windows-robot:
     needs: release-request-gate
     if: needs.release-request-gate.outputs.publish == 'true'
-    name: Insta Cleaner Pro integrated Windows executable
+    name: Insta Cleaner Pro integrated Windows Setup and installed startup
     runs-on: windows-latest
     timeout-minutes: 35
     steps:
@@ -116,6 +116,10 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install playwright==1.57.0 pyinstaller==6.16.0
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup installation failed." }
+          python tests/windows-installer-contract.py
+          if ($LASTEXITCODE -ne 0) { throw "Setup contract failed." }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
@@ -170,11 +174,21 @@ jobs:
           # The HTML is embedded inside the EXE, not an additional file the user must open.
           Remove-Item artifacts/profile-counts-preview/IG-Cleaner-Pro.html -Force
           if (Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html) { throw "HTML must not ship separately." }
-          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v${Version}.zip -Force
+          $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
+          Compress-Archive -Path artifacts/profile-counts-preview/* -DestinationPath "artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v$version.zip" -Force
+      - name: Compile governed Windows Setup, install/launch/uninstall
+        shell: pwsh
+        run: |
+          $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
+          ./tools/build_windows_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version
+          ./tools/test_windows_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Version $version
       - uses: actions/upload-artifact@v4
         with:
           name: ig-cleaner-stable-windows-robot-${{ github.sha }}
-          path: artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v*.zip
+          path: |
+            artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v*.zip
+            artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe
+            artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe.sha256
           retention-days: 14
           if-no-files-found: error
 
@@ -351,7 +365,7 @@ jobs:
         with:
           name: ig-cleaner-stable-windows-robot-${{ github.sha }}
           path: dist
-      - name: Normalize and verify Windows ZIP, then refresh SHA256 checksums
+      - name: Verify Windows installer and portable ZIP, then refresh SHA256 checksums
         run: |
           set -euo pipefail
           ROBOT_ZIP="dist/IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip"
@@ -362,6 +376,11 @@ jobs:
             mv "${candidates[0]}" "$ROBOT_ZIP"
           fi
           test -s "$ROBOT_ZIP"
+          SETUP="dist/IG-Cleaner-Pro-Windows-Setup-v${{ steps.release.outputs.version }}.exe"
+          test -s "$SETUP"
+          test "$(stat -c%s "$SETUP")" -gt 10000000
+          test -s "$SETUP.sha256"
+          echo "Verified same-commit Windows Setup: $SETUP"
           python3 - "$ROBOT_ZIP" "${{ steps.release.outputs.version }}" <<'PY'
           import sys, zipfile
           path, version = sys.argv[1:]
@@ -403,7 +422,9 @@ jobs:
           **Optional full bundle:** **${{ steps.release.outputs.desktop_artifact }}**, containing HTML and the separate original assets/ folder.
 
           ## Windows integrated app + automation
-          **To test the bundled Windows app**, download `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip`, extract, and open **InstaCleanerPro.exe** (Chrome required; no separate CMD or Python installation). The EXE contains the Desktop workspace, Profile Counts robot, and owner-confirmed Cancel Requests / Unfollow actions. Changes to Instagram require explicit selection, approval, and verification. Mutuals is Focus-only.
+          **Recommended Windows installer:** download `IG-Cleaner-Pro-Windows-Setup-v${{ steps.release.outputs.version }}.exe`. Run Setup, accept the complete license, select any optional shortcut, and launch **Insta Cleaner Pro** from Start. It installs the complete robot, a read-only Chrome Companion folder, taskbar pinning instructions, and a Windows uninstaller. Later versions upgrade in place without deleting local imported lists, browser workspaces, or robot history. Chrome is still required.
+
+          **Optional legacy portable archive:** `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip` remains available for compatibility, but Setup is the normal Windows download. Robots still require explicit batch approval and Instagram identity verification; Mutuals is Focus-only.
 
           **Acceptance limitation:** automated browser flows passed offline Chromium UI simulations; live Instagram signed-in DOM, action clicks on the owner's account, and real Windows/Android account data were not validated. Instagram can block browsing or change controls. Stop on challenge/account mismatch, back up data, and test with a small deliberately selected batch. Android cannot run the Windows robot or automatically synchronize new Profile Counts results.
           ## Android
@@ -440,4 +461,5 @@ jobs:
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_html_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip"
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Windows-Setup-v${{ steps.release.outputs.version }}.exe"
           gh release view "$TAG" --json tagName,isPrerelease,isDraft,url
