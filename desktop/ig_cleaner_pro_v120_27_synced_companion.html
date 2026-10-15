@@ -3758,7 +3758,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Run Selected Batch</button>
 <button class="btn orange" id="igcAutoPause" type="button" onclick="igcAutoPause()">⏸ Pause</button>
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
-<button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ New Batch</button>
+<button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
+<button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
 <button class="btn" type="button" onclick="igcAutoPoll()">⟳ Refresh</button>
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
@@ -3783,6 +3784,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <tbody id="igcAutoIssueRows"></tbody></table></div>
 </div>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
+<div class="btnrow" style="align-items:center;gap:8px;margin-top:8px">
+ <button class="btn" type="button" onclick="igcAutoPageMove(-1)">← Previous</button>
+ <span class="note" id="igcAutoPageStatus" role="status" aria-live="polite">Page 1</span>
+ <button class="btn" type="button" onclick="igcAutoPageMove(1)">Next →</button>
+</div>
 <p class="note">Skip excludes a profile from the current batch; protection persists until removed. Mutuals are human-only Focus lists, never automated account changes.</p>
 </div>
 <div class="panel" id="igcAutomationsProfileCountsPanel">
@@ -14809,7 +14815,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 "use strict";
 // This module is intentionally review-only until the browser action runner
 // passes live, owner-approved acceptance. No profile-changing network requests.
-let mode="unfollow",identity="",skips={unfollow:new Set(),cancel:new Set(),audit:new Set()};
+let mode="unfollow",identity="",actionPage=1,skips={unfollow:new Set(),cancel:new Set(),audit:new Set()};
 const choices=["unfollow","cancel","protected","audit"];
 function norm(value){const v=String(value||"").trim().replace(/^@/,"").toLowerCase();return /^[a-z0-9._]{1,30}$/.test(v)?v:""}
 function scope(){
@@ -14860,14 +14866,36 @@ function inputs(){
 }
 function refreshScope(){
  const active=scope();
- if(identity!==active){identity=active;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
+ if(identity!==active){identity=active;actionPage=1;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
 }
+function actionAttemptedKey(task){return "igc_actions_attempted_v1__"+scope()+"__"+task}
+function priorAttempts(task){
+ let saved=[];
+ try{saved=JSON.parse(localStorage.getItem(actionAttemptedKey(task))||"[]")}catch{}
+ const used=new Set(Array.isArray(saved)?saved.map(norm).filter(Boolean):[]);
+ const ctx=actionOwner();
+ if(actionState?.task===task&&actionState.owner===ctx.owner&&actionState.account===ctx.account){
+  for(const user of actionState.attempted_usernames||[])if(norm(user))used.add(norm(user));
+ }
+ return used;
+}
+window.igcAutoPageMove=function(direction){
+ actionPage=Math.max(1,actionPage+Number(direction||0));window.igcAutoRender();
+};
+window.igcAutoOpenPendingReviewBatch=function(){
+ if(mode!=="cancel"){setStatus("Choose Cancel Pending Requests first.");return}
+ if(actionState?.running){setStatus("Pause the active Instagram robot before opening review tabs.");return}
+ const count=Math.max(1,Math.min(40,Number(document.getElementById("igcAutoBatch")?.value)||30));
+ // Review and opening tabs never invokes a cancellation action.
+ window.showPage("pendingRequests");
+ pendingFocusN(count);
+};
 function setStatus(text){
  const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
 }
 window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
- mode=next;
+ mode=next;actionPage=1;
  const search=document.getElementById("igcAutoSearch");if(search)search.value="";
  const issuesTask=document.getElementById("igcAutoIssueTask");
  if(issuesTask&&next!=="protected")issuesTask.value=next;
@@ -14947,7 +14975,9 @@ function selectedActionTargets(){
  refreshScope();
  const limit=Number(document.getElementById("igcAutoBatch")?.value||30);
  if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error("Choose 1–1,000 profiles per batch.");
- return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&!skips[r.kind].has(r.username))
+ const attempted=priorAttempts(mode);
+ return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&
+     !skips[r.kind].has(r.username)&&!attempted.has(r.username))
      .map(r=>r.username))].slice(0,limit);
 }
 function actionConfig(task,targets){
@@ -14976,6 +15006,9 @@ function actionConfig(task,targets){
 window.igcAutoStart=async function(){
  if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
  try{
+  // Refresh the latest Windows journal before selecting the next batch.
+  // This is read-only; it never clicks Follow, Unfollow or Cancel.
+  if(actionBridge)await window.igcAutoPoll();
   const targets=selectedActionTargets(),data=actionConfig(mode,targets);
   const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
   const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
@@ -15017,6 +15050,13 @@ window.igcAutoPoll=async function(){
   // A paused job belonging to A must not trap the user in B, and an active
   // job belonging to A must still prevent B from changing identities.
   actionState=state;
+  if(state.owner===ctx.owner&&state.account===ctx.account&&
+     ["cancel","unfollow","audit"].includes(state.task)&&Array.isArray(state.attempted_usernames)){
+   // Fully persisted server journal spans past batches; never rely on
+   // state.rows (which covers only the latest batch).
+   localStorage.setItem(actionAttemptedKey(state.task),
+     JSON.stringify(state.attempted_usernames.map(norm).filter(Boolean)));
+  }
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
    const fallback=document.getElementById("igcActionAuthFallback");
    if(fallback)fallback.style.display="none";
@@ -15163,13 +15203,21 @@ window.igcAutoRender=function(){
  refreshScope();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ const attempted=mode==="protected"?new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
- const readyCount=Math.max(0,all.length-protectedCount-skippedCount);
+ const attemptedCount=all.filter(r=>attempted.has(r.username)).length;
+ const readyCount=all.filter(r=>!isProtected(r.kind,r.username)&&
+    !skips[r.kind].has(r.username)&&!attempted.has(r.username)).length;
+ const perPage=100,pages=Math.max(1,Math.ceil(list.length/perPage));
+ actionPage=Math.min(Math.max(1,actionPage),pages);
+ const pageStatus=document.getElementById("igcAutoPageStatus");
+ if(pageStatus)pageStatus.textContent="Page "+actionPage+" / "+pages+
+   " · "+list.length+" profiles (all imports, no display cutoff)";
  const stats=document.getElementById("igcAutoMetrics");
  if(stats){
   stats.replaceChildren();
-  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Protected: "+protectedCount,"Skipped: "+skippedCount,"Execution errors: —"]){
+  for(const label of ["Queue: "+all.length,"Ready: "+readyCount,"Already attempted: "+attemptedCount,"Protected: "+protectedCount,"Skipped: "+skippedCount]){
    const item=document.createElement("span");item.textContent=label;stats.appendChild(item);
   }
  }
@@ -15189,7 +15237,7 @@ window.igcAutoRender=function(){
   }
  }catch{}
  root.replaceChildren();
- const visible=list.slice(0,300);
+ const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
  if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
  for(const item of visible){
   const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),actions=document.createElement("td");
@@ -15198,6 +15246,7 @@ window.igcAutoRender=function(){
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
+     attempted.has(item.username)?"Already attempted · inspect journal":
      live.audit_relation==="follows_you"?"✓ Follows you (verified)":
      live.audit_relation==="not_following"?"✓ Not following you (verified)":
      live.status==="ok"?"✓ Completed":
