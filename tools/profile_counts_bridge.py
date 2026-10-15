@@ -17,7 +17,7 @@ import threading
 import time
 import webbrowser
 
-from profile_counts_instagram import (signed_in_handle, challenge_detected, read_following_visible,
+from profile_counts_instagram import (signed_in_handle, challenge_detected, safe_to_probe_owner_from_home, read_following_visible,
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot
@@ -294,7 +294,7 @@ class Collector:
                     while not self.stop_signal.is_set():
                         pages = [p for p in browser.pages if not p.is_closed()]
                         if any(challenge_detected(p) for p in pages):
-                            self._update("blocked", "Instagram requested verification; collection stopped.")
+                            self._update("blocked", "Instagram opened a security verification or reCAPTCHA. Collection stopped without attempting a bypass. Sign in manually and resolve account access before approving another batch.")
                             return
                         identified = {u for p in pages if (u := signed_in_handle(p))}
                         if len(identified) > 1:
@@ -305,8 +305,10 @@ class Collector:
                             break
                         elapsed = time.monotonic() - login_started
                         if (elapsed > 15 and not owner_profile_probed and
-                                self.expected_handle and not self.stop_signal.is_set()):
+                                self.expected_handle and not self.stop_signal.is_set() and
+                                safe_to_probe_owner_from_home(page)):
                             # A collapsed Instagram Home can omit Profile nav.
+                            # Probe only from Home; never interrupt login/recaptcha.
                             # Visit the *selected* own profile once and require
                             # visible Edit profile evidence; expected alone is
                             # never treated as proof of the signed-in account.
