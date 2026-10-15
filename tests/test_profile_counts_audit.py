@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_counts_audit import (
@@ -13,6 +14,7 @@ from profile_counts_audit import (
     seed_latest_readings, read_dated_page,
 )
 from profile_counts_bridge import Collector
+from profile_counts_robot import save_results
 
 
 def row(user, followers, following, stamp, status="ok"):
@@ -57,6 +59,41 @@ class ProfileCountsReauditTests(unittest.TestCase):
             renewed = new_cycle(path, users, next_saved)
             self.assertEqual(renewed["targets"], ["new", "recent", "old"])
             self.assertEqual(renewed["done"], [])
+
+    def test_windows_collector_explicit_cycle_resume_and_new_cycle(self):
+        with TemporaryDirectory() as temp:
+            collector = Collector(Path(temp), Path(temp) / "session")
+            collector.owner, collector.account = "owner1", "account1"
+            save_results(collector.result_path(), {
+                "old": row("old", 100, 10, "2022-01-01T00:00:00Z"),
+                "newer": row("newer", 200, 10, "2026-01-01T00:00:00Z")
+            })
+            request = dict(owner="owner1", account="account1",
+                           usernames=["newer", "newprofile", "old"],
+                           audit_mode="oldest_first")
+            with patch("profile_counts_bridge.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value = False
+                state = collector.auto_start(request)
+                self.assertEqual(state["audit_mode"], "oldest_first")
+                self.assertEqual(state["audit_total"], 3)
+                self.assertEqual(collector.audit_cycle["targets"],
+                                 ["newprofile", "old", "newer"])
+                mark_attempt(audit_cycle_path(collector.result_path()),
+                             collector.audit_cycle, "newprofile")
+                collector.status = "paused"
+                resumed = collector.continue_collection({
+                    "owner": "owner1", "account": "account1"
+                })
+                self.assertEqual(resumed["audit_completed"], 1)
+                self.assertEqual(resumed["audit_mode"], "oldest_first")
+                self.assertEqual(collector.audit_cycle["done"], ["newprofile"])
+                self.assertEqual(collector.audit_cycle["targets"],
+                                 ["newprofile", "old", "newer"])
+                collector.status = "complete"
+                fresh = collector.auto_start(request)
+                self.assertEqual(fresh["audit_completed"], 0)
+                saved = read_dated_page(dated_history_path(collector.result_path()), 0, 10)
+                self.assertEqual({r["followers"] for r in saved["rows"]}, {"100", "200"})
 
     def test_account_workspace_scope(self):
         with TemporaryDirectory() as temp:
@@ -111,7 +148,7 @@ class ProfileCountsReauditTests(unittest.TestCase):
     def test_unbounded_history_is_paginated(self):
         with TemporaryDirectory() as temp:
             p = dated_history_path(Path(temp) / "a.csv")
-            values = {f"profile_{i}": row(f"profile_{i}", i, i+1,
+            values = {f"profile.{i}": row(f"profile_{i}", i, i+1,
                        "2026-10-15T00:00:00Z") for i in range(2501)}
             self.assertEqual(seed_latest_readings(p, values), 2501)
             first = read_dated_page(p, 0, 2000)
