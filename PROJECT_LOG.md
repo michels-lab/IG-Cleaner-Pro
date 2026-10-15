@@ -1,3 +1,8 @@
+## 2026-10-15 — Real native installer wizard/EULA visual gate added
+
+- Extended the Windows Setup CI with `tools/test_windows_installer_wizard.ps1`: launches the actual interactive Inno wizard in English, navigates to the shipped LICENSE.txt page, requires the **accept / decline** radio controls, captures the real wizard screenshot, proves Next is disabled until acceptance, enabled on accept, disabled on decline, then closes without installing. Screenshot is retained in Windows validation artifacts (separate from published release files).
+- Silent INSTALL/installed LAUNCH/in-place UPGRADE/UNINSTALL evidence is a separate test, not a substitute for wizard testing. Whether the latest exact-head CI passed is determined only by its completed GitHub Actions run; on the owner's device, visual acceptance and live Instagram behavior remain separate.
+
 ## 2026-10-15 — Native Windows installer for integrated Insta Cleaner robot (v120.47 candidate; NO release)
 
 - Owner asked to replace extracting/running the Windows robot EXE with a normal Windows installer aligned to Michel's Lab bitácora and master standards. Added Inno Setup source at `packaging/windows-installer/InstaCleanerPro.iss` using the **existing official app ICO and full proprietary LICENSE.txt**; native welcome, required acceptance, bilingual installer language, unchecked desktop shortcut, installed Start menu shortcut, optional taskbar pin guide and proper Windows uninstall.
