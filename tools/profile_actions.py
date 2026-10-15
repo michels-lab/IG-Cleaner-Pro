@@ -16,7 +16,7 @@ import threading
 import time
 from urllib.parse import urlparse
 
-from profile_counts_instagram import signed_in_handle, challenge_detected, verify_selected_owner_profile
+from profile_counts_instagram import signed_in_handle, challenge_detected, verify_selected_owner_profile, preserve_instagram_auth_page
 from profile_counts_robot import valid_username
 from profile_counts_pacing import (
     check_pacing, check_batch_rest, history_path, batch_path, load_history,
@@ -595,8 +595,13 @@ class ActionRobot:
                         browser = pw.chromium.launch_persistent_context(**options)
                     except Exception:
                         browser = pw.chromium.launch_persistent_context(channel="chrome", **options)
-                page = browser.pages[0] if browser.pages else browser.new_page()
-                page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
+                # Never overwrite a restored human login/CAPTCHA page with
+                # an automatic Home navigation when opening persistent Chrome.
+                open_pages = [p for p in browser.pages if not p.is_closed()]
+                page = next((p for p in open_pages if preserve_instagram_auth_page(p)),
+                            open_pages[0] if open_pages else browser.new_page())
+                if not preserve_instagram_auth_page(page):
+                    page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
                 with self.lock:
                     self.status, self.message = "login", "Sign in to Chrome as @" + self.handle
                 while not self.stop_event.is_set():
