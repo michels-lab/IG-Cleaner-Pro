@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - 'tools/profile_counts_robot.py'
+      - 'tools/profile_counts_audit.py'
+      - 'tests/test_profile_counts_audit.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
       - 'tools/ig_cleaner_desktop.py'
@@ -65,6 +67,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_counts_recaptcha.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Instagram CAPTCHA safety regression failed." }
+      - name: Validate durable oldest-first re-audit and dated Windows history
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
       - name: Validate integrated app launch and persistence contracts
         shell: pwsh
         run: |
