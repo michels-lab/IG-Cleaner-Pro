@@ -215,7 +215,7 @@ class Collector:
         owner = str(request.get("owner") or "").strip()
         account = str(request.get("account") or "").strip()
         if not owner or not account or len(owner) > 200 or len(account) > 120:
-            raise ValueError("Se requiere identidad de propietario e Instagram activo.")
+            raise ValueError("An Insta Cleaner owner and active Instagram workspace are required.")
         count, minutes, delay = check_pacing(
             request.get("max_per_window", request.get("per_hour", DEFAULT_COUNT)),
             request.get("window_minutes", DEFAULT_WINDOW_MINUTES),
@@ -599,7 +599,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
 
         def _authorized(self):
             if self.headers.get("Origin") not in (None, "null"):
-                self._send(403, {"error": "Solo se admite la app local."})
+                self._send(403, {"error": "Only the local Insta Cleaner app is allowed."})
                 return False
             if not secrets.compare_digest(self.headers.get("X-IGC-Bridge-Token", ""), token):
                 self._send(403, {"error": "Invalid local access token."})
@@ -686,7 +686,7 @@ def build_server(collector: Collector, token: str, port: int = 0):
 def main():
     parser = argparse.ArgumentParser(description="Puente local de Insta Cleaner ↔ robot visible de Instagram.")
     parser.add_argument("--app", type=Path, help="Path to your Desktop HTML file (same version as your app).")
-    parser.add_argument("--healthcheck", action="store_true", help="Prueba empaquetado Playwright + servidor local, sin abrir Instagram.")
+    parser.add_argument("--healthcheck", action="store_true", help="Check bundled Playwright and local server without opening Instagram.")
     parser.add_argument("--port", type=int, default=0, help="Puerto local (0 = aleatorio disponible).")
     parser.add_argument("--data-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"profile-counts")
     parser.add_argument("--session-dir", type=Path, default=Path.home()/".ig-cleaner-pro"/"instagram-browser")
@@ -707,13 +707,13 @@ def main():
     server = build_server(collector, secret, args.port)
     port = server.server_port
     print(f"Robot local preparado. Puerto: {port}. No se expone a Internet.")
-    print("No compartas el enlace de inicio: contiene una clave temporal del controlador local.")
+    print("Do not share this launch link: it contains a temporary local controller token.")
     webbrowser.open(args.app.resolve().as_uri() + "#igc-robot=" + str(port) + "." + secret)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         collector.stop()
-        print("Robot detenido. Los resultados se conservan para retomarlos.")
+        print("Robot stopped. Saved results remain available for resuming.")
     finally:
         server.server_close()
 
