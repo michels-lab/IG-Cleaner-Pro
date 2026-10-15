@@ -1,3 +1,7 @@
+## Dated history in the main app (v120.47 development)
+
+The regular Chrome Companion's **Export dated history CSV** can now be imported from **Automations → Profile Counts → Import CSV results**. The main app saves each distinct verified dated Followers/Following reading in a separate scoped history while keeping the latest verified result for analytics. Use **Export dated history CSV** in that same Automations panel to back up the complete timeline. Repeating a previous CSV does not duplicate its measurements; newer failed checks never delete earlier verified counters. The original Instagram ZIP stays local. This is not the separate Playwright Windows robot's still-pending automatic second-audit feature, and v120.47 has not been published.
+
 # Profile Counts Robot — current Windows guidance (v120.47 development)
 
 > Current official GitHub Release is **v120.46**. Changes described below for v120.47 require a separate explicit owner release instruction and are NOT yet in the installed build. Historical v120.41–v120.45 instructions are retained below for context only.
