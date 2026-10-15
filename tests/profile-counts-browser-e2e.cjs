@@ -116,12 +116,21 @@ const {chromium}=require("playwright");
   const row=await page.locator("#igcCountsRows").innerText();
   assert(row.includes("public.user")&&row.includes("8,765")&&row.includes("432"),
    "Actual rendered profile counts missing: "+row);
-  const localState=await page.evaluate(()=>{
+  const storedRecord=await page.evaluate(async()=>{
    const ctx=window.IGC_INSTAGRAM_PROFILES;
-   const key="igc_profile_counts_v1__"+encodeURIComponent(ctx.owner)+"__"+encodeURIComponent(ctx.active);
-   return JSON.parse(window.localStorage.getItem(key));
+   await window.igcCountsStorageReady();
+   const scope="igc_profile_counts_v1__"+encodeURIComponent(ctx.owner)+"__"+encodeURIComponent(ctx.active);
+   return new Promise((resolve,reject)=>{
+    const q=indexedDB.open("ig_cleaner_profile_counts_v2",1);
+    q.onsuccess=()=>{
+     const db=q.result,tx=db.transaction("records","readonly");
+     const item=tx.objectStore("records").get(scope+String.fromCharCode(0)+"public.user");
+     item.onsuccess=()=>{resolve(item.result?.record);db.close()};
+     item.onerror=()=>reject(item.error);
+    };q.onerror=()=>reject(q.error)
+   });
   });
-  assert.equal(localState.records["public.user"].followers,"8765");
+  assert.equal(storedRecord.followers,"8765","Visible results must persist to IndexedDB");
   assert(errors.filter(e=>e.includes("igcCounts")).length===0,
    "UI JavaScript exceptions: "+JSON.stringify(errors));
   console.log("PASS: real file:// Chromium sent imported Following to robot without rediscovery and stored follower counts.");
