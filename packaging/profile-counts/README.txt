@@ -27,7 +27,7 @@ This package contains the Windows application `InstaCleanerPro.exe`, including t
 ## Security and acceptance
 
 - Chrome is required. Do not disable Windows security or antivirus protections to run an unsigned Windows binary.
-- Automated tests use offline Instagram fixtures, an installed Windows EXE healthcheck, and Android emulator / Desktop Chromium checks. They do **not** prove successful actions against the owner's real signed-in Instagram or physical devices.
+- Automated tests use simulated offline Instagram fixtures, an installed Windows EXE healthcheck, and Android emulator / Desktop Chromium checks. They do **not** prove successful actions against the owner's real signed-in Instagram or physical devices.
 - Begin with a small explicitly approved batch. Monitor account identity, logged outcomes, and any verification challenges.
 
 ## Offline executable healthcheck
