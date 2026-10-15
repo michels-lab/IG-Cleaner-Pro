@@ -128,6 +128,28 @@ class ProfileCountsBridgeTests(unittest.TestCase):
         self.assertEqual(c.following()["usernames"], [])
         self.assertEqual(result["queue_transport"], "chunked")
 
+    def test_http_prefix_usernames_do_not_stop_a_large_imported_queue(self):
+        c = self.collector
+        c._run = lambda: c._update("complete", "No live Instagram fixture", 0)
+        usernames = [f"valid{i:04d}" for i in range(1015)]
+        usernames[375] = "http.cat"
+        usernames[911] = "httpshop"
+        stage = c.begin_import({"owner": "owner-A", "account": "ig-one",
+                                "total": len(usernames)})
+        for offset in range(0, len(usernames), 1000):
+            chunk = usernames[offset:offset+1000]
+            response = c.append_import({
+                "owner": "owner-A", "account": "ig-one", "transfer": stage["transfer"],
+                "offset": offset, "usernames": chunk})
+            self.assertEqual(response["received"], offset+len(chunk))
+        result = c.auto_start({
+            "owner": "owner-A", "account": "ig-one",
+            "expected_handle": "realmichelduarte", "usernames": [],
+            "use_staged_import": True, "transfer": stage["transfer"]})
+        c.worker.join(timeout=3)
+        self.assertEqual(result["total"], 1015)
+        self.assertEqual(c.usernames, usernames)
+
     def test_chunk_api_is_account_scoped_and_atomic(self):
         b = {"owner": "A", "account": "ig_one", "total": 3}
         stage = self.request("/api/queue/init", body=b)
