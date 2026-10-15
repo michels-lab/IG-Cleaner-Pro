@@ -70,11 +70,35 @@ assert(robotStart<countsStart && countsStart<insightsStart &&
  assert.equal(input.value,'');
  assert.match(elements.igcCountsRows.innerHTML,/1,234/, 'Import must render counts: '+elements.igcCountsFootnote.textContent+' keys='+JSON.stringify(Array.from(store.keys())));
  assert(summary.some(s=>s.includes('1 with data')));
- const onlyKey=Array.from(store.keys())[0];
+ const onlyKey=Array.from(store.keys()).find(k=>k.startsWith('igc_profile_counts_v1__'));
+ assert(onlyKey,'Latest counts must retain their original workspace key');
  assert(onlyKey.includes('owner_A')&&onlyKey.includes('ig_A'));
  const saved=JSON.parse(store.get(onlyKey));
  assert.equal(saved.records['public.user'].followers,'1234');
  assert.equal(saved.records['unrelated'],undefined,'Do not import profiles outside active Following');
+
+ const historicalImport='username,followers,following,checked_at,source,status,approximate\\n'+
+  'public.user,900,300,2026-10-10T09:00:00Z,manual_history,ok,false\\n'+
+  'public.user,1500,225,2026-10-13T09:00:00Z,manual_history,ok,false\\n';
+ await ctx.window.igcCountsImportFile({files:[{text:async()=>historicalImport}],value:''});
+ const historyKey=Array.from(store.keys()).find(k=>k.startsWith('igc_profile_counts_history_v1__'));
+ assert(historyKey,'Dated measurements must be isolated in a durable workspace history');
+ let timeline=JSON.parse(store.get(historyKey)).filter(r=>r.username==='public.user');
+ assert.equal(timeline.length,3,'Earlier, baseline and newer readings must coexist');
+ assert.deepEqual(timeline.map(r=>r.followers).sort(),['1234','1500','900']);
+ assert.equal(JSON.parse(store.get(onlyKey)).records['public.user'].followers,'1500',
+  'The newest dated record is current regardless of CSV order');
+ await ctx.window.igcCountsImportFile({files:[{text:async()=>historicalImport}],value:''});
+ timeline=JSON.parse(store.get(historyKey)).filter(r=>r.username==='public.user');
+ assert.equal(timeline.length,3,'Reimporting the same historical CSV is idempotent');
+ const laterUnavailable='username,followers,following,checked_at,status\\n'+
+  'public.user,,,2026-10-15T09:00:00Z,unavailable\\n';
+ await ctx.window.igcCountsImportFile({files:[{text:async()=>laterUnavailable}],value:''});
+ assert.equal(JSON.parse(store.get(onlyKey)).records['public.user'].followers,'1500',
+  'An inaccessible revisit cannot erase the last verified counts');
+ await ctx.window.igcCountsExportHistory();
+ assert(clicked>=2,'The history export must initiate an actual CSV download');
+
  identity.active='ig_B';
  ctx.window.igcCountsRender();
  assert(summary.some(s=>s.includes('0 with data')),'Sibling Instagram must not inherit counts');
