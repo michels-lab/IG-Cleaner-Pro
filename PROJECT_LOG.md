@@ -1,3 +1,13 @@
+## 2026-10-14 — v120.47 corrective development after real v120.46 Windows feedback
+
+- Owner screenshots exposed two real failures on Windows stable v120.46: **Cancel Sent Requests** processed 1/40 and blocked because owner identity disappeared on a target profile (no request was canceled); **Profile Counts** failed before launch with “Import contains invalid profile usernames.” Owner again clarified *all of Profile Counts*, including its collected per-person results, belongs in **Automations**, not Insights.
+- Fixed Profile Counts username validator mistakenly treating any handle beginning with `http` (e.g. `http.cat`, `httpshop`) as a URL. Only explicit `http://` and `https://` URLs are parsed now. Added end-to-end staged import regression covering `http` handles so a single such profile cannot reject a large queue.
+- Cancel/Unfollow action preflight now verifies the expected Instagram account safely in a **separate, read-only tab** of the same persistent Chrome context when the target profile hides the signed-in user's Profile navigation. It requires own-profile username heading and visible Edit profile control, refuses incorrect/ambiguous accounts and does not modify the target page to verify. Rechecks identity before sensitive clicks and after action.
+- Previously saved `blocked` results are eligible for retry **only if they explicitly documented zero clicks**. All ambiguous, changed-account, after-click or uncertain results remain protected from automatic retries.
+- Relocated all Profile Counts result tables, search, filters, exports and robot controls to **Automations**. Insights now only has aggregate account-level analytical panels. Updated the explicit DOM contract tests accordingly.
+- Added offline Chromium tests of Cancel Pending with collapsed navigation, correct owner vs mismatched owner, and no-click recovery. None of these tests claim a real Instagram cancellation succeeded.
+- This is v120.47 development. The installed v120.46 is still stable/public, with these bugs. Do not release without exact-head Windows/Android/Desktop/Profile Counts CI and an explicit owner release request. Live account acceptance remains pending.
+
 ## 2026-10-14 — v120.46 officially published
 
 - Owner-authorized stable v120.46 published, normal GitHub Release: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.46 .
