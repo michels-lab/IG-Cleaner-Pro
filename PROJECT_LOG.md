@@ -1,3 +1,10 @@
+## 2026-10-15 — English UI follow-up: Pending, Mutuals and non-mutual Followers static labels (v120.48 development)
+
+- Found owner-visible mixed-language labels in Pending Lab, Mutuals and Followers: paused/expired pause filters, age/risk options, action headers, import prompts, detected approvals, counts, navigation and refresh buttons.
+- Replaced 42 static visible labels with English text while preserving their exact `value` codes, JS state names, DOM hooks, imported Instagram data and the accepted layout/assets. No Follow, Unfollow or Cancel behavior changed.
+- Extended the existing English UI source contract with assertions for the new labels and a scoped regression list of obsolete static Spanish labels. Broader dynamically generated JS and real native Android UI still require separate acceptance under #86.
+- **Status:** development only; exact-head CI/Chromium/Android/Windows gates required before merge. Published v120.47 binaries remain unchanged; no release authorization was requested.
+
 ## 2026-10-15 — v120.48 development: cold-start Pending history integrity before next action batch
 
 - Follow-up source audit found a remaining starvation/safety case after the sequential-batch fix: Desktop `igcAutoStart()` called `igcAutoPoll()` first, but that poll can silently skip while busy or catch and swallow a Windows connection error. Also, after a fresh Windows process launch, `ActionRobot.snapshot()` has no current task until an action is started, so it cannot expose persisted attempts for an idle task. Selecting the first N based on this stale/empty state can repeat earlier targets or get rejected only once the backend starts.
