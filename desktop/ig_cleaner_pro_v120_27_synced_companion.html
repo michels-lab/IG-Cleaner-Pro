@@ -14198,7 +14198,7 @@ function historicalCountValid(r){
   Number.isFinite(Date.parse(r.checked_at||''));
 }
 function historyId(scope,r){
- return scope+'\u0000'+r.username+'\u0000'+r.checked_at+'\u0000'+r.followers+'\u0000'+r.following;
+ return scope+'\u0000'+r.username+'\u0000'+r.checked_at+'\u0000'+r.followers+'\u0000'+r.following+'\u0000'+(r.source||'')+'\u0000'+String(r.approximate||false);
 }
 async function countsHistoryPersist(db,scope,rows){
  // Store every distinct dated successful reading; do not cap the history.
