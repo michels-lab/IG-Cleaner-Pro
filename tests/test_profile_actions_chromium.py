@@ -524,6 +524,42 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(_action_issue("cancel", status, message),
                          "pending_cancel_unverified")
 
+    def test_pending_request_readonly_refresh_not_confused_by_following(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        second = fake_profile(result="unchanged")
+        checks = []
+        def route(request):
+            checks.append(request.request.url)
+            request.fulfill(status=200, content_type="text/html",
+                            body=first if len(checks) == 1 else second)
+        self.page.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review")
+        self.assertIn("now displays Following", message)
+        self.assertEqual(len(checks), 2)
+
+    def test_pending_request_readonly_refresh_redirect_cannot_prove_cancellation(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        page_redirect = "<html><body><h1>Please log in</h1></body></html>"
+        checks = []
+        def route(request):
+            checks.append(request.request.url)
+            if len(checks) == 2:
+                request.fulfill(status=302, headers={"Location":
+                        "https://www.instagram.com/accounts/login/"}, body="")
+            else:
+                request.fulfill(status=200, content_type="text/html",
+                                body=first if len(checks) == 1 else page_redirect)
+        self.page.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertNotEqual(status, "ok", "A login redirect must never confirm cancellation")
+        self.assertTrue("redirected" in message or "verification" in message,
+                        "The anomaly must be clearly reported")
+
     def test_pending_request_follow_state_is_not_follow_back(self):
         status, message, events = self.attempt(task="cancel", request_unfollow=True)
         self.assertEqual(status, "ok", message)
