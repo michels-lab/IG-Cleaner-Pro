@@ -1,3 +1,12 @@
+## 2026-10-15 — v120.48 development: cold-start Pending history integrity before next action batch
+
+- Follow-up source audit found a remaining starvation/safety case after the sequential-batch fix: Desktop `igcAutoStart()` called `igcAutoPoll()` first, but that poll can silently skip while busy or catch and swallow a Windows connection error. Also, after a fresh Windows process launch, `ActionRobot.snapshot()` has no current task until an action is started, so it cannot expose persisted attempts for an idle task. Selecting the first N based on this stale/empty state can repeat earlier targets or get rejected only once the backend starts.
+- Added `ActionRobot.attempted_history(owner,account,task)`: read-only retrieval of the durable journal for the exact selected account/task even before a worker starts. Unknown or potentially clicked states remain blocked from automatic replay; provable pre-click identity failures remain eligible. No Instagram access or relationship-changing actions occur during the history check.
+- Added token-protected local `/api/actions/history` and changed `igcAutoStart()` to **require** a successful scoped history read before selecting or confirming the next action batch. Connection failure, malformed history, wrong owner or task changes stop without sending an action start request; no stale in-memory fallback.
+- Regression coverage: cold restart with 60 prior attempts and no local client cache, backend owner/task isolation, no-click retry, malformed/scope-mismatched history and history read failure. CI now includes `tests/automations-cold-start.test.cjs` alongside existing later-batch and offline Python tests.
+- Documentation: README and Profile Counts guidance now correctly identify published stable v120.47, native Windows Setup, and unpublished v120.48 changes. No version tags or release authorization changed.
+- **Status:** development branch, exact-head CI and owner real Chrome acceptance must be verified separately before merging or publishing. Do not claim live Instagram success from fixtures.
+
 ## 2026-10-15 — v120.48 development: Pending Requests second/third batch recovery and unverified cancellation checks
 
 - Owner observed that Pending Requests in Automations stopped opening profiles after the second batch, particularly after importing newer Instagram exports, and Instagram cancellations were recorded as unconfirmed although the profile action appeared to occur.
