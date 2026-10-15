@@ -1,15 +1,12 @@
 {
-  "version": "120.46",
-  "tag": "v120.46",
-  "authorized": false,
-  "authorization_source": "Owner explicitly instructed 'termina lo pendiente y dale release' on 2026-10-14. PR #97 unified all robots into Automations and scalable imported queues; PR #98 completed IndexedDB/account-scoped Profile Counts historical data migration, lossless audit fallback and large-dataset Chromium gates; both merged after 5/5 exact-head CI checks. Owner authorizes official stable v120.46 after exact-release-commit Windows integrated EXE, Desktop, Android UI, signing and checksums verification.",
+  "version": "120.47",
+  "tag": "v120.47",
+  "authorized": true,
+  "authorization_source": "Owner explicitly instructed 'dale release' on 2026-10-15 after receiving confirmation that all four post-merge main-commit CI checks passed for the Windows Setup, verified native updater, chronological re-audits, rendered Desktop/Android and general CI. Publish the normal stable v120.47 release through the governed exact-commit release pipeline, never a prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.45",
-  "owner_acceptance_note": "This release contains unbounded logical Following/Followers analyses, chunked imported queue, unified Automations, IndexedDB migration/backup retention and new 250k browser regression gate. Instagram live signed-in collection and account-changing actions on the owner's PC are not physically verified; do not claim them. Preserve cookies/history/legacy localStorage backup and production Android signing identity. No bypass of rate limits or security challenges.",
-  "published_run": 38658477664,
-  "published_commit": "4550635e7435002915b47472452c4c74aba1bc04",
-  "completed_at_utc": "2026-10-15T00:15:33Z"
+  "status": "requested",
+  "previous_stable_release": "v120.46",
+  "owner_acceptance_note": "Owner explicitly requested release of v120.47 with normal Windows Setup EXE, bundled integrated robots, standalone Desktop HTML/ZIP and stable production-signed Android APK. Exact-request-commit publisher must independently validate rendered UI evidence, Windows setup install/launch/upgrade/uninstall and persistent Android signer, asset integrity and checksums. Real owner's signed-in Instagram and physical-device Windows updater/Android installation remain untested; no CAPTCHA bypass or claim of live automation success. Windows Authenticode not configured."
 }
