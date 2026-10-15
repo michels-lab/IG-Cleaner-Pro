@@ -36,6 +36,16 @@
           audit:stored.audit && Array.isArray(stored.audit.targets) &&
             Array.isArray(stored.audit.completed) ? stored.audit : null
         } : empty();
+    // Older versions stored only the latest record. Seed the timeline
+    // without overwriting it so the first re-audit compares against it.
+    for(const [user,record] of Object.entries(state.records)){
+      if(!C.validMeasurement(record)) continue;
+      const timeline=Array.isArray(state.history[user]) ? state.history[user] : [];
+      if(!timeline.some(row=>row.checked_at===record.checked_at &&
+         row.followers===record.followers && row.following===record.following))
+        timeline.push({...record});
+      state.history[user]=timeline;
+    }
     currentWorkspace = w;
     await chrome.storage.local.set({igc_chrome_last_workspace_v1: w});
     render();
@@ -161,6 +171,8 @@
   }
   async function startOldestAudit() {
     await selectWorkspace();
+    if(state.audit && outstandingReaudit().length)
+      throw Error("Finish the current re-audit before starting another cycle.");
     const pending=firstPass();
     if(pending.length) throw Error("Complete the " + pending.length +
       " unmeasured/incomplete profiles before starting a second audit.");
