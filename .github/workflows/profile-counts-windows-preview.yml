@@ -137,7 +137,7 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
-          ./tools/build_windows_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version
+          ./tools/build_windows_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version -AllowCurrentStablePreview
           if ($LASTEXITCODE -ne 0) { throw "Setup creation failed." }
           ./tools/test_windows_installer_wizard.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Screenshot artifacts/IG-Cleaner-Pro-Installer-EULA.png
           ./tools/test_windows_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Version $version

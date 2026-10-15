@@ -1,13 +1,22 @@
 param(
   [Parameter(Mandatory=$true)][string]$PayloadDir,
-  [Parameter(Mandatory=$true)][string]$Version
+  [Parameter(Mandatory=$true)][string]$Version,
+  [switch]$AllowCurrentStablePreview
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($Version -notmatch '^\d+\.\d+$') { throw "Invalid governed installer version: $Version" }
 $manifest = Get-Content "release/distribution-manifest.json" -Raw | ConvertFrom-Json
 $next = $manifest.releasePolicy.nextRelease
-if ($next -ne "v$Version") { throw "Installer version $Version does not match the governed next release $next" }
+if ($next -ne "v$Version") {
+  # On a PR that has not yet bumped production metadata, preview may build
+  # the currently published version strictly for QA. The governed stable
+  # release workflow DOES NOT pass this switch and still requires nextRelease.
+  if (!$AllowCurrentStablePreview -or $manifest.releasePolicy.currentStableRelease -ne "v$Version") {
+    throw "Installer version $Version does not match the governed next release $next"
+  }
+  Write-Host "PREVIEW ONLY: build current stable metadata v$Version; publishing remains prohibited."
+}
 $payload = (Resolve-Path $PayloadDir).Path
 foreach ($name in @("InstaCleanerPro.exe","README.txt","BUILD-INFO.txt","EXECUTABLE-SHA256.txt",
                      "chrome-extension\manifest.json","chrome-extension\popup.html",

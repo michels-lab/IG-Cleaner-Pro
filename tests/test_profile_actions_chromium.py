@@ -59,8 +59,9 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
            blocked={str(blocked).lower()}, result={result!r},
            requestUnfollow={str(request_unfollow).lower()};
      window.__steps=[];
+     function recordStep(value) {{ window.__steps.push(value); console.log("IGC_STEP:" + value); }}
      function openRelationship() {{
-       window.__steps.push('open');
+       recordStep('open');
        if(requestUnfollow) {{
          document.querySelector('#request-confirm').style.display='block';
          return;
@@ -73,17 +74,17 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        }}
      }}
      function chooseUnfollow() {{
-       window.__steps.push('unfollow');
+       recordStep('unfollow');
        document.querySelector('#action-menu').style.display='none';
        if(privateFlow)document.querySelector('#private-confirm').style.display='block';
        else finishChange();
      }}
      function dismissRequest() {{
-       window.__steps.push('dismiss');
+       recordStep('dismiss');
        document.querySelector('#request-confirm').style.display='none';
      }}
      function finishChange() {{
-       window.__steps.push('confirmed');
+       recordStep('confirmed');
        document.querySelector('#action-menu').style.display='none';
        document.querySelector('#private-confirm').style.display='none';
        document.querySelector('#request-confirm').style.display='none';
@@ -212,6 +213,10 @@ class RealBrowserSelectorTests(unittest.TestCase):
                             request_unfollow=request_unfollow,
                             warning_handle=warning_handle,
                             include_warning=include_warning)
+        # Console events survive the final read-only refresh while page globals do not.
+        recorded_steps = []
+        self.page.on("console", lambda msg: recorded_steps.append(msg.text.split("IGC_STEP:", 1)[1])
+                     if msg.text.startswith("IGC_STEP:") else None)
         # Intercept all Instagram URLs, even accidental external navigations.
         self.page.route("https://www.instagram.com/**",
                         lambda route: route.fulfill(status=200, content_type="text/html", body=html))
@@ -227,7 +232,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message = perform_visible_action(
             self.page, "target.user", task, "my.profile",
             (lambda _: not protected))
-        return status, message, self.page.evaluate("window.__steps")
+        return status, message, recorded_steps
 
 
     def test_read_only_audit_searches_own_followers_without_relation_click(self):
@@ -476,6 +481,84 @@ class RealBrowserSelectorTests(unittest.TestCase):
                                                result="unchanged")
         self.assertEqual(status, "review", message)
         self.assertEqual(events, ["open", "confirmed"])
+
+    def test_pending_request_readonly_reload_confirms_delayed_cancel_without_second_click(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        second = fake_profile(result="unchanged")
+        second = second.replace(">Following</button>", ">Follow</button>")
+        log, visits = [], []
+        def route(request):
+            visits.append(request.request.url)
+            request.fulfill(status=200, content_type="text/html",
+                            body=first if len(visits) == 1 else second)
+        self.page.route("https://www.instagram.com/**", route)
+        self.page.on("console", lambda msg: log.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "ok", message)
+        self.assertIn("read-only profile refresh", message)
+        self.assertEqual(log, ["IGC_STEP:open", "IGC_STEP:confirmed"],
+                         "No second relationship-changing click after ambiguous result")
+        self.assertEqual(len(visits), 2, "Only one safe verification refresh")
+
+    def test_pending_request_refresh_still_requested_needs_manual_review(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        events, visits = [], []
+        self.page.on("console", lambda msg: events.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def route(request):
+            visits.append(request.request.url)
+            request.fulfill(status=200, content_type="text/html", body=first)
+        self.page.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review")
+        self.assertIn("still displays Requested", message)
+        self.assertIn("Do not repeat", message)
+        self.assertEqual(events, ["IGC_STEP:open", "IGC_STEP:confirmed"])
+        self.assertEqual(len(visits), 2)
+        from profile_actions import _action_issue
+        self.assertEqual(_action_issue("cancel", status, message),
+                         "pending_cancel_unverified")
+
+    def test_pending_request_readonly_refresh_not_confused_by_following(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        second = fake_profile(result="unchanged")
+        checks = []
+        def route(request):
+            checks.append(request.request.url)
+            request.fulfill(status=200, content_type="text/html",
+                            body=first if len(checks) == 1 else second)
+        self.page.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review")
+        self.assertIn("now displays Following", message)
+        self.assertEqual(len(checks), 2)
+
+    def test_pending_request_readonly_refresh_redirect_cannot_prove_cancellation(self):
+        first = fake_profile(request_unfollow=True, result="unchanged")
+        first = first.replace(">Following</button>", ">Requested</button>")
+        page_redirect = "<html><body><h1>Please log in</h1></body></html>"
+        checks = []
+        def route(request):
+            checks.append(request.request.url)
+            if len(checks) == 2:
+                request.fulfill(status=302, headers={"Location":
+                        "https://www.instagram.com/accounts/login/"}, body="")
+            else:
+                request.fulfill(status=200, content_type="text/html",
+                                body=first if len(checks) == 1 else page_redirect)
+        self.page.route("https://www.instagram.com/**", route)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertNotEqual(status, "ok", "A login redirect must never confirm cancellation")
+        self.assertTrue("redirected" in message or "verification" in message,
+                        "The anomaly must be clearly reported")
 
     def test_pending_request_follow_state_is_not_follow_back(self):
         status, message, events = self.attempt(task="cancel", request_unfollow=True)
