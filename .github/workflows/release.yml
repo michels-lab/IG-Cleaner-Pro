@@ -153,6 +153,9 @@ jobs:
         run: |
           Copy-Item dist/InstaCleanerPro.exe artifacts/profile-counts-preview/
           Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
+          Copy-Item packaging/chrome-extension artifacts/profile-counts-preview/chrome-extension -Recurse -Force
+          node tests/chrome-companion.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Chrome Companion contract failed." }
           @(
             "candidate_source_sha=${{ github.sha }}"
             "candidate_kind=stable_github_release_live_instagram_untested"
@@ -162,6 +165,7 @@ jobs:
             Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
           if (!(Test-Path artifacts/profile-counts-preview/InstaCleanerPro.exe)) { throw "Integrated Windows app absent." }
+          if (!(Test-Path artifacts/profile-counts-preview/chrome-extension/manifest.json)) { throw "Chrome extension manifest absent." }
           if (Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd) { throw "Legacy .cmd launcher must not ship." }
           # The HTML is embedded inside the EXE, not an additional file the user must open.
           Remove-Item artifacts/profile-counts-preview/IG-Cleaner-Pro.html -Force
@@ -261,6 +265,7 @@ jobs:
           python3 tests/android-native-english-contract.py
           python3 tests/english-ui-contract.py
           python3 tests/windows-automations-owner-contract.py
+          node tests/chrome-companion.test.cjs
           python3 tests/android-signing-contract.py
           python3 tests/release-publisher-contract.py
           python3 tests/standalone-desktop-contract.py
@@ -360,7 +365,10 @@ jobs:
           python3 - "$ROBOT_ZIP" "${{ steps.release.outputs.version }}" <<'PY'
           import sys, zipfile
           path, version = sys.argv[1:]
-          required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt"}
+          required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt",
+                        "chrome-extension/manifest.json", "chrome-extension/popup.html",
+                        "chrome-extension/popup.js", "chrome-extension/collector.js",
+                        "chrome-extension/README.md"}
           with zipfile.ZipFile(path) as archive:
               names = set(archive.namelist())
               assert required <= names, f"Missing integrated Windows files: {required-names}"

@@ -26,6 +26,19 @@ This package contains the Windows application `InstaCleanerPro.exe`, including t
 - The **Start Profile Counts in separate Chrome** button actually starts the collector; it is not a passive sign-in check. During an unverified CAPTCHA, the status offers safe Pause and manual paths. An action robot blocked at CAPTCHA cannot be resumed blindly; obtain a verified session and approve any new action batch explicitly.
 - Profile Counts results from Windows do **not yet** automatically sync into Android.
 
+## Chrome Companion — read-only Profile Counts in your NORMAL Chrome session
+
+If Instagram works in your regular Chrome but reCAPTCHA loops in the separate robot browser, the ZIP also includes the `chrome-extension` folder.
+
+1. Extract the complete ZIP to a stable directory. In regular Chrome open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select that extracted **chrome-extension** folder. The extension is not in Chrome Web Store.
+2. In Insta Cleaner open **Automations → Profile Counts** and click **Export Following queue CSV**. In the toolbar extension, enter the current Instagram workspace label and import this CSV.
+3. With Instagram already signed in in this same regular Chrome, use **Open next profile**, wait for the visible header to load, and click **Capture visible counts**. Repeat with explicit clicks for each profile.
+4. In the extension, **Export results CSV**. Back in **Automations → Profile Counts** select **Import captured results CSV**. Existing imported Following and stored Profile Counts records are preserved; records unrelated to the active Following list are ignored.
+
+After completing all never-measured or incomplete profiles, use **Start oldest-first re-audit** to review the profiles with the **oldest last-count date first**. The extension tracks each re-audit cycle and keeps every previous measurement (followers, following, time, precision); a profile is measured only once in the current cycle. Export the latest values as the normal Insta Cleaner import CSV, and optionally export the complete dated history for change comparisons. Importing a new Following list does not reset old measurements.
+
+The extension uses only temporary `activeTab` permission after a click and local browser storage. It has no Instagram site-wide host permissions and never reads/transfers cookies, collects passwords, solves CAPTCHA, or performs a follow/unfollow/cancel action. Missing profile counters are not marked successful; K/M counts are flagged approximate. All data stays on your PC. Read `chrome-extension/README.md` for exact instructions and limitations. This **does not** provide an autonomous replacement for Cancel Pending or Unfollow. It is a manual read-only recovery path until Instagram permits account interaction through an accepted integration.
+
 ## Security and acceptance
 
 - Chrome is required. Do not disable Windows security or antivirus protections to run an unsigned Windows binary.

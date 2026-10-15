@@ -15,6 +15,8 @@ on:
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
       - 'tools/build_standalone_desktop_html.py'
       - 'packaging/profile-counts/**'
+      - 'packaging/chrome-extension/**'
+      - 'tests/chrome-companion.test.cjs'
       - '.github/workflows/profile-counts-windows-preview.yml'
 
 permissions:
@@ -84,6 +86,9 @@ jobs:
         run: |
           Copy-Item dist/InstaCleanerPro.exe artifacts/profile-counts-preview/
           Copy-Item packaging/profile-counts/README.txt artifacts/profile-counts-preview/
+          Copy-Item packaging/chrome-extension artifacts/profile-counts-preview/chrome-extension -Recurse -Force
+          node tests/chrome-companion.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Chrome Companion contract failed." }
           @(
             "candidate_source_sha=${{ github.sha }}"
             "candidate_kind=unreleased_windows_preview"
@@ -93,6 +98,8 @@ jobs:
             Select-Object -ExpandProperty Hash | Set-Content artifacts/profile-counts-preview/EXECUTABLE-SHA256.txt
           if (!(Test-Path artifacts/profile-counts-preview/IG-Cleaner-Pro.html)) { throw "HTML absent." }
           if (!(Test-Path artifacts/profile-counts-preview/InstaCleanerPro.exe)) { throw "Integrated Windows app absent." }
+          if (!(Test-Path artifacts/profile-counts-preview/chrome-extension/manifest.json)) { throw "Chrome companion manifest absent." }
+          if (!(Test-Path artifacts/profile-counts-preview/chrome-extension/popup.html)) { throw "Chrome companion popup absent." }
           if (Test-Path artifacts/profile-counts-preview/Start-Insta-Cleaner-Robot.cmd) { throw "Legacy .cmd launcher must not ship." }
           # The HTML is embedded inside the EXE, not an additional file the user must open.
           Remove-Item artifacts/profile-counts-preview/IG-Cleaner-Pro.html -Force

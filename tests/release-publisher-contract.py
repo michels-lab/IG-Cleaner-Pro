@@ -52,7 +52,9 @@ for token in (
     'test_native_desktop.py',
     'InstaCleanerPro.exe',
     'EXECUTABLE-SHA256.txt',
-    'required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt"}',
+    'required = {"InstaCleanerPro.exe", "BUILD-INFO.txt", "EXECUTABLE-SHA256.txt", "README.txt",',
+    'chrome-extension/manifest.json',
+    'chrome-extension/collector.js',
 ):
     assert token in workflow, f"Integrated Windows release contract missing: {token}"
 assert 'Copy-Item packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd' not in workflow
