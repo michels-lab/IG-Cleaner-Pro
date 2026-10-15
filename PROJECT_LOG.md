@@ -1,3 +1,11 @@
+## 2026-10-15 — v120.47 Automations Windows English + documentation regression gates (development only)
+
+- Continued from official stable v120.46 and merged PR #99 (v120.47 source). Verified that the source already includes the Python Profile Counts `http`-prefix username fix, independent read-only owner identity proof for account actions, and per-profile results in Automations. These remain **unreleased** and unaccepted on a real Instagram session.
+- Updated `tools/profile_actions.py`, `tools/profile_counts_bridge.py`, and `tools/profile_counts_robot.py` so new robot status, CLI and validation errors are in English. Preserved the Spanish labels/phrases used to recognize Instagram's localized DOM and to classify existing journal records.
+- Updated integrated Windows package `packaging/profile-counts/README.txt`: all robot controls **and individual Profile Counts results** remain under Automations, Insights is aggregate-only, browser robots cannot navigate Chrome simultaneously, and local IndexedDB migration is implemented (no longer an open #96 task).
+- New `tests/windows-automations-owner-contract.py` covers Windows package owner instructions and English error paths; the test is required by general CI and governed release QA. Updated developer `AGENTS.md`, current `README.md` and handoff to prevent old v120.44/v120.45 release guidance from overriding the authoritative manifest.
+- Branch: `fix/v12047-english-automation-packaging-20261015`. CI and PR exact-head checks **pending at time of entry**. No release authorized. Physical Windows Chrome/Instagram and actual cancellation acceptance remain explicitly open.
+
 ## 2026-10-14 — PR #99 merged after reported Windows v120.46 failures
 
 - Main squash `298bf52e7230fba22501a1ac24852023ec4aafda`; exact PR head `9e8ee7e511e0c7e5f07dbed2a0965add95d806f2`. 5/5 CI passed (counts, Windows integrated executable, Desktop rendered UI, Android emulator, general CI).
