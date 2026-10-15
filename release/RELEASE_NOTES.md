@@ -1,3 +1,15 @@
+## v120.46 — Unified Automations Center and scalable historical analysis
+
+- **One Automation Center:** Profile Counts, Cancel Pending Requests, Unfollow and optional Followback Audit now appear together in **Automations**. Insights is dedicated to analytics, profile counts results, comparisons and exports.
+- **No arbitrary dataset-size cap:** imported Following and Followers counts do not limit what analytics run. Profile Counts transfers username queues in verified account-scoped blocks and supports datasets above 50,000. The results table is paginated without truncating analyses.
+- **Durable Profile Counts history:** per-profile rows are stored in versioned IndexedDB; older localStorage data is migrated without deleting the original backup. Transactions operate in bounded chunks and report storage failures instead of silently truncating history.
+- **Audit history retention:** migrate cross-device audit fallback events into IndexedDB, preserve fallback backups and remove the previous 12,000-event silent cutoff.
+- **CSV export:** incremental output to a writable stream in supported browsers, with chunked Blob fallback.
+- **Robot session protection:** shared Chrome admission lock prevents conflicting Instagram browser jobs; local analytics remain independent.
+- **Privacy & safety:** no private Instagram API or credential capture; relationship-changing actions still need explicit approval. Instagram challenge/pacing restrictions remain. No guarantee of unlimited physical storage or unrestricted Instagram visits.
+- **Acceptance:** CI, Android emulator, Windows integrated EXE, rendered Desktop and offline Chromium tests, including 50k/100k/250k synthetic datasets. The owner's real signed-in Instagram and physical-device acceptance remain pending.
+- **Artifacts:** official integrated Windows ZIP, Desktop HTML and ZIP, production-signed Android APK and checksums (subject to exact-commit release gates).
+
 ## v120.45 — Profile Counts from imported Following, improved login detection, English UI
 
 - **No mandatory Following scan:** Insta Cleaner now sends the profiles already imported into the selected Instagram workspace straight to the local Windows Profile Counts robot. Opening the owner's Following list is optional, for an explicit refresh only.
