@@ -1,3 +1,8 @@
+## 2026-10-15 — Interactive Windows Setup contract evidence
+
+- Added exact-candidate interactive UIAutomation script and captured PNG proving EULA acceptance/decline is enforced, rather than only static licence-source assertions. Runs before the silent install/upgrade/runtime/uninstall test in Windows preview and governed release CI.
+- Evidence must be checked against the latest PR head before calling wizard validation complete. No official release, Authenticode signature or automatic updater authorization.
+
 ## 2026-10-15 — Native Windows Setup integration (v120.47 development)
 
 - User requested a proper installer instead of having to extract and run `InstaCleanerPro.exe`. New `packaging/windows-installer/InstaCleanerPro.iss` follows the Michel's Lab master Windows installer experience standard: branded native wizard, real proprietary license, optional shortcuts, start menu, taskbar guide and uninstaller.
