@@ -10,6 +10,8 @@ import csv
 import datetime as dt
 import json
 import os
+import re
+import secrets
 from pathlib import Path
 
 COLUMNS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
@@ -54,16 +56,33 @@ def _atomic_json(path: Path, value: dict) -> None:
         temp.unlink(missing_ok=True)
 
 
+def _done_path(path: Path, cycle: dict) -> Path:
+    """Stable cycle-specific append-only completion log, never a per-visit rewrite."""
+    identity = cycle.get("cycle_id")
+    if not isinstance(identity, str) or not re.fullmatch(r"[0-9a-f]{24}", identity):
+        raise ValueError("Corrupted audit cycle identifier; no history was overwritten.")
+    return path.with_name(path.name + "." + identity + ".done")
+
+
+def _runtime(cycle: dict, done: list[str]) -> dict:
+    cycle["done"] = done
+    cycle["_done_lookup"] = set(done)
+    cycle["_target_lookup"] = set(cycle["targets"])
+    return cycle
+
+
 def new_cycle(path: Path, usernames: list[str], saved: dict) -> dict:
-    cycle = {
+    # Old completion logs are kept unchanged for recovery. The new cycle's
+    # random ID ensures it never reuses a prior append-only log.
+    manifest = {
         "schema": "igc-profile-reaudit-v1",
         "mode": "oldest_first",
+        "cycle_id": secrets.token_hex(12),
         "targets": ordered_audit_targets(usernames, saved),
-        "done": [],
         "started_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     }
-    _atomic_json(path, cycle)
-    return cycle
+    _atomic_json(path, manifest)
+    return _runtime(manifest, [])
 
 
 def resume_cycle(path: Path, usernames: list[str]) -> dict:
@@ -73,21 +92,31 @@ def resume_cycle(path: Path, usernames: list[str]) -> dict:
         cycle = json.load(file)
     allowed = set(usernames)
     targets = cycle.get("targets", [])
-    done = cycle.get("done", [])
     if (cycle.get("schema") != "igc-profile-reaudit-v1" or cycle.get("mode") != "oldest_first"
-        or not isinstance(targets, list) or not isinstance(done, list)
-        or len(targets) != len(set(targets)) or any(u not in allowed for u in targets)
-        or any(u not in targets for u in done) or len(done) != len(set(done))):
+        or not isinstance(targets, list)
+        or len(targets) != len(set(targets)) or any(u not in allowed for u in targets)):
         raise ValueError("The saved re-audit queue differs from this Instagram workspace; start a new cycle.")
-    return cycle
+    done_file = _done_path(path, cycle)
+    with done_file.open("r", encoding="utf-8") if done_file.is_file() else __import__("contextlib").nullcontext([]) as saved:
+        done = saved.read().splitlines() if done_file.is_file() else []
+    if len(done) != len(set(done)) or any(u not in targets for u in done):
+        raise ValueError("The saved re-audit progress log is invalid. No counts were deleted.")
+    return _runtime(cycle, done)
 
 
 def mark_attempt(path: Path, cycle: dict, username: str) -> dict:
-    if username not in cycle["targets"]:
+    if username not in cycle["_target_lookup"]:
         raise ValueError("Cannot record an unselected audit profile.")
-    if username not in cycle["done"]:
-        cycle["done"].append(username)
-        _atomic_json(path, cycle)
+    if username in cycle["_done_lookup"]:
+        return cycle
+    done_file = _done_path(path, cycle)
+    done_file.parent.mkdir(parents=True, exist_ok=True)
+    with done_file.open("a", encoding="utf-8", newline="\n") as output:
+        output.write(username + "\n")
+        output.flush()
+        os.fsync(output.fileno())
+    cycle["done"].append(username)
+    cycle["_done_lookup"].add(username)
     return cycle
 
 
