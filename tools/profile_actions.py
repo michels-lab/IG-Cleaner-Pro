@@ -59,6 +59,57 @@ def _read_json(path: Path, default):
         raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
+MAX_ACTION_TABS = 3
+
+
+class ActionTabPool:
+    """Keep up to three visible target tabs; close only verified outcomes.
+
+    Playwright pages are owned by the existing single robot thread. A pending
+    manual review stays open and consumes a slot; it is never silently recycled
+    for a different Instagram profile or replayed.
+    """
+
+    def __init__(self, context, limit=MAX_ACTION_TABS):
+        self.context = context
+        self.limit = limit
+        self.tabs = {}
+
+    def _prune_manually_closed(self):
+        for user, item in list(self.tabs.items()):
+            if item["page"].is_closed():
+                self.tabs.pop(user, None)
+
+    def open(self, username):
+        self._prune_manually_closed()
+        if username in self.tabs or len(self.tabs) >= self.limit:
+            return None
+        target = self.context.new_page()
+        self.tabs[username] = {"page": target, "status": "checking"}
+        return target
+
+    def record(self, username, status):
+        item = self.tabs.get(username)
+        if item is None:
+            return
+        if status in ("ok", "skipped"):
+            # A confirmed result (or explicit pre-click skip) can be closed.
+            # An ambiguous action, including post-click session loss, cannot.
+            if not item["page"].is_closed():
+                item["page"].close()
+            self.tabs.pop(username, None)
+        else:
+            item["status"] = status
+
+    def overview(self):
+        self._prune_manually_closed()
+        return [{"username": user, "status": item["status"]}
+                for user, item in self.tabs.items()]
+
+    def has_open_tabs(self):
+        return bool(self.overview())
+
+
 def _users(raw):
     if not isinstance(raw, list) or len(raw) > MAX_ACTIONS_PER_JOB:
         raise ValueError("The batch must contain no more than 1,000 profiles.")
@@ -684,6 +735,7 @@ class ActionRobot:
         self.worker = None
         self.owner = self.account = self.handle = self.task = ""
         self.targets = []
+        self.open_review_tabs = []
         self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
@@ -801,6 +853,7 @@ class ActionRobot:
                        and not _preclick_no_action(record) for user in targets):
                     raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
+            self.open_review_tabs = []
             if not resume:
                 self.skipped.clear()
             self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
@@ -863,6 +916,8 @@ class ActionRobot:
                     "attempted_usernames": attempted_usernames,
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
+                    "open_review_tabs": list(self.open_review_tabs),
+                    "max_action_tabs": MAX_ACTION_TABS,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
@@ -919,6 +974,8 @@ class ActionRobot:
                 visits_file, rests_file = history_path(path), batch_path(path)
                 visits = load_history(visits_file)
                 rests = load_batch_state(rests_file)
+                action_tabs = ActionTabPool(browser) if self.task != "audit" else None
+                stopped_for_review = False
                 for user in self.targets:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
@@ -953,16 +1010,28 @@ class ActionRobot:
                         self.status, self.message = "running", "Checking @" + user
                     if self._protected_for(user) or user in self.skipped:
                         continue
+                    work_page = page
+                    if action_tabs:
+                        work_page = action_tabs.open(user)
+                        if work_page is None:
+                            with self.lock:
+                                self.status = "review"
+                                self.message = ("Three Instagram tabs need manual review. "
+                                                "No additional relationship action was attempted.")
+                            stopped_for_review = True
+                            break
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
                     visits = register_visit(visits_file, visits)
                     relation = ""
                     try:
                         if self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
-                                page, user, self.handle)
+                                work_page, user, self.handle)
                         else:
                             relation = ""
                             result, details = perform_visible_action(
-                                page, user, self.task, self.handle,
+                                work_page, user, self.task, self.handle,
                                 lambda name: not self.stop_event.is_set() and
                                 not self._protected_for(name) and name not in self.skipped)
                     except Exception as exc:
@@ -972,6 +1041,10 @@ class ActionRobot:
                         rests = finish_batch_visit(
                             rests_file, rests,
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                    if action_tabs:
+                        action_tabs.record(user, result)
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
                     issue = _action_issue(self.task, result, details)
@@ -990,14 +1063,39 @@ class ActionRobot:
                             continue
                         with self.lock:
                             self.status, self.message = result, "@" + user + ": " + details
-                        return
+                        stopped_for_review = True
+                        break
                 with self.lock:
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     journal.get(u, {}).get("status") != "ok"
                                     for u in self.targets)
-                    self.status = "partial" if remaining else "complete"
-                    self.message = ("Batch reviewed: some profiles require manual verification."
-                                    if remaining else "Batch complete; results saved.")
+                    if not stopped_for_review:
+                        self.status = "partial" if remaining else "complete"
+                        self.message = ("Batch reviewed: some profiles require manual verification."
+                                        if remaining else "Batch complete; results saved.")
+                # Unverified target tabs must remain visible for manual inspection.
+                # The Playwright persistent context is deliberately held open
+                # until the owner manually pauses or closes the target tabs.
+                if action_tabs and action_tabs.has_open_tabs():
+                    with self.lock:
+                        self.status = "review"
+                        self.open_review_tabs = action_tabs.overview()
+                        self.message = (
+                            "Unverified Instagram tabs remain open for manual review. "
+                            "Inspect them before selecting Pause; Pause closes Chrome. "
+                            "No relationship click will be repeated.")
+                    while not self.stop_event.is_set() and action_tabs.has_open_tabs():
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+                        self.stop_event.wait(1)
+                    if self.stop_event.is_set():
+                        with self.lock:
+                            self.status = "paused"
+                            self.message = ("Robot paused by owner. Unverified history was "
+                                            "preserved; no automatic click will be retried.")
+                    else:
+                        with self.lock:
+                            self.open_review_tabs = []
         except Exception as exc:
             with self.lock:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
@@ -1007,3 +1105,5 @@ class ActionRobot:
             if browser:
                 try: browser.close()
                 except Exception: pass
+            with self.lock:
+                self.open_review_tabs = []
