@@ -594,11 +594,29 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.context.route("https://www.instagram.com/**", route)
         self.page.goto("https://www.instagram.com/target.user/", wait_until="commit")
         result, message = perform_visible_action(
-            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+            self.page, "target.user", "unfollow", "my.profile",
+            lambda _: True, preloaded=True)
         self.assertEqual(result, "ok", message)
         self.assertEqual(
             sum("/target.user/" in url for url in visits), 1,
             "Preloaded target page must not be fetched again before acting")
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_same_url_without_prefetch_must_reload_after_fixture_changes(self):
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html",
+                                        body=fake_profile()))
+        self.page.goto("https://www.instagram.com/target.user/")
+        self.assertEqual(self.page.locator("#relationship").inner_text(), "Following")
+        self.context.unroute_all()
+        spanish = fake_profile(locale="es")
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html",
+                                        body=spanish))
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "ok", message)
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
