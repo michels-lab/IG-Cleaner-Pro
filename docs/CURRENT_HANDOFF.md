@@ -1,3 +1,10 @@
+## 2026-10-17 — v120.48 stable release candidate, explicitly requested by owner
+
+- Scope: Pending Requests replay-safe history across multi-batch imports and Windows cold startup, read-only revalidation of uncertain cancellation, Focus preview recovery and targeted English UI changes.
+- Publishing must use governed v120.48 request only after exact-head CI. Android signing and Gradle version updated together; Windows release-gate includes `tests/automations-cold-start.test.cjs`.
+- Do not conflate a passing Playwright DOM fixture with real Instagram access. Owner's actual Windows Chrome, installed-updater flow, physical Samsung and cross-device data acceptance remain open.
+- Stable public version remains v120.47 until the exact v120.48 GitHub Release is independently verified. No forced release if any signing, rendered UI or Windows Setup gate fails.
+
 ## 2026-10-15 — v120.48 Pending batch and cancellation work (development only)
 
 - Candidate branch `fix/pending-request-readonly-recheck-20261015`: fix last-batch replay after the second batch by exposing the persisted per-account/action ActionRobot attempted journal and excluding all prior attempted rows from new selections, then fetching the latest journal before new batch authorization. A signed-in Chrome robot still only performs actions after explicit user confirmation; uncertain click outcomes remain excluded rather than silently retried.
