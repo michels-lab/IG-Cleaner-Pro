@@ -65,15 +65,29 @@ vm.createContext(ctx);vm.runInContext(script[1],ctx,{timeout:1500});
    "First batch after app restart must start after previous 60 attempts");
  assert.equal(JSON.parse([...storage.values()].find(x=>x.includes("requested.000"))).length,60);
 
+ // A v120.48 no-click review may remain cached as "already attempted"
+ // in an idle browser, while the corrected Windows journal now proves it is
+ // retryable. Fresh authoritative disk history must win.
+ const attemptedKey=[...storage.keys()].find(k=>k.startsWith("igc_actions_attempted_v1__"));
+ assert(attemptedKey,"Expected persisted attempts cache");
+ storage.set(attemptedKey,JSON.stringify([...first60,"requested.090"]));
+ state.attempted_usernames=[...first60,"requested.090"];
+ el("igcAutoBatch").value="35";
+ await ctx.igcAutoStart();
+ assert.equal(posts.length,2);
+ assert.equal(posts[1].targets.length,35);
+ assert(posts[1].targets.includes("requested.090"),
+   "An old no-click browser cache must not hide a safely retryable target");
+
  // Never fall back to a stale client cache when robot disk cannot be read.
  failHistory=true;
  await ctx.igcAutoStart();
- assert.equal(posts.length,1,"No action start when journal read fails");
+ assert.equal(posts.length,2,"No action start when journal read fails");
  assert.match(el("igcAutoStatus").textContent,/history unavailable/);
 
  failHistory=false;wrongOwner=true;
  await ctx.igcAutoStart();
- assert.equal(posts.length,1,"No action start on unexpected history scope");
+ assert.equal(posts.length,2,"No action start on unexpected history scope");
  assert.match(el("igcAutoStatus").textContent,/did not match/);
- console.log("PASS: cold launch reads scoped Windows journal; read failures and foreign scopes fail closed");
+ console.log("PASS: cold launch, verified no-click retry over stale cache, fail-closed foreign histories");
 })().catch(error=>{console.error(error);process.exitCode=1});
