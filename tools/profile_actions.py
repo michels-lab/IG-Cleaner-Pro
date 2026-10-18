@@ -293,9 +293,10 @@ def _notify_readiness(on_wait, phase, started_at, timeout_ms):
                 max(1, int(timeout_ms / 1000)))
 
 
-def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
                                    on_wait=None, can_act=None):
     """Wait for the target's *rendered* identity region, not DOMContentLoaded."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
@@ -320,9 +321,10 @@ def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_
 
 
 def _wait_for_profile_relationship_control(page, username, words, *,
-                                           timeout_ms=ACTION_CONTROL_WAIT_MS,
+                                           timeout_ms=None,
                                            on_wait=None, can_act=None):
     """Wait for the real target to finish rendering; never infer no-follow from loading."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
@@ -351,9 +353,10 @@ def _wait_for_profile_relationship_control(page, username, words, *,
         page.wait_for_timeout(min(500, remaining_ms))
 
 
-def _wait_for_unfollow_option(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+def _wait_for_unfollow_option(page, username, *, timeout_ms=None,
                               on_wait=None):
     """Wait for a unique menu action without repeating the Following click."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
