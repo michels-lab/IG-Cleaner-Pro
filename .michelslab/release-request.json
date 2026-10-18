@@ -1,13 +1,17 @@
 {
   "version": "120.50",
   "tag": "v120.50",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly requested 'continua y cuando termines dale release' in the active InstaCleaner development conversation and continued reporting failed Unfollow in v120.49 with new screenshots. The v120.50 next release candidate PRs #122 and #123 passed all five independent exact-head QA families. Publish the next normal stable release only through the guarded workflow so the owner can install and test the live Instagram fix and read-only diagnostics.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.49",
   "owner_acceptance_note": "No actual Instagram unfollow on the owner's profile has been confirmed. The release contains a safer, bounded DOM survey for Following/Siguiendo and non-sensitive category-only layout diagnostics when no click was made. Every exact-commit Windows Setup install/upgrade/uninstall, real Android/Desktop visual evidence, production Android signing identity, and asset checksum verification MUST pass. Do not bypass Instagram challenges, erase activity journals, or automatically repeat ambiguous post-click actions.",
-  "requested_at": "2026-10-18"
+  "requested_at": "2026-10-18",
+  "published_run": 39106161831,
+  "published_commit": "e0a95a8c192642c175a1b080212c7ddd5a4f0655",
+  "completed_at_utc": "2026-10-18T07:08:16Z",
+  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50"
 }

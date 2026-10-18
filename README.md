@@ -4,21 +4,21 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.49 — current official stable GitHub release (published October 17, 2026, Mexico time).** [Download v120.49](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.49).
+**v120.50 — official stable GitHub release (published October 18, 2026).** [Download all v120.50 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50).
 
-| Platform | Primary release file | Notes |
+| Platform | Primary asset | Notes |
 | --- | --- | --- |
-| Windows installed app and robots | `IG-Cleaner-Pro-Windows-Setup-v120.49.exe` | Recommended upgrade, preserving imported lists, existing Chrome robot history and owner-scoped records. |
-| Desktop standalone | `IG-Cleaner-Pro-Desktop-v120.49.html` | Self-contained HTML without the Windows-only browser automation robot. |
-| Android | `IG-Cleaner-Pro-Android-v120.49.apk` | Signed using the original stable Android package and signing identity. |
-| Windows portable robot (optional) | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.49.zip` | Optional compatibility delivery; Windows Setup is preferred. |
-| Desktop ZIP (optional) | `IG-Cleaner-Pro-Desktop-v120.49.zip` | Standalone HTML and original separate assets. |
+| Windows installed application + robots | `IG-Cleaner-Pro-Windows-Setup-v120.50.exe` | Recommended; one-click Setup and robot integrations, preserves previous local activity journal on upgrade. |
+| Android | `IG-Cleaner-Pro-Android-v120.50.apk` | Original production package ID and verified persistent Android signing identity. |
+| Desktop browser | `IG-Cleaner-Pro-Desktop-v120.50.html` | Standalone local HTML, no Windows-only native robot. |
+| Optional Windows portable | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.50.zip` | Optional legacy ZIP; Setup is the normal delivery. |
+| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.50.zip` | HTML and original assets. |
 
-**v120.49 fix:** The Windows robot recognizes an exact profile's `Following` / `Siguiendo` action as a standard button or a `role=button` control with a dropdown caret, in a verified header or profile main area. When the earlier issue was conclusively `nothing clicked`, that historical record can enter a **new owner-approved** batch after an authoritative scoped journal read; uncertain clicked actions remain protected against automatic replay.
+**v120.50:** fixed another Following/Siguiendo locator assumption found in the owner's actual v120.49 screenshots. The robot now surveys the exact visible target username even if Instagram puts it in a span/div instead of h1/h2/h3, and accepts a single nearby accessible/clickable button, role=button or tabindex=0. Never acts on Following counts, links, suggestions or duplicate controls. Read-only no-click diagnostics report `main`, `exact username` and relevant control counts without capturing page contents; Issue Review now wraps messages. Known no-click records remain safely retryable with a new explicit owner-approved batch; post-click uncertainty is still quarantined.
 
-**Acceptance limits:** The owner's screenshot confirms the original v120.48 bug, not a successful unfollow. The published v120.49 binary passed offline Chromium tests and official Windows Setup/Android/Desktop gates, but no real Instagram account-changing action has been verified on the owner's device. Instagram security challenges or further DOM variations can still block the robot. Windows Authenticode signing is not configured; use official release checksums.
+**Important acceptance limit:** GitHub's Chromium simulation, Windows Setup install/upgrade/uninstall and Android/Desktop visual checks passed, but this does **not** confirm that a real Instagram unfollow succeeded on the owner's session. Test with a small batch and inspect the resulting Follow/Follow Back. If it still reports `missing_profile_info`, capture the new `Profile layout` diagnostic. The separate Chrome may receive Instagram challenges; no CAPTCHA bypass. Windows binaries have SHA-256 release checksums but no Authenticode certificate.
 
-**Next development version:** v120.50 reserved, not authorized for release.
+**Next development version:** v120.51, not yet authorized.
 
 ## Features
 
@@ -39,7 +39,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Published stable: v120.49. Next candidate: v120.50 (not authorized). Releases require separate owner authorization.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Published stable: v120.50. Next candidate: v120.51 (not authorized). Releases require separate owner authorization.**
 
 ## Identity and licensing
 

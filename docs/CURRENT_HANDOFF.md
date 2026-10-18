@@ -1,3 +1,11 @@
+## 2026-10-18 — Verified stable v120.50 published (real Instagram acceptance pending)
+
+- Normal public GitHub [v120.50](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50) published 2026-10-18T07:08:16Z, built from exact SHA `e0a95a8c192642c175a1b080212c7ddd5a4f0655`; governed run [39106161831](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39106161831) **success**. Nine assets confirmed, including Windows Setup, Android production APK, Desktop HTML/ZIP and SHA256SUMS.txt.
+- Independent exact-commit release checks passed: token-guarded owner approval, installed Windows Setup validation, real offline Chromium action selector safety, Desktop/Android screenshots, original Android production signing certificate, all asset names and hashes. The real user's Instagram account was **not** touched by CI.
+- Scope: bounded non-semantic visible handle + unique Following/Siguiendo control detection in profile main, layout category diagnostics when no click is possible, safe new-batch retry of known zero-click issues, improved wrapping of Issue Review details.
+- Post-release administrative safeguard: release request returned to `authorized=false,status=published`; distribution manifest now records stable v120.50, next v120.51; README and handoff updated. No automatic future release authorization.
+- Still open: real owner Windows/Chrome test that the correct Following menu opens and account reliably changes to Follow/Follow Back; if it fails the new diagnostic counts must be captured for deeper DOM-specific remediation. No blind clicks, no challenge bypass and no journal reset.
+
 ## 2026-10-18 — v120.50 release preparation: Instagram Following diagnostic
 
 - Owner's actual v120.49 issue screenshot reports no click while the page visibly displays Following. PR #122 implements a read-only bounded `main` profile hero survey handling usernames in span/div and unique nearby following controls (role=button, button, tabindex=0), with explicit safety rejection of counts/links, suggestions and duplicates.
