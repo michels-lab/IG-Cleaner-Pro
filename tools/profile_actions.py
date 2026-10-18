@@ -617,7 +617,7 @@ def _action_issue(task, result, message):
 
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
-                           on_wait=None):
+                           on_wait=None, *, preloaded=False):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -630,7 +630,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         on_wait("loading_profile", 0, 45)
     target_url = "https://www.instagram.com/" + username + "/"
     current_url = urlparse(page.url)
-    if (current_url.hostname not in ("www.instagram.com", "instagram.com")
+    if (not preloaded
+            or current_url.hostname not in ("www.instagram.com", "instagram.com")
             or current_url.path.strip("/").casefold() != username.casefold()):
         page.goto(target_url, wait_until="domcontentloaded", timeout=45000)
     # A prepared target page may still be hydrating; identity/control waits
@@ -1225,7 +1226,9 @@ class ActionRobot:
                                 on_wait=lambda phase, elapsed, limit: (
                                     self._record_readiness(user, phase, elapsed, limit,
                                                            action_tabs),
-                                    paced_prefetch(phase)))
+                                    paced_prefetch(phase)),
+                                preloaded=bool(prepared_item and
+                                               prepared_item.get("status") == "prefetched"))
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
