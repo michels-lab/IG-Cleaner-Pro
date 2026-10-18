@@ -10,6 +10,76 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import ActionRobot
 from profile_counts_bridge import Collector
 
+class FakeTargetTab:
+    def __init__(self):
+        self.closed = False
+
+    def is_closed(self):
+        return self.closed
+
+    def close(self):
+        self.closed = True
+
+
+class FakeTabContext:
+    def __init__(self):
+        self.created = []
+
+    def new_page(self):
+        page = FakeTargetTab()
+        self.created.append(page)
+        return page
+
+
+class ActionTabPoolTests(unittest.TestCase):
+    def test_three_tabs_are_kept_separate_and_only_verified_actions_close(self):
+        from profile_actions import ActionTabPool
+        context = FakeTabContext()
+        pool = ActionTabPool(context)
+        a = pool.open("first.person")
+        b = pool.open("second.person")
+        c = pool.open("third.person")
+        self.assertEqual(len(context.created), 3)
+        self.assertIsNone(pool.open("fourth.person"))
+        pool.record("first.person", "review")
+        pool.record("second.person", "blocked")
+        self.assertFalse(a.is_closed())
+        self.assertFalse(b.is_closed())
+        self.assertIsNone(pool.open("fourth.person"))
+        pool.record("third.person", "ok")
+        self.assertTrue(c.is_closed())
+        self.assertFalse(a.is_closed())
+        self.assertFalse(b.is_closed())
+        fourth = pool.open("fourth.person")
+        self.assertIsNotNone(fourth)
+        self.assertEqual(set(x["username"] for x in pool.overview()),
+                         {"first.person", "second.person", "fourth.person"})
+        self.assertIsNone(pool.open("fifth.person"))
+
+    def test_manual_owner_close_frees_slot_without_confirming_result(self):
+        from profile_actions import ActionTabPool
+        context = FakeTabContext()
+        pool = ActionTabPool(context)
+        a = pool.open("unverified.one")
+        a.close()  # Explicit manual close, never robot-confirmed success.
+        self.assertEqual(pool.overview(), [])
+        self.assertIsNotNone(pool.open("new.person"))
+        self.assertFalse(pool.tabs["new.person"]["page"].is_closed())
+
+    def test_explicit_skip_can_close_but_ambiguous_click_must_not(self):
+        from profile_actions import ActionTabPool
+        context = FakeTabContext()
+        pool = ActionTabPool(context)
+        skipped = pool.open("protected.person")
+        uncertain = pool.open("possibly.clicked")
+        pool.record("protected.person", "skipped")
+        pool.record("possibly.clicked", "error")
+        self.assertTrue(skipped.is_closed())
+        self.assertFalse(uncertain.is_closed())
+        self.assertEqual(pool.overview(), [
+            {"username": "possibly.clicked", "status": "error"}])
+
+
 class ActionBatchHistoryTests(unittest.TestCase):
     def _action(self, root):
         collector=Collector(root/"counts",root/"chrome")
