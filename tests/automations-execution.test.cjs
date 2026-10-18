@@ -77,7 +77,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(elements.igcAutoOpenTabs.style.display,'block');
  assert.match(elements.igcAutoOpenTabs.textContent,/@needs.review/);
- assert(elements.igcAutoOpenTabs.textContent.includes('2/5'));
+ assert(elements.igcAutoOpenTabs.textContent.includes('2/10'));
  await ctx.window.igcAutoPause();
  assert(calls.some(c=>c.type==='pause'),'Pause control must call local robot');
  assert(texts.some(value=>value.includes('will close its Chrome window')),
