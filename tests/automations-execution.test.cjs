@@ -78,6 +78,17 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(elements.igcAutoOpenTabs.style.display,'block');
  assert.match(elements.igcAutoOpenTabs.textContent,/@needs.review/);
  assert(elements.igcAutoOpenTabs.textContent.includes('2/10'));
+ p.current_wait={username:'needs.review',phase:'waiting_relationship_control',
+                 elapsed_seconds:7,timeout_seconds:20};
+ await ctx.window.igcAutoPoll();
+ assert.match(elements.igcAutoLiveStatus.textContent,/Waiting for @needs.review/);
+ assert.match(elements.igcAutoLiveStatus.textContent,/Following \/ Siguiendo button/);
+ assert.match(elements.igcAutoLiveStatus.textContent,/7\/20 s/);
+ p.current_wait={username:'needs.review',phase:'loading_profile',
+                 elapsed_seconds:2,timeout_seconds:20};
+ await ctx.window.igcAutoPoll();
+ assert.match(elements.igcAutoLiveStatus.textContent,/Instagram profile to load/);
+ p.current_wait=null;
  await ctx.window.igcAutoPause();
  assert(calls.some(c=>c.type==='pause'),'Pause control must call local robot');
  assert(texts.some(value=>value.includes('will close its Chrome window')),
