@@ -110,12 +110,98 @@ def _visible_button(root, words):
     return _visible_named_control(root, words, roles=("button",))
 
 
-def _profile_relationship_control(page, username, words):
-    """Find a unique role=button in the correct person's profile action area.
+_PROFILE_HERO_PROBE = r"""
+(main, info) => {
+    // Read-only DOM survey: never click or mutate Instagram. Do not export
+    // page text, cookies, follower lists, DOM snippets or login information.
+    const cleaned = value => String(value || "")
+        .replace(/[\u200b-\u200d\ufeff]/g, "")
+        .replace(/[▼▾⌄∨˅⌃]/g, " ")
+        .replace(/\s+/g, " ").trim().toLowerCase();
+    const visible = element => {
+        if (!element) return false;
+        const box = element.getBoundingClientRect();
+        const css = getComputedStyle(element);
+        return box.width > 5 && box.height > 5 &&
+               css.display !== "none" && css.visibility !== "hidden";
+    };
+    const root = main.getBoundingClientRect();
+    // Instagram may render the username as a span/div, not an h1/h2/h3.
+    // Require the *visible exact target handle* in the upper profile hero.
+    const target = cleaned(info.username);
+    const anchors = Array.from(
+        main.querySelectorAll("h1,h2,h3,span,div,a,strong"), element => element
+    ).slice(0, 2500).filter(element => {
+        if (!visible(element)) return false;
+        const box = element.getBoundingClientRect();
+        const label = cleaned(element.innerText).replace(/^@/, "");
+        return label === target && box.top >= root.top - 24 &&
+               box.top - root.top < 650;
+    }).sort((a,b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+    const anchor = anchors[0];
+    const words = (info.words || []).map(cleaned);
+    const controls = Array.from(main.querySelectorAll(
+        'button,[role="button"],[tabindex="0"]'
+    )).slice(0, 300);
+    let exactText = 0;
+    let near = 0;
+    const selected = [];
+    controls.forEach((element, index) => {
+        if (!visible(element) || element.closest('nav,aside,article,[role="dialog"],[role="menu"]')) return;
+        const text = cleaned(element.innerText);
+        const aria = cleaned(element.getAttribute("aria-label"));
+        if (!words.includes(text) && !words.includes(aria)) return;
+        exactText++;
+        if (!anchor) return;
+        const r = element.getBoundingClientRect();
+        const a = anchor.getBoundingClientRect();
+        const dx = Math.abs((r.left+r.right)/2 - (a.left+a.right)/2);
+        const dy = r.top - a.top;
+        if (dx > 800 || dy < -100 || dy > 450 ||
+            r.top - root.top > 900) return;
+        near++;
+        selected.push(index);
+    });
+    // A Following counter/link is never an action candidate. Count only
+    // clickable role/button/tabindex elements, not visual text nodes.
+    return {
+        target_visible: Boolean(anchor),
+        match_count: selected.length,
+        candidate_indices: selected,
+        control_text_count: exactText,
+        near_controls: near,
+        main_present: true
+    };
+}
+"""
 
-    The relationship control may live in <header> or in Instagram's <main>
-    profile hero as a role=button div. Following counts and suggested accounts
-    are never enough evidence to click. Fail closed on duplicate controls.
+
+def _profile_hero_probe(page, username, words):
+    """Bounded, read-only control/identity evidence from the actual robot tab."""
+    try:
+        main = page.locator("main").first
+        if not main.count() or not main.is_visible():
+            return {"target_visible": False, "main_present": False,
+                    "control_text_count": 0, "candidate_indices": []}
+        # Static vocabulary only, no untrusted selectors/evaluation code.
+        names = [re.sub(r"\\", "", word) for word in words]
+        result = main.evaluate(_PROFILE_HERO_PROBE,
+                               {"username": username, "words": names})
+        if isinstance(result, dict):
+            return result
+    except Exception:
+        pass
+    return {"target_visible": False, "main_present": True,
+            "control_text_count": 0, "candidate_indices": [], "unavailable": True}
+
+
+def _profile_relationship_control(page, username, words):
+    """Find one visible action in the verified target's profile hero.
+
+    The <header>-only/semantic-heading-only selector in v120.49 missed real
+    Following buttons. Instagram can render its heading in <span> and controls
+    in nested divs. A read-only survey checks exact profile username plus
+    action location. Never click a Following count or another user's control.
     """
     current = urlparse(page.url)
     if (current.hostname not in ("www.instagram.com", "instagram.com")
@@ -127,23 +213,29 @@ def _profile_relationship_control(page, username, words):
         found = _visible_named_control(header, labels, roles=("button",))
         if found is not None:
             return found
+    probe = _profile_hero_probe(page, username, words)
+    indices = probe.get("candidate_indices", [])
+    if len(indices) > 1:
+        raise RuntimeError("Multiple equivalent options: Multiple matching profile action controls; no click. Manual review required.")
+    if not probe.get("target_visible") or len(indices) != 1:
+        return None
     main = page.locator("main").first
-    if not main.count() or not main.is_visible():
+    control = main.locator('button,[role="button"],[tabindex="0"]').nth(indices[0])
+    if not control.is_visible():
         return None
-    headings = main.locator("h1, h2, h3")
-    if headings.count() > 30:
-        return None
-    # Require target @handle in a visible heading, not merely an unrelated
-    # suggestion, link, or the verified profile URL.
-    confirmed = any(
-        headings.nth(i).is_visible()
-        and headings.nth(i).inner_text(timeout=3000).strip().lstrip("@").casefold()
-            == username.casefold()
-        for i in range(headings.count())
-    )
-    if not confirmed:
-        return None
-    return _visible_named_control(main, labels, roles=("button",))
+    return control
+
+
+def _relationship_layout_note(page, username, words):
+    """Plain category-only evidence; never include owner credentials or DOM."""
+    probe = _profile_hero_probe(page, username, words)
+    return (" Profile layout: main=" +
+            ("yes" if probe.get("main_present") else "no") +
+            ", exact username=" + ("yes" if probe.get("target_visible") else "no") +
+            ", named interactive controls=" + str(probe.get("control_text_count", 0)) +
+            ", eligible controls=" + str(len(probe.get("candidate_indices", []))) +
+            (", read-only inspection unavailable" if probe.get("unavailable") else "") +
+            ". Nothing clicked.")
 
 
 def _unfollow_option(page):
@@ -320,10 +412,11 @@ def _preclick_no_action(entry):
     return (isinstance(entry, dict)
             and entry.get("status") == "review"
             and entry.get("issue") == "missing_profile_info"
-            and entry.get("message") in (
+            and (entry.get("message") in (
                 LEGACY_MISSING_RELATIONSHIP_CONTROL,
                 MISSING_RELATIONSHIP_CONTROL,
-            ))
+            ) or str(entry.get("message") or "").startswith(
+                MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
 
 
 def _preclick_identity_blocked(entry):
@@ -386,13 +479,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         main = page.locator("main").first
         if not main.count() or not main.is_visible():
             return "blocked", "The target profile area could not be found."
-        headings = main.locator("h1, h2, h3")
-        if headings.count() > 30 or not any(
-                headings.nth(i).is_visible()
-                and headings.nth(i).inner_text(timeout=3000).strip().lstrip("@").casefold()
-                    == username.casefold()
-                for i in range(headings.count())):
-            return "blocked", "The target profile heading could not be verified."
+        # Exact visible username may be a span or div, not a heading tag.
+        if not _profile_hero_probe(page, username, []).get("target_visible"):
+            return "blocked", ("The target profile heading or exact username could not be verified. "
+                               "No action was performed.")
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
@@ -407,7 +497,9 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             if _follow_state(page, username):
                 return "review", ("The request no longer appears as Requested; "
                                   "no change was made.")
-        return "review", MISSING_RELATIONSHIP_CONTROL
+        return "review", MISSING_RELATIONSHIP_CONTROL + _relationship_layout_note(
+            page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
+                             else [r"Requested", r"Solicitado", r"Solicitada"]))
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):

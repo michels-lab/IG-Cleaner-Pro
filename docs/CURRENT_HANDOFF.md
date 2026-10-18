@@ -1,3 +1,10 @@
+## 2026-10-18 — Unfollow still misses Following after v120.49
+
+- Owner v120.49 screenshots show Following visibly present in Instagram but Issue Review still records `missing_profile_info`, no action click.
+- Investigation confirms `h1/h2/h3`-only username gating in v120.49; Instagram's username can be visible in span/div with its clickable Following control nested outside a semantic header. New code checks an exact visible handle and an eligible nearby `button` / `role=button` / `tabindex=0` within profile main, plus target URL and session owner checks.
+- Unknown controls remain no-click manual review; a category-only read-only diagnostic is attached to no-click Issue Review messages to stop guessing why detection failed. History protects clicked/uncertain outcomes; new diagnostics remain safely retryable if owner approves another batch.
+- QA to run: exact PR-head Profile Counts, real local Chromium action fixtures, Windows Setup install/uninstall, Desktop and Android render, general CI; then real owner's installed Windows Instagram test. No live success claimed.
+
 ## 2026-10-17 — v120.49 published: Unfollow Following detector (no-click retry hotfix)
 
 - GitHub stable [v120.49](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.49) published at 2026-10-18T01:25:15Z (October 17, Saltillo local time), source SHA `a6d4583df3cc75ae814b0619c291eac29ed18bff` and owner-authorized governed workflow [39086045263](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39086045263) **success**. Nine expected assets confirmed: Windows Setup, ZIP, Android production-signed APK, standalone HTML and ZIP, SHA256SUMS and metadata/logo.

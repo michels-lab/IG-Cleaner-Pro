@@ -433,6 +433,89 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.page, "target.user", "unfollow", "my.profile", lambda _: True)
         self.assertEqual(events, [])
 
+    def _visual_profile_hero(self, *, language="en", control_kind="tabindex",
+                             profile="target.user", duplicate=False,
+                             unrelated=False):
+        """Instagram's non-semantic real-life span/div profile hero, offline."""
+        original = fake_profile(locale=language)
+        following = "Siguiendo" if language == "es" else "Following"
+        old = ('    <header>\n      <h1>target.user</h1>\n'
+               f'      <button id="relationship" onclick="openRelationship()">{following}</button>\n'
+               '    </header>')
+        self.assertIn(old, original)
+        if control_kind == "tabindex":
+            action = (f'<div id="relationship" tabindex="0" '
+                      f'onclick="openRelationship()"><span>{following}</span>'
+                      ' <svg aria-hidden="true"><path/></svg></div>')
+        elif control_kind == "role":
+            action = (f'<div id="relationship" role="button" '
+                      f'onclick="openRelationship()"><span>{following}</span>'
+                      ' <span aria-hidden="true">∨</span></div>')
+        elif control_kind == "button":
+            action = (f'<button id="relationship" '
+                      f'onclick="openRelationship()">{following}</button>')
+        else:
+            action = f'<a href="/target.user/following/">{following}</a>'
+        additional = (f'<div role="button" onclick="window.__ambiguous=true">'
+                      f'{following}</div>' if duplicate else "")
+        suggestion = (f'<aside><span>suggested.person</span>'
+                      f'<div role="button" onclick="window.__unrelated=true">'
+                      f'{following}</div></aside>' if unrelated else "")
+        # No semantic heading anywhere in the main profile.
+        new = (f'<main><section><div><span>{profile}</span></div>'
+               f'<div style="margin-top:36px">{action}{additional}</div>'
+               f'</section>{suggestion}</main>')
+        html = original.replace(old, new)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        events = []
+        self.page.on("console", lambda msg: events.append(msg.text.split("IGC_STEP:", 1)[1])
+                     if msg.text.startswith("IGC_STEP:") else None)
+        return events
+
+    def test_following_visible_span_username_and_real_clickable_div(self):
+        for language, kind in (("en", "tabindex"), ("es", "role"), ("en", "button")):
+            with self.subTest(language=language, kind=kind):
+                self.context.unroute_all()
+                events = self._visual_profile_hero(language=language, control_kind=kind)
+                result, message = perform_visible_action(
+                    self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+                self.assertEqual(result, "ok", message)
+                self.assertEqual(events, ["open", "unfollow", "confirmed"])
+
+    def test_non_clickable_following_text_records_read_only_layout_diagnostic(self):
+        events = self._visual_profile_hero(control_kind="link")
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "review")
+        self.assertIn("nothing clicked", message)
+        self.assertIn("Profile layout: main=yes, exact username=yes", message)
+        self.assertIn("named interactive controls=0", message)
+        self.assertEqual(events, [])
+
+    def test_following_in_suggested_aside_is_not_a_target_button(self):
+        events = self._visual_profile_hero(control_kind="link", unrelated=True)
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "review")
+        self.assertEqual(events, [])
+        self.assertFalse(self.page.evaluate("Boolean(window.__unrelated)"))
+
+    def test_visual_hero_wrong_username_cannot_click_following(self):
+        events = self._visual_profile_hero(profile="not.target.user")
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "blocked")
+        self.assertIn("exact username", message)
+        self.assertEqual(events, [])
+
+    def test_visual_hero_two_following_actions_never_click(self):
+        events = self._visual_profile_hero(duplicate=True)
+        with self.assertRaisesRegex(RuntimeError, "Multiple matching profile action controls"):
+            perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(events, [])
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
