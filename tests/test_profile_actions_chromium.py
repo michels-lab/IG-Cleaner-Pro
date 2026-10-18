@@ -6,6 +6,7 @@ change a real account. These tests exercise actual Playwright selectors/clicks.
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import perform_visible_action, classify_followback_search, perform_visible_followback_audit
@@ -120,11 +121,18 @@ class RealBrowserSelectorTests(unittest.TestCase):
         cls.pw.stop()
 
     def setUp(self):
+        # Keep offline negative fixtures fast; production still waits 20s.
+        # Positive delayed hydration fixtures take 1.7s and remain meaningful.
+        self._wait_override = patch("profile_actions.ACTION_CONTROL_WAIT_MS", 3000)
+        self._wait_override.start()
         self.context = self.browser.new_context()
         self.page = self.context.new_page()
 
     def tearDown(self):
-        self.context.close()
+        try:
+            self.context.close()
+        finally:
+            self._wait_override.stop()
 
     def test_home_owner_switcher_identifies_session_not_suggested_users(self):
         # Mimics a real Desktop Home with collapsed icon-only Profile navigation.
