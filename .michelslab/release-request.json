@@ -1,14 +1,18 @@
 {
   "version": "120.51",
   "tag": "v120.51",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly instructed 'TERMINA TODO Y DALE RELEASE' in the active 2026-10-18 InstaCleaner development conversation. PR #126 and the merged main candidate passed independent exact-head CI, installed Windows Setup/Chromium action tests, Desktop and Android visual QA. Publish the next official stable via the guarded workflow.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.50",
   "owner_acceptance_note": "Owner's real Instagram session remains unverified: do not claim any live unfollow or pending cancellation succeeded. Published v120.51 is a safe owner-testable Windows release with ten Chrome tabs, wait indicators, conservative sequential actions and paced read-only one-next-profile prefetch. Do not bypass Instagram challenge, reset journals or repeat ambiguous clicks. Require same exact-commit Windows installed Setup validation, real Chromium offline fixtures, Desktop+Android visual evidence, original Android production signing identity and verified checksummed release assets.",
   "requested_at": "2026-10-18",
-  "candidate_main_sha": "1b566b76dd16e34375bbb265531ee7c4f3fe49f3"
+  "candidate_main_sha": "1b566b76dd16e34375bbb265531ee7c4f3fe49f3",
+  "published_run": 39114910174,
+  "published_commit": "f4218e33cc5562c49227b45da23dca9715582a87",
+  "completed_at_utc": "2026-10-18T09:25:11Z",
+  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.51"
 }
