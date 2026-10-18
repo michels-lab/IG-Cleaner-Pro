@@ -90,4 +90,25 @@ for obsolete in (
 ):
     assert obsolete not in ui, f"Untranslated owner-visible dynamic copy: {obsolete}"
 
+# High-traffic Pending, Mutuals and non-mutual Followers static controls:
+# keep user-visible text English while retaining locale-independent option values
+# (medio/alto, legacy Spanish review codes and Instagram DOM recognition).
+for new_label in (
+    ">Paused</button>", ">Expired pauses</button>", ">Medium/high</option>",
+    ">Any date</option>", ">Any age</option>", ">Username</th>",
+    ">Reasons</th>", ">Requested on</th>", ">Current cross-check</th>",
+    "Go to Mutuals</b>", ">Possibly accepted</button>",
+    ">Refresh</button>", ">Import pending_follow_requests.json to begin.</td>",
+):
+    assert new_label in ui, f"Missing translated Pending/Mutuals label: {new_label}"
+static_workspaces = ui.split('id="page-followersMutual"', 1)[-1].split('id="page-automations"', 1)[0]
+for outdated in (
+    ">Pausados activos</button>", ">Pausas vencidas</button>",
+    ">Cualquier edad</option>", ">Cualquier fecha</option>",
+    ">Usuario</th>", ">Razones</th>", ">Fecha solicitud</th>",
+    ">Cruce actual</th>", ">Actualizar</button>",
+    "Pending follow requests — tab especial",
+):
+    assert outdated not in static_workspaces, f"Untranslated static workspace copy: {outdated}"
+
 print("English UI, cloud-delete guard and legacy review compatibility passed.")
