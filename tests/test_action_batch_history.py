@@ -62,6 +62,22 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
         self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
+    def test_prefetch_uses_existing_tab_instead_of_duplicate(self):
+        from profile_actions import ActionTabPool
+        context = FakeTabContext()
+        pool = ActionTabPool(context)
+        prepared = pool.open("already.loading")
+        self.assertIs(pool.prepared("already.loading"), prepared)
+        pool.tabs["already.loading"]["status"] = "prefetched"
+        self.assertEqual(len(context.created), 1)
+        self.assertEqual(pool.overview()[0]["status"], "prefetched")
+        pool.record("already.loading", "review")
+        self.assertFalse(prepared.is_closed())
+        self.assertIs(pool.prepared("already.loading"), prepared)
+        pool.record("already.loading", "ok")
+        self.assertIsNone(pool.prepared("already.loading"))
+        self.assertTrue(prepared.is_closed())
+
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()

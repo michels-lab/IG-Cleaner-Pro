@@ -87,8 +87,15 @@ class ActionTabPool:
         if username in self.tabs or len(self.tabs) >= self.limit:
             return None
         target = self.context.new_page()
-        self.tabs[username] = {"page": target, "status": "checking"}
+        self.tabs[username] = {"page": target, "status": "checking",
+                               "visit_started_at": None}
         return target
+
+    def prepared(self, username):
+        """Return the existing live target tab, never allocate another."""
+        self._prune_manually_closed()
+        item = self.tabs.get(username)
+        return item["page"] if item is not None else None
 
     def record(self, username, status):
         item = self.tabs.get(username)
@@ -286,9 +293,10 @@ def _notify_readiness(on_wait, phase, started_at, timeout_ms):
                 max(1, int(timeout_ms / 1000)))
 
 
-def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
                                    on_wait=None, can_act=None):
     """Wait for the target's *rendered* identity region, not DOMContentLoaded."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
@@ -313,9 +321,10 @@ def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_
 
 
 def _wait_for_profile_relationship_control(page, username, words, *,
-                                           timeout_ms=ACTION_CONTROL_WAIT_MS,
+                                           timeout_ms=None,
                                            on_wait=None, can_act=None):
     """Wait for the real target to finish rendering; never infer no-follow from loading."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
@@ -344,9 +353,10 @@ def _wait_for_profile_relationship_control(page, username, words, *,
         page.wait_for_timeout(min(500, remaining_ms))
 
 
-def _wait_for_unfollow_option(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+def _wait_for_unfollow_option(page, username, *, timeout_ms=None,
                               on_wait=None):
     """Wait for a unique menu action without repeating the Following click."""
+    timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     while True:
@@ -610,7 +620,7 @@ def _action_issue(task, result, message):
 
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
-                           on_wait=None):
+                           on_wait=None, *, preloaded=False):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -621,8 +631,14 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         raise ValueError("Unknown action.")
     if on_wait:
         on_wait("loading_profile", 0, 45)
-    page.goto("https://www.instagram.com/" + username + "/", wait_until="domcontentloaded",
-              timeout=45000)
+    target_url = "https://www.instagram.com/" + username + "/"
+    current_url = urlparse(page.url)
+    if (not preloaded
+            or current_url.hostname not in ("www.instagram.com", "instagram.com")
+            or current_url.path.strip("/").casefold() != username.casefold()):
+        page.goto(target_url, wait_until="domcontentloaded", timeout=45000)
+    # A prepared target page may still be hydrating; identity/control waits
+    # below apply exactly the same checks as ordinary navigation.
     if not _wait_for_target_profile_shell(page, username, on_wait=on_wait,
                                          can_act=can_act):
         if can_act and not can_act(username):
@@ -1083,7 +1099,7 @@ class ActionRobot:
                 rests = load_batch_state(rests_file)
                 action_tabs = ActionTabPool(browser) if self.task != "audit" else None
                 stopped_for_review = False
-                for user in self.targets:
+                for target_index, user in enumerate(self.targets):
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
@@ -1118,8 +1134,13 @@ class ActionRobot:
                     if self._protected_for(user) or user in self.skipped:
                         continue
                     work_page = page
+                    prepared_item = None
                     if action_tabs:
-                        work_page = action_tabs.open(user)
+                        work_page = action_tabs.prepared(user)
+                        if work_page is not None:
+                            prepared_item = action_tabs.tabs[user]
+                        else:
+                            work_page = action_tabs.open(user)
                         if work_page is None:
                             with self.lock:
                                 self.status = "review"
@@ -1129,7 +1150,71 @@ class ActionRobot:
                             break
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
-                    visits = register_visit(visits_file, visits)
+                    if prepared_item and prepared_item.get("visit_started_at") is not None:
+                        current_visit_started = prepared_item["visit_started_at"]
+                    else:
+                        visits = register_visit(visits_file, visits)
+                        current_visit_started = visits[-1]
+
+                    # A single next profile may load read-only in another tab
+                    # while the current profile is resolving its controls.
+                    # Never prefetch through Instagram faster than the owner's
+                    # configured visit pacing or across a mandatory batch rest.
+                    next_user = None
+                    for candidate in self.targets[target_index + 1:]:
+                        prior = journal.get(candidate, {})
+                        if (not self._protected_for(candidate)
+                                and candidate not in self.skipped
+                                and (prior.get("status") not in ("ok", "review", "error", "blocked")
+                                     or _preclick_no_action(prior))):
+                            next_user = candidate
+                            break
+                    prefetch_attempted = False
+
+                    def paced_prefetch(phase):
+                        nonlocal visits, prefetch_attempted
+                        if (not action_tabs or not next_user or prefetch_attempted
+                                or phase not in ("waiting_relationship_control",
+                                                 "waiting_unfollow_menu")
+                                or self.stop_event.is_set()
+                                or self._protected_for(next_user)
+                                or next_user in self.skipped):
+                            return
+                        if (self.rest_minutes > 0
+                                and int(rests.get("count", 0)) + 1 >= self.max_count):
+                            return  # Do not prefetch across a mandatory batch rest.
+                        if (wait_required(visits, self.max_count, self.window_minutes,
+                                          self.min_delay_seconds) > 0
+                                or batch_wait(rests,
+                                              self.max_count if self.rest_minutes > 0 else 0,
+                                              self.rest_minutes) > 0):
+                            return
+                        if action_tabs.prepared(next_user) is not None:
+                            return
+                        prepared_page = action_tabs.open(next_user)
+                        if prepared_page is None:
+                            return  # Ten review tabs already occupy all slots.
+                        prefetch_attempted = True
+                        # Journal a visit BEFORE any navigation, even if Chrome
+                        # crashes or the read-only preload raises an exception.
+                        visits = register_visit(visits_file, visits)
+                        action_tabs.tabs[next_user]["visit_started_at"] = visits[-1]
+                        action_tabs.tabs[next_user]["status"] = "prefetching"
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+                        try:
+                            prepared_page.goto(
+                                "https://www.instagram.com/" + next_user + "/",
+                                wait_until="commit", timeout=12000)
+                            action_tabs.tabs[next_user]["status"] = "prefetched"
+                        except Exception:
+                            # Read-only preparation failed. The target stays in
+                            # its tab; normal readiness checks decide the result
+                            # without silently skipping or issuing any click.
+                            action_tabs.tabs[next_user]["status"] = "prefetch_pending"
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+
                     relation = ""
                     try:
                         if self.task == "audit":
@@ -1141,13 +1226,17 @@ class ActionRobot:
                                 work_page, user, self.task, self.handle,
                                 lambda name: not self.stop_event.is_set() and
                                 not self._protected_for(name) and name not in self.skipped,
-                                on_wait=lambda phase, elapsed, limit:
+                                on_wait=lambda phase, elapsed, limit: (
                                     self._record_readiness(user, phase, elapsed, limit,
-                                                           action_tabs))
+                                                           action_tabs),
+                                    paced_prefetch(phase)),
+                                preloaded=bool(prepared_item and
+                                               prepared_item.get("status") == "prefetched"))
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
-                        visits = finish_visit(visits_file, visits)
+                        visits = finish_visit(
+                            visits_file, visits, started_at=current_visit_started)
                         rests = finish_batch_visit(
                             rests_file, rests,
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)

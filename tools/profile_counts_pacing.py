@@ -103,18 +103,23 @@ def wait_required(events, count: int, minutes: int, delay: float, now=None):
     return max(wait_gap, wait_window)
 
 
-def finish_visit(file: Path, events, at=None):
-    """Anchor the minimum inter-profile pause to the END of the prior visit.
+def finish_visit(file: Path, events, at=None, *, started_at=None):
+    """Close a recorded visit even when a next page was prefetched meanwhile.
 
-    An attempted visit was already written before navigation, so a crash
-    cannot erase its budget. After the page returns, extend the latest
-    timestamp to the completion moment, making the real pause explicit.
+    A prefetch must already have its own durable visit slot. Without started_at
+    retain the historical last-entry behavior for existing callers.
     """
     if not events:
         raise ValueError("No hay una visita activa para finalizar.")
     at = time.time() if at is None else at
     recent = list(events)
-    recent[-1] = max(recent[-1], at)
+    index = len(recent) - 1
+    if started_at is not None:
+        indexes = [i for i, timestamp in enumerate(recent) if timestamp == started_at]
+        if len(indexes) != 1:
+            raise ValueError("El registro de visita cambió; no se puede confirmar su pausa.")
+        index = indexes[0]
+    recent[index] = max(recent[index], at)
     save_history(file, recent)
     return recent
 
