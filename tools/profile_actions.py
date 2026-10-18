@@ -262,15 +262,13 @@ def _verify_final_state(page, expected_handle, username, *, checks=3):
             return "blocked", "Instagram requested verification after the action."
         if not _verified_action_owner(page, expected_handle):
             return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            state = _follow_state(page, username)
-            if state == "follow_back":
-                return "ok", ("Action confirmed: Follow Back. "
-                              "The person still follows you, but you no longer follow them.")
-            if state == "follow":
-                return "ok", ("Action confirmed: Follow. "
-                              "You no longer follow this account; it does not show a followback.")
+        state = _follow_state(page, username)
+        if state == "follow_back":
+            return "ok", ("Action confirmed: Follow Back. "
+                          "The person still follows you, but you no longer follow them.")
+        if state == "follow":
+            return "ok", ("Action confirmed: Follow. "
+                          "You no longer follow this account; it does not show a followback.")
         page.wait_for_timeout(650)
     return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
@@ -299,14 +297,12 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
             return "ok", ("Cancel Request confirmed after a read-only profile refresh. " + message)
         if result == "blocked":
             return result, message + " Cancellation may already have occurred; do not repeat it."
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            if _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]):
-                return "review", prefix + ("Instagram still displays Requested. "
-                                            "Do not repeat; check the profile manually.")
-            if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
-                return "review", prefix + ("Instagram now displays Following, not a cancelled request. "
-                                            "Review the relationship manually.")
+        if _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]):
+            return "review", prefix + ("Instagram still displays Requested. "
+                                        "Do not repeat; check the profile manually.")
+        if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
+            return "review", prefix + ("Instagram now displays Following, not a cancelled request. "
+                                        "Review the relationship manually.")
         return "review", prefix + "No unambiguous Follow state was visible. Do not repeat the action."
     except Exception as exc:
         return "review", prefix + ("The target could not be checked safely (" +
@@ -384,8 +380,20 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         return "blocked", "Instagram redirected to another profile."
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
-        return "blocked", "The profile header could not be found."
-    if task == "unfollow" and re.search(r"\b(follows you|te sigue)\b",
+        # Some layouts use a role=button directly in the profile's main area
+        # without a semantic header. The helper independently requires an
+        # exact visible @username heading before permitting any action.
+        main = page.locator("main").first
+        if not main.count() or not main.is_visible():
+            return "blocked", "The target profile area could not be found."
+        headings = main.locator("h1, h2, h3")
+        if headings.count() > 30 or not any(
+                headings.nth(i).is_visible()
+                and headings.nth(i).inner_text(timeout=3000).strip().lstrip("@").casefold()
+                    == username.casefold()
+                for i in range(headings.count())):
+            return "blocked", "The target profile heading could not be verified."
+    if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
     active = (_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
