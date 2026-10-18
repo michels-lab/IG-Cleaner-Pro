@@ -605,6 +605,28 @@ def _verify_final_state(page, expected_handle, username, *, checks=3):
 
 
 
+def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
+    """One read-only target refresh may prove a delayed Unfollow completion.
+
+    Never issue a second relationship-changing click and never declare success
+    unless the same target now visibly displays Follow / Follow Back.
+    """
+    prefix = "Final state is ambiguous after a read-only refresh. "
+    try:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification after the action."
+        page.goto("https://www.instagram.com/" + username + "/",
+                  wait_until="domcontentloaded", timeout=45000)
+        result, message = _verify_final_state(page, expected_handle, username, checks=3)
+        if result == "ok":
+            return result, "Unfollow confirmed after a read-only profile refresh. " + message
+        if result == "blocked":
+            return result, message + " Unfollow may already have occurred; do not repeat it."
+        return "review", prefix + "No verified Follow state appeared. Do not repeat the click."
+    except Exception:
+        return "review", prefix + "Instagram could not be checked safely. Do not repeat the click."
+
+
 def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
     """Confirm a clicked pending-request cancellation by *reading*, never clicking.
 
@@ -818,7 +840,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                     return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
                 confirm.click(timeout=10000)
                 return _verify_final_state(page, expected_handle, username)
-        return "review", "Could not confirm whether another step is required. The click will not be repeated."
+        return _verify_unfollow_after_readonly_refresh(page, username, expected_handle)
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
     # and explicit Cancel Request confirmation.
