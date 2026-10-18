@@ -92,6 +92,57 @@ class ActionBatchHistoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "valid owner"):
                 cold.attempted_history({**scope, "task": "invalid"})
 
+    def test_legacy_missing_following_is_a_known_safe_preclick_retry(self):
+        from profile_actions import (
+            _atomic_json, _preclick_no_action,
+            LEGACY_MISSING_RELATIONSHIP_CONTROL, MISSING_RELATIONSHIP_CONTROL
+        )
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = self._action(root)
+            historical = {
+                "missing.old": {
+                    "status": "review", "issue": "missing_profile_info",
+                    "message": LEGACY_MISSING_RELATIONSHIP_CONTROL
+                },
+                "missing.new": {
+                    "status": "review", "issue": "missing_profile_info",
+                    "message": MISSING_RELATIONSHIP_CONTROL
+                },
+                "maybe.clicked": {
+                    "status": "review", "issue": "pending_cancel_unverified",
+                    "message": "Pending cancellation unverified after read-only refresh: Requested."
+                },
+                "unproven": {
+                    "status": "review", "issue": "missing_profile_info",
+                    "message": "Some unknown issue; it might already have been clicked."
+                },
+                "reported.no.click": {
+                    "status": "review", "issue": "requires_manual_review",
+                    "message": LEGACY_MISSING_RELATIONSHIP_CONTROL
+                }
+            }
+            _atomic_json(robot._base_for("owner1", "ig_account_1", "unfollow"), historical)
+            cold = self._action(root)
+            scope = {"owner": "owner1", "account": "ig_account_1", "task": "unfollow"}
+            attempts = cold.attempted_history(scope)["attempted_usernames"]
+            self.assertEqual(attempts,
+                             ["maybe.clicked", "reported.no.click", "unproven"])
+            self.assertTrue(_preclick_no_action(historical["missing.old"]))
+            self.assertTrue(_preclick_no_action(historical["missing.new"]))
+            self.assertFalse(_preclick_no_action(historical["maybe.clicked"]))
+            self.assertFalse(_preclick_no_action(historical["unproven"]))
+            self.assertFalse(_preclick_no_action(historical["reported.no.click"]))
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                # New explicit owner approval is required to rerun the
+                # profiles where no relationship-changing click occurred.
+                cold.start(self._request(["missing.old"], task="unfollow"))
+                self.assertEqual(cold.targets, ["missing.old"])
+                cold.start(self._request(["missing.new"], task="unfollow"))
+                with self.assertRaisesRegex(ValueError, "already attempted"):
+                    cold.start(self._request(["maybe.clicked"], task="unfollow"))
+
     def test_journal_is_owner_and_task_scoped(self):
         with TemporaryDirectory() as temporary:
             robot=self._action(Path(temporary))
