@@ -125,6 +125,8 @@ jobs:
         run: |
           node tests/automations-next-batch.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Automations action batch selection failed." }
+          node tests/automations-cold-start.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Cold-start Windows action history verification failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
