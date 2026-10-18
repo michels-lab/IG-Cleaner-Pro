@@ -278,13 +278,91 @@ def _profile_relationship_control(page, username, words):
     if len(indices) > 1:
         raise RuntimeError("Multiple equivalent options: Multiple matching profile action controls; no click. Manual review required.")
     if not probe.get("target_visible") or len(indices) != 1:
-        return None
+        if not probe.get("target_visible"):
+            return None
+        return _profile_visual_pointer_control(page, username, words)
     main = page.locator("main").first
     control = main.locator('button,[role="button"],[tabindex="0"]').nth(indices[0])
     if not control.is_visible():
         return None
     return control
 
+
+
+_POINTER_PROFILE_PROBE = r"""
+(main, info) => {
+    // Return only a safe DOM handle and a count. No raw HTML/page text leaves Chrome.
+    const clean = value => String(value || "").replace(/[\u200b-\u200d\ufeff]/g, "")
+        .replace(/[▼▾⌄∨˅⌃]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+    const visible = el => {
+        if (!el || el.closest('nav,aside,article,[role="dialog"],[role="menu"]')) return false;
+        const r = el.getBoundingClientRect(), css = getComputedStyle(el);
+        return r.width > 5 && r.height > 5 &&
+            css.display !== "none" && css.visibility !== "hidden";
+    };
+    const rect = main.getBoundingClientRect();
+    const anchors = [...main.querySelectorAll("h1,h2,h3,span,div,strong")]
+        .filter(el => visible(el) && clean(el.innerText).replace(/^@/, "") === clean(info.username)
+            && el.getBoundingClientRect().top >= rect.top - 24
+            && el.getBoundingClientRect().top - rect.top < 650);
+    if (!anchors.length) return {count: 0, element: null};
+    const anchor = anchors[0].getBoundingClientRect();
+    const validWords = (info.words || []).map(clean);
+    const selected = new Set();
+    for (const leaf of main.querySelectorAll("span,div,strong")) {
+        if (!visible(leaf) || !validWords.includes(clean(leaf.innerText))) continue;
+        let el = leaf, found = null;
+        for (let depth = 0; el && depth < 5 && el !== main; depth++, el = el.parentElement) {
+            if (!visible(el) || el.closest("a[href]")) break;
+            const tag = el.tagName.toLowerCase();
+            if (tag === "a") break;
+            const text = clean(el.innerText);
+            // Never click a multi-control container or a numeric Following count.
+            if (text !== clean(leaf.innerText)) break;
+            const css = getComputedStyle(el);
+            if (tag === "button" || el.getAttribute("role") === "button" ||
+                el.tabIndex === 0 || css.cursor === "pointer") {
+                found = el;
+            }
+        }
+        if (!found || !visible(found)) continue;
+        const r = found.getBoundingClientRect();
+        const dx = Math.abs((r.left+r.right-anchor.left-anchor.right)/2);
+        const dy = r.top - anchor.top;
+        if (dx > 800 || dy < -100 || dy > 450 || r.top-rect.top > 900) continue;
+        selected.add(found);
+    }
+    // Ignore nested text containers referring to the same clickable ancestor.
+    const uniq = [...selected].filter(el => ![...selected].some(other =>
+        el !== other && other.contains(el) && clean(other.innerText) === clean(el.innerText)));
+    return {count: uniq.length, element: uniq.length === 1 ? uniq[0] : null};
+}
+"""
+
+
+def _profile_visual_pointer_control(page, username, words):
+    """Bounded fallback for unique cursor-pointer Instagram div/span controls.
+
+    The cursor alone is insufficient: exact target URL, target hero username,
+    unique Following/Requested label and geometric scope are all required.
+    """
+    main = page.locator("main").first
+    if not main.count() or not main.is_visible():
+        return None
+    handle = main.evaluate_handle(_POINTER_PROFILE_PROBE, {
+        "username": username, "words": [re.sub(r"\\", "", word) for word in words]})
+    try:
+        count = handle.get_property("count").json_value()
+        if count > 1:
+            raise RuntimeError("Multiple equivalent options: ambiguous visual Instagram relationship controls; no click.")
+        if count != 1:
+            return None
+        control = handle.get_property("element").as_element()
+        if control is None or not control.is_visible():
+            return None
+        return control
+    finally:
+        handle.dispose()
 
 def _notify_readiness(on_wait, phase, started_at, timeout_ms):
     """Progress-only callback; does not decide which Instagram element to click."""
