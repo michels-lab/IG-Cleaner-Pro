@@ -79,6 +79,23 @@ class ProfileCountsPacingTests(unittest.TestCase):
             self.assertEqual(wait_required(events,200,5,5,now=clock), 3)
             self.assertEqual(wait_required(events,200,5,5,now=clock+3), 0)
 
+    def test_prefetched_visits_preserve_both_durable_timestamps(self):
+        clock = 1_700_000_000.0
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/"visits.json"
+            visits = register_visit(path, [], at=clock)
+            visits = register_visit(path, visits, at=clock+11)
+            # The first profile finishes after the next page is opened.
+            visits = finish_visit(path, visits, at=clock+14, started_at=clock)
+            self.assertEqual(visits, [clock+14, clock+11])
+            self.assertEqual(load_history(path, now=clock+15),
+                             [clock+11, clock+14])
+            self.assertEqual(wait_required(visits, 30, 60, 10, now=clock+15), 9)
+            visits = finish_visit(path, visits, at=clock+25, started_at=clock+11)
+            self.assertEqual(visits, [clock+14, clock+25])
+            with self.assertRaisesRegex(ValueError, "registro"):
+                finish_visit(path, visits, started_at=clock+11)
+
     def test_additional_rest_after_each_n_profiles_survives_restart(self):
         clock=1_700_000_000.0
         self.assertEqual(check_batch_rest(200,5),(200,5.0))
