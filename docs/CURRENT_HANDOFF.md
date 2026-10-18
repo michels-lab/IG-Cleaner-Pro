@@ -1,3 +1,10 @@
+## 2026-10-18 — Owner revision: 10 tabs, explicit live wait/status when Instagram has not rendered (development only)
+
+- Work branch: feat/action-tabs-ten-20261018; latest owner preference is **10** Chrome tabs rather than 5.
+- Important additional acceptance condition: do not interpret an unrendered Following/Requested button as absent immediately. Wait for the real profile/header, then for the exact relationship control, and visibly report the current @profile, stage and elapsed/max time in Automations. A 20-second read-only timeout leaves the uncertain tab open for manual review and stops the queue, not a silent skip. The UI distinguishes profile loading from waiting for Following/Requested and reports profile_load_timeout separately.
+- Preserve signed-in owner confirmation before every relationship-changing click, no parallel unfollows, no action replay after uncertainty, existing account-scoped journals and challenge stops. Original 5-tab integration is in main; this ten-tab + wait status change must pass fresh exact-head Windows Chromium/installer, Profile Counts, Desktop, CI and Android UI checks before merging.
+- No version bump, no publication. v120.50 official stable is unchanged. Real Instagram/device proof pending.
+
 ## 2026-10-18 — Candidate: five Chrome action tabs and DOM-readiness waits (NOT released)
 
 - User now prefers **5 tabs** (not 3) and requires each action's tab to remain visible until outcome is confirmed; prior screenshot showed `Could not verify ... session after the action` and `Instagram control not found; no action clicked`.
