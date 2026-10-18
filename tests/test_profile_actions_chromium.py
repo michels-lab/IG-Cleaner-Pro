@@ -585,6 +585,23 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(profile_actions._action_issue("unfollow", result, message),
                          "profile_load_timeout")
 
+    def test_prefetched_profile_does_not_navigate_twice_before_action(self):
+        html = fake_profile()
+        visits = []
+        def route(request):
+            visits.append(request.request.url)
+            request.fulfill(status=200, content_type="text/html", body=html)
+        self.context.route("https://www.instagram.com/**", route)
+        self.page.goto("https://www.instagram.com/target.user/", wait_until="commit")
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "ok", message)
+        self.assertEqual(
+            sum("/target.user/" in url for url in visits), 1,
+            "Preloaded target page must not be fetched again before acting")
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
     def test_delayed_profile_control_waits_for_visible_following(self):
         # A real page may hydrate its Following button after DOMContentLoaded.
         html = fake_profile().replace(
