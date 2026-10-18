@@ -1351,6 +1351,8 @@ class ActionRobot:
                         prior = journal.get(candidate, {})
                         if (not self._protected_for(candidate)
                                 and candidate not in self.skipped
+                                and (not action_tabs or
+                                     action_tabs.prepared(candidate) is None)
                                 and (prior.get("status") not in ("ok", "review", "error", "blocked")
                                      or _preclick_no_action(prior))):
                             next_user = candidate
