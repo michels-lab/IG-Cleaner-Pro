@@ -226,6 +226,48 @@ def _profile_relationship_control(page, username, words):
     return control
 
 
+def _wait_for_profile_relationship_control(page, username, words, *, timeout_ms=7000):
+    """Wait for a safely identifiable control, not a fixed time after DOM ready.
+
+    This is a read-only bounded poll. It never retries a relationship click,
+    and an Instagram challenge, login or unexpected target URL stops the wait.
+    """
+    deadline = time.monotonic() + timeout_ms / 1000.0
+    while True:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return None
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return None
+        control = _profile_relationship_control(page, username, words)
+        if control is not None:
+            return control
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return None
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
+def _wait_for_unfollow_option(page, username, *, timeout_ms=7000):
+    """Allow Instagram's Following menu to render without a second click."""
+    deadline = time.monotonic() + timeout_ms / 1000.0
+    while True:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return None
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return None
+        choice = _unfollow_option(page)
+        if choice is not None:
+            return choice
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return None
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
 def _relationship_layout_note(page, username, words):
     """Plain category-only evidence; never include owner credentials or DOM."""
     probe = _profile_hero_probe(page, username, words)
@@ -352,7 +394,18 @@ def _verify_final_state(page, expected_handle, username, *, checks=3):
     for _ in range(checks):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification after the action."
-        if not _verified_action_owner(page, expected_handle):
+        # The owner UI can transiently disappear during an Instagram rerender.
+        # Retry ONLY read-only identity evidence, never the relationship click.
+        owner_proven = False
+        for owner_attempt in range(3):
+            if challenge_detected(page) or page.locator('input[name="password"]').count():
+                return "blocked", "Instagram requested verification after the action."
+            if _verified_action_owner(page, expected_handle):
+                owner_proven = True
+                break
+            if owner_attempt < 2:
+                page.wait_for_timeout(900)
+        if not owner_proven:
             return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
         state = _follow_state(page, username)
         if state == "follow_back":
@@ -486,9 +539,9 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
-    active = (_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
+    active = (_wait_for_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
               if task == "unfollow" else
-              _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
+              _wait_for_profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
         if task == "cancel":
             if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
@@ -505,12 +558,11 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if not _verified_action_owner(page, expected_handle):
         return "blocked", "Instagram session verification failed before the first click. No action performed."
     active.click(timeout=10000)
-    page.wait_for_timeout(450)
 
     if task == "unfollow":
         # The FIRST click only opens a menu on public accounts.
         # Locate the "Unfollow" command in that menu (or a direct dialog).
-        choice = _unfollow_option(page)
+        choice = _wait_for_unfollow_option(page, username)
         if choice is None:
             # Rare layouts change directly on the first click. Do not guess.
             return _verify_final_state(page, expected_handle, username)
@@ -519,8 +571,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before the final Unfollow click. Inspect the open menu manually."
         choice.click(timeout=10000)
-        page.wait_for_timeout(650)
-        # Public: new Follow button should be visible already.
+        # Public: await the final state; private accounts may show a second dialog.
         status, message = _verify_final_state(page, expected_handle, username, checks=2)
         if status in ("ok", "blocked"):
             return status, message
