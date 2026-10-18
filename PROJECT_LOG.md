@@ -1,3 +1,10 @@
+## 2026-10-18 — Prepare v120.50: second physical Following failure and read-only DOM diagnostics
+
+- Screenshots after v120.49 still showed visible Instagram Following controls yet `missing_profile_info` and no clicks. PR #122 implemented a bounded real-Chrome read-only layout probe requiring exact visible target username (including span/div) and one nearby interactive control (button, role=button, tabindex=0), with blockers for suggestions/links/duplicates.
+- Issue Review now displays safe control-count diagnostics for future investigation and wraps long messages within the viewport. Known no-click journal entries remain retryable in a new explicitly approved batch; no riskier prior click is replayed.
+- PR #122 merged as `62ba64a47954` after **five exact-head passing workflows**, including real offline Chromium locator simulations, Windows Setup installation, Desktop/Android UI and profile-count tests.
+- This branch prepares v120.50 (Android versionCode 12050, versionName 120.50, displayed Desktop UI v120.50), retaining the original signing certificate and package identity. No new release may publish until separate owner-authorized governed exact-commit QA passes. Real owner's Instagram unfollow success remains an open acceptance criterion.
+
 ## 2026-10-18 — v120.50 dev: actual Following visible, v120.49 still misses Instagram control
 
 - New real owner screenshots from installed v120.49: multiple `missing_profile_info` / "Instagram control not found; no action clicked" after visiting actual profiles which visibly display the Following dropdown. This invalidates the assumption that v120.49's heading-based fallback resolved the real-world UI. No account-changing clicks are confirmed.
