@@ -1,3 +1,10 @@
+## 2026-10-17 — v120.49 owner-reported Unfollow hotfix candidate
+
+- PR #120 merged after 5/5 GitHub QA families. The owner screenshot shows the Instagram profile displaying Following while the v120.48 action robot reported nothing clicked. The fix recognizes safely scoped profile Following/Siguiendo buttons in header/main, exact target heading and caret, while refusing unrelated links or duplicate controls.
+- Previously quarantined `missing_profile_info` results with exact pre-click messages become eligible for a new explicit batch after reading the latest Windows journal. Potentially clicked uncertain results remain excluded; do not reset/delete local history.
+- Release preparation updates v120.49 signed metadata and Desktop version. Publish only via the owner's governed stable request after exact-head CI. Do not claim successful unfollow on live Instagram before owner tries installed Setup.
+- Previous stable v120.48 remains the only published release until v120.49 publication and asset integrity are verified.
+
 ## 2026-10-17 — Unfollow visible Following control not detected (v120.49 development)
 
 - Actual user's v120.48 Windows Issue Review lists three `missing_profile_info` in "Not Following Back". In the next screenshot the Instagram profile visibly has the Following button; the robot made **zero clicks** on the three affected users.
