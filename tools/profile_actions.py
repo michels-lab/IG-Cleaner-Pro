@@ -59,11 +59,11 @@ def _read_json(path: Path, default):
         raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
-MAX_ACTION_TABS = 3
+MAX_ACTION_TABS = 5
 
 
 class ActionTabPool:
-    """Keep up to three visible target tabs; close only verified outcomes.
+    """Keep up to five visible target tabs; close only verified outcomes.
 
     Playwright pages are owned by the existing single robot thread. A pending
     manual review stays open and consumes a slot; it is never silently recycled
@@ -1016,7 +1016,7 @@ class ActionRobot:
                         if work_page is None:
                             with self.lock:
                                 self.status = "review"
-                                self.message = ("Three Instagram tabs need manual review. "
+                                self.message = ("Five Instagram tabs need manual review. "
                                                 "No additional relationship action was attempted.")
                             stopped_for_review = True
                             break
