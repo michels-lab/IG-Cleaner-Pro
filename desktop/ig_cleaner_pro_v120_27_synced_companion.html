@@ -15126,9 +15126,9 @@ window.igcAutoPoll=async function(){
       (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":"");
   const tabsBox=document.getElementById("igcAutoOpenTabs");
   if(tabsBox){
-   const open=Array.isArray(state.open_review_tabs)?state.open_review_tabs.slice(0,5):[];
+   const open=Array.isArray(state.open_review_tabs)?state.open_review_tabs.slice(0,10):[];
    tabsBox.style.display=open.length?"block":"none";
-   tabsBox.textContent=open.length?("Chrome profile tabs ("+open.length+"/5): "+
+   tabsBox.textContent=open.length?("Chrome profile tabs ("+open.length+"/10): "+
      open.map(t=>"@"+String(t.username||"")+" — "+String(t.status||"checking")).join(" · ")+
      ". Only confirmed actions close automatically. Pause closes Chrome."): "";
   }
