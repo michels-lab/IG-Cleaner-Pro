@@ -3779,8 +3779,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="missing_profile_info">Missing evidence</option></select></label>
 <input id="igcAutoIssueSearch" type="search" placeholder="Find @username in issues" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
 </div>
-<div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;text-align:left">
-<thead><tr><th>Profile</th><th>Reason / Result</th><th>Actions</th></tr></thead>
+<style>
+#igcAutoIssuesPanel .igc-counts-table{width:100%;min-width:0!important;table-layout:fixed}
+#igcAutoIssuesPanel #igcAutoIssueRows td{overflow-wrap:anywhere;white-space:normal;vertical-align:top}
+#igcAutoIssuesPanel #igcAutoIssueRows td:last-child .btn{max-width:100%;white-space:normal;margin:2px 2px 2px 0}
+#igcAutoIssuesPanel #igcAutoIssueRows td:nth-child(2) .note{overflow-wrap:anywhere;white-space:normal}
+</style>
+<div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;min-width:0;table-layout:fixed;text-align:left">
+<thead><tr><th style="width:20%">Profile</th><th style="width:57%">Reason / Result</th><th style="width:23%">Actions</th></tr></thead>
 <tbody id="igcAutoIssueRows"></tbody></table></div>
 </div>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
