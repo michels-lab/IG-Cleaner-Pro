@@ -15146,7 +15146,7 @@ const issueLabels={
  pending_not_requested:"Not a pending request anymore",
  pending_cancel_unverified:"Cancellation click sent; status not confirmed after read-only refresh",
  mutual_before_action:"This account follows you; no unfollow action was taken",
- missing_profile_info:"Insufficient profile evidence; nothing clicked",
+ missing_profile_info:"Instagram control not found; no action clicked",
  requires_manual_review:"Could not verify; manual review required"
 };
 window.igcAutoRenderIssues=function(){
@@ -15196,6 +15196,11 @@ window.igcAutoRenderIssues=function(){
   if(selected==="cancel"&&issue.issue==="pending_cancel_unverified"){
    const recovery=document.createElement("div");recovery.className="note";
    recovery.textContent="The click may have succeeded. Open the profile to inspect Follow / Requested; do not re-run Cancel Request automatically.";
+   reason.appendChild(recovery);
+  }
+  if(issue.issue==="missing_profile_info"){
+   const recovery=document.createElement("div");recovery.className="note";
+   recovery.textContent="No relationship-changing click occurred. In the updated Windows app, this exact no-click result may be safely checked again in a newly approved batch. A post-click unverified action will never be repeated automatically.";
    reason.appendChild(recovery);
   }
   const profile=document.createElement("a");profile.className="btn";
