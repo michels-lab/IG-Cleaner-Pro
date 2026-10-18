@@ -59,11 +59,13 @@ def _read_json(path: Path, default):
         raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
-MAX_ACTION_TABS = 5
+MAX_ACTION_TABS = 10
+ACTION_CONTROL_WAIT_MS = 20000
+
 
 
 class ActionTabPool:
-    """Keep up to five visible target tabs; close only verified outcomes.
+    """Keep up to ten visible target tabs; close only verified outcomes.
 
     Playwright pages are owned by the existing single robot thread. A pending
     manual review stays open and consumes a slot; it is never silently recycled
@@ -277,14 +279,48 @@ def _profile_relationship_control(page, username, words):
     return control
 
 
-def _wait_for_profile_relationship_control(page, username, words, *, timeout_ms=7000):
-    """Wait for a safely identifiable control, not a fixed time after DOM ready.
+def _notify_readiness(on_wait, phase, started_at, timeout_ms):
+    """Progress-only callback; does not decide which Instagram element to click."""
+    if on_wait:
+        on_wait(phase, max(0, int(time.monotonic() - started_at)),
+                max(1, int(timeout_ms / 1000)))
 
-    This is a read-only bounded poll. It never retries a relationship click,
-    and an Instagram challenge, login or unexpected target URL stops the wait.
-    """
-    deadline = time.monotonic() + timeout_ms / 1000.0
+
+def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+                                   on_wait=None, can_act=None):
+    """Wait for the target's *rendered* identity region, not DOMContentLoaded."""
+    started_at = time.monotonic()
+    deadline = started_at + timeout_ms / 1000.0
     while True:
+        if can_act and not can_act(username):
+            return False
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return False
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return False
+        header = page.locator("header").first
+        if header.count() and header.is_visible() and header.inner_text(timeout=2000).strip():
+            return True
+        if _profile_hero_probe(page, username, []).get("target_visible"):
+            return True
+        _notify_readiness(on_wait, "loading_profile", started_at, timeout_ms)
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return False
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
+def _wait_for_profile_relationship_control(page, username, words, *,
+                                           timeout_ms=ACTION_CONTROL_WAIT_MS,
+                                           on_wait=None, can_act=None):
+    """Wait for the real target to finish rendering; never infer no-follow from loading."""
+    started_at = time.monotonic()
+    deadline = started_at + timeout_ms / 1000.0
+    while True:
+        if can_act and not can_act(username):
+            return None
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return None
         current = urlparse(page.url)
@@ -294,15 +330,25 @@ def _wait_for_profile_relationship_control(page, username, words, *, timeout_ms=
         control = _profile_relationship_control(page, username, words)
         if control is not None:
             return control
+        # A blank shell is not evidence that Instagram lacks Following.
+        header = page.locator("header").first
+        has_header = bool(header.count() and header.is_visible())
+        main = page.locator("main").first
+        has_main = bool(main.count() and main.is_visible())
+        phase = ("waiting_relationship_control" if has_header or has_main
+                 else "loading_profile")
+        _notify_readiness(on_wait, phase, started_at, timeout_ms)
         remaining_ms = int((deadline - time.monotonic()) * 1000)
         if remaining_ms <= 0:
             return None
         page.wait_for_timeout(min(500, remaining_ms))
 
 
-def _wait_for_unfollow_option(page, username, *, timeout_ms=7000):
-    """Allow Instagram's Following menu to render without a second click."""
-    deadline = time.monotonic() + timeout_ms / 1000.0
+def _wait_for_unfollow_option(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+                              on_wait=None):
+    """Wait for a unique menu action without repeating the Following click."""
+    started_at = time.monotonic()
+    deadline = started_at + timeout_ms / 1000.0
     while True:
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return None
@@ -313,6 +359,7 @@ def _wait_for_unfollow_option(page, username, *, timeout_ms=7000):
         choice = _unfollow_option(page)
         if choice is not None:
             return choice
+        _notify_readiness(on_wait, "waiting_unfollow_menu", started_at, timeout_ms)
         remaining_ms = int((deadline - time.monotonic()) * 1000)
         if remaining_ms <= 0:
             return None
@@ -513,14 +560,17 @@ def _preclick_no_action(entry):
     """
     if _preclick_identity_blocked(entry):
         return True
-    return (isinstance(entry, dict)
-            and entry.get("status") == "review"
-            and entry.get("issue") == "missing_profile_info"
-            and (entry.get("message") in (
-                LEGACY_MISSING_RELATIONSHIP_CONTROL,
-                MISSING_RELATIONSHIP_CONTROL,
-            ) or str(entry.get("message") or "").startswith(
-                MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
+    if not isinstance(entry, dict) or entry.get("status") != "review":
+        return False
+    message = str(entry.get("message") or "")
+    if (entry.get("issue") == "profile_load_timeout"
+            and message.startswith(MISSING_RELATIONSHIP_CONTROL + " Waiting timed out:")
+            and "No action clicked." in message):
+        return True
+    return (entry.get("issue") == "missing_profile_info"
+            and (message in (LEGACY_MISSING_RELATIONSHIP_CONTROL,
+                             MISSING_RELATIONSHIP_CONTROL)
+                 or message.startswith(MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
 
 
 def _preclick_identity_blocked(entry):
@@ -549,6 +599,9 @@ def _action_issue(task, result, message):
         return "pending_cancel_unverified"
     if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
         return "mutual_before_action"
+    if (result == "review" and message.startswith(MISSING_RELATIONSHIP_CONTROL)
+            and " Waiting timed out:" in message and "No action clicked." in message):
+        return "profile_load_timeout"
     if result == "review" and message.startswith(("The profile does not show", "El perfil no muestra")):
         return "missing_profile_info"
     if result in ("review", "error", "blocked"):
@@ -556,7 +609,8 @@ def _action_issue(task, result, message):
     return ""
 
 
-def perform_visible_action(page, username, task, expected_handle, can_act=None):
+def perform_visible_action(page, username, task, expected_handle, can_act=None,
+                           on_wait=None):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -565,9 +619,26 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     """
     if task not in TASKS:
         raise ValueError("Unknown action.")
+    if on_wait:
+        on_wait("loading_profile", 0, 45)
     page.goto("https://www.instagram.com/" + username + "/", wait_until="domcontentloaded",
               timeout=45000)
-    page.wait_for_timeout(1000)
+    if not _wait_for_target_profile_shell(page, username, on_wait=on_wait,
+                                         can_act=can_act):
+        if can_act and not can_act(username):
+            return "skipped", "Skipped or protected before a relationship click."
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification."
+        url = urlparse(page.url)
+        if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").casefold() != username.casefold():
+            return "blocked", "Instagram redirected to another profile."
+        main = page.locator("main").first
+        if main.count() and main.is_visible() and main.inner_text(timeout=2000).strip():
+            return "blocked", ("The target profile heading or exact username could not be verified. "
+                               "No action was performed.")
+        return "review", (MISSING_RELATIONSHIP_CONTROL +
+            " Waiting timed out: profile identity has not loaded after 20 seconds. "
+            "No action clicked. Leave this tab open for manual review.")
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requested verification."
     if not _verified_action_owner(page, expected_handle):
@@ -590,10 +661,18 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
-    active = (_wait_for_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
+    active = (_wait_for_profile_relationship_control(
+                  page, username, [r"Following", r"Siguiendo"],
+                  on_wait=on_wait, can_act=can_act)
               if task == "unfollow" else
-              _wait_for_profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
+              _wait_for_profile_relationship_control(
+                  page, username, [r"Requested", r"Solicitado", r"Solicitada"],
+                  on_wait=on_wait, can_act=can_act))
     if active is None:
+        if can_act and not can_act(username):
+            return "skipped", "Skipped or protected while waiting for profile controls."
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification before the first click."
         if task == "cancel":
             if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
                 return "review", ("Outdated pending request: Instagram now shows Following; "
@@ -601,9 +680,15 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             if _follow_state(page, username):
                 return "review", ("The request no longer appears as Requested; "
                                   "no change was made.")
-        return "review", MISSING_RELATIONSHIP_CONTROL + _relationship_layout_note(
-            page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
-                             else [r"Requested", r"Solicitado", r"Solicitada"]))
+        control_name = ("Following/Siguiendo" if task == "unfollow"
+                        else "Requested/Solicitado")
+        return "review", (MISSING_RELATIONSHIP_CONTROL +
+            " Waiting timed out: " + control_name +
+            " was not verifiable after 20 seconds. No action clicked. "
+            "The tab remains open for manual review; the robot will not silently skip it." +
+            _relationship_layout_note(
+                page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
+                                 else [r"Requested", r"Solicitado", r"Solicitada"])))
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
@@ -613,7 +698,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if task == "unfollow":
         # The FIRST click only opens a menu on public accounts.
         # Locate the "Unfollow" command in that menu (or a direct dialog).
-        choice = _wait_for_unfollow_option(page, username)
+        choice = _wait_for_unfollow_option(page, username, on_wait=on_wait)
         if choice is None:
             # Rare layouts change directly on the first click. Do not guess.
             return _verify_final_state(page, expected_handle, username)
@@ -736,6 +821,7 @@ class ActionRobot:
         self.owner = self.account = self.handle = self.task = ""
         self.targets = []
         self.open_review_tabs = []
+        self.current_wait = None
         self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
@@ -854,6 +940,7 @@ class ActionRobot:
                     raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
             self.open_review_tabs = []
+            self.current_wait = None
             if not resume:
                 self.skipped.clear()
             self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
@@ -917,12 +1004,32 @@ class ActionRobot:
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "open_review_tabs": list(self.open_review_tabs),
+                    "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
                               "message": rows[u].get("message", ""),
                               "at": rows[u].get("at", "")} for u in self.targets]}
+
+    def _record_readiness(self, username, phase, elapsed, limit, action_tabs):
+        """Make active Instagram loading/Following waits visible in Automations."""
+        phrases = {
+            "loading_profile": "Instagram profile page is still loading",
+            "waiting_relationship_control": "Waiting for Following/Requested control",
+            "waiting_unfollow_menu": "Waiting for Unfollow menu",
+        }
+        with self.lock:
+            self.status = "waiting"
+            self.current_wait = {
+                "username": username, "phase": phase,
+                "elapsed_seconds": elapsed, "timeout_seconds": limit,
+            }
+            self.message = ("@" + username + ": " + phrases.get(phase, "Waiting for Instagram") +
+                            " (" + str(elapsed) + "/" + str(limit) + " s)")
+            if action_tabs and username in action_tabs.tabs:
+                action_tabs.tabs[username]["status"] = phase
+                self.open_review_tabs = action_tabs.overview()
 
     def _run(self):
         browser = None
@@ -1016,7 +1123,7 @@ class ActionRobot:
                         if work_page is None:
                             with self.lock:
                                 self.status = "review"
-                                self.message = ("Five Instagram tabs need manual review. "
+                                self.message = ("Ten Instagram tabs need manual review. "
                                                 "No additional relationship action was attempted.")
                             stopped_for_review = True
                             break
@@ -1033,7 +1140,10 @@ class ActionRobot:
                             result, details = perform_visible_action(
                                 work_page, user, self.task, self.handle,
                                 lambda name: not self.stop_event.is_set() and
-                                not self._protected_for(name) and name not in self.skipped)
+                                not self._protected_for(name) and name not in self.skipped,
+                                on_wait=lambda phase, elapsed, limit:
+                                    self._record_readiness(user, phase, elapsed, limit,
+                                                           action_tabs))
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
@@ -1041,6 +1151,8 @@ class ActionRobot:
                         rests = finish_batch_visit(
                             rests_file, rests,
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                    with self.lock:
+                        self.current_wait = None
                     # Persist the result BEFORE closing any confirmed tab.
                     # A browser close failure must never erase a clicked action
                     # from the account-scoped no-replay journal.
@@ -1110,7 +1222,7 @@ class ActionRobot:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
         finally:
             with self.lock:
-                self.current, self.wait_until = "", 0
+                self.current, self.wait_until, self.current_wait = "", 0, None
             if browser:
                 try: browser.close()
                 except Exception: pass

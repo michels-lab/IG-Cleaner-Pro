@@ -3777,7 +3777,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p id="igcAutoIssueStatus" class="note" role="status" aria-live="polite">Unexpected relationships and missing evidence will appear here for manual review.</p>
 <div class="btnrow">
 <label>Task <select id="igcAutoIssueTask" onchange="igcAutoRenderIssues()"><option value="unfollow">Not Following Back</option><option value="cancel">Sent Requests</option><option value="audit">Followback Audit</option></select></label>
-<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="missing_profile_info">Missing evidence</option></select></label>
+<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="missing_profile_info">Missing evidence</option><option value="profile_load_timeout">Profile still loading / timed out</option></select></label>
 <input id="igcAutoIssueSearch" type="search" placeholder="Find @username in issues" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
 </div>
 <style>
@@ -15121,14 +15121,23 @@ window.igcAutoPoll=async function(){
   const authHelp=document.getElementById("igcActionAuthFallback");
   if(authHelp)authHelp.style.display=authBlocked?"block":"none";
   const info=document.getElementById("igcAutoLiveStatus");
-  if(info)info.textContent="Status: "+state.status+" · "+(state.message||"")+
+  const profileWait=state.current_wait;
+  const waitText=profileWait&&profileWait.username?(
+    "Waiting for @"+String(profileWait.username)+": "+
+    (profileWait.phase==="loading_profile"?"Instagram profile to load":
+     profileWait.phase==="waiting_relationship_control"?
+     (state.task==="cancel"?"Requested / Solicitado button":"Following / Siguiendo button"):
+     profileWait.phase==="waiting_unfollow_menu"?"Unfollow menu":"Instagram to respond")+
+    " · "+Number(profileWait.elapsed_seconds||0)+"/"+
+    Number(profileWait.timeout_seconds||20)+" s · no action confirmed yet"):"";
+  if(info)info.textContent=waitText||("Status: "+state.status+" · "+(state.message||"")+
       (state.current_profile?" · @"+state.current_profile:"")+
-      (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":"");
+      (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":""));
   const tabsBox=document.getElementById("igcAutoOpenTabs");
   if(tabsBox){
-   const open=Array.isArray(state.open_review_tabs)?state.open_review_tabs.slice(0,5):[];
+   const open=Array.isArray(state.open_review_tabs)?state.open_review_tabs.slice(0,10):[];
    tabsBox.style.display=open.length?"block":"none";
-   tabsBox.textContent=open.length?("Chrome profile tabs ("+open.length+"/5): "+
+   tabsBox.textContent=open.length?("Chrome profile tabs ("+open.length+"/10): "+
      open.map(t=>"@"+String(t.username||"")+" — "+String(t.status||"checking")).join(" · ")+
      ". Only confirmed actions close automatically. Pause closes Chrome."): "";
   }
@@ -15168,6 +15177,7 @@ const issueLabels={
  pending_cancel_unverified:"Cancellation click sent; status not confirmed after read-only refresh",
  mutual_before_action:"This account follows you; no unfollow action was taken",
  missing_profile_info:"Instagram control not found; no action clicked",
+ profile_load_timeout:"Timed out waiting for Instagram to load the requested control; no click",
  requires_manual_review:"Could not verify; manual review required"
 };
 window.igcAutoRenderIssues=function(){
@@ -15217,6 +15227,11 @@ window.igcAutoRenderIssues=function(){
   if(selected==="cancel"&&issue.issue==="pending_cancel_unverified"){
    const recovery=document.createElement("div");recovery.className="note";
    recovery.textContent="The click may have succeeded. Open the profile to inspect Follow / Requested; do not re-run Cancel Request automatically.";
+   reason.appendChild(recovery);
+  }
+  if(issue.issue==="profile_load_timeout"){
+   const recovery=document.createElement("div");recovery.className="note";
+   recovery.textContent="The page never showed a verifiable relationship control within the wait period. No click occurred. The robot paused with this profile tab open for inspection instead of silently skipping it.";
    reason.appendChild(recovery);
   }
   if(issue.issue==="missing_profile_info"){

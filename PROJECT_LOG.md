@@ -1,3 +1,10 @@
+## 2026-10-18 — Development: 10 Chrome tabs and visible Instagram readiness confirmation
+
+- Owner superseded previous 5-tab preference: use **10 Chrome tabs** for Instagram action review, preserving one sequential relationship-changing click at a time and keeping unresolved tabs available for inspection. Updates MAX_ACTION_TABS, UI visible 0/10, and ten-tab safety tests.
+- Owner observed that a missing Following button can be a loading race, not proof of absence. The action worker now reports loading_profile or waiting_relationship_control with profile handle plus elapsed/max seconds to the live Automations UI, and waits up to 20 s for visible target layout and the Following/Requested control. Following menu also waits read-only up to 20 s; no repeated clicks.
+- After a pre-click rendering/control timeout, mark a distinct profile_load_timeout issue, **stop instead of skipping silently**, keep the tab open and journal that no click occurred. Known no-click timeouts may be reconsidered only in a newly approved batch; potentially clicked outcomes are never auto-retried. No change to user data or export privacy.
+- Chromium regressions cover a delayed profile header, a never-loading profile, a never-rendered Following button, wait-stage updates and ten-tab slot protections. Exact-head CI and physical owner Chrome acceptance required. Stable release remains v120.50; no release authorization was granted.
+
 ## 2026-10-18 — Development: safe Instagram action readiness and five-tab workflow
 
 - User screenshot of the installed v120.50 robot reports both a post-click owner-session verification failure and a missing Following control (no action clicked). Cause may involve delayed DOM hydration, but a timing problem has not been proven from the screenshot.
