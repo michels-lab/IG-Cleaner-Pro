@@ -1,3 +1,10 @@
+## 2026-10-18 — Live v120.51 failure, ten-tab staged preloading and Following detector candidate
+
+- User screenshot after installing/testing v120.51: an ambiguous post-click result (@jdrd.avid), a no-click Following timeout (@isaac_nahuat: main=yes, exact username=yes, matching controls=0), and only three loaded profiles despite requesting ten. This is **not** accepted as working real Instagram Unfollow.
+- Development branch `fix/ig-robot-ten-prefill-following-20261018`. Prepare up to 10 *actual* profile tabs in the explicitly approved batch before any clicks; pace navigation per visit and store each visit durably; stop for sign-in/challenge and keep tabs available. Follow actions remain one at a time and only verified outcomes close automatically.
+- Add strict unique visual pointer-backed relationship control fallback and a single *read-only* target refresh for delayed Follow/Follow Back after the Unfollow click. No blind clicks/duplicate action, no reattempt of owner ambiguous @jdrd.avid.
+- Pending: exact-head Windows real Chromium fixtures, integrated Windows Setup, Profile Counts, Desktop/Android visual CI. Even passing fixture CI does not prove actual logged-in Instagram live DOM; user must physically retest. Stable remains v120.51 until separate owner release authorization.
+
 ## 2026-10-18 — Official v120.51 stable release published (real Instagram acceptance still pending)
 
 - User explicitly requested `TERMINA TODO Y DALE RELEASE` in the InstaCleaner continuation. PR [#126](https://github.com/michels-lab/IG-Cleaner-Pro/pull/126) merged after all five exact-head QA families passed. The `main` merge commit `1b566b76dd16e34375bbb265531ee7c4f3fe49f3` also passed Desktop, Android, general CI and the installed Windows/Chromium integration tests.

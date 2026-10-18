@@ -278,13 +278,91 @@ def _profile_relationship_control(page, username, words):
     if len(indices) > 1:
         raise RuntimeError("Multiple equivalent options: Multiple matching profile action controls; no click. Manual review required.")
     if not probe.get("target_visible") or len(indices) != 1:
-        return None
+        if not probe.get("target_visible"):
+            return None
+        return _profile_visual_pointer_control(page, username, words)
     main = page.locator("main").first
     control = main.locator('button,[role="button"],[tabindex="0"]').nth(indices[0])
     if not control.is_visible():
         return None
     return control
 
+
+
+_POINTER_PROFILE_PROBE = r"""
+(main, info) => {
+    // Return only a safe DOM handle and a count. No raw HTML/page text leaves Chrome.
+    const clean = value => String(value || "").replace(/[\u200b-\u200d\ufeff]/g, "")
+        .replace(/[▼▾⌄∨˅⌃]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+    const visible = el => {
+        if (!el || el.closest('nav,aside,article,[role="dialog"],[role="menu"]')) return false;
+        const r = el.getBoundingClientRect(), css = getComputedStyle(el);
+        return r.width > 5 && r.height > 5 &&
+            css.display !== "none" && css.visibility !== "hidden";
+    };
+    const rect = main.getBoundingClientRect();
+    const anchors = [...main.querySelectorAll("h1,h2,h3,span,div,strong")]
+        .filter(el => visible(el) && clean(el.innerText).replace(/^@/, "") === clean(info.username)
+            && el.getBoundingClientRect().top >= rect.top - 24
+            && el.getBoundingClientRect().top - rect.top < 650);
+    if (!anchors.length) return {count: 0, element: null};
+    const anchor = anchors[0].getBoundingClientRect();
+    const validWords = (info.words || []).map(clean);
+    const selected = new Set();
+    for (const leaf of main.querySelectorAll("span,div,strong")) {
+        if (!visible(leaf) || !validWords.includes(clean(leaf.innerText))) continue;
+        let el = leaf, found = null;
+        for (let depth = 0; el && depth < 5 && el !== main; depth++, el = el.parentElement) {
+            if (!visible(el) || el.closest("a[href]")) break;
+            const tag = el.tagName.toLowerCase();
+            if (tag === "a") break;
+            const text = clean(el.innerText);
+            // Never click a multi-control container or a numeric Following count.
+            if (text !== clean(leaf.innerText)) break;
+            const css = getComputedStyle(el);
+            if (tag === "button" || el.getAttribute("role") === "button" ||
+                el.tabIndex === 0 || css.cursor === "pointer") {
+                found = el;
+            }
+        }
+        if (!found || !visible(found)) continue;
+        const r = found.getBoundingClientRect();
+        const dx = Math.abs((r.left+r.right-anchor.left-anchor.right)/2);
+        const dy = r.top - anchor.top;
+        if (dx > 800 || dy < -100 || dy > 450 || r.top-rect.top > 900) continue;
+        selected.add(found);
+    }
+    // Ignore nested text containers referring to the same clickable ancestor.
+    const uniq = [...selected].filter(el => ![...selected].some(other =>
+        el !== other && other.contains(el) && clean(other.innerText) === clean(el.innerText)));
+    return {count: uniq.length, element: uniq.length === 1 ? uniq[0] : null};
+}
+"""
+
+
+def _profile_visual_pointer_control(page, username, words):
+    """Bounded fallback for unique cursor-pointer Instagram div/span controls.
+
+    The cursor alone is insufficient: exact target URL, target hero username,
+    unique Following/Requested label and geometric scope are all required.
+    """
+    main = page.locator("main").first
+    if not main.count() or not main.is_visible():
+        return None
+    handle = main.evaluate_handle(_POINTER_PROFILE_PROBE, {
+        "username": username, "words": [re.sub(r"\\", "", word) for word in words]})
+    try:
+        count = handle.get_property("count").json_value()
+        if count > 1:
+            raise RuntimeError("Multiple equivalent options: ambiguous visual Instagram relationship controls; no click.")
+        if count != 1:
+            return None
+        control = handle.get_property("element").as_element()
+        if control is None or not control.is_visible():
+            return None
+        return control
+    finally:
+        handle.dispose()
 
 def _notify_readiness(on_wait, phase, started_at, timeout_ms):
     """Progress-only callback; does not decide which Instagram element to click."""
@@ -527,6 +605,28 @@ def _verify_final_state(page, expected_handle, username, *, checks=3):
 
 
 
+def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
+    """One read-only target refresh may prove a delayed Unfollow completion.
+
+    Never issue a second relationship-changing click and never declare success
+    unless the same target now visibly displays Follow / Follow Back.
+    """
+    prefix = "Final state is ambiguous after a read-only refresh. "
+    try:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification after the action."
+        page.goto("https://www.instagram.com/" + username + "/",
+                  wait_until="domcontentloaded", timeout=45000)
+        result, message = _verify_final_state(page, expected_handle, username, checks=3)
+        if result == "ok":
+            return result, "Unfollow confirmed after a read-only profile refresh. " + message
+        if result == "blocked":
+            return result, message + " Unfollow may already have occurred; do not repeat it."
+        return "review", prefix + "No verified Follow state appeared. Do not repeat the click."
+    except Exception:
+        return "review", prefix + "Instagram could not be checked safely. Do not repeat the click."
+
+
 def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
     """Confirm a clicked pending-request cancellation by *reading*, never clicking.
 
@@ -740,7 +840,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                     return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
                 confirm.click(timeout=10000)
                 return _verify_final_state(page, expected_handle, username)
-        return "review", "Could not confirm whether another step is required. The click will not be repeated."
+        return _verify_unfollow_after_readonly_refresh(page, username, expected_handle)
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
     # and explicit Cancel Request confirmation.
@@ -1099,7 +1199,87 @@ class ActionRobot:
                 rests = load_batch_state(rests_file)
                 action_tabs = ActionTabPool(browser) if self.task != "audit" else None
                 stopped_for_review = False
-                for target_index, user in enumerate(self.targets):
+                if action_tabs:
+                    # Prepare a genuine ten-profile window *before* attempting
+                    # any relationship-changing clicks. All navigation still
+                    # honors the owner's per-visit cadence and mandatory rests.
+                    stage_names = []
+                    for candidate in self.targets:
+                        previous = journal.get(candidate, {})
+                        if (self._protected_for(candidate) or candidate in self.skipped
+                                or (previous.get("status") in ("ok", "review", "error", "blocked")
+                                    and not _preclick_no_action(previous))):
+                            continue
+                        if len(stage_names) >= MAX_ACTION_TABS:
+                            break
+                        if action_tabs.open(candidate) is None:
+                            break
+                        action_tabs.tabs[candidate]["status"] = "queued"
+                        stage_names.append(candidate)
+                    with self.lock:
+                        self.open_review_tabs = action_tabs.overview()
+                        self.message = ("Preparing " + str(len(stage_names)) +
+                                        " Instagram profile tabs with saved visit spacing.")
+                    for warm_user in stage_names:
+                        if self.stop_event.is_set():
+                            break
+                        while not self.stop_event.is_set():
+                            delay = max(
+                                wait_required(visits, self.max_count, self.window_minutes,
+                                              self.min_delay_seconds),
+                                batch_wait(rests,
+                                           self.max_count if self.rest_minutes > 0 else 0,
+                                           self.rest_minutes))
+                            if delay <= 0:
+                                break
+                            with self.lock:
+                                self.status = "waiting"
+                                self.wait_until = time.time() + delay
+                                self.message = ("Preparing ten tabs: waiting " +
+                                                str(int(delay+0.999)) +
+                                                " s before opening @" + warm_user)
+                            self.stop_event.wait(min(delay, 2.0))
+                        if self.stop_event.is_set():
+                            break
+                        with self.lock:
+                            self.wait_until = 0
+                            self.status = "waiting"
+                            self.message = "Preparing @" + warm_user + " in Chrome"
+                        tab = action_tabs.tabs[warm_user]
+                        tab["status"] = "loading_profile"
+                        visits = register_visit(visits_file, visits)
+                        started = visits[-1]
+                        tab["visit_started_at"] = started
+                        try:
+                            tab["page"].goto(
+                                "https://www.instagram.com/" + warm_user + "/",
+                                wait_until="commit", timeout=30000)
+                            tab["status"] = "prefetched"
+                        except Exception:
+                            # This was a read-only navigation: no action click.
+                            # Retain the tab and record a safe diagnostic later.
+                            tab["status"] = "prefetch_pending"
+                        finally:
+                            visits = finish_visit(visits_file, visits,
+                                                  started_at=started)
+                            rests = finish_batch_visit(
+                                rests_file, rests,
+                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.rest_minutes)
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+                        if (not tab["page"].is_closed()
+                                and (challenge_detected(tab["page"]) or
+                                     tab["page"].locator('input[name="password"]').count())):
+                            with self.lock:
+                                self.status = "blocked"
+                                self.message = ("Instagram requested sign-in or a security "
+                                                "check during read-only tab preparation. "
+                                                "No relationship-changing click was made.")
+                            stopped_for_review = True
+                            break
+                for target_index, user in enumerate(
+                        [] if stopped_for_review else self.targets):
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
@@ -1114,16 +1294,22 @@ class ActionRobot:
                     if (self._protected_for(user) or user in self.skipped or
                         previous.get("status") in ("ok", "review", "error", "blocked")):
                         continue
-                    while not self.stop_event.is_set():
-                        delay = max(wait_required(visits, self.max_count, self.window_minutes,
-                                                  self.min_delay_seconds),
-                                    batch_wait(rests, self.max_count if self.rest_minutes > 0 else 0,
-                                               self.rest_minutes))
-                        if delay <= 0: break
-                        with self.lock:
-                            self.status, self.wait_until = "waiting", time.time() + delay
-                            self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
-                        self.stop_event.wait(min(delay, 2.0))
+                    # Already-prefetched target tabs have paid for their
+                    # visit in the persistent ledger. Do not wait/charge again.
+                    existing_tab = action_tabs.prepared(user) if action_tabs else None
+                    if existing_tab is None:
+                        while not self.stop_event.is_set():
+                            delay = max(wait_required(visits, self.max_count,
+                                                      self.window_minutes,
+                                                      self.min_delay_seconds),
+                                        batch_wait(rests,
+                                                   self.max_count if self.rest_minutes > 0 else 0,
+                                                   self.rest_minutes))
+                            if delay <= 0: break
+                            with self.lock:
+                                self.status, self.wait_until = "waiting", time.time() + delay
+                                self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
+                            self.stop_event.wait(min(delay, 2.0))
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
@@ -1165,6 +1351,8 @@ class ActionRobot:
                         prior = journal.get(candidate, {})
                         if (not self._protected_for(candidate)
                                 and candidate not in self.skipped
+                                and (not action_tabs or
+                                     action_tabs.prepared(candidate) is None)
                                 and (prior.get("status") not in ("ok", "review", "error", "blocked")
                                      or _preclick_no_action(prior))):
                             next_user = candidate
@@ -1220,6 +1408,12 @@ class ActionRobot:
                         if self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
+                        elif prepared_item and prepared_item.get("status") == "prefetch_pending":
+                            relation = ""
+                            result = "review"
+                            details = (MISSING_RELATIONSHIP_CONTROL +
+                                       " Waiting timed out: read-only tab preparation failed. "
+                                       "No action clicked. Inspect the open profile tab.")
                         else:
                             relation = ""
                             result, details = perform_visible_action(
@@ -1235,11 +1429,14 @@ class ActionRobot:
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
-                        visits = finish_visit(
-                            visits_file, visits, started_at=current_visit_started)
-                        rests = finish_batch_visit(
-                            rests_file, rests,
-                            self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                        if not (prepared_item and
+                                prepared_item.get("visit_started_at") is not None):
+                            visits = finish_visit(
+                                visits_file, visits, started_at=current_visit_started)
+                            rests = finish_batch_visit(
+                                rests_file, rests,
+                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
                     # Persist the result BEFORE closing any confirmed tab.
