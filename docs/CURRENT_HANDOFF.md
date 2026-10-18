@@ -1,3 +1,11 @@
+## 2026-10-17 — Unfollow visible Following control not detected (v120.49 development)
+
+- Actual user's v120.48 Windows Issue Review lists three `missing_profile_info` in "Not Following Back". In the next screenshot the Instagram profile visibly has the Following button; the robot made **zero clicks** on the three affected users.
+- Fix candidate `fix/unfollow-following-control-20261017`: detects Following/Siguiendo accessible button (including role=button div and caret label) in verified target header or main-profile hero with exact visible @handle heading. Never turn a Following count/link or ambiguous duplicate into a click.
+- Exact legacy `missing_profile_info` no-click records are eligible for a new explicitly approved batch; uncertain previous clicks remain quarantined. Client action planning trusts read-only disk history over stale browser cache. Do not delete local action journals or ask user to reset profile data.
+- Regression tests in `tests/test_profile_actions_chromium.py`, `tests/test_action_batch_history.py` and `tests/automations-cold-start.test.cjs`. Run exact-head CI, Desktop/Android rendering and Windows installed Setup preview before merge. Real signed-in Instagram acceptance cannot be claimed from offline DOM tests.
+- Published stable stays v120.48; do not silently republish or disable active user state to work around Instagram.
+
 ## 2026-10-17 — v120.48 officially released and authorization deactivated
 
 - Owner-authorized normal stable [v120.48](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.48) published at 2026-10-18 00:27:53 UTC, 2026-10-17 in Saltillo. GitHub governed run [39082472684](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39082472684) **SUCCESS**; exact publication source SHA `19680119c0e0a1c5d5bdfb954793c355849f0bdb`.
