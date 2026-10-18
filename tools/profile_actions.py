@@ -481,7 +481,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
             return "blocked", "The target profile area could not be found."
         # Exact visible username may be a span or div, not a heading tag.
         if not _profile_hero_probe(page, username, []).get("target_visible"):
-            return "blocked", ("The exact target profile username could not be verified. "
+            return "blocked", ("The target profile heading or exact username could not be verified. "
                                "No action was performed.")
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
