@@ -1,13 +1,17 @@
 {
   "version": "120.49",
   "tag": "v120.49",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner instructed 'continua y cuando termines dale release' on 2026-10-17, then reported that released v120.48 failed to unfollow profiles while browser shows Following. The new v120.49 contains the requested regression fix and safely retryable zero-click outcomes; PR #120 and release PR #121 each passed all five exact-head workflow families. Owner expects to test fixes via an official installed Setup release, not an unreleased source ZIP. Publish only normal stable after independent safeguarded CI.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.48",
   "owner_acceptance_note": "Owner supplied actual screen evidence of the v120.48 bug; no successful Instagram unfollow has been verified. Publish Windows installed Setup, separate Desktop HTML/ZIP, optional integrated Windows robot ZIP and Android APK only if exact-commit Windows install/uninstall, real Desktop/Android visual gates, Android persistent production signer, and asset SHA-256 checks all pass. Post-release tests on the owner's Instagram/physical devices remain outstanding; do not bypass CAPTCHA, delete journals or claim the real profiles were unfollowed.",
-  "requested_at": "2026-10-17"
+  "requested_at": "2026-10-17",
+  "published_run": 39086045263,
+  "published_commit": "a6d4583df3cc75ae814b0619c291eac29ed18bff",
+  "completed_at_utc": "2026-10-18T01:25:15Z",
+  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.49"
 }

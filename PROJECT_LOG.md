@@ -1,3 +1,11 @@
+## 2026-10-17 — v120.49 published: Unfollow Following detector (no-click retry hotfix)
+
+- GitHub stable [v120.49](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.49) published at 2026-10-18T01:25:15Z (October 17, Saltillo local time), source SHA `a6d4583df3cc75ae814b0619c291eac29ed18bff` and owner-authorized governed workflow [39086045263](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39086045263) **success**. Nine expected assets confirmed: Windows Setup, ZIP, Android production-signed APK, standalone HTML and ZIP, SHA256SUMS and metadata/logo.
+- Release gates passed: Android source/signed certificate, rendered actual Android/Desktop screenshots, Windows installed Setup and isolated Chrome DOM safety tests, package checksums and published asset verification. Live Instagram unfollow on the owner's profile **not yet physically accepted**. Do not claim the user's screenshot target was unfollowed.
+- Post-publication safeguard: release authorization deactivated (`authorized=false`, `status=published`), stable manifest advanced to `v120.49` and next `v120.50` reserved; no automatic publishing of v120.50 is authorized.
+- Owner should install Windows Setup v120.49 using Updates or the official Setup (no prior uninstall or journal reset), then start a **small newly approved Not Following Back batch**. Exact legacy `missing_profile_info` pre-click records are eligible again. Inspect final profile state and Issue Review. Still ambiguous post-click entries remain excluded from automatic repetition.
+- Remaining follow-up: actual owner's Chrome/Instagram acceptance, confirm follow menu selector and post-click Follow/Follow Back, observe challenge stop and owner-identity checks, verify update preservation and cross-device data where relevant.
+
 ## 2026-10-17 — v120.49 candidate for reported Unfollow bug
 
 - Owner supplied a real v120.48 screenshot where three Not Following Back records incorrectly show `Insufficient profile evidence; nothing clicked`, followed by a browser screenshot of the target profile with **Following** visible. This is an active post-release defect, not a successful unfollow.
