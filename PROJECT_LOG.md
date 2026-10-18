@@ -1,3 +1,12 @@
+## 2026-10-18 — Prepare v120.51: paced read-only prefetch with ten-tab workflow
+
+- User explicitly ordered finishing InstaCleaner and publishing the next release. Version source follows distribution manifest `nextRelease=v120.51`; Android versionCode 12051/versionName 120.51 and Desktop UI v120.51 are synchronized, retaining original package and production signing certificate.
+- Action robot can **preload one next eligible target in a second Chrome tab while the current target is waiting for its relationship control/menu**, provided the owner-configured visit window/delay and mandatory batch rest permit the read-only navigation. Existing ten-tab cap is preserved. Changing an Instagram relationship still occurs **strictly one at a time**, with separate ownership proof, protected list and post-click Follow verification; no silent skips or replay of uncertain clicks.
+- A speculative visit is written to the persistent pacing ledger *before* navigation; finalization can target the correct visit timestamp when another tab was opened concurrently. Preloaded profile is reused, never fetched twice before its turn; any preload/navigation failure is left for normal visible readiness review, not treated as a successful action.
+- Added Chromium and Python tests for a preloaded exact profile, ten-tab no-eviction, and indexed visit completions. This is read-only overlapping **where cooldown allows**, not ten simultaneous Instagram page requests. The current visit intervals remain in effect.
+- Acceptance still pending: real signed-in owner Chrome test that Following is found and a real Unfollow/Cancel Request has changed to Follow/Follow Back. Automated fixture QA can validate safety but not live Instagram.
+- Release publication must use the governed v120.51 workflow and pass exact-head Desktop/Android visuals, installed Windows Setup, original Android signing certificate, hash/assets and release verification. Do not claim installation on owner's PC.
+
 ## 2026-10-18 — Development: 10 Chrome tabs and visible Instagram readiness confirmation
 
 - Owner superseded previous 5-tab preference: use **10 Chrome tabs** for Instagram action review, preserving one sequential relationship-changing click at a time and keeping unresolved tabs available for inspection. Updates MAX_ACTION_TABS, UI visible 0/10, and ten-tab safety tests.
