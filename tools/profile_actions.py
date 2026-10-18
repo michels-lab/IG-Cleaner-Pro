@@ -216,7 +216,7 @@ def _profile_relationship_control(page, username, words):
     probe = _profile_hero_probe(page, username, words)
     indices = probe.get("candidate_indices", [])
     if len(indices) > 1:
-        raise RuntimeError("Multiple matching profile action controls; no click. Manual review required.")
+        raise RuntimeError("Multiple equivalent options: Multiple matching profile action controls; no click. Manual review required.")
     if not probe.get("target_visible") or len(indices) != 1:
         return None
     main = page.locator("main").first
