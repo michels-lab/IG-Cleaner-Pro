@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.51.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.52.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.51.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.52.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,7 +27,7 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.51.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.52.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
@@ -36,7 +36,7 @@
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     },
     "windowsRobot": {
-      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.51.exe",
+      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.52.exe",
       "artifactTemplate": "IG-Cleaner-Pro-Windows-Setup-v{version}.exe",
       "transport": "github-release",
       "runtime": "local-windows-chrome",
@@ -83,7 +83,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.51",
+    "nextRelease": "v120.52",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -95,9 +95,9 @@
       "v120.32",
       "v120.33"
     ],
-    "currentStableRelease": "v120.50",
-    "lastPublishedRun": 39106161831,
-    "lastPublishedCommit": "e0a95a8c192642c175a1b080212c7ddd5a4f0655",
+    "currentStableRelease": "v120.51",
+    "lastPublishedRun": 39114910174,
+    "lastPublishedCommit": "f4218e33cc5562c49227b45da23dca9715582a87",
     "genericPublisher": ".github/workflows/release.yml",
     "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
   }
