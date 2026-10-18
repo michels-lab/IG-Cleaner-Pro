@@ -1,3 +1,10 @@
+## 2026-10-18 — v120.50 release preparation: Instagram Following diagnostic
+
+- Owner's actual v120.49 issue screenshot reports no click while the page visibly displays Following. PR #122 implements a read-only bounded `main` profile hero survey handling usernames in span/div and unique nearby following controls (role=button, button, tabindex=0), with explicit safety rejection of counts/links, suggestions and duplicates.
+- The issue message includes *category counts only* of the robot-controlled Chrome DOM: `main`, `exact username`, `named interactive controls`, `eligible controls`; no sensitive content is recorded. Known no-click issues remain safely retryable with a fresh owner-approved batch.
+- PR #122 passed 5/5 exact-head workflows and merged. Prepare v120.50 signed Android metadata and visible UI. Must still pass governed release exact-commit screenshots, setup install/uninstall/upgrade, production signer and checksum/publication checks.
+- User must test installed Windows with a small approved batch; do not claim a working live Instagram unfollow from mock Chromium fixtures. Stable v120.49 stays public until v120.50 independently verified.
+
 ## 2026-10-18 — Unfollow still misses Following after v120.49
 
 - Owner v120.49 screenshots show Following visibly present in Instagram but Issue Review still records `missing_profile_info`, no action click.
