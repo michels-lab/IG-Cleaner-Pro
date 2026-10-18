@@ -1,3 +1,12 @@
+## 2026-10-18 — Owner live v120.51 failure: three tabs, control missed, ambiguous post-click result
+
+- Screenshot of v120.51 Issue Review: @jdrd.avid has `Final state is ambiguous`, **possibly clicked** and therefore must not be automatically repeated. @isaac_nahuat has `profile_load_timeout` with `main=yes, exact username=yes, named interactive controls=0, eligible controls=0`, **no click**. A third issue row is visible. This is actual owner live evidence, not a mock success.
+- Root cause of "10 tabs": v120.51 only kept up to ten *slots* but typically prepared **one** next page. On a review/timeout stop, only 2-3 pages were visited. Corrective branch `fix/ig-robot-ten-prefill-following-20261018` now allocates up to ten real target tabs and navigates each with durable visit journaling and owner-configured pacing **before** attempting relationship changes. Explicit approved batch size, exclusions, existing protected/attempted journal and security checks still apply. Fewer than ten eligible selected targets or security stops can still mean fewer than ten loaded pages.
+- Enhanced read-only exact-target Following detection for uniquely located visual `cursor:pointer` controls with exact visible text and target username, excluding Following count links, suggested/sidebar controls and ambiguous duplicates. Never guess a click target without exact evidence.
+- On a potentially clicked Unfollow still showing ambiguous relationship state, perform **one read-only target refresh** then verify Follow/Follow Back; never re-click, never infer success without verified final state. Keep uncertain tabs and journals.
+- Added offline real-Chromium regression fixtures for cursor-pointer control, counter-link exclusion, ambiguous duplicates and delayed post-click UI refresh. Real owner acceptance still pending.
+- This is development work. Official stable remains v120.51. **Do not publish v120.52 without a new explicit owner release instruction** and exact-commit QA.
+
 ## 2026-10-18 — Official v120.51 stable release published (real Instagram acceptance still pending)
 
 - User explicitly requested `TERMINA TODO Y DALE RELEASE` in the InstaCleaner continuation. PR [#126](https://github.com/michels-lab/IG-Cleaner-Pro/pull/126) merged after all five exact-head QA families passed. The `main` merge commit `1b566b76dd16e34375bbb265531ee7c4f3fe49f3` also passed Desktop, Android, general CI and the installed Windows/Chromium integration tests.
