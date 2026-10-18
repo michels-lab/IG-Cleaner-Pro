@@ -1,3 +1,10 @@
+### Development update — 2026-10-18: ten tabs and visible loading/Following wait
+
+- The owner's latest requested tab capacity is **10**, superseding the earlier five-tab request; all tabs belong to the same visible owner-controlled Chrome session. Relationship-changing clicks remain sequential rather than concurrent.
+- After a profile navigation, Automations reports a live stage with the target @username: Instagram profile to load, Following / Siguiendo button or Requested / Solicitado button, elapsed time, and bounded wait limit. The robot waits for visible profile identity then the correctly scoped control; HTML DOMContentLoaded alone cannot prove Instagram finished rendering.
+- If the target or required control remains unverified after 20 seconds, the robot reports a profile_load_timeout **without clicking**, retains its Chrome profile tab for manual inspection, and pauses the batch for review instead of silently advancing to another person. The no-click journal record can be considered in a separately owner-approved new batch; a possibly clicked action cannot be repeated automatically.
+- This is a development-only implementation pending exact-source tests and the owner's real Instagram acceptance, not a claim about released v120.50 behavior.
+
 ### Development candidate — 2026-10-18: five target tabs with retained verification
 
 - The owner requested 5 Chrome **tabs** (not separate browser windows) and tab closure only after a confirmed result. The candidate action controller uses up to five target-page slots. An `ok` (actual visible Follow/Follow Back after owner verification) can close its tab, as can an explicitly pre-click skipped profile; missing controls, uncertain results and post-click verification failure retain their tab for human review. If five cannot be confirmed, no sixth relationship action starts.
