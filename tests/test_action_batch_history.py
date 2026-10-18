@@ -110,6 +110,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
                     "status": "review", "issue": "missing_profile_info",
                     "message": MISSING_RELATIONSHIP_CONTROL
                 },
+                "missing.diagnostic": {
+                    "status": "review", "issue": "missing_profile_info",
+                    "message": MISSING_RELATIONSHIP_CONTROL +
+                        " Profile layout: main=yes, exact username=yes, named interactive controls=0, eligible controls=0. Nothing clicked."
+                },
                 "maybe.clicked": {
                     "status": "review", "issue": "pending_cancel_unverified",
                     "message": "Pending cancellation unverified after read-only refresh: Requested."
@@ -131,6 +136,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                              ["maybe.clicked", "reported.no.click", "unproven"])
             self.assertTrue(_preclick_no_action(historical["missing.old"]))
             self.assertTrue(_preclick_no_action(historical["missing.new"]))
+            self.assertTrue(_preclick_no_action(historical["missing.diagnostic"]))
             self.assertFalse(_preclick_no_action(historical["maybe.clicked"]))
             self.assertFalse(_preclick_no_action(historical["unproven"]))
             self.assertFalse(_preclick_no_action(historical["reported.no.click"]))
