@@ -286,6 +286,32 @@ def _notify_readiness(on_wait, phase, started_at, timeout_ms):
                 max(1, int(timeout_ms / 1000)))
 
 
+def _wait_for_target_profile_shell(page, username, *, timeout_ms=ACTION_CONTROL_WAIT_MS,
+                                   on_wait=None, can_act=None):
+    """Wait for the target's *rendered* identity region, not DOMContentLoaded."""
+    started_at = time.monotonic()
+    deadline = started_at + timeout_ms / 1000.0
+    while True:
+        if can_act and not can_act(username):
+            return False
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return False
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return False
+        header = page.locator("header").first
+        if header.count() and header.is_visible() and header.inner_text(timeout=2000).strip():
+            return True
+        if _profile_hero_probe(page, username, []).get("target_visible"):
+            return True
+        _notify_readiness(on_wait, "loading_profile", started_at, timeout_ms)
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return False
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
 def _wait_for_profile_relationship_control(page, username, words, *,
                                            timeout_ms=ACTION_CONTROL_WAIT_MS,
                                            on_wait=None, can_act=None):
@@ -597,7 +623,22 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         on_wait("loading_profile", 0, 45)
     page.goto("https://www.instagram.com/" + username + "/", wait_until="domcontentloaded",
               timeout=45000)
-    page.wait_for_timeout(750)
+    if not _wait_for_target_profile_shell(page, username, on_wait=on_wait,
+                                         can_act=can_act):
+        if can_act and not can_act(username):
+            return "skipped", "Skipped or protected before a relationship click."
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification."
+        url = urlparse(page.url)
+        if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").casefold() != username.casefold():
+            return "blocked", "Instagram redirected to another profile."
+        main = page.locator("main").first
+        if main.count() and main.is_visible() and main.inner_text(timeout=2000).strip():
+            return "blocked", ("The target profile heading or exact username could not be verified. "
+                               "No action was performed.")
+        return "review", (MISSING_RELATIONSHIP_CONTROL +
+            " Waiting timed out: profile identity has not loaded after 20 seconds. "
+            "No action clicked. Leave this tab open for manual review.")
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requested verification."
     if not _verified_action_owner(page, expected_handle):
