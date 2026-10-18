@@ -19,6 +19,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
         return dict(owner="owner1",account="ig_account_1",expected_handle="owner.name",
                     task=task, targets=users,batch_size=len(users),
                     gap_seconds=10,rest_minutes=0,protected=[],
+                    followers_evidence=task=="unfollow",
                     confirmation=f"{task}:{len(users)}")
 
     def test_prior_two_batches_are_exposed_for_next_batch(self):
