@@ -1177,7 +1177,87 @@ class ActionRobot:
                 rests = load_batch_state(rests_file)
                 action_tabs = ActionTabPool(browser) if self.task != "audit" else None
                 stopped_for_review = False
-                for target_index, user in enumerate(self.targets):
+                if action_tabs:
+                    # Prepare a genuine ten-profile window *before* attempting
+                    # any relationship-changing clicks. All navigation still
+                    # honors the owner's per-visit cadence and mandatory rests.
+                    stage_names = []
+                    for candidate in self.targets:
+                        previous = journal.get(candidate, {})
+                        if (self._protected_for(candidate) or candidate in self.skipped
+                                or (previous.get("status") in ("ok", "review", "error", "blocked")
+                                    and not _preclick_no_action(previous))):
+                            continue
+                        if len(stage_names) >= MAX_ACTION_TABS:
+                            break
+                        if action_tabs.open(candidate) is None:
+                            break
+                        action_tabs.tabs[candidate]["status"] = "queued"
+                        stage_names.append(candidate)
+                    with self.lock:
+                        self.open_review_tabs = action_tabs.overview()
+                        self.message = ("Preparing " + str(len(stage_names)) +
+                                        " Instagram profile tabs with saved visit spacing.")
+                    for warm_user in stage_names:
+                        if self.stop_event.is_set():
+                            break
+                        while not self.stop_event.is_set():
+                            delay = max(
+                                wait_required(visits, self.max_count, self.window_minutes,
+                                              self.min_delay_seconds),
+                                batch_wait(rests,
+                                           self.max_count if self.rest_minutes > 0 else 0,
+                                           self.rest_minutes))
+                            if delay <= 0:
+                                break
+                            with self.lock:
+                                self.status = "waiting"
+                                self.wait_until = time.time() + delay
+                                self.message = ("Preparing ten tabs: waiting " +
+                                                str(int(delay+0.999)) +
+                                                " s before opening @" + warm_user)
+                            self.stop_event.wait(min(delay, 2.0))
+                        if self.stop_event.is_set():
+                            break
+                        with self.lock:
+                            self.wait_until = 0
+                            self.status = "waiting"
+                            self.message = "Preparing @" + warm_user + " in Chrome"
+                        tab = action_tabs.tabs[warm_user]
+                        tab["status"] = "loading_profile"
+                        visits = register_visit(visits_file, visits)
+                        started = visits[-1]
+                        tab["visit_started_at"] = started
+                        try:
+                            tab["page"].goto(
+                                "https://www.instagram.com/" + warm_user + "/",
+                                wait_until="commit", timeout=30000)
+                            tab["status"] = "prefetched"
+                        except Exception:
+                            # This was a read-only navigation: no action click.
+                            # Retain the tab and record a safe diagnostic later.
+                            tab["status"] = "prefetch_pending"
+                        finally:
+                            visits = finish_visit(visits_file, visits,
+                                                  started_at=started)
+                            rests = finish_batch_visit(
+                                rests_file, rests,
+                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.rest_minutes)
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+                        if (not tab["page"].is_closed()
+                                and (challenge_detected(tab["page"]) or
+                                     tab["page"].locator('input[name="password"]').count())):
+                            with self.lock:
+                                self.status = "blocked"
+                                self.message = ("Instagram requested sign-in or a security "
+                                                "check during read-only tab preparation. "
+                                                "No relationship-changing click was made.")
+                            stopped_for_review = True
+                            break
+                for target_index, user in enumerate(
+                        [] if stopped_for_review else self.targets):
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
@@ -1192,16 +1272,22 @@ class ActionRobot:
                     if (self._protected_for(user) or user in self.skipped or
                         previous.get("status") in ("ok", "review", "error", "blocked")):
                         continue
-                    while not self.stop_event.is_set():
-                        delay = max(wait_required(visits, self.max_count, self.window_minutes,
-                                                  self.min_delay_seconds),
-                                    batch_wait(rests, self.max_count if self.rest_minutes > 0 else 0,
-                                               self.rest_minutes))
-                        if delay <= 0: break
-                        with self.lock:
-                            self.status, self.wait_until = "waiting", time.time() + delay
-                            self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
-                        self.stop_event.wait(min(delay, 2.0))
+                    # Already-prefetched target tabs have paid for their
+                    # visit in the persistent ledger. Do not wait/charge again.
+                    existing_tab = action_tabs.prepared(user) if action_tabs else None
+                    if existing_tab is None:
+                        while not self.stop_event.is_set():
+                            delay = max(wait_required(visits, self.max_count,
+                                                      self.window_minutes,
+                                                      self.min_delay_seconds),
+                                        batch_wait(rests,
+                                                   self.max_count if self.rest_minutes > 0 else 0,
+                                                   self.rest_minutes))
+                            if delay <= 0: break
+                            with self.lock:
+                                self.status, self.wait_until = "waiting", time.time() + delay
+                                self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
+                            self.stop_event.wait(min(delay, 2.0))
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
@@ -1298,6 +1384,12 @@ class ActionRobot:
                         if self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
+                        elif prepared_item and prepared_item.get("status") == "prefetch_pending":
+                            relation = ""
+                            result = "review"
+                            details = (MISSING_RELATIONSHIP_CONTROL +
+                                       " Waiting timed out: read-only tab preparation failed. "
+                                       "No action clicked. Inspect the open profile tab.")
                         else:
                             relation = ""
                             result, details = perform_visible_action(
@@ -1313,11 +1405,14 @@ class ActionRobot:
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
-                        visits = finish_visit(
-                            visits_file, visits, started_at=current_visit_started)
-                        rests = finish_batch_visit(
-                            rests_file, rests,
-                            self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                        if not (prepared_item and
+                                prepared_item.get("visit_started_at") is not None):
+                            visits = finish_visit(
+                                visits_file, visits, started_at=current_visit_started)
+                            rests = finish_batch_visit(
+                                rests_file, rests,
+                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
                     # Persist the result BEFORE closing any confirmed tab.
