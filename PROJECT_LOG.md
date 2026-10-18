@@ -1,3 +1,11 @@
+## 2026-10-17 — v120.49 candidate for reported Unfollow bug
+
+- Owner supplied a real v120.48 screenshot where three Not Following Back records incorrectly show `Insufficient profile evidence; nothing clicked`, followed by a browser screenshot of the target profile with **Following** visible. This is an active post-release defect, not a successful unfollow.
+- Root-cause and fix developed in PR #120: conservative profile-scoped Following/Siguiendo detection including role=button and dropdown caret, no-click-only legacy journal retry, fresh backend history precedence, and explanatory Issue Review. Preserves no-repeat protections for potentially clicked actions.
+- PR #120 exact-head CI: Profile Counts, Desktop rendered UI, Android emulator, general CI and integrated Windows app preview/Setup passed before merge into main `5c12723d`; offline Chromium tests do not prove live Instagram.
+- This separate preparation branch advances production Android Gradle metadata, signed version manifest and Desktop visible version from v120.48 to v120.49 without altering the certificate. **Stable remains v120.48 until independent governed publication verifies exact commit QA, Windows installed Setup, signed Android APK and SHA-256.**
+- User's earlier continuation instruction included publishing the next working installer; actual owner device and Instagram relationship-changing acceptance remains pending and must be reported separately, never invented.
+
 ## 2026-10-17 — v120.49 development: live-owner Unfollow misses visible Instagram Following controls
 
 - User's **actual Windows v120.48 Issue Review screenshot** shows three "Not Following Back" profiles with `missing_profile_info`, message "The profile does not show the state required for this action." and zero relationship-changing clicks. User separately showed the Instagram profile itself visibly has **Following**. This establishes a detection failure, not proof the person was unfollowed or that the Instagram session failed.
