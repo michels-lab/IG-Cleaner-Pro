@@ -32,34 +32,35 @@ class FakeTabContext:
 
 
 class ActionTabPoolTests(unittest.TestCase):
-    def test_five_tabs_are_kept_separate_and_only_verified_actions_close(self):
-        from profile_actions import ActionTabPool
+    def test_ten_tabs_hold_unverified_and_close_only_confirmed(self):
+        from profile_actions import ActionTabPool, MAX_ACTION_TABS
+        self.assertEqual(MAX_ACTION_TABS, 10)
         context = FakeTabContext()
         pool = ActionTabPool(context)
-        a = pool.open("first.person")
-        b = pool.open("second.person")
-        c = pool.open("third.person")
-        d = pool.open("fourth.person")
-        e = pool.open("fifth.person")
-        self.assertEqual(len(context.created), 5)
-        self.assertIsNone(pool.open("sixth.person"))
-        pool.record("first.person", "review")
-        pool.record("second.person", "blocked")
-        self.assertFalse(a.is_closed())
-        self.assertFalse(b.is_closed())
-        self.assertIsNone(pool.open("fourth.person"))
-        pool.record("third.person", "ok")
-        self.assertFalse(d.is_closed())
-        self.assertFalse(e.is_closed())
-        self.assertTrue(c.is_closed())
-        self.assertFalse(a.is_closed())
-        self.assertFalse(b.is_closed())
-        fourth = pool.open("sixth.person")
-        self.assertIsNotNone(fourth)
-        self.assertEqual(set(x["username"] for x in pool.overview()),
-                         {"first.person", "second.person", "fourth.person",
-                          "fifth.person", "sixth.person"})
-        self.assertIsNone(pool.open("sixth.person"))
+        users = [f"profile.{n}" for n in range(1, 11)]
+        tabs = {user: pool.open(user) for user in users}
+        self.assertEqual(len(context.created), 10)
+        self.assertTrue(all(tab is not None for tab in tabs.values()))
+        self.assertIsNone(pool.open("profile.11"))
+        pool.record("profile.1", "review")
+        pool.record("profile.2", "blocked")
+        pool.record("profile.3", "error")
+        self.assertFalse(any(tabs[name].is_closed() for name in users))
+        self.assertIsNone(pool.open("profile.11"),
+                          "Unverified tabs must not be silently evicted")
+        pool.record("profile.4", "ok")
+        self.assertTrue(tabs["profile.4"].is_closed())
+        self.assertFalse(tabs["profile.1"].is_closed())
+        eleventh = pool.open("profile.11")
+        self.assertIsNotNone(eleventh)
+        self.assertIsNone(pool.open("profile.12"))
+        self.assertEqual(len(pool.overview()), 10)
+        self.assertEqual(
+            {entry["username"] for entry in pool.overview()},
+            (set(users) - {"profile.4"}) | {"profile.11"})
+        self.assertEqual(pool.tabs["profile.1"]["status"], "review")
+        self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
+        self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
