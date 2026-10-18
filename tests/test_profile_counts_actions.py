@@ -136,6 +136,11 @@ class FakePage:
     def locator(self, selector):
         if selector == "header":
             return self.header
+        if selector == "main":
+            # Original offline fixtures use only a semantic profile header.
+            # A main-only Instagram layout is exercised separately in real
+            # Chromium, not fabricated through this unit-test FakePage.
+            return FakeRoot("", visible=False)
         if selector == '[role="menu"]':
             return self.menu
         if selector == '[role="dialog"]':

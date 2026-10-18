@@ -14971,11 +14971,14 @@ function ownInstagramHandle(){
  }
  return handle;
 }
-function selectedActionTargets(){
+function selectedActionTargets(verifiedAttempts=null){
  refreshScope();
  const limit=Number(document.getElementById("igcAutoBatch")?.value||30);
  if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error("Choose 1–1,000 profiles per batch.");
- const attempted=priorAttempts(mode);
+ // An explicit history read is mandatory before the robot starts. Its
+ // authoritative journal overrides older browser-cache or idle poll values,
+ // including v120.48 issues proven to have made zero relationship clicks.
+ const attempted=verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
  return [...new Set(inputs().filter(r=>!isProtected(r.kind,r.username)&&
      !skips[r.kind].has(r.username)&&!attempted.has(r.username))
      .map(r=>r.username))].slice(0,limit);
@@ -15023,8 +15026,9 @@ window.igcAutoStart=async function(){
  try{
   // Fail closed unless the latest persisted owner/account/task history
   // is known. Never trust a stale in-memory batch or an idle snapshot.
-  await refreshActionHistoryForStart(mode);
-  const targets=selectedActionTargets(),data=actionConfig(mode,targets);
+  const verifiedHistory=await refreshActionHistoryForStart(mode);
+  const targets=selectedActionTargets(new Set(verifiedHistory.attempted_usernames.map(norm)));
+  const data=actionConfig(mode,targets);
   const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
   const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
   if(!window.confirm("Run "+operation+" on "+targets.length+" profiles from @"+
@@ -15142,7 +15146,7 @@ const issueLabels={
  pending_not_requested:"Not a pending request anymore",
  pending_cancel_unverified:"Cancellation click sent; status not confirmed after read-only refresh",
  mutual_before_action:"This account follows you; no unfollow action was taken",
- missing_profile_info:"Insufficient profile evidence; nothing clicked",
+ missing_profile_info:"Instagram control not found; no action clicked",
  requires_manual_review:"Could not verify; manual review required"
 };
 window.igcAutoRenderIssues=function(){
@@ -15192,6 +15196,11 @@ window.igcAutoRenderIssues=function(){
   if(selected==="cancel"&&issue.issue==="pending_cancel_unverified"){
    const recovery=document.createElement("div");recovery.className="note";
    recovery.textContent="The click may have succeeded. Open the profile to inspect Follow / Requested; do not re-run Cancel Request automatically.";
+   reason.appendChild(recovery);
+  }
+  if(issue.issue==="missing_profile_info"){
+   const recovery=document.createElement("div");recovery.className="note";
+   recovery.textContent="No relationship-changing click occurred. In the updated Windows app, this exact no-click result may be safely checked again in a newly approved batch. A post-click unverified action will never be repeated automatically.";
    reason.appendChild(recovery);
   }
   const profile=document.createElement("a");profile.className="btn";

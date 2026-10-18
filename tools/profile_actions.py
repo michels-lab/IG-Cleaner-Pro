@@ -28,6 +28,14 @@ TASKS = {"unfollow": "unfollow", "cancel": "cancel request", "audit": "read-only
 ACTION_WINDOW_MINUTES = 60
 MAX_ACTIONS_PER_JOB = 1000
 
+# Retry only verified pre-click misses after owner approves a new batch.
+MISSING_RELATIONSHIP_CONTROL = (
+    "The profile does not show the state required for this action. "
+    "No unique Following/Requested control was found in the verified target profile; "
+    "nothing clicked."
+)
+LEGACY_MISSING_RELATIONSHIP_CONTROL = "The profile does not show the state required for this action."
+
 
 def _atomic_json(path: Path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -102,6 +110,42 @@ def _visible_button(root, words):
     return _visible_named_control(root, words, roles=("button",))
 
 
+def _profile_relationship_control(page, username, words):
+    """Find a unique role=button in the correct person's profile action area.
+
+    The relationship control may live in <header> or in Instagram's <main>
+    profile hero as a role=button div. Following counts and suggested accounts
+    are never enough evidence to click. Fail closed on duplicate controls.
+    """
+    current = urlparse(page.url)
+    if (current.hostname not in ("www.instagram.com", "instagram.com")
+            or current.path.strip("/").casefold() != username.casefold()):
+        return None
+    labels = [r"(?:%s)(?:\s*[▾▼⌄])?" % word for word in words]
+    header = page.locator("header").first
+    if header.count() and header.is_visible():
+        found = _visible_named_control(header, labels, roles=("button",))
+        if found is not None:
+            return found
+    main = page.locator("main").first
+    if not main.count() or not main.is_visible():
+        return None
+    headings = main.locator("h1, h2, h3")
+    if headings.count() > 30:
+        return None
+    # Require target @handle in a visible heading, not merely an unrelated
+    # suggestion, link, or the verified profile URL.
+    confirmed = any(
+        headings.nth(i).is_visible()
+        and headings.nth(i).inner_text(timeout=3000).strip().lstrip("@").casefold()
+            == username.casefold()
+        for i in range(headings.count())
+    )
+    if not confirmed:
+        return None
+    return _visible_named_control(main, labels, roles=("button",))
+
+
 def _unfollow_option(page):
     """Look in an opened action menu/dialog first; never follow unrelated UI text."""
     names = [r"Unfollow", r"Dejar de seguir"]
@@ -171,15 +215,11 @@ def _request_cancel_confirmation(dialog, username):
     return unfollow
 
 
-def _follow_state(header):
-    """Return verified post-action relation without conflating follow-back.
-
-    Follow Back / Seguir también: they follow the owner; owner no longer follows.
-    Follow / Seguir: owner no longer follows; no follow-back is indicated.
-    """
-    if _visible_button(header, [r"Follow Back", r"Seguir también"]):
+def _follow_state(page, username):
+    """Verify the result on the exact target, not an unrelated Follow link."""
+    if _profile_relationship_control(page, username, [r"Follow Back", r"Seguir también"]):
         return "follow_back"
-    if _visible_button(header, [r"Follow", r"Seguir"]):
+    if _profile_relationship_control(page, username, [r"Follow", r"Seguir"]):
         return "follow"
     return None
 
@@ -215,22 +255,20 @@ def _verified_action_owner(page, expected_handle):
             except Exception:
                 pass
 
-def _verify_final_state(page, expected_handle, *, checks=3):
+def _verify_final_state(page, expected_handle, username, *, checks=3):
     """Allow short UI settling but never infer success from a completed click."""
     for _ in range(checks):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification after the action."
         if not _verified_action_owner(page, expected_handle):
             return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            state = _follow_state(header)
-            if state == "follow_back":
-                return "ok", ("Action confirmed: Follow Back. "
-                              "The person still follows you, but you no longer follow them.")
-            if state == "follow":
-                return "ok", ("Action confirmed: Follow. "
-                              "You no longer follow this account; it does not show a followback.")
+        state = _follow_state(page, username)
+        if state == "follow_back":
+            return "ok", ("Action confirmed: Follow Back. "
+                          "The person still follows you, but you no longer follow them.")
+        if state == "follow":
+            return "ok", ("Action confirmed: Follow. "
+                          "You no longer follow this account; it does not show a followback.")
         page.wait_for_timeout(650)
     return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
@@ -254,23 +292,38 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
         if (current.hostname not in ("www.instagram.com", "instagram.com")
                 or current.path.strip("/").casefold() != username.casefold()):
             return "review", prefix + "Instagram redirected away from the target; do not repeat the action."
-        result, message = _verify_final_state(page, expected_handle, checks=2)
+        result, message = _verify_final_state(page, expected_handle, username, checks=2)
         if result == "ok":
             return "ok", ("Cancel Request confirmed after a read-only profile refresh. " + message)
         if result == "blocked":
             return result, message + " Cancellation may already have occurred; do not repeat it."
-        header = page.locator("header").first
-        if header.count() and header.is_visible():
-            if _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]):
-                return "review", prefix + ("Instagram still displays Requested. "
-                                            "Do not repeat; check the profile manually.")
-            if _visible_button(header, [r"Following", r"Siguiendo"]):
-                return "review", prefix + ("Instagram now displays Following, not a cancelled request. "
-                                            "Review the relationship manually.")
+        if _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]):
+            return "review", prefix + ("Instagram still displays Requested. "
+                                        "Do not repeat; check the profile manually.")
+        if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
+            return "review", prefix + ("Instagram now displays Following, not a cancelled request. "
+                                        "Review the relationship manually.")
         return "review", prefix + "No unambiguous Follow state was visible. Do not repeat the action."
     except Exception as exc:
         return "review", prefix + ("The target could not be checked safely (" +
                                      str(exc)[:100] + "). Do not repeat the action.")
+
+
+def _preclick_no_action(entry):
+    """Recognize a known failed *first* click, never an uncertain outcome.
+
+    Prior versions labeled these misses "nothing clicked" but blocked them
+    forever as attempted. Rechecking requires a new owner-approved batch.
+    """
+    if _preclick_identity_blocked(entry):
+        return True
+    return (isinstance(entry, dict)
+            and entry.get("status") == "review"
+            and entry.get("issue") == "missing_profile_info"
+            and entry.get("message") in (
+                LEGACY_MISSING_RELATIONSHIP_CONTROL,
+                MISSING_RELATIONSHIP_CONTROL,
+            ))
 
 
 def _preclick_identity_blocked(entry):
@@ -327,22 +380,34 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         return "blocked", "Instagram redirected to another profile."
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
-        return "blocked", "The profile header could not be found."
-    if task == "unfollow" and re.search(r"\b(follows you|te sigue)\b",
+        # Some layouts use a role=button directly in the profile's main area
+        # without a semantic header. The helper independently requires an
+        # exact visible @username heading before permitting any action.
+        main = page.locator("main").first
+        if not main.count() or not main.is_visible():
+            return "blocked", "The target profile area could not be found."
+        headings = main.locator("h1, h2, h3")
+        if headings.count() > 30 or not any(
+                headings.nth(i).is_visible()
+                and headings.nth(i).inner_text(timeout=3000).strip().lstrip("@").casefold()
+                    == username.casefold()
+                for i in range(headings.count())):
+            return "blocked", "The target profile heading could not be verified."
+    if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
-    active = (_visible_button(header, [r"Following", r"Siguiendo"])
+    active = (_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
               if task == "unfollow" else
-              _visible_button(header, [r"Requested", r"Solicitado", r"Solicitada"]))
+              _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
         if task == "cancel":
-            if _visible_button(header, [r"Following", r"Siguiendo"]):
+            if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
                 return "review", ("Outdated pending request: Instagram now shows Following; "
                                   "the follow request was accepted. No relationship was changed.")
-            if _follow_state(header):
+            if _follow_state(page, username):
                 return "review", ("The request no longer appears as Requested; "
                                   "no change was made.")
-        return "review", "The profile does not show the state required for this action."
+        return "review", MISSING_RELATIONSHIP_CONTROL
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
@@ -356,7 +421,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         choice = _unfollow_option(page)
         if choice is None:
             # Rare layouts change directly on the first click. Do not guess.
-            return _verify_final_state(page, expected_handle)
+            return _verify_final_state(page, expected_handle, username)
         if can_act and not can_act(username):
             return "review", "Menu opened, but protection changed. Review before continuing."
         if not _verified_action_owner(page, expected_handle):
@@ -364,7 +429,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         choice.click(timeout=10000)
         page.wait_for_timeout(650)
         # Public: new Follow button should be visible already.
-        status, message = _verify_final_state(page, expected_handle, checks=2)
+        status, message = _verify_final_state(page, expected_handle, username, checks=2)
         if status in ("ok", "blocked"):
             return status, message
         # Private: Instagram may prompt one more explicit confirmation.
@@ -379,7 +444,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
                 if not _verified_action_owner(page, expected_handle):
                     return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
                 confirm.click(timeout=10000)
-                return _verify_final_state(page, expected_handle)
+                return _verify_final_state(page, expected_handle, username)
         return "review", "Could not confirm whether another step is required. The click will not be repeated."
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
@@ -396,7 +461,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         choice.click(timeout=10000)
     # A click may have succeeded even if Instagram's client UI has not caught
     # up. A *read-only* fresh profile load may confirm it; never click again.
-    result, details = _verify_final_state(page, expected_handle)
+    result, details = _verify_final_state(page, expected_handle, username)
     if result != "review":
         return result, details
     return _verify_cancel_after_readonly_refresh(page, username, expected_handle)
@@ -511,7 +576,7 @@ class ActionRobot:
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and isinstance(record, dict)
             and record.get("status") in ("ok", "review", "error", "blocked")
-            and not _preclick_identity_blocked(record))
+            and not _preclick_no_action(record))
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted}
 
@@ -590,7 +655,7 @@ class ActionRobot:
             if not resume:
                 previous = self._journal()
                 if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
-                       and not _preclick_identity_blocked(record) for user in targets):
+                       and not _preclick_no_action(record) for user in targets):
                     raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
             if not resume:
@@ -627,7 +692,7 @@ class ActionRobot:
             attempted_usernames = sorted(u for u, record in journal.items()
                 if isinstance(record, dict)
                 and record.get("status") in ("ok", "review", "error", "blocked")
-                and not _preclick_identity_blocked(record))
+                and not _preclick_no_action(record))
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
@@ -719,7 +784,7 @@ class ActionRobot:
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
                     previous = journal.get(user, {})
-                    if _preclick_identity_blocked(previous):
+                    if _preclick_no_action(previous):
                         journal.pop(user, None)
                         _atomic_json(path, journal)
                         previous = {}
