@@ -1,3 +1,11 @@
+## 2026-10-17 — Preparing governed v120.48 stable release, explicit owner instruction
+
+- Owner instructed: continue InstaCleaner pending development tasks and **publish a release when the work is finished**. Scope of this candidate: PR #113 (read-only Cancel Pending recheck), sequential Pending/Focus import recovery commit `5c7aed9`, PR #117 cold-start action-journal safety and PR #118 static English UI labels. Do not claim all outstanding physical/browser acceptance issues are complete.
+- PR #118 was merged to main as `5e7cedcd` after its five exact-head CI families completed successfully. PR #117 is already merged as `c9ac3ff7`.
+- Pre-release branch increments Android Gradle release versionCode/name and `release/android-signing.json` from 12047 to 12048 without changing the certificate fingerprint or keystore location. Desktop-visible UI and <title> now show v120.48, and release notes document fixes and known real-device limitations.
+- Governed Windows publishing workflow now explicitly runs the cold-start history guard in addition to Pending second/third batch, reimport and no-repeated-click checks.
+- Next: merge only after required CI tests; create a separate **authorized v120.48 stable request** on main and let `.github/workflows/release.yml` independently validate exact-commit screenshots, Windows Setup build/install/start/upgrade/uninstall, production Android signature and published SHA256 checksums. After verified GitHub Release, deactivate authorization and advance manifest stable/next versions. No Instagram CAPTCHA bypass or credentials handled.
+
 ## 2026-10-15 — English UI follow-up: Pending, Mutuals and non-mutual Followers static labels (v120.48 development)
 
 - Found owner-visible mixed-language labels in Pending Lab, Mutuals and Followers: paused/expired pause filters, age/risk options, action headers, import prompts, detected approvals, counts, navigation and refresh buttons.
