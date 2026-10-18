@@ -1,3 +1,11 @@
+## 2026-10-17 — v120.48 officially released and authorization deactivated
+
+- Owner-authorized normal stable [v120.48](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.48) published at 2026-10-18 00:27:53 UTC, 2026-10-17 in Saltillo. GitHub governed run [39082472684](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39082472684) **SUCCESS**; exact publication source SHA `19680119c0e0a1c5d5bdfb954793c355849f0bdb`.
+- Full official assets verified: Windows native Setup.exe + checksum, optional integrated Windows robot ZIP, standalone Desktop HTML and ZIP, original logo/privacy files, SHA256SUMS.txt and production-signed Android APK with the original app signing identity.
+- Independent release gates passed: authenticated authorization, eight real Desktop screenshot surfaces, installed Android Home/About screenshots, Windows Setup wizard/build/install/start/upgrade/uninstall and release asset/integrity tests. The user's **real Instagram sign-in and action outcomes, actual local Windows update and Samsung cross-account state** remain unverified.
+- Release request marked `authorized=false,status=published` with immutable publication run, SHA and timestamp. Distribution manifest now records stable `v120.48` and reserves `v120.49`; no later release authorized.
+- Functional changes: sequential Pending/ZIP reimport and cold-start action-journal safety, one read-only pending-cancel verification without duplicate click, recoverable manual Focus previews and targeted English UI strings. Remaining dynamic Spanish text and real-session acceptance are tracked separately.
+
 ## 2026-10-17 — Preparing governed v120.48 stable release, explicit owner instruction
 
 - Owner instructed: continue InstaCleaner pending development tasks and **publish a release when the work is finished**. Scope of this candidate: PR #113 (read-only Cancel Pending recheck), sequential Pending/Focus import recovery commit `5c7aed9`, PR #117 cold-start action-journal safety and PR #118 static English UI labels. Do not claim all outstanding physical/browser acceptance issues are complete.
