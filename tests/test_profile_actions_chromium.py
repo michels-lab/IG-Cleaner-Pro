@@ -516,6 +516,67 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.page, "target.user", "unfollow", "my.profile", lambda _: True)
         self.assertEqual(events, [])
 
+    def test_profile_shell_waits_for_delayed_instagram_render(self):
+        html = fake_profile()
+        ready = html.replace("<header>", '<header style="display:none">', 1)
+        ready = ready.replace("</script>", (
+            "setTimeout(() => document.querySelector('header').style.display='', 1700);"
+            "</script>"))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=ready))
+        waits = []
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile",
+            lambda _: True, on_wait=lambda phase, elapsed, maximum:
+                waits.append((phase, elapsed, maximum)))
+        self.assertEqual(result, "ok", message)
+        self.assertTrue(any(item[0] == "loading_profile" for item in waits))
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_missing_profile_shell_waits_and_reports_without_click(self):
+        from unittest.mock import patch
+        import profile_actions
+        html = '<html><body><main style="display:none"></main></body></html>'
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        waits = []
+        with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 1100):
+            result, message = perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile",
+                lambda _: True, on_wait=lambda phase, elapsed, maximum:
+                    waits.append((phase, elapsed, maximum)))
+        self.assertEqual(result, "review", message)
+        self.assertIn("Waiting timed out: profile identity", message)
+        self.assertIn("No action clicked.", message)
+        self.assertTrue(any(p == "loading_profile" for p, _, _ in waits))
+        self.assertEqual(profile_actions._action_issue("unfollow", result, message),
+                         "profile_load_timeout")
+        self.assertTrue(profile_actions._preclick_no_action({
+            "status": result, "issue": "profile_load_timeout", "message": message}))
+
+    def test_missing_following_control_is_visible_wait_then_review_not_skip(self):
+        from unittest.mock import patch
+        import profile_actions
+        html = fake_profile().replace(
+            'id="relationship" onclick="openRelationship()"',
+            'id="relationship" style="display:none" onclick="openRelationship()"')
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        waits = []
+        with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 1100):
+            result, message = perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile",
+                lambda _: True, on_wait=lambda phase, elapsed, maximum:
+                    waits.append((phase, elapsed, maximum)))
+        self.assertEqual(result, "review", message)
+        self.assertIn("Following/Siguiendo", message)
+        self.assertIn("No action clicked.", message)
+        self.assertTrue(any(p == "waiting_relationship_control" for p, _, _ in waits))
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+        self.assertEqual(profile_actions._action_issue("unfollow", result, message),
+                         "profile_load_timeout")
+
     def test_delayed_profile_control_waits_for_visible_following(self):
         # A real page may hydrate its Following button after DOMContentLoaded.
         html = fake_profile().replace(
