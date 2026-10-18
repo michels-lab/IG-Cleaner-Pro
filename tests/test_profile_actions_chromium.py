@@ -374,6 +374,65 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate("window.__steps"),[])
         self.page.unroute_all()
 
+    def _main_role_button_unfollow(self, locale="en", target_heading="target.user",
+                                   role_button=True, duplicate=False):
+        """Real Chromium, offline: Instagram profile hero without <header>."""
+        label = "Siguiendo" if locale == "es" else "Following"
+        original = fake_profile(locale=locale)
+        legacy = ('    <header>\n      <h1>target.user</h1>\n'
+                  f'      <button id="relationship" onclick="openRelationship()">{label}</button>\n'
+                  '    </header>')
+        control = (f'<div id="relationship" role="button" tabindex="0" '
+                   f'onclick="openRelationship()">{label} ▾</div>'
+                   if role_button else
+                   f'<a href="/my.profile/following/">{label}</a>')
+        other = (f'<div role="button" onclick="window.__otherClicked=true">'
+                 f'{label}</div>' if duplicate else '')
+        hero = (f'<main><section><h2>{target_heading}</h2>'
+                f'{control}{other}</section></main>')
+        self.assertIn(legacy, original)
+        html = original.replace(legacy, hero)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        events = []
+        self.page.on("console", lambda msg: events.append(msg.text.split("IGC_STEP:", 1)[1])
+                     if msg.text.startswith("IGC_STEP:") else None)
+        return events
+
+    def test_unfollow_from_main_role_button_with_dropdown_caret(self):
+        for locale in ("en", "es"):
+            with self.subTest(locale=locale):
+                self.context.unroute_all()
+                events = self._main_role_button_unfollow(locale=locale)
+                status, message = perform_visible_action(
+                    self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+                self.assertEqual(status, "ok", message)
+                self.assertEqual(events, ["open", "unfollow", "confirmed"])
+                self.assertIn("no longer follow", message)
+
+    def test_following_count_link_never_becomes_an_unfollow_click(self):
+        events = self._main_role_button_unfollow(role_button=False)
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "review")
+        self.assertIn("nothing clicked", message)
+        self.assertEqual(events, [])
+
+    def test_unrelated_main_following_button_cannot_replace_target_heading(self):
+        events = self._main_role_button_unfollow(target_heading="someone.else")
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "blocked")
+        self.assertIn("heading", message)
+        self.assertEqual(events, [])
+
+    def test_ambiguous_main_following_buttons_never_click(self):
+        events = self._main_role_button_unfollow(duplicate=True)
+        with self.assertRaisesRegex(RuntimeError, "Multiple equivalent options"):
+            perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(events, [])
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
