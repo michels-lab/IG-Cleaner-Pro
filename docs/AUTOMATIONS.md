@@ -1,3 +1,10 @@
+### Development candidate — 2026-10-18: five target tabs with retained verification
+
+- The owner requested 5 Chrome **tabs** (not separate browser windows) and tab closure only after a confirmed result. The candidate action controller uses up to five target-page slots. An `ok` (actual visible Follow/Follow Back after owner verification) can close its tab, as can an explicitly pre-click skipped profile; missing controls, uncertain results and post-click verification failure retain their tab for human review. If five cannot be confirmed, no sixth relationship action starts.
+- The robot stays with **sequential** relationship-changing clicks, existing visit cooldown/journal, account ownership and protections; five tabs do not mean five simultaneous unfollows. Bounded UI waits address possible loading races without claiming that Instagram's current layout is known or automatically bypassing challenges.
+- Pause warns when retained tabs will be closed; journal status remains authoritative, and uncertain clicks are never auto-replayed.
+- This is development code only until current-commit CI and owner Windows Chrome tests pass; do not advertise it as in the public v120.50 installer.
+
 # Automatizaciones — especificación y estado
 
 **Estado 2026-10-12 (PR #82, versión de desarrollo):** el robot de acciones **ya ejecuta operaciones mediante Chrome visible**, con autorización explícita de la tanda, verificación de la sesión/perfil, botones localizados de forma estricta y comprobación posterior. **Aún no está publicado como release estable ni probado contra la sesión real del propietario**. Una variación del DOM o un bloqueo de Instagram detiene el proceso: ninguna simulación equivale a aceptación real.
