@@ -1,16 +1,13 @@
 {
-  "version": "120.47",
-  "tag": "v120.47",
-  "authorized": false,
-  "authorization_source": "Owner explicitly instructed 'dale release' on 2026-10-15 after receiving confirmation that all four post-merge main-commit CI checks passed for the Windows Setup, verified native updater, chronological re-audits, rendered Desktop/Android and general CI. Publish the normal stable v120.47 release through the governed exact-commit release pipeline, never a prerelease. Retry on 2026-10-15 after correcting the exact-commit Desktop visual gate to REQUIRE eight real screenshots (Home, About initial/socials, Automations manual-recovery in compact/wide), matching the current real Chromium capture. The user authorization remains the same.",
+  "version": "120.48",
+  "tag": "v120.48",
+  "authorized": true,
+  "authorization_source": "Owner explicitly instructed 'continua y cuando termines dale release' on 2026-10-17. The requested next normal stable release is v120.48, after merged Pending batch recovery, cold-start journal protection, delayed read-only cancellation confirmation and English UI corrections. Candidate PR #119 passed five exact-head workflow families before merge. Publish only through the protected governed pipeline, never as a prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.46",
-  "owner_acceptance_note": "Owner explicitly requested release of v120.47 with normal Windows Setup EXE, bundled integrated robots, standalone Desktop HTML/ZIP and stable production-signed Android APK. Exact-request-commit publisher must independently validate rendered UI evidence, Windows setup install/launch/upgrade/uninstall and persistent Android signer, asset integrity and checksums. Real owner's signed-in Instagram and physical-device Windows updater/Android installation remain untested; no CAPTCHA bypass or claim of live automation success. Windows Authenticode not configured.",
-  "published_run": 38813431832,
-  "published_commit": "9d252f70c40145602bb7ad44ef74ffbf26bc5181",
-  "completed_at_utc": "2026-10-15T22:01:27Z",
-  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47"
+  "status": "requested",
+  "previous_stable_release": "v120.47",
+  "owner_acceptance_note": "Owner authorized normal stable GitHub publication of Windows Setup installer, standalone Desktop HTML/ZIP, integrated portable robot ZIP and production-signed Android APK. Independent exact-source screenshot evidence, Windows installer build/install/upgrade/uninstall, signing identity, asset checksums and published release verification must all succeed; a failing gate must block publication. Actual Instagram sign-in in separate Playwright Chrome, live relationship-changing actions, physical Samsung installation and real Windows self-update remain unverified. No CAPTCHA bypass or Authenticode code signing claimed.",
+  "requested_at": "2026-10-17"
 }
