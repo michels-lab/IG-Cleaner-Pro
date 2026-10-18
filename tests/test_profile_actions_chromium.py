@@ -491,6 +491,79 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.assertEqual(result, "ok", message)
                 self.assertEqual(events, ["open", "unfollow", "confirmed"])
 
+    def test_nonsemantic_pointer_following_div_is_verified_and_clicked(self):
+        original = fake_profile()
+        old = ('    <header>\n      <h1>target.user</h1>\n'
+               '      <button id="relationship" onclick="openRelationship()">Following</button>\n'
+               '    </header>')
+        hero = ('<main><section><span>target.user</span>'
+                '<div style="margin-top:30px;cursor:pointer" id="relationship" '
+                'onclick="openRelationship()"><span>Following</span>'
+                '<svg aria-hidden="true"></svg></div></section></main>')
+        self.assertIn(old, original)
+        html = original.replace(old, hero)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_pointer_text_inside_following_counter_link_must_not_click(self):
+        original = fake_profile()
+        old = ('    <header>\n      <h1>target.user</h1>\n'
+               '      <button id="relationship" onclick="openRelationship()">Following</button>\n'
+               '    </header>')
+        html = original.replace(old, (
+            '<main><span>target.user</span>'
+            '<a href="/target.user/following/" style="cursor:pointer">'
+            '<span>Following</span></a></main>'))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+
+    def test_ambiguous_two_pointer_following_controls_do_not_click(self):
+        original = fake_profile()
+        old = ('    <header>\n      <h1>target.user</h1>\n'
+               '      <button id="relationship" onclick="openRelationship()">Following</button>\n'
+               '    </header>')
+        html = original.replace(old, (
+            '<main><span>target.user</span><section style="margin-top:30px">'
+            '<div style="cursor:pointer" id="relationship" onclick="openRelationship()">'
+            '<span>Following</span></div>'
+            '<div style="cursor:pointer" onclick="window.__unexpected=true">'
+            '<span>Following</span></div></section></main>'))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        with self.assertRaisesRegex(RuntimeError, "ambiguous visual"):
+            perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+        self.assertFalse(self.page.evaluate("Boolean(window.__unexpected)"))
+
+    def test_unfollow_refresh_can_confirm_delayed_follow_state_without_reclick(self):
+        route_count = {"visits": 0}
+        events = []
+        def route(request):
+            route_count["visits"] += 1
+            html = fake_profile(result="unchanged")
+            if route_count["visits"] >= 2:
+                html = html.replace('>Following</button>', '>Follow</button>')
+            request.fulfill(status=200, content_type="text/html", body=html)
+        self.context.route("https://www.instagram.com/**", route)
+        self.page.on("console", lambda msg: events.append(msg.text.split("IGC_STEP:",1)[1])
+                     if msg.text.startswith("IGC_STEP:") else None)
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "ok", message)
+        self.assertIn("read-only profile refresh", message)
+        self.assertEqual(events, ["open", "unfollow", "confirmed"])
+        self.assertEqual(route_count["visits"], 2)
+
     def test_non_clickable_following_text_records_read_only_layout_diagnostic(self):
         events = self._visual_profile_hero(control_kind="link")
         result, message = perform_visible_action(
