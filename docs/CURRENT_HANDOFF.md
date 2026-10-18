@@ -1,3 +1,10 @@
+## 2026-10-18 — v120.51 release candidate: paced tab prefetch and official Setup
+
+- User ordered next official release; version authority: `release/distribution-manifest.json` `nextRelease=v120.51`. Work on `feat/v12051-robot-prefetch-release-20261018`. Preparing production signed Android, Desktop HTML and Windows Setup v120.51 identities.
+- Existing ten tabs, bounded visible Following/Requested wait, retained uncertain tabs, owner-verified sequential relationship actions are preserved. New read-only speculative next-profile navigation occurs *only when current-profile readiness is pending AND configured visit pacing/rest allows it*. One prepared next profile at a time (not a ten-profile burst); it is reused in its normal queue slot. Journal is persisted before navigation and no ambiguous post-click outcome is replayed.
+- New regression checks: preloaded tab reuse, prefetch-target navigation exactly once in offline Chromium, and precise durable visit finish timestamps for overlapping navigation.
+- Real owner Instagram browser acceptance remains unverified and must be disclosed even after release; no CAPTCHA bypass/private Instagram API. Stable publication requires exact-source CI/install/render/signing and checksums. Do not claim a release until GitHub confirms published assets.
+
 ## 2026-10-18 — Owner revision: 10 tabs, explicit live wait/status when Instagram has not rendered (development only)
 
 - Work branch: feat/action-tabs-ten-20261018; latest owner preference is **10** Chrome tabs rather than 5.
