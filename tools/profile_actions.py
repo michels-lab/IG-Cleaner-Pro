@@ -1041,18 +1041,27 @@ class ActionRobot:
                         rests = finish_batch_visit(
                             rests_file, rests,
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                    # Persist the result BEFORE closing any confirmed tab.
+                    # A browser close failure must never erase a clicked action
+                    # from the account-scoped no-replay journal.
+                    if result != "skipped":
+                        issue = _action_issue(self.task, result, details)
+                        journal[user] = {"status": result, "message": details,
+                                         "audit_relation": relation,
+                                         "issue": issue,
+                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                        _atomic_json(path, journal)
                     if action_tabs:
-                        action_tabs.record(user, result)
+                        try:
+                            action_tabs.record(user, result)
+                        except Exception:
+                            # No relationship click is ever repeated to recover
+                            # from a tab closing problem.
+                            pass
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    issue = _action_issue(self.task, result, details)
-                    journal[user] = {"status": result, "message": details,
-                                     "audit_relation": relation,
-                                     "issue": issue,
-                                     "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-                    _atomic_json(path, journal)
                     if result != "ok":
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
