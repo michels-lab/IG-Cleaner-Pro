@@ -1,3 +1,10 @@
+## 2026-10-18 — Candidate: five Chrome action tabs and DOM-readiness waits (NOT released)
+
+- User now prefers **5 tabs** (not 3) and requires each action's tab to remain visible until outcome is confirmed; prior screenshot showed `Could not verify ... session after the action` and `Instagram control not found; no action clicked`.
+- Branch: `fix/instagram-action-readiness-20261018`. Adds up to five per-target browser tabs for local owner-controlled action visits, read-only bounded waits for Following/Requested and menu UI, repeated read-only post-click ownership proof, durable action journal before confirmed-close, and UI visibility/warning for retained tabs. Relationship-changing clicks remain sequential, not five simultaneous clicks. *The five-tab pool is a review/working capacity; it is not a claim of concurrent browser automation or live success.*
+- Five unresolved tabs halt further processing rather than silently closing or replaying ambiguous actions. Explicit Pause is allowed to close the Chrome session after a confirmation warning. Manual tab closure must never mark an action `ok`.
+- Pending: exact-head CI, installed Windows Setup/Chromium regression, physical Chrome owner's session acceptance. Do not release without a new explicit owner request. v120.50 remains the official stable.
+
 ## 2026-10-18 — Verified stable v120.50 published (real Instagram acceptance pending)
 
 - Normal public GitHub [v120.50](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50) published 2026-10-18T07:08:16Z, built from exact SHA `e0a95a8c192642c175a1b080212c7ddd5a4f0655`; governed run [39106161831](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39106161831) **success**. Nine assets confirmed, including Windows Setup, Android production APK, Desktop HTML/ZIP and SHA256SUMS.txt.

@@ -59,6 +59,57 @@ def _read_json(path: Path, default):
         raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
+MAX_ACTION_TABS = 5
+
+
+class ActionTabPool:
+    """Keep up to five visible target tabs; close only verified outcomes.
+
+    Playwright pages are owned by the existing single robot thread. A pending
+    manual review stays open and consumes a slot; it is never silently recycled
+    for a different Instagram profile or replayed.
+    """
+
+    def __init__(self, context, limit=MAX_ACTION_TABS):
+        self.context = context
+        self.limit = limit
+        self.tabs = {}
+
+    def _prune_manually_closed(self):
+        for user, item in list(self.tabs.items()):
+            if item["page"].is_closed():
+                self.tabs.pop(user, None)
+
+    def open(self, username):
+        self._prune_manually_closed()
+        if username in self.tabs or len(self.tabs) >= self.limit:
+            return None
+        target = self.context.new_page()
+        self.tabs[username] = {"page": target, "status": "checking"}
+        return target
+
+    def record(self, username, status):
+        item = self.tabs.get(username)
+        if item is None:
+            return
+        if status in ("ok", "skipped"):
+            # A confirmed result (or explicit pre-click skip) can be closed.
+            # An ambiguous action, including post-click session loss, cannot.
+            if not item["page"].is_closed():
+                item["page"].close()
+            self.tabs.pop(username, None)
+        else:
+            item["status"] = status
+
+    def overview(self):
+        self._prune_manually_closed()
+        return [{"username": user, "status": item["status"]}
+                for user, item in self.tabs.items()]
+
+    def has_open_tabs(self):
+        return bool(self.overview())
+
+
 def _users(raw):
     if not isinstance(raw, list) or len(raw) > MAX_ACTIONS_PER_JOB:
         raise ValueError("The batch must contain no more than 1,000 profiles.")
@@ -226,6 +277,48 @@ def _profile_relationship_control(page, username, words):
     return control
 
 
+def _wait_for_profile_relationship_control(page, username, words, *, timeout_ms=7000):
+    """Wait for a safely identifiable control, not a fixed time after DOM ready.
+
+    This is a read-only bounded poll. It never retries a relationship click,
+    and an Instagram challenge, login or unexpected target URL stops the wait.
+    """
+    deadline = time.monotonic() + timeout_ms / 1000.0
+    while True:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return None
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return None
+        control = _profile_relationship_control(page, username, words)
+        if control is not None:
+            return control
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return None
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
+def _wait_for_unfollow_option(page, username, *, timeout_ms=7000):
+    """Allow Instagram's Following menu to render without a second click."""
+    deadline = time.monotonic() + timeout_ms / 1000.0
+    while True:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return None
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()):
+            return None
+        choice = _unfollow_option(page)
+        if choice is not None:
+            return choice
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            return None
+        page.wait_for_timeout(min(500, remaining_ms))
+
+
 def _relationship_layout_note(page, username, words):
     """Plain category-only evidence; never include owner credentials or DOM."""
     probe = _profile_hero_probe(page, username, words)
@@ -352,7 +445,18 @@ def _verify_final_state(page, expected_handle, username, *, checks=3):
     for _ in range(checks):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification after the action."
-        if not _verified_action_owner(page, expected_handle):
+        # The owner UI can transiently disappear during an Instagram rerender.
+        # Retry ONLY read-only identity evidence, never the relationship click.
+        owner_proven = False
+        for owner_attempt in range(3):
+            if challenge_detected(page) or page.locator('input[name="password"]').count():
+                return "blocked", "Instagram requested verification after the action."
+            if _verified_action_owner(page, expected_handle):
+                owner_proven = True
+                break
+            if owner_attempt < 2:
+                page.wait_for_timeout(900)
+        if not owner_proven:
             return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
         state = _follow_state(page, username)
         if state == "follow_back":
@@ -486,9 +590,9 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
         return "review", "This account follows you; review required."
-    active = (_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
+    active = (_wait_for_profile_relationship_control(page, username, [r"Following", r"Siguiendo"])
               if task == "unfollow" else
-              _profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
+              _wait_for_profile_relationship_control(page, username, [r"Requested", r"Solicitado", r"Solicitada"]))
     if active is None:
         if task == "cancel":
             if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]):
@@ -505,12 +609,11 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
     if not _verified_action_owner(page, expected_handle):
         return "blocked", "Instagram session verification failed before the first click. No action performed."
     active.click(timeout=10000)
-    page.wait_for_timeout(450)
 
     if task == "unfollow":
         # The FIRST click only opens a menu on public accounts.
         # Locate the "Unfollow" command in that menu (or a direct dialog).
-        choice = _unfollow_option(page)
+        choice = _wait_for_unfollow_option(page, username)
         if choice is None:
             # Rare layouts change directly on the first click. Do not guess.
             return _verify_final_state(page, expected_handle, username)
@@ -519,8 +622,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None):
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before the final Unfollow click. Inspect the open menu manually."
         choice.click(timeout=10000)
-        page.wait_for_timeout(650)
-        # Public: new Follow button should be visible already.
+        # Public: await the final state; private accounts may show a second dialog.
         status, message = _verify_final_state(page, expected_handle, username, checks=2)
         if status in ("ok", "blocked"):
             return status, message
@@ -633,6 +735,7 @@ class ActionRobot:
         self.worker = None
         self.owner = self.account = self.handle = self.task = ""
         self.targets = []
+        self.open_review_tabs = []
         self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
@@ -750,6 +853,7 @@ class ActionRobot:
                        and not _preclick_no_action(record) for user in targets):
                     raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
+            self.open_review_tabs = []
             if not resume:
                 self.skipped.clear()
             self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
@@ -812,6 +916,8 @@ class ActionRobot:
                     "attempted_usernames": attempted_usernames,
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
+                    "open_review_tabs": list(self.open_review_tabs),
+                    "max_action_tabs": MAX_ACTION_TABS,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
@@ -868,6 +974,8 @@ class ActionRobot:
                 visits_file, rests_file = history_path(path), batch_path(path)
                 visits = load_history(visits_file)
                 rests = load_batch_state(rests_file)
+                action_tabs = ActionTabPool(browser) if self.task != "audit" else None
+                stopped_for_review = False
                 for user in self.targets:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
@@ -902,16 +1010,28 @@ class ActionRobot:
                         self.status, self.message = "running", "Checking @" + user
                     if self._protected_for(user) or user in self.skipped:
                         continue
+                    work_page = page
+                    if action_tabs:
+                        work_page = action_tabs.open(user)
+                        if work_page is None:
+                            with self.lock:
+                                self.status = "review"
+                                self.message = ("Five Instagram tabs need manual review. "
+                                                "No additional relationship action was attempted.")
+                            stopped_for_review = True
+                            break
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
                     visits = register_visit(visits_file, visits)
                     relation = ""
                     try:
                         if self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
-                                page, user, self.handle)
+                                work_page, user, self.handle)
                         else:
                             relation = ""
                             result, details = perform_visible_action(
-                                page, user, self.task, self.handle,
+                                work_page, user, self.task, self.handle,
                                 lambda name: not self.stop_event.is_set() and
                                 not self._protected_for(name) and name not in self.skipped)
                     except Exception as exc:
@@ -921,14 +1041,27 @@ class ActionRobot:
                         rests = finish_batch_visit(
                             rests_file, rests,
                             self.max_count if self.rest_minutes > 0 else 0, self.rest_minutes)
+                    # Persist the result BEFORE closing any confirmed tab.
+                    # A browser close failure must never erase a clicked action
+                    # from the account-scoped no-replay journal.
+                    if result != "skipped":
+                        issue = _action_issue(self.task, result, details)
+                        journal[user] = {"status": result, "message": details,
+                                         "audit_relation": relation,
+                                         "issue": issue,
+                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                        _atomic_json(path, journal)
+                    if action_tabs:
+                        try:
+                            action_tabs.record(user, result)
+                        except Exception:
+                            # No relationship click is ever repeated to recover
+                            # from a tab closing problem.
+                            pass
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    issue = _action_issue(self.task, result, details)
-                    journal[user] = {"status": result, "message": details,
-                                     "audit_relation": relation,
-                                     "issue": issue,
-                                     "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-                    _atomic_json(path, journal)
                     if result != "ok":
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
@@ -939,14 +1072,39 @@ class ActionRobot:
                             continue
                         with self.lock:
                             self.status, self.message = result, "@" + user + ": " + details
-                        return
+                        stopped_for_review = True
+                        break
                 with self.lock:
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     journal.get(u, {}).get("status") != "ok"
                                     for u in self.targets)
-                    self.status = "partial" if remaining else "complete"
-                    self.message = ("Batch reviewed: some profiles require manual verification."
-                                    if remaining else "Batch complete; results saved.")
+                    if not stopped_for_review:
+                        self.status = "partial" if remaining else "complete"
+                        self.message = ("Batch reviewed: some profiles require manual verification."
+                                        if remaining else "Batch complete; results saved.")
+                # Unverified target tabs must remain visible for manual inspection.
+                # The Playwright persistent context is deliberately held open
+                # until the owner manually pauses or closes the target tabs.
+                if action_tabs and action_tabs.has_open_tabs():
+                    with self.lock:
+                        self.status = "review"
+                        self.open_review_tabs = action_tabs.overview()
+                        self.message = (
+                            "Unverified Instagram tabs remain open for manual review. "
+                            "Inspect them before selecting Pause; Pause closes Chrome. "
+                            "No relationship click will be repeated.")
+                    while not self.stop_event.is_set() and action_tabs.has_open_tabs():
+                        with self.lock:
+                            self.open_review_tabs = action_tabs.overview()
+                        self.stop_event.wait(1)
+                    if self.stop_event.is_set():
+                        with self.lock:
+                            self.status = "paused"
+                            self.message = ("Robot paused by owner. Unverified history was "
+                                            "preserved; no automatic click will be retried.")
+                    else:
+                        with self.lock:
+                            self.open_review_tabs = []
         except Exception as exc:
             with self.lock:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
@@ -956,3 +1114,5 @@ class ActionRobot:
             if browser:
                 try: browser.close()
                 except Exception: pass
+            with self.lock:
+                self.open_review_tabs = []

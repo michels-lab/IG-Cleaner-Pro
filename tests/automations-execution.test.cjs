@@ -9,6 +9,7 @@ for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])eleme
  children:[],replaceChildren(){this.children=[]},appendChild(node){this.children.push(node)}
 };
 for(const id of ['igcAutoStatus','igcAutoLiveStatus'])elements[id]={textContent:''};
+elements.igcAutoOpenTabs={textContent:'',style:{display:'none'}};
 for(const [id,value] of Object.entries({igcAutoSearch:'',igcAutoBatch:'2',igcAutoRest:'5',igcAutoGap:'5'}))elements[id]={value};
 elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};
 elements.igcActionAuthFallback={style:{display:'none'}};
@@ -71,8 +72,19 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoStart();
  assert.equal(calls.filter(c=>c.type==='start').length,3,'Partial HTML must reject an unfollow but allow optional audit');
  ctx.window.V119_HTML={partial:false};
+ p.open_review_tabs=[{username:'needs.review',status:'review'},
+                     {username:'pending.inspect',status:'checking'}];
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcAutoOpenTabs.style.display,'block');
+ assert.match(elements.igcAutoOpenTabs.textContent,/@needs.review/);
+ assert(elements.igcAutoOpenTabs.textContent.includes('2/5'));
  await ctx.window.igcAutoPause();
  assert(calls.some(c=>c.type==='pause'),'Pause control must call local robot');
+ assert(texts.some(value=>value.includes('will close its Chrome window')),
+   'Pausing with unverified action tabs must require a warning');
+ p.open_review_tabs=[];
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcAutoOpenTabs.style.display,'none');
  await ctx.window.igcAutoPoll();
  assert.equal(ctx.window.igcAutoSwitchGuard(),false,
   'Running Chrome actions must block switching account/profile');

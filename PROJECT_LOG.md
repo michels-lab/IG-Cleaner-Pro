@@ -1,3 +1,11 @@
+## 2026-10-18 — Development: safe Instagram action readiness and five-tab workflow
+
+- User screenshot of the installed v120.50 robot reports both a post-click owner-session verification failure and a missing Following control (no action clicked). Cause may involve delayed DOM hydration, but a timing problem has not been proven from the screenshot.
+- Development branch `fix/instagram-action-readiness-20261018` implements bounded read-only waits for the target relationship control and open menu, and retries *verification reads* after post-click transient owner-state failure. No second relationship-changing click is issued.
+- Per user's revised preference, Windows action robot supports up to **five distinct visible target tabs** within the same session, sequential owner-approved relationship actions, per-tab outcome tracking, and closes only confirmed `ok` actions or explicit pre-click skips. Unknown/possibly-clicked records retain a visible tab for manual inspection rather than being reused or auto-retried. When all five tabs are unresolved, stop and prompt review.
+- Journal writes happen before closing verified tabs, preserving crash/no-replay semantics. Automations displays open review tabs and warns that Pause closes Chrome. No CAPTCHA bypass, no private Instagram API, no raw export upload, no release/version bump.
+- Status: candidate only, exact-head GitHub validation and real Windows/Instagram physical acceptance still required; stable stays v120.50.
+
 ## 2026-10-18 — Verified stable v120.50 published (real Instagram acceptance pending)
 
 - Normal public GitHub [v120.50](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50) published 2026-10-18T07:08:16Z, built from exact SHA `e0a95a8c192642c175a1b080212c7ddd5a4f0655`; governed run [39106161831](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39106161831) **success**. Nine assets confirmed, including Windows Setup, Android production APK, Desktop HTML/ZIP and SHA256SUMS.txt.

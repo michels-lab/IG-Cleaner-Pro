@@ -516,6 +516,57 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 self.page, "target.user", "unfollow", "my.profile", lambda _: True)
         self.assertEqual(events, [])
 
+    def test_delayed_profile_control_waits_for_visible_following(self):
+        # A real page may hydrate its Following button after DOMContentLoaded.
+        html = fake_profile().replace(
+            'id="relationship" onclick="openRelationship()"',
+            'id="relationship" style="display:none" onclick="openRelationship()"')
+        html = html.replace('</script>', (
+            "setTimeout(() => { document.querySelector('#relationship').style.display = ''; }, 1700);"
+            "</script>"))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_delayed_unfollow_menu_waits_without_extra_click(self):
+        html = fake_profile().replace(
+            "document.querySelector('#action-menu').style.display='block';",
+            "setTimeout(() => { document.querySelector('#action-menu').style.display='block'; }, 1700);")
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        result, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(result, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_post_click_transient_owner_failure_rechecks_without_reclick(self):
+        from unittest.mock import patch
+        import profile_actions
+        html = fake_profile()
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        actual = profile_actions._verified_action_owner
+        observations = {"temporary_misses": 0}
+        def delayed_identity(page, expected):
+            # One read-only identity failure immediately after a genuine click.
+            if (page.evaluate("window.__steps.includes('confirmed')")
+                    and observations["temporary_misses"] == 0):
+                observations["temporary_misses"] += 1
+                return False
+            return actual(page, expected)
+        with patch.object(profile_actions, "_verified_action_owner", delayed_identity):
+            result, message = perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(observations["temporary_misses"], 1)
+        self.assertEqual(result, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)

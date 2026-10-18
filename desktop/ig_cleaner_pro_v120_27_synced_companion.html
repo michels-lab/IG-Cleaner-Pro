@@ -3765,6 +3765,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot disconnected. Open InstaCleanerPro.exe on Windows to start the local service.</p>
+<div id="igcAutoOpenTabs" class="note" role="status" aria-live="polite" style="display:none;margin:8px 0"></div>
 <div id="igcActionAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin:12px 0">
 <strong>Instagram verification is blocking the action robot.</strong>
 <p class="note">Regular Chrome and the Instagram mobile app may work even when this separate robot browser is rejected. Do not repeatedly retry CAPTCHA or an unverified batch. No cancellation or unfollow is confirmed by this warning.</p>
@@ -15049,6 +15050,12 @@ window.igcAutoStart=async function(){
 };
 window.igcAutoPause=async function(){
  try{
+  const live=await requestAction("status");
+  const open=Array.isArray(live.open_review_tabs)?live.open_review_tabs:[];
+  if(open.length&&live.running&&!window.confirm(
+   "There are "+open.length+" Instagram profile tabs still awaiting verification. "+
+   "Pausing the local robot will close its Chrome window, but preserve the audit journal. "+
+   "Review these profiles first. Close Chrome now?"))return;
   const result=await requestAction("pause",actionOwner());
   actionState=result;await window.igcAutoPoll();
  }catch(e){setStatus("Could not pause: "+e.message)}
@@ -15117,6 +15124,14 @@ window.igcAutoPoll=async function(){
   if(info)info.textContent="Status: "+state.status+" · "+(state.message||"")+
       (state.current_profile?" · @"+state.current_profile:"")+
       (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":"");
+  const tabsBox=document.getElementById("igcAutoOpenTabs");
+  if(tabsBox){
+   const open=Array.isArray(state.open_review_tabs)?state.open_review_tabs.slice(0,5):[];
+   tabsBox.style.display=open.length?"block":"none";
+   tabsBox.textContent=open.length?("Chrome profile tabs ("+open.length+"/5): "+
+     open.map(t=>"@"+String(t.username||"")+" — "+String(t.status||"checking")).join(" · ")+
+     ". Only confirmed actions close automatically. Pause closes Chrome."): "";
+  }
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
   if(resume)resume.disabled=state.running||authBlocked||!["paused","blocked","review","error"].includes(state.status);
