@@ -155,26 +155,35 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(elements.igcAutoResume.disabled,false);
  // The backend action journal is separate from owner-approved reviewed state.
  p.status='partial';p.running=false;p.task='unfollow';p.owner='owner_A';p.account='ig_A';
- batchFixture={id:'batch123',targets:['keep.me','skip.me'],approved_at:null,
-  action_results:{'keep.me':{status:'ok'},'skip.me':{status:'review'}},
+ batchFixture={id:'batch123',targets:['keep.me','skip.me','untouched.three'],approved_at:null,
+  action_results:{'keep.me':{status:'ok'},'skip.me':{status:'review'},
+                  'untouched.three':{status:'pending'}},
   recheck_results:{}};
  await ctx.window.igcAutoPoll();
  assert.equal(elements.igcAutoBatchApproval.style.display,'block');
- assert.match(elements.igcAutoBatchApprovalDetails.textContent,/Awaiting your approval/);
+ assert.match(elements.igcAutoBatchApprovalDetails.textContent,/Batch incomplete/);
+ assert.equal(elements.igcAutoApproveBatch.disabled,true,'Cannot approve an incomplete batch');
  assert.equal(ctx.doneSet.size,0,'Robot success must not mark anything reviewed without owner approval');
- // Retry reuses the same existing batch, not a new set of actions.
+ // Run continues untouched action targets, not a read-only verification pass.
  ctx.window.igcAutoChoose('unfollow');
  await ctx.window.igcAutoStart();
- assert.equal(calls.filter(c=>c.type==='start').length,3,
-   'An unapproved batch must not be replaced by a new action batch');
- assert.equal(calls.filter(c=>c.type==='recheck-batch').length,1,
-   'Pressing Run must automatically recheck the same unapproved batch');
- const retry=calls.find(c=>c.type==='recheck-batch');assert(retry);
+ assert.equal(calls.filter(c=>c.type==='start').length,4,
+   'Run must start actual actions for the saved unapproved cohort');
+ assert.equal(calls.filter(c=>c.type==='recheck-batch').length,0,
+   'Run must never silently switch to read-only recheck');
+ const retry=calls.filter(c=>c.type==='start').at(-1);assert(retry);
  assert.equal(retry.data.batch_id,'batch123');
- assert.equal(retry.data.confirmation,'recheck:batch123');
+ assert.deepEqual(retry.data.targets,['keep.me','skip.me','untouched.three']);
+ assert.equal(retry.data.confirmation,'unfollow:3');
+ assert(texts.at(-1).includes('Only untouched profiles will be attempted'));
  ctx.window.igcAutoOpenBatchIssues();
- assert.equal(opened.length,1,'Only issue profiles may open');
+ assert.equal(opened.length,1,'Only issue profiles may open, never untouched accounts');
  assert.match(opened[0][0],/skip.me/);
+ await ctx.window.igcAutoApproveBatch();
+ assert.equal(calls.filter(c=>c.type==='approve-batch').length,0,
+   'Cannot approve while one profile was never attempted');
+ batchFixture.action_results['untouched.three']={status:'ok'};
+ await ctx.window.igcAutoPoll();
  await ctx.window.igcAutoApproveBatch();
  const approved=calls.find(c=>c.type==='approve-batch');assert(approved);
  assert.equal(approved.data.confirmation,'reviewed:batch123');
