@@ -32,8 +32,8 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12052
-        versionName = "120.52"
+        versionCode = 12053
+        versionName = "120.53"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
