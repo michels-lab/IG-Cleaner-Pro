@@ -3764,6 +3764,16 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
+<div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
+  <div class="title">Is this batch OK?</div>
+  <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
+  <div class="btnrow">
+    <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
+    <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Recheck automatically</button>
+    <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open only issue profiles</button>
+  </div>
+  <p class="note">Automatic actions are not marked reviewed until you approve. Rechecking uses Chrome automatically and never repeats a possibly completed Unfollow or Cancel Request.</p>
+</div>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot disconnected. Open InstaCleanerPro.exe on Windows to start the local service.</p>
 <div id="igcAutoOpenTabs" class="note" role="status" aria-live="polite" style="display:none;margin:8px 0"></div>
 <div id="igcActionAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin:12px 0">
@@ -14943,7 +14953,7 @@ window.igcAutoSaveTiming=function(){
 // Local-only action connector: same capability token used by the Profile Counts robot.
 const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
-let actionState=null,actionBusy=false;
+let actionState=null,actionBusy=false,actionBatchReview=null;
 // Do not silently leave a running action job acting on a different identity.
 // Unknown connection state is fail-closed until the local robot is queried.
 window.igcAutoSwitchGuard=function(){
@@ -15031,6 +15041,15 @@ async function refreshActionHistoryForStart(task){
 window.igcAutoStart=async function(){
  if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
  try{
+  // An unapproved batch retains its original cohort. Never silently replace it
+  // with a fresh queue because some actions may have already been clicked.
+  const waiting=await requestAction("review-batch",{...actionOwner(),task:mode});
+  actionBatchReview=waiting.batch||null;
+  window.igcAutoRenderBatchApproval();
+  if(waiting.batch){
+    setStatus("This automatic batch is not yet marked Reviewed. Choose Recheck automatically or Mark batch reviewed.");
+    return;
+  }
   // Fail closed unless the latest persisted owner/account/task history
   // is known. Never trust a stale in-memory batch or an idle snapshot.
   const verifiedHistory=await refreshActionHistoryForStart(mode);
@@ -15104,6 +15123,11 @@ window.igcAutoPoll=async function(){
                        issues:state.issues,updated_at:new Date().toISOString()}));
   }
   window.igcAutoRenderIssues();
+  if(["unfollow","cancel","audit"].includes(mode)){
+   const reviewed=await requestAction("review-batch",{...ctx,task:mode});
+   actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
+  }else actionBatchReview=null;
+  window.igcAutoRenderBatchApproval();
   const metrics=document.getElementById("igcAutoExecutionMetrics");
   if(metrics){
    metrics.replaceChildren();
@@ -15322,6 +15346,99 @@ window.igcAutoRender=function(){
   }
   tr.appendChild(u);tr.appendChild(status);tr.appendChild(actions);root.appendChild(tr);
  }
+};
+function igcAutoBatchOutcomes(){
+ const b=actionBatchReview;if(!b)return {confirmed:[],issues:[],unchecked:[]};
+ const confirmed=[],issues=[],unchecked=[];
+ for(const username of b.targets||[]){
+  const status=(b.recheck_results?.[username]||b.action_results?.[username]||{}).status||"pending";
+  if(status==="ok")confirmed.push(username);
+  else if(status==="pending")unchecked.push(username);
+  else issues.push(username);
+ }
+ return {confirmed,issues,unchecked};
+}
+window.igcAutoRenderBatchApproval=function(){
+ const panel=document.getElementById("igcAutoBatchApproval");
+ if(!panel)return;
+ panel.style.display=actionBatchReview?"block":"none";
+ if(!actionBatchReview)return;
+ const outcome=igcAutoBatchOutcomes(),count=(actionBatchReview.targets||[]).length;
+ const busy=!!(actionState?.running && actionState?.owner===actionOwner().owner &&
+                actionState?.account===actionOwner().account);
+ const msg=document.getElementById("igcAutoBatchApprovalDetails");
+ if(msg)msg.textContent=(busy?"Automatic checking in progress. ":"Awaiting your approval. ")+
+   count+" in batch · "+outcome.confirmed.length+" verified by robot · "+
+   outcome.issues.length+" need attention · "+outcome.unchecked.length+
+   " not yet checked. No profile is counted as manually reviewed until you approve.";
+ for(const id of ["igcAutoApproveBatch","igcAutoRecheckBatch"]){
+  const button=document.getElementById(id);if(button)button.disabled=busy;
+ }
+ const open=document.getElementById("igcAutoOpenBatchIssues");
+ if(open)open.disabled=!outcome.issues.length&&!outcome.unchecked.length;
+};
+window.igcAutoRecheckBatch=async function(){
+ const b=actionBatchReview;if(!b||actionState?.running)return;
+ if(!window.confirm("Recheck the same "+b.targets.length+
+     " profiles automatically in Chrome? This does NOT click Unfollow or Cancel Request again."))return;
+ try{
+  const result=await requestAction("recheck-batch",{
+   ...actionOwner(),task:mode,batch_id:b.id,confirmation:"recheck:"+b.id,
+   expected_handle:ownInstagramHandle(),
+   batch_size:Number(document.getElementById("igcAutoBatch")?.value||30),
+   gap_seconds:Number(document.getElementById("igcAutoGap")?.value||10),
+   rest_minutes:Number(document.getElementById("igcAutoRest")?.value||5)
+  });
+  actionState=result;await window.igcAutoPoll();
+ }catch(e){setStatus("Could not automatically recheck batch: "+e.message)}
+};
+window.igcAutoApproveBatch=async function(){
+ const b=actionBatchReview;if(!b||actionState?.running)return;
+ const o=igcAutoBatchOutcomes();
+ if(!window.confirm("Mark this "+b.targets.length+
+   "-profile batch as Reviewed?\n\n"+o.confirmed.length+
+   " robot-verified profiles will be marked Reviewed. "+(o.issues.length+o.unchecked.length)+
+   " unresolved profiles remain in Issue Review and will NOT be marked Reviewed.\n\nApprove this batch?"))return;
+ try{
+  const result=await requestAction("approve-batch",{
+   ...actionOwner(),task:mode,batch_id:b.id,confirmation:"reviewed:"+b.id
+  });
+  const names=result.approved_usernames||[];
+  const now=Date.now();
+  if(mode==="unfollow"){
+   for(const username of names){
+    const row=allRows.find(r=>r.username===username);
+    if(!row)continue;
+    const oldMode=currentMode;currentMode="following";
+    const meta=makeReviewMeta(row,"approved_automatic_batch","automation_batch_confirmed");
+    meta.mode="following";currentMode=oldMode;
+    reviewedMeta[username]=meta;doneSet.add(username);
+   }
+   saveReviewedState();renderAll();
+  }else if(mode==="cancel"){
+   for(const username of names){
+    pendingReviewedMeta[username]={
+     reviewedAt:now,decision:"reviewed",label:"Approved automatic batch"
+    };
+   }
+   savePendingReviewedMeta();renderPendingRequests();
+  }
+  actionBatchReview=null;window.igcAutoRenderBatchApproval();
+  setStatus("Batch approved: "+names.length+" verified profiles marked Reviewed; "+
+    (result.unresolved_usernames||[]).length+" unresolved profiles remain in Issue Review.");
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Could not approve this batch: "+e.message)}
+};
+window.igcAutoOpenBatchIssues=function(){
+ const b=actionBatchReview;if(!b)return;
+ const outcome=igcAutoBatchOutcomes(),users=[...outcome.issues,...outcome.unchecked].slice(0,10);
+ if(!users.length){setStatus("No issue profiles need manual inspection.");return}
+ // Deliberately open ONLY the exceptions, never the whole automatic batch.
+ for(const user of users){
+  if(!/^[A-Za-z0-9._]{1,30}$/.test(user))continue;
+  window.open("https://www.instagram.com/"+encodeURIComponent(user)+"/","_blank","noopener");
+ }
+ setStatus("Opened "+users.length+" exception profiles; confirmed profiles stay closed.");
 };
 const original=window.showPage;
 if(typeof original==="function")window.showPage=function(id){
