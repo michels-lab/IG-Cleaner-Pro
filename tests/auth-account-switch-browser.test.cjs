@@ -61,7 +61,18 @@ const {chromium}=require("playwright");
   await page.waitForFunction(()=>{
    try{return JSON.parse(localStorage.getItem("igc_v12027_supabase_session")||"null")?.user?.email==="second@example.test"}
    catch{return false}
-  },null,{timeout:15000});
+  },null,{timeout:15000}).catch(async error=>{
+   const snapshot=await page.evaluate(()=>({
+    owner:JSON.parse(localStorage.getItem("igc_v12027_supabase_session")||"null")?.user?.email,
+    remembered:Object.keys(JSON.parse(localStorage.getItem("igc_v120_login_accounts_v1")||"{}")),
+    chooser:!!document.querySelector("#igcLoginChooser"),
+    status:document.querySelector("#igcSyncStatus")?.textContent,
+    visibleAccount:document.querySelector("#igcSyncAccount")?.textContent,
+    developer:!!window.igcDevAudit
+   }));
+   throw new Error("Saved account switch did not complete: "+
+     JSON.stringify(snapshot)+"; page errors="+JSON.stringify(errors)+"; "+error.message);
+  });
   await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES?.owner&&
       document.querySelector("#igcAppShell")?.offsetParent!==null,
       null,{timeout:15000});
