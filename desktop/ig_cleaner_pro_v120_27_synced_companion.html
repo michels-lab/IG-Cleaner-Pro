@@ -15047,7 +15047,10 @@ window.igcAutoStart=async function(){
   actionBatchReview=waiting.batch||null;
   window.igcAutoRenderBatchApproval();
   if(waiting.batch){
-    setStatus("This automatic batch is not yet marked Reviewed. Choose Recheck automatically or Mark batch reviewed.");
+    // Run must resume this exact *unapproved* cohort in the automatic robot,
+    // not quietly choose new profiles or demand manual one-by-one review.
+    setStatus("This batch is still awaiting your approval; reopening the same cohort in the automatic robot.");
+    await window.igcAutoRecheckBatch();
     return;
   }
   // Fail closed unless the latest persisted owner/account/task history
