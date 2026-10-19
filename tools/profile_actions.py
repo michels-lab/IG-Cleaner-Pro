@@ -1120,6 +1120,20 @@ class ActionRobot:
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
             _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
 
+    def _discard_stale_recheck(self, username):
+        """An actual later action supersedes old read-only observations.
+
+        Preserve all original click journals. Never let a prior incomplete
+        recheck result hide a newly verified action in the approval panel.
+        """
+        entries = self._review_batches(self.owner, self.account, self.task)
+        entry = next((x for x in reversed(entries)
+                      if x.get("id") == self.active_batch_id and not x.get("approved_at")), None)
+        if entry and username in entry.get("recheck_results", {}):
+            entry["recheck_results"].pop(username, None)
+            _atomic_json(self._review_batches_file_for(
+                self.owner, self.account, self.task), entries)
+
     def _protection_file(self):
         ident = "\0".join((self.owner, self.account))
         digest = hashlib.sha256(ident.encode("utf-8")).hexdigest()[:32]
@@ -1637,6 +1651,7 @@ class ActionRobot:
                                          "issue": issue,
                                          "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                         _atomic_json(path, journal)
+                        self._discard_stale_recheck(user)
                     if action_tabs:
                         try:
                             safely_unclicked = (self.review_only and not previous.get("status")) or (
