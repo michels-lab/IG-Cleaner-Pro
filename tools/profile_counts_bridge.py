@@ -739,7 +739,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/recheck-batch", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -767,6 +767,12 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None):
                         raise ValueError("Unknown update action.")
                 elif self.path == "/api/actions/history":
                     result = actions.attempted_history(data)
+                elif self.path == "/api/actions/review-batch":
+                    result = actions.batch_review(data)
+                elif self.path == "/api/actions/approve-batch":
+                    result = actions.approve_batch(data)
+                elif self.path == "/api/actions/recheck-batch":
+                    result = actions.recheck_batch(data)
                 elif self.path == "/api/actions/start":
                     result = actions.start(data)
                 elif self.path == "/api/actions/continue":

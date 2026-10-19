@@ -187,6 +187,76 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
+    def test_automatic_attempt_never_counts_as_owner_review_before_confirm(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            robot=self._action(root)
+            request=self._request(["verified.one","uncertain.two"])
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value=False
+                robot.start(request)
+                _atomic_json(robot._base(),{
+                    "verified.one":{"status":"ok","message":"Follow confirmed"},
+                    "uncertain.two":{"status":"review","message":
+                        "Final state ambiguous. Do not repeat this action."}
+                })
+                snapshot=robot.snapshot()
+                self.assertEqual(snapshot["successful"],1)
+                self.assertIsNone(snapshot["review_batch"]["approved_at"])
+                fresh=self._action(root)
+                pending=fresh.batch_review(request)["batch"]
+                self.assertEqual(pending["targets"],request["targets"])
+                self.assertEqual(pending["action_results"]["verified.one"]["status"],"ok")
+                self.assertEqual(pending["action_results"]["uncertain.two"]["status"],"review")
+                with self.assertRaisesRegex(ValueError, "not been marked Reviewed"):
+                    robot.start(self._request(["different.person"]))
+                with self.assertRaisesRegex(ValueError,"exact unapproved batch"):
+                    robot.recheck_batch({**request,"batch_id":"wrong",
+                                         "confirmation":"recheck:wrong"})
+                with self.assertRaisesRegex(ValueError,"explicit batch confirmation"):
+                    robot.approve_batch({**request,"batch_id":pending["id"],
+                                          "confirmation":"reviewed:wrong"})
+                # A read-only recheck must not overwrite the original action journal.
+                robot.active_batch_id=pending["id"]
+                robot._save_recheck_result("uncertain.two","review","Still ambiguous; no click")
+                robot._save_recheck_result("verified.one","ok","Follow still visible; no click")
+                before=robot._journal()
+                result=robot.approve_batch({**request,"batch_id":pending["id"],
+                                            "confirmation":"reviewed:"+pending["id"]})
+                self.assertEqual(result["approved_usernames"],["verified.one"])
+                self.assertEqual(result["unresolved_usernames"],["uncertain.two"])
+                self.assertEqual(robot._journal(),before)
+                self.assertIsNone(fresh.batch_review(request)["batch"])
+                robot.start(self._request(["different.person"]))
+
+    def test_readonly_recheck_reuses_same_unapproved_batch_and_scope(self):
+        with TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            robot=self._action(root)
+            request=self._request(["profile.one","profile.two"])
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value=False
+                robot.start(request)
+                entry=robot.batch_review(request)["batch"]
+                payload={**request,"batch_id":entry["id"],
+                         "confirmation":"recheck:"+entry["id"]}
+                robot.recheck_batch(payload)
+                self.assertTrue(robot.review_only)
+                self.assertEqual(robot.active_batch_id,entry["id"])
+                self.assertEqual(robot.targets,request["targets"])
+                self.assertEqual(robot.snapshot()["attempted_usernames"],[])
+                other={**payload,"account":"different-account"}
+                with self.assertRaisesRegex(ValueError,"exact unapproved batch"):
+                    robot.recheck_batch(other)
+                # Even a recheck that verifies a formerly ambiguous action
+                # never mutates the original journal.
+                robot._save_recheck_result("profile.one","ok","Read-only Follow confirmed.")
+                approved=robot.approve_batch({**request,"batch_id":entry["id"],
+                                               "confirmation":"reviewed:"+entry["id"]})
+                self.assertEqual(approved["approved_usernames"],["profile.one"])
+                self.assertEqual(approved["unresolved_usernames"],["profile.two"])
+
     def test_prior_two_batches_are_exposed_for_next_batch(self):
         with TemporaryDirectory() as temporary:
             robot=self._action(Path(temporary))
@@ -209,6 +279,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertEqual(len(state["attempted_usernames"]),80)
                 # A new UI selection can exclude all 80 historical attempts,
                 # not only the active batch displayed in snapshot.rows.
+                with self.assertRaisesRegex(ValueError,"not been marked Reviewed"):
+                    robot.start(self._request(["fresh.81"]))
+                current = robot.batch_review({**request,"task":"cancel"})["batch"]
+                robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
+                                     "confirmation":"reviewed:"+current["id"]})
                 with self.assertRaisesRegex(ValueError,"already attempted"):
                     robot.start(self._request(["target.79"]))
                 robot.start(self._request(["fresh.81"]))
@@ -229,8 +304,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 })
                 self.assertNotIn("pending.old",robot.snapshot()["attempted_usernames"])
                 self.assertIn("pending.clicked",robot.snapshot()["attempted_usernames"])
+                b=robot.batch_review(self._request(["pending.old"]))["batch"]
+                robot.approve_batch({**self._request(["pending.old"]), "batch_id":b["id"],
+                                     "confirmation":"reviewed:"+b["id"]})
                 robot.start(self._request(["pending.old"]))
-                with self.assertRaisesRegex(ValueError,"already attempted"):
+                with self.assertRaisesRegex(ValueError,"not been marked Reviewed"):
                     robot.start(self._request(["pending.clicked"]))
 
     def test_read_prior_attempts_on_fresh_windows_launch_without_starting_worker(self):
@@ -309,11 +387,15 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 worker.return_value.is_alive.return_value = False
                 # New explicit owner approval is required to rerun the
                 # profiles where no relationship-changing click occurred.
-                cold.start(self._request(["missing.old"], task="unfollow"))
+                request=self._request(["missing.old"],task="unfollow")
+                cold.start(request)
                 self.assertEqual(cold.targets, ["missing.old"])
-                cold.start(self._request(["missing.new"], task="unfollow"))
-                with self.assertRaisesRegex(ValueError, "already attempted"):
-                    cold.start(self._request(["maybe.clicked"], task="unfollow"))
+                b=cold.batch_review(request)["batch"]
+                cold.approve_batch({**request,"batch_id":b["id"],
+                                    "confirmation":"reviewed:"+b["id"]})
+                cold.start(self._request(["missing.new"],task="unfollow"))
+                with self.assertRaisesRegex(ValueError, "not been marked Reviewed"):
+                    cold.start(self._request(["maybe.clicked"],task="unfollow"))
 
     def test_journal_is_owner_and_task_scoped(self):
         with TemporaryDirectory() as temporary:
