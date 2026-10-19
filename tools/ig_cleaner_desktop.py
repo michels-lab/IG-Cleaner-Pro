@@ -54,10 +54,10 @@ def bundled_html() -> Path:
 def prepare_html(source: Path, destination: Path) -> Path:
     """Copy only on content change, atomically, without touching workspace data."""
     if not source.is_file():
-        raise FileNotFoundError("El ejecutable no incluye la interfaz de Insta Cleaner.")
+        raise FileNotFoundError("The installed executable is missing the Insta Cleaner interface.")
     incoming = source.read_bytes()
     if len(incoming) < 100_000:
-        raise ValueError("La interfaz incluida está incompleta.")
+        raise ValueError("The bundled interface is incomplete.")
     if destination.is_file() and hashlib.sha256(destination.read_bytes()).digest() == hashlib.sha256(incoming).digest():
         return destination
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -83,7 +83,7 @@ def chrome_path() -> Path:
     for candidate in candidates:
         if candidate and Path(candidate).is_file():
             return Path(candidate)
-    raise FileNotFoundError("Instala Google Chrome para abrir Insta Cleaner y usar el robot de Instagram.")
+    raise FileNotFoundError("Install Google Chrome to open Insta Cleaner and use its Instagram robot.")
 
 
 def chrome_app_args(executable: Path, page: Path, workspace: Path, port: int, token: str, *, developer=False):
@@ -110,7 +110,7 @@ def acquire_single_instance(*, developer=False):
         raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
     if ctypes.get_last_error() == 183:
         kernel32.CloseHandle(handle)
-        raise RuntimeError("Insta Cleaner Pro ya está abierto. Usa la ventana existente.")
+        raise RuntimeError("Insta Cleaner Pro is already running. Use the existing window.")
     return handle
 
 
@@ -185,7 +185,7 @@ def main(argv=None) -> int:
             from playwright.sync_api import sync_playwright
             with sync_playwright() as playwright:
                 if not playwright.chromium:
-                    raise RuntimeError("No se empaquetó el controlador de Chrome.")
+                    raise RuntimeError("The Chrome controller was not packaged with this app.")
             if not app_version():
                 raise RuntimeError("The governed native release metadata is missing.")
             server = build_server(Collector(app_home() / "robot-data", app_home() / "instagram-browser"),
