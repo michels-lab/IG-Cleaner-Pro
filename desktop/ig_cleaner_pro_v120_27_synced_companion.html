@@ -3769,7 +3769,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
   <div class="btnrow">
     <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
-    <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Recheck automatically</button>
+    <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Verify previous actions (read-only)</button>
     <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open only issue profiles</button>
   </div>
   <p class="note">Automatic actions are not marked reviewed until you approve. Rechecking uses Chrome automatically and never repeats a possibly completed Unfollow or Cancel Request.</p>
@@ -15047,10 +15047,22 @@ window.igcAutoStart=async function(){
   actionBatchReview=waiting.batch||null;
   window.igcAutoRenderBatchApproval();
   if(waiting.batch){
-    // Run must resume this exact *unapproved* cohort in the automatic robot,
-    // not quietly choose new profiles or demand manual one-by-one review.
-    setStatus("This batch is still awaiting your approval; reopening the same cohort in the automatic robot.");
-    await window.igcAutoRecheckBatch();
+    // Run performs owner-authorized actions on the SAME saved batch's
+    // untouched profiles; the separate Recheck button never clicks.
+    const data=actionConfig(mode,waiting.batch.targets);
+    data.batch_id=waiting.batch.id;
+    const attempted=waiting.batch.action_results||{};
+    const untouched=data.targets.filter(u=>
+      attempted[u]?.safe_no_click===true ||
+      !["ok","review","error","blocked"].includes(attempted[u]?.status||"pending"));
+    if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
+    if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
+      " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
+      "?\n"+untouched.length+" profiles are untouched or explicitly proven no-click. Only these safe profiles will be attempted; uncertain actions will NEVER be repeated."))return;
+    window.igcAutoSaveTiming();
+    actionState=await requestAction("start",data);
+    setStatus("Continuing saved batch: untouched profiles and proven no-click retries only.");
+    await window.igcAutoPoll();
     return;
   }
   // Fail closed unless the latest persisted owner/account/task history
@@ -15373,20 +15385,25 @@ window.igcAutoRenderBatchApproval=function(){
  const busy=!!(actionState?.running && actionState?.owner===actionOwner().owner &&
                 actionState?.account===actionOwner().account);
  const msg=document.getElementById("igcAutoBatchApprovalDetails");
- if(msg)msg.textContent=(busy?"Automatic checking in progress. ":"Awaiting your approval. ")+
-   count+" in batch · "+outcome.confirmed.length+" verified by robot · "+
-   outcome.issues.length+" need attention · "+outcome.unchecked.length+
-   " not yet checked. No profile is counted as manually reviewed until you approve.";
- for(const id of ["igcAutoApproveBatch","igcAutoRecheckBatch"]){
-  const button=document.getElementById(id);if(button)button.disabled=busy;
- }
- const open=document.getElementById("igcAutoOpenBatchIssues");
- if(open)open.disabled=!outcome.issues.length&&!outcome.unchecked.length;
+  const heading=busy?(actionState?.review_only
+    ?"Read-only verification in progress (NO UNFOLLOW). "
+    :"Action pass running. "):
+    outcome.unchecked.length
+    ?"Batch incomplete. Choose Run to continue untouched profiles. "
+    :"Action pass finished. Review results and approve this batch. ";
+  if(msg)msg.textContent=heading+count+" in batch · "+outcome.confirmed.length+
+    " verified results · "+outcome.issues.length+" issues · "+
+    outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed.";
+  const approve=document.getElementById("igcAutoApproveBatch");
+  if(approve)approve.disabled=busy||outcome.unchecked.length>0;
+  const recheck=document.getElementById("igcAutoRecheckBatch");
+  if(recheck)recheck.disabled=busy;
+  const open=document.getElementById("igcAutoOpenBatchIssues");
+  if(open)open.disabled=!outcome.issues.length;
 };
 window.igcAutoRecheckBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
- if(!window.confirm("Recheck the same "+b.targets.length+
-     " profiles automatically in Chrome? This does NOT click Unfollow or Cancel Request again."))return;
+ if(!window.confirm("READ-ONLY verification of previously attempted profiles. This NEVER clicks Unfollow or Cancel Request and does NOT act on untouched profiles. Use Run for new actions. Continue?"))return;
  try{
   const result=await requestAction("recheck-batch",{
    ...actionOwner(),task:mode,batch_id:b.id,confirmation:"recheck:"+b.id,
@@ -15401,6 +15418,7 @@ window.igcAutoRecheckBatch=async function(){
 window.igcAutoApproveBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
  const o=igcAutoBatchOutcomes();
+ if(o.unchecked.length){setStatus(o.unchecked.length+" profiles are untouched. Choose Run to finish the batch before approval.");return}
  if(!window.confirm("Mark this "+b.targets.length+
    "-profile batch as Reviewed?\n\n"+o.confirmed.length+
    " robot-verified profiles will be marked Reviewed. "+(o.issues.length+o.unchecked.length)+
@@ -15437,7 +15455,7 @@ window.igcAutoApproveBatch=async function(){
 };
 window.igcAutoOpenBatchIssues=function(){
  const b=actionBatchReview;if(!b)return;
- const outcome=igcAutoBatchOutcomes(),users=[...outcome.issues,...outcome.unchecked].slice(0,10);
+ const outcome=igcAutoBatchOutcomes(),users=outcome.issues.slice(0,10);
  if(!users.length){setStatus("No issue profiles need manual inspection.");return}
  // Deliberately open ONLY the exceptions, never the whole automatic batch.
  for(const user of users){

@@ -62,6 +62,18 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
         self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
+    def test_safe_no_click_closes_failed_profile_but_keeps_ambiguous_click(self):
+        from profile_actions import ActionTabPool
+        context = FakeTabContext()
+        pool = ActionTabPool(context)
+        no_click = pool.open("missing.following")
+        uncertain = pool.open("possibly.changed")
+        pool.record("missing.following", "review", safe_no_click=True)
+        pool.record("possibly.changed", "review")
+        self.assertTrue(no_click.is_closed())
+        self.assertFalse(uncertain.is_closed())
+        self.assertIsNotNone(pool.open("next.untouched"))
+
     def test_prefetch_uses_existing_tab_instead_of_duplicate(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
@@ -209,7 +221,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertEqual(pending["targets"],request["targets"])
                 self.assertEqual(pending["action_results"]["verified.one"]["status"],"ok")
                 self.assertEqual(pending["action_results"]["uncertain.two"]["status"],"review")
-                with self.assertRaisesRegex(ValueError, "not been marked Reviewed"):
+                with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
                     robot.start(self._request(["different.person"]))
                 with self.assertRaisesRegex(ValueError,"exact unapproved batch"):
                     robot.recheck_batch({**request,"batch_id":"wrong",
@@ -229,6 +241,42 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertEqual(robot._journal(),before)
                 self.assertIsNone(fresh.batch_review(request)["batch"])
                 robot.start(self._request(["different.person"]))
+
+    def test_resume_pending_cohort_executes_only_untouched_without_new_batch(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as tmp:
+            robot = self._action(Path(tmp))
+            req = self._request(["already.ok","uncertain.click","no.click","untouched.one","untouched.two"],task="unfollow")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.start(req)
+                batch = robot.batch_review(req)["batch"]
+                _atomic_json(robot._base(), {
+                    "already.ok": {"status":"ok","message":"Follow confirmed."},
+                    "uncertain.click":{"status":"review","message":"Final state ambiguous after click."},
+                    "no.click":{"status":"review","issue":"profile_load_timeout",
+                      "message":"No relationship control found. Waiting timed out: Following. No action clicked."}})
+                with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
+                    robot.start(self._request(["replacement.new"],task="unfollow"))
+                with self.assertRaisesRegex(ValueError,"exact saved ID"):
+                    robot.start({**req,"batch_id":"wrong"})
+                swapped = self._request(list(reversed(req["targets"])),task="unfollow")
+                with self.assertRaisesRegex(ValueError,"exact saved ID"):
+                    robot.start({**swapped,"batch_id":batch["id"]})
+                with self.assertRaisesRegex(ValueError,"Saved batch changed"):
+                    robot.start({**req,"account":"other","batch_id":batch["id"]})
+                prior = robot._journal()
+                robot.start({**req,"batch_id":batch["id"]})
+                self.assertTrue(robot.continuing_batch)
+                self.assertFalse(robot.review_only)
+                self.assertEqual(robot.active_batch_id,batch["id"])
+                self.assertEqual(robot.targets,req["targets"])
+                self.assertEqual(robot._journal(),prior)
+                self.assertEqual(len(robot._review_batches(req["owner"],req["account"],req["task"])),1)
+                robot.review_only=True
+                robot.status="paused"
+                with self.assertRaisesRegex(ValueError,"Read-only verification cannot resume"):
+                    robot.start(req,resume=True)
 
     def test_readonly_recheck_reuses_same_unapproved_batch_and_scope(self):
         with TemporaryDirectory() as temporary:
@@ -279,12 +327,12 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertEqual(len(state["attempted_usernames"]),80)
                 # A new UI selection can exclude all 80 historical attempts,
                 # not only the active batch displayed in snapshot.rows.
-                with self.assertRaisesRegex(ValueError,"not been marked Reviewed"):
+                with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
                     robot.start(self._request(["fresh.81"]))
                 current = robot.batch_review({**request,"task":"cancel"})["batch"]
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
-                with self.assertRaisesRegex(ValueError,"already attempted"):
+                with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
                     robot.start(self._request(["target.79"]))
                 robot.start(self._request(["fresh.81"]))
                 self.assertEqual(robot.targets,["fresh.81"])
@@ -308,7 +356,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 robot.approve_batch({**self._request(["pending.old"]), "batch_id":b["id"],
                                      "confirmation":"reviewed:"+b["id"]})
                 robot.start(self._request(["pending.old"]))
-                with self.assertRaisesRegex(ValueError,"not been marked Reviewed"):
+                with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
                     robot.start(self._request(["pending.clicked"]))
 
     def test_read_prior_attempts_on_fresh_windows_launch_without_starting_worker(self):
@@ -394,7 +442,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 cold.approve_batch({**request,"batch_id":b["id"],
                                     "confirmation":"reviewed:"+b["id"]})
                 cold.start(self._request(["missing.new"],task="unfollow"))
-                with self.assertRaisesRegex(ValueError, "not been marked Reviewed"):
+                with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
                     cold.start(self._request(["maybe.clicked"],task="unfollow"))
 
     def test_journal_is_owner_and_task_scoped(self):

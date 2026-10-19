@@ -97,12 +97,13 @@ class ActionTabPool:
         item = self.tabs.get(username)
         return item["page"] if item is not None else None
 
-    def record(self, username, status):
+    def record(self, username, status, *, safe_no_click=False):
         item = self.tabs.get(username)
         if item is None:
             return
-        if status in ("ok", "skipped"):
-            # A confirmed result (or explicit pre-click skip) can be closed.
+        if status in ("ok", "skipped") or safe_no_click:
+            # Verified outcomes, explicit skips and known pre-click failures
+            # close safely; uncertain post-click results retain visible tabs.
             # An ambiguous action, including post-click session loss, cannot.
             if not item["page"].is_closed():
                 item["page"].close()
@@ -964,6 +965,7 @@ class ActionRobot:
         self.open_review_tabs = []
         self.current_wait = None
         self.review_only = False
+        self.continuing_batch = False
         self.active_batch_id = ""
         self.skipped = set()
         self.max_count = 30
@@ -1025,7 +1027,8 @@ class ActionRobot:
                 details = dict(entry)
                 details["action_results"] = {
                     username: {"status": journal.get(username, {}).get("status", "pending"),
-                               "message": journal.get(username, {}).get("message", "")}
+                               "message": journal.get(username, {}).get("message", ""),
+                               "safe_no_click": _preclick_no_action(journal.get(username, {}))}
                     for username in entry["targets"]}
             else:
                 details = None
@@ -1092,6 +1095,7 @@ class ActionRobot:
             self.targets = list(entry["targets"])
             self.active_batch_id = entry["id"]
             self.review_only = True
+            self.continuing_batch = False
             self.open_review_tabs = []
             self.current_wait = None
             self.skipped.clear()
@@ -1116,6 +1120,20 @@ class ActionRobot:
                 "status": result, "message": message,
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
             _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
+
+    def _discard_stale_recheck(self, username):
+        """An actual later action supersedes old read-only observations.
+
+        Preserve all original click journals. Never let a prior incomplete
+        recheck result hide a newly verified action in the approval panel.
+        """
+        entries = self._review_batches(self.owner, self.account, self.task)
+        entry = next((x for x in reversed(entries)
+                      if x.get("id") == self.active_batch_id and not x.get("approved_at")), None)
+        if entry and username in entry.get("recheck_results", {}):
+            entry["recheck_results"].pop(username, None)
+            _atomic_json(self._review_batches_file_for(
+                self.owner, self.account, self.task), entries)
 
     def _protection_file(self):
         ident = "\0".join((self.owner, self.account))
@@ -1188,25 +1206,40 @@ class ActionRobot:
                 raise ValueError("Cannot resume a different task or account.")
             if resume and self.status not in ("paused", "error", "review", "blocked"):
                 raise ValueError("There is no paused task to resume.")
+            if resume and self.review_only:
+                raise ValueError("Read-only verification cannot resume as an Unfollow job.")
+            if resume and targets != self.targets:
+                raise ValueError("Resuming actions cannot change the saved target cohort.")
+            pending_entry = None if resume else self._pending_review(owner, account, task)
+            if not resume:
+                if pending_entry:
+                    if (data.get("batch_id") != pending_entry["id"] or
+                            targets != pending_entry["targets"]):
+                        raise ValueError("An unapproved batch exists. Continue its exact saved ID and profiles; never replace it.")
+                elif data.get("batch_id"):
+                    raise ValueError("Saved batch changed. Refresh before restarting actions.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             if not resume:
-                if self._pending_review(owner, account, task):
-                    raise ValueError("This batch has not been marked Reviewed. Recheck the existing batch automatically or approve it first.")
                 previous = self._journal()
                 if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
-                       and not _preclick_no_action(record) for user in targets):
-                    raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
+                       and not _preclick_no_action(record)
+                       for user in targets):
+                    raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
             self.targets = targets
             self.review_only = False
             if not resume:
-                entries = self._review_batches(owner, account, task)
-                batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
-                                          owner + "\\0" + account + "\\0" + task).encode()).hexdigest()[:24]
-                entries.append({"id": batch_id, "targets": list(targets),
-                                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                                "approved_at": None, "recheck_results": {}})
-                _atomic_json(self._review_batches_file_for(owner, account, task), entries)
-                self.active_batch_id = batch_id
+                self.continuing_batch = pending_entry is not None
+                if pending_entry:
+                    self.active_batch_id = pending_entry["id"]
+                else:
+                    entries = self._review_batches(owner, account, task)
+                    batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
+                                              owner + "\\0" + account + "\\0" + task).encode()).hexdigest()[:24]
+                    entries.append({"id": batch_id, "targets": list(targets),
+                                    "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                    "approved_at": None, "recheck_results": {}})
+                    _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+                    self.active_batch_id = batch_id
             self.open_review_tabs = []
             self.current_wait = None
             if not resume:
@@ -1275,6 +1308,7 @@ class ActionRobot:
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
+                    "continuing_batch": self.continuing_batch,
                     "review_batch": (self._pending_review(self.owner, self.account, self.task)
                         if self.owner and self.account and self.task else None),
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
@@ -1618,9 +1652,12 @@ class ActionRobot:
                                          "issue": issue,
                                          "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                         _atomic_json(path, journal)
+                        self._discard_stale_recheck(user)
                     if action_tabs:
                         try:
-                            action_tabs.record(user, result)
+                            safely_unclicked = (self.review_only and not previous.get("status")) or (
+                                not self.review_only and _preclick_no_action(journal.get(user, {})))
+                            action_tabs.record(user, result, safe_no_click=safely_unclicked)
                         except Exception:
                             # No relationship click is ever repeated to recover
                             # from a tab closing problem.
@@ -1639,7 +1676,8 @@ class ActionRobot:
                         if self.task == "audit" and result == "review":
                             continue
                         if issue in ("pending_already_following", "pending_not_requested",
-                                     "mutual_before_action", "missing_profile_info"):
+                                     "mutual_before_action", "missing_profile_info",
+                                     "profile_load_timeout"):
                             continue
                         with self.lock:
                             self.status, self.message = result, "@" + user + ": " + details
