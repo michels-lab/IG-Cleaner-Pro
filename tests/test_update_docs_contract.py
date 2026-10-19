@@ -38,7 +38,7 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertIn("official GitHub Releases", guide)
         self.assertIn("official published release", guide)
         self.assertNotIn("v120.48 Pending Requests batch fixes are still", guide)
-        self.assertNotRegex(guide, r"current Windows guidance\\s*\\(v[0-9]+\\.[0-9]+")
+        self.assertNotRegex(guide, r"current Windows guidance\s*\(v[0-9]+\.[0-9]+")
         self.assertIn("historical [v120.47 release]", guide)
         self.assertIn("not claims about the latest stable", guide)
 
