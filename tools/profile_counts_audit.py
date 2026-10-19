@@ -38,7 +38,9 @@ def _valid_reading(row: dict) -> bool:
         checked = dt.datetime.fromisoformat(str(row.get("checked_at") or "").replace("Z", "+00:00"))
     except (TypeError, ValueError, OverflowError):
         return False
-    return checked.tzinfo is not None and checked.utcoffset() is not None
+    if checked.tzinfo is None or checked.utcoffset() is None:
+        return False
+    return checked.astimezone(dt.timezone.utc) <= dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=60)
 
 
 def audit_cycle_path(results_path: Path) -> Path:
