@@ -4,10 +4,10 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 const html=fs.readFileSync(path.join(__dirname,"../desktop/ig_cleaner_pro_v120_27_synced_companion.html"),"utf8");
-const script=html.match(/<script id="igc-v12024-frozen-focus-preview-js">([\\s\\S]*?)<\\/script>/)?.[1];
+const script=html.match(/<script id="igc-v12024-frozen-focus-preview-js">([\s\S]*?)<\/script>/)?.[1];
 assert(script,"Frozen Focus preview must be present");
 new vm.Script(script);
-assert.match(html,/return window\\.igcPrioritizedMainFocusPool\\?\\.\\(\\)/,
+assert.match(html,/return window\.igcPrioritizedMainFocusPool\?\.\(\)/,
   "Editable Focus refills must reuse the same complete prioritization pool");
 
 const store=new Map(),nodes=new Map(),opens=[];
