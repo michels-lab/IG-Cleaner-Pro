@@ -1292,6 +1292,11 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         sync.setOnClickListener(v -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Developer Edition keeps your real login but does not write cloud sync data.",
+                        Snackbar.LENGTH_LONG).show();
+                return;
+            }
             setGlobalStatus("SYNCING • account and device");
             runAsync(() -> {
                 touchDevice();
@@ -1303,6 +1308,11 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         managePassword.setOnClickListener(v -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Password changes are disabled in Developer Edition.",
+                        Snackbar.LENGTH_LONG).show();
+                return;
+            }
             TextInputEditText passwordField = new TextInputEditText(this);
             passwordField.setHint("New password");
             passwordField.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
@@ -1664,6 +1674,11 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void confirmDeleteSyncedCloudData() {
+        if (isDeveloperEdition()) {
+            Snackbar.make(content, "Developer Edition cannot delete synchronized production data.",
+                    Snackbar.LENGTH_LONG).show();
+            return;
+        }
         if (!api.hasSession()) {
             Snackbar.make(content, "Sign in first.", Snackbar.LENGTH_LONG).show();
             return;
