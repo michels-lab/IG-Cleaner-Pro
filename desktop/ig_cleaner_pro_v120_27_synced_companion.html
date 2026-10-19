@@ -15712,7 +15712,9 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
 (function(){
  "use strict";
  const match=/^#igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})&igc-developer=1$/.exec(location.hash||"");
- if(!match)return;
+ let androidDeveloper=false;
+ try{androidDeveloper=window.AndroidBridge?.isDeveloperMode?.()===true}catch{}
+ if(!match&&!androidDeveloper)return;
  const el=id=>document.getElementById(id);
  const host=el("igcDevConsole"),summary=el("igcDevResults"),highlight=el("igcDevSelectionOutline");
  if(!host||!summary||!highlight)return;
@@ -15823,6 +15825,31 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  async function audit(){
   el("igcDevRun").disabled=true;summary.textContent="Auditing local journals and current app UI...";
   try{
+   if(androidDeveloper){
+    // Android APK is sandboxed by .developer package identity; its local
+    // renderer audit never uses the Windows loopback or Instagram credentials.
+    const checks=clientChecks(),findings=[];
+    for(const [name,code] of [
+      ["duplicate_dom_ids","DUPLICATE_DOM_IDS"],
+      ["missing_critical_controls","MISSING_UI_CONTROLS"],
+      ["uncaught_ui_errors","UNCAUGHT_UI_ERRORS"],
+      ["unhandled_ui_rejections","UNHANDLED_UI_REJECTIONS"]]){
+      if(checks[name]>0)findings.push({code,severity:"warning",count:checks[name],
+        evidence:"android_embedded_webview_runtime",action:"Inspect tagged screen and reproduce on an installed Android Developer APK."});
+    }
+    lastReport={schema:"michels-lab-android-developer-ui-audit-v1",
+      product:"IG Cleaner Pro",generated_at:new Date().toISOString(),
+      mode:"developer-read-only",platform:"android",source_revision:"embedded-html",
+      findings,limitations:[
+        "Android Developer audit covers local WebView runtime/DOM only.",
+        "No Windows action journals or live Instagram relationship changes were scanned.",
+        "Owner notes are unverified observations; no action was clicked by this audit."
+      ]};
+    lastPrompt="Android Developer Edition read-only UI audit. Prioritize these UI findings and user-reported section notes; do not assume Instagram actions succeeded.\\n"+
+      JSON.stringify({audit:lastReport,client_ui_checks:checks},null,2);
+    summary.textContent=JSON.stringify({audit:lastReport,client_ui_checks:checks,section_notes:notes().length},null,2);
+    return true;
+   }
    const response=await fetch("http://127.0.0.1:"+match[1]+"/api/developer/audit",{
     method:"POST",mode:"cors",cache:"no-store",
     headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":match[2]},
@@ -15864,6 +15891,15 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    safety:"Owner annotations are user-reported observations, not verified automated failures. They may include private wording. Review before sharing. Never export sessions or access tokens."};
  }
  function download(content,name,type){
+  if(androidDeveloper&&window.AndroidBridge?.saveBase64){
+   // Use the existing native MediaStore export path; blob: downloads in
+   // Android WebView do not reliably reach the Downloads directory.
+   const utf8=new TextEncoder().encode(content);let binary="";
+   for(let i=0;i<utf8.length;i+=8192)
+    binary+=String.fromCharCode(...utf8.subarray(i,i+8192));
+   window.AndroidBridge.saveBase64(name,type,"data:"+type+";base64,"+btoa(binary));
+   return;
+  }
   const objectUrl=URL.createObjectURL(new Blob([content],{type}));
   const a=document.createElement("a");a.href=objectUrl;a.download=name;
   document.body.appendChild(a);a.click();a.remove();
