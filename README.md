@@ -4,19 +4,19 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.52 — official stable GitHub release (published October 19, 2026).** [Download verified v120.52 with all nine assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52). Tested in automated Windows Setup, Chromium fixture, Desktop and Android build/render/signing gates. Live Instagram owner acceptance remains pending.
+**v120.53 — official hotfix candidate**, pending independent current-commit packaging/signing/visual QA and final stable GitHub publication. The latest verified published version remains [v120.52](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52) until publication completes.
 
-| Platform | v120.52 published official asset |
+| Platform | Planned official v120.53 file |
 | --- | --- |
-| Windows integrated app and Instagram robots | `IG-Cleaner-Pro-Windows-Setup-v120.52.exe` |
-| Production-signed Android | `IG-Cleaner-Pro-Android-v120.52.apk` |
-| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.52.html` |
-| Optional Windows portable ZIP | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.52.zip` |
-| Optional Desktop bundle | `IG-Cleaner-Pro-Desktop-v120.52.zip` |
+| Windows installed application + automation robot | `IG-Cleaner-Pro-Windows-Setup-v120.53.exe` |
+| Android (original production-signed package) | `IG-Cleaner-Pro-Android-v120.53.apk` |
+| Desktop offline standalone | `IG-Cleaner-Pro-Desktop-v120.53.html` |
+| Optional Windows robot ZIP | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.53.zip` |
+| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.53.zip` |
 
-**Changes:** actual preparation of up to ten distinct Chrome tabs; safer verified Following/Siguiendo controls and delayed read-only outcome check; automatic whole-batch **Is this batch OK?** confirmation before marking successful profiles Reviewed. Unapproved batches survive restart and rerun automatically in read-only mode; open only issue profiles when needed. Never replay an uncertain relationship-changing click.
+**Critical fix:** Run no longer quietly enters read-only verification for a saved batch still awaiting the owner's approval. It now explicitly resumes **real actions** for untouched or provably zero-click profiles in the *same exact batch*; uncertain previous clicks are never repeated. "Verify previous actions (read-only)" stays separate, approval is disabled until all targets have an outcome, and the issue-profile opener does not open all untouched profiles. Known no-click timeouts do not unnecessarily halt later eligible profiles. Persistent owner/account task journal and imported files are preserved.
 
-**Owner tests the RELEASE:** Michel validates only published stable installers against his real Instagram session, not candidate/preview Actions artifacts. Automated QA still gates publication. No live Instagram action success is claimed before his post-release tests; the robot stops on uncertainty, challenges and identity mismatch. Windows installer SHA-256 integrity checks are supplied, but no Authenticode certificate is configured.
+**Acceptance:** The owner tests only the **official published stable release** on the real Instagram account; never require a temporary Actions artifact or preview ZIP. Automated Windows/Chromium/Android/Desktop checks are release prerequisites but cannot guarantee that Instagram's real controls work. On challenge or ambiguous action, the robot fails closed. There is no CAPTCHA bypass or Windows Authenticode signature; use published SHA-256 hashes.
 
 ## Features
 
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current stable: v120.52. Next reserved version: v120.53, not authorized for publication.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable remains v120.52 until v120.53 is verified on GitHub. No future version is automatically authorized.**
 
 ## Identity and licensing
 
