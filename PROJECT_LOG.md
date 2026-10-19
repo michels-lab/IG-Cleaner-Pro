@@ -1,3 +1,11 @@
+## 2026-10-19 — GRANADA #1: Focus preview underfill, separate PR (#137)
+
+- **Operación GRANADA:** se aparcan #133 (release y prueba Instagram real del robot ya integrado) y #135 (Android Developer autenticación/proveedor/dispositivo), y el issue #57 estaba ya implementado y publicado en v120.40 aunque la aceptación física seguía pendiente. No editar esos componentes ni reinterpretar CI como aceptación del usuario.
+- Se eligió #136 en rama `granada/focus-priority-full-batches-20261019`, PR [#137](https://github.com/michels-lab/IG-Cleaner-Pro/pull/137). Falla fuente: el pool principal de Focus devolvía **solo la primera categoría no vacía**: uno o dos `changed` suprimían los demás elegibles en tandas 20/30/40. El editor v125 mantenía la misma selección parcial en otro algoritmo duplicado.
+- Corrección candidata: priorizar `changed -> critical -> risk -> demás` dentro del **pool elegible** con deduplicación estable, orden por evidencia/prioridad, y una única fuente utilizada tanto por preview congelada como por el editor. Persistencia de usernames congelados, reimport stale y confirmación explícita conservados. No se toca robot ni Android.
+- Prueba nueva `tests/focus-batch-priority.test.cjs` conectada a `.github/workflows/ci.yml`, cubre 1 cambiado + restantes, exactitud de conteo, candidatos filtrados, Pending independiente y reimport que obliga a confirmar.
+- **Evidencia:** commit candidato `cf46361ca1e40875cd6d0251f868290b96ba294e`; Desktop contracts, Desktop visual, Profile Counts offline y RLS PASS. En el mismo candidato Developer Android falló por el SDK `unknown archive` al descargar una imagen del emulador, **antes de instalar la app**, sin conexión causal establecida con Focus. Un reintento de **solo ese job** quedó solicitado; no se modificó Android. Un merge/publicación sigue sujeto a CI pertinente y normas de release. Stable pública v120.53 permanece intacta.
+
 ## 2026-10-19 — BR-01–BR-07 implementation merged: PR #134, release not authorized
 
 - **Merged product source**: PR [#134](https://github.com/michels-lab/IG-Cleaner-Pro/pull/134) into `main` at `8df8f3b27747b0ba1ccfd896664676223219f4ac`. This replaces the previous document-only candidate status for BR-01..BR-06; the original owner bug #133 is still open for actual release acceptance.

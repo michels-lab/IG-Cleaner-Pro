@@ -92,6 +92,7 @@ jobs:
           node tests/developer-annotations-contract.test.cjs
           python3 -m unittest discover -s tests -p 'test_developer_audit.py' -v
           node tests/pending-focus-reimport.test.cjs
+          node tests/focus-batch-priority.test.cjs
           python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
           python3 -m unittest discover -s tests -p 'test_historical_recheck.py' -v
       - name: Verify Windows-only updater dialog and required click-to-install
