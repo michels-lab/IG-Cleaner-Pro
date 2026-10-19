@@ -15274,15 +15274,17 @@ window.igcAutoRenderIssues=function(){
  }
  const all=Array.isArray(data?.issues)?data.issues.filter(r=>norm(r.username)&&r.issue):[];
  const marked=igcAutoIssueReviewed(selected);
- const outstanding=all.filter(r=>!marked[igcAutoIssueRowKey(r)]).length;
+ const recoverable=all.filter(r=>r.safe_no_click).length;
+ const outstanding=all.filter(r=>!r.safe_no_click&&!marked[igcAutoIssueRowKey(r)]).length;
  const total=document.getElementById("igcAutoIssueTotal");
- if(total)total.textContent=outstanding+" pending reviews · "+all.length+" issues";
+ if(total)total.textContent=outstanding+" need manual review · "+recoverable+
+  " auto-retry eligible (no click) · "+all.length+" logged issues";
  const status=document.getElementById("igcAutoIssueStatus");
  if(status)status.textContent=!data?"No results yet for this task.":
   ["complete","partial"].includes(data.status)?"Batch finished. Review discrepancies and open profiles if needed.":
   "Results update during the batch; ambiguous actions will not be repeated.";
  const rows=all.filter(r=>r.username.toLowerCase().includes(search)&&(
-  filter==="all"||(filter==="pending"&&!marked[igcAutoIssueRowKey(r)])||
+  filter==="all"||(filter==="pending"&&!r.safe_no_click&&!marked[igcAutoIssueRowKey(r)])||
   (filter==="reviewed"&&!!marked[igcAutoIssueRowKey(r)])||r.issue===filter));
  root.replaceChildren();
  if(!rows.length){
@@ -15302,7 +15304,8 @@ window.igcAutoRenderIssues=function(){
   });
   link.textContent="@"+issue.username;name.appendChild(link);
   const heading=document.createElement("strong");
-  heading.textContent=issueLabels[issue.issue]||"Review required";
+  heading.textContent=issue.safe_no_click?"Automatic retry eligible · no click":
+    (issueLabels[issue.issue]||"Review required");
   reason.appendChild(heading);
   const detail=document.createElement("div");detail.className="note";
   detail.textContent=issue.message||issue.status||"";
@@ -15338,10 +15341,12 @@ window.igcAutoRenderIssues=function(){
    window.igcAutoRenderIssues();
   });
   actions.appendChild(protect);
-  const checked=document.createElement("button");checked.type="button";checked.className="btn";
-  checked.textContent=marked[igcAutoIssueRowKey(issue)]?"↶ Mark pending":"✓ Reviewed";
-  checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue,!marked[igcAutoIssueRowKey(issue)]));
-  actions.appendChild(checked);
+  if(!issue.safe_no_click){
+   const checked=document.createElement("button");checked.type="button";checked.className="btn";
+   checked.textContent=marked[igcAutoIssueRowKey(issue)]?"↶ Mark pending":"✓ Reviewed";
+   checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue,!marked[igcAutoIssueRowKey(issue)]));
+   actions.appendChild(checked);
+  }
   tr.appendChild(name);tr.appendChild(reason);tr.appendChild(actions);root.appendChild(tr);
  }
 };
@@ -15440,7 +15445,7 @@ window.igcAutoRenderBatchApproval=function(){
   const recheck=document.getElementById("igcAutoRecheckBatch");
   if(recheck)recheck.disabled=busy;
   const open=document.getElementById("igcAutoOpenBatchIssues");
-  if(open)open.disabled=!outcome.issues.length;
+  if(open)open.disabled=!outcome.issues.some(u=>!actionBatchReview.action_results?.[u]?.safe_no_click);
 };
 window.igcAutoRecheckBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
@@ -15496,8 +15501,9 @@ window.igcAutoApproveBatch=async function(){
 };
 window.igcAutoOpenBatchIssues=async function(){
  const b=actionBatchReview;if(!b)return;
- const outcome=igcAutoBatchOutcomes(),users=outcome.issues.slice(0,10);
- if(!users.length){setStatus("No issue profiles need manual inspection.");return}
+ const outcome=igcAutoBatchOutcomes(),users=outcome.issues.filter(u=>
+  !b.action_results?.[u]?.safe_no_click).slice(0,10);
+ if(!users.length){setStatus("No manual exceptions. Proven no-click failures remain eligible for automatic retry on Run.");return}
  // Open ONLY actual exceptions; retain the robot Chrome login, not the app UI browser.
  let opened=0;
  for(const user of users){
