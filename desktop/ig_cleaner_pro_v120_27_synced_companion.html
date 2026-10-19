@@ -15804,7 +15804,8 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    locateButton.addEventListener("click",()=>{
     const target=locate(entry.anchor);
     if(target){target.scrollIntoView({block:"center",behavior:"smooth"});outline(target);
-     el("igcDevSelected").textContent="Located "+selectionText(entry.anchor)}
+     const exact=safeId(entry.anchor.control)&&el(entry.anchor.control);
+     el("igcDevSelected").textContent=(exact?"Located ":"Original control missing; showing nearest parent: ")+selectionText(entry.anchor)}
     else el("igcDevSelected").textContent="Section not present in this version: "+selectionText(entry.anchor);
    });
    controls.append(edit,locateButton,del);card.appendChild(controls);root.appendChild(card);
@@ -15847,7 +15848,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    source:"owner_observation_not_automatically_verified",
    id:entry.id,screen:entry.anchor.screen,section:entry.anchor.section,
    control:entry.anchor.control,locator:entry.anchor.locator,
-   target_present:!!locate(entry.anchor),
+   target_present:!!(safeId(entry.anchor.control)&&el(entry.anchor.control)),
    comment:entry.comment,
    created_at:entry.created_at,updated_at:entry.updated_at,
    app_version_at_creation:entry.app_version||"unknown"
@@ -15872,6 +15873,9 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   updateScope();
   if(!lastReport)await audit();
   const data=combinedReport(),today=new Date().toISOString().slice(0,10);
+  if(data.owner_section_annotations.length&&
+     !window.confirm("This developer report includes "+data.owner_section_annotations.length+
+       " verbatim owner comment(s) with screen/section identifiers. Review them for private data before sharing. Export now?"))return;
   const prefix="IG-Cleaner-Developer-Audit-"+today;
   if(kind==="json"){
    download(JSON.stringify(data,null,2),prefix+".json","application/json;charset=utf-8");return;
