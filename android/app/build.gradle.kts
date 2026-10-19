@@ -67,7 +67,6 @@ android {
             initWith(getByName("debug"))
             applicationIdSuffix = ".developer"
             versionNameSuffix = "-developer"
-            resValue("string", "developer_app_name", "Insta Cleaner Pro Developer")
         }
     }
 
