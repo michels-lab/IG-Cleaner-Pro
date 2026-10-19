@@ -115,8 +115,13 @@ public class AboutRenderTest {
         assertNotNull("Emulator never rendered real " + surface +
                 " app pixels after 12 compositor captures", frame);
         String viewport = InstrumentationRegistry.getArguments().getString("viewport", "unknown");
+        // Keep screenshots in the debug app's private files directory. API 35
+        // emulators can deny adb pull from /sdcard/Android/data even when the
+        // installed UI test and PNG write succeeded. The CI runner extracts
+        // these bytes via debug-only "adb exec-out run-as <package> cat".
+        // No production app data, credentials or public storage are involved.
         File dir = new File(InstrumentationRegistry.getInstrumentation().getTargetContext()
-                .getExternalFilesDir(null), "igc-ui-capture");
+                .getFilesDir(), "igc-ui-capture");
         assertTrue("Screenshot directory unavailable", dir.isDirectory() || dir.mkdirs());
         File target = new File(dir, surface + "-" + viewport + "-" + label + ".png");
         try(FileOutputStream out = new FileOutputStream(target)) {
