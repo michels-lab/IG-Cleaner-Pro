@@ -69,6 +69,7 @@ class FakeRoot:
         self.visible = visible
         self.roles = roles
         self.clicker = FakeButton(callback or (lambda: None))
+        self.target_username = None
 
     def get_by_role(self, role, name=None):
         return FakeMatches([self.clicker] if
@@ -77,7 +78,9 @@ class FakeRoot:
 
     def get_by_text(self, label, exact=True):
         return FakeMatches([self.clicker] if self.visible and
-                           label.fullmatch(self.label) else [])
+                           (label.fullmatch(self.label) or
+                            (self.target_username and label.fullmatch(self.target_username)))
+                           else [])
 
     def nth(self, i):
         return self
@@ -108,6 +111,7 @@ class FakePage:
                                self.confirm, visible=False)
         self.header = FakeRoot("Following" if task == "unfollow" else "Requested",
                                self.open_action)
+        self.header.target_username = target
         self.delay = []
 
     def open_action(self):
@@ -285,6 +289,7 @@ class ActionSafetyTests(unittest.TestCase):
         # already unfollowed. Keep it unresolved, never click or silently skip.
         page = FakePage("unfollow")
         page.header.label = "Follow"
+        page.header.target_username = "different.user"  # Unanchored button.
         with patch("profile_actions.challenge_detected", return_value=False), \
              patch("profile_actions.signed_in_handle", return_value="my.profile"), \
              patch("profile_actions.ACTION_CONTROL_WAIT_MS", 650):
