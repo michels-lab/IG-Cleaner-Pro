@@ -90,6 +90,24 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertIsNone(pool.prepared("already.loading"))
         self.assertTrue(prepared.is_closed())
 
+    def test_finished_cohort_releases_unused_prefetched_tabs_not_uncertain_actions(self):
+        from profile_actions import ActionTabPool
+        pool=ActionTabPool(FakeTabContext())
+        staged=[pool.open("staged."+str(i)) for i in range(8)]
+        for i in range(8):
+            pool.tabs["staged."+str(i)]["status"]="prefetched"
+        uncertain=pool.open("maybe.clicked")
+        pool.record("maybe.clicked","review")
+        blocked=pool.open("manual.challenge")
+        pool.record("manual.challenge","blocked")
+        pool.close_unacted_prefetches()
+        self.assertTrue(all(page.is_closed() for page in staged),
+                        "Eight untouched prefetched tabs must not hold robot in review loop")
+        self.assertFalse(uncertain.is_closed(),"Potential relationship action remains visible")
+        self.assertFalse(blocked.is_closed(),"Account challenge remains for human attention")
+        self.assertEqual({row["username"] for row in pool.overview()},
+                         {"maybe.clicked","manual.challenge"})
+
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
@@ -225,6 +243,17 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 review=robot.batch_review(request)["batch"]
                 self.assertEqual(review["action_results"]["already.gone"]["status"],
                                  "already_not_following")
+                # The first result does not permit closing out the untouched
+                # second target; the exact saved cohort must remain resumable.
+                with self.assertRaisesRegex(ValueError, "untouched profiles"):
+                    robot.approve_batch({**request,"batch_id":review["id"],
+                        "confirmation":"reviewed:"+review["id"]})
+                self.assertIsNotNone(robot.batch_review(request)["batch"])
+                _atomic_json(robot._base(), {
+                    **robot._journal(),
+                    "still.following":{"status":"review",
+                        "message":"Ambiguous previous action; do not retry."}
+                })
                 approved=robot.approve_batch({**request,"batch_id":review["id"],
                     "confirmation":"reviewed:"+review["id"]})
                 self.assertIn("already.gone",approved["approved_usernames"])
@@ -337,6 +366,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 # Even a recheck that verifies a formerly ambiguous action
                 # never mutates the original journal.
                 robot._save_recheck_result("profile.one","ok","Read-only Follow confirmed.")
+                robot._save_recheck_result("profile.two","review","Read-only check still uncertain.")
                 approved=robot.approve_batch({**request,"batch_id":entry["id"],
                                                "confirmation":"reviewed:"+entry["id"]})
                 self.assertEqual(approved["approved_usernames"],["profile.one"])
@@ -367,6 +397,10 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
                     robot.start(self._request(["fresh.81"]))
                 current = robot.batch_review({**request,"task":"cancel"})["batch"]
+                # Historical filtering is independent of batch approval; mark
+                # the initial member as attempted before closing the cohort.
+                _atomic_json(robot._base(), {**robot._journal(),
+                    "a.one":{"status":"review","message":"Prior uncertain result."}})
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
                 with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):

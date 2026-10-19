@@ -31,9 +31,18 @@ try {
   }
   $startMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Insta Cleaner Pro.lnk"
   if (!(Test-Path $startMenu)) { throw "Windows Start menu shortcut missing" }
+  $devMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Insta Cleaner Pro - Developer Edition.lnk"
+  if (!(Test-Path $devMenu)) { throw "Developer Edition Start menu shortcut missing" }
+  $devShortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($devMenu)
+  if ($devShortcut.Arguments -ne '--developer') { throw "Developer shortcut must launch --developer." }
   # Real installed binary, not a copied portable EXE.
   RunBounded $exe @('--healthcheck') 'Installed app binary'
   RunBounded $exe @('--smoke-startup') 'Installed app startup path'
+  RunBounded $exe @('--smoke-startup','--developer') 'Installed Developer Edition startup path'
+  $devState = Join-Path $state "developer-edition"
+  if (!(Test-Path (Join-Path $devState "IG-Cleaner-Pro.html"))) {
+    throw "Developer Edition did not create isolated HTML origin."
+  }
   $ui = Join-Path $state "IG-Cleaner-Pro.html"
   if (!(Test-Path $ui)) { throw "Installed runtime did not prepare its persistent UI" }
   if ((Get-Item $ui).Length -lt 100000) { throw "Installed UI was incomplete" }

@@ -120,7 +120,12 @@ assert 'app:menu="@menu/top_app_bar"' not in layout
 assert '@+id/headerAboutButton' in layout and '@+id/headerSyncButton' in layout
 assert 'android:text="About"' in layout
 assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
-assert 'syncAction.setOnClickListener(view -> syncNow())' in main
+# The public build keeps Sync; the separate Developer APK must refuse writes
+# in the native click handler rather than exposing the former unconditional call.
+assert 'syncAction.setOnClickListener(view -> {' in main
+assert 'if (isDeveloperEdition()) {' in main
+assert 'Developer Edition: automatic cloud writes are disabled.' in main
+assert '} else syncNow();' in main
 assert 'brandContext.setOnClickListener(view -> showInstagramProfileManager())' in main, "Account switch must be available from native header"
 assert 'brandContext.setContentDescription("Switch Instagram profile: "' in main, "Account switch requires accessible name"
 assert 'android:id="@+id/brandContext"' in layout and 'android:focusable="true"' in layout, "Header profile switch must remain tappable"
@@ -158,7 +163,7 @@ for token in ("followingAndFollowerDatesHaveCorrectDirectionAndHistory",
               "oldDesktopBatchDatesSurviveNewSnapshotAndUnknownsStayUnknown",
               "pendingAndLastBatchUseOwnDatesAndSourceDevice"):
     assert token in focus_test, f"Missing runtime Focus insight QA: {token}"
-assert "10 tests" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8"), "Android instrumentation must run two new secure Switch Account tests in addition to the original eight"
+assert "OK \\(12 tests\\)" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8"), "Android instrumentation must cover the full public native suite including the Developer-only test class skipped on the public flavor"
 print("Android UX/Focus/privacy/About regression contract passed.")
 
 # Real Home screens must now be checked in the packaged Android runtime.

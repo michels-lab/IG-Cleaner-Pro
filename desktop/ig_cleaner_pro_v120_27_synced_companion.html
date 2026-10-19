@@ -3760,10 +3760,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
 <button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
 <button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
+<button class="btn" id="igcAutoHistoricalRecheck" type="button" onclick="igcAutoRecheckHistory()">↻ Re-audit old failures (read-only)</button>
 <button class="btn" type="button" onclick="igcAutoPoll()">⟳ Refresh</button>
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
+<p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
   <div class="title">Is this batch OK?</div>
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
@@ -13346,11 +13348,22 @@ function status(text,type=''){const el=document.getElementById('igcSyncStatus');
 function renderStats(){const el=document.getElementById('igcSyncKpis');if(!el)return;const ev=window.igcAuditGetEvents?.()||[],android=ev.filter(x=>x.deviceType==='android').length,desktop=ev.filter(x=>x.deviceType==='desktop').length;el.innerHTML=`<div class="igc-sync-kpi"><b>${ev.length}</b><span>eventos locales</span></div><div class="igc-sync-kpi"><b>${desktop}</b><span>desktop</span></div><div class="igc-sync-kpi"><b>${android}</b><span>android</span></div><div class="igc-sync-kpi"><b>${S.stats.profilesDown||0}</b><span>perfiles en nube</span></div><div class="igc-sync-kpi"><b>${S.lastSync?new Date(S.lastSync).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):'—'}</b><span>último sync</span></div>`}
 function cfgFromUi(){S.cfg.email=String(document.getElementById('igcSyncEmail')?.value||S.cfg.email).trim();S.cfg.auto=true;saveCfg();return S.cfg}
 function headers(auth=true,extra={}){const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...extra};if(auth&&S.session?.access_token)h.Authorization=`Bearer ${S.session.access_token}`;return h}
-async function jfetch(path,opt={}){const r=await fetch(SUPABASE_URL+path,{...opt,headers:{...headers(opt.auth!==false),...(opt.headers||{})}});const txt=await r.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{data=txt}if(!r.ok){const e=new Error(data?.msg||data?.message||data?.error_description||data?.error||`${r.status} ${r.statusText}`);e.status=r.status;throw e}return data}
+function igcDeveloperReadOnly(){
+ if(/&igc-developer=1$/.test(window.location?.hash||""))return true;
+ try{return window.AndroidBridge?.isDeveloperMode?.()===true}catch{return false}
+}
+async function jfetch(path,opt={}){
+ if(igcDeveloperReadOnly()){
+  const method=String(opt.method||"GET").toUpperCase();
+  if(!["GET","HEAD"].includes(method)&&
+     !(/^\/auth\/v1\/(?:otp|verify|token(?:\?.*)?|logout(?:\?.*)?)$/.test(path)&&method==="POST"))
+   throw new Error("Developer Edition: production cloud writes are disabled. Normal account login is still available.");
+ }
+ const r=await fetch(SUPABASE_URL+path,{...opt,headers:{...headers(opt.auth!==false),...(opt.headers||{})}});const txt=await r.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{data=txt}if(!r.ok){const e=new Error(data?.msg||data?.message||data?.error_description||data?.error||`${r.status} ${r.statusText}`);e.status=r.status;throw e}return data}
 async function sendOtp(){cfgFromUi();if(!S.cfg.email)throw new Error('Escribe tu correo.');await jfetch('/auth/v1/otp',{method:'POST',auth:false,body:JSON.stringify({email:S.cfg.email,create_user:true})});status(`Código enviado a ${S.cfg.email}. Revisa tu correo.`,'ok')}
 async function signInPassword(){cfgFromUi();const password=String(document.getElementById('igcSyncPassword')?.value||'');if(!S.cfg.email||!password)throw new Error('Escribe tu correo y contraseña.');const data=await jfetch('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:JSON.stringify({email:S.cfg.email,password})});if(!data?.access_token)throw new Error('No se pudo iniciar sesión.');S.session=data;S.needsReauth=false;saveSession();renderAuthUi();return data}
 async function verifyOtp(){cfgFromUi();const token=String(document.getElementById('igcSyncCode')?.value||'').replace(/\s+/g,'');if(!S.cfg.email||!token)throw new Error('Escribe tu correo y el código recibido.');const data=await jfetch('/auth/v1/verify',{method:'POST',auth:false,body:JSON.stringify({type:'email',email:S.cfg.email,token})});if(!data?.access_token)throw new Error('El código no produjo una sesión. Pide uno nuevo.');S.session=data;S.needsReauth=false;saveSession();renderAuthUi();return data}
-async function verifyOtpAndSetPassword(){await verifyOtp();const password=String(document.getElementById('igcSyncNewPassword')?.value||'');if(password.length<8)throw new Error('La contraseña debe tener al menos 8 caracteres.');await jfetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});return true}
+async function verifyOtpAndSetPassword(){await verifyOtp();if(igcDeveloperReadOnly())return true;const password=String(document.getElementById('igcSyncNewPassword')?.value||'');if(password.length<8)throw new Error('La contraseña debe tener al menos 8 caracteres.');await jfetch('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});return true}
 const AUTH_RECOVERY_MESSAGE='Tu sesión caducó y no se pudo renovar automáticamente. Vuelve a entrar en Cuenta; tus perfiles y revisiones guardados no se borraron.';
 const AUTH_NETWORK_MESSAGE='No se pudo renovar la sesión por un problema de conexión. Comprueba Internet y vuelve a sincronizar; tus datos locales están intactos.';
 let refreshInFlight=null;
@@ -14007,11 +14020,16 @@ window.igcDeleteInstagramProfile=async function(){
  finally{S.busy=false;}
 };
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
-async function syncNow(manual=true){cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+async function syncNow(manual=true){
+ if(igcDeveloperReadOnly()){
+  renderAuthUi();status("Developer Edition: account sign-in enabled; production cloud synchronization disabled.",'warn');
+  return;
+ }
+ cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
-window.igcSyncVerifyCode=async function(){try{status('Verificando y guardando contraseña…');await verifyOtpAndSetPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Cuenta verificada · contraseña guardada.`,'ok');await syncNow(false)}catch(e){status(`No pude verificar la cuenta: ${e.message||e}`,'warn')}};
+window.igcSyncVerifyCode=async function(){try{status('Verificando y guardando contraseña…');await verifyOtpAndSetPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(igcDeveloperReadOnly()?'Cuenta verificada · Developer no modificó la contraseña.':'Cuenta verificada · contraseña guardada.','ok');await syncNow(false)}catch(e){status(`No pude verificar la cuenta: ${e.message||e}`,'warn')}};
 let statePushTimer=null;
 window.igcQueueStateSync=function(reason='state'){
   clearTimeout(statePushTimer);
@@ -14827,6 +14845,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<style id="igc-automations-metric-layout">
+#igcAutoMetrics,#igcAutoExecutionMetrics{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:12px 0}
+#igcAutoMetrics>span,#igcAutoExecutionMetrics>span{display:inline-flex;align-items:center;white-space:normal;overflow-wrap:anywhere;min-height:34px;padding:7px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);line-height:1.45}
+</style>
 <script id="igc-automations-plan">
 (function(){
 "use strict";
@@ -14841,6 +14863,28 @@ function scope(){
 }
 function key(){return "igc_action_protected_v1__"+scope()}
 function timingKey(){return "igc_action_timing_v1__"+scope()+"__"+mode}
+let hydratedTimingKey=null;
+function igcAutoHydrateTiming(){
+ const key=timingKey();if(hydratedTimingKey===key)return; // Do not reset active edits on polling.
+ hydratedTimingKey=key;
+ try{
+  const t=JSON.parse(localStorage.getItem(key)||"null");
+  if(t){
+   if(Number.isInteger(t.count)&&t.count>=1&&t.count<=1000)document.getElementById("igcAutoBatch").value=String(t.count);
+   if(Number.isFinite(t.rest)&&t.rest>=0&&t.rest<=1440)document.getElementById("igcAutoRest").value=String(t.rest);
+   if(Number.isFinite(t.gap)&&t.gap>=0&&t.gap<=3600)document.getElementById("igcAutoGap").value=String(t.gap);
+  }
+ }catch{}
+}
+function igcAutoPersistTiming(){
+ const count=Number(document.getElementById("igcAutoBatch")?.value);
+ const rest=Number(document.getElementById("igcAutoRest")?.value);
+ const gap=Number(document.getElementById("igcAutoGap")?.value);
+ if(Number.isInteger(count)&&count>=1&&count<=1000&&
+    Number.isFinite(rest)&&rest>=0&&rest<=1440&&
+    Number.isFinite(gap)&&gap>=0&&gap<=3600)
+  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
+}
 function saved(){
  try{
   const x=JSON.parse(localStorage.getItem(key())||"{}");
@@ -14951,7 +14995,7 @@ window.igcAutoSaveTiming=function(){
  }catch(e){setStatus(e.message)}
 };
 // Local-only action connector: same capability token used by the Profile Counts robot.
-const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec((window.location?.hash||"").replace(/^#/,""));
+const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)?$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
 // Do not silently leave a running action job acting on a different identity.
@@ -14977,6 +15021,16 @@ function actionOwner(){
  const p=window.IGC_INSTAGRAM_PROFILES||{};
  return {owner:String(p.owner||""),account:String(p.active||"")};
 }
+window.igcAutoOpenProfile=async function(username,task=mode){
+ const user=norm(username);
+ if(!user||!["unfollow","cancel","audit"].includes(task))return;
+ try{
+  const result=await requestAction("open-profile",{...actionOwner(),task,username:user});
+  setStatus("Opening @"+result.username+" in the robot's persistent Chrome profile (same Instagram session).");
+ }catch(e){
+  setStatus("Could not open in robot Chrome: "+e.message);
+ }
+};
 function ownInstagramHandle(){
  const p=window.IGC_INSTAGRAM_PROFILES||{},profile=(p.accounts||[]).find(x=>x.account_key===p.active);
  let handle=norm(profile?.username||"");
@@ -15146,20 +15200,43 @@ window.igcAutoPoll=async function(){
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
   }else actionBatchReview=null;
   window.igcAutoRenderBatchApproval();
+  const historyText=document.getElementById("igcAutoHistoricalSummary");
+  if(historyText&&["unfollow","cancel"].includes(mode)){
+   try{
+    const history=await requestAction("history-recheck-status",{...ctx,task:mode});
+    const count=history.counts||{};
+    historyText.textContent=(count.total||0)
+     ?("Historical read-only observations: "+(count.total||0)+
+       " profiles · "+(count.observed_not_following||0)+
+       " now observed not following · "+(count.still_unresolved||0)+
+       " still unresolved. No Unfollow/Cancel was repeated. No auto-Reviewed.")
+     :"No historical read-only re-audit results for this account yet.";
+   }catch{historyText.textContent="Historical re-audit status unavailable."}
+  }else if(historyText){historyText.textContent="Historical re-audit is available for Unfollow and Cancel Requests."}
+  const historyButton=document.getElementById("igcAutoHistoricalRecheck");
+  if(historyButton)historyButton.disabled=state.running||!["unfollow","cancel"].includes(mode);
   const metrics=document.getElementById("igcAutoExecutionMetrics");
   if(metrics){
    metrics.replaceChildren();
-   for(const label of ["Processed: "+(state.processed??state.successful)+" / "+state.total,
+   const labels=state.history_recheck?[
+    "HISTORICAL READ-ONLY SCAN",
+    "Checked: "+(state.historical_checked||0)+" / "+state.total,
+    "Observed not following now: "+(state.historical_not_following||0),
+    "No relationship changes or Reviewed approvals"
+   ]:[
+    "Processed: "+(state.processed??state.successful)+" / "+state.total,
     "Unfollows confirmed: "+state.successful,"Already not following: "+(state.already_not_following||0),
-     "Remaining: "+state.remaining,
+    "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
-    "Issues: "+(state.issue_count||0)]){
+    "Issues: "+(state.issue_count||0)];
+   for(const label of labels){
     const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
    }
   }
   const bar=document.getElementById("igcAutoProgress");
-  if(bar)bar.value=state.total?Math.round(100*(state.total-state.remaining)/state.total):0;
+  if(bar)bar.value=state.total?Math.round(100*(state.history_recheck?
+    (state.historical_checked||0):(state.total-state.remaining))/state.total):0;
   const authBlocked=state.status==="blocked"&&/recaptcha|security check|verification/i.test(state.message||"");
   const authHelp=document.getElementById("igcActionAuthFallback");
   if(authHelp)authHelp.style.display=authBlocked?"block":"none";
@@ -15186,7 +15263,7 @@ window.igcAutoPoll=async function(){
   }
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
-  if(resume)resume.disabled=state.running||authBlocked||!["paused","blocked","review","error"].includes(state.status);
+  if(resume)resume.disabled=state.running||state.review_only||authBlocked||!["paused","blocked","review","error"].includes(state.status);
   window.igcAutoRender();
  }catch(e){
   const el=document.getElementById("igcAutoLiveStatus");
@@ -15238,15 +15315,17 @@ window.igcAutoRenderIssues=function(){
  }
  const all=Array.isArray(data?.issues)?data.issues.filter(r=>norm(r.username)&&r.issue):[];
  const marked=igcAutoIssueReviewed(selected);
- const outstanding=all.filter(r=>!marked[igcAutoIssueRowKey(r)]).length;
+ const recoverable=all.filter(r=>r.safe_no_click).length;
+ const outstanding=all.filter(r=>!r.safe_no_click&&!marked[igcAutoIssueRowKey(r)]).length;
  const total=document.getElementById("igcAutoIssueTotal");
- if(total)total.textContent=outstanding+" pending reviews · "+all.length+" issues";
+ if(total)total.textContent=outstanding+" need manual review · "+recoverable+
+  " auto-retry eligible (no click) · "+all.length+" logged issues";
  const status=document.getElementById("igcAutoIssueStatus");
  if(status)status.textContent=!data?"No results yet for this task.":
   ["complete","partial"].includes(data.status)?"Batch finished. Review discrepancies and open profiles if needed.":
   "Results update during the batch; ambiguous actions will not be repeated.";
  const rows=all.filter(r=>r.username.toLowerCase().includes(search)&&(
-  filter==="all"||(filter==="pending"&&!marked[igcAutoIssueRowKey(r)])||
+  filter==="all"||(filter==="pending"&&!r.safe_no_click&&!marked[igcAutoIssueRowKey(r)])||
   (filter==="reviewed"&&!!marked[igcAutoIssueRowKey(r)])||r.issue===filter));
  root.replaceChildren();
  if(!rows.length){
@@ -15260,9 +15339,14 @@ window.igcAutoRenderIssues=function(){
   const link=document.createElement("a");
   link.href="https://www.instagram.com/"+encodeURIComponent(issue.username)+"/";
   link.target="_blank";link.rel="noopener noreferrer";
+  if(actionBridge)link.addEventListener("click",event=>{
+   if(event&&typeof event.preventDefault==="function")event.preventDefault();
+   window.igcAutoOpenProfile(issue.username,selected);
+  });
   link.textContent="@"+issue.username;name.appendChild(link);
   const heading=document.createElement("strong");
-  heading.textContent=issueLabels[issue.issue]||"Review required";
+  heading.textContent=issue.safe_no_click?"Automatic retry eligible · no click":
+    (issueLabels[issue.issue]||"Review required");
   reason.appendChild(heading);
   const detail=document.createElement("div");detail.className="note";
   detail.textContent=issue.message||issue.status||"";
@@ -15282,8 +15366,13 @@ window.igcAutoRenderIssues=function(){
    recovery.textContent="No relationship-changing click occurred. In the updated Windows app, this exact no-click result may be safely checked again in a newly approved batch. A post-click unverified action will never be repeated automatically.";
    reason.appendChild(recovery);
   }
-  const profile=document.createElement("a");profile.className="btn";
-  profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
+  const profile=document.createElement(actionBridge?"button":"a");profile.className="btn";
+  if(actionBridge){
+   profile.type="button";
+   profile.addEventListener("click",()=>window.igcAutoOpenProfile(issue.username,selected));
+  }else{
+   profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
+  }
   profile.textContent="↗ Open profile";actions.appendChild(profile);
   const protect=document.createElement("button");protect.type="button";protect.className="btn";
   protect.textContent=isProtected(selected,issue.username)?"★ Protected":"★ Protect";
@@ -15293,17 +15382,19 @@ window.igcAutoRenderIssues=function(){
    window.igcAutoRenderIssues();
   });
   actions.appendChild(protect);
-  const checked=document.createElement("button");checked.type="button";checked.className="btn";
-  checked.textContent=marked[igcAutoIssueRowKey(issue)]?"↶ Mark pending":"✓ Reviewed";
-  checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue,!marked[igcAutoIssueRowKey(issue)]));
-  actions.appendChild(checked);
+  if(!issue.safe_no_click){
+   const checked=document.createElement("button");checked.type="button";checked.className="btn";
+   checked.textContent=marked[igcAutoIssueRowKey(issue)]?"↶ Mark pending":"✓ Reviewed";
+   checked.addEventListener("click",()=>window.igcAutoIssueMark(selected,issue,!marked[igcAutoIssueRowKey(issue)]));
+   actions.appendChild(checked);
+  }
   tr.appendChild(name);tr.appendChild(reason);tr.appendChild(actions);root.appendChild(tr);
  }
 };
 
 window.igcAutoRender=function(){
  const root=document.getElementById("igcAutoRows");if(!root)return;
- refreshScope();
+ refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
  const attempted=mode==="protected"?new Set():priorAttempts(mode);
@@ -15331,14 +15422,6 @@ window.igcAutoRender=function(){
  }else{
   setStatus("Queue prepared: "+(mode==="cancel"?"sent requests":mode==="audit"?"suspected non-followback accounts for OPTIONAL read-only verification":"unreviewed non-followbacks from imported exports")+". Review and authorize your batch.");
  }
- try{
-  const t=JSON.parse(localStorage.getItem(timingKey())||"null");
-  if(t){
-   document.getElementById("igcAutoBatch").value=String(t.count);
-   document.getElementById("igcAutoRest").value=String(t.rest);
-   document.getElementById("igcAutoGap").value=String(t.gap);
-  }
- }catch{}
  root.replaceChildren();
  const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
  if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
@@ -15403,7 +15486,28 @@ window.igcAutoRenderBatchApproval=function(){
   const recheck=document.getElementById("igcAutoRecheckBatch");
   if(recheck)recheck.disabled=busy;
   const open=document.getElementById("igcAutoOpenBatchIssues");
-  if(open)open.disabled=!outcome.issues.length;
+  if(open)open.disabled=!outcome.issues.some(u=>!actionBatchReview.action_results?.[u]?.safe_no_click);
+};
+window.igcAutoRecheckHistory=async function(){
+ if(!actionBridge){setStatus("Historical audits require the installed Windows robot.");return}
+ if(!["unfollow","cancel"].includes(mode)){
+  setStatus("Choose Unfollow or Cancel Requests to re-audit old technical issues.");return;
+ }
+ if(actionState?.running){setStatus("Pause the current robot before historical re-audit.");return}
+ if(!window.confirm("Re-audit all unresolved historical "+mode+
+   " profiles automatically with Chrome in READ-ONLY mode? No Unfollow/Cancel action "+
+   "will be clicked, no original journal will be deleted and no profile will become Reviewed. "+
+   "The results will be stored separately as current observations."))return;
+ try{
+  const data={...actionOwner(),task:mode,expected_handle:ownInstagramHandle(),
+   confirmation:"history-read-only:"+mode,
+   batch_size:Number(document.getElementById("igcAutoBatch")?.value||30),
+   gap_seconds:Number(document.getElementById("igcAutoGap")?.value||10),
+   rest_minutes:Number(document.getElementById("igcAutoRest")?.value||5)};
+  actionState=await requestAction("recheck-history",data);
+  setStatus("Historical re-audit started: Chrome will inspect old issues automatically, without clicks.");
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Historical re-audit unavailable: "+e.message)}
 };
 window.igcAutoRecheckBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
@@ -15457,16 +15561,26 @@ window.igcAutoApproveBatch=async function(){
   await window.igcAutoPoll();
  }catch(e){setStatus("Could not approve this batch: "+e.message)}
 };
-window.igcAutoOpenBatchIssues=function(){
+window.igcAutoOpenBatchIssues=async function(){
  const b=actionBatchReview;if(!b)return;
- const outcome=igcAutoBatchOutcomes(),users=outcome.issues.slice(0,10);
- if(!users.length){setStatus("No issue profiles need manual inspection.");return}
- // Deliberately open ONLY the exceptions, never the whole automatic batch.
+ const outcome=igcAutoBatchOutcomes(),users=outcome.issues.filter(u=>
+  !b.action_results?.[u]?.safe_no_click).slice(0,10);
+ if(!users.length){setStatus("No manual exceptions. Proven no-click failures remain eligible for automatic retry on Run.");return}
+ // Open ONLY actual exceptions; retain the robot Chrome login, not the app UI browser.
+ let opened=0;
  for(const user of users){
   if(!/^[A-Za-z0-9._]{1,30}$/.test(user))continue;
-  window.open("https://www.instagram.com/"+encodeURIComponent(user)+"/","_blank","noopener");
+  if(actionBridge){
+   try{
+    await requestAction("open-profile",{...actionOwner(),task:mode,username:user});
+    opened++;
+   }catch(e){setStatus("Chrome could not open @"+user+": "+e.message);return}
+  }else{
+   window.open("https://www.instagram.com/"+encodeURIComponent(user)+"/","_blank","noopener");
+   opened++;
+  }
  }
- setStatus("Opened "+users.length+" exception profiles; confirmed profiles stay closed.");
+ setStatus("Requested "+opened+" exception profiles in robot Chrome; confirmed profiles stay closed.");
 };
 const original=window.showPage;
 if(typeof original==="function")window.showPage=function(id){
@@ -15474,6 +15588,11 @@ if(typeof original==="function")window.showPage=function(id){
  if(id==="automations"){window.igcAutoRender();window.igcAutoRenderIssues();if(actionBridge)window.igcAutoPoll()}
  return ret;
 };
+for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap"]){
+ const control=document.getElementById(id);
+ if(control&&typeof control.addEventListener==="function")
+  control.addEventListener("input",igcAutoPersistTiming);
+}
 if(actionBridge&&typeof setInterval==="function")
  setInterval(()=>{if(!document.hidden)window.igcAutoPoll()},5000);
 })();
@@ -15591,6 +15710,337 @@ controls.close.addEventListener('click',close);
 overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
 overlay.addEventListener('keydown',event=>{if(event.key==='Escape')close()});
 setInterval(()=>{if(opened&&!document.hidden)status()},1700);
+})();
+</script>
+
+<style id="igc-dev-diagnostics-style">
+#igcDevConsole{position:fixed;z-index:2147483000;bottom:12px;right:12px;width:min(445px,calc(100vw - 24px));max-height:min(86vh,770px);display:none;flex-direction:column;background:#101d2e;color:#e9f6ff;border:1px solid #5c8da0;border-radius:15px;box-shadow:0 18px 55px #000a;padding:14px;font:13px/1.4 system-ui,sans-serif;box-sizing:border-box}
+#igcDevConsole .igc-dev-head{font-weight:800;color:#8bddf9;letter-spacing:.04em}
+#igcDevConsole .igc-dev-actions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+#igcDevConsole button{border:1px solid #568ea6;border-radius:8px;color:#eafaff;background:#183349;padding:7px 9px;cursor:pointer;font:inherit}
+#igcDevConsole button:disabled{opacity:.55;cursor:not-allowed}
+#igcDevConsole textarea{color:#f0faff;background:#08111e;border:1px solid #568ea6;border-radius:8px;resize:vertical;min-height:66px;max-height:160px;width:100%;box-sizing:border-box;padding:8px;font:inherit}
+#igcDevConsole pre{white-space:pre-wrap;overflow:auto;max-height:20vh;background:#08111e;padding:10px;border-radius:9px;margin:0;font:11px/1.45 ui-monospace,monospace;overflow-wrap:anywhere}
+#igcDevConsole .igc-dev-note{opacity:.83;font-size:12px;margin:7px 0}
+#igcDevConsole .igc-dev-editor{overflow-y:auto;min-height:0}
+#igcDevConsole .igc-dev-entries{max-height:18vh;overflow-y:auto}
+#igcDevConsole .igc-dev-entry{border-top:1px solid #38536b;padding:8px 0}
+#igcDevConsole .igc-dev-entry span{display:block;overflow-wrap:anywhere}
+#igcDevConsole[aria-expanded="false"] .igc-dev-editor{display:none}
+#igcDevSelectionOutline{position:fixed;z-index:2147482999;pointer-events:none;border:3px solid #f8c854;border-radius:8px;background:#f8c85420;box-shadow:0 0 0 2px #0d223d;display:none;box-sizing:border-box}
+</style>
+<div id="igcDevSelectionOutline" aria-hidden="true"></div>
+<section id="igcDevConsole" role="region" aria-label="Developer audit and annotations" aria-expanded="true">
+ <div class="igc-dev-head">◇ IG CLEANER PRO — DEVELOPER EDITION</div>
+ <div class="igc-dev-actions">
+  <button type="button" id="igcDevCollapse" aria-expanded="true">Minimize</button>
+  <button type="button" id="igcDevAccount">Sign in / Account</button>
+ </div>
+ <div class="igc-dev-editor">
+  <div class="igc-dev-note">Same real app and account sign-in · isolated local browser · safe read-only robot diagnostics. User data is not automatically exported.</div>
+  <div id="igcDevScope" class="igc-dev-note">Guest workspace</div>
+  <div class="igc-dev-actions">
+   <button type="button" id="igcDevPick">Select section / control</button>
+   <button type="button" id="igcDevClear">Clear selection</button>
+  </div>
+  <div id="igcDevSelected" class="igc-dev-note">No section selected. Select a section and then click the area of the app you want to report.</div>
+  <label for="igcDevNoteInput">Your observation for this section</label>
+  <textarea id="igcDevNoteInput" maxlength="3000" placeholder="Describe the glitch, what you did, what happened and what you expected."></textarea>
+  <div class="igc-dev-actions"><button type="button" id="igcDevSaveNote">Save section note</button><button type="button" id="igcDevCancelEdit">Cancel editing</button></div>
+  <div id="igcDevNotesCount" class="igc-dev-note">No notes saved.</div>
+  <div id="igcDevNotes" class="igc-dev-entries" aria-live="polite"></div>
+  <div class="igc-dev-actions">
+   <button type="button" id="igcDevRun">Run audit</button>
+   <button type="button" id="igcDevExport">Export AI repair prompt (.txt)</button>
+   <button type="button" id="igcDevExportJson">Export report + notes (.json)</button>
+  </div>
+  <pre id="igcDevResults" aria-live="polite">Not audited yet. Notes can still be exported. No Instagram action is executed.</pre>
+  <div class="igc-dev-note">The export includes your exact comments and section locations. Check them for personal information before sharing with an AI or another person.</div>
+ </div>
+</section>
+<script id="igc-developer-edition">
+(function(){
+ "use strict";
+ const match=/^#igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})&igc-developer=1$/.exec(location.hash||"");
+ let androidDeveloper=false;
+ try{androidDeveloper=window.AndroidBridge?.isDeveloperMode?.()===true}catch{}
+ if(!match&&!androidDeveloper)return;
+ const el=id=>document.getElementById(id);
+ const host=el("igcDevConsole"),summary=el("igcDevResults"),highlight=el("igcDevSelectionOutline");
+ if(!host||!summary||!highlight)return;
+ host.style.display="flex";
+ const noteInput=el("igcDevNoteInput");
+ let selected=null,editing=null,picking=false,activeScope="",lastReport=null,lastPrompt="";
+ let runtimeErrors=0,runtimeRejections=0;
+ window.addEventListener("error",()=>{runtimeErrors+=1});
+ window.addEventListener("unhandledrejection",()=>{runtimeRejections+=1});
+ const safeId=id=>/^[A-Za-z][A-Za-z0-9_-]{0,90}$/.test(String(id||""))?String(id):"";
+ const safeText=value=>String(value||"").slice(0,3000);
+ const accountInfo=()=>{
+  const p=window.IGC_INSTAGRAM_PROFILES||{};
+  return {owner:safeId(p.owner)||"guest",account:safeId(p.active)||"legacy"};
+ };
+ function scopeKey(){
+  const p=accountInfo();
+  return "igc_dev_section_notes_v1__"+encodeURIComponent(p.owner)+"__"+encodeURIComponent(p.account);
+ }
+ function notes(){
+  try{
+   const raw=JSON.parse(localStorage.getItem(scopeKey())||"[]");
+   return Array.isArray(raw)?raw.filter(n=>n&&typeof n==="object"&&typeof n.id==="string"
+    &&typeof n.comment==="string"&&n.anchor&&typeof n.anchor==="object").slice(0,1000):[];
+  }catch{return []}
+ }
+ function saveNotes(value){localStorage.setItem(scopeKey(),JSON.stringify(value.slice(0,1000)))}
+ function stopPicking(){
+  picking=false;el("igcDevPick").textContent="Select section / control";
+ }
+ function resetEdit(){editing=null;selected=null;noteInput.value="";el("igcDevSelected").textContent="No section selected.";highlight.style.display="none";stopPicking()}
+ function updateScope(){
+  const key=scopeKey();
+  if(key===activeScope)return;
+  activeScope=key;resetEdit();renderNotes();
+  const info=accountInfo();
+  el("igcDevScope").textContent=info.owner==="guest"?"Guest workspace — sign in under Account to scope annotations":
+   "Signed-in developer workspace · selected Instagram account "+(info.account==="legacy"?"legacy": "active");
+ }
+ function structuralLocator(node){
+  // For id-less cards/buttons, preserve a precise CSS path under a stable
+  // page/section id. Never record text content, href, username or secrets.
+  const chain=[];
+  for(let current=node;current&&chain.length<10;current=current.parentElement){
+   const id=safeId(current.id);
+   if(id){chain.unshift("#"+id);break}
+   const tag=String(current.tagName||"").toLowerCase();
+   if(!/^[a-z][a-z0-9-]*$/.test(tag)||!current.parentElement)return "";
+   let position=1;
+   for(let sibling=current.previousElementSibling;sibling;sibling=sibling.previousElementSibling)
+    if(sibling.tagName===current.tagName)position++;
+   chain.unshift(tag+":nth-of-type("+position+")");
+  }
+  const path=chain.join(" > ");
+  return path.startsWith("#")?path:"";
+ }
+ function closestSection(target){
+  const control=target.closest("button,input,select,textarea,[role='button']");
+  const section=target.closest(".panel,section,[role='region'],.module-card,.page");
+  const screen=target.closest(".page")||document.querySelector(".page.active");
+  const uiTarget=control||section||target;
+  const screenId=safeId(screen?.id)||"app";
+  const sectionId=safeId(section?.id)||screenId;
+  const targetId=safeId(uiTarget?.id)||"";
+  const locator=targetId?"#"+targetId:structuralLocator(uiTarget);
+  if(!locator||targetId.startsWith("igcDev"))return null;
+  return {screen:screenId,section:sectionId,
+   control:targetId||"(structural target)",
+   tag:String(uiTarget?.tagName||"").toLowerCase().slice(0,15),
+   locator,locator_kind:targetId?"stable-id":"structural"};
+ }
+ function locate(anchor){
+  if(!anchor||typeof anchor.locator!=="string"||
+     !/^#[A-Za-z][A-Za-z0-9_-]*(?: > [a-z][a-z0-9-]*:nth-of-type\([1-9]\d*\))*$/.test(anchor.locator))return null;
+  try{return document.querySelector(anchor.locator)}catch{return null}
+ }
+ function outline(node){
+  if(!node){highlight.style.display="none";return}
+  const r=node.getBoundingClientRect();
+  highlight.style.display="block";highlight.style.left=r.left+"px";highlight.style.top=r.top+"px";
+  highlight.style.width=r.width+"px";highlight.style.height=r.height+"px";
+ }
+ function selectionText(anchor){return anchor.screen+" → "+anchor.section+" → "+anchor.control}
+ function renderNotes(){
+  const entries=notes(),root=el("igcDevNotes");
+  root.replaceChildren();
+  el("igcDevNotesCount").textContent=entries.length+" saved section note"+(entries.length===1?"":"s")+" in this workspace";
+  for(const entry of entries.slice().reverse()){
+   const card=document.createElement("div");card.className="igc-dev-entry";
+   const loc=document.createElement("span");loc.textContent=selectionText(entry.anchor);card.appendChild(loc);
+   const note=document.createElement("span");note.textContent=entry.comment;card.appendChild(note);
+   const time=document.createElement("small");time.textContent="Updated "+entry.updated_at;card.appendChild(time);
+   const controls=document.createElement("div");controls.className="igc-dev-actions";
+   const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";
+   edit.addEventListener("click",()=>{
+    updateScope();editing=entry.id;selected=entry.anchor;noteInput.value=entry.comment;
+    el("igcDevSelected").textContent="Editing "+selectionText(selected);
+    outline(locate(selected));noteInput.focus();
+   });
+   const del=document.createElement("button");del.type="button";del.textContent="Delete";
+   del.addEventListener("click",()=>{
+    if(window.confirm("Delete this developer observation?")){
+     saveNotes(notes().filter(n=>n.id!==entry.id));if(editing===entry.id)resetEdit();renderNotes();
+    }
+   });
+   const locateButton=document.createElement("button");locateButton.type="button";
+   locateButton.textContent="Locate";
+   locateButton.addEventListener("click",()=>{
+    const target=locate(entry.anchor);
+    if(target){target.scrollIntoView({block:"center",behavior:"smooth"});outline(target);
+     const exact=safeId(entry.anchor.control)&&el(entry.anchor.control);
+     el("igcDevSelected").textContent=(exact?"Located ":"Original control missing; showing nearest parent: ")+selectionText(entry.anchor)}
+    else el("igcDevSelected").textContent="Section not present in this version: "+selectionText(entry.anchor);
+   });
+   controls.append(edit,locateButton,del);card.appendChild(controls);root.appendChild(card);
+  }
+ }
+ function clientChecks(){
+  const seen=new Set();let duplicates=0;
+  document.querySelectorAll("[id]").forEach(node=>{if(seen.has(node.id))duplicates++;else seen.add(node.id)});
+  const required=["igcAutoBatch","igcAutoRun","igcAutoRows","igcAutoExecutionMetrics","igcAutoBatchApproval"];
+  return {duplicate_dom_ids:duplicates,
+   missing_critical_controls:required.filter(id=>!el(id)).length,
+   uncaught_ui_errors:runtimeErrors,unhandled_ui_rejections:runtimeRejections,
+   viewport_width:Math.max(0,Math.round(window.innerWidth||0))};
+ }
+ async function audit(){
+  el("igcDevRun").disabled=true;summary.textContent="Auditing local journals and current app UI...";
+  try{
+   if(androidDeveloper){
+    // Android APK is sandboxed by .developer package identity; its local
+    // renderer audit never uses the Windows loopback or Instagram credentials.
+    const checks=clientChecks(),findings=[];
+    for(const [name,code] of [
+      ["duplicate_dom_ids","DUPLICATE_DOM_IDS"],
+      ["missing_critical_controls","MISSING_UI_CONTROLS"],
+      ["uncaught_ui_errors","UNCAUGHT_UI_ERRORS"],
+      ["unhandled_ui_rejections","UNHANDLED_UI_REJECTIONS"]]){
+      if(checks[name]>0)findings.push({code,severity:"warning",count:checks[name],
+        evidence:"android_embedded_webview_runtime",action:"Inspect tagged screen and reproduce on an installed Android Developer APK."});
+    }
+    lastReport={schema:"michels-lab-android-developer-ui-audit-v1",
+      product:"IG Cleaner Pro",generated_at:new Date().toISOString(),
+      mode:"developer-read-only",platform:"android",source_revision:"embedded-html",
+      findings,limitations:[
+        "Android Developer audit covers local WebView runtime/DOM only.",
+        "No Windows action journals or live Instagram relationship changes were scanned.",
+        "Owner notes are unverified observations; no action was clicked by this audit."
+      ]};
+    lastPrompt="Android Developer Edition read-only UI audit. Prioritize these UI findings and user-reported section notes; do not assume Instagram actions succeeded.\\n"+
+      JSON.stringify({audit:lastReport,client_ui_checks:checks},null,2);
+    summary.textContent=JSON.stringify({audit:lastReport,client_ui_checks:checks,section_notes:notes().length},null,2);
+    return true;
+   }
+   const response=await fetch("http://127.0.0.1:"+match[1]+"/api/developer/audit",{
+    method:"POST",mode:"cors",cache:"no-store",
+    headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":match[2]},
+    body:JSON.stringify({client_checks:clientChecks()})
+   });
+   if(!response.ok)throw Error("Developer diagnostic request was rejected");
+   const result=await response.json();lastReport=result.report||null;lastPrompt=String(result.ai_prompt||"");
+   summary.textContent=JSON.stringify({
+    generated_at:lastReport?.generated_at||null,
+    journals:lastReport?.journals||0,profiles:lastReport?.profiles||0,
+    unapproved_batches:lastReport?.unapproved_batches||0,
+    findings:lastReport?.findings||[],ui_checks:clientChecks(),
+    section_notes:notes().length,
+    limitations:lastReport?.limitations||[]
+   },null,2);
+   return true;
+  }catch(e){summary.textContent="Audit unavailable: "+String(e.message||"unknown error");
+   lastReport=null;lastPrompt="";return false}
+  finally{el("igcDevRun").disabled=false}
+ }
+ function annotationExport(){
+  return notes().map(entry=>({
+   source:"owner_observation_not_automatically_verified",
+   id:entry.id,screen:entry.anchor.screen,section:entry.anchor.section,
+   control:entry.anchor.control,locator:entry.anchor.locator,
+   locator_kind:entry.anchor.locator_kind||"stable-id",
+   target_present:!!locate(entry.anchor),
+   comment:entry.comment,
+   created_at:entry.created_at,updated_at:entry.updated_at,
+   app_version_at_creation:entry.app_version||"unknown"
+  }));
+ }
+ function combinedReport(){
+  return {schema:"michels-lab-developer-report-with-annotations-v1",
+   product:"IG Cleaner Pro",created_at:new Date().toISOString(),
+   note_scope:"current selected developer login and Instagram workspace",
+   audit_status:lastReport?"completed":"not_available_or_not_run",
+   audit:lastReport,client_ui_checks:clientChecks(),
+   owner_section_annotations:annotationExport(),
+   safety:"Owner annotations are user-reported observations, not verified automated failures. They may include private wording. Review before sharing. Never export sessions or access tokens."};
+ }
+ function download(content,name,type){
+  if(androidDeveloper&&window.AndroidBridge?.saveBase64){
+   // Use the existing native MediaStore export path; blob: downloads in
+   // Android WebView do not reliably reach the Downloads directory.
+   const utf8=new TextEncoder().encode(content);let binary="";
+   for(let i=0;i<utf8.length;i+=8192)
+    binary+=String.fromCharCode(...utf8.subarray(i,i+8192));
+   window.AndroidBridge.saveBase64(name,type,"data:"+type+";base64,"+btoa(binary));
+   return;
+  }
+  const objectUrl=URL.createObjectURL(new Blob([content],{type}));
+  const a=document.createElement("a");a.href=objectUrl;a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+ }
+ async function exportReport(kind){
+  updateScope();
+  if(!lastReport)await audit();
+  const data=combinedReport(),today=new Date().toISOString().slice(0,10);
+  if(data.owner_section_annotations.length&&
+     !window.confirm("This developer report includes "+data.owner_section_annotations.length+
+       " verbatim owner comment(s) with screen/section identifiers. Review them for private data before sharing. Export now?"))return;
+  const prefix="IG-Cleaner-Developer-Audit-"+today;
+  if(kind==="json"){
+   download(JSON.stringify(data,null,2),prefix+".json","application/json;charset=utf-8");return;
+  }
+  const text=(lastPrompt||"Automated audit was unavailable. No automated findings were verified.")+
+   "\n\n# OWNER-REPORTED SECTION ANNOTATIONS (verbatim; not automated evidence)\n"+
+   JSON.stringify(data.owner_section_annotations,null,2)+
+   "\n\n# UI CHECKS AND CONTEXT\n"+
+   JSON.stringify({ui_checks:data.client_ui_checks,report_schema:data.schema,
+     audit_status:data.audit_status},null,2)+
+   "\n\nFor each annotation, identify the exact screen/section/control and propose a reproduction test. "+
+   "Do not treat these reports as confirmed root causes. Preserve signed-in account isolation and user data.\n";
+  download(text,prefix+"-AI-REPAIR.txt","text/plain;charset=utf-8");
+ }
+ el("igcDevAccount").addEventListener("click",()=>{
+  stopPicking();if(typeof window.showPage==="function")window.showPage("sync");
+  else summary.textContent="Account screen unavailable in this build.";
+ });
+ el("igcDevCollapse").addEventListener("click",()=>{
+  const expanded=host.getAttribute("aria-expanded")==="true";
+  host.setAttribute("aria-expanded",String(!expanded));
+  el("igcDevCollapse").setAttribute("aria-expanded",String(!expanded));
+  el("igcDevCollapse").textContent=expanded?"Show developer tools":"Minimize";
+ });
+ el("igcDevPick").addEventListener("click",()=>{
+  updateScope();picking=!picking;el("igcDevPick").textContent=picking?"Cancel selection":"Select section / control";
+  el("igcDevSelected").textContent=picking?"Click a visible app section or control (one click captures location; no action will run).":
+    (selected?"Selected "+selectionText(selected):"No section selected.");
+ });
+ document.addEventListener("click",event=>{
+  if(!picking||host.contains(event.target)||highlight.contains(event.target))return;
+  event.preventDefault();event.stopPropagation();
+  if(typeof event.stopImmediatePropagation==="function")event.stopImmediatePropagation();
+  const anchor=closestSection(event.target);stopPicking();
+  if(!anchor){el("igcDevSelected").textContent="No stable section locator found. Choose a labelled panel or control.";return}
+  selected=anchor;el("igcDevSelected").textContent="Selected "+selectionText(anchor);
+  outline(locate(anchor));
+ },true);
+ el("igcDevClear").addEventListener("click",resetEdit);
+ el("igcDevCancelEdit").addEventListener("click",resetEdit);
+ el("igcDevSaveNote").addEventListener("click",()=>{
+  updateScope();const comment=safeText(noteInput.value).trim();
+  if(!selected||!comment){el("igcDevSelected").textContent="Select a section and write a comment before saving.";return}
+  const saved=notes(),now=new Date().toISOString();
+  if(editing){
+   const current=saved.find(n=>n.id===editing);
+   if(current){current.anchor=selected;current.comment=comment;current.updated_at=now}
+  }else{
+   saved.push({id:"n"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+    anchor:selected,comment,created_at:now,updated_at:now,
+    app_version:document.title.slice(0,80)});
+  }
+  saveNotes(saved);resetEdit();renderNotes();
+ });
+ el("igcDevRun").addEventListener("click",audit);
+ el("igcDevExport").addEventListener("click",()=>exportReport("text"));
+ el("igcDevExportJson").addEventListener("click",()=>exportReport("json"));
+ updateScope();
+ setInterval(updateScope,2000);
 })();
 </script>
 </body>

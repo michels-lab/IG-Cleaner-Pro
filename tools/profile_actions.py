@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -110,6 +112,24 @@ class ActionTabPool:
             self.tabs.pop(username, None)
         else:
             item["status"] = status
+
+    def close_unacted_prefetches(self):
+        """Release staged no-click tabs after the worker exhausts its cohort.
+
+        Never close a page whose action result is ambiguous. Prefetch means
+        navigation only, not a relationship click or a completed review.
+        """
+        no_action = {"queued", "prefetching", "prefetched",
+                     "prefetch_pending", "loading_profile"}
+        for username, item in list(self.tabs.items()):
+            if item["status"] not in no_action:
+                continue
+            try:
+                if not item["page"].is_closed():
+                    item["page"].close()
+            except Exception:
+                pass
+            self.tabs.pop(username, None)
 
     def overview(self):
         self._prune_manually_closed()
@@ -720,6 +740,7 @@ def _preclick_identity_blocked(entry):
     return (
         message.startswith("The active Instagram account cannot be verified. No action was performed.")
         or message == "Instagram session verification failed before the first click. No action performed."
+        or message == "Instagram session could not be verified before skipping a non-followed profile."
     )
 
 def _action_issue(task, result, message):
@@ -971,14 +992,16 @@ def perform_visible_followback_audit(page, username, expected_handle):
 
 
 def recheck_action_readonly(page, username, task, expected_handle, previous,
-                            *, on_wait=None, preloaded=False):
+                            *, on_wait=None, preloaded=False,
+                            allow_unacted_observation=False):
     """Verify the previous automatic action without any relationship-changing click."""
     if task == "audit":
         result, _relation, details = perform_visible_followback_audit(
             page, username, expected_handle)
         return result, details
-    if not isinstance(previous, dict) or previous.get("status") not in (
-            "ok", "already_not_following", "review", "error", "blocked") or _preclick_no_action(previous):
+    if (not isinstance(previous, dict) or previous.get("status") not in
+            ("ok", "already_not_following", "review", "error", "blocked")
+            or (_preclick_no_action(previous) and not allow_unacted_observation)):
         return "review", ("No completed Instagram action exists for this profile. "
                           "Automatic read-only recheck did not click anything.")
     target = "https://www.instagram.com/" + username + "/"
@@ -1001,6 +1024,10 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         return "review", (
             "Read-only recheck: prior non-followed state could not be confirmed; no click.")
     result, details = _verify_final_state(page, expected_handle, username, checks=3)
+    if allow_unacted_observation:
+        return result, ("Current read-only relationship observation: " +
+                        details.replace("Action confirmed:", "Current visible state:") +
+                        " No relationship-changing click was made by this scan.")
     return result, ("Read-only batch recheck: " + details +
                     " No new relationship-changing click was made.")
 
@@ -1016,6 +1043,9 @@ class ActionRobot:
         self.open_review_tabs = []
         self.current_wait = None
         self.review_only = False
+        self.history_recheck_mode = False
+        self.historical_seen = set()
+        self.historical_not_following_seen = set()
         self.continuing_batch = False
         self.active_batch_id = ""
         self.skipped = set()
@@ -1061,6 +1091,27 @@ class ActionRobot:
         base = self._base_for(owner, account, task)
         return base.with_name(base.stem + "-batch-reviews.json")
 
+    def _historical_recheck_file_for(self, owner, account, task):
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-historical-rechecks.json")
+
+    def historical_recheck_status(self, data):
+        owner, account, task = self._review_scope(data)
+        with self.lock:
+            saved = _read_json(self._historical_recheck_file_for(owner, account, task), {})
+            rows = saved.get("results", {}) if isinstance(saved, dict) else {}
+            if not isinstance(rows, dict): rows = {}
+            counts = {"observed_not_following": 0, "still_unresolved": 0, "total": 0}
+            for record in rows.values():
+                if not isinstance(record, dict): continue
+                state = record.get("observation")
+                if state in counts: counts[state] += 1
+                counts["total"] += 1
+            return {"owner": owner, "account": account, "task": task,
+                    "counts": counts,
+                    "completed_at": saved.get("completed_at") if isinstance(saved, dict) else None,
+                    "source": "read_only_no_relationship_click"}
+
     def _review_batches(self, owner, account, task):
         return _read_json(self._review_batches_file_for(owner, account, task), [])
 
@@ -1068,6 +1119,47 @@ class ActionRobot:
         batches = self._review_batches(owner, account, task)
         return next((entry for entry in reversed(batches)
                      if not entry.get("approved_at")), None)
+
+    def open_profile(self, data):
+        """Open an owner-selected issue in the robot's persistent Chrome profile.
+
+        Never fall back to the system default browser (which uses a different
+        Instagram login). No credentials or cookies leave the local machine.
+        This is manual navigation only; it never changes a relationship.
+        """
+        owner, account, task = self._review_scope(data)
+        username = valid_username(data.get("username"))
+        if not username:
+            raise ValueError("Choose a valid Instagram profile.")
+        with self.lock:
+            running = bool(self.worker and self.worker.is_alive())
+            if running and (owner, account, task) != (self.owner, self.account, self.task):
+                raise ValueError("Another Instagram account owns the active robot session.")
+            # Manual review is allowed after restarting Windows: opening the
+            # same persistent Chrome directory is navigation, not a robot action.
+            # A fresh process has no active self.owner/task and must not prevent
+            # visiting earlier journal issues in the saved browser session.
+            session = self.session_dir.resolve()
+        candidates = [shutil.which("chrome.exe"), shutil.which("chrome")]
+        for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+            base = os.environ.get(env)
+            if base:
+                candidates.append(str(Path(base) / "Google" / "Chrome" / "Application" / "chrome.exe"))
+        chrome = next((str(Path(p)) for p in candidates if p and Path(p).is_file()), None)
+        if chrome is None:
+            raise ValueError("Google Chrome is required to reopen the robot's authenticated session.")
+        # Chrome's process singleton reuses the existing browser when this
+        # user-data-dir is already active. Do not open the app's UI profile.
+        url = "https://www.instagram.com/" + username + "/"
+        try:
+            subprocess.Popen([chrome, "--user-data-dir=" + str(session),
+                              "--new-tab", url],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, close_fds=True)
+        except OSError as exc:
+            raise ValueError("Unable to reopen robot Chrome: " + str(exc)) from exc
+        return {"status": "opening", "username": username,
+                "session": "robot-persistent-chrome", "relationship_action": False}
 
     def batch_review(self, data):
         owner, account, task = self._review_scope(data)
@@ -1109,6 +1201,21 @@ class ActionRobot:
                 raise ValueError("Only your explicit batch confirmation can mark this reviewed.")
             journal = _read_json(self._base_for(owner, account, task), {})
             rechecked = match.get("recheck_results") or {}
+            # Approval closes the pending cohort: do not strand profiles that
+            # never received an actual attempt or a read-only observation.
+            # A recorded uncertain outcome may remain unresolved, but it
+            # cannot silently promote an untouched target to Reviewed.
+            untouched = [
+                username for username in match["targets"]
+                if not (isinstance(journal.get(username), dict)
+                        and journal[username].get("status"))
+                and not (isinstance(rechecked.get(username), dict)
+                         and rechecked[username].get("status"))
+            ]
+            if untouched:
+                raise ValueError(
+                    "The batch still has " + str(len(untouched)) +
+                    " untouched profiles. Continue the saved cohort before approval.")
             approved = []
             unresolved = []
             for username in match["targets"]:
@@ -1126,6 +1233,68 @@ class ActionRobot:
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "approved_usernames": approved,
                     "unresolved_usernames": unresolved, "approved_at": match["approved_at"]}
+
+    def recheck_history(self, data):
+        """Revisit unresolved old journal records; no repeat relationship clicks."""
+        owner, account, task = self._review_scope(data)
+        if task not in ("unfollow", "cancel"):
+            raise ValueError("Historical recheck applies only to relationship tasks.")
+        expected = valid_username(data.get("expected_handle"))
+        if not expected or data.get("confirmation") != "history-read-only:" + task:
+            raise ValueError("Confirm the selected account and read-only re-audit.")
+        count, window, delay = check_pacing(
+            int(data.get("batch_size", 30)), ACTION_WINDOW_MINUTES,
+            data.get("gap_seconds", 10))
+        rest_input = data.get("rest_minutes", 5)
+        _, rest = check_batch_rest(count if rest_input else 0, rest_input)
+        with self.collector.browser_admission, self.lock:
+            if self.worker and self.worker.is_alive():
+                raise ValueError("Pause the action robot before historical read-only checks.")
+            if self.collector.worker and self.collector.worker.is_alive():
+                raise ValueError("Pause Profile Counts before historical read-only checks.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            targets = [username for username, record in journal.items()
+                       if valid_username(username) == username
+                       and isinstance(record, dict)
+                       and record.get("status") in ("review", "error", "blocked")]
+            if not targets:
+                raise ValueError("No unresolved historical profiles need re-audit.")
+            self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            protected = self._protected()
+            targets = [name for name in targets if name not in protected]
+            if not targets:
+                raise ValueError("All unresolved historical profiles are protected.")
+            old = _read_json(self._historical_recheck_file_for(owner, account, task), {})
+            results = old.get("results", {}) if isinstance(old, dict) else {}
+            if not isinstance(results, dict): results = {}
+            # Do not always re-open the same first 1,000 old failures.
+            # Prefer entries never read, then the oldest unresolved observation.
+            # Already-confirmed read-only Follow state is complete *as a scan*
+            # but never approved as a historical Unfollow action.
+            to_revisit = [name for name in targets
+                          if not (isinstance(results.get(name), dict)
+                                  and results[name].get("observation") == "observed_not_following")]
+            if not to_revisit:
+                raise ValueError("All historical failed actions already have a read-only current-state observation.")
+            to_revisit.sort(key=lambda name: (
+                0 if name not in results else 1,
+                str(results.get(name, {}).get("at", "")) if isinstance(results.get(name), dict) else "",
+                name))
+            self.targets = to_revisit[:MAX_ACTIONS_PER_JOB]
+            self.active_batch_id = ""
+            self.review_only, self.history_recheck_mode = True, True
+            self.historical_seen, self.historical_not_following_seen = set(), set()
+            self.continuing_batch = False
+            self.open_review_tabs, self.current_wait = [], None
+            self.skipped.clear()
+            self.max_count, self.window_minutes, self.min_delay_seconds = count, window, delay
+            self.rest_minutes = rest
+            self.stop_event.clear()
+            self.status, self.message = ("starting",
+                "Re-auditing unresolved historical profiles (read-only, no actions).")
+            self.worker = threading.Thread(target=self._run, daemon=True)
+            self.worker.start()
+            return self.snapshot()
 
     def recheck_batch(self, data):
         owner, account, task = self._review_scope(data)
@@ -1146,6 +1315,7 @@ class ActionRobot:
             self.targets = list(entry["targets"])
             self.active_batch_id = entry["id"]
             self.review_only = True
+            self.history_recheck_mode = False
             self.continuing_batch = False
             self.open_review_tabs = []
             self.current_wait = None
@@ -1163,6 +1333,29 @@ class ActionRobot:
             return self.snapshot()
 
     def _save_recheck_result(self, user, result, message):
+        if self.history_recheck_mode:
+            path = self._historical_recheck_file_for(self.owner, self.account, self.task)
+            saved = _read_json(path, {})
+            if not isinstance(saved, dict): saved = {}
+            rows = saved.setdefault("results", {})
+            if not isinstance(rows, dict): rows = {};saved["results"] = rows
+            previous = rows.get(user, {})
+            events = previous.get("observations", []) if isinstance(previous, dict) else []
+            observation = ("observed_not_following"
+                           if result in ("ok", "already_not_following")
+                           else "still_unresolved")
+            record = {"observation": observation, "verification_status": result,
+                      "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                      "read_only": True}
+            rows[user] = {**record, "observations": list(events)[-24:] + [record]}
+            saved["completed_at"] = record["at"]
+            _atomic_json(path, saved)
+            self.historical_seen.add(user)
+            if observation == "observed_not_following":
+                self.historical_not_following_seen.add(user)
+            else:
+                self.historical_not_following_seen.discard(user)
+            return
         entries = self._review_batches(self.owner, self.account, self.task)
         entry = next((x for x in reversed(entries)
                       if x.get("id") == self.active_batch_id and not x.get("approved_at")), None)
@@ -1278,6 +1471,7 @@ class ActionRobot:
                     raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
             self.targets = targets
             self.review_only = False
+            self.history_recheck_mode = False
             if not resume:
                 self.continuing_batch = pending_entry is not None
                 if pending_entry:
@@ -1322,6 +1516,9 @@ class ActionRobot:
         with self.lock:
             journal = self._journal() if self.owner and self.task else {}
             rows = {u: journal.get(u, {}) for u in self.targets}
+            historical_checked = len(self.historical_seen) if self.history_recheck_mode else 0
+            historical_not_following = (
+                len(self.historical_not_following_seen) if self.history_recheck_mode else 0)
             # Persisted action journal spans ALL earlier batches, not merely
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
@@ -1336,6 +1533,7 @@ class ActionRobot:
             issues = [{"username": u, "status": rows[u].get("status", "pending"),
                        "issue": rows[u].get("issue", ""),
                        "message": rows[u].get("message", ""),
+                       "safe_no_click": _preclick_no_action(rows[u]),
                        "at": rows[u].get("at", "")}
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
@@ -1363,6 +1561,9 @@ class ActionRobot:
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
                     "continuing_batch": self.continuing_batch,
+                    "history_recheck": self.history_recheck_mode,
+                    "historical_checked": historical_checked,
+                    "historical_not_following": historical_not_following,
                     "review_batch": (self._pending_review(self.owner, self.account, self.task)
                         if self.owner and self.account and self.task else None),
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
@@ -1531,13 +1732,13 @@ class ActionRobot:
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
                     previous = journal.get(user, {})
-                    if not self.review_only and _preclick_no_action(previous):
-                        journal.pop(user, None)
-                        _atomic_json(path, journal)
-                        previous = {}
+                    # Retry only proven no-click outcomes. Keep old evidence
+                    # until the new outcome has been written, never delete
+                    # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
                         (not self.review_only and
-                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked"))):
+                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                         and not _preclick_no_action(previous))):
                         continue
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
@@ -1659,7 +1860,8 @@ class ActionRobot:
                                     self._record_readiness(user, phase, elapsed, limit,
                                                            action_tabs),
                                 preloaded=bool(prepared_item and
-                                               prepared_item.get("status") == "prefetched"))
+                                               prepared_item.get("status") == "prefetched"),
+                                allow_unacted_observation=self.history_recheck_mode)
                         elif self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
@@ -1701,16 +1903,23 @@ class ActionRobot:
                     if self.review_only:
                         self._save_recheck_result(user, result, details)
                     elif result != "skipped":
+                        previous_attempt = journal.get(user, {})
+                        history = list(previous_attempt.get("attempt_history", []))
+                        if previous_attempt.get("status"):
+                            history.append({k: v for k, v in previous_attempt.items()
+                                            if k != "attempt_history"})
                         journal[user] = {"status": result, "message": details,
-                                         "audit_relation": relation,
-                                         "issue": issue,
-                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                                         "audit_relation": relation, "issue": issue,
+                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                         "attempt_history": history}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
                     if action_tabs:
                         try:
-                            safely_unclicked = (self.review_only and not previous.get("status")) or (
-                                not self.review_only and _preclick_no_action(journal.get(user, {})))
+                            # Read-only inspections cannot change relationships:
+                            # release their tabs even when earlier history is
+                            # uncertain. Original action journals stay intact.
+                            safely_unclicked = self.review_only or _preclick_no_action(journal.get(user, {}))
                             action_tabs.record(user, result, safe_no_click=safely_unclicked)
                         except Exception:
                             # No relationship click is ever repeated to recover
@@ -1728,6 +1937,10 @@ class ActionRobot:
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
                         if self.task == "audit" and result == "review":
+                            continue
+                        if _preclick_no_action(journal.get(user, {})):
+                            # Safe no-click: record and move to the next target.
+                            # A challenge or possibly clicked action is NOT safe.
                             continue
                         if issue in ("pending_already_following", "pending_not_requested",
                                      "mutual_before_action", "missing_profile_info",
@@ -1747,8 +1960,18 @@ class ActionRobot:
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
-                        self.message = ("Batch reviewed: some profiles require manual verification."
-                                        if remaining else "Batch complete; results saved.")
+                        self.message = (
+                            "Historical re-audit finished: read-only observations saved. No action re-clicked or approved."
+                            if self.history_recheck_mode else
+                            ("Batch reviewed: some profiles require manual verification."
+                             if remaining else "Batch complete; results saved."))
+                # Prefetch-only tabs never had action clicks. Do not trap the
+                # robot in manual-review mode just because a later unvisited
+                # target is still prefetched in one of the 10 open slots.
+                if action_tabs:
+                    action_tabs.close_unacted_prefetches()
+                    with self.lock:
+                        self.open_review_tabs = action_tabs.overview()
                 # Unverified target tabs must remain visible for manual inspection.
                 # The Playwright persistent context is deliberately held open
                 # until the owner manually pauses or closes the target tabs.

@@ -176,9 +176,12 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.deepEqual(retry.data.targets,['keep.me','skip.me','untouched.three']);
  assert.equal(retry.data.confirmation,'unfollow:3');
  assert(texts.at(-1).includes('Only these safe profiles will be attempted'));
- ctx.window.igcAutoOpenBatchIssues();
- assert.equal(opened.length,1,'Only issue profiles may open, never untouched accounts');
- assert.match(opened[0][0],/skip.me/);
+ await ctx.window.igcAutoOpenBatchIssues();
+ const manualOpen=calls.filter(c=>c.type==='open-profile');
+ assert.equal(manualOpen.length,1,'Only issue profiles may open, never untouched accounts');
+ assert.equal(manualOpen[0].data.username,'skip.me');
+ assert.equal(manualOpen[0].data.task,'unfollow');
+ assert.equal(opened.length,0,'Integrated Windows must not open separate logged-out browser');
  await ctx.window.igcAutoApproveBatch();
  assert.equal(calls.filter(c=>c.type==='approve-batch').length,0,
    'Cannot approve while one profile was never attempted');
@@ -193,5 +196,15 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert(ctx.doneSet.has('keep.me'),'Owner-confirmed verified profile must become reviewed');
  assert(!ctx.doneSet.has('skip.me'),'Unresolved result must remain not reviewed');
  assert.equal(elements.igcAutoBatchApproval.style.display,'none');
- console.log('Automations action execution, owner switching guard, pause and partial HTML gate: PASS');
+ await ctx.window.igcAutoRecheckHistory();
+ const historical=calls.find(c=>c.type==='recheck-history');
+ assert(historical,'Historical read-only action journal recovery must be reachable from UI');
+ assert.equal(historical.data.task,'unfollow');
+ assert.equal(historical.data.expected_handle,'my.profile');
+ assert.equal(historical.data.confirmation,'history-read-only:unfollow');
+ assert(!historical.data.targets,'UI must not select/click per-person actions for historical read-only scan');
+ assert(texts.at(-1).includes('No Unfollow/Cancel action'),
+   'History scan must require one explicit explanation of its no-click behavior');
+ assert(!calls.some(c=>c.type==='approve-batch' && c.data.confirmation==='history-read-only:unfollow'));
+ console.log('Automations execution, old-error automatic read-only re-audit, owner switching and batch approval: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});

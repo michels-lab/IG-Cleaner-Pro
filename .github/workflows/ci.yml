@@ -89,8 +89,11 @@ jobs:
         run: |
           node tests/automations-next-batch.test.cjs
           node tests/automations-cold-start.test.cjs
+          node tests/developer-annotations-contract.test.cjs
+          python3 -m unittest discover -s tests -p 'test_developer_audit.py' -v
           node tests/pending-focus-reimport.test.cjs
           python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
+          python3 -m unittest discover -s tests -p 'test_historical_recheck.py' -v
       - name: Verify Windows-only updater dialog and required click-to-install
         run: node tests/windows-updater-ui.test.cjs
       - name: Validate Chrome Companion least-privilege extension, parser and local CSV flow

@@ -220,7 +220,11 @@ public final class MainActivity extends AppCompatActivity {
         View aboutAction = findViewById(R.id.headerAboutButton);
         View syncAction = findViewById(R.id.headerSyncButton);
         aboutAction.setOnClickListener(view -> showAbout());
-        syncAction.setOnClickListener(view -> syncNow());
+        syncAction.setOnClickListener(view -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Developer Edition: automatic cloud writes are disabled.", Snackbar.LENGTH_LONG).show();
+            } else syncNow();
+        });
         // A visible Instagram identity is also a global switcher: changing
         // profiles should never require leaving a Focus/Review workflow just
         // to hunt for the Profile tab. About stays independent and visible.
@@ -252,6 +256,13 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setSelectedItemId(R.id.navHome);
+        // Developer APK is independently installed and opens the same WebView
+        // workspace with local diagnostics enabled, without changing production.
+        if (isDeveloperEdition()) showWorkspaceScreen("", "DEVELOPER EDITION");
+    }
+
+    private boolean isDeveloperEdition() {
+        return getPackageName().endsWith(".developer");
     }
 
     @Override
@@ -1270,14 +1281,22 @@ public final class MainActivity extends AppCompatActivity {
                 api.verifyOtpAndSetPassword(textOf(codeInput), rawTextOf(newPasswordInput));
                 touchDevice();
                 mainHandler.post(() -> {
-                    setGlobalStatus("CONNECTED • password saved");
+                    setGlobalStatus(isDeveloperEdition()
+                        ? "CONNECTED • Developer OTP login" : "CONNECTED • password saved");
                     showNativeAccountScreen();
-                    Snackbar.make(content, "Email verified and password saved", Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(content, isDeveloperEdition()
+                        ? "Email verified. Developer did not modify your password."
+                        : "Email verified and password saved", Snackbar.LENGTH_LONG).show();
                 });
             }, true);
         });
 
         sync.setOnClickListener(v -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Developer Edition keeps your real login but does not write cloud sync data.",
+                        Snackbar.LENGTH_LONG).show();
+                return;
+            }
             setGlobalStatus("SYNCING • account and device");
             runAsync(() -> {
                 touchDevice();
@@ -1289,6 +1308,11 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         managePassword.setOnClickListener(v -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Password changes are disabled in Developer Edition.",
+                        Snackbar.LENGTH_LONG).show();
+                return;
+            }
             TextInputEditText passwordField = new TextInputEditText(this);
             passwordField.setHint("New password");
             passwordField.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
@@ -1475,7 +1499,7 @@ public final class MainActivity extends AppCompatActivity {
         try {
             JSONObject cfg = new JSONObject()
                     .put("email", api.getEmail())
-                    .put("auto", true);
+                    .put("auto", !isDeveloperEdition());
             JSONObject device = new JSONObject()
                     .put("id", deviceId)
                     .put("type", "android")
@@ -1650,6 +1674,11 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void confirmDeleteSyncedCloudData() {
+        if (isDeveloperEdition()) {
+            Snackbar.make(content, "Developer Edition cannot delete synchronized production data.",
+                    Snackbar.LENGTH_LONG).show();
+            return;
+        }
         if (!api.hasSession()) {
             Snackbar.make(content, "Sign in first.", Snackbar.LENGTH_LONG).show();
             return;
@@ -1712,6 +1741,11 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private final class WorkspaceBridge {
+        @JavascriptInterface
+        public boolean isDeveloperMode() {
+            return isDeveloperEdition();
+        }
+
         @JavascriptInterface
         public String getInstagramOwnerEmail() {
             return api.getEmail();
@@ -2959,6 +2993,9 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void touchDevice() throws Exception {
+        // Registration is a Supabase production write. Developer remains a
+        // real authenticated reader without mutating the public device list.
+        if (isDeveloperEdition()) return;
         JSONObject device = new JSONObject()
                 .put("device_id", deviceId)
                 .put("device_type", "android")

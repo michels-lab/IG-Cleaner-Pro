@@ -32,6 +32,10 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
+    // Android Gradle Plugin builds instrumentation only for testBuildType.
+    // Keep ordinary visual QA on debug; developer emulator QA opts into its
+    // isolated package through -PigcAndroidTestBuildType=developer.
+    testBuildType = providers.gradleProperty("igcAndroidTestBuildType").orNull ?: "debug"
         versionCode = 12053
         versionName = "120.53"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -60,6 +64,13 @@ android {
         release {
             isMinifyEnabled = false
             signingConfigs.findByName("release")?.let { signingConfig = it }
+        }
+        // Separately installable QA twin. Never replace the signed public
+        // com.michelslab.igcleaner installation or share its local WebView.
+        create("developer") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".developer"
+            versionNameSuffix = "-developer"
         }
     }
 
