@@ -171,6 +171,94 @@ class WindowsUpdaterTests(unittest.TestCase):
                 self.assertNotIn("private.zip",str(names))
                 self.assertIn(b"120.47",z.read("BACKUP-INFO.json"))
 
+    def test_restore_point_integrity_manifest_detects_valid_zip_content_change(self):
+        with TemporaryDirectory() as tmp:
+            home=Path(tmp)/"app"
+            robots=Path(tmp)/"robot"
+            home.mkdir()
+            robots.mkdir()
+            (home/"IG-Cleaner-Pro.html").write_text("installed UI",encoding="utf-8")
+            (robots/"history.json").write_text('{"result": "preserved"}',encoding="utf-8")
+            backup=wu.create_restore_point(home/"backups",home,robots,"120.53")
+            self.assertIsNone(wu.verify_restore_point(backup))
+            with zipfile.ZipFile(backup) as z:
+                manifest=json.loads(z.read("BACKUP-CHECKSUMS.json"))
+                self.assertEqual(manifest["schema"],1)
+                self.assertEqual(manifest["files"]["robot/history.json"],
+                                 hashlib.sha256(b'{"result": "preserved"}').hexdigest())
+                content={name:z.read(name) for name in z.namelist()}
+            # Repack a valid ZIP with recomputed CRC but the original manifest:
+            # CRC-only checks would accept it, SHA-256 must reject it.
+            content["robot/history.json"]=b'{"result": "changed"}'
+            with zipfile.ZipFile(backup,"w",compression=zipfile.ZIP_DEFLATED) as z:
+                for name,body in content.items():
+                    z.writestr(name,body)
+            with self.assertRaisesRegex(ValueError,"integrity"):
+                wu.verify_restore_point(backup)
+
+    def test_restore_point_missing_manifest_duplicate_and_unsafe_name_fail_closed(self):
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            broken=root/"bad.zip"
+            with zipfile.ZipFile(broken,"w") as z:
+                z.writestr("BACKUP-INFO.json",'{"schema":2}')
+            with self.assertRaises(ValueError):
+                wu.verify_restore_point(broken)
+            with zipfile.ZipFile(broken,"w") as z:
+                z.writestr("BACKUP-INFO.json",'{"schema":2}')
+                z.writestr("BACKUP-CHECKSUMS.json",json.dumps({
+                    "schema":1,"files":{"robot/../escaped.json":hashlib.sha256(b"bad").hexdigest()}}))
+                z.writestr("robot/../escaped.json",b"bad")
+            with self.assertRaisesRegex(ValueError,"unsafe"):
+                wu.verify_restore_point(broken)
+            with zipfile.ZipFile(broken,"a") as z:
+                z.writestr("robot/../escaped.json",b"duplicate")
+            with self.assertRaisesRegex(ValueError,"duplicate"):
+                wu.verify_restore_point(broken)
+
+    def test_restore_point_blocks_symlink_data_and_preserves_existing_files(self):
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            home=root/"app"
+            robots=root/"robots"
+            secret=root/"private.json"
+            secret.write_text("COOKIE-LIKE PRIVATE CONTENT",encoding="utf-8")
+            home.mkdir()
+            robots.mkdir()
+            (robots/"safe.json").write_text('{"audit": 1}',encoding="utf-8")
+            try:
+                (robots/"linked.json").symlink_to(secret)
+            except (OSError, NotImplementedError):
+                pass
+            backup=wu.create_restore_point(home/"backups",home,robots,"120.53")
+            with zipfile.ZipFile(backup) as z:
+                self.assertIn("robot/safe.json",z.namelist())
+                self.assertNotIn("robot/linked.json",z.namelist())
+                self.assertNotIn(b"COOKIE-LIKE PRIVATE CONTENT",b"".join(z.read(n) for n in z.namelist()))
+
+    def test_installer_never_launches_if_finished_backup_integrity_check_fails(self):
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"robots").mkdir()
+            (root/"robots"/"saved.json").write_text('{"status":"saved"}')
+            installer=root/"updates"/"Setup.exe"
+            installer.parent.mkdir()
+            installer.write_bytes(b"verified installer")
+            m=wu.WindowsUpdater("120.53",root,root/"robots")
+            m.downloaded=installer
+            m.expected_sha=hashlib.sha256(b"verified installer").hexdigest()
+            m.state["status"]="ready_to_install"
+            with patch.object(wu,"running_on_windows",return_value=True):
+                with patch.object(wu,"verify_restore_point",
+                                  side_effect=[None,ValueError("backup integrity failure")]):
+                    with patch.object(wu.subprocess,"Popen") as launch:
+                        with self.assertRaisesRegex(ValueError,"integrity"):
+                            m.install()
+                        launch.assert_not_called()
+            self.assertEqual(m.snapshot()["status"],"ready_to_install")
+            self.assertTrue(list((root/"backups").glob("*.zip")))
+            self.assertEqual((root/"robots"/"saved.json").read_text(),'{"status":"saved"}')
+
     def test_local_server_requires_session_token_and_explicit_install_phrase(self):
         with TemporaryDirectory() as tmp:
             root=Path(tmp)
