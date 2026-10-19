@@ -61,6 +61,14 @@ android {
             isMinifyEnabled = false
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
+        // Separately installable QA twin. Never replace the signed public
+        // com.michelslab.igcleaner installation or share its local WebView.
+        create("developer") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".developer"
+            versionNameSuffix = "-developer"
+            resValue("string", "developer_app_name", "Insta Cleaner Pro Developer")
+        }
     }
 
     sourceSets {
