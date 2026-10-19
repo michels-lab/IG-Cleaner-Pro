@@ -1037,6 +1037,7 @@ class ActionRobot:
         self.open_review_tabs = []
         self.current_wait = None
         self.review_only = False
+        self.history_recheck_mode = False
         self.continuing_batch = False
         self.active_batch_id = ""
         self.skipped = set()
@@ -1081,6 +1082,27 @@ class ActionRobot:
     def _review_batches_file_for(self, owner, account, task):
         base = self._base_for(owner, account, task)
         return base.with_name(base.stem + "-batch-reviews.json")
+
+    def _historical_recheck_file_for(self, owner, account, task):
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-historical-rechecks.json")
+
+    def historical_recheck_status(self, data):
+        owner, account, task = self._review_scope(data)
+        with self.lock:
+            saved = _read_json(self._historical_recheck_file_for(owner, account, task), {})
+            rows = saved.get("results", {}) if isinstance(saved, dict) else {}
+            if not isinstance(rows, dict): rows = {}
+            counts = {"observed_not_following": 0, "still_unresolved": 0, "total": 0}
+            for record in rows.values():
+                if not isinstance(record, dict): continue
+                state = record.get("observation")
+                if state in counts: counts[state] += 1
+                counts["total"] += 1
+            return {"owner": owner, "account": account, "task": task,
+                    "counts": counts,
+                    "completed_at": saved.get("completed_at") if isinstance(saved, dict) else None,
+                    "source": "read_only_no_relationship_click"}
 
     def _review_batches(self, owner, account, task):
         return _read_json(self._review_batches_file_for(owner, account, task), [])
@@ -1188,6 +1210,51 @@ class ActionRobot:
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "approved_usernames": approved,
                     "unresolved_usernames": unresolved, "approved_at": match["approved_at"]}
+
+    def recheck_history(self, data):
+        """Revisit unresolved old journal records; no repeat relationship clicks."""
+        owner, account, task = self._review_scope(data)
+        if task not in ("unfollow", "cancel"):
+            raise ValueError("Historical recheck applies only to relationship tasks.")
+        expected = valid_username(data.get("expected_handle"))
+        if not expected or data.get("confirmation") != "history-read-only:" + task:
+            raise ValueError("Confirm the selected account and read-only re-audit.")
+        count, window, delay = check_pacing(
+            int(data.get("batch_size", 30)), ACTION_WINDOW_MINUTES,
+            data.get("gap_seconds", 10))
+        rest_input = data.get("rest_minutes", 5)
+        _, rest = check_batch_rest(count if rest_input else 0, rest_input)
+        with self.collector.browser_admission, self.lock:
+            if self.worker and self.worker.is_alive():
+                raise ValueError("Pause the action robot before historical read-only checks.")
+            if self.collector.worker and self.collector.worker.is_alive():
+                raise ValueError("Pause Profile Counts before historical read-only checks.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            targets = sorted(username for username, record in journal.items()
+                if valid_username(username) == username
+                and isinstance(record, dict)
+                and record.get("status") in ("review", "error", "blocked"))
+            if not targets:
+                raise ValueError("No unresolved historical profiles need re-audit.")
+            self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            protected = self._protected()
+            targets = [name for name in targets if name not in protected]
+            if not targets:
+                raise ValueError("All unresolved historical profiles are protected.")
+            self.targets = targets[:MAX_ACTIONS_PER_JOB]
+            self.active_batch_id = ""
+            self.review_only, self.history_recheck_mode = True, True
+            self.continuing_batch = False
+            self.open_review_tabs, self.current_wait = [], None
+            self.skipped.clear()
+            self.max_count, self.window_minutes, self.min_delay_seconds = count, window, delay
+            self.rest_minutes = rest
+            self.stop_event.clear()
+            self.status, self.message = ("starting",
+                "Re-auditing unresolved historical profiles (read-only, no actions).")
+            self.worker = threading.Thread(target=self._run, daemon=True)
+            self.worker.start()
+            return self.snapshot()
 
     def recheck_batch(self, data):
         owner, account, task = self._review_scope(data)
