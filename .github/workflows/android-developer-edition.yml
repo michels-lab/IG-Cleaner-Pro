@@ -37,22 +37,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
-          script: |
-            set -euo pipefail
-            gradle -p android :app:assembleDeveloper :app:assembleDeveloperAndroidTest
-            apk="android/app/build/outputs/apk/developer/app-developer.apk"
-            test -s "$apk"
-            adb install -r "$apk"
-            adb install -r android/app/build/outputs/apk/androidTest/developer/app-developer-androidTest.apk
-            adb shell pm list packages | grep -q 'package:com.michelslab.igcleaner.developer'
-            mkdir -p artifacts/android-developer
-            adb shell am instrument -w -r -e class com.michelslab.igcleaner.DeveloperEditionTest \
-              com.michelslab.igcleaner.developer.test/androidx.test.runner.AndroidJUnitRunner \
-              | tee artifacts/android-developer/instrumentation.txt
-            grep -Fq 'OK (1 test)' artifacts/android-developer/instrumentation.txt
-            unzip -p "$apk" assets/ig_cleaner_pro_v120_27_synced_companion.html \
-              | grep -aq 'igcDevSaveNote'
-            cp "$apk" artifacts/android-developer/app-developer.apk
+          script: bash tools/run_android_developer_ui.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
