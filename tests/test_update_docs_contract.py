@@ -15,8 +15,8 @@ class UpdateGuideContract(unittest.TestCase):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         stable = manifest["releasePolicy"]["currentStableRelease"]
         reserved = manifest["releasePolicy"]["nextRelease"]
-        self.assertRegex(stable, r"^v\\d+\\.\\d+$")
-        self.assertRegex(reserved, r"^v\\d+\\.\\d+$")
+        self.assertRegex(stable, r"^v\d+\.\d+$")
+        self.assertRegex(reserved, r"^v\d+\.\d+$")
         self.assertNotEqual(stable, reserved)
 
         guide = UPDATE_GUIDE.read_text(encoding="utf-8")
@@ -25,7 +25,7 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertIn(f"https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/{stable}", guide)
         self.assertIn(f"Next reserved version: {reserved} (not published)", guide)
         self.assertIn(f"**{stable} — official stable GitHub release", readme)
-        current_claims = re.findall(r"currently (v\\d+\\.\\d+)", guide)
+        current_claims = re.findall(r"currently (v\d+\.\d+)", guide)
         self.assertGreaterEqual(len(current_claims), 2)
         self.assertEqual(set(current_claims), {stable},
                          "Update guide must not tell users an old or reserved version is currently shipped.")
