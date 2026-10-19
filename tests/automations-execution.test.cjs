@@ -196,5 +196,15 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert(ctx.doneSet.has('keep.me'),'Owner-confirmed verified profile must become reviewed');
  assert(!ctx.doneSet.has('skip.me'),'Unresolved result must remain not reviewed');
  assert.equal(elements.igcAutoBatchApproval.style.display,'none');
- console.log('Automations action execution, owner switching guard, pause and partial HTML gate: PASS');
+ await ctx.window.igcAutoRecheckHistory();
+ const historical=calls.find(c=>c.type==='recheck-history');
+ assert(historical,'Historical read-only action journal recovery must be reachable from UI');
+ assert.equal(historical.data.task,'unfollow');
+ assert.equal(historical.data.expected_handle,'my.profile');
+ assert.equal(historical.data.confirmation,'history-read-only:unfollow');
+ assert(!historical.data.targets,'UI must not select/click per-person actions for historical read-only scan');
+ assert(texts.at(-1).includes('No Unfollow/Cancel action'),
+   'History scan must require one explicit explanation of its no-click behavior');
+ assert(!calls.some(c=>c.type==='approve-batch' && c.data.confirmation==='history-read-only:unfollow'));
+ console.log('Automations execution, old-error automatic read-only re-audit, owner switching and batch approval: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
