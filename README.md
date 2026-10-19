@@ -4,21 +4,19 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.50 — official stable GitHub release (published October 18, 2026).** [Download all v120.50 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.50).
+**v120.52 is the official-release candidate.** Latest verified public stable: [v120.51](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.51). The v120.52 files should be downloaded only once the official GitHub release is published and its assets verified.
 
-| Platform | Primary asset | Notes |
-| --- | --- | --- |
-| Windows installed application + robots | `IG-Cleaner-Pro-Windows-Setup-v120.50.exe` | Recommended; one-click Setup and robot integrations, preserves previous local activity journal on upgrade. |
-| Android | `IG-Cleaner-Pro-Android-v120.50.apk` | Original production package ID and verified persistent Android signing identity. |
-| Desktop browser | `IG-Cleaner-Pro-Desktop-v120.50.html` | Standalone local HTML, no Windows-only native robot. |
-| Optional Windows portable | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.50.zip` | Optional legacy ZIP; Setup is the normal delivery. |
-| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.50.zip` | HTML and original assets. |
+| Platform | v120.52 expected official asset |
+| --- | --- |
+| Windows integrated app and Instagram robots | `IG-Cleaner-Pro-Windows-Setup-v120.52.exe` |
+| Production-signed Android | `IG-Cleaner-Pro-Android-v120.52.apk` |
+| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.52.html` |
+| Optional Windows portable ZIP | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.52.zip` |
+| Optional Desktop bundle | `IG-Cleaner-Pro-Desktop-v120.52.zip` |
 
-**v120.50:** fixed another Following/Siguiendo locator assumption found in the owner's actual v120.49 screenshots. The robot now surveys the exact visible target username even if Instagram puts it in a span/div instead of h1/h2/h3, and accepts a single nearby accessible/clickable button, role=button or tabindex=0. Never acts on Following counts, links, suggestions or duplicate controls. Read-only no-click diagnostics report `main`, `exact username` and relevant control counts without capturing page contents; Issue Review now wraps messages. Known no-click records remain safely retryable with a new explicit owner-approved batch; post-click uncertainty is still quarantined.
+**Changes:** actual preparation of up to ten distinct Chrome tabs; safer verified Following/Siguiendo controls and delayed read-only outcome check; automatic whole-batch **Is this batch OK?** confirmation before marking successful profiles Reviewed. Unapproved batches survive restart and rerun automatically in read-only mode; open only issue profiles when needed. Never replay an uncertain relationship-changing click.
 
-**Important acceptance limit:** GitHub's Chromium simulation, Windows Setup install/upgrade/uninstall and Android/Desktop visual checks passed, but this does **not** confirm that a real Instagram unfollow succeeded on the owner's session. Test with a small batch and inspect the resulting Follow/Follow Back. If it still reports `missing_profile_info`, capture the new `Profile layout` diagnostic. The separate Chrome may receive Instagram challenges; no CAPTCHA bypass. Windows binaries have SHA-256 release checksums but no Authenticode certificate.
-
-**Next development version:** v120.51, not yet authorized.
+**Owner tests the RELEASE:** Michel validates only published stable installers against his real Instagram session, not candidate/preview Actions artifacts. Automated QA still gates publication. No live Instagram action success is claimed before his post-release tests; the robot stops on uncertainty, challenges and identity mismatch. Windows installer SHA-256 integrity checks are supplied, but no Authenticode certificate is configured.
 
 ## Features
 
@@ -39,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Published stable: v120.50. Next candidate: v120.51 (not authorized). Releases require separate owner authorization.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Before claiming a new published stable version, verify the official GitHub release page, full expected artifacts and manifest.**
 
 ## Identity and licensing
 
