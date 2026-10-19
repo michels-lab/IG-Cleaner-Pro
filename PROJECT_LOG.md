@@ -1,3 +1,9 @@
+## 2026-10-19 — GRANADA #1 Focus priority pool integrated; #2 isolated updater QA in progress
+
+- **GRANADA #1** Focus previews PR [#137](https://github.com/michels-lab/IG-Cleaner-Pro/pull/137) merged into `main` at `c44589d6855f0b8bacd07d336edcb8f0d8dbe3a9`. Exact PR head `ee453fabc11538a8d317e8621dbef317a811f04f` had 8 of 8 GitHub checks SUCCESS, including installed Windows Setup, Profile Counts offline, Desktop, Android About and Developer runtime. A 20/30/40 Focus batch now fills from all eligible priority categories rather than stopping at the first tier. This is **source-integrated, not a new release**; installed owner acceptance is separate.
+- **GRANADA #2** independent updater safety task [#138](https://github.com/michels-lab/IG-Cleaner-Pro/issues/138), PR [#139](https://github.com/michels-lab/IG-Cleaner-Pro/pull/139) on `granada/windows-verified-restore-points-20261019`. Validated local robot/UI ZIP snapshots with checksums before launching Windows Setup; separate source and tests, no changes to Focus, Instagram robot or Developer. Exact-head CI **in progress**, do not mark merged or released. Dedicated log: `docs/GRANADA_02_WINDOWS_RESTORE_2026-10-19.md` (in PR branch).
+- Stable remains **v120.53**; next v120.54 reserved. Owner tests installed official releases only, **not** Actions previews. Open #133, #135 and real-session issues remain unclosed until release/device acceptance. No GitHub release publication was requested by this GRANADA continuation.
+
 ## 2026-10-19 — GRANADA #1: Focus preview underfill, separate PR (#137)
 
 - **Operación GRANADA:** se aparcan #133 (release y prueba Instagram real del robot ya integrado) y #135 (Android Developer autenticación/proveedor/dispositivo), y el issue #57 estaba ya implementado y publicado en v120.40 aunque la aceptación física seguía pendiente. No editar esos componentes ni reinterpretar CI como aceptación del usuario.
