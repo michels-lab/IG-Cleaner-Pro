@@ -1020,8 +1020,17 @@ class ActionRobot:
         owner, account, task = self._review_scope(data)
         with self.lock:
             entry = self._pending_review(owner, account, task)
+            if entry:
+                journal = _read_json(self._base_for(owner, account, task), {})
+                details = dict(entry)
+                details["action_results"] = {
+                    username: {"status": journal.get(username, {}).get("status", "pending"),
+                               "message": journal.get(username, {}).get("message", "")}
+                    for username in entry["targets"]}
+            else:
+                details = None
             return {"owner": owner, "account": account, "task": task,
-                    "batch": dict(entry) if entry else None}
+                    "batch": details}
 
     def _review_scope(self, data):
         owner = str(data.get("owner") or "").strip()
