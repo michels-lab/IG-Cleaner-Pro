@@ -1275,8 +1275,8 @@ class ActionRobot:
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
-                    "review_batch": dict(self._pending_review(self.owner, self.account, self.task))
-                        if self.owner and self.account and self.task else None,
+                    "review_batch": (self._pending_review(self.owner, self.account, self.task)
+                        if self.owner and self.account and self.task else None),
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
