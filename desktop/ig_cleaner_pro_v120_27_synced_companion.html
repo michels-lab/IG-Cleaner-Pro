@@ -3760,10 +3760,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
 <button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
 <button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
+<button class="btn" id="igcAutoHistoricalRecheck" type="button" onclick="igcAutoRecheckHistory()">↻ Re-audit old failures (read-only)</button>
 <button class="btn" type="button" onclick="igcAutoPoll()">⟳ Refresh</button>
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
+<p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
   <div class="title">Is this batch OK?</div>
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
@@ -15198,20 +15200,43 @@ window.igcAutoPoll=async function(){
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
   }else actionBatchReview=null;
   window.igcAutoRenderBatchApproval();
+  const historyText=document.getElementById("igcAutoHistoricalSummary");
+  if(historyText&&["unfollow","cancel"].includes(mode)){
+   try{
+    const history=await requestAction("history-recheck-status",{...ctx,task:mode});
+    const count=history.counts||{};
+    historyText.textContent=(count.total||0)
+     ?("Historical read-only observations: "+(count.total||0)+
+       " profiles · "+(count.observed_not_following||0)+
+       " now observed not following · "+(count.still_unresolved||0)+
+       " still unresolved. No Unfollow/Cancel was repeated. No auto-Reviewed.")
+     :"No historical read-only re-audit results for this account yet.";
+   }catch{historyText.textContent="Historical re-audit status unavailable."}
+  }else if(historyText){historyText.textContent="Historical re-audit is available for Unfollow and Cancel Requests."}
+  const historyButton=document.getElementById("igcAutoHistoricalRecheck");
+  if(historyButton)historyButton.disabled=state.running||!["unfollow","cancel"].includes(mode);
   const metrics=document.getElementById("igcAutoExecutionMetrics");
   if(metrics){
    metrics.replaceChildren();
-   for(const label of ["Processed: "+(state.processed??state.successful)+" / "+state.total,
+   const labels=state.history_recheck?[
+    "HISTORICAL READ-ONLY SCAN",
+    "Checked: "+(state.historical_checked||0)+" / "+state.total,
+    "Observed not following now: "+(state.historical_not_following||0),
+    "No relationship changes or Reviewed approvals"
+   ]:[
+    "Processed: "+(state.processed??state.successful)+" / "+state.total,
     "Unfollows confirmed: "+state.successful,"Already not following: "+(state.already_not_following||0),
-     "Remaining: "+state.remaining,
+    "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
-    "Issues: "+(state.issue_count||0)]){
+    "Issues: "+(state.issue_count||0)];
+   for(const label of labels){
     const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
    }
   }
   const bar=document.getElementById("igcAutoProgress");
-  if(bar)bar.value=state.total?Math.round(100*(state.total-state.remaining)/state.total):0;
+  if(bar)bar.value=state.total?Math.round(100*(state.history_recheck?
+    (state.historical_checked||0):(state.total-state.remaining))/state.total):0;
   const authBlocked=state.status==="blocked"&&/recaptcha|security check|verification/i.test(state.message||"");
   const authHelp=document.getElementById("igcActionAuthFallback");
   if(authHelp)authHelp.style.display=authBlocked?"block":"none";
@@ -15238,7 +15263,7 @@ window.igcAutoPoll=async function(){
   }
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
-  if(resume)resume.disabled=state.running||authBlocked||!["paused","blocked","review","error"].includes(state.status);
+  if(resume)resume.disabled=state.running||state.review_only||authBlocked||!["paused","blocked","review","error"].includes(state.status);
   window.igcAutoRender();
  }catch(e){
   const el=document.getElementById("igcAutoLiveStatus");
@@ -15462,6 +15487,27 @@ window.igcAutoRenderBatchApproval=function(){
   if(recheck)recheck.disabled=busy;
   const open=document.getElementById("igcAutoOpenBatchIssues");
   if(open)open.disabled=!outcome.issues.some(u=>!actionBatchReview.action_results?.[u]?.safe_no_click);
+};
+window.igcAutoRecheckHistory=async function(){
+ if(!actionBridge){setStatus("Historical audits require the installed Windows robot.");return}
+ if(!["unfollow","cancel"].includes(mode)){
+  setStatus("Choose Unfollow or Cancel Requests to re-audit old technical issues.");return;
+ }
+ if(actionState?.running){setStatus("Pause the current robot before historical re-audit.");return}
+ if(!window.confirm("Re-audit all unresolved historical "+mode+
+   " profiles automatically with Chrome in READ-ONLY mode? No Unfollow/Cancel action "+
+   "will be clicked, no original journal will be deleted and no profile will become Reviewed. "+
+   "The results will be stored separately as current observations."))return;
+ try{
+  const data={...actionOwner(),task:mode,expected_handle:ownInstagramHandle(),
+   confirmation:"history-read-only:"+mode,
+   batch_size:Number(document.getElementById("igcAutoBatch")?.value||30),
+   gap_seconds:Number(document.getElementById("igcAutoGap")?.value||10),
+   rest_minutes:Number(document.getElementById("igcAutoRest")?.value||5)};
+  actionState=await requestAction("recheck-history",data);
+  setStatus("Historical re-audit started: Chrome will inspect old issues automatically, without clicks.");
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Historical re-audit unavailable: "+e.message)}
 };
 window.igcAutoRecheckBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
