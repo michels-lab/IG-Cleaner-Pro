@@ -1337,6 +1337,7 @@ class ActionRobot:
             issues = [{"username": u, "status": rows[u].get("status", "pending"),
                        "issue": rows[u].get("issue", ""),
                        "message": rows[u].get("message", ""),
+                       "safe_no_click": _preclick_no_action(rows[u]),
                        "at": rows[u].get("at", "")}
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
