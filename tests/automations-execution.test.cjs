@@ -167,7 +167,8 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoStart();
  assert.equal(calls.filter(c=>c.type==='start').length,3,
    'An unapproved batch must not be replaced by a new action batch');
- await ctx.window.igcAutoRecheckBatch();
+ assert.equal(calls.filter(c=>c.type==='recheck-batch').length,1,
+   'Pressing Run must automatically recheck the same unapproved batch');
  const retry=calls.find(c=>c.type==='recheck-batch');assert(retry);
  assert.equal(retry.data.batch_id,'batch123');
  assert.equal(retry.data.confirmation,'recheck:batch123');
