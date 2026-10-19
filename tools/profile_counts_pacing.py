@@ -72,6 +72,16 @@ def load_history(file: Path, previous_results=None, now=None):
         raw = [_from_iso(r.get("checked_at", "")) for r in (previous_results or {}).values()]
     values=[]
     for item in raw:
+        if file.exists():
+            # A syntactically valid JSON array is not necessarily a valid visit
+            # ledger. Dropping malformed/future records here silently resets the
+            # rate budget, so stop the robot and retain the original bytes.
+            if (isinstance(item, bool) or not isinstance(item, (int, float))
+                    or not math.isfinite(item) or item <= 0 or item > now + 60):
+                raise ValueError(
+                    "The saved Profile Counts visit history has invalid or future timestamps. "
+                    "The original journal was preserved; resolve the clock/journal issue before restarting."
+                )
         if isinstance(item, (int, float)) and not isinstance(item, bool) and math.isfinite(item) and 0 < item <= now + 60:
             if item >= now - MAX_WINDOW_MINUTES * 60:
                 values.append(float(item))
@@ -157,12 +167,20 @@ def load_batch_state(path: Path):
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
         if (not isinstance(state, dict) or
-                not isinstance(state.get("count"), int) or
+                type(state.get("count")) is not int or
                 not 0 <= state["count"] <= 10000 or
+                isinstance(state.get("rest_until"), bool) or
                 not isinstance(state.get("rest_until"), (int, float)) or
                 not math.isfinite(state["rest_until"]) or
-                state["rest_until"] < 0):
-            raise ValueError("Estado de tandas inválido.")
+                state["rest_until"] < 0 or
+                type(state.get("every")) is not int or
+                isinstance(state.get("minutes"), bool) or
+                not isinstance(state.get("minutes"), (int, float)) or
+                not math.isfinite(state["minutes"])):
+            raise ValueError("Invalid persisted Profile Counts batch-rest state.")
+        every, minutes = check_batch_rest(state["every"], state["minutes"])
+        if state["count"] > 0 and (not every or state["count"] >= every):
+            raise ValueError("Invalid saved batch counter; previous pacing state was preserved.")
         return state
     except (OSError, ValueError, TypeError, KeyError) as exc:
         raise ValueError("El registro local de pausas de tanda está dañado. No se reiniciará automáticamente.") from exc
