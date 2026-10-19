@@ -26,7 +26,7 @@ Before preparing or publishing any release:
 4. Treat `releasePolicy.nextRelease` as authoritative; never derive a release version from a branch name or old workflow.
 5. Require explicit user authorization for publication.
 6. Refuse a stable publication if the APK/package/version still identifies as beta or signing continuity is unresolved.
-7. Never publish from generic validation CI.
+7. Never publish from generic validation CI. Use only the governed `.github/workflows/release.yml` publisher after explicit owner authorization.
 8. Historical version-specific publishers are retired evidence only.
 
 Never hard-code a current stable or next candidate here. **Read `release/distribution-manifest.json` (`releasePolicy.currentStableRelease`, `releasePolicy.nextRelease`) and verify the real GitHub Releases feed immediately before any release decision.** The reserved next version is not a published version. A merge, CI success, version bump or prior approval never authorizes a new release. The owner validates only official published release assets, not Actions previews.
