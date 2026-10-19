@@ -938,6 +938,8 @@ class ActionRobot:
         self.targets = []
         self.open_review_tabs = []
         self.current_wait = None
+        self.review_only = False
+        self.active_batch_id = ""
         self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
@@ -976,6 +978,110 @@ class ActionRobot:
             and not _preclick_no_action(record))
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted}
+
+    def _review_batches_file_for(self, owner, account, task):
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-batch-reviews.json")
+
+    def _review_batches(self, owner, account, task):
+        return _read_json(self._review_batches_file_for(owner, account, task), [])
+
+    def _pending_review(self, owner, account, task):
+        batches = self._review_batches(owner, account, task)
+        return next((entry for entry in reversed(batches)
+                     if not entry.get("approved_at")), None)
+
+    def batch_review(self, data):
+        owner, account, task = self._review_scope(data)
+        with self.lock:
+            entry = self._pending_review(owner, account, task)
+            return {"owner": owner, "account": account, "task": task,
+                    "batch": dict(entry) if entry else None}
+
+    def _review_scope(self, data):
+        owner = str(data.get("owner") or "").strip()
+        account = str(data.get("account") or "").strip()
+        task = str(data.get("task") or "").strip()
+        if not owner or not account or len(owner) > 200 or len(account) > 120 or task not in TASKS:
+            raise ValueError("Choose a valid owner, Instagram account and robot task.")
+        return owner, account, task
+
+    def approve_batch(self, data):
+        owner, account, task = self._review_scope(data)
+        batch_id = str(data.get("batch_id") or "")
+        with self.lock:
+            if self.worker and self.worker.is_alive():
+                raise ValueError("Wait for the robot to finish before approving the batch.")
+            entries = self._review_batches(owner, account, task)
+            match = next((entry for entry in reversed(entries)
+                         if entry.get("id") == batch_id and not entry.get("approved_at")), None)
+            if match is None:
+                raise ValueError("The pending batch changed. Refresh before confirming.")
+            if data.get("confirmation") != "reviewed:" + batch_id:
+                raise ValueError("Only your explicit batch confirmation can mark this reviewed.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            rechecked = match.get("recheck_results") or {}
+            approved = []
+            unresolved = []
+            for username in match["targets"]:
+                result = rechecked.get(username, {}).get("status")
+                if result is None:
+                    result = journal.get(username, {}).get("status")
+                if result == "ok":
+                    approved.append(username)
+                else:
+                    unresolved.append(username)
+            match["approved_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            match["approved_usernames"] = approved
+            match["unresolved_usernames"] = unresolved
+            _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+            return {"owner": owner, "account": account, "task": task,
+                    "batch_id": batch_id, "approved_usernames": approved,
+                    "unresolved_usernames": unresolved, "approved_at": match["approved_at"]}
+
+    def recheck_batch(self, data):
+        owner, account, task = self._review_scope(data)
+        with self.collector.browser_admission, self.lock:
+            if self.worker and self.worker.is_alive():
+                raise ValueError("The Instagram robot is already active.")
+            if self.collector.worker and self.collector.worker.is_alive():
+                raise ValueError("Pause Profile Counts before rechecking an action batch.")
+            entry = self._pending_review(owner, account, task)
+            if (not entry or data.get("batch_id") != entry["id"]
+                    or data.get("confirmation") != "recheck:" + entry["id"]):
+                raise ValueError("Confirm the exact unapproved batch before rechecking.")
+            expected = valid_username(data.get("expected_handle"))
+            if not expected:
+                raise ValueError("Verify the active Instagram handle first.")
+            # Never initiate a relationship-changing click during recheck.
+            self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            self.targets = list(entry["targets"])
+            self.active_batch_id = entry["id"]
+            self.review_only = True
+            self.open_review_tabs = []
+            self.current_wait = None
+            self.skipped.clear()
+            self.max_count, self.window_minutes, self.min_delay_seconds = check_pacing(
+                int(data.get("batch_size", 30)), ACTION_WINDOW_MINUTES,
+                data.get("gap_seconds", 10))
+            rest_input = data.get("rest_minutes", 5)
+            _, self.rest_minutes = check_batch_rest(
+                self.max_count if rest_input else 0, rest_input)
+            self.stop_event.clear()
+            self.status, self.message = "starting", "Rechecking unapproved batch in Chrome (read-only)."
+            self.worker = threading.Thread(target=self._run, daemon=True)
+            self.worker.start()
+            return self.snapshot()
+
+    def _save_recheck_result(self, user, result, message):
+        entries = self._review_batches(self.owner, self.account, self.task)
+        entry = next((x for x in reversed(entries)
+                      if x.get("id") == self.active_batch_id and not x.get("approved_at")), None)
+        if entry:
+            entry.setdefault("recheck_results", {})[user] = {
+                "status": result, "message": message,
+                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+            _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
 
     def _protection_file(self):
         ident = "\0".join((self.owner, self.account))
@@ -1050,11 +1156,23 @@ class ActionRobot:
                 raise ValueError("There is no paused task to resume.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             if not resume:
+                if self._pending_review(owner, account, task):
+                    raise ValueError("This batch has not been marked Reviewed. Recheck the existing batch automatically or approve it first.")
                 previous = self._journal()
                 if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
                        and not _preclick_no_action(record) for user in targets):
                     raise ValueError("Every selected profile was already attempted in this task. Choose a fresh batch or review uncertain results; the robot will not repeat actions.")
             self.targets = targets
+            self.review_only = False
+            if not resume:
+                entries = self._review_batches(owner, account, task)
+                batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
+                                          owner + "\\0" + account + "\\0" + task).encode()).hexdigest()[:24]
+                entries.append({"id": batch_id, "targets": list(targets),
+                                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                "approved_at": None, "recheck_results": {}})
+                _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+                self.active_batch_id = batch_id
             self.open_review_tabs = []
             self.current_wait = None
             if not resume:
@@ -1122,6 +1240,9 @@ class ActionRobot:
                     "open_review_tabs": list(self.open_review_tabs),
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
+                    "review_only": self.review_only,
+                    "review_batch": dict(self._pending_review(self.owner, self.account, self.task))
+                        if self.owner and self.account and self.task else None,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
