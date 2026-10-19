@@ -13346,8 +13346,12 @@ function status(text,type=''){const el=document.getElementById('igcSyncStatus');
 function renderStats(){const el=document.getElementById('igcSyncKpis');if(!el)return;const ev=window.igcAuditGetEvents?.()||[],android=ev.filter(x=>x.deviceType==='android').length,desktop=ev.filter(x=>x.deviceType==='desktop').length;el.innerHTML=`<div class="igc-sync-kpi"><b>${ev.length}</b><span>eventos locales</span></div><div class="igc-sync-kpi"><b>${desktop}</b><span>desktop</span></div><div class="igc-sync-kpi"><b>${android}</b><span>android</span></div><div class="igc-sync-kpi"><b>${S.stats.profilesDown||0}</b><span>perfiles en nube</span></div><div class="igc-sync-kpi"><b>${S.lastSync?new Date(S.lastSync).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):'—'}</b><span>último sync</span></div>`}
 function cfgFromUi(){S.cfg.email=String(document.getElementById('igcSyncEmail')?.value||S.cfg.email).trim();S.cfg.auto=true;saveCfg();return S.cfg}
 function headers(auth=true,extra={}){const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...extra};if(auth&&S.session?.access_token)h.Authorization=`Bearer ${S.session.access_token}`;return h}
+function igcDeveloperReadOnly(){
+ if(/&igc-developer=1$/.test(window.location?.hash||""))return true;
+ try{return window.AndroidBridge?.isDeveloperMode?.()===true}catch{return false}
+}
 async function jfetch(path,opt={}){
- if(/&igc-developer=1$/.test(window.location?.hash||"")){
+ if(igcDeveloperReadOnly()){
   const method=String(opt.method||"GET").toUpperCase();
   if(!["GET","HEAD"].includes(method)&&
      !(/^\/auth\/v1\/(?:otp|verify|token(?:\?.*)?|logout(?:\?.*)?)$/.test(path)&&method==="POST"))
@@ -14015,7 +14019,7 @@ window.igcDeleteInstagramProfile=async function(){
 };
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
 async function syncNow(manual=true){
- if(/&igc-developer=1$/.test(window.location?.hash||"")){
+ if(igcDeveloperReadOnly()){
   renderAuthUi();status("Developer Edition: account sign-in enabled; production cloud synchronization disabled.",'warn');
   return;
  }
