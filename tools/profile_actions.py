@@ -1084,10 +1084,13 @@ class ActionRobot:
         if not username:
             raise ValueError("Choose a valid Instagram profile.")
         with self.lock:
-            if (owner, account, task) != (self.owner, self.account, self.task):
-                raise ValueError("Select the Instagram account and task that own this robot session.")
-            if self.status in ("idle", "starting", "login"):
-                raise ValueError("Wait until the named Instagram session is ready.")
+            running = bool(self.worker and self.worker.is_alive())
+            if running and (owner, account, task) != (self.owner, self.account, self.task):
+                raise ValueError("Another Instagram account owns the active robot session.")
+            # Manual review is allowed after restarting Windows: opening the
+            # same persistent Chrome directory is navigation, not a robot action.
+            # A fresh process has no active self.owner/task and must not prevent
+            # visiting earlier journal issues in the saved browser session.
             session = self.session_dir.resolve()
         candidates = [shutil.which("chrome.exe"), shutil.which("chrome")]
         for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
