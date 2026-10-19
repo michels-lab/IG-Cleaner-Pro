@@ -1,3 +1,7 @@
+## 2026-10-19 — Developer twin isolation boundaries (source merged)
+
+Windows and Android Developer Editions ship separate data/browser/storage identity rather than sharing public local sessions. Developer UI/native gates deny cloud writes while preserving real authentication, annotations remain local and owner-exported diagnostics redact credentials. Validated by PR #134 CI installed Windows/Android emulator and offline tests; live provider auth, physical phone, official signed Developer APK distribution and owner acceptance remain unverified. Stable public v120.53 unchanged.
+
 ## 2026-10-15 — Opt-in verified native Windows Setup updater
 
 - The native updater uses GitHub public stable release metadata at a product-specific URL and checks official release SHA256SUMS. No new API tokens/secrets, Instagram access, cloud services, Supabase data mutations, update signing keys or remote privileged system changes. GET availability checks are automatic but optional downloads and Setup launch require foreground owner actions and session-only localhost capability.
