@@ -1,3 +1,14 @@
+## 2026-10-19 — Developer real-login preservation: OTP, device registration and production write barriers
+
+Found a **real user login regression** caused by trying to perform production writes from an otherwise read-only Developer Edition. A valid native Android password or OTP login was followed by `touchDevice()` (Supabase device upsert) and thus could appear failed despite authentication. Both normal-user auth and production safety are now separate:
+- Android `MainActivity.touchDevice()` intentionally returns without production upsert only in the standalone `.developer` package. Public app registration remains unchanged.
+- Android `SyncApi.verifyOtpAndSetPassword()` still verifies a real OTP and keeps the developer session, but skips the production Auth password update in Developer; ordinary public app still updates the password as before. Visible native success copy explicitly says the password was not modified.
+- Desktop/Android shared Web `verifyOtpAndSetPassword()` likewise authenticates with a real OTP but bypasses Auth password PUT in Developer only, and reports that accurately. Read-only cloud RPC boundary restrictions remain intact. An added Node regression test verifies *Developer OTP does not PUT Auth user* while *public OTP does*.
+- The first installed Android Developer emulator run reached and **passed native guard tests**, then exposed a test race at line 101 while `location.reload()` was replacing the WebView document (a JavaScript evaluation returned `null`). The UI test now requires actual new-document context and restored notes, instead of treating the outgoing page as ready. **Final Android Developer installed test on the updated head is still pending**; do not claim Android Developer accepted/released.
+- Previously verified: Windows installed Setup + Desktop visual + Profile Counts + ordinary Android About tests passed for earlier candidate revision; live owner Instagram, OTP provider physical-device delivery and real UI sign-in remain acceptance gaps.
+
+Implementation remains in draft [PR #134](https://github.com/michels-lab/IG-Cleaner-Pro/pull/134), release not published, issue [#135](https://github.com/michels-lab/IG-Cleaner-Pro/issues/135) open. No owner-created release request issued this block.
+
 ## 2026-10-19 — Historical no-click re-audit scale + Developer Android native guard (large-block continuation)
 
 **Scope:** draft PR [#134](https://github.com/michels-lab/IG-Cleaner-Pro/pull/134), not merged/released. Windows user tests must use official stable release only; v120.53 remains the public version, and v120.54 is still a candidate.
