@@ -117,7 +117,7 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  await deleteCard.children[3].children[2].listeners.click();
  assert.equal(JSON.parse(store.get('igc_dev_section_notes_v1__owner_1__ig_00000001')).length,0,
   'Deleting one note must remove only the selected workspace record');
- const jstart=html.indexOf("async function jfetch(path,opt={})");
+ const jstart=html.indexOf("function igcDeveloperReadOnly(){");
  const jend=html.indexOf("async function sendOtp(){",jstart);
  assert(jstart>0&&jend>jstart,'Original real cloud login flow missing');
  const outgoing=[];
@@ -134,5 +134,21 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  await assert.rejects(()=>jfetch('/auth/v1/user',{method:'PUT'}),
   /production cloud writes are disabled/);
  assert.equal(outgoing.length,1,'Blocked Developer mutations must not reach cloud');
- console.log('Developer Edition login, section selection, saved annotations, combined export and cloud write isolation: PASS');
+ // Selection must preserve a precise structural target when its control lacks an ID.
+ const section=e.get('igcAutoBatchApproval');
+ const idlessButton={id:'',tagName:'BUTTON',parentElement:section,previousElementSibling:null,
+   closest(selector){
+    if(selector.includes('button,input'))return this;
+    if(selector.includes('.panel'))return section;
+    if(selector.includes('.page'))return e.get('page-automations');
+    return null;
+   }};
+ e.get('igcDevPick').listeners.click();
+ h.events.get('click')({target:idlessButton,preventDefault(){},stopPropagation(){},stopImmediatePropagation(){}});
+ e.get('igcDevNoteInput').value='Control without ID has incorrect spacing.';
+ e.get('igcDevSaveNote').listeners.click();
+ const structural=JSON.parse(store.get('igc_dev_section_notes_v1__owner_1__ig_00000001'))[0];
+ assert.equal(structural.anchor.locator,'#igcAutoBatchApproval > button:nth-of-type(1)');
+ assert.equal(structural.anchor.locator_kind,'structural');
+ console.log('Developer Edition login, section selection (IDs and id-less targets), persisted notes, export and read-only cloud gate: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
