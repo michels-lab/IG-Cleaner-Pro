@@ -1,3 +1,9 @@
+## 2026-10-19 — Resume GRANADA #4 after Android Developer QA fix
+
+- GRANADA #8 [PR #151](https://github.com/michels-lab/IG-Cleaner-Pro/pull/151) fixed the *instrumentation* race in its isolated Android Developer real-WebView acceptance test, merged to `main` as `bed5e5eb2e54a690e261bd558a09075b24f64413` after **5/5 exact-head checks SUCCESS**, including installed Developer APK/actual WebView notes and native Download.
+- This branch previously had 7/8 success and a red Developer check from the old compound UI test. That check is superseded by the tested implementation in main, **but new exact-head full CI on this English PR is required** before merging.
+- This note updates the PR head to request fresh checks on the latest base, without changing the Windows translation implementation or Android app/production logic. Do not interpret source QA as the owner's live Instagram/session/provider acceptance or authorize v120.54 release.
+
 # GRANADA #4 — English runtime copy on installed Windows Desktop (2026-10-19)
 
 **Status: implementation candidate; official stable still v120.53; next version v120.54 reserved and not authorized for publication.**
