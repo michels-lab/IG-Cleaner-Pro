@@ -13028,17 +13028,35 @@ function dataSignature(){
   return [h(pack(followingRaw)),h(pack(followersRaw)),h(pack(pendingRequestsRaw))].join('.');
 }
 function dedupe(list){const seen=new Set(),out=[];(list||[]).forEach(r=>{if(!r?.username||seen.has(r.username))return;seen.add(r.username);out.push(r)});return out}
+// GRANADA: fill each Focus cohort across ALL eligible priority tiers. Previously
+// the first nonempty tier replaced the entire pool (1 changed => 1/30 opened).
+// The source is still allMainFocusOpenableRows(): do not reintroduce protected,
+// reviewed, snoozed, or partial-HTML-unverifiable profiles from raw lists.
+function prioritizeMainFocusRows(){
+  const eligible=dedupe(allMainFocusOpenableRows?.()||[]);
+  const byScore=(a,b)=>{
+    let pa=0,pb=0;
+    try{pa=calcPriority(a).score;pb=calcPriority(b).score}catch{}
+    return pb-pa+(b.riskScore-a.riskScore)||
+      ((a.dateMain||0)-(b.dateMain||0))||
+      a.username.localeCompare(b.username);
+  };
+  const changed=eligible.filter(r=>doneSet.has(r.username)&&!isDoneValidForMode(r,'following'));
+  const critical=eligible.filter(r=>{try{return ['critica','alta'].includes(calcPriority(r).level)}catch{return false}});
+  const risky=eligible.filter(r=>['medio','alto'].includes(r.riskLevel));
+  return dedupe([
+    ...changed.sort(byScore),...critical.sort(byScore),...risky.sort(byScore),
+    ...eligible.sort(byScore)
+  ]);
+}
+// The editable v125 Focus preview must use exactly this source and order.
+window.igcPrioritizedMainFocusPool=prioritizeMainFocusRows;
 function pool(kind){
   if(kind==='pending')return dedupe([...(pendingCandidateRows?.()||[]),...(pendingAnyFocusCandidates?.()||[])]);
   if(kind==='followers')return dedupe(followersFocusCandidates?.()||[]);
   if(kind==='mutual')return dedupe([...(followersMutualCandidates?.()||[]),...(followersMutualAnyFocusCandidates?.()||[])]);
-  const base=allMainFocusOpenableRows?.()||[];
-  const changed=base.filter(r=>doneSet.has(r.username)&&!isDoneValidForMode(r,'following'));
-  const critical=base.filter(r=>{try{return ['critica','alta'].includes(calcPriority(r).level)}catch{return false}});
-  const risk=base.filter(r=>['medio','alto'].includes(r.riskLevel));
-  let chosen=changed.length?changed:critical.length?critical:risk.length?risk:base;
-  chosen=[...chosen].sort((a,b)=>{let pa=0,pb=0;try{pa=calcPriority(a).score;pb=calcPriority(b).score}catch{}return pb-pa+(b.riskScore-a.riskScore)||((a.dateMain||0)-(b.dateMain||0))||a.username.localeCompare(b.username)});
-  return dedupe(chosen);
+  return prioritizeMainFocusRows();
+
 }
 function currentMap(kind){const m=new Map();pool(kind).forEach(r=>m.set(r.username,r));return m}
 function rowsFor(batch){const m=currentMap(batch.kind),rows=[],missing=[];(batch.usernames||[]).forEach(u=>{const r=m.get(u);if(r)rows.push(r);else missing.push(u)});return {rows,missing}}
@@ -13154,7 +13172,14 @@ window.igcOpenProfileDossier=async username=>{const u=clean(username);if(!u)retu
 window.igcCloseProfileDossier=()=>{const o=document.getElementById('igcV125ProfileOverlay');o?.classList.remove('open');o?.setAttribute('aria-hidden','true')};
 document.addEventListener('click',ev=>{const el=ev.target.closest?.('.username,.igc-focus-preview-user>b');if(!el||ev.target.closest('a,button,input,label,select'))return;const u=clean(el.textContent);if(u)igcOpenProfileDossier(u)});
 // Editable frozen Focus preview: removing is local to this prepared batch and refills from the next candidate.
-function focusPool(kind){const ded=list=>{const s=new Set(),o=[];(list||[]).forEach(r=>{if(r?.username&&!s.has(r.username)){s.add(r.username);o.push(r)}});return o};if(kind==='pending')return ded([...(pendingCandidateRows?.()||[]),...(pendingAnyFocusCandidates?.()||[])]);if(kind==='followers')return ded(followersFocusCandidates?.()||[]);if(kind==='mutual')return ded([...(followersMutualCandidates?.()||[]),...(followersMutualAnyFocusCandidates?.()||[])]);const base=allMainFocusOpenableRows?.()||[],changed=base.filter(r=>doneSet.has(r.username)&&!isDoneValidForMode(r,'following')),critical=base.filter(r=>{try{return ['critica','alta'].includes(calcPriority(r).level)}catch{return false}}),risk=base.filter(r=>['medio','alto'].includes(r.riskLevel));let chosen=changed.length?changed:critical.length?critical:risk.length?risk:base;return ded([...chosen].sort((a,b)=>{let pa=0,pb=0;try{pa=calcPriority(a).score;pb=calcPriority(b).score}catch{}return pb-pa+(b.riskScore-a.riskScore)||((a.dateMain||0)-(b.dateMain||0))||a.username.localeCompare(b.username)}))}
+function focusPool(kind){
+  const ded=list=>{const seen=new Set(),out=[];(list||[]).forEach(r=>{if(r?.username&&!seen.has(r.username)){seen.add(r.username);out.push(r)}});return out};
+  if(kind==='pending')return ded([...(pendingCandidateRows?.()||[]),...(pendingAnyFocusCandidates?.()||[])]);
+  if(kind==='followers')return ded(followersFocusCandidates?.()||[]);
+  if(kind==='mutual')return ded([...(followersMutualCandidates?.()||[]),...(followersMutualAnyFocusCandidates?.()||[])]);
+  // This preview refills from the same priority-complete pool as v12024.
+  return window.igcPrioritizedMainFocusPool?.()||ded(allMainFocusOpenableRows?.()||[]);
+}
 const prevPreview=window.igcPreviewNextFocus;if(typeof prevPreview==='function')window.igcPreviewNextFocus=function(kind,n){H.currentPreview={kind,n:Number(n)};const r=prevPreview.apply(this,arguments);setTimeout(patchPreviewEditor,0);return r};
 const prevRegen=window.igcRegenerateFocusPreview;if(typeof prevRegen==='function')window.igcRegenerateFocusPreview=function(){const r=prevRegen.apply(this,arguments);setTimeout(patchPreviewEditor,0);return r};
 function patchPreviewEditor(){const cp=H.currentPreview,b=cp&&window.igcPreparedFocusState?.[`${cp.kind}:${cp.n}`];if(!b)return;document.querySelectorAll('#igcFocusPreviewList .igc-focus-preview-row').forEach(row=>{if(row.querySelector('.igc-v125-remove-preview'))return;const txt=row.querySelector('.igc-focus-preview-user>b')?.textContent||'',u=clean(txt);if(!u)return;const btn=document.createElement('button');btn.className='igc-v125-remove-preview';btn.type='button';btn.textContent='Sacar de tanda';btn.onclick=()=>igcV125RemovePreviewUser(u);row.appendChild(btn)});const meta=document.getElementById('igcFocusPreviewMeta');if(meta){const base=String(meta.textContent||'').replace(/ · \d+ perfil\(es\) sacados manualmente de esta preview\.$/,'');const target=b.excluded?.length?`${base} · ${b.excluded.length} perfil(es) sacados manualmente de esta preview.`:base;if(meta.textContent!==target)meta.textContent=target}}
