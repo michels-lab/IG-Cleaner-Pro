@@ -1275,6 +1275,7 @@ class ActionRobot:
             self.targets = list(entry["targets"])
             self.active_batch_id = entry["id"]
             self.review_only = True
+            self.history_recheck_mode = False
             self.continuing_batch = False
             self.open_review_tabs = []
             self.current_wait = None
@@ -1292,6 +1293,24 @@ class ActionRobot:
             return self.snapshot()
 
     def _save_recheck_result(self, user, result, message):
+        if self.history_recheck_mode:
+            path = self._historical_recheck_file_for(self.owner, self.account, self.task)
+            saved = _read_json(path, {})
+            if not isinstance(saved, dict): saved = {}
+            rows = saved.setdefault("results", {})
+            if not isinstance(rows, dict): rows = {};saved["results"] = rows
+            previous = rows.get(user, {})
+            events = previous.get("observations", []) if isinstance(previous, dict) else []
+            observation = ("observed_not_following"
+                           if result in ("ok", "already_not_following")
+                           else "still_unresolved")
+            record = {"observation": observation, "verification_status": result,
+                      "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                      "read_only": True}
+            rows[user] = {**record, "observations": list(events)[-24:] + [record]}
+            saved["completed_at"] = record["at"]
+            _atomic_json(path, saved)
+            return
         entries = self._review_batches(self.owner, self.account, self.task)
         entry = next((x for x in reversed(entries)
                       if x.get("id") == self.active_batch_id and not x.get("approved_at")), None)
@@ -1407,6 +1426,7 @@ class ActionRobot:
                     raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
             self.targets = targets
             self.review_only = False
+            self.history_recheck_mode = False
             if not resume:
                 self.continuing_batch = pending_entry is not None
                 if pending_entry:
@@ -1493,6 +1513,7 @@ class ActionRobot:
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
                     "continuing_batch": self.continuing_batch,
+                    "history_recheck": self.history_recheck_mode,
                     "review_batch": (self._pending_review(self.owner, self.account, self.task)
                         if self.owner and self.account and self.task else None),
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
@@ -1844,8 +1865,10 @@ class ActionRobot:
                         self._discard_stale_recheck(user)
                     if action_tabs:
                         try:
-                            safely_unclicked = (self.review_only and not previous.get("status")) or (
-                                not self.review_only and _preclick_no_action(journal.get(user, {})))
+                            # Read-only inspections cannot change relationships:
+                            # release their tabs even when earlier history is
+                            # uncertain. Original action journals stay intact.
+                            safely_unclicked = self.review_only or _preclick_no_action(journal.get(user, {}))
                             action_tabs.record(user, result, safe_no_click=safely_unclicked)
                         except Exception:
                             # No relationship click is ever repeated to recover
@@ -1886,8 +1909,11 @@ class ActionRobot:
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
-                        self.message = ("Batch reviewed: some profiles require manual verification."
-                                        if remaining else "Batch complete; results saved.")
+                        self.message = (
+                            "Historical re-audit finished: read-only observations saved. No action re-clicked or approved."
+                            if self.history_recheck_mode else
+                            ("Batch reviewed: some profiles require manual verification."
+                             if remaining else "Batch complete; results saved."))
                 # Prefetch-only tabs never had action clicks. Do not trap the
                 # robot in manual-review mode just because a later unvisited
                 # target is still prefetched in one of the 10 open slots.
