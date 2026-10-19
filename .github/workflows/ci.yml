@@ -105,6 +105,8 @@ jobs:
         run: python tests/android-signing-contract.py
       - name: Validate generic release publisher
         run: python tests/release-publisher-contract.py
+      - name: Validate current published update guidance against distribution manifest
+        run: python3 -m unittest discover -s tests -p 'test_update_docs_contract.py' -v
       - name: Validate Supabase RLS isolation contract
         run: python tests/rls-contract.py
       - name: Validate distribution manifest
