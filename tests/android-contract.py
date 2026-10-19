@@ -163,7 +163,7 @@ for token in ("followingAndFollowerDatesHaveCorrectDirectionAndHistory",
               "oldDesktopBatchDatesSurviveNewSnapshotAndUnknownsStayUnknown",
               "pendingAndLastBatchUseOwnDatesAndSourceDevice"):
     assert token in focus_test, f"Missing runtime Focus insight QA: {token}"
-assert "10 tests" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8"), "Android instrumentation must run two new secure Switch Account tests in addition to the original eight"
+assert "OK \\(12 tests\\)" in (ROOT / "tools/run_android_about_ui.sh").read_text(encoding="utf-8"), "Android instrumentation must cover the full public native suite including the Developer-only test class skipped on the public flavor"
 print("Android UX/Focus/privacy/About regression contract passed.")
 
 # Real Home screens must now be checked in the packaged Android runtime.
