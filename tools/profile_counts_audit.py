@@ -15,8 +15,8 @@ import secrets
 from pathlib import Path
 
 COLUMNS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
-USERNAME = re.compile(r"[A-Za-z0-9._]{1,30}\\Z")
-INTEGER_COUNT = re.compile(r"[0-9]+\\Z")
+USERNAME = re.compile(r"[A-Za-z0-9._]{1,30}")
+INTEGER_COUNT = re.compile(r"[0-9]+")
 
 
 def _valid_reading(row: dict) -> bool:
