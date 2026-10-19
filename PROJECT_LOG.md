@@ -1,3 +1,11 @@
+## 2026-10-19 — Owner requirement: auto-advance when profile is already not followed
+
+- When the exact Instagram target profile is verifiably showing `Follow / Seguir` or `Follow Back / Seguir también`, it is **already not followed** by the selected signed-in owner. InstaCleaner must **make no Unfollow click, close that successfully classified tab and automatically continue to the next eligible account**. This includes former mutuals whose banner says "Follows you" while the actual relationship control shows Follow Back.
+- Do not interpret sidebar recommendations, follower-count links, a blank/loading header, a wrong-account session or mismatched target URL as a known non-follow state. The exact-profile, signed-in-owner and uniquely scoped action control checks still apply. Require repeated visible readings during Instagram hydration; if ambiguous, retain existing fail-closed logic.
+- Store distinct terminal outcome `already_not_following` instead of reporting an actual successful Unfollow. Count completed/no-action profiles separately from real Unfollow confirmations, exclude both terminal outcomes from next-batch replay, allow whole-batch explicit owner approval of verified non-follows and do not count them as Issue Review errors. Optional read-only recheck preserves no-click semantics.
+- Chromium offline fixtures now cover English and Spanish initial Follow / Follow Back, delayed rendering, unrelated sidebar Follow decoys and the "Follows you" case. Python account-scoped history and Desktop approval-panel contracts validate that these profiles are terminal and their tabs are released without clicks.
+- Work is additive to merged v120.53 candidate; **do not claim the successor public stable is published until the official release pipeline has passed and GitHub assets are verified**. Michel tests installed official stable releases only, never previews.
+
 ## 2026-10-19 — Prepare official stable v120.53 after post-release v120.52 action-mode regression
 
 - Merged fix [PR #130](https://github.com/michels-lab/IG-Cleaner-Pro/pull/130) at `bc2fa492747c4029525b9cf3dd592eaf6a110779` after **five passing** exact-head workflow families: Windows Setup install/Chromium, Desktop, Android, Profile Counts and general CI.
