@@ -992,14 +992,16 @@ def perform_visible_followback_audit(page, username, expected_handle):
 
 
 def recheck_action_readonly(page, username, task, expected_handle, previous,
-                            *, on_wait=None, preloaded=False):
+                            *, on_wait=None, preloaded=False,
+                            allow_unacted_observation=False):
     """Verify the previous automatic action without any relationship-changing click."""
     if task == "audit":
         result, _relation, details = perform_visible_followback_audit(
             page, username, expected_handle)
         return result, details
-    if not isinstance(previous, dict) or previous.get("status") not in (
-            "ok", "already_not_following", "review", "error", "blocked") or _preclick_no_action(previous):
+    if (not isinstance(previous, dict) or previous.get("status") not in
+            ("ok", "already_not_following", "review", "error", "blocked")
+            or (_preclick_no_action(previous) and not allow_unacted_observation)):
         return "review", ("No completed Instagram action exists for this profile. "
                           "Automatic read-only recheck did not click anything.")
     target = "https://www.instagram.com/" + username + "/"
@@ -1022,6 +1024,10 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         return "review", (
             "Read-only recheck: prior non-followed state could not be confirmed; no click.")
     result, details = _verify_final_state(page, expected_handle, username, checks=3)
+    if allow_unacted_observation:
+        return result, ("Current read-only relationship observation: " +
+                        details.replace("Action confirmed:", "Current visible state:") +
+                        " No relationship-changing click was made by this scan.")
     return result, ("Read-only batch recheck: " + details +
                     " No new relationship-changing click was made.")
 
@@ -1823,7 +1829,8 @@ class ActionRobot:
                                     self._record_readiness(user, phase, elapsed, limit,
                                                            action_tabs),
                                 preloaded=bool(prepared_item and
-                                               prepared_item.get("status") == "prefetched"))
+                                               prepared_item.get("status") == "prefetched"),
+                                allow_unacted_observation=self.history_recheck_mode)
                         elif self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
