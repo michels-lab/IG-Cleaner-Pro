@@ -555,7 +555,7 @@ def _follow_state(page, username):
             header = page.locator("header").first
             if not header.count() or not header.is_visible():
                 return None
-            exact = re.compile(r"^\\s*@?" + re.escape(username) + r"\\s*$", re.I)
+            exact = re.compile(r"^\s*@?" + re.escape(username) + r"\s*$", re.I)
             matches = header.get_by_text(exact, exact=True)
             if not any(matches.nth(i).is_visible()
                        for i in range(min(matches.count(), 10))):
