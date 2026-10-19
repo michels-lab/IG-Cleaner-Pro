@@ -23,7 +23,7 @@ MAX_BYTES = 5_000_000
 
 
 def _safe_status(value):
-    return value if value in ACTION_STATES else "other"
+    return value if isinstance(value, str) and value in ACTION_STATES else "other"
 
 
 def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
@@ -79,7 +79,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
             status_counts[status] += 1
             issue = record.get("issue")
             if issue:
-                issue_counts[issue if issue in ISSUE_CODES else "other"] += 1
+                issue_counts[issue if isinstance(issue, str) and issue in ISSUE_CODES else "other"] += 1
             if status in {"review", "error", "blocked"}:
                 msg = str(record.get("message") or "")
                 safe_preclick = (
@@ -133,7 +133,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
 
 def ai_prompt(report: dict, client_checks: dict | None = None) -> str:
     """Stable export: diagnostic categories only, no user-generated values."""
-    checks = client_checks or {}
+    checks = client_checks if isinstance(client_checks, dict) else {}
     allowed_checks = {
         "duplicate_dom_ids", "missing_critical_controls", "uncaught_ui_errors",
         "unhandled_ui_rejections", "app_revision", "viewport_width"
