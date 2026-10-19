@@ -1471,6 +1471,18 @@ class ActionRobot:
         with self.lock:
             journal = self._journal() if self.owner and self.task else {}
             rows = {u: journal.get(u, {}) for u in self.targets}
+            historical_rows = {}
+            if self.history_recheck_mode and self.owner and self.account and self.task:
+                saved_history = _read_json(
+                    self._historical_recheck_file_for(self.owner, self.account, self.task), {})
+                if isinstance(saved_history, dict):
+                    historical_rows = saved_history.get("results", {})
+                    if not isinstance(historical_rows, dict):
+                        historical_rows = {}
+            historical_checked = sum(user in historical_rows for user in self.targets)
+            historical_not_following = sum(
+                historical_rows.get(user, {}).get("observation") == "observed_not_following"
+                for user in self.targets if isinstance(historical_rows.get(user), dict))
             # Persisted action journal spans ALL earlier batches, not merely
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
@@ -1514,6 +1526,8 @@ class ActionRobot:
                     "review_only": self.review_only,
                     "continuing_batch": self.continuing_batch,
                     "history_recheck": self.history_recheck_mode,
+                    "historical_checked": historical_checked,
+                    "historical_not_following": historical_not_following,
                     "review_batch": (self._pending_review(self.owner, self.account, self.task)
                         if self.owner and self.account and self.task else None),
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
