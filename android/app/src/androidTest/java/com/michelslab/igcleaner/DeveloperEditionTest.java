@@ -1,6 +1,12 @@
 package com.michelslab.igcleaner;
 
 import android.webkit.WebView;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.MediaStore;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -71,6 +77,42 @@ public class DeveloperEditionTest {
                 "(function(){return document.getElementById('igcDevNotes').textContent.includes('Developer Android test observation')})()"));
             assertEquals("true",js(scenario,
                 "(function(){return document.getElementById('igcDevNotes').textContent.includes('igcAutoBatchApproval')})()"));
+            assertEquals("true",js(scenario,
+                "(function(){window.confirm=function(){return true};"+
+                "document.getElementById('igcDevExportJson').click();return true})()"));
+            // Open the actual native MediaStore export; a mock Blob/download
+            // button does not prove this file reaches the Android user.
+            String exported=null;
+            for(int attempt=0;attempt<24&&exported==null;attempt++){
+                Thread.sleep(400L);
+                AtomicReference<String> report=new AtomicReference<>(null);
+                scenario.onActivity(activity -> {
+                    String[] projection={MediaStore.Downloads._ID,MediaStore.Downloads.DISPLAY_NAME};
+                    try(Cursor cursor=activity.getContentResolver().query(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,projection,
+                        MediaStore.Downloads.DISPLAY_NAME+" LIKE ?",
+                        new String[]{"IG-Cleaner-Developer-Audit-%.json"},null)){
+                        if(cursor==null)return;
+                        while(cursor.moveToNext()){
+                            Uri uri=Uri.withAppendedPath(MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                String.valueOf(cursor.getLong(0)));
+                            try(InputStream input=activity.getContentResolver().openInputStream(uri)){
+                                if(input==null)continue;
+                                ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+                                input.transferTo(bytes);
+                                String json=bytes.toString(StandardCharsets.UTF_8);
+                                if(json.contains("Developer Android test observation")
+                                        &&json.contains("igcAutoBatchApproval")){
+                                    report.set(json);break;
+                                }
+                            }catch(Exception ignored){}
+                        }
+                    }
+                });
+                exported=report.get();
+            }
+            assertNotNull("No exported annotated JSON appeared in native Android Downloads",exported);
+            assertTrue(exported.contains("owner_section_annotations"));
         }
     }
 }
