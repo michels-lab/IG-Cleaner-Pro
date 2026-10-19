@@ -98,6 +98,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
           python -m unittest discover -s tests -p 'test_granada_pacing_integrity.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA Profile Counts pacing ledger tests failed." }
           if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
       - name: Test verified GitHub Windows updater and opt-in install UX (offline)
         shell: pwsh
