@@ -1,3 +1,10 @@
+## 2026-10-19 — Gran bloque de recuperación y Developer twin (especificación registrada)
+
+- Nuevo contrato de ingeniería: `docs/PENDING_BLOCK_ROBOT_RECOVERY_DEVELOPER_TWIN_2026-10-19.md` (BR-01–BR-07). Cubre batch size, prefetched huérfanos, sesión única, reauditoría segura de tandas históricas, contadores, gemelo Developer con anotaciones ubicadas y exportación IA, y QA de instaladores.
+- **Evidencia:** documento comprometido en `c9ca61063fb73be40e7986ef8cf9cc03e084a551`. Es trabajo documental y diseño de pruebas: **todavía no se reparó el ejecutable, no se corrieron pruebas y no hay nuevo release**.
+- Próximo paso de implementación: máquina de estados y contratos de persistencia, después Chrome-context compartido; conservar v120.53 como estable hasta autorización explícita de publicar versión nueva.
+
+
 ## 2026-10-19 — Developer real-login preservation: OTP, device registration and production write barriers
 
 Found a **real user login regression** caused by trying to perform production writes from an otherwise read-only Developer Edition. A valid native Android password or OTP login was followed by `touchDevice()` (Supabase device upsert) and thus could appear failed despite authentication. Both normal-user auth and production safety are now separate:
