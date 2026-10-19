@@ -745,7 +745,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/recheck-batch", "/api/actions/open-profile", "/api/developer/audit", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/developer/audit", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -789,6 +789,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     result = actions.open_profile(data)
                 elif self.path == "/api/actions/recheck-batch":
                     result = actions.recheck_batch(data)
+                elif self.path == "/api/actions/recheck-history":
+                    result = actions.recheck_history(data)
+                elif self.path == "/api/actions/history-recheck-status":
+                    result = actions.historical_recheck_status(data)
                 elif self.path == "/api/actions/start":
                     result = actions.start(data)
                 elif self.path == "/api/actions/continue":
