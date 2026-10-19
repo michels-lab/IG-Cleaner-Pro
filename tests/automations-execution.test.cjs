@@ -176,9 +176,12 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.deepEqual(retry.data.targets,['keep.me','skip.me','untouched.three']);
  assert.equal(retry.data.confirmation,'unfollow:3');
  assert(texts.at(-1).includes('Only these safe profiles will be attempted'));
- ctx.window.igcAutoOpenBatchIssues();
- assert.equal(opened.length,1,'Only issue profiles may open, never untouched accounts');
- assert.match(opened[0][0],/skip.me/);
+ await ctx.window.igcAutoOpenBatchIssues();
+ const manualOpen=calls.filter(c=>c.type==='open-profile');
+ assert.equal(manualOpen.length,1,'Only issue profiles may open, never untouched accounts');
+ assert.equal(manualOpen[0].data.username,'skip.me');
+ assert.equal(manualOpen[0].data.task,'unfollow');
+ assert.equal(opened.length,0,'Integrated Windows must not open separate logged-out browser');
  await ctx.window.igcAutoApproveBatch();
  assert.equal(calls.filter(c=>c.type==='approve-batch').length,0,
    'Cannot approve while one profile was never attempted');
