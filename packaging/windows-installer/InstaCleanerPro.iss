@@ -59,8 +59,8 @@ english.LaunchApp=Launch Insta Cleaner Pro
 spanish.LaunchApp=Abrir Insta Cleaner Pro
 english.PinTaskbarHelp=Show how to pin Insta Cleaner Pro to the taskbar
 spanish.PinTaskbarHelp=Ver cómo anclar Insta Cleaner Pro a la barra de tareas
-english.DeveloperEdition=Install read-only Developer Edition shortcut (isolated audit workspace)
-spanish.DeveloperEdition=Instalar acceso a edicion de desarrollador (auditoria aislada)
+english.DeveloperEdition=Create Developer Edition desktop shortcut (Start menu always available)
+spanish.DeveloperEdition=Crear acceso a Developer Edition en escritorio (disponible en Inicio)
 
 [Files]
 Source: "{#PayloadDir}\InstaCleanerPro.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -72,7 +72,8 @@ Source: "TaskbarPinning.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{userprograms}\Insta Cleaner Pro"; Filename: "{app}\InstaCleanerPro.exe"; IconFilename: "{app}\InstaCleanerPro.exe"
-Name: "{userprograms}\Insta Cleaner Pro - Developer Edition"; Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; IconFilename: "{app}\InstaCleanerPro.exe"; Tasks: developeredition
+Name: "{userprograms}\Insta Cleaner Pro - Developer Edition"; Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; IconFilename: "{app}\InstaCleanerPro.exe"
+Name: "{autodesktop}\Insta Cleaner Pro - Developer Edition"; Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; IconFilename: "{app}\InstaCleanerPro.exe"; Tasks: developeredition
 Name: "{autodesktop}\Insta Cleaner Pro"; Filename: "{app}\InstaCleanerPro.exe"; IconFilename: "{app}\InstaCleanerPro.exe"; Tasks: desktopicon
 
 [Tasks]
