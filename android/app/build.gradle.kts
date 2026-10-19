@@ -32,6 +32,10 @@ android {
         applicationId = "com.michelslab.igcleaner"
         minSdk = 26
         targetSdk = 35
+    // Android Gradle Plugin builds instrumentation only for testBuildType.
+    // Keep ordinary visual QA on debug; developer emulator QA opts into its
+    // isolated package through -PigcAndroidTestBuildType=developer.
+    testBuildType = providers.gradleProperty("igcAndroidTestBuildType").orNull ?: "debug"
         versionCode = 12053
         versionName = "120.53"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
