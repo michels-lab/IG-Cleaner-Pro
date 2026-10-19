@@ -1,6 +1,6 @@
 # GRANADA #9 — Safe requeue of corrupted historical Profile Counts successes (2026-10-19)
 
-**Issue:** [#152](https://github.com/michels-lab/IG-Cleaner-Pro/issues/152). **Branch:** `granada/profile-counts-false-success-resume-20261019`, based on `main` `8697c9f412ca68ec9e62d2dd293d1b58261ba05e`. **State:** source implementation in isolated PR, exact-HEAD QA pending, no publication.
+**Issue:** [#152](https://github.com/michels-lab/IG-Cleaner-Pro/issues/152). **Branch:** `granada/profile-counts-false-success-resume-20261019`, based on `main` `8697c9f412ca68ec9e62d2dd293d1b58261ba05e`. **State:** merged [PR #153](https://github.com/michels-lab/IG-Cleaner-Pro/pull/153) into `main` at `dc229e38fde26dbaac5bf8798aae36bc3f160ef5`, **7/7 exact-HEAD check families SUCCESS**, including Windows installed Setup, Profile Counts offline, Desktop rendered, Android About/build and RLS. Issue #152 closed; **not published**.
 
 ## Gap
 - Earlier GRANADA #7 enforces valid count and date evidence when appending dated history, but standalone `profile_counts_robot.py` and Windows `profile_counts_bridge.py` were still treating every historical CSV `status=ok` as completed even if its two numeric counts, Instagram username or date were corrupt.
