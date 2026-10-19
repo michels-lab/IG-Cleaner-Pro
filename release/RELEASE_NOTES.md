@@ -1,3 +1,13 @@
+## v120.53 — Fix Run silently doing read-only checks instead of Unfollow (owner v120.52 screenshot)
+
+- **Real owner v120.52 regression:** screenshot showed 2/40 processed, 0 confirmed, 2 issues, 38 untouched while Chrome opened profiles. Source confirmed that Run with an unapproved batch unconditionally invoked read-only verification instead of the action robot; this cannot click Unfollow/Cancel Request.
+- **Run now continues the same existing batch** (persisted ID and exact 40-person cohort) and explicitly asks permission to perform account actions on still untouched profiles and strictly proven zero-click failures. Previously attempted results (especially any uncertain post-click outcome) are never automatically replayed, and the original action journal is retained.
+- **Read-only verification stays optional and clearly labeled** "Verify previous actions (read-only)"; it never initiates an Instagram relationship change.
+- **No-click timeouts do not stall every other profile:** the robot persists the issue, closes only a provably no-click tab and continues to other eligible targets. Ambiguous action tabs stay available and stop safely.
+- **Batch review panel:** clearly distinguishes real action pass from read-only checks; keeps untouched totals visible; prevents a premature manual "Reviewed" approval while there are unattempted accounts; opens only genuine issue profiles. Any new action result supersedes older read-only recheck status, never overwrites original evidence.
+- **No data deletion or signup changes:** preserves imported lists, existing workspace, per-account history and settings. Chrome session/passwords are never exported. Offline Chromium fixture tests and installed Windows Setup, Android, Desktop and Profile Counts CI must pass exact candidate; real Instagram control layout remains owner-testable only after this official release.
+- Windows installer lacks Authenticode certificate; official SHA-256 checksums verify asset integrity. No CAPTCHA bypass or unauthorized Instagram action. Owner tests **official GitHub release**, never Actions preview.
+
 ## v120.52 — owner tests official release; ten real tabs; explicit batch approval
 
 - **Release-first acceptance:** Michel tests real installed stable GitHub releases. Automatic CI and installed Windows/Chromium/Android/Desktop checks are required *before publishing*, but do not ask him to test temporary builds, previews or Actions ZIPs.
