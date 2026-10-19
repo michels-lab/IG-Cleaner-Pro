@@ -95,11 +95,20 @@ public class DeveloperEditionTest {
                 "return document.getElementById('igcDevNotesCount').textContent.includes('saved section note')})()"));
             assertEquals("true",js(scenario,
                 "(function(){return document.getElementById('igcDevNotes').textContent.includes('Developer Android test observation')})()"));
-            // Real WebView localStorage persistence, no fake external database.
-            js(scenario,"location.reload();true");
-            untilDeveloperReady(scenario);
-            assertEquals("true",js(scenario,
-                "(function(){return document.getElementById('igcDevNotes').textContent.includes('Developer Android test observation')})()"));
+            // Wait for the actual *new document* after navigation, not a
+            // stale panel that is still visible while reload is in progress.
+            js(scenario,"window.__igcTestBeforeReload=true;location.reload();true");
+            boolean restored=false;
+            for(int attempt=0;attempt<50;attempt++){
+                String state=js(scenario,
+                    "(function(){var notes=document.getElementById('igcDevNotes');"+
+                    "return !window.__igcTestBeforeReload && notes &&"+
+                    "notes.textContent.includes('Developer Android test observation')})()");
+                if("true".equals(state)){restored=true;break;}
+                Thread.sleep(350L);
+            }
+            assertTrue("Developer notes failed to restore in a new WebView document after reload",
+                       restored);
             assertEquals("true",js(scenario,
                 "(function(){return document.getElementById('igcDevNotes').textContent.includes('igcAutoBatchApproval')})()"));
             assertEquals("true",js(scenario,
