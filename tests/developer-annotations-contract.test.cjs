@@ -134,6 +134,23 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  await assert.rejects(()=>jfetch('/auth/v1/user',{method:'PUT'}),
   /production cloud writes are disabled/);
  assert.equal(outgoing.length,1,'Blocked Developer mutations must not reach cloud');
+ const verifyStart=html.indexOf('async function verifyOtpAndSetPassword(){');
+ const verifyEnd=html.indexOf('const AUTH_RECOVERY_MESSAGE=',verifyStart);
+ assert(verifyStart>0&&verifyEnd>verifyStart,'Real OTP verifier function is missing');
+ const otpSource=html.slice(verifyStart,verifyEnd);
+ let otpVerified=0,otpWrites=0;
+ const otpContext={verifyOtp:async()=>{otpVerified++},
+   igcDeveloperReadOnly:()=>true,
+   document:{getElementById:()=>({value:'password-123'})},
+   jfetch:async()=>{otpWrites++}};
+ const devOtp=vm.runInNewContext(otpSource+';verifyOtpAndSetPassword',otpContext);
+ await devOtp();
+ assert.equal(otpVerified,1,'Developer must still authenticate real OTP');
+ assert.equal(otpWrites,0,'Developer must not update the production Auth password');
+ const publicContext={...otpContext,igcDeveloperReadOnly:()=>false};
+ const regularOtp=vm.runInNewContext(otpSource+';verifyOtpAndSetPassword',publicContext);
+ await regularOtp();
+ assert.equal(otpWrites,1,'The public sign-up flow must preserve normal password setup');
  // Selection must preserve a precise structural target when its control lacks an ID.
  const section=e.get('igcAutoBatchApproval');
  const idlessButton={id:'',tagName:'BUTTON',parentElement:section,previousElementSibling:null,
