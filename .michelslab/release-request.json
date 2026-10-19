@@ -1,18 +1,14 @@
 {
-  "version": "120.52",
-  "tag": "v120.52",
-  "authorized": false,
-  "authorization_source": "Owner explicitly instructed 'termina todo y dale release' on 2026-10-19 and clarified that Michel tests only official published stable releases, never previews; PR #129 candidate has all five exact-head CI families green and merged on main. This authorizes guarded v120.52 stable publication after independent release checks.",
+  "version": "120.53",
+  "tag": "v120.53",
+  "authorized": true,
+  "authorization_source": "Owner's standing 2026-10-19 instruction is to complete InstaCleaner fixes and issue official stable releases for their device acceptance, never ask to test previews. Following real v120.52 owner screenshot with 2/40 processed and 0 confirmed, PR #130 corrected Run wrongly entering read-only recheck; PR #131 prepared v120.53 identities; PR #132 fixed owner's added request to advance past already-not-followed profiles. Both implementation fix and v120.53 candidate passed five exact-head CI families. Guarded official stable v120.53 publication is authorized after independent checks.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.51",
-  "owner_acceptance_note": "Michel personally tests InstaCleaner only after the official v120.52 stable release is published; do not ask for temporary build or Actions artifact testing. New release includes ten actual Chrome tabs, safer Following detection, automatic 'Is this batch OK?' Reviewed confirmation, durable batch read-only rechecks and exception-only tabs. Live Instagram actions remain unverified until post-release owner testing. Never replay an ambiguous unfollow, reset journals, bypass challenges, erase imported state or change Android signer. Independently verify exact-commit Windows installed Setup, Chromium tests, Desktop and Android visuals, original Android signing, checksums, all nine GitHub assets.",
+  "status": "requested",
+  "previous_stable_release": "v120.52",
+  "owner_acceptance_note": "The owner tests ONLY official published stable installers. v120.53 includes Run continuation of exact pending cohort in action mode, real no-click retries without repeating ambiguous clicks, and separately recorded already_not_following profile completions that move to the next target without any relationship click. CI proves offline Chromium selectors, installed Windows Setup, Android/desktop rendering, persistent Android production signer and checksums, NOT real Instagram success; user validates post-release. Do not reset journals, secrets or imported data. No CAPTCHA bypass or repeated uncertain Unfollow.",
   "requested_at": "2026-10-19",
-  "candidate_main_sha": "409c09210c9f9dba6b12d41826eab2cbc22f57a0",
-  "published_run": 39254170073,
-  "published_commit": "4db21aaf634d43062e191ae6b9408d86c690f05e",
-  "completed_at_utc": "2026-10-19T12:48:35Z",
-  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52"
+  "candidate_main_sha": "c3e0236459584a88b045d0a75521f111f4aee6ef"
 }
