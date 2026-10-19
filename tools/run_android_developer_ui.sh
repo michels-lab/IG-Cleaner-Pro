@@ -16,7 +16,7 @@ adb shell am instrument -w -r \
   -e class com.michelslab.igcleaner.DeveloperEditionTest \
   com.michelslab.igcleaner.developer.test/androidx.test.runner.AndroidJUnitRunner \
   | tee artifacts/android-developer/instrumentation.txt
-grep -Fq 'OK (1 test)' artifacts/android-developer/instrumentation.txt
+grep -Fq 'OK (2 tests)' artifacts/android-developer/instrumentation.txt
 
 unzip -p "$apk" assets/ig_cleaner_pro_v120_27_synced_companion.html > /tmp/igc-developer-embedded.html
 grep -Fq 'igcDevSaveNote' /tmp/igc-developer-embedded.html
