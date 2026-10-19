@@ -1027,7 +1027,8 @@ class ActionRobot:
                 details = dict(entry)
                 details["action_results"] = {
                     username: {"status": journal.get(username, {}).get("status", "pending"),
-                               "message": journal.get(username, {}).get("message", "")}
+                               "message": journal.get(username, {}).get("message", ""),
+                               "safe_no_click": _preclick_no_action(journal.get(username, {}))}
                     for username in entry["targets"]}
             else:
                 details = None
@@ -1221,7 +1222,7 @@ class ActionRobot:
             if not resume:
                 previous = self._journal()
                 if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
-                       and (pending_entry is not None or not _preclick_no_action(record))
+                       and not _preclick_no_action(record)
                        for user in targets):
                     raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
             self.targets = targets
@@ -1397,7 +1398,7 @@ class ActionRobot:
                         if (self._protected_for(candidate) or candidate in self.skipped
                                 or (not self.review_only and
                                     previous.get("status") in ("ok", "review", "error", "blocked")
-                                    and (self.continuing_batch or not _preclick_no_action(previous)))):
+                                    and not _preclick_no_action(previous))):
                             continue
                         if len(stage_names) >= MAX_ACTION_TABS:
                             break
@@ -1476,7 +1477,7 @@ class ActionRobot:
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
                     previous = journal.get(user, {})
-                    if not self.review_only and not self.continuing_batch and _preclick_no_action(previous):
+                    if not self.review_only and _preclick_no_action(previous):
                         journal.pop(user, None)
                         _atomic_json(path, journal)
                         previous = {}
@@ -1545,7 +1546,7 @@ class ActionRobot:
                                 and (not action_tabs or
                                      action_tabs.prepared(candidate) is None)
                                 and (prior.get("status") not in ("ok", "review", "error", "blocked")
-                                     or (not self.continuing_batch and _preclick_no_action(prior)))):
+                                     or _preclick_no_action(prior))):
                             next_user = candidate
                             break
                     prefetch_attempted = False
