@@ -720,6 +720,7 @@ def _preclick_identity_blocked(entry):
     return (
         message.startswith("The active Instagram account cannot be verified. No action was performed.")
         or message == "Instagram session verification failed before the first click. No action performed."
+        or message == "Instagram session could not be verified before skipping a non-followed profile."
     )
 
 def _action_issue(task, result, message):
@@ -1531,13 +1532,13 @@ class ActionRobot:
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
                     previous = journal.get(user, {})
-                    if not self.review_only and _preclick_no_action(previous):
-                        journal.pop(user, None)
-                        _atomic_json(path, journal)
-                        previous = {}
+                    # Retry only proven no-click outcomes. Keep old evidence
+                    # until the new outcome has been written, never delete
+                    # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
                         (not self.review_only and
-                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked"))):
+                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                         and not _preclick_no_action(previous))):
                         continue
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
@@ -1701,10 +1702,15 @@ class ActionRobot:
                     if self.review_only:
                         self._save_recheck_result(user, result, details)
                     elif result != "skipped":
+                        previous_attempt = journal.get(user, {})
+                        history = list(previous_attempt.get("attempt_history", []))
+                        if previous_attempt.get("status"):
+                            history.append({k: v for k, v in previous_attempt.items()
+                                            if k != "attempt_history"})
                         journal[user] = {"status": result, "message": details,
-                                         "audit_relation": relation,
-                                         "issue": issue,
-                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                                         "audit_relation": relation, "issue": issue,
+                                         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                         "attempt_history": history}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
                     if action_tabs:
@@ -1728,6 +1734,10 @@ class ActionRobot:
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
                         if self.task == "audit" and result == "review":
+                            continue
+                        if _preclick_no_action(journal.get(user, {})):
+                            # Safe no-click: record and move to the next target.
+                            # A challenge or possibly clicked action is NOT safe.
                             continue
                         if issue in ("pending_already_following", "pending_not_requested",
                                      "mutual_before_action", "missing_profile_info",
