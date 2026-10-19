@@ -169,6 +169,59 @@ class ProfileCountsReauditTests(unittest.TestCase):
             seed_latest_readings(p, {"one": row("one", "", "", "2026-05-03T00:00:00Z", "error")})
             self.assertEqual(read_dated_page(p, 0, 10)["rows"][0]["followers"], "900")
 
+    def test_malformed_success_claims_do_not_enter_history_or_delete_prior_evidence(self):
+        with TemporaryDirectory() as temp:
+            path = dated_history_path(Path(temp) / "workspace.csv")
+            good = row("exact.user", 250, 47, "2026-10-18T10:00:00Z")
+            append_dated_reading(path, good)
+            before = path.read_bytes()
+            failures = [
+                {"followers": "12.3K"},
+                {"followers": "1,234"},
+                {"followers": "nan"},
+                {"followers": "0;=IMPORT"},
+                {"followers": None},
+                {"following": ""},
+                {"following": "99.5"},
+                {"following": "-1"},
+                {"checked_at": "not-a-date"},
+                {"checked_at": "2026-10-18T10:00:00"},
+                {"checked_at": "2099-01-01T10:00:00Z"},
+                {"username": "../another-workspace"},
+                {"username": "=HYPERLINK()"},
+                {"status": "error"},
+            ]
+            for change in failures:
+                invalid = dict(good, **change)
+                with self.subTest(change=change):
+                    append_dated_reading(path, invalid)
+                    self.assertEqual(seed_latest_readings(path, {"corrupt": invalid}), 0)
+                    self.assertEqual(path.read_bytes(), before)
+            self.assertEqual(read_dated_page(path, 0, 20)["rows"][0]["followers"], "250")
+
+    def test_valid_zero_and_approximate_integer_remain_supported(self):
+        with TemporaryDirectory() as temp:
+            path = dated_history_path(Path(temp) / "workspace.csv")
+            valid = row("legit.user", 0, 12300, "2026-10-18T10:00:00+00:00")
+            valid["approximate"] = "true"
+            self.assertEqual(seed_latest_readings(path, {"legit.user": valid}), 1)
+            saved = read_dated_page(path, 0, 10)["rows"]
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0]["followers"], "0")
+            self.assertEqual(saved[0]["following"], "12300")
+            self.assertEqual(saved[0]["approximate"], "true")
+
+    def test_invalid_ok_rows_are_prioritized_as_unmeasured_on_next_audit(self):
+        valid = row("valid", 15, 30, "2026-10-18T10:00:00Z")
+        no_proof = row("suspect", "12,345", 5, "2026-10-18T10:00:00Z")
+        no_timestamp = row("undated", 10, 10, "not-a-date")
+        queue = ordered_audit_targets(["valid", "suspect", "undated"], {
+            "valid": valid, "suspect": no_proof, "undated": no_timestamp
+        })
+        self.assertEqual(queue[-1], "valid")
+        self.assertEqual(set(queue[:-1]), {"suspect", "undated"})
+        self.assertEqual(len(queue), 3)
+
     def test_unbounded_history_is_paginated(self):
         with TemporaryDirectory() as temp:
             p = dated_history_path(Path(temp) / "a.csv")
