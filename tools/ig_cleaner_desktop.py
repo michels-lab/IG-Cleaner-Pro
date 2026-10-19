@@ -86,16 +86,16 @@ def chrome_path() -> Path:
     raise FileNotFoundError("Instala Google Chrome para abrir Insta Cleaner y usar el robot de Instagram.")
 
 
-def chrome_app_args(executable: Path, page: Path, workspace: Path, port: int, token: str):
+def chrome_app_args(executable: Path, page: Path, workspace: Path, port: int, token: str, *, developer=False):
     if not (1 <= port <= 65535) or not token:
         raise ValueError("El puente local no se ha inicializado.")
-    url = page.resolve().as_uri() + "#igc-robot=" + str(port) + "." + token
+    url = page.resolve().as_uri() + "#igc-robot=" + str(port) + "." + token + ("&igc-developer=1" if developer else "")
     return [str(executable), "--no-first-run", "--no-default-browser-check",
             "--disable-background-mode", "--user-data-dir=" + str(workspace),
             "--app=" + url]
 
 
-def acquire_single_instance():
+def acquire_single_instance(*, developer=False):
     """Prevent reopening a second window with a dead port/token for the same profile."""
     if sys.platform != "win32":
         return None
@@ -105,7 +105,7 @@ def acquire_single_instance():
     kernel32.CreateMutexW.restype = ctypes.c_void_p
     kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
     kernel32.CloseHandle.restype = ctypes.c_bool
-    handle = kernel32.CreateMutexW(None, False, "Local\\MichelsLab_InstaCleanerPro_Desktop")
+    handle = kernel32.CreateMutexW(None, False, "Local\\MichelsLab_InstaCleanerPro_Developer" if developer else "Local\\MichelsLab_InstaCleanerPro_Desktop")
     if not handle:
         raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
     if ctypes.get_last_error() == 183:
@@ -144,6 +144,8 @@ def stop_safely(server) -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Insta Cleaner Pro Windows con robot integrado")
     parser.add_argument("--healthcheck", action="store_true")
+    parser.add_argument("--developer", action="store_true",
+                        help="Launch isolated, read-only Developer Edition with local audit/export.")
     parser.add_argument("--smoke-startup", action="store_true",
                         help="Initialize the installed UI and local controller without Instagram.")
     args = parser.parse_args(argv)
@@ -188,9 +190,9 @@ def main(argv=None) -> int:
             print("PASS: UI embebida, controlador Playwright y servidor local disponibles.")
             return 0
 
-        mutex = acquire_single_instance()
+        mutex = acquire_single_instance(developer=args.developer)
         try:
-            home = app_home()
+            home = app_home() / "developer-edition" if args.developer else app_home()
             page = prepare_html(source, home / BUNDLED_HTML)
             browser = chrome_path()
             chrome_workspace = home / "workspace-browser"
@@ -198,18 +200,25 @@ def main(argv=None) -> int:
             # Keep existing result and Instagram session paths, so an upgrade
             # retains earlier robot results and the signed-in Instagram browser.
             legacy = Path.home() / ".ig-cleaner-pro"
-            collector = Collector(legacy / "profile-counts", legacy / "instagram-browser")
+            collector = (Collector(home / "audit-scratch", home / "instagram-browser")
+                         if args.developer else
+                         Collector(legacy / "profile-counts", legacy / "instagram-browser"))
             token = secrets.token_urlsafe(32)
-            updater = WindowsUpdater(app_version(), home, legacy / "profile-counts")
-            server = build_server(collector, token, 0, updater=updater)
+            updater = (None if args.developer else
+                       WindowsUpdater(app_version(), home, legacy / "profile-counts"))
+            server = build_server(
+                collector, token, 0, updater=updater,
+                developer_mode=args.developer, audit_root=legacy / "profile-counts")
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
             # Version awareness starts automatically, but never downloads,
             # installs or changes Instagram state without explicit approval.
-            updater.check()
+            if updater is not None:
+                updater.check()
             try:
-                chrome = subprocess.Popen(chrome_app_args(browser, page, chrome_workspace,
-                                                         server.server_port, token))
+                chrome = subprocess.Popen(chrome_app_args(
+                    browser, page, chrome_workspace, server.server_port, token,
+                    developer=args.developer))
                 chrome.wait()
             finally:
                 stop_safely(server)
