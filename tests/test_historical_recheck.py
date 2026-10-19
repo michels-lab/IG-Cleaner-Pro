@@ -64,6 +64,52 @@ class HistoricalActionAuditTests(unittest.TestCase):
             self.assertTrue(any(f["code"] == "HISTORICAL_READONLY_UNRESOLVED"
                                 for f in audit["findings"]))
 
+    def test_historical_scan_rotates_unseen_profiles_after_first_page(self):
+        with TemporaryDirectory() as tmp:
+            robot = self.scoped(Path(tmp))
+            _atomic_json(robot._base_for("owner_test", "account_1", "unfollow"), {
+                "failed.01": {"status": "review"},
+                "failed.02": {"status": "error"},
+                "failed.03": {"status": "blocked"},
+                "failed.04": {"status": "review"},
+            })
+            with patch("profile_actions.MAX_ACTIONS_PER_JOB", 2), \
+                 patch("profile_actions.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value = False
+                robot.recheck_history(self.data())
+                self.assertEqual(robot.targets, ["failed.01", "failed.02"])
+                robot._save_recheck_result("failed.01", "review", "Current state unresolved")
+                robot._save_recheck_result("failed.02", "ok", "Now Follow state visible")
+                robot.recheck_history(self.data())
+                self.assertEqual(robot.targets, ["failed.03", "failed.04"],
+                                 "A second pass must inspect previously unseen errors first")
+
+    def test_preclick_historical_failure_can_be_observed_without_action(self):
+        from unittest.mock import MagicMock
+        from profile_actions import recheck_action_readonly
+        page = MagicMock()
+        page.url = "https://www.instagram.com/load.fail/"
+        page.locator.return_value.count.return_value = 0
+        previous = {"status": "review",
+                    "message": "The active Instagram account cannot be verified. No action was performed."}
+        with patch("profile_actions._wait_for_target_profile_shell", return_value=True), \
+             patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("ok", "Action confirmed: Follow.")) as verified:
+            ordinary = recheck_action_readonly(page, "load.fail", "unfollow",
+                                               "owner.test", previous, preloaded=True)
+            self.assertEqual(ordinary[0], "review")
+            verified.assert_not_called()
+            historical = recheck_action_readonly(
+                page, "load.fail", "unfollow", "owner.test", previous,
+                preloaded=True, allow_unacted_observation=True)
+            self.assertEqual(historical[0], "ok")
+            self.assertIn("Current visible state", historical[1])
+            self.assertNotIn("Action confirmed", historical[1])
+            verified.assert_called_once()
+            page.get_by_role.assert_not_called()
+            page.locator.return_value.click.assert_not_called()
+
     def test_confirmed_owner_task_required_and_protections_honored(self):
         with TemporaryDirectory() as tmp:
             robot = self.scoped(Path(tmp))
