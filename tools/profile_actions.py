@@ -113,6 +113,24 @@ class ActionTabPool:
         else:
             item["status"] = status
 
+    def close_unacted_prefetches(self):
+        """Release staged no-click tabs after the worker exhausts its cohort.
+
+        Never close a page whose action result is ambiguous. Prefetch means
+        navigation only, not a relationship click or a completed review.
+        """
+        no_action = {"queued", "prefetching", "prefetched",
+                     "prefetch_pending", "loading_profile"}
+        for username, item in list(self.tabs.items()):
+            if item["status"] not in no_action:
+                continue
+            try:
+                if not item["page"].is_closed():
+                    item["page"].close()
+            except Exception:
+                pass
+            self.tabs.pop(username, None)
+
     def overview(self):
         self._prune_manually_closed()
         return [{"username": user, "status": item["status"]}
@@ -1803,6 +1821,13 @@ class ActionRobot:
                         self.status = "partial" if remaining else "complete"
                         self.message = ("Batch reviewed: some profiles require manual verification."
                                         if remaining else "Batch complete; results saved.")
+                # Prefetch-only tabs never had action clicks. Do not trap the
+                # robot in manual-review mode just because a later unvisited
+                # target is still prefetched in one of the 10 open slots.
+                if action_tabs:
+                    action_tabs.close_unacted_prefetches()
+                    with self.lock:
+                        self.open_review_tabs = action_tabs.overview()
                 # Unverified target tabs must remain visible for manual inspection.
                 # The Playwright persistent context is deliberately held open
                 # until the owner manually pauses or closes the target tabs.
