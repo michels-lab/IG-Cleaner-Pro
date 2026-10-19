@@ -45,6 +45,17 @@ public class DeveloperEditionTest {
         fail("Android Developer panel never appeared on real embedded WebView");
     }
 
+    private void untilJsTrue(ActivityScenario<MainActivity> scenario,
+                             String expression, String description) throws Exception {
+        String last = "unobserved";
+        for (int attempt = 0; attempt < 40; attempt++) {
+            last = js(scenario, expression);
+            if ("true".equals(last)) return;
+            Thread.sleep(300L);
+        }
+        fail(description + "; last WebView result: " + last);
+    }
+
     @Test
     public void nativeDeveloperCloudWritesCannotReachProduction() throws Exception {
         Assume.assumeTrue(InstrumentationRegistry.getInstrumentation()
@@ -79,22 +90,51 @@ public class DeveloperEditionTest {
                 assertTrue("Must use separate .developer app package",
                     activity.getPackageName().endsWith(".developer")));
             untilDeveloperReady(scenario);
-            assertEquals("true",js(scenario,
-                "(function(){return AndroidBridge.isDeveloperMode() && !!document.getElementById('page-sync')})()"));
-            assertEquals("true",js(scenario,
-                "(function(){document.getElementById('igcDevAccount').click();"+
-                "return !!document.querySelector('#page-sync.active')})()"));
-            assertEquals("true",js(scenario,
-                "(function(){window.showPage('automations');"+
-                "document.getElementById('igcDevPick').click();"+
-                "var t=document.getElementById('igcAutoBatchApproval');"+
+            untilJsTrue(scenario,
+                "(function(){return document.readyState==='complete' "+
+                "&& typeof window.showPage==='function' "+
+                "&& AndroidBridge.isDeveloperMode() "+
+                "&& !!document.getElementById('page-sync')})()",
+                "Developer native bridge or account screen not ready");
+            // Separate navigation, selection and saving. Performing them all
+            // inside one evaluateJavascript() is racy: WebView may respond
+            // null if a screen transition invalidates the pending callback,
+            // even when the button's action completed successfully.
+            js(scenario, "document.getElementById('igcDevAccount').click();true");
+            untilJsTrue(scenario,
+                "(function(){return !!document.querySelector('#page-sync.active')})()",
+                "Developer Account navigation did not activate the real sign-in screen");
+            js(scenario, "window.showPage('automations');true");
+            untilJsTrue(scenario,
+                "(function(){return !!document.querySelector('#page-automations.active')})()",
+                "Automations page failed to render before section selection");
+            js(scenario,
+                "(function(){var b=document.getElementById('igcDevPick');"+
+                "if(!b)return false;b.click();return true})()");
+            untilJsTrue(scenario,
+                "(function(){var b=document.getElementById('igcDevPick');"+
+                "return !!b&&b.textContent.includes('Cancel selection')})()",
+                "Developer section picker did not activate");
+            js(scenario,
+                "(function(){var t=document.getElementById('igcAutoBatchApproval');"+
                 "if(!t)return false;"+
                 "t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));"+
-                "document.getElementById('igcDevNoteInput').value='Developer Android test observation';"+
-                "document.getElementById('igcDevSaveNote').click();"+
-                "return document.getElementById('igcDevNotesCount').textContent.includes('saved section note')})()"));
-            assertEquals("true",js(scenario,
-                "(function(){return document.getElementById('igcDevNotes').textContent.includes('Developer Android test observation')})()"));
+                "return true})()");
+            untilJsTrue(scenario,
+                "(function(){var t=document.getElementById('igcDevSelected');"+
+                "return !!t&&t.textContent.includes('igcAutoBatchApproval')})()",
+                "Developer section picker did not retain precise control locator");
+            js(scenario,
+                "(function(){var input=document.getElementById('igcDevNoteInput');"+
+                "var save=document.getElementById('igcDevSaveNote');"+
+                "if(!input||!save)return false;"+
+                "input.value='Developer Android test observation';save.click();return true})()");
+            untilJsTrue(scenario,
+                "(function(){var count=document.getElementById('igcDevNotesCount');"+
+                "var notes=document.getElementById('igcDevNotes');"+
+                "return !!count&&count.textContent.includes('saved section note')"+
+                "&&!!notes&&notes.textContent.includes('Developer Android test observation')})()",
+                "Developer note was not saved to the chosen workspace");
             // Wait for the actual *new document* after navigation, not a
             // stale panel that is still visible while reload is in progress.
             js(scenario,"window.__igcTestBeforeReload=true;location.reload();true");
