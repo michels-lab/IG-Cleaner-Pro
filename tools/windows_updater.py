@@ -108,27 +108,81 @@ def _sha256(path: Path) -> str:
     return checksum.hexdigest()
 
 
+def _zip_member_sha256(archive: zipfile.ZipFile, name: str) -> str:
+    digest = hashlib.sha256()
+    with archive.open(name) as member:
+        while chunk := member.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_restore_point(backup: Path) -> None:
+    """Fail closed if an update backup is missing, truncated or internally inconsistent.
+
+    This checks accidental corruption; the manifest is inside the local archive,
+    so it is not a digital signature against deliberate replacement.
+    """
+    try:
+        with zipfile.ZipFile(backup, "r") as archive:
+            names = archive.namelist()
+            if len(names) != len(set(names)):
+                raise ValueError("Update backup contains duplicate archive entries.")
+            info = json.loads(archive.read("BACKUP-INFO.json"))
+            manifest = json.loads(archive.read("BACKUP-CHECKSUMS.json"))
+            if not isinstance(info, dict) or info.get("schema") != 2:
+                raise ValueError("Update backup has an unsupported integrity schema.")
+            if not isinstance(manifest, dict) or manifest.get("schema") != 1:
+                raise ValueError("Update backup has no valid integrity manifest.")
+            files = manifest.get("files")
+            if not isinstance(files, dict):
+                raise ValueError("Update backup has an invalid file manifest.")
+            expected = {"BACKUP-INFO.json", "BACKUP-CHECKSUMS.json"} | set(files)
+            if set(names) != expected:
+                raise ValueError("Update backup entry list differs from its manifest.")
+            for name, digest in files.items():
+                parts = name.split("/")
+                if (not isinstance(name, str) or "\\\\" in name
+                    or len(parts) < 2 or parts[0] not in ("app", "robot")
+                    or any(part in ("", ".", "..") for part in parts)
+                    or not isinstance(digest, str) or not SHA.fullmatch(digest)):
+                    raise ValueError("Update backup contains an unsafe or invalid entry.")
+                if _zip_member_sha256(archive, name) != digest.lower():
+                    raise ValueError("Update backup failed file integrity verification.")
+    except (OSError, zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Update backup could not be verified.") from exc
+
+
 def create_restore_point(destination: Path, local_app_home: Path, robot_results: Path, version: str) -> Path:
-    """Snapshot state files, NOT browser passwords, cookie stores or raw ZIPs."""
+    """Snapshot local UI/robot files without browser cookies; verify before publishing."""
     destination.mkdir(parents=True, exist_ok=True)
     timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     backup = destination / f"IG-Cleaner-Pro-State-{version}-{timestamp}.zip"
     temp = backup.with_suffix(".zip.partial")
     try:
         with zipfile.ZipFile(temp, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as zipf:
-            meta = {"schema":1,"app_version":version,"utc_created":timestamp,
-                    "contents":"local UI file and robot result CSV/JSON journals only",
-                    "excluded":"Chrome session profiles/cookies and raw Instagram uploads"}
+            meta = {"schema": 2, "app_version": version, "utc_created": timestamp,
+                    "contents": "local UI file and robot result CSV/JSON journals only",
+                    "excluded": "Chrome sessions/cookies, raw Instagram uploads, browser localStorage"}
             zipf.writestr("BACKUP-INFO.json", json.dumps(meta))
+            entries = {}
             ui = local_app_home / "IG-Cleaner-Pro.html"
             if ui.is_file() and not ui.is_symlink():
-                zipf.write(ui, arcname="app/IG-Cleaner-Pro.html")
-            if robot_results.is_dir():
+                name = "app/IG-Cleaner-Pro.html"
+                zipf.write(ui, arcname=name)
+                entries[name] = _zip_member_sha256(zipf, name)
+            if robot_results.is_dir() and not robot_results.is_symlink():
                 for path in robot_results.rglob("*"):
-                    if path.is_symlink() or not path.is_file() or path.suffix.lower() not in (".csv",".json",".done"):
+                    if path.is_symlink() or not path.is_file() or path.suffix.lower() not in (".csv", ".json", ".done"):
                         continue
                     relative = path.relative_to(robot_results)
-                    zipf.write(path, arcname=str(Path("robot") / relative).replace("\\", "/"))
+                    if any((robot_results.joinpath(*relative.parts[:i])).is_symlink()
+                           for i in range(1, len(relative.parts))):
+                        continue
+                    name = (Path("robot") / relative).as_posix()
+                    zipf.write(path, arcname=name)
+                    entries[name] = _zip_member_sha256(zipf, name)
+            zipf.writestr("BACKUP-CHECKSUMS.json", json.dumps({"schema": 1, "files": entries}, sort_keys=True))
+        verify_restore_point(temp)
         os.replace(temp, backup)
     finally:
         temp.unlink(missing_ok=True)
@@ -254,6 +308,7 @@ class WindowsUpdater:
         if _sha256(installer) != expected:
             raise ValueError("The downloaded Setup changed after verification; installation was blocked.")
         backup = create_restore_point(self.app_home/"backups",self.app_home,self.robot_results,self.current)
+        verify_restore_point(backup)  # Never launch Setup with an unverified pre-update snapshot.
         try:
             subprocess.Popen([str(installer)],close_fds=True)
         except Exception:
