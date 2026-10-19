@@ -397,6 +397,10 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
                     robot.start(self._request(["fresh.81"]))
                 current = robot.batch_review({**request,"task":"cancel"})["batch"]
+                # Historical filtering is independent of batch approval; mark
+                # the initial member as attempted before closing the cohort.
+                _atomic_json(robot._base(), {**robot._journal(),
+                    "a.one":{"status":"review","message":"Prior uncertain result."}})
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
                 with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
