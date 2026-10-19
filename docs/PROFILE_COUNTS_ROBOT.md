@@ -6,9 +6,9 @@ Windows also stores verified successful values append-only in an account-scoped 
 
 This does not resolve Instagram CAPTCHA loops in the separate Playwright Chrome profile, and does not automate follow/unfollow/cancel operations. If the separate Chrome cannot verify the account, use the already provided manual read-only Chrome Companion or CSV history workflows. Live owner Chrome acceptance and any cross-device Android history sync remain open, not implied by offline CI.
 
-# Profile Counts Robot — current Windows guidance (v120.47 stable)
+# Profile Counts Robot — Windows guidance (published stable channel)
 
-> The official [v120.47 GitHub Release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47) includes the installed Windows Setup, dated Profile Counts history and oldest-first second audit. The post-release v120.48 Pending Requests batch fixes are still **unpublished**. Historical v120.41–v120.45 instructions below are retained as background, not current release status.
+> **Release authority:** read `release/distribution-manifest.json` → `releasePolicy.currentStableRelease`, and verify the matching [official GitHub Releases](https://github.com/michels-lab/IG-Cleaner-Pro/releases) before choosing a Windows installer. `releasePolicy.nextRelease` is only a *reserved candidate*, not proof an update was published. The historical [v120.47 release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.47) first shipped the installed Windows Setup, dated counts history and oldest-first re-audit. Historical v120.41–v120.47 descriptions in this guide are background, **not** claims about the latest stable. Test only the official published release, never PR branches or Actions artifacts.
 
 1. Open **Automations → Automation Center → Profile Counts** in the integrated Windows app. **All robots** (Profile Counts, Cancel Pending, Unfollow and optional Followback Audit) live in Automations.
 2. Import the Following/Followers export into the correct Instagram workspace. The Profile Counts robot consumes **already-imported** Following usernames; Instagram Following discovery is entirely optional.
