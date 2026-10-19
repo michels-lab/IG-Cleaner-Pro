@@ -94,6 +94,16 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  const report=JSON.parse(await h.files.at(-1).text());
  assert.equal(report.owner_section_annotations[0].comment,entries[0].comment);
  assert.equal(report.audit.findings[0].code,'RETRYABLE_ZERO_CLICK');
+ // Edit is intentionally supported without losing the original target.
+ const editCard=e.get('igcDevNotes').children[0];
+ await editCard.children[3].children[0].listeners.click();
+ assert.equal(e.get('igcDevNoteInput').value,entries[0].comment);
+ e.get('igcDevNoteInput').value='Batch changed to 40 after selecting a different tab.';
+ e.get('igcDevSaveNote').listeners.click();
+ entries=JSON.parse(store.get('igc_dev_section_notes_v1__owner_1__ig_00000001'));
+ assert.equal(entries.length,1);
+ assert.equal(entries[0].anchor.section,'igcAutoBatchApproval');
+ assert.equal(entries[0].comment,'Batch changed to 40 after selecting a different tab.');
  const newSession=harness(store,identity);
  assert.match(newSession.elements.get('igcDevNotesCount').textContent,/1 saved section note/,
   'Developer notes must persist through app restart');
@@ -101,6 +111,12 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  h.intervals[0]();
  assert.match(e.get('igcDevNotesCount').textContent,/0 saved section notes/,
   'Notes must not leak between Instagram workspaces');
+ identity.active='ig_00000001';h.intervals[0]();
+ assert.match(e.get('igcDevNotesCount').textContent,/1 saved section note/);
+ const deleteCard=e.get('igcDevNotes').children[0];
+ await deleteCard.children[3].children[2].listeners.click();
+ assert.equal(JSON.parse(store.get('igc_dev_section_notes_v1__owner_1__ig_00000001')).length,0,
+  'Deleting one note must remove only the selected workspace record');
  const jstart=html.indexOf("async function jfetch(path,opt={})");
  const jend=html.indexOf("async function sendOtp(){",jstart);
  assert(jstart>0&&jend>jstart,'Original real cloud login flow missing');
