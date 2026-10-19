@@ -90,7 +90,7 @@ class HistoricalActionAuditTests(unittest.TestCase):
         page = MagicMock()
         page.url = "https://www.instagram.com/load.fail/"
         page.locator.return_value.count.return_value = 0
-        previous = {"status": "review",
+        previous = {"status": "blocked",
                     "message": "The active Instagram account cannot be verified. No action was performed."}
         with patch("profile_actions._wait_for_target_profile_shell", return_value=True), \
              patch("profile_actions.challenge_detected", return_value=False), \
