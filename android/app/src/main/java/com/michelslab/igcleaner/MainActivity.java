@@ -1281,9 +1281,12 @@ public final class MainActivity extends AppCompatActivity {
                 api.verifyOtpAndSetPassword(textOf(codeInput), rawTextOf(newPasswordInput));
                 touchDevice();
                 mainHandler.post(() -> {
-                    setGlobalStatus("CONNECTED • password saved");
+                    setGlobalStatus(isDeveloperEdition()
+                        ? "CONNECTED • Developer OTP login" : "CONNECTED • password saved");
                     showNativeAccountScreen();
-                    Snackbar.make(content, "Email verified and password saved", Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(content, isDeveloperEdition()
+                        ? "Email verified. Developer did not modify your password."
+                        : "Email verified and password saved", Snackbar.LENGTH_LONG).show();
                 });
             }, true);
         });
@@ -2975,6 +2978,9 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void touchDevice() throws Exception {
+        // Registration is a Supabase production write. Developer remains a
+        // real authenticated reader without mutating the public device list.
+        if (isDeveloperEdition()) return;
         JSONObject device = new JSONObject()
                 .put("device_id", deviceId)
                 .put("device_type", "android")
