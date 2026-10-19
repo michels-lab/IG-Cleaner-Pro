@@ -1,3 +1,10 @@
+## 2026-10-19 — v120.52 release preparation and owner testing contract
+
+- **Permanent owner-acceptance rule:** Michel tests the actual official published stable release, never temporary GitHub Actions previews, candidate ZIPs or unmerged artifacts. Complete automated safety, installed Windows, real offline Chromium, Android/desktop UI, signing and asset-integrity checks before publication, then provide the official stable release. Do not use owner manual preview validation as a release gate or claim real Instagram acceptance before post-release feedback.
+- Owner explicitly requested completing current InstaCleaner changes and publishing v120.52. PR #127 (ten prepared Chrome tabs, safe Following detection, read-only refresh) and #128 (persistent whole-batch Reviewed approval, automatic read-only recheck when unapproved, exceptions-only tabs) are already merged on main.
+- Retain no-repeat safeguards for potentially clicked actions, exact Instagram workspace scope, protected accounts, original local journal and imported data. Stable v120.51 remains published until v120.52 is verified as a normal stable release with all nine assets.
+- Official release requires separately authorized release-request commit, exact-source CI, Windows Setup install/upgrade, signed original-production Android, Desktop/Android visuals and checksums; the owner tests *after* that release.
+
 ## 2026-10-18 — Candidate: automatic batch needs human "Reviewed" approval
 
 - User interrupted ten-tab work to clarify: do NOT re-open all ten profiles for manual inspection. Robot does routine checking automatically. On batch completion display **"Is this batch OK?"**; only the user's one-click batch approval marks verified profiles Reviewed. An unapproved batch stays pending and can be rerun in automatic **read-only check** mode for the same cohort; no repeated relationship-changing clicks for prior attempts. Optional "Open only issue profiles" is for exceptions.

@@ -1,3 +1,11 @@
+## v120.52 — owner tests official release; ten real tabs; explicit batch approval
+
+- **Release-first acceptance:** Michel tests real installed stable GitHub releases. Automatic CI and installed Windows/Chromium/Android/Desktop checks are required *before publishing*, but do not ask him to test temporary builds, previews or Actions ZIPs.
+- **Ten real Chrome tabs:** the robot prepares up to 10 distinct eligible profile tabs before relationship-changing clicks, with pacing, owner/session verification and security stops. This repairs the prior 3-tab behavior; fewer selected targets or security stops can still mean fewer than ten.
+- **Following evidence:** strictly scoped visible cursor-pointer Following/Siguiendo detection excludes counters, suggestions, wrong handles and ambiguous controls. After an uncertain click, one read-only refresh can verify Follow/Follow Back, with no second relationship-changing click.
+- **Automatic batches require owner approval:** opening profiles or running verified actions never marks them Reviewed. After a batch, the app asks **Is this batch OK?**. Only explicit whole-batch approval marks evidenced successful accounts reviewed. An unapproved cohort remains saved after restart and a fresh Run rechecks it automatically, *read-only*, without replaying Unfollow/Cancel. Optional open-only-exceptions avoids manual checks of all ten.
+- **Safety:** uncertain outcomes remain issues; protected accounts, imported lists, history, Instagram workspace identity and action journals remain separate and preserved. Tests use offline Chromium and do not prove real-account Instagram success; owner checks real behavior using this **official published release**. No CAPTCHA bypass. Windows Setup has no configured Authenticode signature.
+
 ## v120.50 — visible Instagram Following detection and read-only layout evidence
 
 - **Owner-reported regression after v120.49:** InstaCleaner could still report "Instagram control not found; no action clicked" despite the profile's visible Following dropdown. v120.49 incorrectly assumed the visible username must use `h1/h2/h3` rather than a common nonsemantic `span` or `div`.

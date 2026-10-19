@@ -61,6 +61,10 @@ Inspect current CI/workflows and run the strongest relevant current-commit check
 
 Supabase changes require RLS/data-boundary reasoning and, when possible, real-provider isolation/round-trip evidence.
 
+## Owner acceptance: published stable release only (2026-10-19)
+
+Michel tests InstaCleaner against his own Instagram account **only after an official stable GitHub release is published**. Do not request manual test of a candidate artifact, Actions preview, or ZIP before releasing. Automated install/Chromium/Android/Desktop/signing/checksum gates remain mandatory *before* publishing. Always link the verified stable release for his actual testing, preserve data on update and distinguish offline CI from successful live account actions.
+
 ## Completion
 
 Update `PROJECT_LOG.md` with meaningful fixes, regressions, decisions and validation. Infrastructure changes also update `docs/INFRASTRUCTURE_AUDIT.md` when relevant.
