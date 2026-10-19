@@ -29,6 +29,14 @@ except ImportError:
                                        DEFAULT_DELAY_SECONDS,
                                        check_batch_rest, batch_path, load_batch_state, batch_wait, finish_batch_visit)
 
+# Reuse the dated-history evidence contract. Never treat a stale CSV row as
+# successfully measured merely because its string status happens to equal "ok".
+try:
+    from .profile_counts_audit import _valid_reading as valid_saved_measurement
+except ImportError:
+    from profile_counts_audit import _valid_reading as valid_saved_measurement
+
+
 FIELDS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
 USERNAME = re.compile(r"^[A-Za-z0-9._]{1,30}$")
 LABEL = {
@@ -202,7 +210,10 @@ def run(args):
     rests_file = batch_path(args.output)
     rests = load_batch_state(rests_file)
     pending = [u for u in usernames if u not in results or
-               (args.retry_unavailable and results[u].get("status") in ("error", "unavailable", "login_required"))]
+               (not valid_saved_measurement(results[u]) and (
+                   results[u].get("status") == "ok" or
+                   (args.retry_unavailable and results[u].get("status") in
+                    ("error", "unavailable", "login_required"))))]
     if args.max_profiles:
         pending = pending[:args.max_profiles]
     print(f"Profiles queued: {len(usernames)}. Remaining in this run: {len(pending)}.")
