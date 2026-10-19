@@ -36,7 +36,10 @@ public final class SyncApi {
             "audit_events", "focus_batches", "focus_batch_items", "profile_state",
             "list_snapshots", "workspace_state");
 
+    private final boolean developerReadOnly;
+
     public SyncApi(Context context) {
+        developerReadOnly = context.getPackageName().endsWith(".developer");
         prefs = context.getSharedPreferences("igc_sync", Context.MODE_PRIVATE);
         accounts = new AccountSessionVault(context);
         load();
@@ -419,8 +422,19 @@ public final class SyncApi {
         return raw(method, path, body, auth, headers, true);
     }
 
+    static boolean blocksDeveloperMutation(String method, String path) {
+        String verb = method == null ? "" : method.toUpperCase(Locale.ROOT);
+        String route = path == null ? "" : path;
+        // Real Auth sign-in/OTP/refresh/logout are allowed; all native
+        // REST table mutations and Auth account modifications are denied.
+        return (route.startsWith("/rest/v1/") && !"GET".equals(verb))
+                || (route.startsWith("/auth/v1/user") && !"GET".equals(verb));
+    }
+
     private String raw(String method, String path, String body, boolean auth,
                        Map<String, String> headers, boolean allowRefresh) throws Exception {
+        if (developerReadOnly && blocksDeveloperMutation(method, path))
+            throw new IOException("Developer Edition: production cloud modifications are disabled.");
         if (auth && allowRefresh && hasSession() && expiresAt > 0
                 && expiresAt <= System.currentTimeMillis() / 1000L + 90) {
             refreshSession(); // One bounded preflight; the 401 fallback remains intact.
