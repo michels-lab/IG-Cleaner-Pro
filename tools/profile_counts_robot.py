@@ -29,6 +29,14 @@ except ImportError:
                                        DEFAULT_DELAY_SECONDS,
                                        check_batch_rest, batch_path, load_batch_state, batch_wait, finish_batch_visit)
 
+# Reuse the dated-history evidence contract. Never treat a stale CSV row as
+# successfully measured merely because its string status happens to equal "ok".
+try:
+    from .profile_counts_audit import _valid_reading as valid_saved_measurement
+except ImportError:
+    from profile_counts_audit import _valid_reading as valid_saved_measurement
+
+
 FIELDS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
 USERNAME = re.compile(r"^[A-Za-z0-9._]{1,30}$")
 LABEL = {
@@ -188,6 +196,19 @@ def collect_visible_counts(page, username: str):
         return "error", None
 
 
+def pending_count_targets(usernames: list[str], results: dict, retry_unavailable=False) -> list[str]:
+    """A prior 'ok' is only complete with verifiable counts and a valid date.
+
+    Failed probes keep the established opt-in retry policy; corrupt success
+    records must always be retried, otherwise false proof persists forever.
+    """
+    return [u for u in usernames if u not in results or
+            (not valid_saved_measurement(results[u]) and (
+                results[u].get("status") == "ok" or
+                (retry_unavailable and results[u].get("status") in
+                 ("error", "unavailable", "login_required"))))]
+
+
 def run(args):
     usernames = read_queue(args.input)
     if not usernames:
@@ -201,8 +222,7 @@ def run(args):
     pause_every, pause_minutes = check_batch_rest(args.pause_every, args.pause_minutes)
     rests_file = batch_path(args.output)
     rests = load_batch_state(rests_file)
-    pending = [u for u in usernames if u not in results or
-               (args.retry_unavailable and results[u].get("status") in ("error", "unavailable", "login_required"))]
+    pending = pending_count_targets(usernames, results, args.retry_unavailable)
     if args.max_profiles:
         pending = pending[:args.max_profiles]
     print(f"Profiles queued: {len(usernames)}. Remaining in this run: {len(pending)}.")
