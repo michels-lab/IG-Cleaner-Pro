@@ -101,5 +101,22 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  h.intervals[0]();
  assert.match(e.get('igcDevNotesCount').textContent,/0 saved section notes/,
   'Notes must not leak between Instagram workspaces');
- console.log('Developer Edition login, section selection, saved annotations, export, restart, and account isolation: PASS');
+ const jstart=html.indexOf("async function jfetch(path,opt={})");
+ const jend=html.indexOf("async function sendOtp(){",jstart);
+ assert(jstart>0&&jend>jstart,'Original real cloud login flow missing');
+ const outgoing=[];
+ const cloudContext={window:{location:{hash:'#igc-robot=30000.012345678901234567890123456789&igc-developer=1'}},
+  SUPABASE_URL:'https://unit.test',headers:()=>({}),
+  fetch:async(url,options)=>{outgoing.push({url,options});return {ok:true,text:async()=>'{"access_token":"test"}'}}};
+ const jfetch=vm.runInNewContext(html.slice(jstart,jend)+'\njfetch',cloudContext);
+ await jfetch('/auth/v1/token?grant_type=password',{method:'POST'});
+ assert.equal(outgoing.length,1,'Real account sign-in must remain available');
+ await assert.rejects(()=>jfetch('/rest/v1/profile_state',{method:'POST',body:'{}'}),
+  /production cloud writes are disabled/);
+ await assert.rejects(()=>jfetch('/rest/v1/devices',{method:'DELETE'}),
+  /production cloud writes are disabled/);
+ await assert.rejects(()=>jfetch('/auth/v1/user',{method:'PUT'}),
+  /production cloud writes are disabled/);
+ assert.equal(outgoing.length,1,'Blocked Developer mutations must not reach cloud');
+ console.log('Developer Edition login, section selection, saved annotations, combined export and cloud write isolation: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
