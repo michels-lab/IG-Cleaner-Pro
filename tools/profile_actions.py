@@ -975,6 +975,16 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         return "review", "Profile did not load during automatic read-only recheck."
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requires verification. No relationship click made."
+    if previous.get("status") == "already_not_following":
+        # Do not describe an old non-followed profile as a new successful Unfollow.
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Read-only recheck could not verify the owner; no click."
+        state = _follow_state(page, username)
+        if state:
+            return "already_not_following", (
+                "Read-only recheck: still not following this exact profile. No click.")
+        return "review", (
+            "Read-only recheck: prior non-followed state could not be confirmed; no click.")
     result, details = _verify_final_state(page, expected_handle, username, checks=3)
     return result, ("Read-only batch recheck: " + details +
                     " No new relationship-changing click was made.")
