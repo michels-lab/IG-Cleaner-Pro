@@ -242,7 +242,9 @@ public final class SyncApi {
 
     public void verifyOtpAndSetPassword(String code, String password) throws Exception {
         verifyOtp(code);
-        updatePassword(password);
+        // Developer must permit real OTP login, but must not modify the
+        // user's production Auth password. Public app behavior is unchanged.
+        if (!developerReadOnly) updatePassword(password);
     }
 
     public synchronized void logout() {
