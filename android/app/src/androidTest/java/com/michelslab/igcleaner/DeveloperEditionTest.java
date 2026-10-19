@@ -46,6 +46,31 @@ public class DeveloperEditionTest {
     }
 
     @Test
+    public void nativeDeveloperCloudWritesCannotReachProduction() throws Exception {
+        Assume.assumeTrue(InstrumentationRegistry.getInstrumentation()
+            .getTargetContext().getPackageName().endsWith(".developer"));
+        assertTrue(SyncApi.blocksDeveloperMutation("POST", "/rest/v1/profile_state"));
+        assertTrue(SyncApi.blocksDeveloperMutation("PATCH", "/rest/v1/instagram_accounts"));
+        assertTrue(SyncApi.blocksDeveloperMutation("DELETE", "/rest/v1/rpc/igc_delete_instagram_profile"));
+        assertTrue(SyncApi.blocksDeveloperMutation("PUT", "/auth/v1/user"));
+        assertFalse(SyncApi.blocksDeveloperMutation("POST", "/auth/v1/otp"));
+        assertFalse(SyncApi.blocksDeveloperMutation("POST", "/auth/v1/token?grant_type=password"));
+        assertFalse(SyncApi.blocksDeveloperMutation("GET", "/rest/v1/instagram_accounts"));
+        try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                SyncApi api=new SyncApi(activity);
+                try {
+                    api.deleteUnscoped("instagram_accounts?user_id=not.is.null");
+                    fail("Developer native cloud delete must be rejected BEFORE network.");
+                } catch(Exception denied) {
+                    assertTrue("Expected intentional developer guard, not network error",
+                        denied.getMessage().contains("Developer Edition"));
+                }
+            });
+        }
+    }
+
+    @Test
     public void realDeveloperBuildSupportsAccountNotesAndRestart() throws Exception {
         Assume.assumeTrue(InstrumentationRegistry.getInstrumentation()
             .getTargetContext().getPackageName().endsWith(".developer"));
