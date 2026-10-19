@@ -281,10 +281,13 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(page.header.clicker.clicked, 0)
 
     def test_unexpected_follow_button_is_manual_review(self):
+        # An unanchored Follow label is not proof that the CURRENT target is
+        # already unfollowed. Keep it unresolved, never click or silently skip.
         page = FakePage("unfollow")
         page.header.label = "Follow"
         with patch("profile_actions.challenge_detected", return_value=False), \
-             patch("profile_actions.signed_in_handle", return_value="my.profile"):
+             patch("profile_actions.signed_in_handle", return_value="my.profile"), \
+             patch("profile_actions.ACTION_CONTROL_WAIT_MS", 650):
             status, _ = perform_visible_action(page, "target.user", "unfollow", "my.profile")
         self.assertEqual(status, "review")
         self.assertEqual(page.header.clicker.clicked, 0)
