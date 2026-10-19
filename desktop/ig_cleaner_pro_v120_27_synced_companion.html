@@ -15758,23 +15758,42 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   el("igcDevScope").textContent=info.owner==="guest"?"Guest workspace — sign in under Account to scope annotations":
    "Signed-in developer workspace · selected Instagram account "+(info.account==="legacy"?"legacy": "active");
  }
+ function structuralLocator(node){
+  // For id-less cards/buttons, preserve a precise CSS path under a stable
+  // page/section id. Never record text content, href, username or secrets.
+  const chain=[];
+  for(let current=node;current&&chain.length<10;current=current.parentElement){
+   const id=safeId(current.id);
+   if(id){chain.unshift("#"+id);break}
+   const tag=String(current.tagName||"").toLowerCase();
+   if(!/^[a-z][a-z0-9-]*$/.test(tag)||!current.parentElement)return "";
+   let position=1;
+   for(let sibling=current.previousElementSibling;sibling;sibling=sibling.previousElementSibling)
+    if(sibling.tagName===current.tagName)position++;
+   chain.unshift(tag+":nth-of-type("+position+")");
+  }
+  const path=chain.join(" > ");
+  return path.startsWith("#")?path:"";
+ }
  function closestSection(target){
-  const control=target.closest("button[id],input[id],select[id],textarea[id],[role='button'][id]");
-  const section=target.closest(".panel[id],section[id],[role='region'][id],.module-card[id],.page[id],.page");
+  const control=target.closest("button,input,select,textarea,[role='button']");
+  const section=target.closest(".panel,section,[role='region'],.module-card,.page");
   const screen=target.closest(".page")||document.querySelector(".page.active");
-  const uiTarget=control||section||target.closest("[id]")||screen;
+  const uiTarget=control||section||target;
   const screenId=safeId(screen?.id)||"app";
   const sectionId=safeId(section?.id)||screenId;
-  const targetId=safeId(uiTarget?.id)||sectionId;
-  if(!targetId||targetId.startsWith("igcDev"))return null;
-  return {screen:screenId,section:sectionId,control:targetId,
+  const targetId=safeId(uiTarget?.id)||"";
+  const locator=targetId?"#"+targetId:structuralLocator(uiTarget);
+  if(!locator||targetId.startsWith("igcDev"))return null;
+  return {screen:screenId,section:sectionId,
+   control:targetId||"(structural target)",
    tag:String(uiTarget?.tagName||"").toLowerCase().slice(0,15),
-   locator:"#"+targetId};
+   locator,locator_kind:targetId?"stable-id":"structural"};
  }
  function locate(anchor){
-  const node=anchor&&safeId(anchor.control)?el(anchor.control):null;
-  return node|| (anchor&&safeId(anchor.section)?el(anchor.section):null)||
-   (anchor&&safeId(anchor.screen)?el(anchor.screen):null);
+  if(!anchor||typeof anchor.locator!=="string"||
+     !/^#[A-Za-z][A-Za-z0-9_-]*(?: > [a-z][a-z0-9-]*:nth-of-type\\([1-9]\\d*\\))*$/.test(anchor.locator))return null;
+  try{return document.querySelector(anchor.locator)}catch{return null}
  }
  function outline(node){
   if(!node){highlight.style.display="none";return}
@@ -15879,7 +15898,8 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    source:"owner_observation_not_automatically_verified",
    id:entry.id,screen:entry.anchor.screen,section:entry.anchor.section,
    control:entry.anchor.control,locator:entry.anchor.locator,
-   target_present:!!(safeId(entry.anchor.control)&&el(entry.anchor.control)),
+   locator_kind:entry.anchor.locator_kind||"stable-id",
+   target_present:!!locate(entry.anchor),
    comment:entry.comment,
    created_at:entry.created_at,updated_at:entry.updated_at,
    app_version_at_creation:entry.app_version||"unknown"
