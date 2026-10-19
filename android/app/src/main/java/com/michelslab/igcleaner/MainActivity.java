@@ -220,7 +220,11 @@ public final class MainActivity extends AppCompatActivity {
         View aboutAction = findViewById(R.id.headerAboutButton);
         View syncAction = findViewById(R.id.headerSyncButton);
         aboutAction.setOnClickListener(view -> showAbout());
-        syncAction.setOnClickListener(view -> syncNow());
+        syncAction.setOnClickListener(view -> {
+            if (isDeveloperEdition()) {
+                Snackbar.make(content, "Developer Edition: automatic cloud writes are disabled.", Snackbar.LENGTH_LONG).show();
+            } else syncNow();
+        });
         // A visible Instagram identity is also a global switcher: changing
         // profiles should never require leaving a Focus/Review workflow just
         // to hunt for the Profile tab. About stays independent and visible.
@@ -1482,7 +1486,7 @@ public final class MainActivity extends AppCompatActivity {
         try {
             JSONObject cfg = new JSONObject()
                     .put("email", api.getEmail())
-                    .put("auto", true);
+                    .put("auto", !isDeveloperEdition());
             JSONObject device = new JSONObject()
                     .put("id", deviceId)
                     .put("type", "android")
