@@ -15003,6 +15003,16 @@ function actionOwner(){
  const p=window.IGC_INSTAGRAM_PROFILES||{};
  return {owner:String(p.owner||""),account:String(p.active||"")};
 }
+window.igcAutoOpenProfile=async function(username,task=mode){
+ const user=norm(username);
+ if(!user||!["unfollow","cancel","audit"].includes(task))return;
+ try{
+  const result=await requestAction("open-profile",{...actionOwner(),task,username:user});
+  setStatus("Opening @"+result.username+" in the robot's persistent Chrome profile (same Instagram session).");
+ }catch(e){
+  setStatus("Could not open in robot Chrome: "+e.message);
+ }
+};
 function ownInstagramHandle(){
  const p=window.IGC_INSTAGRAM_PROFILES||{},profile=(p.accounts||[]).find(x=>x.account_key===p.active);
  let handle=norm(profile?.username||"");
@@ -15286,6 +15296,10 @@ window.igcAutoRenderIssues=function(){
   const link=document.createElement("a");
   link.href="https://www.instagram.com/"+encodeURIComponent(issue.username)+"/";
   link.target="_blank";link.rel="noopener noreferrer";
+  if(actionBridge)link.addEventListener("click",event=>{
+   if(event&&typeof event.preventDefault==="function")event.preventDefault();
+   window.igcAutoOpenProfile(issue.username,selected);
+  });
   link.textContent="@"+issue.username;name.appendChild(link);
   const heading=document.createElement("strong");
   heading.textContent=issueLabels[issue.issue]||"Review required";
@@ -15308,8 +15322,13 @@ window.igcAutoRenderIssues=function(){
    recovery.textContent="No relationship-changing click occurred. In the updated Windows app, this exact no-click result may be safely checked again in a newly approved batch. A post-click unverified action will never be repeated automatically.";
    reason.appendChild(recovery);
   }
-  const profile=document.createElement("a");profile.className="btn";
-  profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
+  const profile=document.createElement(actionBridge?"button":"a");profile.className="btn";
+  if(actionBridge){
+   profile.type="button";
+   profile.addEventListener("click",()=>window.igcAutoOpenProfile(issue.username,selected));
+  }else{
+   profile.href=link.href;profile.target="_blank";profile.rel="noopener noreferrer";
+  }
   profile.textContent="↗ Open profile";actions.appendChild(profile);
   const protect=document.createElement("button");protect.type="button";protect.className="btn";
   protect.textContent=isProtected(selected,issue.username)?"★ Protected":"★ Protect";
@@ -15475,16 +15494,25 @@ window.igcAutoApproveBatch=async function(){
   await window.igcAutoPoll();
  }catch(e){setStatus("Could not approve this batch: "+e.message)}
 };
-window.igcAutoOpenBatchIssues=function(){
+window.igcAutoOpenBatchIssues=async function(){
  const b=actionBatchReview;if(!b)return;
  const outcome=igcAutoBatchOutcomes(),users=outcome.issues.slice(0,10);
  if(!users.length){setStatus("No issue profiles need manual inspection.");return}
- // Deliberately open ONLY the exceptions, never the whole automatic batch.
+ // Open ONLY actual exceptions; retain the robot Chrome login, not the app UI browser.
+ let opened=0;
  for(const user of users){
   if(!/^[A-Za-z0-9._]{1,30}$/.test(user))continue;
-  window.open("https://www.instagram.com/"+encodeURIComponent(user)+"/","_blank","noopener");
+  if(actionBridge){
+   try{
+    await requestAction("open-profile",{...actionOwner(),task:mode,username:user});
+    opened++;
+   }catch(e){setStatus("Chrome could not open @"+user+": "+e.message);return}
+  }else{
+   window.open("https://www.instagram.com/"+encodeURIComponent(user)+"/","_blank","noopener");
+   opened++;
+  }
  }
- setStatus("Opened "+users.length+" exception profiles; confirmed profiles stay closed.");
+ setStatus("Requested "+opened+" exception profiles in robot Chrome; confirmed profiles stay closed.");
 };
 const original=window.showPage;
 if(typeof original==="function")window.showPage=function(id){
