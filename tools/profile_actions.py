@@ -101,7 +101,7 @@ class ActionTabPool:
         item = self.tabs.get(username)
         if item is None:
             return
-        if status in ("ok", "skipped") or safe_no_click:
+        if status in ("ok", "skipped", "already_not_following") or safe_no_click:
             # Verified outcomes, explicit skips and known pre-click failures
             # close safely; uncertain post-click results retain visible tabs.
             # An ambiguous action, including post-click session loss, cannot.
@@ -401,11 +401,13 @@ def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
 
 def _wait_for_profile_relationship_control(page, username, words, *,
                                            timeout_ms=None,
-                                           on_wait=None, can_act=None):
+                                           on_wait=None, can_act=None,
+                                           detect_already_not_following=False):
     """Wait for the real target to finish rendering; never infer no-follow from loading."""
     timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
+    nonfollow_seen = 0
     while True:
         if can_act and not can_act(username):
             return None
@@ -418,6 +420,13 @@ def _wait_for_profile_relationship_control(page, username, words, *,
         control = _profile_relationship_control(page, username, words)
         if control is not None:
             return control
+        if detect_already_not_following:
+            # Uniquely scoped Follow / Follow Back in this target's hero is
+            # positive evidence of no current follow. Require consecutive
+            # observations so loading/transient page states cannot count.
+            nonfollow_seen = nonfollow_seen + 1 if _follow_state(page, username) else 0
+            if nonfollow_seen >= 3:
+                return "already_not_following"
         # A blank shell is not evidence that Instagram lacks Following.
         header = page.locator("header").first
         has_header = bool(header.count() and header.is_visible())
@@ -777,14 +786,31 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                                "No action was performed.")
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
+        # An account may follow the owner without the owner following it.
+        # Preserve the mutual guard unless Follow Back is definitely visible.
+        if _follow_state(page, username):
+            page.wait_for_timeout(500)
+            if (_follow_state(page, username) and
+                    _profile_relationship_control(page, username,
+                                                  [r"Following", r"Siguiendo"]) is None):
+                return "already_not_following", (
+                    "Already not following: verified Follow / Follow Back on this target. "
+                    "No relationship-changing click; continuing to next profile.")
         return "review", "This account follows you; review required."
     active = (_wait_for_profile_relationship_control(
                   page, username, [r"Following", r"Siguiendo"],
-                  on_wait=on_wait, can_act=can_act)
+                  on_wait=on_wait, can_act=can_act,
+                  detect_already_not_following=True)
               if task == "unfollow" else
               _wait_for_profile_relationship_control(
                   page, username, [r"Requested", r"Solicitado", r"Solicitada"],
                   on_wait=on_wait, can_act=can_act))
+    if active == "already_not_following":
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Instagram session could not be verified before skipping a non-followed profile."
+        return "already_not_following", (
+            "Already not following: verified Follow / Follow Back for this exact profile. "
+            "No Unfollow clicked; continuing to next profile.")
     if active is None:
         if can_act and not can_act(username):
             return "skipped", "Skipped or protected while waiting for profile controls."
