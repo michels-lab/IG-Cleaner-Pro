@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -1069,6 +1071,44 @@ class ActionRobot:
         batches = self._review_batches(owner, account, task)
         return next((entry for entry in reversed(batches)
                      if not entry.get("approved_at")), None)
+
+    def open_profile(self, data):
+        """Open an owner-selected issue in the robot's persistent Chrome profile.
+
+        Never fall back to the system default browser (which uses a different
+        Instagram login). No credentials or cookies leave the local machine.
+        This is manual navigation only; it never changes a relationship.
+        """
+        owner, account, task = self._review_scope(data)
+        username = valid_username(data.get("username"))
+        if not username:
+            raise ValueError("Choose a valid Instagram profile.")
+        with self.lock:
+            if (owner, account, task) != (self.owner, self.account, self.task):
+                raise ValueError("Select the Instagram account and task that own this robot session.")
+            if self.status in ("idle", "starting", "login"):
+                raise ValueError("Wait until the named Instagram session is ready.")
+            session = self.session_dir.resolve()
+        candidates = [shutil.which("chrome.exe"), shutil.which("chrome")]
+        for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+            base = os.environ.get(env)
+            if base:
+                candidates.append(str(Path(base) / "Google" / "Chrome" / "Application" / "chrome.exe"))
+        chrome = next((str(Path(p)) for p in candidates if p and Path(p).is_file()), None)
+        if chrome is None:
+            raise ValueError("Google Chrome is required to reopen the robot's authenticated session.")
+        # Chrome's process singleton reuses the existing browser when this
+        # user-data-dir is already active. Do not open the app's UI profile.
+        url = "https://www.instagram.com/" + username + "/"
+        try:
+            subprocess.Popen([chrome, "--user-data-dir=" + str(session),
+                              "--new-tab", url],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, close_fds=True)
+        except OSError as exc:
+            raise ValueError("Unable to reopen robot Chrome: " + str(exc)) from exc
+        return {"status": "opening", "username": username,
+                "session": "robot-persistent-chrome", "relationship_action": False}
 
     def batch_review(self, data):
         owner, account, task = self._review_scope(data)
