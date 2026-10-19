@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-gradle -p android :app:assembleDeveloper :app:assembleDeveloperAndroidTest
+gradle -p android -PigcAndroidTestBuildType=developer :app:assembleDeveloper :app:assembleDeveloperAndroidTest
 apk="android/app/build/outputs/apk/developer/app-developer.apk"
 instrumentation="android/app/build/outputs/apk/androidTest/developer/app-developer-androidTest.apk"
 test -s "$apk"
