@@ -40,6 +40,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
         "mode": "developer-read-only",
         "privacy": "aggregates-only-no-usernames-no-cookies-no-tokens",
         "journals": 0, "profiles": 0, "unapproved_batches": 0,
+        "historical_readonly_observations": 0,
         "action_status_counts": {}, "issue_code_counts": {},
         "findings": [], "limitations": [
             "Offline journal analysis cannot confirm a real Instagram relationship change.",
@@ -55,7 +56,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
     status_counts, issue_counts, finding_counts = Counter(), Counter(), Counter()
     for path in sorted(root.glob("instagram-actions-*.json")):
         # Skip derived/auxiliary history; count it via the dedicated loop below.
-        if path.name.endswith("-batch-reviews.json"):
+        if path.name.endswith(("-batch-reviews.json", "-historical-rechecks.json")):
             continue
         if not path.is_file():
             continue
@@ -109,6 +110,24 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
                         finding_counts["BATCH_AWAITING_OWNER_APPROVAL"] += 1
         except (OSError, ValueError, UnicodeError):
             finding_counts["BATCH_REVIEW_UNREADABLE"] += 1
+    for path in root.glob("instagram-actions-*-historical-rechecks.json"):
+        try:
+            if path.stat().st_size > MAX_BYTES:
+                finding_counts["HISTORICAL_READONLY_REPORT_UNREADABLE"] += 1
+                continue
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            rows = saved.get("results", {}) if isinstance(saved, dict) else {}
+            if not isinstance(rows, dict): raise ValueError("invalid")
+            for row in rows.values():
+                if not isinstance(row, dict): continue
+                result["historical_readonly_observations"] += 1
+                category = row.get("observation")
+                if category == "observed_not_following":
+                    finding_counts["HISTORICAL_READONLY_NOT_FOLLOWING"] += 1
+                elif category == "still_unresolved":
+                    finding_counts["HISTORICAL_READONLY_UNRESOLVED"] += 1
+        except (OSError, ValueError, UnicodeError):
+            finding_counts["HISTORICAL_READONLY_REPORT_UNREADABLE"] += 1
     if result["unapproved_batches"] > 1:
         finding_counts["MULTIPLE_UNAPPROVED_COHORTS"] += 1
     result["action_status_counts"] = dict(sorted(status_counts.items()))
@@ -122,7 +141,10 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
         "NONFOLLOW_EVIDENCE_INCONSISTENT": ("error", "Terminal already-not-following lacks expected evidence marker."),
         "BATCH_AWAITING_OWNER_APPROVAL": ("info", "Unapproved batch retained; automatic results are not Reviewed."),
         "MULTIPLE_UNAPPROVED_COHORTS": ("warning", "Several unapproved cohorts; reconcile scope without deleting history."),
-        "BATCH_REVIEW_UNREADABLE": ("error", "Batch review document could not be parsed.")
+        "BATCH_REVIEW_UNREADABLE": ("error", "Batch review document could not be parsed."),
+        "HISTORICAL_READONLY_NOT_FOLLOWING": ("info", "Historical recheck observed absence of outgoing follow; no Unfollow clicked and not marked Reviewed."),
+        "HISTORICAL_READONLY_UNRESOLVED": ("warning", "Historical profile still lacks reliable read-only verification; original action result remains untouched."),
+        "HISTORICAL_READONLY_REPORT_UNREADABLE": ("warning", "Historical read-only ledger could not be read; original journal preserved.")
     }
     for code, count in sorted(finding_counts.items()):
         severity, action = descriptions[code]
@@ -149,6 +171,7 @@ def ai_prompt(report: dict, client_checks: dict | None = None) -> str:
     sanitized = {key: report[key] for key in (
         "schema", "product", "generated_at", "source_revision", "mode", "privacy",
         "journals", "profiles", "unapproved_batches",
+        "historical_readonly_observations",
         "action_status_counts", "issue_code_counts", "findings", "limitations"
     ) if key in report}
     return (
