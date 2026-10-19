@@ -1,14 +1,18 @@
 {
   "version": "120.52",
   "tag": "v120.52",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly instructed 'termina todo y dale release' on 2026-10-19 and clarified that Michel tests only official published stable releases, never previews; PR #129 candidate has all five exact-head CI families green and merged on main. This authorizes guarded v120.52 stable publication after independent release checks.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.51",
   "owner_acceptance_note": "Michel personally tests InstaCleaner only after the official v120.52 stable release is published; do not ask for temporary build or Actions artifact testing. New release includes ten actual Chrome tabs, safer Following detection, automatic 'Is this batch OK?' Reviewed confirmation, durable batch read-only rechecks and exception-only tabs. Live Instagram actions remain unverified until post-release owner testing. Never replay an ambiguous unfollow, reset journals, bypass challenges, erase imported state or change Android signer. Independently verify exact-commit Windows installed Setup, Chromium tests, Desktop and Android visuals, original Android signing, checksums, all nine GitHub assets.",
   "requested_at": "2026-10-19",
-  "candidate_main_sha": "409c09210c9f9dba6b12d41826eab2cbc22f57a0"
+  "candidate_main_sha": "409c09210c9f9dba6b12d41826eab2cbc22f57a0",
+  "published_run": 39254170073,
+  "published_commit": "4db21aaf634d43062e191ae6b9408d86c690f05e",
+  "completed_at_utc": "2026-10-19T12:48:35Z",
+  "publication_evidence_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52"
 }
