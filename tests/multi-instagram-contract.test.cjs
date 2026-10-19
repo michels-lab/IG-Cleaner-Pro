@@ -81,7 +81,7 @@ const up=p.scopeRest('focus_batches?on_conflict=user_id,id',
 assert.equal(up.path,'instagram_focus_batches?on_conflict=user_id,account_key,id');
 assert.equal(JSON.parse(up.opt.body)[0].account_key,'ig_second_456');
 vm.runInContext("igcActiveInstagramProfile='ig_third_789';window.IGC_INSTAGRAM_PROFILES._verified=false",ctx);
-assert.throws(()=>p.scopeRest('profile_state?select=*',{method:'GET'}),/verificarse/);
+assert.throws(()=>p.scopeRest('profile_state?select=*',{method:'GET'}),/must be verified before syncing/);
 assert.match(html,/id="igcInstagramIdentity"/);
 assert.match(html,/await refreshInstagramAccounts\(\)/);
 const schema=fs.readFileSync(path.join(root,'supabase/schema.sql'),'utf8');
