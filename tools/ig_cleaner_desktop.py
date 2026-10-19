@@ -155,7 +155,7 @@ def main(argv=None) -> int:
             # Test the REAL installed executable's file:// and local backend
             # startup path. No sign-in, network calls, browser automation, or
             # destructive workspace resets. Used by silent Setup acceptance.
-            home = app_home()
+            home = app_home() / "developer-edition" if args.developer else app_home()
             page = prepare_html(source, home / BUNDLED_HTML)
             if page.stat().st_size < 100_000:
                 raise RuntimeError("The installed interface is incomplete.")
@@ -165,10 +165,14 @@ def main(argv=None) -> int:
             chrome_workspace = home / "workspace-browser"
             chrome_workspace.mkdir(parents=True, exist_ok=True)
             legacy = Path.home() / ".ig-cleaner-pro"
-            manager = WindowsUpdater(app_version(),home,legacy / "profile-counts")
-            server = build_server(Collector(legacy / "profile-counts",
-                                            legacy / "instagram-browser"),
-                                  "installer-smoke-session-token", 0, updater=manager)
+            manager = (None if args.developer else
+                       WindowsUpdater(app_version(), home, legacy / "profile-counts"))
+            collector = (Collector(home / "audit-scratch", home / "instagram-browser")
+                         if args.developer else
+                         Collector(legacy / "profile-counts", legacy / "instagram-browser"))
+            server = build_server(collector, "installer-smoke-session-token", 0,
+                                  updater=manager, developer_mode=args.developer,
+                                  audit_root=legacy / "profile-counts")
             try:
                 assert server.server_address[0] == "127.0.0.1"
             finally:
