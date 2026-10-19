@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "release" / "distribution-manifest.json"
 UPDATE_GUIDE = ROOT / "docs" / "UPDATE_AND_STATE_MIGRATION.md"
 README = ROOT / "README.md"
+COUNTS_GUIDE = ROOT / "docs" / "PROFILE_COUNTS_ROBOT.md"
 
 
 class UpdateGuideContract(unittest.TestCase):
@@ -29,6 +30,17 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertGreaterEqual(len(current_claims), 2)
         self.assertEqual(set(current_claims), {stable},
                          "Update guide must not tell users an old or reserved version is currently shipped.")
+
+    def test_profile_counts_guide_uses_release_feed_not_obsolete_stable_claim(self):
+        guide = COUNTS_GUIDE.read_text(encoding="utf-8")
+        self.assertIn("releasePolicy.currentStableRelease", guide)
+        self.assertIn("releasePolicy.nextRelease", guide)
+        self.assertIn("official GitHub Releases", guide)
+        self.assertIn("official published release", guide)
+        self.assertNotIn("v120.48 Pending Requests batch fixes are still", guide)
+        self.assertNotRegex(guide, r"current Windows guidance\s*\(v[0-9]+\.[0-9]+")
+        self.assertIn("historical [v120.47 release]", guide)
+        self.assertIn("not claims about the latest stable", guide)
 
     def test_publishing_and_device_qa_are_not_conflated_with_candidate_builds(self):
         guide = UPDATE_GUIDE.read_text(encoding="utf-8")
