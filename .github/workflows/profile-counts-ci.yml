@@ -11,6 +11,7 @@ on:
       - 'tests/test_profile_counts_robot.py'
       - 'tests/test_profile_counts_bridge.py'
       - 'tests/test_profile_counts_pacing.py'
+      - 'tests/test_granada_pacing_integrity.py'
       - 'tests/profile-counts-ui.test.cjs'
       - 'packaging/chrome-extension/**'
       - 'tests/chrome-companion.test.cjs'
@@ -34,6 +35,7 @@ on:
       - 'tests/test_profile_counts_robot.py'
       - 'tests/test_profile_counts_bridge.py'
       - 'tests/test_profile_counts_pacing.py'
+      - 'tests/test_granada_pacing_integrity.py'
       - 'tests/profile-counts-ui.test.cjs'
       - '.github/workflows/profile-counts-ci.yml'
 permissions:
@@ -51,6 +53,8 @@ jobs:
           node-version: '22'
       - name: Python profile counts parsing, queue and resume
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
+      - name: GRANADA verify persisted visit and rest journal integrity
+        run: python -m unittest discover -s tests -p 'test_granada_pacing_integrity.py' -v
       - name: Desktop Insights CSV and account isolation
         run: node tests/profile-counts-ui.test.cjs
       - name: Verify regular Chrome Companion is read-only, scoped and CSV-compatible
