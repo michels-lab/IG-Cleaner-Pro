@@ -14977,7 +14977,7 @@ window.igcAutoSaveTiming=function(){
  }catch(e){setStatus(e.message)}
 };
 // Local-only action connector: same capability token used by the Profile Counts robot.
-const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec((window.location?.hash||"").replace(/^#/,""));
+const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)?$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
 // Do not silently leave a running action job acting on a different identity.
@@ -15648,6 +15648,90 @@ controls.close.addEventListener('click',close);
 overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
 overlay.addEventListener('keydown',event=>{if(event.key==='Escape')close()});
 setInterval(()=>{if(opened&&!document.hidden)status()},1700);
+})();
+</script>
+
+<style id="igc-dev-diagnostics-style">
+#igcDevConsole{position:fixed;z-index:2147483000;bottom:14px;right:14px;width:min(380px,calc(100vw - 28px));max-height:min(72vh,640px);display:none;flex-direction:column;background:#101d2e;color:#e9f6ff;border:1px solid #5c8da0;border-radius:15px;box-shadow:0 18px 55px #000a;padding:14px;font:13px/1.4 system-ui,sans-serif;box-sizing:border-box}
+#igcDevConsole .igc-dev-head{font-weight:800;color:#8bddf9;letter-spacing:.04em}
+#igcDevConsole .igc-dev-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#igcDevConsole button{border:1px solid #568ea6;border-radius:8px;color:#eafaff;background:#183349;padding:8px 12px;cursor:pointer;font:inherit}
+#igcDevConsole button:disabled{opacity:.55;cursor:not-allowed}
+#igcDevConsole pre{white-space:pre-wrap;overflow:auto;max-height:39vh;background:#08111e;padding:12px;border-radius:9px;margin:0;font:11px/1.45 ui-monospace,monospace;overflow-wrap:anywhere}
+#igcDevConsole .igc-dev-note{opacity:.8;font-size:12px;margin-top:8px}
+</style>
+<section id="igcDevConsole" role="region" aria-label="Developer audit console">
+ <div class="igc-dev-head">◇ IG CLEANER PRO — DEVELOPER EDITION</div>
+ <div>Read-only twin · isolated browser workspace · redacted audits</div>
+ <div class="igc-dev-actions">
+  <button type="button" id="igcDevRun">Run full audit</button>
+  <button type="button" id="igcDevExport" disabled>Export AI prompt (.txt)</button>
+ </div>
+ <pre id="igcDevResults" aria-live="polite">No audit yet. This twin does not change Instagram relationships.</pre>
+ <div class="igc-dev-note">No usernames, passwords, cookies, tokens or raw exports are included. Inspect the live user app separately.</div>
+</section>
+<script id="igc-developer-edition">
+(function(){
+ "use strict";
+ const match=/^#igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})&igc-developer=1$/.exec(location.hash||"");
+ if(!match)return;
+ const host=document.getElementById("igcDevConsole");
+ const summary=document.getElementById("igcDevResults");
+ const run=document.getElementById("igcDevRun");
+ const exportButton=document.getElementById("igcDevExport");
+ if(!host||!run||!exportButton)return;
+ host.style.display="flex";
+ let lastPrompt="",runtimeErrors=0,runtimeRejections=0;
+ window.addEventListener("error",()=>{runtimeErrors+=1});
+ window.addEventListener("unhandledrejection",()=>{runtimeRejections+=1});
+ function clientChecks(){
+  const seen=new Set();let duplicates=0;
+  document.querySelectorAll("[id]").forEach(el=>{
+   if(seen.has(el.id))duplicates++;else seen.add(el.id);
+  });
+  const ids=["igcAutoBatch","igcAutoRun","igcAutoRows","igcAutoExecutionMetrics","igcAutoBatchApproval"];
+  return {
+   duplicate_dom_ids:duplicates,
+   missing_critical_controls:ids.filter(id=>!document.getElementById(id)).length,
+   uncaught_ui_errors:runtimeErrors,
+   unhandled_ui_rejections:runtimeRejections,
+   viewport_width:Math.max(0,Math.round(window.innerWidth||0))
+  };
+ }
+ run.addEventListener("click",async()=>{
+  run.disabled=true;lastPrompt="";exportButton.disabled=true;summary.textContent="Scanning local action journals and developer UI...";
+  try{
+   const response=await fetch("http://127.0.0.1:"+match[1]+"/api/developer/audit",{
+    method:"POST",mode:"cors",cache:"no-store",
+    headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":match[2]},
+    body:JSON.stringify({client_checks:clientChecks()})
+   });
+   const result=await response.json();
+   if(!response.ok)throw Error("Developer audit backend declined the request");
+   lastPrompt=String(result.ai_prompt||"");
+   const report=result.report||{};
+   summary.textContent=JSON.stringify({
+    generated_at:report.generated_at,
+    journals:report.journals,
+    profiles:report.profiles,
+    unapproved_batches:report.unapproved_batches,
+    status_totals:report.action_status_counts,
+    findings:report.findings,
+    ui_checks:clientChecks(),
+    limitations:report.limitations
+   },null,2);
+   exportButton.disabled=!lastPrompt;
+  }catch(e){summary.textContent="Audit unavailable: "+String(e.message||"unknown error")}
+  finally{run.disabled=false}
+ });
+ exportButton.addEventListener("click",()=>{
+  if(!lastPrompt)return;
+  const file=new Blob([lastPrompt],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(file),a=document.createElement("a");
+  a.href=url;a.download="IG-Cleaner-Developer-Audit-"+new Date().toISOString().slice(0,10)+".txt";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
 })();
 </script>
 </body>
