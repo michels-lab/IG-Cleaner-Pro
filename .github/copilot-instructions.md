@@ -27,7 +27,7 @@ For logo/About/branding work, follow the Michel-Software-Standards Product Ident
 
 ## Release/version authority
 
-Read `release/distribution-manifest.json` before version/release work. Its `releasePolicy.nextRelease` is the authoritative next target. Current stable is **v120.35** and the current next publication target is **v120.36**. Use `.github/workflows/release.yml` for governed v120.35+ publication; historical version-specific publishers stay retired. Never let generic validation publish a release, never publish a prerelease when a normal release was requested, and never treat a merge/version bump as release authorization.
+Read `release/distribution-manifest.json` before ALL version/release work. Resolve the published stable from `releasePolicy.currentStableRelease`, the reserved next target from `releasePolicy.nextRelease`, and cross-check against real GitHub Releases immediately before publishing. **Do not use stale numeric version claims inside agent prompts.** Use `.github/workflows/release.yml` for governed publication; historical version-specific publishers stay retired. Never let generic validation publish a release, never publish a prerelease when a normal release was requested, and never treat a merge/version bump as release authorization. Michel tests official published releases only, not Actions or branch previews.
 
 ## Structured handoff requirement
 
