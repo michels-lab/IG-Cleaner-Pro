@@ -2,12 +2,16 @@
 import json
 import sys
 import unittest
+import threading
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from developer_audit import run_audit, ai_prompt
 from ig_cleaner_desktop import chrome_app_args
+from profile_counts_bridge import Collector, build_server
 
 class DeveloperAuditTest(unittest.TestCase):
     def test_redacted_evidence_preserves_journal(self):
@@ -45,6 +49,37 @@ class DeveloperAuditTest(unittest.TestCase):
                                "0123456789abcdefghijklmnopqrstuvwxyz", developer=True)
         self.assertIn("igc-developer=1", args[-1])
         self.assertIn("developer-edition", args[-2])
+
+
+class ReadOnlyDevBridgeTest(unittest.TestCase):
+    def test_diagnostics_endpoint_and_mutation_guard(self):
+        with TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/"instagram-actions-a.json").write_text(json.dumps({
+                "local_test_profile":{"status":"review","issue":"requires_manual_review",
+                                      "message":"Unverified action."}}))
+            collector=Collector(root/"scratch",root/"browser")
+            server=build_server(collector,"0123456789abcdefghijklmnop",0,
+                                developer_mode=True,audit_root=root)
+            thread=threading.Thread(target=server.serve_forever,daemon=True)
+            thread.start()
+            base="http://127.0.0.1:"+str(server.server_port)
+            headers={"X-IGC-Bridge-Token":"0123456789abcdefghijklmnop","Content-Type":"application/json"}
+            try:
+                request=Request(base+"/api/developer/audit",data=b"{}",headers=headers,method="POST")
+                with urlopen(request,timeout=6) as response:
+                    result=json.load(response)
+                self.assertEqual(result["report"]["profiles"],1)
+                self.assertIn("UNCERTAIN_OR_MANUAL",result["ai_prompt"])
+                self.assertNotIn("local_test_profile",json.dumps(result))
+                request=Request(base+"/api/actions/start",data=b"{}",headers=headers,method="POST")
+                with self.assertRaises(HTTPError) as failure:
+                    urlopen(request,timeout=6)
+                self.assertEqual(failure.exception.code,400)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=6)
 
 if __name__ == "__main__":
     unittest.main()
