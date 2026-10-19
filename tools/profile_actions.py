@@ -546,7 +546,22 @@ def _request_cancel_confirmation(dialog, username):
 
 
 def _follow_state(page, username):
-    """Verify the result on the exact target, not an unrelated Follow link."""
+    """Read only this exact target's Follow state, never a sidebar/suggestion."""
+    # A Follow button alone is NOT enough to skip an account. The correct URL,
+    # signed-in owner (caller) AND an exact visible target username in the
+    # profile header or main hero are required.
+    if not _profile_hero_probe(page, username, []).get("target_visible"):
+        try:
+            header = page.locator("header").first
+            if not header.count() or not header.is_visible():
+                return None
+            exact = re.compile(r"^\\s*@?" + re.escape(username) + r"\\s*$", re.I)
+            matches = header.get_by_text(exact, exact=True)
+            if not any(matches.nth(i).is_visible()
+                       for i in range(min(matches.count(), 10))):
+                return None
+        except Exception:
+            return None
     if _profile_relationship_control(page, username, [r"Follow Back", r"Seguir también"]):
         return "follow_back"
     if _profile_relationship_control(page, username, [r"Follow", r"Seguir"]):
