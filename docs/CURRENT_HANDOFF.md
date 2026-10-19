@@ -1,3 +1,9 @@
+## 2026-10-19 — GRANADA #11 Android screenshot extraction gate (exact-head rerun)
+
+- Profile Counts release-guide [PR #157](https://github.com/michels-lab/IG-Cleaner-Pro/pull/157), head `602b07b15be26cc2fb1a0e5aa646ebd0a255a1b7`: 4/5 exact-head CI check families SUCCESS (Desktop, Desktop rendered, Android compile, Supabase RLS). **Installed Android About screenshot evidence initially FAILED after compact and wide instrumentations each returned `OK (12 tests)`**: `adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/` exited 1, so visual screenshot provenance is not established. Do not conflate test pass with screenshot acceptance.
+- Re-ran only the failed Android visual job via GitHub Actions job rerun against the exact unchanged PR head; re-run is still in progress as recorded. Root cause may be runner/emulator storage path but is **unconfirmed**. The source documentation fix itself remains pending CI merge.
+- Public stable still v120.53, v120.54 unpublished; no release authorized. Owner tests only official published releases.
+
 ## 2026-10-19 — GRANADA #9/#10 integrated, #11 release-guide QA underway; Developer #4 still parked
 
 - **GRANADA #9 merged:** [PR #153](https://github.com/michels-lab/IG-Cleaner-Pro/pull/153) to `main` SHA `dc229e38fde26dbaac5bf8798aae36bc3f160ef5`, issue [#152](https://github.com/michels-lab/IG-Cleaner-Pro/issues/152) closed. Exact PR head `3d6abfdfde2b61e4fa11215ac1dbacc7611db69f` passed **7/7** CI check families, including Windows integrated Setup installed smoke, Desktop rendered/contracts, Android About/build, Profile Counts offline and Supabase RLS. Old CSV rows claiming `ok` without numeric/date evidence are no longer skipped or counted as verified; Windows API displays `invalid_evidence` without rewriting the source file. CLI opt-in failure retry behavior unchanged.
