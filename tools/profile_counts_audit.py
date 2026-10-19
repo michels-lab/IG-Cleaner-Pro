@@ -210,4 +210,17 @@ def read_dated_page(path: Path, offset: int, size: int) -> dict:
         import itertools
         segment = list(itertools.islice(reader, offset, offset + size + 1))
     more = len(segment) > size
-    return {"rows": segment[:size], "next_offset": offset + size if more else None}
+    # Historical CSV may predate strict evidence validation. Never rewrite,
+    # delete or silently erase those owner snapshots; expose unverifiable
+    # "ok" rows with a distinct status so UI/export cannot present them as
+    # confirmed follower measurements.
+    page_rows = []
+    for row in segment[:size]:
+        if row.get("status") == "ok" and not _valid_reading(row):
+            page_rows.append({
+                **row, "status": "invalid_evidence",
+                "evidence_warning": "Historical count/date evidence is incomplete; recheck before using this measurement.",
+            })
+        else:
+            page_rows.append(row)
+    return {"rows": page_rows, "next_offset": offset + size if more else None}

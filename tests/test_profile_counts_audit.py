@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_counts_audit import (
-    audit_cycle_path, dated_history_path, ordered_audit_targets,
+    COLUMNS, audit_cycle_path, dated_history_path, ordered_audit_targets,
     new_cycle, resume_cycle, mark_attempt, append_dated_reading,
     seed_latest_readings, read_dated_page,
 )
@@ -221,6 +221,49 @@ class ProfileCountsReauditTests(unittest.TestCase):
         self.assertEqual(queue[-1], "valid")
         self.assertEqual(set(queue[:-1]), {"suspect", "undated"})
         self.assertEqual(len(queue), 3)
+
+    def test_historical_invalid_ok_rows_are_flagged_read_only_not_silently_deleted(self):
+        with TemporaryDirectory() as temp:
+            path = dated_history_path(Path(temp) / "a.csv")
+            rows = [
+                row("valid", 25, 10, "2026-10-18T13:00:00Z"),
+                row("corrupt", "=IMPORTXML('http://example.test')", 10,
+                    "2026-10-18T13:01:00Z"),
+                row("future", 10, 10, "2099-01-01T00:00:00Z"),
+                row("offline", "", "", "2026-10-18T13:02:00Z", "unavailable"),
+            ]
+            with path.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=COLUMNS)
+                writer.writeheader()
+                writer.writerows(rows)
+            original = path.read_bytes()
+            first = read_dated_page(path, 0, 2)
+            self.assertEqual([x["status"] for x in first["rows"]],
+                             ["ok", "invalid_evidence"])
+            self.assertIn("recheck", first["rows"][1]["evidence_warning"])
+            self.assertEqual(first["rows"][1]["followers"],
+                             "=IMPORTXML('http://example.test')")
+            self.assertEqual(first["next_offset"], 2)
+            second = read_dated_page(path, 2, 2)
+            self.assertEqual([x["status"] for x in second["rows"]],
+                             ["invalid_evidence", "unavailable"])
+            self.assertIsNone(second["next_offset"])
+            self.assertNotIn("evidence_warning", first["rows"][0])
+            self.assertEqual(path.read_bytes(), original,
+                             "Old audit evidence is preserved byte for byte.")
+
+    def test_historical_page_accepts_valid_numeric_zero_and_offset_pagination(self):
+        with TemporaryDirectory() as temp:
+            path = dated_history_path(Path(temp) / "zero.csv")
+            successful = row("zero", 0, 0, "2026-10-18T13:00:00+00:00")
+            successful["approximate"] = "true"
+            append_dated_reading(path, successful)
+            output = read_dated_page(path, 0, 10)
+            self.assertEqual(len(output["rows"]), 1)
+            self.assertEqual(output["rows"][0]["status"], "ok")
+            self.assertEqual(output["rows"][0]["followers"], "0")
+            self.assertEqual(output["rows"][0]["approximate"], "true")
+            self.assertNotIn("evidence_warning", output["rows"][0])
 
     def test_unbounded_history_is_paginated(self):
         with TemporaryDirectory() as temp:
