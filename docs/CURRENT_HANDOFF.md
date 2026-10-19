@@ -1,3 +1,10 @@
+## 2026-10-18 — Candidate: automatic batch needs human "Reviewed" approval
+
+- User interrupted ten-tab work to clarify: do NOT re-open all ten profiles for manual inspection. Robot does routine checking automatically. On batch completion display **"Is this batch OK?"**; only the user's one-click batch approval marks verified profiles Reviewed. An unapproved batch stays pending and can be rerun in automatic **read-only check** mode for the same cohort; no repeated relationship-changing clicks for prior attempts. Optional "Open only issue profiles" is for exceptions.
+- Branch `feat/automation-batch-approval-20261018`: owner/account/task-specific durable `-batch-reviews.json` sidecar storing exact target cohort, creation and explicit approved_at; Windows bridge `review-batch`, `approve-batch`, `recheck-batch` with owner/task/batch id validation; separate UI status and legacy reviewedMeta updates only after confirmation. Uncertain records remain unresolved even if the batch was approved.
+- New automatic recheck visits all eligible saved targets with existing Instagram pacing and **no Unfollow/Cancel Request clicks**, persisting read-only outcomes without overwriting original action journals. Explicitly does not send Instagram credentials or browser state anywhere. Historical action records stay, but no legacy batch membership is inferred.
+- Test against stale sessions, cross-account isolation, restart, non-approved start blocking, safe recheck, only-issues browser opening, and Windows/Android/Desktop regression workflows. Do not release without explicit owner instruction. v120.51 remains stable.
+
 ## 2026-10-18 — Live v120.51 failure, ten-tab staged preloading and Following detector candidate
 
 - User screenshot after installing/testing v120.51: an ambiguous post-click result (@jdrd.avid), a no-click Following timeout (@isaac_nahuat: main=yes, exact username=yes, matching controls=0), and only three loaded profiles despite requesting ten. This is **not** accepted as working real Instagram Unfollow.
