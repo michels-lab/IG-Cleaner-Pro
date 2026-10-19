@@ -14827,6 +14827,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<style id="igc-automations-metric-layout">
+#igcAutoMetrics,#igcAutoExecutionMetrics{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:12px 0}
+#igcAutoMetrics>span,#igcAutoExecutionMetrics>span{display:inline-flex;align-items:center;white-space:normal;overflow-wrap:anywhere;min-height:34px;padding:7px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);line-height:1.45}
+</style>
 <script id="igc-automations-plan">
 (function(){
 "use strict";
@@ -14841,6 +14845,28 @@ function scope(){
 }
 function key(){return "igc_action_protected_v1__"+scope()}
 function timingKey(){return "igc_action_timing_v1__"+scope()+"__"+mode}
+let hydratedTimingKey=null;
+function igcAutoHydrateTiming(){
+ const key=timingKey();if(hydratedTimingKey===key)return; // Do not reset active edits on polling.
+ hydratedTimingKey=key;
+ try{
+  const t=JSON.parse(localStorage.getItem(key)||"null");
+  if(t){
+   if(Number.isInteger(t.count)&&t.count>=1&&t.count<=1000)document.getElementById("igcAutoBatch").value=String(t.count);
+   if(Number.isFinite(t.rest)&&t.rest>=0&&t.rest<=1440)document.getElementById("igcAutoRest").value=String(t.rest);
+   if(Number.isFinite(t.gap)&&t.gap>=0&&t.gap<=3600)document.getElementById("igcAutoGap").value=String(t.gap);
+  }
+ }catch{}
+}
+function igcAutoPersistTiming(){
+ const count=Number(document.getElementById("igcAutoBatch")?.value);
+ const rest=Number(document.getElementById("igcAutoRest")?.value);
+ const gap=Number(document.getElementById("igcAutoGap")?.value);
+ if(Number.isInteger(count)&&count>=1&&count<=1000&&
+    Number.isFinite(rest)&&rest>=0&&rest<=1440&&
+    Number.isFinite(gap)&&gap>=0&&gap<=3600)
+  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
+}
 function saved(){
  try{
   const x=JSON.parse(localStorage.getItem(key())||"{}");
@@ -15303,7 +15329,7 @@ window.igcAutoRenderIssues=function(){
 
 window.igcAutoRender=function(){
  const root=document.getElementById("igcAutoRows");if(!root)return;
- refreshScope();
+ refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
  const attempted=mode==="protected"?new Set():priorAttempts(mode);
@@ -15331,14 +15357,6 @@ window.igcAutoRender=function(){
  }else{
   setStatus("Queue prepared: "+(mode==="cancel"?"sent requests":mode==="audit"?"suspected non-followback accounts for OPTIONAL read-only verification":"unreviewed non-followbacks from imported exports")+". Review and authorize your batch.");
  }
- try{
-  const t=JSON.parse(localStorage.getItem(timingKey())||"null");
-  if(t){
-   document.getElementById("igcAutoBatch").value=String(t.count);
-   document.getElementById("igcAutoRest").value=String(t.rest);
-   document.getElementById("igcAutoGap").value=String(t.gap);
-  }
- }catch{}
  root.replaceChildren();
  const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
  if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
@@ -15474,6 +15492,11 @@ if(typeof original==="function")window.showPage=function(id){
  if(id==="automations"){window.igcAutoRender();window.igcAutoRenderIssues();if(actionBridge)window.igcAutoPoll()}
  return ret;
 };
+for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap"]){
+ const control=document.getElementById(id);
+ if(control&&typeof control.addEventListener==="function")
+  control.addEventListener("input",igcAutoPersistTiming);
+}
 if(actionBridge&&typeof setInterval==="function")
  setInterval(()=>{if(!document.hidden)window.igcAutoPoll()},5000);
 })();
