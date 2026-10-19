@@ -90,6 +90,24 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertIsNone(pool.prepared("already.loading"))
         self.assertTrue(prepared.is_closed())
 
+    def test_finished_cohort_releases_unused_prefetched_tabs_not_uncertain_actions(self):
+        from profile_actions import ActionTabPool
+        pool=ActionTabPool(FakeTabContext())
+        staged=[pool.open("staged."+str(i)) for i in range(8)]
+        for i in range(8):
+            pool.tabs["staged."+str(i)]["status"]="prefetched"
+        uncertain=pool.open("maybe.clicked")
+        pool.record("maybe.clicked","review")
+        blocked=pool.open("manual.challenge")
+        pool.record("manual.challenge","blocked")
+        pool.close_unacted_prefetches()
+        self.assertTrue(all(page.is_closed() for page in staged),
+                        "Eight untouched prefetched tabs must not hold robot in review loop")
+        self.assertFalse(uncertain.is_closed(),"Potential relationship action remains visible")
+        self.assertFalse(blocked.is_closed(),"Account challenge remains for human attention")
+        self.assertEqual({row["username"] for row in pool.overview()},
+                         {"maybe.clicked","manual.challenge"})
+
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
