@@ -1,3 +1,13 @@
+## 2026-10-19 — v120.52 stable officially published and verified
+
+- Owner's explicit release-first acceptance rule remains binding: Michel tests the actual stable release only, never temporary Actions previews. Do not request a preview installation for acceptance.
+- Candidate release PR #129 merged from exact head `a641b78f190f9cec47053aeab0d52f518a167dc3`; all five workflow families SUCCESS (Windows installed Setup/Chromium, general CI, Profile Counts, Desktop visual, Android emulator visual).
+- Authorized via isolated main commit `4db21aaf634d43062e191ae6b9408d86c690f05e`. Governed publication run [39254170073](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39254170073) SUCCESS: rendered UI evidence, Windows Setup install/launch/uninstall, original stable signing Android APK, integrated package and SHA-256 checksums.
+- Official GitHub stable [v120.52](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52), published `2026-10-19T12:48:35Z`, `draft=false`, `prerelease=false`, **nine real assets**, including `IG-Cleaner-Pro-Windows-Setup-v120.52.exe`, `IG-Cleaner-Pro-Android-v120.52.apk`, Desktop HTML/ZIP, optional portable robot ZIP and SHA256SUMS. Release identity verified from GitHub API.
+- Public release includes PR #127 ten actually prepared tabs and safer Following verification, PR #128 explicit owner-approved automatic batch Reviewed state and read-only reruns of unapproved cohorts, with only exception profiles opened as needed. Never replay uncertain relationship-changing clicks or erase old journals.
+- Release-request authorization consumed (`authorized=false,status=published`); distribution manifest reconciled to current stable v120.52 and next reserved v120.53. No next release is authorized.
+- **Still pending owner testing against live Instagram on official installed v120.52.** Offline Chromium does not prove real-world successful Unfollow/Cancel Request. Keep open owner-reported account/session differences as potential follow-up; stop on challenges. No Authenticode certificate was used for Windows Setup.
+
 ## 2026-10-19 — v120.52 release preparation and owner testing contract
 
 - **Permanent owner-acceptance rule:** Michel tests the actual official published stable release, never temporary GitHub Actions previews, candidate ZIPs or unmerged artifacts. Complete automated safety, installed Windows, real offline Chromium, Android/desktop UI, signing and asset-integrity checks before publication, then provide the official stable release. Do not use owner manual preview validation as a release gate or claim real Instagram acceptance before post-release feedback.
