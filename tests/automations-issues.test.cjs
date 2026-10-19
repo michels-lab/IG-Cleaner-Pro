@@ -41,7 +41,11 @@ vm.createContext(ctx);vm.runInContext(match[1],ctx);
  const first=elements.igcAutoIssueRows.children[0];
  assert.equal(first.children[0].children[0].href,"https://www.instagram.com/mutual.after/");
  assert.equal(first.children[2].children[0].textContent,"↗ Open profile");
- assert.equal(first.children[2].children[0].target,"_blank");
+ assert.notEqual(first.children[2].children[0].target,"_blank",
+  "Integrated app must not open a separate logged-out browser");
+ await first.children[2].children[0].click();
+ assert(calls.some(url=>url.endsWith("/api/actions/open-profile")),
+  "Open profile must use token-authenticated robot Chrome");
  assert.match(first.children[1].children[0].textContent,/Follow Back/);
  first.children[2].children[2].click(); // mark reviewed
  assert.equal(elements.igcAutoIssueRows.children.length,1,"Reviewed item is hidden from pending filter");
@@ -60,6 +64,6 @@ vm.createContext(ctx);vm.runInContext(match[1],ctx);
  profile.active="ig-A";
  ctx.window.igcAutoRenderIssues();
  assert.equal(elements.igcAutoIssueRows.children.length,2,"Return to account restores saved result cache");
- assert.match(elements.igcAutoIssueTotal.textContent,/1 pending reviews/);
+ assert.match(elements.igcAutoIssueTotal.textContent,/1 need manual review/);
  console.log("Automations issue summaries, filters, profile navigation, reviewed state and account isolation: PASS");
 })().catch(e=>{console.error(e);process.exitCode=1});
