@@ -28,6 +28,13 @@ for viewport in compact wide; do
   fi
 done
 
-adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/ artifacts/visual/android/
-test "$(find artifacts/visual/android/igc-ui-capture -name '*.png' | wc -l)" -eq 8
-echo 'SUCCESS: eight instrumented Android Home and About screenshots captured'
+# Scoped external Android/data extraction can fail even when all 12 installed
+# UI tests passed. Read only debug-APK-owned private evidence with run-as.
+# The helper is fail-closed, validates all eight PNG headers/dimensions and
+# never publishes a partial set; downstream visual QA verifies real pixels.
+python3 tools/collect_android_about_screenshots.py \
+  --adb adb \
+  --package com.michelslab.igcleaner.beta \
+  --out artifacts/visual/android/igc-ui-capture
+test "$(find artifacts/visual/android/igc-ui-capture -maxdepth 1 -name '*.png' | wc -l)" -eq 8
+echo 'SUCCESS: eight instrumented Android Home and About screenshots captured and transferred'
