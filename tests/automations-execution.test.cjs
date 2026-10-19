@@ -175,7 +175,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(retry.data.batch_id,'batch123');
  assert.deepEqual(retry.data.targets,['keep.me','skip.me','untouched.three']);
  assert.equal(retry.data.confirmation,'unfollow:3');
- assert(texts.at(-1).includes('Only untouched profiles will be attempted'));
+ assert(texts.at(-1).includes('Only these safe profiles will be attempted'));
  ctx.window.igcAutoOpenBatchIssues();
  assert.equal(opened.length,1,'Only issue profiles may open, never untouched accounts');
  assert.match(opened[0][0],/skip.me/);
