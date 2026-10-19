@@ -290,3 +290,7 @@ Before any About/branding implementation or approval, read the **current** `mich
 ## Instagram Cleaner explicit release-review workflow override (2026-10-08)
 
 The user reviews the **finished release**, not a pre-release approval queue. Do not gate this app's publishing on manual/required human reviewer approvals or protected GitHub Environment setup. Retain a strict automated pre-publication gate: the exact candidate commit must pass real emulated Android About UI tests, visible social/contact assertions, image capture at compact/wide sizes, screenshot checksum/binary identity validation, Desktop/Android CI and persistent signing. Missing automated proof blocks. New releases still need the user's explicit release authorization. Separate user-facing post-release review and target-device acceptance must be recorded honestly; a green screenshot CI is not a physical-phone PASS. This app-specific preference takes precedence over a generic manual review pattern in shared agent instructions.
+
+## GRANADA — Regla permanente de continuación del propietario
+
+Cuando el propietario diga **GRANADA**, se aparca con trazabilidad cualquier pendiente inacabado/bloqueado/en QA/propiedad de otra rama, y se aborda **el siguiente bloque grande independiente**. Consultar primero `.michelslab/GRANADA.md` y la norma maestra `standards/GRANADA_CONTINUOUS_BLOCK_PROTOCOL.md`; respetar claims, PRs y colisiones de archivos. Registrar SHA, tests y punto de retorno; no cerrar pendientes falsamente ni publicar releases sin autorización.
