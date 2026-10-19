@@ -252,6 +252,13 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         bottomNav.setSelectedItemId(R.id.navHome);
+        // Developer APK is independently installed and opens the same WebView
+        // workspace with local diagnostics enabled, without changing production.
+        if (isDeveloperEdition()) showWorkspaceScreen("", "DEVELOPER EDITION");
+    }
+
+    private boolean isDeveloperEdition() {
+        return getPackageName().endsWith(".developer");
     }
 
     @Override
@@ -1712,6 +1719,11 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private final class WorkspaceBridge {
+        @JavascriptInterface
+        public boolean isDeveloperMode() {
+            return isDeveloperEdition();
+        }
+
         @JavascriptInterface
         public String getInstagramOwnerEmail() {
             return api.getEmail();
