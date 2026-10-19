@@ -1238,10 +1238,10 @@ class ActionRobot:
             if self.collector.worker and self.collector.worker.is_alive():
                 raise ValueError("Pause Profile Counts before historical read-only checks.")
             journal = _read_json(self._base_for(owner, account, task), {})
-            targets = sorted(username for username, record in journal.items()
-                if valid_username(username) == username
-                and isinstance(record, dict)
-                and record.get("status") in ("review", "error", "blocked"))
+            targets = [username for username, record in journal.items()
+                       if valid_username(username) == username
+                       and isinstance(record, dict)
+                       and record.get("status") in ("review", "error", "blocked")]
             if not targets:
                 raise ValueError("No unresolved historical profiles need re-audit.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
@@ -1249,7 +1249,23 @@ class ActionRobot:
             targets = [name for name in targets if name not in protected]
             if not targets:
                 raise ValueError("All unresolved historical profiles are protected.")
-            self.targets = targets[:MAX_ACTIONS_PER_JOB]
+            old = _read_json(self._historical_recheck_file_for(owner, account, task), {})
+            results = old.get("results", {}) if isinstance(old, dict) else {}
+            if not isinstance(results, dict): results = {}
+            # Do not always re-open the same first 1,000 old failures.
+            # Prefer entries never read, then the oldest unresolved observation.
+            # Already-confirmed read-only Follow state is complete *as a scan*
+            # but never approved as a historical Unfollow action.
+            to_revisit = [name for name in targets
+                          if not (isinstance(results.get(name), dict)
+                                  and results[name].get("observation") == "observed_not_following")]
+            if not to_revisit:
+                raise ValueError("All historical failed actions already have a read-only current-state observation.")
+            to_revisit.sort(key=lambda name: (
+                0 if name not in results else 1,
+                str(results.get(name, {}).get("at", "")) if isinstance(results.get(name), dict) else "",
+                name))
+            self.targets = to_revisit[:MAX_ACTIONS_PER_JOB]
             self.active_batch_id = ""
             self.review_only, self.history_recheck_mode = True, True
             self.historical_seen, self.historical_not_following_seen = set(), set()
