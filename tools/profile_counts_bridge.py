@@ -22,7 +22,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot
 
-from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username
+from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
                                   resume_cycle, mark_attempt, append_dated_reading,
                                   seed_latest_readings, read_dated_page)
@@ -219,7 +219,7 @@ class Collector:
                     self.audit_cycle = new_cycle(cycle_file, self.usernames, saved)
                 self.progress = len(self.audit_cycle["done"])
             else:
-                self.progress = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
+                self.progress = sum(valid_saved_measurement(saved.get(u)) for u in self.usernames)
             self.max_per_window, self.window_minutes, self.min_delay_seconds = count, minutes, delay
             self.pause_every, self.pause_minutes = rest_count, rest_minutes
             self.wait_until = 0
@@ -280,7 +280,7 @@ class Collector:
             saved = read_results(self.result_path())
             seed_latest_readings(dated_history_path(self.result_path()), saved)
             self.total = len(normalized)
-            self.progress = sum(u in saved and saved[u].get("status") == "ok" for u in normalized)
+            self.progress = sum(valid_saved_measurement(saved.get(u)) for u in normalized)
             self.message = ("Saved results restored; select Start to continue."
                             if load_only else "Opening visible browser...")
             self.status = "idle" if load_only else "starting"
@@ -468,7 +468,7 @@ class Collector:
                     done = set(self.audit_cycle["done"])
                     remaining = [u for u in self.audit_cycle["targets"] if u not in done]
                 else:
-                    remaining = [u for u in self.usernames if saved.get(u, {}).get("status") != "ok"]
+                    remaining = [u for u in self.usernames if not valid_saved_measurement(saved.get(u))]
                 self._update("running", "Re-auditing oldest measurements..."
                              if self.audit_mode == "oldest_first" else
                              "Checking visible Instagram profiles...")
@@ -517,7 +517,7 @@ class Collector:
                     # A later blocked/failed recheck never erases the last
                     # successful observation from the latest-results index.
                     previous = saved.get(username, {})
-                    if previous.get("status") != "ok" or status == "ok":
+                    if not valid_saved_measurement(previous) or status == "ok":
                         if status == "ok":
                             append_dated_reading(dated_history_path(self.result_path()), row)
                         saved[username] = row
@@ -529,13 +529,13 @@ class Collector:
                         completed = len(self.audit_cycle["done"])
                         denominator = len(self.audit_cycle["targets"])
                     else:
-                        completed = sum(u in saved and saved[u].get("status") == "ok" for u in self.usernames)
+                        completed = sum(valid_saved_measurement(saved.get(u)) for u in self.usernames)
                         denominator = self.total
                     self._update("running", f"@{username}: {status}. Completed {completed}/{denominator}.", completed)
                 if self.stop_signal.is_set():
                     self._update("paused", "Paused; progress was saved.")
                     return
-                unresolved = any(saved.get(u, {}).get("status") != "ok" for u in self.usernames)
+                unresolved = any(not valid_saved_measurement(saved.get(u)) for u in self.usernames)
                 if self.audit_mode == "oldest_first":
                     done = len(self.audit_cycle["done"])
                     total = len(self.audit_cycle["targets"])
@@ -617,7 +617,7 @@ class Collector:
     def snapshot(self):
         with self.lock:
             saved = read_results(self.result_path()) if self.owner and self.account else {}
-            good = sum(saved.get(u, {}).get("status") == "ok" for u in self.usernames)
+            good = sum(valid_saved_measurement(saved.get(u)) for u in self.usernames)
             error = sum(saved.get(u, {}).get("status") == "error" for u in self.usernames)
             unavailable = sum(saved.get(u, {}).get("status") == "unavailable" for u in self.usernames)
             analyzed = good + error + unavailable
@@ -671,7 +671,19 @@ class Collector:
             if not self.owner or not self.account:
                 return []
             saved = read_results(self.result_path())
-            return [saved[u] for u in self.usernames if u in saved]
+            rows = []
+            for username in self.usernames:
+                if username not in saved:
+                    continue
+                row = saved[username]
+                if row.get("status") == "ok" and not valid_saved_measurement(row):
+                    # Only sanitize the API response. Do not rewrite the CSV:
+                    # owner evidence and historic timestamps must remain intact.
+                    rows.append({**row, "status": "invalid_evidence",
+                                 "evidence_warning": "Previous success record is missing verified counts or date; recheck required."})
+                else:
+                    rows.append(row)
+            return rows
 
 
 def build_server(collector: Collector, token: str, port: int = 0, updater=None,
