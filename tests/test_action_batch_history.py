@@ -332,7 +332,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 current = robot.batch_review({**request,"task":"cancel"})["batch"]
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
-                with self.assertRaisesRegex(ValueError,"already attempted"):
+                with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
                     robot.start(self._request(["target.79"]))
                 robot.start(self._request(["fresh.81"]))
                 self.assertEqual(robot.targets,["fresh.81"])
