@@ -928,6 +928,31 @@ def perform_visible_followback_audit(page, username, expected_handle):
     return "review", "unverified", "Followers search gave incomplete or inconsistent evidence."
 
 
+def recheck_action_readonly(page, username, task, expected_handle, previous,
+                            *, on_wait=None, preloaded=False):
+    """Verify the previous automatic action without any relationship-changing click."""
+    if task == "audit":
+        result, _relation, details = perform_visible_followback_audit(
+            page, username, expected_handle)
+        return result, details
+    if not isinstance(previous, dict) or previous.get("status") not in (
+            "ok", "review", "error", "blocked") or _preclick_no_action(previous):
+        return "review", ("No completed Instagram action exists for this profile. "
+                          "Automatic read-only recheck did not click anything.")
+    target = "https://www.instagram.com/" + username + "/"
+    current = urlparse(page.url)
+    if (not preloaded or current.hostname not in ("www.instagram.com", "instagram.com")
+            or current.path.strip("/").casefold() != username.casefold()):
+        page.goto(target, wait_until="domcontentloaded", timeout=45000)
+    if not _wait_for_target_profile_shell(page, username, on_wait=on_wait):
+        return "review", "Profile did not load during automatic read-only recheck."
+    if challenge_detected(page) or page.locator('input[name="password"]').count():
+        return "blocked", "Instagram requires verification. No relationship click made."
+    result, details = _verify_final_state(page, expected_handle, username, checks=3)
+    return result, ("Read-only batch recheck: " + details +
+                    " No new relationship-changing click was made.")
+
+
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
         self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
@@ -1328,7 +1353,8 @@ class ActionRobot:
                     for candidate in self.targets:
                         previous = journal.get(candidate, {})
                         if (self._protected_for(candidate) or candidate in self.skipped
-                                or (previous.get("status") in ("ok", "review", "error", "blocked")
+                                or (not self.review_only and
+                                    previous.get("status") in ("ok", "review", "error", "blocked")
                                     and not _preclick_no_action(previous))):
                             continue
                         if len(stage_names) >= MAX_ACTION_TABS:
@@ -1408,12 +1434,13 @@ class ActionRobot:
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
                     previous = journal.get(user, {})
-                    if _preclick_no_action(previous):
+                    if not self.review_only and _preclick_no_action(previous):
                         journal.pop(user, None)
                         _atomic_json(path, journal)
                         previous = {}
                     if (self._protected_for(user) or user in self.skipped or
-                        previous.get("status") in ("ok", "review", "error", "blocked")):
+                        (not self.review_only and
+                         previous.get("status") in ("ok", "review", "error", "blocked"))):
                         continue
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
@@ -1468,7 +1495,8 @@ class ActionRobot:
                     # Never prefetch through Instagram faster than the owner's
                     # configured visit pacing or across a mandatory batch rest.
                     next_user = None
-                    for candidate in self.targets[target_index + 1:]:
+                    for candidate in ([] if self.review_only else
+                                      self.targets[target_index + 1:]):
                         prior = journal.get(candidate, {})
                         if (not self._protected_for(candidate)
                                 and candidate not in self.skipped
@@ -1526,7 +1554,16 @@ class ActionRobot:
 
                     relation = ""
                     try:
-                        if self.task == "audit":
+                        if self.review_only:
+                            relation = ""
+                            result, details = recheck_action_readonly(
+                                work_page, user, self.task, self.handle, previous,
+                                on_wait=lambda phase, elapsed, limit:
+                                    self._record_readiness(user, phase, elapsed, limit,
+                                                           action_tabs),
+                                preloaded=bool(prepared_item and
+                                               prepared_item.get("status") == "prefetched"))
+                        elif self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
                         elif prepared_item and prepared_item.get("status") == "prefetch_pending":
@@ -1563,8 +1600,10 @@ class ActionRobot:
                     # Persist the result BEFORE closing any confirmed tab.
                     # A browser close failure must never erase a clicked action
                     # from the account-scoped no-replay journal.
-                    if result != "skipped":
-                        issue = _action_issue(self.task, result, details)
+                    issue = _action_issue(self.task, result, details) if result != "skipped" else ""
+                    if self.review_only:
+                        self._save_recheck_result(user, result, details)
+                    elif result != "skipped":
                         journal[user] = {"status": result, "message": details,
                                          "audit_relation": relation,
                                          "issue": issue,
@@ -1582,6 +1621,10 @@ class ActionRobot:
                     if result == "skipped":
                         continue
                     if result != "ok":
+                        if self.review_only:
+                            # Read-only automatic review should check the rest
+                            # of the batch, not demand one-by-one manual work.
+                            continue
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
                         if self.task == "audit" and result == "review":
@@ -1594,8 +1637,11 @@ class ActionRobot:
                         stopped_for_review = True
                         break
                 with self.lock:
+                    rechecked = (self._pending_review(self.owner, self.account, self.task)
+                                 or {}).get("recheck_results", {}) if self.review_only else {}
                     remaining = sum(u not in self._protected() and u not in self.skipped and
-                                    journal.get(u, {}).get("status") != "ok"
+                                    (rechecked.get(u, {}).get("status") if self.review_only
+                                     else journal.get(u, {}).get("status")) != "ok"
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
