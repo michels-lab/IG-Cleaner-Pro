@@ -15052,15 +15052,16 @@ window.igcAutoStart=async function(){
     const data=actionConfig(mode,waiting.batch.targets);
     data.batch_id=waiting.batch.id;
     const attempted=waiting.batch.action_results||{};
-    const untouched=data.targets.filter(u=>!["ok","review","error","blocked"].includes(
-      attempted[u]?.status||"pending"));
-    if(!untouched.length)throw Error("No untouched targets remain. Verify previous outcomes or open only issue profiles. Uncertain clicks are never replayed.");
+    const untouched=data.targets.filter(u=>
+      attempted[u]?.safe_no_click===true ||
+      !["ok","review","error","blocked"].includes(attempted[u]?.status||"pending"));
+    if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
     if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
       " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
-      "?\n"+untouched.length+" profiles have no previous action result. Only untouched profiles will be attempted; uncertain actions will NEVER be repeated."))return;
+      "?\n"+untouched.length+" profiles are untouched or explicitly proven no-click. Only these safe profiles will be attempted; uncertain actions will NEVER be repeated."))return;
     window.igcAutoSaveTiming();
     actionState=await requestAction("start",data);
-    setStatus("Continuing saved batch: attempting only untouched profiles.");
+    setStatus("Continuing saved batch: untouched profiles and proven no-click retries only.");
     await window.igcAutoPoll();
     return;
   }
