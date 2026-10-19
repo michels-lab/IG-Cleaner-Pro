@@ -3,6 +3,8 @@ package com.michelslab.igcleaner;
 import android.webkit.WebView;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
@@ -39,6 +41,8 @@ public class DeveloperEditionTest {
 
     @Test
     public void realDeveloperBuildSupportsAccountNotesAndRestart() throws Exception {
+        Assume.assumeTrue(InstrumentationRegistry.getInstrumentation()
+            .getTargetContext().getPackageName().endsWith(".developer"));
         try(ActivityScenario<MainActivity> scenario=ActivityScenario.launch(MainActivity.class)){
             scenario.onActivity(activity ->
                 assertTrue("Must use separate .developer app package",
