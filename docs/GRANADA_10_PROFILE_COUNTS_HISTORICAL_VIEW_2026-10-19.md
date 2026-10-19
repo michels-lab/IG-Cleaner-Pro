@@ -1,6 +1,6 @@
 # GRANADA #10 — Legacy Profile Counts dated-history evidence display (2026-10-19)
 
-**Issue:** [#154](https://github.com/michels-lab/IG-Cleaner-Pro/issues/154). **Branch:** `granada/dated-counts-invalid-evidence-view-20261019`, base `main` `8697c9f412ca68ec9e62d2dd293d1b58261ba05e`. **Status:** isolated PR awaiting exact-HEAD CI, not released.
+**Issue:** [#154](https://github.com/michels-lab/IG-Cleaner-Pro/issues/154). **Branch:** `granada/dated-counts-invalid-evidence-view-20261019`, base `main` `8697c9f412ca68ec9e62d2dd293d1b58261ba05e`. **Status:** merged [PR #155](https://github.com/michels-lab/IG-Cleaner-Pro/pull/155) into `main` at `9159617e1ca716d9c15d650deee33b5956077e10`, **6/6 exact-HEAD check families SUCCESS**, including Windows installed Setup, Android About/build, Desktop rendered and RLS. Issue #154 closed; **not published**.
 
 ## Gap and scope
 - GRANADA #7 prevents new invalid `status=ok` measurements entering the append-only dated history. However, *old* `.dated.csv` rows created before verification can still contain invalid counts, missing or future timestamps, or injected-looking CSV-formula content, and `read_dated_page` previously presented every historical `ok` as a verified measurement.
