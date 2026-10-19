@@ -59,7 +59,8 @@ def history_path(results_file: Path):
 def load_history(file: Path, previous_results=None, now=None):
     """Upgrade existing result files conservatively when no visit log exists."""
     now = time.time() if now is None else now
-    if file.exists():
+    existing_ledger = file.exists()
+    if existing_ledger:
         try:
             raw = json.loads(file.read_text(encoding="utf-8"))
             if not isinstance(raw, list):
@@ -72,7 +73,7 @@ def load_history(file: Path, previous_results=None, now=None):
         raw = [_from_iso(r.get("checked_at", "")) for r in (previous_results or {}).values()]
     values=[]
     for item in raw:
-        if file.exists():
+        if existing_ledger:
             # A syntactically valid JSON array is not necessarily a valid visit
             # ledger. Dropping malformed/future records here silently resets the
             # rate budget, so stop the robot and retain the original bytes.
