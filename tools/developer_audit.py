@@ -86,7 +86,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
                     msg.startswith("The active Instagram account cannot be verified. No action was performed.")
                     or msg == "Instagram session verification failed before the first click. No action performed."
                     or msg == "Instagram session could not be verified before skipping a non-followed profile."
-                    or (issue in SAFE_ISSUES and "No action clicked." in msg)
+                    or (isinstance(issue, str) and issue in SAFE_ISSUES and "No action clicked." in msg)
                 )
                 finding_counts["RETRYABLE_ZERO_CLICK" if safe_preclick else "UNCERTAIN_OR_MANUAL"] += 1
             if status == "already_not_following" and not str(record.get("message", "")).startswith("Already not following:"):
