@@ -1,3 +1,11 @@
+## 2026-10-19 — Prepare official stable v120.53 after post-release v120.52 action-mode regression
+
+- Merged fix [PR #130](https://github.com/michels-lab/IG-Cleaner-Pro/pull/130) at `bc2fa492747c4029525b9cf3dd592eaf6a110779` after **five passing** exact-head workflow families: Windows Setup install/Chromium, Desktop, Android, Profile Counts and general CI.
+- Functional source root: Run directed incomplete owner-unapproved batch to the read-only recheck API. Real owner screenshot: 2/40 processed, 0 verified, 2 issues, 38 untouched. Corrected to continue exact persisted batch in action mode for untouched and proven-zero-click targets, with explicit user approval before fresh account changes. Never retry ambiguous/clicked actions, and keep read-only verification opt-in. Source tests cover behavior.
+- Candidate release metadata v120.53, original production Android identity, Desktop UI v120.53 and release notes. User tests only **official published GitHub stable release**, not previews or ZIPs. CI alone does not demonstrate Instagram unfollow success; owner will validate on official installer.
+- Current official release remains v120.52 until governed v120.53 publishing completes and the full nine public assets/checksums are verified; do not claim premature publication. Distribution manifest nextRelease authority is v120.53.
+- The owner's earlier instruction to finish and release, and not require preview testing again, is treated as a standing request for the immediate v120.52-regression hotfix; an independent guarded publication commit still requires exact candidate CI before activating it.
+
 ## 2026-10-19 — Owner live v120.52: opened Chrome profiles, zero verified actions (post-release defect)
 
 - Screenshot from official installed v120.52: `Processed 2 / 40`, `Confirmed 0`, `Errors/review 2`, `Remaining 38`, pending **Is this batch OK?**. Owner reported profiles opened with no Unfollow. This screenshot alone does not prove which particular DOM selector failed or whether a relationship click happened; inspect full Issue Review messages for that distinction.
