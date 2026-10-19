@@ -1,0 +1,62 @@
+name: Android Developer Edition runtime
+on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'desktop/**'
+      - 'tests/developer-annotations-contract.test.cjs'
+      - '.github/workflows/android-developer-edition.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: igc-android-developer-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-developer-runtime:
+    name: Install isolated Developer APK and validate real WebView notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Enable emulator KVM
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Launch Developer APK and run device instrumentation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: |
+            set -euo pipefail
+            gradle -p android :app:assembleDeveloper :app:assembleDeveloperAndroidTest
+            apk="android/app/build/outputs/apk/developer/app-developer.apk"
+            test -s "$apk"
+            adb install -r "$apk"
+            adb install -r android/app/build/outputs/apk/androidTest/developer/app-developer-androidTest.apk
+            adb shell pm list packages | grep -q 'package:com.michelslab.igcleaner.developer'
+            mkdir -p artifacts/android-developer
+            adb shell am instrument -w -r -e class com.michelslab.igcleaner.DeveloperEditionTest \
+              com.michelslab.igcleaner.developer.test/androidx.test.runner.AndroidJUnitRunner \
+              | tee artifacts/android-developer/instrumentation.txt
+            grep -Fq 'OK (1 test)' artifacts/android-developer/instrumentation.txt
+            unzip -p "$apk" assets/ig_cleaner_pro_v120_27_synced_companion.html \
+              | grep -aq 'igcDevSaveNote'
+            cp "$apk" artifacts/android-developer/app-developer.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ig-cleaner-developer-android-${{ github.sha }}
+          path: artifacts/android-developer/
+          retention-days: 14
+          if-no-files-found: warn
