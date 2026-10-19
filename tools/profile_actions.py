@@ -963,7 +963,7 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
             page, username, expected_handle)
         return result, details
     if not isinstance(previous, dict) or previous.get("status") not in (
-            "ok", "review", "error", "blocked") or _preclick_no_action(previous):
+            "ok", "already_not_following", "review", "error", "blocked") or _preclick_no_action(previous):
         return "review", ("No completed Instagram action exists for this profile. "
                           "Automatic read-only recheck did not click anything.")
     target = "https://www.instagram.com/" + username + "/"
@@ -1027,7 +1027,7 @@ class ActionRobot:
             journal = _read_json(self._base_for(owner, account, task), {})
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and isinstance(record, dict)
-            and record.get("status") in ("ok", "review", "error", "blocked")
+            and record.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
             and not _preclick_no_action(record))
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted}
@@ -1090,7 +1090,7 @@ class ActionRobot:
                 result = rechecked.get(username, {}).get("status")
                 if result is None:
                     result = journal.get(username, {}).get("status")
-                if result == "ok":
+                if result in ("ok", "already_not_following"):
                     approved.append(username)
                 else:
                     unresolved.append(username)
@@ -1247,7 +1247,7 @@ class ActionRobot:
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             if not resume:
                 previous = self._journal()
-                if all((record := previous.get(user, {})).get("status") in ("ok", "review", "error", "blocked")
+                if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "review", "error", "blocked")
                        and not _preclick_no_action(record)
                        for user in targets):
                     raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
@@ -1301,10 +1301,12 @@ class ActionRobot:
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
                 if isinstance(record, dict)
-                and record.get("status") in ("ok", "review", "error", "blocked")
+                and record.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
                 and not _preclick_no_action(record))
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
+            already_not_following = sum(x.get("status") == "already_not_following"
+                                        for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
             issues = [{"username": u, "status": rows[u].get("status", "pending"),
                        "issue": rows[u].get("issue", ""),
@@ -1313,7 +1315,7 @@ class ActionRobot:
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
             skipped = sum(u in self.skipped for u in self.targets)
-            completed_states = ("ok", "review", "error", "blocked")
+            completed_states = ("ok", "already_not_following", "review", "error", "blocked")
             processed = sum(rows[u].get("status") in completed_states
                             or u in protected or u in self.skipped for u in self.targets)
             pending = sum(u not in protected and u not in self.skipped and
@@ -1325,6 +1327,7 @@ class ActionRobot:
                     "running": bool(self.worker and self.worker.is_alive()),
                     "total": len(self.targets), "processed": processed,
                     "pending": pending, "successful": successful,
+                    "already_not_following": already_not_following,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
                     "attempted_usernames": attempted_usernames,
@@ -1423,7 +1426,7 @@ class ActionRobot:
                         previous = journal.get(candidate, {})
                         if (self._protected_for(candidate) or candidate in self.skipped
                                 or (not self.review_only and
-                                    previous.get("status") in ("ok", "review", "error", "blocked")
+                                    previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
                                     and not _preclick_no_action(previous))):
                             continue
                         if len(stage_names) >= MAX_ACTION_TABS:
@@ -1509,7 +1512,7 @@ class ActionRobot:
                         previous = {}
                     if (self._protected_for(user) or user in self.skipped or
                         (not self.review_only and
-                         previous.get("status") in ("ok", "review", "error", "blocked"))):
+                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked"))):
                         continue
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
@@ -1571,7 +1574,7 @@ class ActionRobot:
                                 and candidate not in self.skipped
                                 and (not action_tabs or
                                      action_tabs.prepared(candidate) is None)
-                                and (prior.get("status") not in ("ok", "review", "error", "blocked")
+                                and (prior.get("status") not in ("ok", "already_not_following", "review", "error", "blocked")
                                      or _preclick_no_action(prior))):
                             next_user = candidate
                             break
@@ -1692,7 +1695,7 @@ class ActionRobot:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    if result != "ok":
+                    if result not in ("ok", "already_not_following"):
                         if self.review_only:
                             # Read-only automatic review should check the rest
                             # of the batch, not demand one-by-one manual work.
@@ -1714,7 +1717,8 @@ class ActionRobot:
                                  or {}).get("recheck_results", {}) if self.review_only else {}
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     (rechecked.get(u, {}).get("status") if self.review_only
-                                     else journal.get(u, {}).get("status")) != "ok"
+                                     else journal.get(u, {}).get("status"))
+                                    not in ("ok", "already_not_following")
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
