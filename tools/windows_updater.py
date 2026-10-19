@@ -140,8 +140,10 @@ def verify_restore_point(backup: Path) -> None:
             if set(names) != expected:
                 raise ValueError("Update backup entry list differs from its manifest.")
             for name, digest in files.items():
+                if not isinstance(name, str):
+                    raise ValueError("Update backup contains an invalid entry name.")
                 parts = name.split("/")
-                if (not isinstance(name, str) or "\\\\" in name
+                if ("\\" in name
                     or len(parts) < 2 or parts[0] not in ("app", "robot")
                     or any(part in ("", ".", "..") for part in parts)
                     or not isinstance(digest, str) or not SHA.fullmatch(digest)):
@@ -169,7 +171,7 @@ def create_restore_point(destination: Path, local_app_home: Path, robot_results:
             if ui.is_file() and not ui.is_symlink():
                 name = "app/IG-Cleaner-Pro.html"
                 zipf.write(ui, arcname=name)
-                entries[name] = _zip_member_sha256(zipf, name)
+                entries[name] = None
             if robot_results.is_dir() and not robot_results.is_symlink():
                 for path in robot_results.rglob("*"):
                     if path.is_symlink() or not path.is_file() or path.suffix.lower() not in (".csv", ".json", ".done"):
@@ -180,7 +182,12 @@ def create_restore_point(destination: Path, local_app_home: Path, robot_results:
                         continue
                     name = (Path("robot") / relative).as_posix()
                     zipf.write(path, arcname=name)
-                    entries[name] = _zip_member_sha256(zipf, name)
+                    entries[name] = None
+        # Reopen the finished archive to hash the exact saved bytes, not a file
+        # that may have changed while it was being copied.
+        with zipfile.ZipFile(temp, "a") as zipf:
+            for name in entries:
+                entries[name] = _zip_member_sha256(zipf, name)
             zipf.writestr("BACKUP-CHECKSUMS.json", json.dumps({"schema": 1, "files": entries}, sort_keys=True))
         verify_restore_point(temp)
         os.replace(temp, backup)
