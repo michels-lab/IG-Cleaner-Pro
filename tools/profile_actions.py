@@ -1038,6 +1038,8 @@ class ActionRobot:
         self.current_wait = None
         self.review_only = False
         self.history_recheck_mode = False
+        self.historical_seen = set()
+        self.historical_not_following_seen = set()
         self.continuing_batch = False
         self.active_batch_id = ""
         self.skipped = set()
@@ -1244,6 +1246,7 @@ class ActionRobot:
             self.targets = targets[:MAX_ACTIONS_PER_JOB]
             self.active_batch_id = ""
             self.review_only, self.history_recheck_mode = True, True
+            self.historical_seen, self.historical_not_following_seen = set(), set()
             self.continuing_batch = False
             self.open_review_tabs, self.current_wait = [], None
             self.skipped.clear()
@@ -1310,6 +1313,11 @@ class ActionRobot:
             rows[user] = {**record, "observations": list(events)[-24:] + [record]}
             saved["completed_at"] = record["at"]
             _atomic_json(path, saved)
+            self.historical_seen.add(user)
+            if observation == "observed_not_following":
+                self.historical_not_following_seen.add(user)
+            else:
+                self.historical_not_following_seen.discard(user)
             return
         entries = self._review_batches(self.owner, self.account, self.task)
         entry = next((x for x in reversed(entries)
@@ -1471,18 +1479,9 @@ class ActionRobot:
         with self.lock:
             journal = self._journal() if self.owner and self.task else {}
             rows = {u: journal.get(u, {}) for u in self.targets}
-            historical_rows = {}
-            if self.history_recheck_mode and self.owner and self.account and self.task:
-                saved_history = _read_json(
-                    self._historical_recheck_file_for(self.owner, self.account, self.task), {})
-                if isinstance(saved_history, dict):
-                    historical_rows = saved_history.get("results", {})
-                    if not isinstance(historical_rows, dict):
-                        historical_rows = {}
-            historical_checked = sum(user in historical_rows for user in self.targets)
-            historical_not_following = sum(
-                historical_rows.get(user, {}).get("observation") == "observed_not_following"
-                for user in self.targets if isinstance(historical_rows.get(user), dict))
+            historical_checked = len(self.historical_seen) if self.history_recheck_mode else 0
+            historical_not_following = (
+                len(self.historical_not_following_seen) if self.history_recheck_mode else 0)
             # Persisted action journal spans ALL earlier batches, not merely
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
