@@ -744,6 +744,60 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
+    def test_already_not_following_advances_without_a_relationship_click(self):
+        """Owner request: Follow / Follow Back means no Unfollow is needed."""
+        import profile_actions
+        for locale, label in (("en", "Follow"), ("es", "Seguir"),
+                              ("en", "Follow Back"), ("es", "Seguir también")):
+            with self.subTest(locale=locale, label=label):
+                self.context.unroute_all()
+                old = "Siguiendo" if locale == "es" else "Following"
+                html = fake_profile(locale=locale).replace(
+                    ">" + old + "</button>", ">" + label + "</button>", 1)
+                self.context.route("https://www.instagram.com/**",
+                    lambda route: route.fulfill(
+                        status=200, content_type="text/html", body=html))
+                status, message = perform_visible_action(
+                    self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+                self.assertEqual(status, "already_not_following", message)
+                self.assertIn("No Unfollow", message)
+                self.assertEqual(self.page.evaluate("window.__steps"), [])
+                self.assertEqual(profile_actions._action_issue("unfollow", status, message), "")
+
+    def test_delayed_visible_follow_is_already_not_following_without_click(self):
+        html = fake_profile().replace(">Following</button>", ">Loading...</button>", 1)
+        html = html.replace("</script>", (
+            "setTimeout(() => document.querySelector('#relationship').textContent='Follow', 650);"
+            "</script>"))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "already_not_following", message)
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+
+    def test_other_account_follow_button_does_not_skip_real_following(self):
+        html = fake_profile().replace(
+            "<header>", '<aside><button>Follow</button></aside><header>', 1)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"),
+                         ["open", "unfollow", "confirmed"])
+
+    def test_follow_back_with_follows_you_banner_already_not_following(self):
+        html = fake_profile().replace(">Following</button>", ">Follow Back</button>", 1)
+        html = html.replace("<h1>target.user</h1>",
+                            "<h1>target.user</h1><span>Follows you</span>", 1)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "already_not_following", message)
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)

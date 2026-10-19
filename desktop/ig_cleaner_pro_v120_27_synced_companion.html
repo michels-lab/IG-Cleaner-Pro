@@ -15054,7 +15054,7 @@ window.igcAutoStart=async function(){
     const attempted=waiting.batch.action_results||{};
     const untouched=data.targets.filter(u=>
       attempted[u]?.safe_no_click===true ||
-      !["ok","review","error","blocked"].includes(attempted[u]?.status||"pending"));
+      !["ok","already_not_following","review","error","blocked"].includes(attempted[u]?.status||"pending"));
     if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
     if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
       " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
@@ -15150,7 +15150,8 @@ window.igcAutoPoll=async function(){
   if(metrics){
    metrics.replaceChildren();
    for(const label of ["Processed: "+(state.processed??state.successful)+" / "+state.total,
-    "Confirmed: "+state.successful,"Remaining: "+state.remaining,
+    "Unfollows confirmed: "+state.successful,"Already not following: "+(state.already_not_following||0),
+     "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
     "Issues: "+(state.issue_count||0)]){
@@ -15348,9 +15349,10 @@ window.igcAutoRender=function(){
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
-     attempted.has(item.username)?"Already attempted · inspect journal":
+     live.status==="already_not_following"?"✓ Already not following · no action needed":
      live.audit_relation==="follows_you"?"✓ Follows you (verified)":
      live.audit_relation==="not_following"?"✓ Not following you (verified)":
+     attempted.has(item.username)?"Already attempted · inspect journal":
      live.status==="ok"?"✓ Completed":
      live.status&&live.status!=="pending"?(live.status+": "+live.message):"Not reviewed";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
@@ -15366,15 +15368,16 @@ window.igcAutoRender=function(){
  }
 };
 function igcAutoBatchOutcomes(){
- const b=actionBatchReview;if(!b)return {confirmed:[],issues:[],unchecked:[]};
- const confirmed=[],issues=[],unchecked=[];
+ const b=actionBatchReview;if(!b)return {confirmed:[],already:[],issues:[],unchecked:[]};
+ const confirmed=[],already=[],issues=[],unchecked=[];
  for(const username of b.targets||[]){
   const status=(b.recheck_results?.[username]||b.action_results?.[username]||{}).status||"pending";
   if(status==="ok")confirmed.push(username);
+  else if(status==="already_not_following")already.push(username);
   else if(status==="pending")unchecked.push(username);
   else issues.push(username);
  }
- return {confirmed,issues,unchecked};
+ return {confirmed,already,issues,unchecked};
 }
 window.igcAutoRenderBatchApproval=function(){
  const panel=document.getElementById("igcAutoBatchApproval");
@@ -15392,7 +15395,8 @@ window.igcAutoRenderBatchApproval=function(){
     ?"Batch incomplete. Choose Run to continue untouched profiles. "
     :"Action pass finished. Review results and approve this batch. ";
   if(msg)msg.textContent=heading+count+" in batch · "+outcome.confirmed.length+
-    " verified results · "+outcome.issues.length+" issues · "+
+    " verified actions · "+outcome.already.length+" already not following (no click) · "+
+    outcome.issues.length+" issues · "+
     outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed.";
   const approve=document.getElementById("igcAutoApproveBatch");
   if(approve)approve.disabled=busy||outcome.unchecked.length>0;
@@ -15420,8 +15424,8 @@ window.igcAutoApproveBatch=async function(){
  const o=igcAutoBatchOutcomes();
  if(o.unchecked.length){setStatus(o.unchecked.length+" profiles are untouched. Choose Run to finish the batch before approval.");return}
  if(!window.confirm("Mark this "+b.targets.length+
-   "-profile batch as Reviewed?\n\n"+o.confirmed.length+
-   " robot-verified profiles will be marked Reviewed. "+(o.issues.length+o.unchecked.length)+
+   "-profile batch as Reviewed?\n\n"+(o.confirmed.length+o.already.length)+
+   " verified profiles ("+o.already.length+" already not following) will be marked Reviewed. "+(o.issues.length+o.unchecked.length)+
    " unresolved profiles remain in Issue Review and will NOT be marked Reviewed.\n\nApprove this batch?"))return;
  try{
   const result=await requestAction("approve-batch",{

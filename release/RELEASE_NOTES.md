@@ -1,3 +1,11 @@
+## v120.53 addition — Skip already-unfollowed profiles and keep working
+
+- A visible, uniquely verified **Follow / Seguir / Follow Back / Seguir también** on the correct signed-in target profile means the user **already does not follow** that account: no relationship-changing click is needed. The robot immediately records a distinct `already_not_following` result and continues to the next eligible profile instead of treating it as a missing Following error.
+- This already-not-followed completion closes its Chrome tab and will not be replayed in a later batch. The progress UI shows **Already not following** separately from **Unfollows confirmed** so it never invents an Unfollow click.
+- Owner approval can mark these positively verified no-follow accounts Reviewed, while actual uncertain outcomes remain in Issue Review. A read-only recheck never claims to have newly unfollowed them.
+- Safe target, owner, no-follow and anti-suggestion checks remain enforced; if profile controls are still loading or ambiguous, the robot never guesses. Includes offline real Chromium test cases for English/Spanish, Follow Back, delayed profile rendering and unrelated sidebar Follow controls.
+- This addition is included in the official v120.53 release candidate after v120.52 field feedback; do not confuse exact-source test success with owner-validated live Instagram actions.
+
 ## v120.53 — Fix Run silently doing read-only checks instead of Unfollow (owner v120.52 screenshot)
 
 - **Real owner v120.52 regression:** screenshot showed 2/40 processed, 0 confirmed, 2 issues, 38 untouched while Chrome opened profiles. Source confirmed that Run with an unapproved batch unconditionally invoked read-only verification instead of the action robot; this cannot click Unfollow/Cancel Request.

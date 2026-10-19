@@ -199,6 +199,43 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
+    def test_already_not_following_is_completed_not_an_unfollow_or_issue(self):
+        """Keep a separate confirmed-no-follow outcome and move to the next target."""
+        from profile_actions import _atomic_json, ActionTabPool
+        with TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            robot=self._action(root)
+            request=self._request(["already.gone","still.following"],task="unfollow")
+            with patch("profile_actions.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value=False
+                robot.start(request)
+                _atomic_json(robot._base(),{
+                    "already.gone":{"status":"already_not_following",
+                        "message":"Already not following. No Unfollow clicked.", "issue":""}
+                })
+                state=robot.snapshot()
+                self.assertEqual(state["successful"],0,
+                    "Already gone must never inflate successful Unfollows")
+                self.assertEqual(state["already_not_following"],1)
+                self.assertEqual(state["processed"],1)
+                self.assertEqual(state["remaining"],1)
+                self.assertEqual(state["issues"],[])
+                self.assertIn("already.gone",state["attempted_usernames"],
+                    "A completed no-follow profile must not receive action replay")
+                review=robot.batch_review(request)["batch"]
+                self.assertEqual(review["action_results"]["already.gone"]["status"],
+                                 "already_not_following")
+                approved=robot.approve_batch({**request,"batch_id":review["id"],
+                    "confirmation":"reviewed:"+review["id"]})
+                self.assertIn("already.gone",approved["approved_usernames"])
+                self.assertIn("still.following",approved["unresolved_usernames"])
+        context=FakeTabContext()
+        pool=ActionTabPool(context)
+        page=pool.open("already.gone")
+        pool.record("already.gone","already_not_following")
+        self.assertTrue(page.is_closed())
+        self.assertIsNotNone(pool.open("still.following"))
+
     def test_automatic_attempt_never_counts_as_owner_review_before_confirm(self):
         from profile_actions import _atomic_json
         with TemporaryDirectory() as temporary:
