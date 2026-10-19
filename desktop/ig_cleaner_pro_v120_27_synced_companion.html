@@ -15109,6 +15109,9 @@ window.igcAutoPoll=async function(){
      JSON.stringify(state.attempted_usernames.map(norm).filter(Boolean)));
   }
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
+   // Never show a previous Instagram workspace's pending batch after switch.
+   actionBatchReview=null;
+   window.igcAutoRenderBatchApproval();
    const fallback=document.getElementById("igcActionAuthFallback");
    if(fallback)fallback.style.display="none";
    const text=document.getElementById("igcAutoLiveStatus");
