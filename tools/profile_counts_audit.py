@@ -15,6 +15,30 @@ import secrets
 from pathlib import Path
 
 COLUMNS = ("username", "followers", "following", "checked_at", "source", "status", "approximate")
+USERNAME = re.compile(r"[A-Za-z0-9._]{1,30}\\Z")
+INTEGER_COUNT = re.compile(r"[0-9]+\\Z")
+
+
+def _valid_reading(row: dict) -> bool:
+    """Only fully evidenced success rows can enter dated history or count as measured.
+
+    Historical CSVs can have malformed 'ok' records. Never fabricate a zero,
+    reinterpret a compact count or overwrite older valid readings with them.
+    """
+    if not isinstance(row, dict) or row.get("status") != "ok":
+        return False
+    name = str(row.get("username") or "")
+    if not USERNAME.fullmatch(name):
+        return False
+    for key in ("followers", "following"):
+        value = str(row.get(key) if row.get(key) is not None else "")
+        if not INTEGER_COUNT.fullmatch(value):
+            return False
+    try:
+        checked = dt.datetime.fromisoformat(str(row.get("checked_at") or "").replace("Z", "+00:00"))
+    except (TypeError, ValueError, OverflowError):
+        return False
+    return checked.tzinfo is not None and checked.utcoffset() is not None
 
 
 def audit_cycle_path(results_path: Path) -> Path:
@@ -38,7 +62,7 @@ def ordered_audit_targets(usernames: list[str], saved: dict) -> list[str]:
     unique = list(dict.fromkeys(usernames))
     original = {u: i for i, u in enumerate(unique)}
     return sorted(unique, key=lambda u: (
-        0 if saved.get(u, {}).get("status") != "ok" else 1,
+        0 if not _valid_reading(saved.get(u, {})) else 1,
         _stamp(saved.get(u, {})), original[u]
     ))
 
@@ -126,8 +150,7 @@ def mark_attempt(path: Path, cycle: dict, username: str) -> dict:
 
 def append_dated_reading(path: Path, row: dict) -> None:
     """Append successes only. Preserve historical data; never wipe old readings."""
-    if row.get("status") != "ok" or any(str(row.get(k, "")) == "" for k in
-                                           ("username", "followers", "following", "checked_at")):
+    if not _valid_reading(row):
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     is_new = not path.exists() or path.stat().st_size == 0
@@ -154,8 +177,7 @@ def seed_latest_readings(path: Path, saved: dict) -> int:
                                ("username", "checked_at", "followers", "following")))
     additions = []
     for row in saved.values():
-        if row.get("status") != "ok" or any(not str(row.get(k, "")) for k in
-                                               ("username", "checked_at", "followers", "following")):
+        if not _valid_reading(row):
             continue
         identity = tuple(str(row.get(k, "")) for k in
                          ("username", "checked_at", "followers", "following"))
