@@ -1201,6 +1201,21 @@ class ActionRobot:
                 raise ValueError("Only your explicit batch confirmation can mark this reviewed.")
             journal = _read_json(self._base_for(owner, account, task), {})
             rechecked = match.get("recheck_results") or {}
+            # Approval closes the pending cohort: do not strand profiles that
+            # never received an actual attempt or a read-only observation.
+            # A recorded uncertain outcome may remain unresolved, but it
+            # cannot silently promote an untouched target to Reviewed.
+            untouched = [
+                username for username in match["targets"]
+                if not (isinstance(journal.get(username), dict)
+                        and journal[username].get("status"))
+                and not (isinstance(rechecked.get(username), dict)
+                         and rechecked[username].get("status"))
+            ]
+            if untouched:
+                raise ValueError(
+                    "The batch still has " + str(len(untouched)) +
+                    " untouched profiles. Continue the saved cohort before approval.")
             approved = []
             unresolved = []
             for username in match["targets"]:

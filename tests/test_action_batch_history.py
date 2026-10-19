@@ -243,6 +243,17 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 review=robot.batch_review(request)["batch"]
                 self.assertEqual(review["action_results"]["already.gone"]["status"],
                                  "already_not_following")
+                # The first result does not permit closing out the untouched
+                # second target; the exact saved cohort must remain resumable.
+                with self.assertRaisesRegex(ValueError, "untouched profiles"):
+                    robot.approve_batch({**request,"batch_id":review["id"],
+                        "confirmation":"reviewed:"+review["id"]})
+                self.assertIsNotNone(robot.batch_review(request)["batch"])
+                _atomic_json(robot._base(), {
+                    **robot._journal(),
+                    "still.following":{"status":"review",
+                        "message":"Ambiguous previous action; do not retry."}
+                })
                 approved=robot.approve_batch({**request,"batch_id":review["id"],
                     "confirmation":"reviewed:"+review["id"]})
                 self.assertIn("already.gone",approved["approved_usernames"])
@@ -355,6 +366,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 # Even a recheck that verifies a formerly ambiguous action
                 # never mutates the original journal.
                 robot._save_recheck_result("profile.one","ok","Read-only Follow confirmed.")
+                robot._save_recheck_result("profile.two","review","Read-only check still uncertain.")
                 approved=robot.approve_batch({**request,"batch_id":entry["id"],
                                                "confirmation":"reviewed:"+entry["id"]})
                 self.assertEqual(approved["approved_usernames"],["profile.one"])
