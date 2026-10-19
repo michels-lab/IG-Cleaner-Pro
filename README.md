@@ -4,9 +4,9 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.52 is the official-release candidate.** Latest verified public stable: [v120.51](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.51). The v120.52 files should be downloaded only once the official GitHub release is published and its assets verified.
+**v120.52 — official stable GitHub release (published October 19, 2026).** [Download verified v120.52 with all nine assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52). Tested in automated Windows Setup, Chromium fixture, Desktop and Android build/render/signing gates. Live Instagram owner acceptance remains pending.
 
-| Platform | v120.52 expected official asset |
+| Platform | v120.52 published official asset |
 | --- | --- |
 | Windows integrated app and Instagram robots | `IG-Cleaner-Pro-Windows-Setup-v120.52.exe` |
 | Production-signed Android | `IG-Cleaner-Pro-Android-v120.52.apk` |
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Before claiming a new published stable version, verify the official GitHub release page, full expected artifacts and manifest.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current stable: v120.52. Next reserved version: v120.53, not authorized for publication.**
 
 ## Identity and licensing
 
