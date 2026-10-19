@@ -4,19 +4,19 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.53 — official hotfix candidate**, pending independent current-commit packaging/signing/visual QA and final stable GitHub publication. The latest verified published version remains [v120.52](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.52) until publication completes.
+**v120.53 — official stable GitHub release, published October 19, 2026.** [Download all nine verified official assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.53).
 
-| Platform | Planned official v120.53 file |
+| Platform | Official published asset |
 | --- | --- |
-| Windows installed application + automation robot | `IG-Cleaner-Pro-Windows-Setup-v120.53.exe` |
-| Android (original production-signed package) | `IG-Cleaner-Pro-Android-v120.53.apk` |
-| Desktop offline standalone | `IG-Cleaner-Pro-Desktop-v120.53.html` |
-| Optional Windows robot ZIP | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.53.zip` |
+| Windows app with integrated action robot | `IG-Cleaner-Pro-Windows-Setup-v120.53.exe` |
+| Android with original production signing | `IG-Cleaner-Pro-Android-v120.53.apk` |
+| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.53.html` |
+| Optional Windows portable archive | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.53.zip` |
 | Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.53.zip` |
 
-**Critical fix:** Run no longer quietly enters read-only verification for a saved batch still awaiting the owner's approval. It now explicitly resumes **real actions** for untouched or provably zero-click profiles in the *same exact batch*; uncertain previous clicks are never repeated. "Verify previous actions (read-only)" stays separate, approval is disabled until all targets have an outcome, and the issue-profile opener does not open all untouched profiles. Known no-click timeouts do not unnecessarily halt later eligible profiles. Persistent owner/account task journal and imported files are preserved.
+**Fixed:** an unapproved batch could have 38 untouched targets but pressing Run silently entered read-only recheck; v120.53 resumes the exact saved cohort for owner-approved actions on previously untouched or provably no-click targets, never repeating uncertain relationship clicks. **Already not following** is now an explicit terminal no-click result when the exact logged-in target shows Follow/Seguir or Follow Back/Seguir también; the robot records it, closes its safe tab, and advances to the next target without counting a successful Unfollow. Confirmed Unfollows and already-not-followed profiles have separate live totals. Whole-batch Reviewed approval is still a separate owner action.
 
-**Acceptance:** The owner tests only the **official published stable release** on the real Instagram account; never require a temporary Actions artifact or preview ZIP. Automated Windows/Chromium/Android/Desktop checks are release prerequisites but cannot guarantee that Instagram's real controls work. On challenge or ambiguous action, the robot fails closed. There is no CAPTCHA bypass or Windows Authenticode signature; use published SHA-256 hashes.
+**Testing contract:** Michel tests against official published stable releases, not temporary previews or Actions artifacts. Automated installed Windows Setup, offline real Chromium action fixtures, Profile Counts, Desktop render, Android render/production signing and SHA256 checksums passed. Those tests do **not** prove a live Instagram Unfollow; only the owner's post-release installed-session test can establish that. Do not bypass challenges, replay uncertain clicks, or erase local journals. The Windows Setup is not Authenticode-signed.
 
 ## Features
 
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable remains v120.52 until v120.53 is verified on GitHub. No future version is automatically authorized.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.53. Next reserved version: v120.54, not authorized for automatic publication.**
 
 ## Identity and licensing
 
