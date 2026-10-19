@@ -41,8 +41,8 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  elements.set(section.id,section);
  const selectTarget={
   closest(selector){
-   if(selector.includes('button[id]'))return null;
-   if(selector.includes('.panel[id]'))return section;
+   if(selector.includes('button,input'))return null;
+   if(selector.includes('.panel'))return section;
    if(selector.includes('.page'))return activePage;
    return section;
   }
