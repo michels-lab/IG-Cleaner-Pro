@@ -182,8 +182,11 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoApproveBatch();
  assert.equal(calls.filter(c=>c.type==='approve-batch').length,0,
    'Cannot approve while one profile was never attempted');
- batchFixture.action_results['untouched.three']={status:'ok'};
+ batchFixture.action_results['untouched.three']={status:'already_not_following'};
  await ctx.window.igcAutoPoll();
+ assert.match(elements.igcAutoBatchApprovalDetails.textContent,/already not following \(no click\)/);
+ assert.equal(elements.igcAutoApproveBatch.disabled,false,
+   'Explicitly verified already-not-following is complete, not an issue');
  await ctx.window.igcAutoApproveBatch();
  const approved=calls.find(c=>c.type==='approve-batch');assert(approved);
  assert.equal(approved.data.confirmation,'reviewed:batch123');
