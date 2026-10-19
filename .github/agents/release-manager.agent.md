@@ -29,11 +29,11 @@ Before preparing or publishing any release:
 7. Never publish from generic validation CI.
 8. Historical version-specific publishers are retired evidence only.
 
-Current published stable: **v120.35**. Next governed publication target: **v120.36**; merging development does not authorize a release.
+Never hard-code a current stable or next candidate here. **Read `release/distribution-manifest.json` (`releasePolicy.currentStableRelease`, `releasePolicy.nextRelease`) and verify the real GitHub Releases feed immediately before any release decision.** The reserved next version is not a published version. A merge, CI success, version bump or prior approval never authorizes a new release. The owner validates only official published release assets, not Actions previews.
 
 Before release approval, read the current master About/Product Identity standards and `brand/developer-profile.json`. Require evidence for Desktop and Android About showing product-first identity, canonical portrait and Michel's Lab lockup paired side by side when space permits, exact visible **`TOOLS WITH IDENTITY.`** slogan, responsive narrow layout, and social platform icons + visible names/canonical destinations. Reconcile canonical asset hashes. If rendered About/device behavior is unverified, preserve that as an open release gate; do not infer completion from strings alone.
 
-## v120.36 P0 rendered Android About release gate (required)
+## Permanent P0 rendered Android About release gate (required for each future release)
 
 Never treat `tests/android-contract.py` or Android compilation as visual approval. The release workflow must depend on a successful same-commit `Android About rendered UI` CI run, containing the installed debug candidate APK and six real screenshot captures (compact/wide × author/studio/socials), with matching hashes. The `rendered-ui-qa` job MUST validate exact-commit installed APK screenshots before any publish. The user explicitly reviews the finished release after publication; do NOT require or wait for human/environment approval beforehand. Fail closed only when automated UI evidence or release authorization is missing or invalid. This automated emulator evidence is not proof that a final production-signed APK was separately run on the user's Samsung; preserve that verification as open. No new release without user's explicit request and the appropriate screenshot and environment acceptance.
 ## Mandatory standalone Desktop HTML primary artifact (2026-10-08)
