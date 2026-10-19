@@ -3,7 +3,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const source=fs.readFileSync(path.join(__dirname,'../desktop/ig_cleaner_pro_v120_27_synced_companion.html'),'utf8');
 const script=source.match(/<script id="igc-automations-plan">([\s\S]*?)<\/script>/);
 assert(script,'Action script not found');
-const store=new Map(),calls=[],texts=[];
+const store=new Map(),calls=[],texts=[],opened=[];
+let batchFixture=null;
 const elements={};
 for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])elements[id]={
  children:[],replaceChildren(){this.children=[]},appendChild(node){this.children.push(node)}
@@ -13,6 +14,9 @@ elements.igcAutoOpenTabs={textContent:'',style:{display:'none'}};
 for(const [id,value] of Object.entries({igcAutoSearch:'',igcAutoBatch:'2',igcAutoRest:'5',igcAutoGap:'5'}))elements[id]={value};
 elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};
 elements.igcActionAuthFallback={style:{display:'none'}};
+elements.igcAutoBatchApproval={style:{display:'none'}};
+elements.igcAutoBatchApprovalDetails={textContent:''};
+for(const id of ['igcAutoApproveBatch','igcAutoRecheckBatch','igcAutoOpenBatchIssues'])elements[id]={disabled:false};
 const document={hidden:false,getElementById:id=>elements[id]||null,
  createElement:tag=>({tag,children:[],textContent:'',appendChild(node){this.children.push(node)},
   addEventListener(type,fn){if(type==='click')this.click=fn}})};
@@ -31,16 +35,31 @@ const mockFetch=async(url,options)=>{
  if(type==='history')return {ok:true,json:async()=>({
    owner:context.owner,account:context.active,task:data.task,attempted_usernames:[]
  })};
+ if(type==='review-batch')return {ok:true,json:async()=>({
+    owner:context.owner,account:context.active,task:data.task,batch:batchFixture
+ })};
+ if(type==='approve-batch'){
+  const result={approved_usernames:['keep.me'],unresolved_usernames:['skip.me']};
+  batchFixture=null;
+  return {ok:true,json:async()=>result};
+ }
  return {ok:true,json:async()=>type==='status'?p:{...p,message:'fixture action started'}};
 };
 const localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};
 const ctx={document,localStorage,
  window:{IGC_INSTAGRAM_PROFILES:context,location:{hash:'#igc-robot=33333.0123456789abcdefghijabcdefgh'},
- showPage:()=>{},confirm:message=>(texts.push(message),true)},
+ showPage:()=>{},confirm:message=>(texts.push(message),true),
+ open:(...params)=>opened.push(params)},
  followingRaw:[{username:'skip.me'},{username:'keep.me'},{username:'mutual.person'}],
  followersRaw:[{username:'mutual.person'}],followersMap:new Map([['mutual.person',{}]]),
  pendingRequestsRaw:[{username:'request.one'}],protectedSet:new Set(),
  saveSet(){},LS_PROT:'protected',Set,Map,JSON,Math,Date,Number,String,encodeURIComponent,
+ allRows:[{username:'keep.me',relation:'not_following',relationGood:false,followsBack:false,
+ isFollower:false,dateMain:0}],doneSet:new Set(),reviewedMeta:{},
+ currentMode:'following',makeReviewMeta:(row,reason,source)=>({mode:'following',
+ relation:row.relation,relationGood:false,followsBack:false,isFollower:false,
+ reviewedAt:Date.now(),reviewReason:reason,reviewSource:source}),
+ saveReviewedState(){},renderAll(){},
  fetch:mockFetch,setInterval(){},Error};
 vm.createContext(ctx);vm.runInContext(script[1],ctx);
 assert.equal(ctx.window.igcAutoSwitchGuard(),false,
@@ -134,5 +153,32 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(elements.igcActionAuthFallback.style.display,'none');
  assert.equal(elements.igcAutoResume.disabled,false);
+ // The backend action journal is separate from owner-approved reviewed state.
+ p.status='partial';p.running=false;p.task='unfollow';p.owner='owner_A';p.account='ig_A';
+ batchFixture={id:'batch123',targets:['keep.me','skip.me'],approved_at:null,
+  action_results:{'keep.me':{status:'ok'},'skip.me':{status:'review'}},
+  recheck_results:{}};
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcAutoBatchApproval.style.display,'block');
+ assert.match(elements.igcAutoBatchApprovalDetails.textContent,/Awaiting your approval/);
+ assert.equal(ctx.doneSet.size,0,'Robot success must not mark anything reviewed without owner approval');
+ // Retry reuses the same existing batch, not a new set of actions.
+ ctx.window.igcAutoChoose('unfollow');
+ await ctx.window.igcAutoStart();
+ assert.equal(calls.filter(c=>c.type==='start').length,3,
+   'An unapproved batch must not be replaced by a new action batch');
+ await ctx.window.igcAutoRecheckBatch();
+ const retry=calls.find(c=>c.type==='recheck-batch');assert(retry);
+ assert.equal(retry.data.batch_id,'batch123');
+ assert.equal(retry.data.confirmation,'recheck:batch123');
+ ctx.window.igcAutoOpenBatchIssues();
+ assert.equal(opened.length,1,'Only issue profiles may open');
+ assert.match(opened[0][0],/skip.me/);
+ await ctx.window.igcAutoApproveBatch();
+ const approved=calls.find(c=>c.type==='approve-batch');assert(approved);
+ assert.equal(approved.data.confirmation,'reviewed:batch123');
+ assert(ctx.doneSet.has('keep.me'),'Owner-confirmed verified profile must become reviewed');
+ assert(!ctx.doneSet.has('skip.me'),'Unresolved result must remain not reviewed');
+ assert.equal(elements.igcAutoBatchApproval.style.display,'none');
  console.log('Automations action execution, owner switching guard, pause and partial HTML gate: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
