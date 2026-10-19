@@ -16,6 +16,9 @@ on:
       - 'tools/profile_actions.py'
       - 'tools/ig_cleaner_desktop.py'
       - 'tests/test_native_desktop.py'
+      - 'tools/developer_audit.py'
+      - 'tests/test_developer_audit.py'
+      - 'tests/developer-annotations-contract.test.cjs'
       - 'tests/test_profile_actions_chromium.py'
       - 'tests/test_action_batch_history.py'
       - 'tests/automations-next-batch.test.cjs'
@@ -67,6 +70,10 @@ jobs:
         shell: pwsh
         run: |
           node tests/automations-next-batch.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Automations next batch failed." }
+          node tests/developer-annotations-contract.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Developer Edition section note/export contract failed." }
+          python -m unittest discover -s tests -p 'test_developer_audit.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Automations action batch selection failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
