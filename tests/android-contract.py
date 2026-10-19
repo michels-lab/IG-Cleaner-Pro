@@ -120,7 +120,12 @@ assert 'app:menu="@menu/top_app_bar"' not in layout
 assert '@+id/headerAboutButton' in layout and '@+id/headerSyncButton' in layout
 assert 'android:text="About"' in layout
 assert 'aboutAction.setOnClickListener(view -> showAbout())' in main
-assert 'syncAction.setOnClickListener(view -> syncNow())' in main
+# The public build keeps Sync; the separate Developer APK must refuse writes
+# in the native click handler rather than exposing the former unconditional call.
+assert 'syncAction.setOnClickListener(view -> {' in main
+assert 'if (isDeveloperEdition()) {' in main
+assert 'Developer Edition: automatic cloud writes are disabled.' in main
+assert '} else syncNow();' in main
 assert 'brandContext.setOnClickListener(view -> showInstagramProfileManager())' in main, "Account switch must be available from native header"
 assert 'brandContext.setContentDescription("Switch Instagram profile: "' in main, "Account switch requires accessible name"
 assert 'android:id="@+id/brandContext"' in layout and 'android:focusable="true"' in layout, "Header profile switch must remain tappable"
