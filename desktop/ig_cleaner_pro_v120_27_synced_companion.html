@@ -15792,7 +15792,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  }
  function locate(anchor){
   if(!anchor||typeof anchor.locator!=="string"||
-     !/^#[A-Za-z][A-Za-z0-9_-]*(?: > [a-z][a-z0-9-]*:nth-of-type\\([1-9]\\d*\\))*$/.test(anchor.locator))return null;
+     !/^#[A-Za-z][A-Za-z0-9_-]*(?: > [a-z][a-z0-9-]*:nth-of-type\([1-9]\d*\))*$/.test(anchor.locator))return null;
   try{return document.querySelector(anchor.locator)}catch{return null}
  }
  function outline(node){
