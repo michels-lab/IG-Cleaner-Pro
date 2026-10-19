@@ -674,7 +674,13 @@ class Collector:
             return [saved[u] for u in self.usernames if u in saved]
 
 
-def build_server(collector: Collector, token: str, port: int = 0, updater=None):
+def build_server(collector: Collector, token: str, port: int = 0, updater=None,
+                 *, developer_mode=False, audit_root=None):
+    # Developer twin is strictly read-only. Its separate local workspace cannot
+    # run Instagram jobs or alter production logs through the loopback API.
+    if developer_mode:
+        from developer_audit import run_audit, ai_prompt
+    audit_root = Path(audit_root) if audit_root is not None else collector.data_dir
     actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
     collector.actions = actions
     class Handler(BaseHTTPRequestHandler):
@@ -739,7 +745,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None):
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/recheck-batch", "/api/actions/open-profile", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/recheck-batch", "/api/actions/open-profile", "/api/developer/audit", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -750,7 +756,15 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None):
                 data = json.loads(body or b"{}")
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request.")
-                if self.path.startswith("/api/update/"):
+                if developer_mode and self.path != "/api/developer/audit":
+                    raise ValueError("Developer Edition is read-only. Relationship and update actions are disabled.")
+                if self.path == "/api/developer/audit" and developer_mode:
+                    report = run_audit(audit_root)
+                    result = {"report": report,
+                              "ai_prompt": ai_prompt(report, data.get("client_checks"))}
+                elif self.path == "/api/developer/audit":
+                    raise ValueError("Developer diagnostics are unavailable in the regular edition.")
+                elif self.path.startswith("/api/update/"):
                     if updater is None:
                         raise ValueError("Windows updates are available only in the installed application.")
                     if self.path == "/api/update/check":
