@@ -1493,9 +1493,14 @@ class ActionRobot:
             self.rest_minutes = rest
             # A newly authorized batch uses the owner's current visible
             # favorites. During an active run protection may only be added.
-            saved_protected = set(_users(data.get("protected", [])))
-            if resume:
-                saved_protected.update(self._protected())
+            # The UI's visible favorites list can be stale or incomplete after
+            # a browser restart, an offline import or an account switch. Never
+            # turn absence from that payload into an implicit "unprotect".
+            # Both Unfollow and Cancel consult this owner/account-scoped guard
+            # immediately before any click. Explicit removal requires its own
+            # separate, owner-confirmed operation outside active jobs.
+            saved_protected = self._protected()
+            saved_protected.update(_users(data.get("protected", [])))
             _atomic_json(self._protection_file(), sorted(saved_protected))
             self.stop_event.clear()
             self.status, self.message = "starting", "Opening Instagram in Chrome…"
