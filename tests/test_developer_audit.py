@@ -127,7 +127,7 @@ class DeveloperAuditTest(unittest.TestCase):
         self.assertNotIn("Bearer=", prompt)
         self.assertIn("UNCERTAIN_OR_MANUAL", prompt)
         self.assertIn("uncaught_ui_errors", prompt)
-        backend = json.loads(prompt.split("\\n\\n", 1)[1])["backend"]
+        backend = json.loads(prompt.split("\n\n", 1)[1])["backend"]
         self.assertEqual(backend["source_revision"], "unknown")
         self.assertEqual(backend["unapproved_batches"], 0)
         self.assertEqual(backend["action_status_counts"], {"ok": 2})
