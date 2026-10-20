@@ -15944,6 +15944,19 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    </div>
    <pre id="igcDevLiveResults" role="status" aria-live="polite">Not started. The installed Developer Edition opens its own Chrome login; your existing public Instagram session is never copied or changed.</pre>
   </div>
+  <section id="igcDevChat" aria-label="Developer diagnostic chat">
+   <div class="igc-dev-head">◇ ROBOT DIAGNOSTIC ASSISTANT · LOCAL CHAT</div>
+   <div class="igc-dev-note">Tell the Developer what failed. It can run local audit, inspect your real Instagram session (only after your consent), compare diagnostic observations and prepare a repair report. This is a LOCAL rule-guided assistant, not a live connection to ChatGPT. It cannot edit code, install updates or click relationship actions.</div>
+   <div id="igcDevChatMessages" role="log" aria-live="polite" style="max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
+   <label for="igcDevChatInput">Tell the diagnostic assistant what to investigate</label>
+   <textarea id="igcDevChatInput" maxlength="1500" rows="2" placeholder="Unfollow doesn't work. Diagnose with my real Instagram; compare whether the last fix helped."></textarea>
+   <div class="igc-dev-actions">
+    <button type="button" id="igcDevChatSend">Send instruction</button>
+    <button type="button" id="igcDevChatCompare">Compare diagnostic runs</button>
+    <button type="button" id="igcDevChatCopy">Export chat + repair prompt</button>
+   </div>
+   <div class="igc-dev-note">The conversation is saved only in this Developer workspace. Exports are manual; review your own messages before sharing.</div>
+  </section>
   <pre id="igcDevResults" aria-live="polite">Not audited yet. Notes can still be exported. No Instagram action is executed.</pre>
   <div class="igc-dev-note">The export includes your exact comments and section locations. Check them for personal information before sharing with an AI or another person.</div>
  </div>
@@ -15962,6 +15975,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  const noteInput=el("igcDevNoteInput");
  let selected=null,editing=null,picking=false,activeScope="",lastReport=null,lastPrompt="";
  let lastLiveReport=null,liveScope=null,livePolling=false;
+ let lastChatLiveId="",chatBusy=false;
  let runtimeErrors=0,runtimeRejections=0;
  window.addEventListener("error",()=>{runtimeErrors+=1});
  window.addEventListener("unhandledrejection",()=>{runtimeRejections+=1});
@@ -15990,7 +16004,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  function updateScope(){
   const key=scopeKey();
   if(key===activeScope)return;
-  activeScope=key;resetEdit();renderNotes();
+  activeScope=key;resetEdit();renderNotes();renderChat();
   const info=accountInfo();
   el("igcDevScope").textContent=info.owner==="guest"?"Guest workspace — sign in under Account to scope annotations":
    "Signed-in developer workspace · selected Instagram account "+(info.account==="legacy"?"legacy": "active");
@@ -16150,6 +16164,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    audit:lastReport,client_ui_checks:clientChecks(),
    real_instagram_readonly_probe:lastLiveReport,
    owner_section_annotations:annotationExport(),
+   diagnostic_chat_history:chatEntries(),diagnostic_comparisons:readProbeHistory().slice(-5),
    safety:"Owner annotations are user-reported observations, not verified automated failures. They may include private wording. Review before sharing. Never export sessions or access tokens."};
  }
  function download(content,name,type){
@@ -16171,9 +16186,8 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   updateScope();
   if(!lastReport)await audit();
   const data=combinedReport(),today=new Date().toISOString().slice(0,10);
-  if(data.owner_section_annotations.length&&
-     !window.confirm("This developer report includes "+data.owner_section_annotations.length+
-       " verbatim owner comment(s) with screen/section identifiers. Review them for private data before sharing. Export now?"))return;
+  if((data.owner_section_annotations.length||data.diagnostic_chat_history.some(e=>e.role==="owner"))&&
+     !window.confirm("This diagnostic report includes your VERBATIM owner notes and developer chat instructions. They may contain personal information. Review and redact before sharing. Export locally now?"))return;
   const prefix="IG-Cleaner-Developer-Audit-"+today;
   if(kind==="json"){
    download(JSON.stringify(data,null,2),prefix+".json","application/json;charset=utf-8");return;
@@ -16181,9 +16195,12 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   const text=(lastPrompt||"Automated audit was unavailable. No automated findings were verified.")+
    "\n\n# OWNER-REPORTED SECTION ANNOTATIONS (verbatim; not automated evidence)\n"+
    JSON.stringify(data.owner_section_annotations,null,2)+
+   "\n\n# OWNER INSTRUCTIONS + LOCAL DIAGNOSTIC CHAT (verbatim owner text; not remote AI)\n"+
+   JSON.stringify(data.diagnostic_chat_history,null,2)+
    "\n\n# UI CHECKS AND CONTEXT\n"+
    JSON.stringify({ui_checks:data.client_ui_checks,report_schema:data.schema,
-     audit_status:data.audit_status,real_instagram_readonly_probe:data.real_instagram_readonly_probe},null,2)+
+     audit_status:data.audit_status,real_instagram_readonly_probe:data.real_instagram_readonly_probe,
+     local_comparisons:data.diagnostic_comparisons},null,2)+
    "\n\nFor each annotation, identify the exact screen/section/control and propose a reproduction test. "+
    "Do not treat these reports as confirmed root causes. Preserve signed-in account isolation and user data.\n";
   download(text,prefix+"-AI-REPAIR.txt","text/plain;charset=utf-8");
@@ -16216,6 +16233,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   },null,2);
   if(report.state==="complete"||report.state==="stopped"){
    lastLiveReport=report;
+   recordLiveProbe(report);
   }
  }
  async function pollLiveProbe(){
@@ -16270,6 +16288,124 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  });
  if(androidDeveloper){el("igcDevRealProbe").style.display="none"}
  else setInterval(()=>{if(liveScope)pollLiveProbe()},2500);
+ // Owner-facing local diagnostic chat: user instructions dispatch only
+ // explicit bounded read-only audit capabilities. No external AI/network
+ // provider, and no direct access to follow/unfollow/cancel endpoints.
+ const chatKey=()=>scopeKey()+"__diagnostic_chat_v1";
+ const historyKey=()=>scopeKey()+"__diagnostic_probes_v1";
+ function chatEntries(){
+  try{const v=JSON.parse(localStorage.getItem(chatKey())||"[]");
+   return Array.isArray(v)?v.filter(e=>e&&["owner","local_assistant"].includes(e.role)&&
+     typeof e.text==="string"&&typeof e.at==="string").slice(-60):[]
+  }catch{return []}
+ }
+ function readProbeHistory(){
+  try{const v=JSON.parse(localStorage.getItem(historyKey())||"[]");
+   return Array.isArray(v)?v.filter(x=>x&&x.schema==="igc-developer-live-instagram-readonly-v1"&&
+     x.contains_usernames===false&&typeof x.started_at==="string").slice(-12):[]
+  }catch{return []}
+ }
+ function chatAdd(role,text){
+  const lines=chatEntries();
+  lines.push({role,text:String(text).slice(0,1500),at:new Date().toISOString(),
+    source:role==="owner"?"owner_verbatim_instruction":"local_rules_not_remote_AI"});
+  localStorage.setItem(chatKey(),JSON.stringify(lines.slice(-60)));
+  renderChat();
+ }
+ function renderChat(){
+  const panel=el("igcDevChatMessages");if(!panel)return;
+  panel.replaceChildren();
+  const history=chatEntries();
+  if(!history.length){
+   const note=document.createElement("div");
+   note.textContent="Tell me what failed. Try: 'Audit local robot errors', 'Diagnose Unfollow with real Instagram', 'Diagnose Cancel Pending', or 'Compare my last tests'.";
+   panel.appendChild(note);
+  }
+  for(const item of history){
+   const row=document.createElement("div");row.className="igc-dev-entry";
+   const name=document.createElement("strong");
+   name.textContent=item.role==="owner"?"YOU":"LOCAL DIAGNOSTIC";
+   const body=document.createElement("span");body.textContent=item.text;
+   row.append(name,body);panel.appendChild(row);
+  }
+ }
+ function recordLiveProbe(report){
+  if(!report||report.schema!=="igc-developer-live-instagram-readonly-v1"||
+     report.contains_usernames!==false||!report.started_at||
+     !["complete","stopped"].includes(report.state)||report.started_at===lastChatLiveId)return;
+  lastChatLiveId=report.started_at;
+  const runs=readProbeHistory();
+  runs.push(report);
+  localStorage.setItem(historyKey(),JSON.stringify(runs.slice(-12)));
+  const counts=Object.entries(report.counts||{}).map(([key,n])=>key+"="+n).join(", ")||"No observations";
+  const ready=(report.counts?.FOLLOWING_VISIBLE||0)+(report.counts?.REQUESTED_VISIBLE||0);
+  chatAdd("local_assistant","Real Instagram diagnostic finished: "+report.checked+
+   " observations; "+counts+". "+(ready?"Real account controls were located. ":"")+
+   "This does NOT prove Unfollow or Cancel actually worked: no relationship-changing action was clicked. Export the report to investigate code.");
+ }
+ function compareProbes(){
+  const all=readProbeHistory();
+  const key=scopeKey();
+  const recent=all.at(-1);
+  if(!recent)return "No completed real Instagram diagnostic yet. Run a real read-only inspection first.";
+  const earlier=all.slice(0,-1).reverse().find(r=>
+   r.evidence===recent.evidence&&r.total===recent.total&&
+   r.state==="complete"&&recent.state==="complete");
+  if(!earlier)return "Only one comparable real-session diagnostic is saved in this account workspace. Repeat after installing an updated build; results cannot yet be compared.";
+  const first=earlier.counts||{},last=recent.counts||{};
+  const keys=[...new Set([...Object.keys(first),...Object.keys(last)])].sort();
+  const changes=keys.filter(code=>Number(first[code]||0)!==Number(last[code]||0))
+   .map(code=>code+": "+Number(first[code]||0)+" → "+Number(last[code]||0));
+  return "Read-only diagnostic comparison (same workspace, "+recent.total+
+   " samples each): "+(changes.join("; ")||"no detected change in aggregate DOM codes")+
+   ". This only compares visibility/identity checks, NOT whether real Unfollow or Cancel actions succeeded. App version/source and target set may differ; do not claim repaired without the owner's action-confirmation test.";
+ }
+ async function processChatInstruction(){
+  if(chatBusy)return;
+  const control=el("igcDevChatInput");
+  const message=String(control?.value||"").trim();
+  if(!message)return;
+  chatBusy=true;
+  el("igcDevChatSend").disabled=true;
+  control.value="";
+  chatAdd("owner",message);
+  try{
+   if(/compar|compare|cambios|funcionaron|worked|fix|versi[oó]n/i.test(message)){
+    chatAdd("local_assistant",compareProbes());
+   }else if(/unfollow|cancel|pendient|solicitudes|requested|siguiendo|robot real|instagram real/i.test(message)){
+    const kind=/cancel|pendient|solicitudes|requested/i.test(message)?"cancel":"unfollow";
+    el("igcDevLiveTask").value=kind;
+    chatAdd("local_assistant","I can inspect REAL signed-in Instagram to locate "+kind+
+      " failures in the saved journal, without clicking any relationship action. I will ask for explicit confirmation. "+
+      "Enter your exact Instagram @handle in the Real Instagram diagnostic box if it is blank.");
+    await runLiveProbe(); // separate human confirmation is mandatory
+   }else if(/audita|auditor[ií]a|audit|diagn[oó]stic|error|falla|fallando/i.test(message)){
+    const ok=await audit();
+    const findings=lastReport?.findings||[];
+    chatAdd("local_assistant",ok?
+      "Local journal/UI audit completed. "+findings.length+
+      " finding type(s). "+findings.slice(0,6).map(f=>f.code+" ("+f.count+")").join("; ")+
+      ". These are observed journal/UI symptoms, not guaranteed root causes; export the report for engineering.":
+      "Local audit was unavailable. Keep the original data; review the diagnostic panel before repeating the request.");
+   }else if(/export|reporte|informe|prompt|copiar/i.test(message)){
+    chatAdd("local_assistant","Preparing a manual local AI repair report, including your instructions and the scoped diagnostic evidence. Review the content before sharing.");
+    await exportReport("text");
+   }else{
+    chatAdd("local_assistant","I saved that instruction. I can run a local journal audit, inspect real Instagram without clicks, or compare completed diagnostic runs. To send code changes directly to ChatGPT requires a separately authorized connection that is not installed here; export the AI repair prompt when you want me to work from it.");
+   }
+  }catch(e){chatAdd("local_assistant","The local diagnostic could not finish. No Instagram action was clicked. "+String(e.message||"Unknown local error").slice(0,240))}
+  finally{chatBusy=false;el("igcDevChatSend").disabled=false}
+ }
+ el("igcDevChatSend").addEventListener("click",processChatInstruction);
+ el("igcDevChatInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();processChatInstruction()}
+ });
+ el("igcDevChatCompare").addEventListener("click",()=>{
+  chatAdd("owner","Compare saved real Instagram diagnostic runs");
+  chatAdd("local_assistant",compareProbes());
+ });
+ el("igcDevChatCopy").addEventListener("click",()=>exportReport("text"));
+ renderChat();
  el("igcDevAccount").addEventListener("click",()=>{
   stopPicking();if(typeof window.showPage==="function")window.showPage("sync");
   else summary.textContent="Account screen unavailable in this build.";
