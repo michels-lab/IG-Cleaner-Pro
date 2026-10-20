@@ -1,4 +1,4 @@
-; Insta Cleaner Pro Developer Edition — independently installed read-only diagnostic twin.
+; Insta Cleaner Pro Developer Edition — independently installed diagnostic + opt-in real action QA twin.
 ; Same full executable and UI; --developer is mandatory on every entry point.
 ; Different AppId/installation directory avoids replacing the public app.
 #ifndef MyAppVersion
