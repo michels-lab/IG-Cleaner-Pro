@@ -1,3 +1,9 @@
+## 2026-10-20 — GRANADA ten-tab sequential action waves (CANDIDATE, no release)
+
+- Owner's exact behavior implemented in `tools/profile_actions.py`: stage ten visible target profiles **before clicking any**, sequentially activate/focus and verify each, close confirmed outcomes, then open the *next group of ten* (not rolling next-user prefetch). Saved pacing/rest, protected exclusions and uncertainty no-replay remain mandatory. Tested contract added in `tests/test_action_tab_waves.py` and installed Windows/Profile Counts pipelines; details: `docs/GRANADA_P0_TEN_TAB_WAVES_2026-10-20.md`.
+- Scope is source development for Windows production action robot. Developer Edition independent real-relationship test mode remains **NOT IMPLEMENTED** (currently real-account read-only audit and simple local diagnostic chat only); owner explicitly wants authorized real account actions as proof, tracked separately. No actual Instagram account actions were performed by the developer/CI; v120.54 remains official stable; v120.55 reserved, **no permission to publish**.
+- Do not equate offline Chromium proof with the owner's live Unfollow/Cancel results. Keep issue #172 open until official-installed real-account acceptance.
+
 ## 2026-10-20 — GRANADA P0 Windows robots: PR #174 and #175 MERGED; exact-head CI validated, live Instagram QA OPEN
 
 - **Integrated source:** PR [#174](https://github.com/michels-lab/IG-Cleaner-Pro/pull/174) merge `3bbb4e22de29dbd5e632b96a4b58429eb813d3a1` and PR [#175](https://github.com/michels-lab/IG-Cleaner-Pro/pull/175) merge `a0518a9af4129dffe2f204f820ef73f888fa73f4` on `main`.
