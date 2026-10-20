@@ -16179,6 +16179,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    real_instagram_readonly_probe:lastLiveReport,
    owner_section_annotations:annotationExport(),
    diagnostic_chat_history:chatEntries(),diagnostic_comparisons:readProbeHistory().slice(-5),
+   developer_real_action_test_summary:readActionTestSummary(),
    safety:"Owner annotations are user-reported observations, not verified automated failures. They may include private wording. Review before sharing. Never export sessions or access tokens."};
  }
  function download(content,name,type){
@@ -16214,7 +16215,8 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    "\n\n# UI CHECKS AND CONTEXT\n"+
    JSON.stringify({ui_checks:data.client_ui_checks,report_schema:data.schema,
      audit_status:data.audit_status,real_instagram_readonly_probe:data.real_instagram_readonly_probe,
-     local_comparisons:data.diagnostic_comparisons},null,2)+
+     local_comparisons:data.diagnostic_comparisons,
+     developer_real_action_test_summary:data.developer_real_action_test_summary},null,2)+
    "\n\nFor each annotation, identify the exact screen/section/control and propose a reproduction test. "+
    "Do not treat these reports as confirmed root causes. Preserve signed-in account isolation and user data.\n";
   if(kind==="copy"){
@@ -16496,7 +16498,8 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
     el("igcDevLiveTask").value=kind;
     chatAdd("local_assistant","I can inspect REAL signed-in Instagram to locate "+kind+
       " failures in the saved journal, without clicking any relationship action. I will ask for explicit confirmation. "+
-      "Enter your exact Instagram @handle in the Real Instagram diagnostic box if it is blank.");
+      "Enter your exact Instagram @handle in the Real Instagram diagnostic box if it is blank. "+
+      "For a real relationship change use the separate LIVE ACTION TEST panel; free-text chat NEVER clicks.");
     await runLiveProbe(); // separate human confirmation is mandatory
    }else if(/audita|auditor[ií]a|audit|diagn[oó]stic|error|falla|fallando/i.test(message)){
     const ok=await audit();
