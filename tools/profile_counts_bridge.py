@@ -803,7 +803,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                         if (task not in ("unfollow", "cancel") or
                                 not isinstance(targets, list) or
                                 not 1 <= len(targets) <= 10 or
-                                any(valid_username(user) != user for user in targets) or
+                                any(not isinstance(user, str) or valid_username(user) != user for user in targets) or
                                 len(set(targets)) != len(targets)):
                             raise ValueError("A live Developer test requires 1–10 distinct exact Instagram targets and Unfollow or Cancel.")
                         expected_consent = "LIVE_TEST:" + task + ":" + ",".join(targets)
