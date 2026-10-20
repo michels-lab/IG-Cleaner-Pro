@@ -55,4 +55,4 @@ Source: "{#PayloadDir}\chrome-extension\*"; DestDir: "{app}\chrome-extension"; F
 Name: "{userprograms}\Insta Cleaner Pro Developer\Insta Cleaner Pro - Developer Edition"; Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; IconFilename: "{app}\InstaCleanerPro.exe"
 
 [Run]
-Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; Description: "Launch read-only Developer Edition"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\InstaCleanerPro.exe"; Parameters: "--developer"; Description: "Launch Developer Edition (read-only unless live test explicitly approved)"; Flags: nowait postinstall skipifsilent
