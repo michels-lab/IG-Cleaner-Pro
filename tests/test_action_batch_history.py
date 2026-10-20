@@ -157,6 +157,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
             def goto(self, url, **kwargs):
                 self.url = url
                 self.visited.append(url)
+            def bring_to_front(self):
+                self.was_focused = True
             def locator(self, *_):
                 return types.SimpleNamespace(count=lambda: 0)
             def is_closed(self):
@@ -209,6 +211,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                  patch("profile_actions.perform_visible_action", side_effect=one_uncertain_click):
                 robot._run()
             self.assertEqual(len(seen), 1)
+            self.assertTrue(browser.pages[1].was_focused,
+                            "The first Instagram target tab must receive focus before its action")
             self.assertEqual(len(seen[0]), 10)
             self.assertEqual(
                 seen[0], ["https://www.instagram.com/test." + str(n) + "/"
@@ -216,6 +220,80 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertEqual(robot._journal()["test.0"]["status"], "review")
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
+
+    def test_forty_profiles_run_as_four_complete_ten_tab_waves(self):
+        """Real _run state machine: 10 prepared -> ordered verify/close -> next 10."""
+        from unittest.mock import MagicMock
+        import types
+        import sys
+        from unittest.mock import patch
+
+        class Tab:
+            def __init__(self):
+                self.url, self.closed, self.focused = "about:blank", False, False
+            def goto(self, url, **kwargs):
+                self.url = url
+            def locator(self, *_):
+                return types.SimpleNamespace(count=lambda: 0)
+            def is_closed(self):
+                return self.closed
+            def close(self):
+                self.closed = True
+            def bring_to_front(self):
+                self.focused = True
+
+        class Browser:
+            def __init__(self):
+                self.pages = [Tab()]
+                self.pages[0].url = "https://www.instagram.com/"
+            def new_page(self):
+                page = Tab()
+                self.pages.append(page)
+                return page
+            def close(self):
+                for page in self.pages:
+                    page.close()
+
+        with TemporaryDirectory() as temporary:
+            browser = Browser()
+            robot = self._action(Path(temporary))
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.handle, robot.task = "owner.name", "unfollow"
+            robot.targets = ["wave." + str(i) for i in range(40)]
+            robot.rest_minutes, robot.min_delay_seconds = 0, 0
+            observations = []
+            def real_verified_action(page, username, *_args, **_kwargs):
+                self.assertTrue(page.focused, "Current target tab must have focus")
+                live=[p.url for p in browser.pages[1:] if not p.is_closed()]
+                observations.append((username, live))
+                self.assertIn("https://www.instagram.com/"+username+"/", live)
+                return "ok", "Action confirmed: visible Follow after Unfollow."
+            fake_playwright = types.SimpleNamespace(chromium=types.SimpleNamespace(
+                launch_persistent_context=lambda **kwargs: browser))
+            fake_context = MagicMock()
+            fake_context.__enter__.return_value = fake_playwright
+            with patch.dict(sys.modules, {
+                   "playwright": types.ModuleType("playwright"),
+                   "playwright.sync_api": types.SimpleNamespace(
+                       sync_playwright=lambda: fake_context)}), \
+                 patch("profile_actions.preserve_instagram_auth_page",return_value=True), \
+                 patch("profile_actions.challenge_detected",return_value=False), \
+                 patch("profile_actions.signed_in_handle",return_value="owner.name"), \
+                 patch("profile_actions.wait_required",return_value=0), \
+                 patch("profile_actions.batch_wait",return_value=0), \
+                 patch("profile_actions.perform_visible_action",side_effect=real_verified_action):
+                robot._run()
+            self.assertEqual(len(observations),40)
+            for batch in range(4):
+                names=["wave."+str(i) for i in range(batch*10,(batch+1)*10)]
+                expected=["https://www.instagram.com/"+name+"/" for name in names]
+                for step in range(10):
+                    user,live=observations[batch*10+step]
+                    self.assertEqual(user,names[step])
+                    self.assertEqual(live,expected[step:],
+                        "Only the current ten tabs may remain open, never next-wave prefetch")
+            self.assertEqual(robot.snapshot()["successful"],40)
+            self.assertTrue(all(p.closed for p in browser.pages))
 
     def test_already_not_following_is_completed_not_an_unfollow_or_issue(self):
         """Keep a separate confirmed-no-follow outcome and move to the next target."""

@@ -87,6 +87,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Developer real Instagram read-only/consent gate tests failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
+          python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA full-wave robot regression failed." }
           python -m unittest discover -s tests -p 'test_historical_recheck.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Historical no-click re-audit safety contract failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
