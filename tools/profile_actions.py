@@ -2061,6 +2061,10 @@ class ActionRobot:
                         self.current = user
                         self.status, self.message = "running", "Checking @" + user
                     if self._protected_for(user) or user in self.skipped:
+                        if action_tabs and action_tabs.prepared(user) is not None:
+                            action_tabs.record(user, "skipped", safe_no_click=True)
+                            with self.lock:
+                                self.open_review_tabs = action_tabs.overview()
                         continue
                     work_page = page
                     prepared_item = None
