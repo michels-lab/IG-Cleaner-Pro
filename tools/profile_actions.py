@@ -1379,10 +1379,13 @@ class ActionRobot:
             _atomic_json(self._review_batches_file_for(
                 self.owner, self.account, self.task), entries)
 
-    def _protection_file(self):
-        ident = "\0".join((self.owner, self.account))
+    def _protection_file_for(self, owner, account):
+        ident = "\\0".join((owner, account))
         digest = hashlib.sha256(ident.encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("action-protected-" + digest + ".json")
+
+    def _protection_file(self):
+        return self._protection_file_for(self.owner, self.account)
 
     def _protected(self):
         return set(_read_json(self._protection_file(), []))
@@ -1395,18 +1398,42 @@ class ActionRobot:
             return username in self._protected()
 
     def protect(self, data):
-        owner, account = str(data.get("owner") or ""), str(data.get("account") or "")
-        # Protection updates apply only to the currently selected authenticated
-        # owner/profile; never allow a UI switch to overwrite another scope.
+        """Persist owner/account protections; removing one requires explicit intent.
+
+        A UI toggle used to send "protected=[username]" for BOTH directions.
+        A missing user in a batch snapshot is never sufficient to unprotect.
+        """
+        owner = str(data.get("owner") or "").strip()
+        account = str(data.get("account") or "").strip()
+        if not owner or not account or len(owner) > 200 or len(account) > 120:
+            raise ValueError("Select an Insta Cleaner owner and Instagram workspace.")
+        additions = _users(data.get("protected", []))
+        removals = _users(data.get("unprotected", []))
+        if additions and removals:
+            raise ValueError("Protect and unprotect require separate commands.")
+        if removals and (len(removals) != 1 or
+                         data.get("confirmation") != "unprotect:" + removals[0]):
+            raise ValueError("Removing a saved protection requires explicit confirmation.")
         with self.lock:
-            if not self.owner or (owner, account) != (self.owner, self.account):
+            active = bool(self.worker and self.worker.is_alive())
+            # Never change a different owner's saved guard during an active
+            # robot; also retain paused-task identity guards.
+            if (self.owner and (owner, account) != (self.owner, self.account)
+                    and (active or self.status in
+                         ("paused", "starting", "running", "login", "waiting", "review", "blocked"))):
                 raise ValueError("Select the same account to update protected profiles.")
-            names = _users(data.get("protected", []))
-            protected = self._protected()
-            # Additive while running: a concurrent UI update can only protect.
-            protected.update(names)
-            _atomic_json(self._protection_file(), sorted(protected))
-            return self.snapshot()
+            if removals and active:
+                raise ValueError("Pause and finish the active robot before removing protection.")
+            path = self._protection_file_for(owner, account)
+            protected = set(_read_json(path, []))
+            protected.update(additions)
+            protected.difference_update(removals)
+            _atomic_json(path, sorted(protected))
+            if (owner, account) == (self.owner, self.account):
+                return self.snapshot()
+            return {"owner": owner, "account": account,
+                    "protected": len(protected), "running": False,
+                    "status": "idle", "message": "Saved protection updated for this workspace."}
 
     def skip(self, data):
         with self.lock:
