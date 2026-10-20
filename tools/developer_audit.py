@@ -40,9 +40,9 @@ def _safe_number(value):
 def _safe_counts(values, allowed):
     if not isinstance(values, dict):
         return {}
-    return {key: _safe_number(values[key]) for key in sorted(values)
-            if isinstance(key, str) and key in allowed
-            and type(values[key]) is int and 0 <= values[key] <= 1_000_000_000}
+    keys = sorted(key for key in values if isinstance(key, str) and key in allowed)
+    return {key: values[key] for key in keys
+            if type(values[key]) is int and 0 <= values[key] <= 1_000_000_000}
 
 
 def _safe_generated_at(value):
@@ -69,7 +69,8 @@ FINDING_CATALOG = {
     "BATCH_REVIEW_UNREADABLE": ("error", "Batch review document could not be parsed."),
     "HISTORICAL_READONLY_NOT_FOLLOWING": ("info", "Historical recheck observed absence of outgoing follow; no Unfollow clicked and not marked Reviewed."),
     "HISTORICAL_READONLY_UNRESOLVED": ("warning", "Historical profile still lacks reliable read-only verification; original action result remains untouched."),
-    "HISTORICAL_READONLY_REPORT_UNREADABLE": ("warning", "Historical read-only ledger could not be read; original journal preserved.")
+    "HISTORICAL_READONLY_REPORT_UNREADABLE": ("warning", "Historical read-only ledger could not be read; original journal preserved."),
+    "AUDIT_ROOT_IS_SYMLINK": ("error", "Developer audit root is a link; select its real, private workspace directory."),
     "EXTERNAL_JOURNAL_LINK_SKIPPED": ("warning", "Linked action-journal file was skipped to keep the Developer audit inside its local workspace."),
 }
 
@@ -102,7 +103,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
     if root.is_symlink():
         result["findings"].append({
             "code": "AUDIT_ROOT_IS_SYMLINK", "severity": "error", "count": 1,
-            "action": "Developer audit root is a link; select its real, private workspace directory."
+            "action": FINDING_CATALOG["AUDIT_ROOT_IS_SYMLINK"][1]
         })
         return result
     if not root.exists():
