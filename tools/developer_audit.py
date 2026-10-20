@@ -21,7 +21,7 @@ ISSUE_CODES = {
     "pending_already_following", "pending_not_requested", "mutual_before_action"
 }
 MAX_BYTES = 5_000_000
-SAFE_REVISION = re.compile(r"[A-Za-z0-9._-]{1,64}\Z")
+SAFE_REVISION = re.compile(r"(?:unknown|v?[0-9]+\.[0-9]+|[0-9a-fA-F]{7,40})\Z")
 SAFE_LIMITATIONS = (
     "Offline journal analysis cannot confirm a real Instagram relationship change.",
     "A possibly completed click must never be retried from this audit.",
@@ -218,7 +218,7 @@ def ai_prompt(report: dict, client_checks: dict | None = None) -> str:
     for key in allowed_checks:
         value = checks.get(key)
         if key == "app_revision":
-            if isinstance(value, str) and len(value) < 32 and all(c.isalnum() or c in ".-_" for c in value):
+            if isinstance(value, str) and _safe_revision(value) != "unknown":
                 safe_checks[key] = value
         elif isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 1_000_000:
             safe_checks[key] = value
