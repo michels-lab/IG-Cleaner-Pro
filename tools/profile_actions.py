@@ -1912,12 +1912,21 @@ class ActionRobot:
                 rests = load_batch_state(rests_file)
                 action_tabs = ActionTabPool(browser) if self.task != "audit" else None
                 stopped_for_review = False
-                if action_tabs:
+                def stage_next_wave(start_index):
+                    """Open all ten target tabs before any action in that wave.
+
+                    Visit pacing and rest apply to each navigation. Never
+                    reallocate a tab while unresolved tabs from an older wave
+                    remain visible for manual inspection.
+                    """
+                    nonlocal visits, rests, stopped_for_review
+                    if not action_tabs or action_tabs.has_open_tabs():
+                        return False
                     # Prepare a genuine ten-profile window *before* attempting
                     # any relationship-changing clicks. All navigation still
                     # honors the owner's per-visit cadence and mandatory rests.
                     stage_names = []
-                    for candidate in self.targets:
+                    for candidate in self.targets[start_index:]:
                         previous = journal.get(candidate, {})
                         if (self._protected_for(candidate) or candidate in self.skipped
                                 or (not self.review_only and
@@ -1967,7 +1976,7 @@ class ActionRobot:
                         try:
                             tab["page"].goto(
                                 "https://www.instagram.com/" + warm_user + "/",
-                                wait_until="commit", timeout=30000)
+                                wait_until="domcontentloaded", timeout=30000)
                             tab["status"] = "prefetched"
                         except Exception:
                             # This was a read-only navigation: no action click.
@@ -1992,6 +2001,8 @@ class ActionRobot:
                                                 "No relationship-changing click was made.")
                             stopped_for_review = True
                             break
+                    return bool(stage_names) and not stopped_for_review
+
                 for target_index, user in enumerate(
                         [] if stopped_for_review else self.targets):
                     if self.stop_event.is_set():
@@ -2008,7 +2019,24 @@ class ActionRobot:
                         (not self.review_only and
                          previous.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                          and not _preclick_no_action(previous))):
+                        if action_tabs and action_tabs.prepared(user) is not None:
+                            action_tabs.record(user, "skipped", safe_no_click=True)
+                            with self.lock:
+                                self.open_review_tabs = action_tabs.overview()
                         continue
+                    if action_tabs and action_tabs.prepared(user) is None:
+                        if action_tabs.has_open_tabs():
+                            with self.lock:
+                                self.status = "review"
+                                self.message = ("An unresolved tab remains from the previous "
+                                                "ten-profile wave. Review it before the next "
+                                                "wave; no uncertain click will be retried.")
+                            stopped_for_review = True
+                            break
+                        if not stage_next_wave(target_index):
+                            if stopped_for_review or self.stop_event.is_set():
+                                break
+                            continue
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
                     existing_tab = action_tabs.prepared(user) if action_tabs else None
@@ -2033,6 +2061,10 @@ class ActionRobot:
                         self.current = user
                         self.status, self.message = "running", "Checking @" + user
                     if self._protected_for(user) or user in self.skipped:
+                        if action_tabs and action_tabs.prepared(user) is not None:
+                            action_tabs.record(user, "skipped", safe_no_click=True)
+                            with self.lock:
+                                self.open_review_tabs = action_tabs.overview()
                         continue
                     work_page = page
                     prepared_item = None
@@ -2057,67 +2089,10 @@ class ActionRobot:
                         visits = register_visit(visits_file, visits)
                         current_visit_started = visits[-1]
 
-                    # A single next profile may load read-only in another tab
-                    # while the current profile is resolving its controls.
-                    # Never prefetch through Instagram faster than the owner's
-                    # configured visit pacing or across a mandatory batch rest.
-                    next_user = None
-                    for candidate in ([] if self.review_only else
-                                      self.targets[target_index + 1:]):
-                        prior = journal.get(candidate, {})
-                        if (not self._protected_for(candidate)
-                                and candidate not in self.skipped
-                                and (not action_tabs or
-                                     action_tabs.prepared(candidate) is None)
-                                and (prior.get("status") not in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-                                     or _preclick_no_action(prior))):
-                            next_user = candidate
-                            break
-                    prefetch_attempted = False
-
-                    def paced_prefetch(phase):
-                        nonlocal visits, prefetch_attempted
-                        if (not action_tabs or not next_user or prefetch_attempted
-                                or phase not in ("waiting_relationship_control",
-                                                 "waiting_unfollow_menu")
-                                or self.stop_event.is_set()
-                                or self._protected_for(next_user)
-                                or next_user in self.skipped):
-                            return
-                        if (self.rest_minutes > 0
-                                and int(rests.get("count", 0)) + 1 >= self.max_count):
-                            return  # Do not prefetch across a mandatory batch rest.
-                        if (wait_required(visits, self.max_count, self.window_minutes,
-                                          self.min_delay_seconds) > 0
-                                or batch_wait(rests,
-                                              self.max_count if self.rest_minutes > 0 else 0,
-                                              self.rest_minutes) > 0):
-                            return
-                        if action_tabs.prepared(next_user) is not None:
-                            return
-                        prepared_page = action_tabs.open(next_user)
-                        if prepared_page is None:
-                            return  # Ten review tabs already occupy all slots.
-                        prefetch_attempted = True
-                        # Journal a visit BEFORE any navigation, even if Chrome
-                        # crashes or the read-only preload raises an exception.
-                        visits = register_visit(visits_file, visits)
-                        action_tabs.tabs[next_user]["visit_started_at"] = visits[-1]
-                        action_tabs.tabs[next_user]["status"] = "prefetching"
-                        with self.lock:
-                            self.open_review_tabs = action_tabs.overview()
-                        try:
-                            prepared_page.goto(
-                                "https://www.instagram.com/" + next_user + "/",
-                                wait_until="commit", timeout=12000)
-                            action_tabs.tabs[next_user]["status"] = "prefetched"
-                        except Exception:
-                            # Read-only preparation failed. The target stays in
-                            # its tab; normal readiness checks decide the result
-                            # without silently skipping or issuing any click.
-                            action_tabs.tabs[next_user]["status"] = "prefetch_pending"
-                        with self.lock:
-                            self.open_review_tabs = action_tabs.overview()
+                    # Focus the first, then the second, and so on. No rolling
+                    # one-by-one prefetch outside this complete ten-tab wave.
+                    if action_tabs and not work_page.is_closed():
+                        work_page.bring_to_front()
 
                     relation = ""
                     try:
@@ -2146,10 +2121,9 @@ class ActionRobot:
                                 work_page, user, self.task, self.handle,
                                 lambda name: not self.stop_event.is_set() and
                                 not self._protected_for(name) and name not in self.skipped,
-                                on_wait=lambda phase, elapsed, limit: (
+                                on_wait=lambda phase, elapsed, limit:
                                     self._record_readiness(user, phase, elapsed, limit,
                                                            action_tabs),
-                                    paced_prefetch(phase)),
                                 preloaded=bool(prepared_item and
                                                prepared_item.get("status") == "prefetched"))
                     except Exception as exc:

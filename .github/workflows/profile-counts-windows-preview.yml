@@ -81,6 +81,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Automations action batch selection failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
+          python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Ten-tab wave and tab safety contract failed." }
           python -m unittest discover -s tests -p 'test_historical_recheck.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Historical no-click re-audit safety contract failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
