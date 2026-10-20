@@ -1,8 +1,11 @@
 """GRANADA #13: corrupt historical CSV cannot be silently collapsed or rewritten."""
 import csv
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 from tools.profile_counts_robot import FIELDS, read_results, save_results
 from tools.profile_counts_bridge import Collector
