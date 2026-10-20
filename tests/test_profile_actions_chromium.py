@@ -744,6 +744,58 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
+    def test_cancel_no_request_verified_without_click_public_private_locales(self):
+        import profile_actions
+        for locale, label, private in (
+            ("en", "Follow", False),
+            ("en", "Follow Back", True),
+            ("es", "Seguir", False),
+            ("es", "Seguir también", True),
+        ):
+            with self.subTest(locale=locale, label=label, private=private):
+                self.context.unroute_all()
+                original = "Siguiendo" if locale == "es" else "Following"
+                html = fake_profile(locale=locale, private=private).replace(
+                    ">" + original + "</button>", ">" + label + "</button>", 1)
+                self.context.route("https://www.instagram.com/**",
+                    lambda route: route.fulfill(
+                        status=200, content_type="text/html", body=html))
+                with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 2000), \
+                     patch.object(profile_actions, "CANCEL_NO_REQUEST_MIN_WAIT_MS", 700):
+                    status, message = perform_visible_action(
+                        self.page, "target.user", "cancel", "my.profile", lambda _: True)
+                self.assertEqual(status, "already_not_requested", message)
+                self.assertIn("No Cancel Request clicked", message)
+                self.assertEqual(self.page.evaluate("window.__steps"), [])
+
+    def test_cancel_delayed_requested_takes_precedence_over_follow(self):
+        import profile_actions
+        html = fake_profile().replace(">Following</button>", ">Follow</button>", 1)
+        html = html.replace("</script>", (
+            "setTimeout(() => document.querySelector('#relationship').textContent='Requested', 700);"
+            "</script>"))
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 2200), \
+             patch.object(profile_actions, "CANCEL_NO_REQUEST_MIN_WAIT_MS", 1300):
+            status, message = perform_visible_action(
+                self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "ok", message)
+        self.assertEqual(self.page.evaluate("window.__steps"), ["open", "confirmed"])
+
+    def test_cancel_sidebar_follow_is_not_exact_target_evidence(self):
+        import profile_actions
+        html = fake_profile().replace(">Following</button>", ">Loading...</button>", 1)
+        html = html.replace("<header>", '<aside><button>Follow</button></aside><header>', 1)
+        self.context.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 650), \
+             patch.object(profile_actions, "CANCEL_NO_REQUEST_MIN_WAIT_MS", 0):
+            status, message = perform_visible_action(
+                self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertEqual(self.page.evaluate("window.__steps"), [])
+
     def test_already_not_following_advances_without_a_relationship_click(self):
         """Owner request: Follow / Follow Back means no Unfollow is needed."""
         import profile_actions
