@@ -12,7 +12,7 @@ for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])eleme
 for(const id of ['igcAutoStatus','igcAutoLiveStatus'])elements[id]={textContent:''};
 elements.igcAutoOpenTabs={textContent:'',style:{display:'none'}};
 for(const [id,value] of Object.entries({igcAutoSearch:'',igcAutoBatch:'2',igcAutoRest:'5',igcAutoGap:'5'}))elements[id]={value};
-elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};
+elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};elements.igcAutoRun={disabled:false};
 elements.igcActionAuthFallback={style:{display:'none'}};
 elements.igcAutoBatchApproval={style:{display:'none'}};
 elements.igcAutoBatchApprovalDetails={textContent:''};
@@ -97,6 +97,8 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(elements.igcAutoOpenTabs.style.display,'block');
  assert.match(elements.igcAutoOpenTabs.textContent,/@needs.review/);
  assert(elements.igcAutoOpenTabs.textContent.includes('2/10'));
+ assert.equal(elements.igcAutoRun.disabled,true,'Run disabled while robot is active');
+ assert.match(elements.igcAutoStatus.textContent,/ROBOT · UNFOLLOW · RUNNING/);
  p.current_wait={username:'needs.review',phase:'waiting_relationship_control',
                  elapsed_seconds:7,timeout_seconds:20};
  await ctx.window.igcAutoPoll();
@@ -143,6 +145,8 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
    'Human CAPTCHA block must expose safe manual Pending/Following options');
  assert.equal(elements.igcAutoResume.disabled,true,
    'Blocked CAPTCHA should not be retried through Resume');
+ assert.equal(elements.igcAutoRun.disabled,true,'Blocked CAPTCHA cannot restart via Run');
+ assert.match(elements.igcAutoStatus.textContent,/security check/);
  assert.match(elements.igcAutoLiveStatus.textContent,/security check/);
  context.owner='owner_B';context.active='ig_B';
  await ctx.window.igcAutoPoll();
@@ -153,6 +157,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoPoll();
  assert.equal(elements.igcActionAuthFallback.style.display,'none');
  assert.equal(elements.igcAutoResume.disabled,false);
+ assert.equal(elements.igcAutoRun.disabled,false,'Paused robot allows next owner-authorized Run');
  // The backend action journal is separate from owner-approved reviewed state.
  p.status='partial';p.running=false;p.task='unfollow';p.owner='owner_A';p.account='ig_A';
  batchFixture={id:'batch123',targets:['keep.me','skip.me','untouched.three'],approved_at:null,
@@ -210,5 +215,17 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert(texts.at(-1).includes('No Unfollow/Cancel action'),
    'History scan must require one explicit explanation of its no-click behavior');
  assert(!calls.some(c=>c.type==='approve-batch' && c.data.confirmation==='history-read-only:unfollow'));
- console.log('Automations execution, old-error automatic read-only re-audit, owner switching and batch approval: PASS');
+ // Verified absent requests are completed non-click outcomes, not cancel clicks.
+ p.status='complete';p.running=false;p.task='cancel';p.total=1;
+ p.successful=0;p.already_not_requested=1;p.remaining=0;
+ batchFixture={id:'cancel-verified',targets:['request.one'],approved_at:null,
+  action_results:{'request.one':{status:'already_not_requested'}},recheck_results:{}};
+ ctx.window.igcAutoChoose('cancel');
+ await ctx.window.igcAutoPoll();
+ assert.match(elements.igcAutoExecutionMetrics.children.map(x=>x.textContent).join(' | '),
+  /Cancellations confirmed: 0.*Already no pending request: 1/);
+ assert.match(elements.igcAutoBatchApprovalDetails.textContent,/verified no pending request \(no click\)/);
+ assert.equal(elements.igcAutoApproveBatch.disabled,false,
+  'Completed no-click result may be approved explicitly, never auto-Reviewed');
+ console.log('Automations execution, live status, blocked Run, no-request evidence and batch approval: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});

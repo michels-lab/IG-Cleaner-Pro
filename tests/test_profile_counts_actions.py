@@ -227,11 +227,52 @@ class ActionSafetyTests(unittest.TestCase):
         page=FakePage("cancel")
         page.header.label="Follow"
         with patch("profile_actions.challenge_detected",return_value=False), \
-             patch("profile_actions.signed_in_handle",return_value="my.profile"):
+             patch("profile_actions.signed_in_handle",return_value="my.profile"), \
+             patch("profile_actions.ACTION_CONTROL_WAIT_MS",30), \
+             patch("profile_actions.CANCEL_NO_REQUEST_MIN_WAIT_MS",0):
             status, message=perform_visible_action(page,"target.user","cancel","my.profile")
-        self.assertEqual(status,"review")
-        self.assertEqual(_action_issue("cancel",status,message),"pending_not_requested")
+        self.assertEqual(status,"already_not_requested")
+        self.assertIn("No Cancel Request clicked",message)
+        self.assertEqual(_action_issue("cancel",status,message),"")
         self.assertEqual(page.header.clicker.clicked,0)
+
+    def test_already_not_requested_survives_restart_and_never_claims_click(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot.owner, robot.account, robot.task = "owner", "instagram", "cancel"
+            robot.targets = ["no.request"]
+            _atomic_json(robot._base(), {"no.request": {
+                "status": "already_not_requested",
+                "message": "No Cancel Request clicked; no active outgoing request.",
+                "at": "2026-10-20T00:00:00Z", "issue": ""}})
+            snapshot = robot.snapshot()
+            self.assertEqual(snapshot["successful"], 0)
+            self.assertEqual(snapshot["already_not_requested"], 1)
+            self.assertEqual(snapshot["remaining"], 0)
+            cold = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            history = cold.attempted_history({
+                "owner": "owner", "account": "instagram", "task": "cancel"})
+            self.assertEqual(history["attempted_usernames"], ["no.request"])
+            self.assertNotIn("no.request", history["reusable_usernames"])
+            for foreign in (
+                {"owner": "other", "account": "instagram", "task": "cancel"},
+                {"owner": "owner", "account": "other", "task": "cancel"},
+                {"owner": "owner", "account": "instagram", "task": "unfollow"}
+            ):
+                self.assertNotIn("no.request", cold.attempted_history(foreign)["attempted_usernames"])
+
+    def test_cancel_wrong_owner_follow_back_cannot_skip_request(self):
+        page = FakePage("cancel")
+        page.header.label = "Follow Back"
+        with patch("profile_actions.challenge_detected",return_value=False), \
+             patch("profile_actions.signed_in_handle",return_value="wrong.owner"), \
+             patch("profile_actions.ACTION_CONTROL_WAIT_MS",30), \
+             patch("profile_actions.CANCEL_NO_REQUEST_MIN_WAIT_MS",0):
+            status, _ = perform_visible_action(page, "target.user", "cancel", "my.profile")
+        self.assertEqual(status, "blocked")
+        self.assertEqual(page.header.clicker.clicked, 0)
 
     def test_followback_anomaly_has_dedicated_issue_code(self):
         # Old on-disk messages must still classify after the UI switches to English.

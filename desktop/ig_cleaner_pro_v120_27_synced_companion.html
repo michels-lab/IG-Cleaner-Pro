@@ -15222,7 +15222,7 @@ window.igcAutoStart=async function(){
     const attempted=waiting.batch.action_results||{};
     const untouched=data.targets.filter(u=>
       attempted[u]?.safe_no_click===true ||
-      !["ok","already_not_following","review","error","blocked"].includes(attempted[u]?.status||"pending"));
+      !["ok","already_not_following","already_not_requested","review","error","blocked"].includes(attempted[u]?.status||"pending"));
     if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
     if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
       " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
@@ -15345,8 +15345,10 @@ window.igcAutoPoll=async function(){
     const count=history.counts||{};
     historyText.textContent=(count.total||0)
      ?("Historical read-only observations: "+(count.total||0)+
-       " profiles · "+(count.observed_not_following||0)+
-       " now observed not following · "+(count.still_unresolved||0)+
+       " profiles · "+(mode==="cancel"?
+          ((count.observed_not_requested||0)+" now verified no active request"):
+          ((count.observed_not_following||0)+" now observed not following"))+
+       " · "+(count.still_unresolved||0)+
        " still unresolved. No Unfollow/Cancel was repeated. No auto-Reviewed.")
      :"No historical read-only re-audit results for this account yet.";
    }catch{historyText.textContent="Historical re-audit status unavailable."}
@@ -15363,7 +15365,9 @@ window.igcAutoPoll=async function(){
     "No relationship changes or Reviewed approvals"
    ]:[
     "Processed: "+(state.processed??state.successful)+" / "+state.total,
-    "Unfollows confirmed: "+state.successful,"Already not following: "+(state.already_not_following||0),
+    (state.task==="cancel"?"Cancellations confirmed: ":"Unfollows confirmed: ")+state.successful,
+     (state.task==="cancel"?"Already no pending request: ":"Already not following: ")+
+       (state.task==="cancel"?(state.already_not_requested||0):(state.already_not_following||0)),
     "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
@@ -15558,7 +15562,21 @@ window.igcAutoRender=function(){
    const item=document.createElement("span");item.textContent=label;stats.appendChild(item);
   }
  }
- if(mode==="unfollow"&&(!Array.isArray(followingRaw)||!followingRaw.length||!Array.isArray(followersRaw)||!followersRaw.length)){
+ const owner=actionOwner(),sameOwner=actionState&&
+   actionState.owner===owner.owner&&actionState.account===owner.account;
+  const liveRobot=sameOwner&&actionState?.task&&
+    ["starting","running","waiting","login","pausing","paused","blocked","review","error","partial","complete"].includes(actionState.status);
+  const authChallenge=liveRobot&&actionState.status==="blocked"&&
+    /recaptcha|challenge|security check|verification|identity/i.test(actionState.message||"");
+  const run=document.getElementById("igcAutoRun");
+  if(run)run.disabled=mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge;
+  if(liveRobot){
+   const batchId=actionState.review_batch?.id;
+   setStatus("ROBOT · "+String(actionState.task).toUpperCase()+" · "+
+      String(actionState.status).toUpperCase()+
+      (batchId?" · cohort "+batchId:"")+
+      " · "+(actionState.message||"Status available in the live panel below."));
+  }else if(mode==="unfollow"&&(!Array.isArray(followingRaw)||!followingRaw.length||!Array.isArray(followersRaw)||!followersRaw.length)){
   setStatus("Import Following and Followers data first; lack of evidence cannot prove non-followback.");
  }else if(mode==="protected"){
   setStatus("Protected profiles are excluded from account-changing actions until protection is removed.");
@@ -15576,6 +15594,7 @@ window.igcAutoRender=function(){
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
      live.status==="already_not_following"?"✓ Already not following · no action needed":
+      live.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
      live.audit_relation==="follows_you"?"✓ Follows you (verified)":
      live.audit_relation==="not_following"?"✓ Not following you (verified)":
      attempted.has(item.username)?"Already attempted · inspect journal":
@@ -15599,7 +15618,7 @@ function igcAutoBatchOutcomes(){
  for(const username of b.targets||[]){
   const status=(b.recheck_results?.[username]||b.action_results?.[username]||{}).status||"pending";
   if(status==="ok")confirmed.push(username);
-  else if(status==="already_not_following")already.push(username);
+  else if(status==="already_not_following"||status==="already_not_requested")already.push(username);
   else if(status==="pending")unchecked.push(username);
   else issues.push(username);
  }
@@ -15629,7 +15648,8 @@ window.igcAutoRenderBatchApproval=function(){
     " profiles · NEW SELECTED SIZE: "+chosenSize+
     ". Run will continue the saved "+count+" until you choose to replan its unfinished profiles. "):"")+
     count+" in batch · "+outcome.confirmed.length+
-    " verified actions · "+outcome.already.length+" already not following (no click) · "+
+    " verified actions · "+outcome.already.length+
+     (mode==="cancel"?" verified no pending request (no click) · ":" already not following (no click) · ")+
     outcome.issues.length+" issues · "+
     outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed."+
     (blocked.length?" "+blocked.length+

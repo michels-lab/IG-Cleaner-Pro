@@ -1,3 +1,13 @@
+## 2026-10-20 — GRANADA P0 Cancel Pending positive evidence (source candidate)
+
+- **Issue:** #172 and #164. Isolated branch `granada/p0-cancel-positive-evidence-20261020`, based on post-#174 main merge `3bbb4e22`.
+- **Root issue:** Cancel Pending treated a positively verified exact-target Follow/Follow Back (no Requested) as `review / pending_not_requested`. The profile could be reopened after reimport or restart despite no relationship click.
+- **Behavior:** visible Chrome requires the signed-in owner, exact target username, three positive non-requested observations and at least five seconds of hydration delay; an additional three checks exclude delayed Requested before returning terminal `already_not_requested`. No Cancel was clicked or claimed. If Requested appears, only the normal validated cancellation path may run. Owner mismatch, sidebar suggestion, Following, missing controls or challenge never count as positive no-request evidence.
+- **Persistence:** owner+Instagram workspace+task-scoped journal/replay and per-cohort approval now recognize the terminal non-click state. Existing historic `ok`, uncertain click, protect/favorites and original saved batches are unchanged. No automatic Reviewed promotion.
+- **Controller:** Windows metrics distinguish actual `Cancellations confirmed` from `Already no pending request`; read-only old failures have separate `observed_not_requested` count.
+- **Offline tests:** FakePage unit tests and real Chromium DOM fixtures cover English/Spanish, public/private, delayed Requested, sidebar-only Follow, owner mismatch and restart/scope/counter integrity. URL interception prevents real Instagram use.
+- **Status:** candidate only; GitHub exact-HEAD CI and installed physical Windows / user Instagram acceptance are separate gates. No version bump or v120.55 release authorized; stable remains v120.54.
+
 ## 2026-10-20 — OWNER-AUTHORIZED GRANADA RELEASE v120.54 — officially PUBLISHED and verified
 
 - **Permission:** explicit owner command “OPERACION GRANADA Y DALE RELEASE” (2026-10-20) covers the official stable publication. [Release PR #171](https://github.com/michels-lab/IG-Cleaner-Pro/pull/171) merged after **five active PR-head success** checks (Profile Counts, integrated Windows Setup/Chromium, Desktop rendered, Android About, Android Developer). The Android Developer emulator had one intermittent Account-navigation failure and passed the subsequent same-HEAD rerun; no test was disabled.
