@@ -1,6 +1,6 @@
 # GRANADA #12 — Deterministic installed Android screenshot evidence (2026-10-19)
 
-**Issue:** [#158](https://github.com/michels-lab/IG-Cleaner-Pro/issues/158). **Base:** `main` commit `1730b1f5fe75c8e050ac01b7eef3969281a88d9a`. **Stage:** isolated test/CI candidate awaiting exact-commit validation. Published stable v120.53 remains unchanged.
+**Issue:** [#158](https://github.com/michels-lab/IG-Cleaner-Pro/issues/158). **Base:** `main` commit `1730b1f5fe75c8e050ac01b7eef3969281a88d9a`. **Stage:** integrated in `main` via [PR #159](https://github.com/michels-lab/IG-Cleaner-Pro/pull/159), merge `b86ce64ca03c08520405c1bca78043e4188b601d`, after **6/6 exact-HEAD check families SUCCESS** at candidate head `9b3659fe8f331374d92186f29da276c337ed7602` (installed Android Home/About screenshot evidence, installed Developer APK, Android compile, Desktop rendered/contracts, Supabase RLS). Issue #158 closed. Published stable v120.53 remains unchanged; no new release.
 
 ## Concrete failed acceptance and risk
 - During GRANADA #11 [PR #157](https://github.com/michels-lab/IG-Cleaner-Pro/pull/157) an Android 35 emulator twice reported `OK (12 tests)` for the installed UI, but the job could not retrieve image bytes with `adb pull /sdcard/Android/data/com.michelslab.igcleaner.beta/files/igc-ui-capture/`.
@@ -19,4 +19,4 @@
 - Exact-head CI installed Android About **must** pass and evidence manifest must exist before merge. Published stable v120.53, reserved v120.54 not authorized or published; user tests only official releases, never Actions candidates.
 
 ## QA
-Await exact-HEAD check results and any real failures. No release creation.
+The first offline suite found a missing section loop in the collector, the second found a test-only parent-path parsing bug; both corrected and all exact-HEAD CI checks passed after subsequent commits. Normal/debug APK evidence validates all eight actual screenshots and signed-off CI manifest; no release creation or owner physical-device/provider acceptance claimed.
