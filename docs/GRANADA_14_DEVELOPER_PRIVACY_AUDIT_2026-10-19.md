@@ -1,6 +1,6 @@
 # GRANADA #14 — Developer auditor private-workspace and AI-export hardening (2026-10-19)
 
-**Issue:** [#162](https://github.com/michels-lab/IG-Cleaner-Pro/issues/162). **Base:** `main` at `cbd8b1ce65d428b6950c71539b2761df5823a907`. **Stage:** isolated source/test PR candidate; exact-HEAD CI pending; no publication.
+**Issue:** [#162](https://github.com/michels-lab/IG-Cleaner-Pro/issues/162). **Base:** `main` at `cbd8b1ce65d428b6950c71539b2761df5823a907`. **Stage:** integrated into `main` via [PR #163](https://github.com/michels-lab/IG-Cleaner-Pro/pull/163), merge SHA `c949d5dc5147728739a174bbc54f63dfd8c41c1d`, after **6/6 exact-HEAD checks SUCCESS** at `d0a61094e02952c90a580823b675160237f6e1cd`: installed Windows Setup, Desktop contracts/render, Android build/About visual and Supabase RLS. [Issue #162](https://github.com/michels-lab/IG-Cleaner-Pro/issues/162) closed. **Source integrated, not published**.
 
 ## Findings
 - `run_audit` globbed three action history families within `data_root`, but Python `Path.is_file()` and `read_text()` follow symbolic links. A symlink named like an action journal could cause Developer Edition to examine unrelated local files outside the owner's developer workspace. A symlinked root could redirect the entire scan.
@@ -16,8 +16,8 @@
 
 ## Limitations / QA
 - Path symlink checks guard the normal app-workspace read path; they do not promise a full OS-level defense against hostile concurrent same-user filesystem races or compromised Windows processes.
-- Source tests and installed Windows package QA still require exact-HEAD CI proof. They do not validate real Instagram account login, physical Android OTP, browser session recovery or mutation outcomes.
+- Exact-head CI passed across six jobs, including installed Windows Setup. Those tests do **not** validate real Instagram login, physical Android OTP, browser session recovery or relationship mutation outcomes.
 - Official GitHub stable remains **v120.53**, next reserved **v120.54** is **not** published or authorized by this change. Owner tests only official published release installers, never Actions candidate artifacts.
 
 ## CI verdict
-Pending.
+**SUCCESS (6/6 exact-HEAD checks)** for the merge-candidate commit; owner live account/device acceptance pending. No release created.
