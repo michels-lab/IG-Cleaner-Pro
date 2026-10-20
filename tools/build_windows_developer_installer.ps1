@@ -37,4 +37,4 @@ if (!(Test-Path $installer) -or (Get-Item $installer).Length -lt 10000000) {
 }
 $sha = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
 "$sha  $filename" | Set-Content "artifacts/$filename.sha256" -Encoding ascii
-Write-Host "PASS: independent Developer Setup v$Version + checksum; read-only --developer"
+Write-Host "PASS: independent Developer Setup v$Version + checksum; --developer with read-only default and explicit bounded real-action test"
