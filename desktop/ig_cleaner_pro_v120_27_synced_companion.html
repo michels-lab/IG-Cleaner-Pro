@@ -15074,7 +15074,15 @@ async function requestAction(endpoint,body){
   ...(body?{body:JSON.stringify(body)}:{})
  });
  const value=await response.json();
- if(!response.ok)throw Error(value.error||"The local connection did not complete the request.");
+ if(!response.ok){
+  const err=new Error(value.error||"The local connection did not complete the request.");
+  if(value.code==="stale_protected_batch"){
+   err.code=value.code;err.protected_usernames=value.protected_usernames;
+   err.conflicting_count=value.conflicting_count;err.task=value.task;
+   err.retry_requires_confirmation=value.retry_requires_confirmation;
+  }
+  throw err;
+ }
  return value;
 }
 function actionOwner(){
@@ -15152,8 +15160,35 @@ async function refreshActionHistoryForStart(task){
  localStorage.setItem(actionAttemptedKey(task),JSON.stringify([...new Set(names)]));
  return result;
 }
+function igcAutoReplanStaleProtected(err,originalScope,originalMode){
+ if(err?.code!=="stale_protected_batch")return false;
+ // The bridge reported a rejected, never-started batch. Never mutate a
+ // different workspace when the user switched accounts during the request.
+ if(scope()!==originalScope||mode!==originalMode){
+  setStatus("The old batch was rejected on another workspace. Switch back and refresh before starting.");
+  return true;
+ }
+ const rows=Array.isArray(err.protected_usernames)?err.protected_usernames.map(norm):[];
+ const users=[...new Set(rows)].filter(Boolean);
+ if(!users.length||users.length!==err.conflicting_count||err.task!==originalMode){
+  setStatus("The Windows robot rejected a stale batch. Refresh Automations; no Instagram action was started.");
+  return true;
+ }
+ // The Windows protection file is authoritative for both robot modes.
+ // Mirroring its positive guard in local views is safe; never remove one.
+ for(const user of users){write("unfollow",user,true);write("cancel",user,true)}
+ window.igcAutoRender();
+ const label=users.slice(0,8).map(u=>"@"+u).join(", ")+(users.length>8?"…":"");
+ setStatus("No Instagram actions started. "+users.length+
+  " selected account(s) were protected in the Windows journal ("+label+
+  "). Local exclusions refreshed. "+(actionBatchReview?
+    "The original unapproved cohort remains unchanged; resolve it before continuing.":
+    "Choose Run again to inspect and confirm a NEW eligible batch."));
+ return true;
+}
 window.igcAutoStart=async function(){
  if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
+ const originalScope=scope(),originalMode=mode;
  try{
   // An unapproved batch retains its original cohort. Never silently replace it
   // with a fresh queue because some actions may have already been clicked.
@@ -15194,7 +15229,10 @@ window.igcAutoStart=async function(){
   const result=await requestAction("start",data);
   actionState=result;
   await window.igcAutoPoll();
- }catch(e){setStatus("Could not start: "+e.message)}
+ }catch(e){
+  if(!igcAutoReplanStaleProtected(e,originalScope,originalMode))
+   setStatus("Could not start: "+e.message);
+ }
 };
 window.igcAutoPause=async function(){
  try{

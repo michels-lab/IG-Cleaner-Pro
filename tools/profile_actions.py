@@ -1032,6 +1032,21 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
                     " No new relationship-changing click was made.")
 
 
+class ProtectedBatchCollision(ValueError):
+    """No action batch was written: exact approved cohort became protected."""
+
+    def __init__(self, usernames, *, task, batch_size):
+        self.usernames = sorted(usernames)
+        self.task = task
+        self.batch_size = batch_size
+        n = len(self.usernames)
+        super().__init__(
+            f"Approved batch is stale: {n} selected profile(s) are now "
+            "protected on this Windows device. Refresh the protected list and "
+            "review a NEW cohort; the previous approval was not used."
+        )
+
+
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
         self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
@@ -1491,6 +1506,17 @@ class ActionRobot:
                         raise ValueError("An unapproved batch exists. Continue its exact saved ID and profiles; never replace it.")
                 elif data.get("batch_id"):
                     raise ValueError("Saved batch changed. Refresh before restarting actions.")
+                # Validate the EXACT owner-approved cohort before writing ANY
+                # review-batch row or rebinding the worker. A stale Desktop
+                # favorites snapshot cannot know about disk-only protections.
+                # Do not silently trim/reapprove targets: ask the owner to
+                # inspect and approve the replacement list explicitly.
+                disk_guard = set(_read_json(self._protection_file_for(owner, account), []))
+                ui_guard = set(_users(data.get("protected", [])))
+                collision = sorted(set(targets) & (disk_guard | ui_guard))
+                if collision:
+                    raise ProtectedBatchCollision(
+                        collision, task=task, batch_size=len(targets))
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             if not resume:
                 previous = self._journal()

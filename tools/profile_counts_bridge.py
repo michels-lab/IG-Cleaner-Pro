@@ -20,7 +20,7 @@ import webbrowser
 from profile_counts_instagram import (signed_in_handle, challenge_detected, safe_to_probe_owner_from_home, preserve_instagram_auth_page, read_following_visible,
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
-from profile_actions import ActionRobot
+from profile_actions import ActionRobot, ProtectedBatchCollision
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -834,6 +834,19 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                 else:
                     result = collector.resume()
                 self._send(200, result)
+            except ProtectedBatchCollision as exc:
+                # A conflict is not a partial start. Return the exact
+                # normalized collision set to the local owner-only UI so it
+                # can replan without reusing the first approval.
+                self._send(409, {
+                    "error": str(exc),
+                    "code": "stale_protected_batch",
+                    "protected_usernames": exc.usernames,
+                    "conflicting_count": len(exc.usernames),
+                    "batch_size": exc.batch_size,
+                    "task": exc.task,
+                    "retry_requires_confirmation": True,
+                })
             except (ValueError, json.JSONDecodeError) as exc:
                 self._send(400, {"error": str(exc)})
 
