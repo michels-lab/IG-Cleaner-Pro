@@ -1,3 +1,8 @@
+## 2026-10-20 — Release channel stable v120.54 reconciled with official publication
+
+- [Official v120.54 stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.54), governed [successful publisher #39394417960](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39394417960); release tag target `4d8962743b83bcad178c3e8cde9c057483361300`. Exact-commit Android/desktop installed/emulated visual evidence, Windows Setup install/launch/uninstall, signed production Android keystore and APK identity verification, SHA256SUMS and nine uploaded assets. User real Instagram acceptance remains unverified.
+- Release request authorization consumed (`authorized:false,status:published`) with definitive run/url/source SHA. Distribution manifest current stable v120.54, next v120.55 **reserved, unpublished and unauthorized**; no automatic release on main. No new secrets/services/provider bypass or user-data migration.
+
 ## 2026-10-20 — Local Windows robot archive protocol for protected cohorts
 
 [PR #170](https://github.com/michels-lab/IG-Cleaner-Pro/pull/170) merges local-only `/api/actions/defer-protected-batch` (explicit owner task ID + confirmation) and `/api/actions/deferred-batches` read-only scoped summaries. Saved account/task review cohorts are marked `deferred_at`, never as `approved_at`. The original journal, protected guard, Chrome session, pacing and privacy boundaries remain unchanged. No external provider, Meta API, credentials, new secrets, production migration, remote database writes or release version changes. Exact candidate-head integrated Windows installer + offline action fixture, Desktop and Android CI passed; real Instagram owner acceptance remains unverified, stable public v120.53 unaffected.
