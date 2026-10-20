@@ -48,7 +48,9 @@ ctx.window.igcAutoChoose('protected');
 assert(dom.igcAutoRows.children.some(r=>r.children[0].children[0].textContent==='@no.follow'));
 const protectedRows=dom.igcAutoRows.children;
 protectedRows[0].children[2].children[0].click();
-assert(!protectedSet.has('no.follow'));
+assert(protectedSet.has('no.follow'),
+ 'Standalone HTML must not pretend to revoke Windows robot protections without its bridge');
+assert.match(dom.igcAutoStatus.textContent,/installed Windows robot/);
 ctx.window.igcAutoChoose('cancel');
 assert.equal(dom.igcAutoRows.children.length,1);
 dom.igcAutoRows.children[0].children[2].children[0].click();
