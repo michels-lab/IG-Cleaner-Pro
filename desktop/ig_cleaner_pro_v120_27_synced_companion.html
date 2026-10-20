@@ -3772,6 +3772,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <div class="btnrow">
     <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
     <button class="btn orange" id="igcAutoDeferProtected" type="button" onclick="igcAutoDeferProtectedBatch()" style="display:none">↷ Archive protected batch (not Reviewed)</button>
+    <button class="btn orange" id="igcAutoReplanSize" type="button" onclick="igcAutoReplanSavedBatch()" style="display:none">↷ Use selected batch size (save old batch)</button>
     <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Verify previous actions (read-only)</button>
     <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open only issue profiles</button>
   </div>
@@ -15200,6 +15201,15 @@ window.igcAutoStart=async function(){
   if(waiting.batch){
     // Run performs owner-authorized actions on the SAME saved batch's
     // untouched profiles; the separate Recheck button never clicks.
+    const savedSize=waiting.batch.targets.length;
+    const requestedSize=Number(document.getElementById("igcAutoBatch")?.value);
+    if(Number.isInteger(requestedSize)&&requestedSize!==savedSize){
+      setStatus("SAVED COHORT: "+savedSize+" profiles; NEW SELECTED SIZE: "+requestedSize+
+        ". The earlier cohort has NOT been replaced. Use Archive old "+savedSize+
+        " · prepare NEW "+requestedSize+" (not Reviewed), then press Run again. "+
+        "No Instagram action was started.");
+      return;
+    }
     const data=actionConfig(mode,waiting.batch.targets);
     data.batch_id=waiting.batch.id;
     const attempted=waiting.batch.action_results||{};
@@ -15386,6 +15396,11 @@ window.igcAutoPoll=async function(){
   if(pause)pause.disabled=!state.running;
   if(resume)resume.disabled=state.running||state.review_only||authBlocked||!["paused","blocked","review","error"].includes(state.status);
   window.igcAutoRender();
+  // A queue re-render is not permission to hide the actual live Windows
+  // robot status. Use the authoritative server state after rendering.
+  if(info)info.textContent=waitText||("Status: "+state.status+" · "+(state.message||"")+
+      (state.current_profile?" · @"+state.current_profile:"")+
+      (state.wait_seconds?" · next profile in "+state.wait_seconds+" s":""));
  }catch(e){
   const el=document.getElementById("igcAutoLiveStatus");
   if(el)el.textContent="Robot unavailable: "+e.message;
@@ -15600,12 +15615,20 @@ window.igcAutoRenderBatchApproval=function(){
     outcome.unchecked.length
     ?"Batch incomplete. Choose Run to continue untouched profiles. "
     :"Action pass finished. Review results and approve this batch. ";
-  if(msg)msg.textContent=heading+count+" in batch · "+outcome.confirmed.length+
+  const chosenSize=Number(document.getElementById("igcAutoBatch")?.value);
+  const sizeMismatch=Number.isInteger(chosenSize)&&chosenSize>=1&&chosenSize<=1000&&chosenSize!==count;
+  if(msg)msg.textContent=heading+(sizeMismatch?("SAVED BATCH: "+count+
+    " profiles · NEW SELECTED SIZE: "+chosenSize+
+    ". Run will continue the saved "+count+" until you choose to archive it explicitly. "):"")+
+    count+" in batch · "+outcome.confirmed.length+
     " verified actions · "+outcome.already.length+" already not following (no click) · "+
     outcome.issues.length+" issues · "+
     outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed."+
     (blocked.length?" "+blocked.length+
       " are protected on this Windows device. Archive this cohort WITHOUT marking any profiles Reviewed, then select a new batch.":"");
+  const replan=document.getElementById("igcAutoReplanSize");
+  if(replan){replan.style.display=sizeMismatch?"inline-flex":"none";replan.disabled=busy;
+   replan.textContent="↷ Archive old "+count+" · prepare NEW "+chosenSize+" (not Reviewed)";}
   const defer=document.getElementById("igcAutoDeferProtected");
   if(defer){defer.style.display=blocked.length?"inline-flex":"none";defer.disabled=busy;}
   const approve=document.getElementById("igcAutoApproveBatch");
@@ -15649,6 +15672,50 @@ window.igcAutoRecheckBatch=async function(){
   });
   actionState=result;await window.igcAutoPoll();
  }catch(e){setStatus("Could not automatically recheck batch: "+e.message)}
+};
+window.igcAutoReplanSavedBatch=async function(){
+ const b=actionBatchReview;
+ if(!b||actionState?.running)return;
+ const oldSize=(b.targets||[]).length;
+ const selected=Number(document.getElementById("igcAutoBatch")?.value);
+ if(!Number.isInteger(selected)||selected<1||selected>1000||selected===oldSize){
+  setStatus("Select a different valid batch size (1–1,000) first.");return;
+ }
+ const originalScope=scope(),originalMode=mode,owner=actionOwner();
+ try{
+  const checked=await requestAction("review-batch",{...owner,task:originalMode});
+  const live=checked?.batch;
+  if(scope()!==originalScope||mode!==originalMode||
+     checked.owner!==owner.owner||checked.account!==owner.account||
+     !live||live.id!==b.id||live.targets.length!==oldSize){
+   throw Error("Saved batch changed or another account was selected. Refresh first.");
+  }
+  if(!window.confirm("Your PREVIOUS "+oldSize+"-profile "+originalMode+
+   " cohort is still saved. You selected NEW size "+selected+
+   ".\n\nArchive the old "+oldSize+"-profile cohort WITHOUT marking any profiles Reviewed?"+
+   "\nAll previous outcomes and uncertain clicks remain in the action journal."+
+   "\nNo Instagram action starts or repeats. Afterwards press Run to inspect and approve a NEW batch of at most "+selected+". Continue?"))return;
+  if(scope()!==originalScope||mode!==originalMode||
+     Number(document.getElementById("igcAutoBatch")?.value)!==selected)
+   throw Error("The selected batch/account changed; no archive performed.");
+  const result=await requestAction("defer-resized-batch",{
+   ...owner,task:originalMode,batch_id:b.id,desired_batch_size:selected,
+   confirmation:"replan-size:"+b.id+":"+selected
+  });
+  if(result.marked_reviewed!==false||result.batch_id!==b.id||
+     result.requested_new_size!==selected||result.previous_size!==oldSize)
+    throw Error("Unexpected batch archive response; do not run actions until refreshed.");
+  if(scope()!==originalScope||mode!==originalMode){
+   setStatus("Old cohort archived for the former workspace. Return to inspect history.");
+   return;
+  }
+  actionBatchReview=null;
+  window.igcAutoRenderBatchApproval();
+  await window.igcAutoPoll();
+  setStatus("Original "+oldSize+" saved profiles archived WITHOUT Reviewed. "+
+    result.action_recorded+" earlier outcomes retained, "+result.untouched+
+    " untouched. New size "+selected+" is ready; press Run and explicitly approve the NEW selection.");
+ }catch(e){setStatus("Could not switch batch sizes: "+e.message)}
 };
 window.igcAutoDeferProtectedBatch=async function(){
  const b=actionBatchReview;
