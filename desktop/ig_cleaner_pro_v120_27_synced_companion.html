@@ -15024,6 +15024,16 @@ window.igcAutoProtect=async function(kind,user){
   setStatus((nextProtected?"Protected @":"Protection removed for @")+u+
             ". Active action batches never lose protection silently.");
  }catch(e){
+  if(nextProtected && /Select the same account to update protected profiles/.test(e.message)){
+   // A fresh installed app has no authenticated robot task bound yet.
+   // Keep this favorite in the owner's local plan and send it with the
+   // next explicitly approved batch; do not claim Windows persisted it.
+   if(scope()===identityAtClick){
+    write(kind,u,true);window.igcAutoRender();
+    setStatus("Protected locally for the next approved Windows batch. No action has run.");
+   }
+   return;
+  }
   window.igcAutoRender();
   setStatus("Saved protection unchanged: "+e.message);
  }
