@@ -19,6 +19,7 @@ EXPECTED = tuple(
         ("home", ("initial",)),
         ("about", ("author", "studio", "socials")),
     )
+    for section in sections
 )
 SIZES = {"compact": (720, 1280), "wide": (1080, 1920)}
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
