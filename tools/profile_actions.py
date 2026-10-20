@@ -1248,6 +1248,8 @@ class ActionRobot:
             if (self.worker and self.worker.is_alive()) or (
                     self.collector.worker and self.collector.worker.is_alive()):
                 raise ValueError("Pause all Chrome robots before deferring a protected batch.")
+            if self.owner and (owner, account) != (self.owner, self.account):
+                raise ValueError("A different Instagram workspace is bound to the robot.")
             entries = self._review_batches(owner, account, task)
             pending = next((entry for entry in reversed(entries)
                             if not entry.get("approved_at") and not entry.get("deferred_at")), None)
