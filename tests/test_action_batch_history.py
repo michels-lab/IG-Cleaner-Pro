@@ -157,6 +157,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
             def goto(self, url, **kwargs):
                 self.url = url
                 self.visited.append(url)
+            def bring_to_front(self):
+                self.was_focused = True
             def locator(self, *_):
                 return types.SimpleNamespace(count=lambda: 0)
             def is_closed(self):
@@ -209,6 +211,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                  patch("profile_actions.perform_visible_action", side_effect=one_uncertain_click):
                 robot._run()
             self.assertEqual(len(seen), 1)
+            self.assertTrue(browser.pages[1].was_focused,
+                            "The first Instagram target tab must receive focus before its action")
             self.assertEqual(len(seen[0]), 10)
             self.assertEqual(
                 seen[0], ["https://www.instagram.com/test." + str(n) + "/"
