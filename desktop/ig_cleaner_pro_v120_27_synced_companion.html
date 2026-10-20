@@ -3777,6 +3777,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   </div>
   <p class="note">Automatic actions are not marked reviewed until you approve. Rechecking uses Chrome automatically and never repeats a possibly completed Unfollow or Cancel Request.</p>
 </div>
+<p id="igcAutoDeferredSummary" class="note" role="status" aria-live="polite">Archived robot batches: waiting for Windows archive history.</p>
 <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Robot disconnected. Open InstaCleanerPro.exe on Windows to start the local service.</p>
 <div id="igcAutoOpenTabs" class="note" role="status" aria-live="polite" style="display:none;margin:8px 0"></div>
 <div id="igcActionAuthFallback" class="panel" role="status" aria-live="polite" style="display:none;margin:12px 0">
@@ -15299,6 +15300,27 @@ window.igcAutoPoll=async function(){
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
   }else actionBatchReview=null;
   window.igcAutoRenderBatchApproval();
+  const deferredLine=document.getElementById("igcAutoDeferredSummary");
+  if(deferredLine&&["unfollow","cancel","audit"].includes(mode)){
+   try{
+    const originalAccount=scope(),originalTask=mode;
+    const archive=await requestAction("deferred-batches",{...ctx,task:originalTask});
+    if(originalAccount===scope()&&originalTask===mode&&
+       archive.owner===ctx.owner&&archive.account===ctx.account&&
+       archive.task===originalTask&&archive.read_only===true){
+      const recent=Array.isArray(archive.recent)?archive.recent:[];
+      const last=recent[0];
+      deferredLine.textContent=(archive.total_deferred||0)
+       ?("Archived blocked batches (NOT Reviewed): "+archive.total_deferred+
+         ". Most recent: "+(last.target_count||0)+" targets, "+
+         (last.protected_count||0)+" protected, "+
+         (last.action_recorded||0)+" preserved action records, "+
+         (last.untouched||0)+" untouched. "+
+         "Original journals stay saved; next batch requires new approval.")
+       :"No archived protected batches for this Instagram account and robot task.";
+    }
+   }catch{deferredLine.textContent="Archived-batch history temporarily unavailable; original journals remain saved."}
+  }else if(deferredLine){deferredLine.textContent="Choose a robot action mode to view saved archived cohorts."}
   const historyText=document.getElementById("igcAutoHistoricalSummary");
   if(historyText&&["unfollow","cancel"].includes(mode)){
    try{
