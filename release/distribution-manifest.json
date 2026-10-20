@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.54.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.55.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.54.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.55.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,7 +27,7 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.54.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.55.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
@@ -36,7 +36,7 @@
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     },
     "windowsRobot": {
-      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.54.exe",
+      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.55.exe",
       "artifactTemplate": "IG-Cleaner-Pro-Windows-Setup-v{version}.exe",
       "transport": "github-release",
       "runtime": "local-windows-chrome",
@@ -83,7 +83,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.54",
+    "nextRelease": "v120.55",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -95,10 +95,12 @@
       "v120.32",
       "v120.33"
     ],
-    "currentStableRelease": "v120.53",
-    "lastPublishedRun": 39299032190,
-    "lastPublishedCommit": "5dba9f140298a14194baa4f1d031bbb1b3935f7c",
+    "currentStableRelease": "v120.54",
+    "lastPublishedRun": 39394417960,
+    "lastPublishedCommit": "4d8962743b83bcad178c3e8cde9c057483361300",
     "genericPublisher": ".github/workflows/release.yml",
-    "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8"
+    "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8",
+    "lastPublishedAt": "2026-10-20T08:40:59Z",
+    "lastPublishedReleaseUrl": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.54"
   }
 }
