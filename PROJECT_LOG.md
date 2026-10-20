@@ -1,3 +1,10 @@
+## 2026-10-20 — GRANADA Developer mainline real-action QA and simple chat (source candidate)
+
+- New main-based candidate `granada/p0-developer-mainline-integrated-20261020` preserves merged #174/#175 (batch 40→10, Cancel Pending already_not_requested, true live status); transplants only the independent Developer panel/script and bridge changes from the older #178 development branch.
+- Local user chat persists owner instructions by workspace, runs bounded journal/Chrome-read-only diagnostic, compares observations, and supports privacy-confirmed Copy for ChatGPT / TXT fallback. It does **not** connect remotely to ChatGPT.
+- Owner explicitly requires **actual mutations in Developer** for proof: distinct Windows `LIVE ACTION TEST` for 1–10 exact consented targets (Unfollow or Cancel), checked in both UI and token-authenticated bridge; uses mainline verified `ActionRobot` with canonical journal/protected/batch safety and separate Developer Chrome, keeps CAPTCHA/manual checks, shows verified results and pause. Freeform chat alone does not click; Android remains read-only.
+- Integrated Windows preview CI additionally runs Developer read-only + consent tests and installs independent Developer Windows Setup; source-only until exact-head green, installed owner login/live actions and governed Developer release assets. Real Instagram changes are **NOT** validated by offline tests. Ten-tab whole-wave robot source remains PR #177 until merged. Official stable v120.54; v120.55 unauthorized.
+
 ## 2026-10-20 — GRANADA P0 Windows robots: PR #174 and #175 MERGED; exact-head CI validated, live Instagram QA OPEN
 
 - **Integrated source:** PR [#174](https://github.com/michels-lab/IG-Cleaner-Pro/pull/174) merge `3bbb4e22de29dbd5e632b96a4b58429eb813d3a1` and PR [#175](https://github.com/michels-lab/IG-Cleaner-Pro/pull/175) merge `a0518a9af4129dffe2f204f820ef73f888fa73f4` on `main`.
