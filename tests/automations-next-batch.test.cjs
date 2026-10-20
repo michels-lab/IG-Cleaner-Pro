@@ -46,16 +46,22 @@ const ctx={
         owner:"owner1",account:"profile1",task:"cancel",batch:pendingSaved
       })};
     }
-    if(op==="defer-resized-batch"){
+    if(op==="replan-batch"){
       const payload=JSON.parse(opts.body);batchReplans.push(payload);
       assert(pendingSaved,"Only a pending cohort can be replanned");
-      const old=pendingSaved;pendingSaved=null;
+      const old=pendingSaved;
+      const remain=old.targets.filter((u,i)=>i!==0);
+      pendingSaved={...old,original_targets:[...old.targets],
+        targets:remain.slice(0,payload.desired_batch_size),
+        carryover_targets:remain.slice(payload.desired_batch_size),
+        selected_batch_size:payload.desired_batch_size};
       return {ok:true,json:async()=>({
         owner:payload.owner,account:payload.account,task:payload.task,
         batch_id:old.id,previous_size:old.targets.length,
         requested_new_size:payload.desired_batch_size,
-        action_recorded:1,untouched:old.targets.length-1,
-        marked_reviewed:false
+        active_size:pendingSaved.targets.length,
+        reusable_after_active:pendingSaved.carryover_targets.length,
+        marked_reviewed:false,status:"replanned_active_cohort_not_archived"
       })};
     }
     if(op==="history"){
@@ -122,12 +128,17 @@ vm.createContext(ctx);vm.runInContext(source,ctx,{timeout:1200});
   assert.equal(batchReplans[0].batch_id,"saved-40-batch");
   assert.equal(batchReplans[0].desired_batch_size,10);
   assert.equal(batchReplans[0].confirmation,"replan-size:saved-40-batch:10");
-  assert.equal(pendingSaved,null);
-  state={...state,attempted_usernames:[]};
+  assert.equal(pendingSaved.id,"saved-40-batch","Same cohort remains active");
+  assert.equal(pendingSaved.original_targets.length,40,"Original users never archived or deleted");
+  assert.equal(pendingSaved.targets.length,10);
+  assert.equal(pendingSaved.carryover_targets.length,29);
+  assert.equal(pendingSaved.selected_batch_size,10);
+  state={...state,attempted_usernames:["saved.000"]};
   await ctx.igcAutoStart();
   assert.equal(post.length,before+1);
   assert.equal(post.at(-1).targets.length,10,
     "After explicit archival, Run MUST honor the newly selected size 10");
-  assert.deepEqual([...post.at(-1).targets],pending.slice(0,10).map(x=>x.username));
-  console.log("PASS: third batch advances; reimport; saved 40 cannot override selected 10; explicit safe archive then new 10");
+  assert.deepEqual([...post.at(-1).targets],pendingSaved.targets,
+    "Run reuses the exact ten previously untouched users without skipping everyone else");
+  console.log("PASS: third batch advances; reimport; saved 40 cannot override selected 10; 40 remain saved, 10 active, 29 reusable");
 })().catch(e=>{console.error(e);process.exitCode=1});
