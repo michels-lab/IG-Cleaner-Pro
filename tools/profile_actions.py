@@ -63,6 +63,8 @@ def _read_json(path: Path, default):
 
 MAX_ACTION_TABS = 10
 ACTION_CONTROL_WAIT_MS = 20000
+# Guard against temporary Follow before delayed Requested during hydration.
+CANCEL_NO_REQUEST_MIN_WAIT_MS = 5000
 
 
 
@@ -103,7 +105,7 @@ class ActionTabPool:
         item = self.tabs.get(username)
         if item is None:
             return
-        if status in ("ok", "skipped", "already_not_following") or safe_no_click:
+        if status in ("ok", "skipped", "already_not_following", "already_not_requested") or safe_no_click:
             # Verified outcomes, explicit skips and known pre-click failures
             # close safely; uncertain post-click results retain visible tabs.
             # An ambiguous action, including post-click session loss, cannot.
@@ -422,12 +424,14 @@ def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
 def _wait_for_profile_relationship_control(page, username, words, *,
                                            timeout_ms=None,
                                            on_wait=None, can_act=None,
-                                           detect_already_not_following=False):
+                                           detect_already_not_following=False,
+                                           detect_already_not_requested=False):
     """Wait for the real target to finish rendering; never infer no-follow from loading."""
     timeout_ms = ACTION_CONTROL_WAIT_MS if timeout_ms is None else timeout_ms
     started_at = time.monotonic()
     deadline = started_at + timeout_ms / 1000.0
     nonfollow_seen = 0
+    nonrequest_seen = 0
     while True:
         if can_act and not can_act(username):
             return None
@@ -447,6 +451,13 @@ def _wait_for_profile_relationship_control(page, username, words, *,
             nonfollow_seen = nonfollow_seen + 1 if _follow_state(page, username) else 0
             if nonfollow_seen >= 3:
                 return "already_not_following"
+        if detect_already_not_requested:
+            # Requested takes precedence; a target-scoped Follow must be stable
+            # for multiple reads and past the hydration period before no-request.
+            nonrequest_seen = nonrequest_seen + 1 if _follow_state(page, username) else 0
+            if (nonrequest_seen >= 3 and
+                    (time.monotonic() - started_at) * 1000 >= CANCEL_NO_REQUEST_MIN_WAIT_MS):
+                return "already_not_requested"
         # A blank shell is not evidence that Instagram lacks Following.
         header = page.locator("header").first
         has_header = bool(header.count() and header.is_visible())
@@ -588,6 +599,23 @@ def _follow_state(page, username):
         return "follow"
     return None
 
+
+
+def _stable_no_requested_state(page, username):
+    """Check exact-target Follow/Follow Back thrice, never click or trust a sidebar."""
+    for attempt in range(3):
+        current = urlparse(page.url)
+        if (current.hostname not in ("www.instagram.com", "instagram.com")
+                or current.path.strip("/").casefold() != username.casefold()
+                or challenge_detected(page)
+                or page.locator('input[name="password"]').count()
+                or _profile_relationship_control(
+                    page, username, [r"Requested", r"Solicitado", r"Solicitada"])
+                or not _follow_state(page, username)):
+            return False
+        if attempt < 2:
+            page.wait_for_timeout(450)
+    return True
 
 
 def _verified_action_owner(page, expected_handle):
@@ -840,13 +868,26 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
               if task == "unfollow" else
               _wait_for_profile_relationship_control(
                   page, username, [r"Requested", r"Solicitado", r"Solicitada"],
-                  on_wait=on_wait, can_act=can_act))
+                  on_wait=on_wait, can_act=can_act,
+                  detect_already_not_requested=True))
     if active == "already_not_following":
         if not _verified_action_owner(page, expected_handle):
             return "blocked", "Instagram session could not be verified before skipping a non-followed profile."
         return "already_not_following", (
             "Already not following: verified Follow / Follow Back for this exact profile. "
             "No Unfollow clicked; continuing to next profile.")
+    if active == "already_not_requested":
+        if can_act and not can_act(username):
+            return "skipped", "Skipped or protected before confirming no pending request."
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "The Instagram owner changed before no-request verification. No click."
+        if not _stable_no_requested_state(page, username):
+            return "review", ("The Follow / Requested state changed during read-only verification. "
+                              "No Cancel Request click was made; inspect manually.")
+        return "already_not_requested", (
+            "Already not requested: verified stable Follow / Follow Back on this exact target "
+            "under the signed-in owner, with no Requested control. "
+            "No Cancel Request clicked; no active outgoing request to cancel.")
     if active is None:
         if can_act and not can_act(username):
             return "skipped", "Skipped or protected while waiting for profile controls."
@@ -1000,7 +1041,7 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
             page, username, expected_handle)
         return result, details
     if (not isinstance(previous, dict) or previous.get("status") not in
-            ("ok", "already_not_following", "review", "error", "blocked")
+            ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
             or (_preclick_no_action(previous) and not allow_unacted_observation)):
         return "review", ("No completed Instagram action exists for this profile. "
                           "Automatic read-only recheck did not click anything.")
@@ -1013,6 +1054,14 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         return "review", "Profile did not load during automatic read-only recheck."
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requires verification. No relationship click made."
+    if previous.get("status") == "already_not_requested":
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Read-only no-request verification could not prove owner; no click."
+        if _stable_no_requested_state(page, username):
+            return "already_not_requested", (
+                "Read-only recheck: still no active outgoing request on this exact target. No click.")
+        return "review", (
+            "Read-only recheck: previous no-request result is no longer verified. No click.")
     if previous.get("status") == "already_not_following":
         # Do not describe an old non-followed profile as a new successful Unfollow.
         if not _verified_action_owner(page, expected_handle):
@@ -1109,7 +1158,7 @@ class ActionRobot:
                     reusable.append(user)
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and isinstance(record, dict)
-            and record.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+            and record.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
             and not _preclick_no_action(record))
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted,
@@ -1129,7 +1178,8 @@ class ActionRobot:
             saved = _read_json(self._historical_recheck_file_for(owner, account, task), {})
             rows = saved.get("results", {}) if isinstance(saved, dict) else {}
             if not isinstance(rows, dict): rows = {}
-            counts = {"observed_not_following": 0, "still_unresolved": 0, "total": 0}
+            counts = {"observed_not_following": 0, "observed_not_requested": 0,
+                      "still_unresolved": 0, "total": 0}
             for record in rows.values():
                 if not isinstance(record, dict): continue
                 state = record.get("observation")
@@ -1391,7 +1441,7 @@ class ActionRobot:
                 result = rechecked.get(username, {}).get("status")
                 if result is None:
                     result = journal.get(username, {}).get("status")
-                if result in ("ok", "already_not_following"):
+                if result in ("ok", "already_not_following", "already_not_requested"):
                     approved.append(username)
                 else:
                     unresolved.append(username)
@@ -1510,8 +1560,10 @@ class ActionRobot:
             if not isinstance(rows, dict): rows = {};saved["results"] = rows
             previous = rows.get(user, {})
             events = previous.get("observations", []) if isinstance(previous, dict) else []
-            observation = ("observed_not_following"
-                           if result in ("ok", "already_not_following")
+            observation = ("observed_not_requested"
+                           if self.task == "cancel" and result == "already_not_requested"
+                           else "observed_not_following"
+                           if result in ("ok", "already_not_following", "already_not_requested")
                            else "still_unresolved")
             record = {"observation": observation, "verification_status": result,
                       "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -1520,7 +1572,7 @@ class ActionRobot:
             saved["completed_at"] = record["at"]
             _atomic_json(path, saved)
             self.historical_seen.add(user)
-            if observation == "observed_not_following":
+            if observation in ("observed_not_following", "observed_not_requested"):
                 self.historical_not_following_seen.add(user)
             else:
                 self.historical_not_following_seen.discard(user)
@@ -1674,7 +1726,7 @@ class ActionRobot:
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
             if not resume:
                 previous = self._journal()
-                if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                        and not _preclick_no_action(record)
                        for user in targets):
                     raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
@@ -1737,11 +1789,13 @@ class ActionRobot:
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
                 if isinstance(record, dict)
-                and record.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                and record.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                 and not _preclick_no_action(record))
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
             already_not_following = sum(x.get("status") == "already_not_following"
+                                        for x in rows.values())
+            already_not_requested = sum(x.get("status") == "already_not_requested"
                                         for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
             issues = [{"username": u, "status": rows[u].get("status", "pending"),
@@ -1752,7 +1806,7 @@ class ActionRobot:
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
             skipped = sum(u in self.skipped for u in self.targets)
-            completed_states = ("ok", "already_not_following", "review", "error", "blocked")
+            completed_states = ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
             processed = sum(rows[u].get("status") in completed_states
                             or u in protected or u in self.skipped for u in self.targets)
             pending = sum(u not in protected and u not in self.skipped and
@@ -1765,6 +1819,7 @@ class ActionRobot:
                     "total": len(self.targets), "processed": processed,
                     "pending": pending, "successful": successful,
                     "already_not_following": already_not_following,
+                    "already_not_requested": already_not_requested,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
                     "attempted_usernames": attempted_usernames,
@@ -1866,7 +1921,7 @@ class ActionRobot:
                         previous = journal.get(candidate, {})
                         if (self._protected_for(candidate) or candidate in self.skipped
                                 or (not self.review_only and
-                                    previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                                    previous.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                                     and not _preclick_no_action(previous))):
                             continue
                         if len(stage_names) >= MAX_ACTION_TABS:
@@ -1951,7 +2006,7 @@ class ActionRobot:
                     # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
                         (not self.review_only and
-                         previous.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
+                         previous.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                          and not _preclick_no_action(previous))):
                         continue
                     # Already-prefetched target tabs have paid for their
@@ -2014,7 +2069,7 @@ class ActionRobot:
                                 and candidate not in self.skipped
                                 and (not action_tabs or
                                      action_tabs.prepared(candidate) is None)
-                                and (prior.get("status") not in ("ok", "already_not_following", "review", "error", "blocked")
+                                and (prior.get("status") not in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                                      or _preclick_no_action(prior))):
                             next_user = candidate
                             break
@@ -2143,7 +2198,7 @@ class ActionRobot:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    if result not in ("ok", "already_not_following"):
+                    if result not in ("ok", "already_not_following", "already_not_requested"):
                         if self.review_only:
                             # Read-only automatic review should check the rest
                             # of the batch, not demand one-by-one manual work.
@@ -2170,7 +2225,7 @@ class ActionRobot:
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     (rechecked.get(u, {}).get("status") if self.review_only
                                      else journal.get(u, {}).get("status"))
-                                    not in ("ok", "already_not_following")
+                                    not in ("ok", "already_not_following", "already_not_requested")
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
