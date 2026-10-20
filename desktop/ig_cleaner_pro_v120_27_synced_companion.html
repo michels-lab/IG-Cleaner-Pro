@@ -16316,6 +16316,97 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  });
  if(androidDeveloper){el("igcDevRealProbe").style.display="none"}
  else setInterval(()=>{if(liveScope)pollLiveProbe()},2500);
+ // Real relationship changes are NEVER triggered by free-text chat.
+ // Every test needs explicit exact-target approval from this visible panel.
+ const actionTestKey=()=>scopeKey()+"__real_actions_v1";
+ const readActionTestSummary=()=>{
+  try{
+   const x=JSON.parse(localStorage.getItem(actionTestKey())||"null");
+   return x?.schema==="igc-developer-real-action-summary-v1"?x:null
+  }catch{return null}
+ };
+ let devActionActive=false,lastDevActionSignature="";
+ function devActionSummary(s){
+  return {schema:"igc-developer-real-action-summary-v1",
+   source:"owner_approved_real_instagram_actions_separate_developer_chrome",
+   task:s.task,status:s.status,processed:Number(s.processed||0),
+   total:Number(s.total||0),confirmed_clicks:Number(s.successful||0),
+   already_not_following:Number(s.already_not_following||0),
+   already_not_requested:Number(s.already_not_requested||0),
+   issue_count:Number(s.issue_count||0),errors:Number(s.errors||0),
+   contains_usernames:false,recorded_at:new Date().toISOString(),
+   disclaimer:"Real action journals and visual post-click verification; pending/uncertain actions are never automatically replayed."};
+ }
+ function renderActionTest(s){
+  const panel=el("igcDevActionStatus");if(!panel)return;
+  panel.textContent="REAL INSTAGRAM · "+String(s?.task||"unstarted")+" · "+String(s?.status||"idle")+
+   "\n"+String(s?.message||"No real test.")+"\n"+
+   "Processed "+Number(s?.processed||0)+"/"+Number(s?.total||0)+
+   " · Confirmed clicks "+Number(s?.successful||0)+
+   " · No action needed "+(Number(s?.already_not_following||0)+Number(s?.already_not_requested||0))+
+   " · Issues "+Number(s?.issue_count||0)+"\n"+
+   (Array.isArray(s?.rows)?s.rows.slice(0,10).map(x=>
+     "@"+x.username+": "+x.status+" — "+String(x.message||"").slice(0,150)).join("\n"):"");
+  devActionActive=!!s?.running;
+  if(!devActionActive&&Number(s?.total||0)>0){
+   const signature=[s.task,s.status,s.processed,s.successful,s.issue_count].join(":");
+   if(signature!==lastDevActionSignature){
+    lastDevActionSignature=signature;
+    const summary=devActionSummary(s);
+    localStorage.setItem(actionTestKey(),JSON.stringify(summary));
+    chatAdd("local_assistant","Real Instagram test: "+summary.processed+"/"+summary.total+
+     " processed; "+summary.confirmed_clicks+" verified actions; "+summary.issue_count+
+     " issues. Copy the repair prompt to ChatGPT. Preexisting Follow/No Request does not count as a new action.");
+   }
+  }
+ }
+ async function startDevActionTest(){
+  if(!match){el("igcDevActionStatus").textContent="Available only in Windows Developer Edition.";return}
+  const p=window.IGC_INSTAGRAM_PROFILES||{},
+   owner=String(p.owner||"").trim(),account=String(p.active||"").trim(),
+   expected_handle=devExpectedHandle(),task=el("igcDevActionTask").value,
+   targets=String(el("igcDevActionTargets").value||"").split(/[\s,]+/)
+      .map(x=>x.replace(/^@/,"")).filter(Boolean);
+  if(!owner||!account||!expected_handle||!["unfollow","cancel"].includes(task)||
+     !targets.length||targets.length>10||new Set(targets).size!==targets.length||
+     !targets.every(x=>/^[A-Za-z0-9._]{1,30}$/.test(x))){
+   el("igcDevActionStatus").textContent="Select the signed-in account, enter its exact @handle and 1–10 distinct usernames.";return;
+  }
+  const followers_evidence=el("igcDevActionFollowersEvidence").checked;
+  if(task==="unfollow"&&!followers_evidence){
+   el("igcDevActionStatus").textContent="Verify the required complete Followers evidence first.";return;
+  }
+  if(!window.confirm("THIS WILL REALLY "+(task==="unfollow"?"UNFOLLOW":"CANCEL PENDING")+
+    " FOR "+targets.length+" INSTAGRAM ACCOUNTS:\n"+
+    targets.map(x=>"@"+x).join("\n")+
+    "\n\nThese are real account changes. Stop public robots. An uncertain click is NEVER replayed automatically. Proceed?"))return;
+  const button=el("igcDevActionStart");button.disabled=true;
+  try{
+   const result=await devLiveRequest("action-start",{
+    owner,account,expected_handle,task,targets,followers_evidence,
+    acknowledge_real_changes:true,
+    explicit_consent:"LIVE_TEST:"+task+":"+targets.join(","),gap_seconds:10
+   });
+   devActionActive=true;lastDevActionSignature="";
+   renderActionTest(result);
+  }catch(e){el("igcDevActionStatus").textContent="Real test did NOT start: "+e.message}
+  finally{button.disabled=false}
+ }
+ el("igcDevActionStart").addEventListener("click",startDevActionTest);
+ el("igcDevActionPause").addEventListener("click",async()=>{
+  if(!match)return;
+  const p=window.IGC_INSTAGRAM_PROFILES||{};
+  try{renderActionTest(await devLiveRequest("action-stop",{
+   owner:String(p.owner||""),account:String(p.active||"")
+  }))}
+  catch(e){el("igcDevActionStatus").textContent="Pause failed: "+e.message}
+ });
+ if(androidDeveloper){el("igcDevRealActionTests").style.display="none"}
+ else setInterval(async()=>{
+  if(!devActionActive)return;
+  try{renderActionTest(await devLiveRequest("action-status"))}
+  catch(e){el("igcDevActionStatus").textContent="Live action status unavailable: "+e.message}
+ },2500);
  // Owner-facing local diagnostic chat: user instructions dispatch only
  // explicit bounded read-only audit capabilities. No external AI/network
  // provider, and no direct access to follow/unfollow/cancel endpoints.
