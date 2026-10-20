@@ -1296,6 +1296,7 @@ class ActionRobot:
             pending["original_targets"] = list(baseline)
             pending["targets"] = new_targets
             pending["carryover_targets"] = safe[len(new_targets):]
+            pending["selected_batch_size"] = desired
             pending.setdefault("replan_history", []).append({
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "previous_active_size": old_size,
