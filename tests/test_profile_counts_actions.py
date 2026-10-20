@@ -643,6 +643,122 @@ class ActionSafetyTests(unittest.TestCase):
                 self.assertEqual(result["total_deferred"], 0)
                 self.assertEqual(result["recent"], [])
 
+    def test_resized_40_keeps_untouched_users_reusable_not_archived(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot._run = lambda: None
+            original = [f"cohort{i:03d}" for i in range(40)]
+            scope = dict(owner="owner", account="instagram", task="cancel",
+                         expected_handle="owner.handle", batch_size=40,
+                         rest_minutes=0, gap_seconds=10, protected=[],
+                         confirmation="cancel:40", targets=original)
+            robot.start(scope)
+            robot.worker.join(timeout=2)
+            pending = robot._pending_review("owner","instagram","cancel")
+            batch_id = pending["id"]
+            journal_path = robot._base_for("owner","instagram","cancel")
+            _atomic_json(journal_path,{
+                "cohort000":{"status":"review","message":"Ambiguous possible click",
+                             "at":"2026-10-20T00:01:00Z"},
+                "cohort001":{"status":"ok","message":"Confirmed earlier click",
+                             "at":"2026-10-20T00:02:00Z"}
+            })
+            original_bytes = journal_path.read_bytes()
+            review_path = robot._review_batches_file_for("owner","instagram","cancel")
+            original_review = review_path.read_bytes()
+            request = dict(owner="owner",account="instagram",task="cancel",
+                           batch_id=batch_id,desired_batch_size=10,
+                           confirmation="replan-size:"+batch_id+":10")
+            for invalid in (
+                {**request,"confirmation":"wrong"},
+                {**request,"batch_id":"other"},
+                {**request,"desired_batch_size":40},
+                {**request,"desired_batch_size":0},
+                {**request,"desired_batch_size":10.0},
+                {**request,"owner":"other-owner"},
+                {**request,"account":"other-instagram"},
+            ):
+                with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                    robot.replan_incomplete_batch(invalid)
+            self.assertEqual(journal_path.read_bytes(),original_bytes)
+            self.assertEqual(review_path.read_bytes(),original_review)
+            class Active:
+                def is_alive(self): return True
+            counts.worker=Active()
+            with self.assertRaisesRegex(ValueError,"Pause all Chrome robots"):
+                robot.replan_incomplete_batch(request)
+            counts.worker=None
+            result=robot.replan_incomplete_batch(request)
+            self.assertFalse(result["marked_reviewed"])
+            self.assertEqual(result["approved_usernames"],[])
+            self.assertEqual(result["previous_size"],40)
+            self.assertEqual(result["requested_new_size"],10)
+            self.assertEqual(result["active_size"],10)
+            self.assertEqual(result["reusable_after_active"],28)
+            self.assertEqual(result["status"],"replanned_active_cohort_not_archived")
+            self.assertEqual(journal_path.read_bytes(),original_bytes)
+            # Same cohort remains active, with the original 40 preserved;
+            # unprocessed profiles remain reusable without archiving.
+            active=robot._pending_review("owner","instagram","cancel")
+            self.assertEqual(active["id"],batch_id)
+            self.assertEqual(active["targets"],original[2:12])
+            self.assertEqual(active["original_targets"],original)
+            self.assertEqual(active["carryover_targets"],original[12:])
+            self.assertEqual(active["selected_batch_size"],10)
+            self.assertIsNone(active.get("deferred_at"))
+            self.assertIsNone(active.get("approved_at"))
+            self.assertEqual(robot.deferred_batch_history({
+                "owner":"owner","account":"instagram","task":"cancel"})["total_deferred"],0)
+            cold=ActionRobot(counts,counts.data_dir,counts.session_dir)
+            history=cold.attempted_history({
+                "owner":"owner","account":"instagram","task":"cancel"})
+            self.assertEqual(set(history["attempted_usernames"]),
+                             {"cohort000","cohort001"})
+            self.assertIn("cohort039",history["reusable_usernames"])
+            self.assertNotIn("cohort000",history["reusable_usernames"])
+            for other in (
+                {"owner":"other","account":"instagram","task":"cancel"},
+                {"owner":"owner","account":"other","task":"cancel"},
+                {"owner":"owner","account":"instagram","task":"unfollow"},
+            ):
+                self.assertEqual(cold.attempted_history(other)["reusable_usernames"],[])
+            cold._run=lambda: None
+            cold.start({**scope,"targets":original[2:12],"batch_size":10,
+                        "batch_id":batch_id,"confirmation":"cancel:10"})
+            cold.worker.join(timeout=2)
+            self.assertEqual(journal_path.read_bytes(),original_bytes)
+            # Only the new active ten can be Reviewed, and only after their
+            # actions are independently recorded.
+            with self.assertRaises(ValueError):
+                cold.approve_batch({"owner":"owner","account":"instagram",
+                                    "task":"cancel","batch_id":batch_id,
+                                    "confirmation":"reviewed:"+batch_id})
+            journal=json.loads(journal_path.read_text(encoding="utf-8"))
+            for u in original[2:12]:
+                journal[u]={"status":"ok","message":"Confirmed for test"}
+            _atomic_json(journal_path,journal)
+            approved=cold.approve_batch({"owner":"owner","account":"instagram",
+                                         "task":"cancel","batch_id":batch_id,
+                                         "confirmation":"reviewed:"+batch_id})
+            self.assertEqual(len(approved["approved_usernames"]),10)
+            later=ActionRobot(counts,counts.data_dir,counts.session_dir)
+            remainder=later.attempted_history({
+                "owner":"owner","account":"instagram","task":"cancel"})["reusable_usernames"]
+            self.assertEqual(remainder,original[12:])
+            later._run=lambda: None
+            later.start({**scope,"targets":remainder[:10],"batch_size":10,
+                         "confirmation":"cancel:10"})
+            later.worker.join(timeout=2)
+            self.assertEqual(later._pending_review(
+                "owner","instagram","cancel")["targets"],original[12:22])
+            self.assertEqual(len(later._review_batches("owner","instagram","cancel")),2)
+            self.assertEqual(later.deferred_batch_history({
+                "owner":"owner","account":"instagram","task":"cancel"})["total_deferred"],0)
+            self.assertEqual(json.loads(journal_path.read_text())["cohort000"]["status"],
+                             "review","Uncertain original click never became reusable")
+
     def test_defer_requires_a_durable_protected_collision(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

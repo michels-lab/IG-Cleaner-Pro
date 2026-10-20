@@ -166,7 +166,11 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(ctx.doneSet.size,0,'Robot success must not mark anything reviewed without owner approval');
  // Run continues untouched action targets, not a read-only verification pass.
  ctx.window.igcAutoChoose('unfollow');
+ // Continue the saved three-profile cohort only when the selected size
+ // matches it. Mismatches must not silently launch an older 40-person batch.
+ elements.igcAutoBatch.value='3';
  await ctx.window.igcAutoStart();
+ elements.igcAutoBatch.value='2';
  assert.equal(calls.filter(c=>c.type==='start').length,4,
    'Run must start actual actions for the saved unapproved cohort');
  assert.equal(calls.filter(c=>c.type==='recheck-batch').length,0,
