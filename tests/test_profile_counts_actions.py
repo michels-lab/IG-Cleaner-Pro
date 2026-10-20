@@ -385,6 +385,69 @@ class ActionSafetyTests(unittest.TestCase):
             restarted.worker.join(timeout=2)
             self.assertTrue(restarted._protected_for("saved.from.review"))
 
+    def test_explicit_unprotect_is_confirmed_owner_scoped_and_idle_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            scope = {"owner": "owner1", "account": "instagram1"}
+            other = {"owner": "owner1", "account": "instagram2"}
+
+            # Cold Windows boot: no active worker or remembered task yet.
+            # Saving favorite protections must still work for the exact scope.
+            robot.protect({**scope, "protected": ["never.click"]})
+            self.assertIn("never.click",
+                          robot.protect({**scope, "protected": []})["message"]
+                          if False else set(
+                              __import__("json").loads(robot._protection_file_for(
+                                  scope["owner"], scope["account"]).read_text())))
+            path = robot._protection_file_for(scope["owner"], scope["account"])
+            original = path.read_bytes()
+            for rejected in (
+                {**scope, "unprotected": ["never.click"]},
+                {**scope, "unprotected": ["never.click"], "confirmation": "unprotect:other"},
+                {**scope, "protected": ["new"], "unprotected": ["never.click"],
+                 "confirmation": "unprotect:never.click"},
+            ):
+                with self.subTest(rejected=rejected):
+                    with self.assertRaisesRegex(ValueError, "confirmation|separate commands"):
+                        robot.protect(rejected)
+                    self.assertEqual(path.read_bytes(), original)
+
+            robot.owner, robot.account, robot.task = "owner1", "instagram1", "unfollow"
+            robot.status = "running"
+            robot.worker = type("ActiveWorker", (), {"is_alive": lambda self: True})()
+            confirmed = {**scope, "unprotected": ["never.click"],
+                         "confirmation": "unprotect:never.click"}
+            with self.assertRaisesRegex(ValueError, "active robot"):
+                robot.protect(confirmed)
+            with self.assertRaisesRegex(ValueError, "same account"):
+                robot.protect({**other, "protected": ["other.user"]})
+            self.assertEqual(path.read_bytes(), original)
+
+            robot.worker = None
+            robot.status = "paused"
+            robot.protect(confirmed)
+            self.assertEqual(__import__("json").loads(path.read_text()), [])
+            # Unprotecting this owner never unprotects another Instagram scope.
+            other_robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            other_robot.protect({**other, "protected": ["other.user"]})
+            self.assertEqual(__import__("json").loads(other_robot._protection_file_for(
+                other["owner"], other["account"]).read_text()), ["other.user"])
+            self.assertEqual(__import__("json").loads(path.read_text()), [])
+
+    def test_desktop_toggle_never_sends_addition_for_unprotect(self):
+        html = (Path(__file__).resolve().parents[1] / "desktop" /
+                "ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
+        section = html.split("window.igcAutoProtect=async function(kind,user)", 1)[1].split(
+            "window.igcAutoClearSkipped=", 1)[0]
+        self.assertIn("unprotected:[u],confirmation:\"unprotect:\"+u", section)
+        self.assertIn("if(!window.confirm(", section)
+        self.assertIn("await requestAction(\"protect\"", section)
+        self.assertIn("write(kind,u,nextProtected)", section)
+        self.assertIn("Saved protection unchanged", section)
+        self.assertNotIn("requestAction(\"protect\",{...actionOwner(),protected:[u]}).catch", section)
+
     def test_requires_explicit_approved_queue_and_full_followers(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
