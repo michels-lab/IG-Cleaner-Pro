@@ -1095,12 +1095,25 @@ class ActionRobot:
             raise ValueError("Select a valid owner, Instagram workspace and action task.")
         with self.lock:
             journal = _read_json(self._base_for(owner, account, task), {})
+            cohorts = self._review_batches(owner, account, task)
+            protected = set(_read_json(self._protection_file_for(owner, account), []))
+        reusable = []
+        for entry in cohorts:
+            if not isinstance(entry, dict): continue
+            base = entry.get("original_targets") or []
+            if not isinstance(base, list): continue
+            for user in base:
+                if (valid_username(user) == user and user not in protected and
+                        (not isinstance(journal.get(user), dict) or
+                         not journal[user].get("status") or _preclick_no_action(journal[user]))):
+                    reusable.append(user)
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and isinstance(record, dict)
             and record.get("status") in ("ok", "already_not_following", "review", "error", "blocked")
             and not _preclick_no_action(record))
         return {"owner": owner, "account": account, "task": task,
-                "attempted_usernames": attempted}
+                "attempted_usernames": attempted,
+                "reusable_usernames": list(dict.fromkeys(reusable))}
 
     def _review_batches_file_for(self, owner, account, task):
         base = self._base_for(owner, account, task)
@@ -1238,12 +1251,13 @@ class ActionRobot:
             raise ValueError("Choose a valid owner, Instagram account and robot task.")
         return owner, account, task
 
-    def defer_resized_batch(self, data):
-        """Retire exact old unapproved batch after owner requests a NEW size.
+    def replan_incomplete_batch(self, data):
+        """Resize the active incomplete cohort; keep every unused profile reusable.
 
-        This is an explicit switch of plans, NOT a Reviewed approval and NOT
-        an overwrite: existing action results, uncertain clicks, original
-        40-person cohort, protected profiles and Chrome sessions remain saved.
+        No archiving, no review approval, no clicks and no lost original targets.
+        The persistent original/carryover identities are retained in the SAME
+        pending batch. Only untouched or explicitly proven pre-click misses
+        may enter the newly selected 1–1,000-person batch.
         """
         owner, account, task = self._review_scope(data)
         batch_id = str(data.get("batch_id") or "")
@@ -1251,38 +1265,53 @@ class ActionRobot:
         if (type(desired) is not int or not 1 <= desired <= 1000
                 or not batch_id or data.get("confirmation") !=
                 "replan-size:" + batch_id + ":" + str(desired)):
-            raise ValueError("Changing a saved batch size requires explicit exact-batch approval.")
+            raise ValueError("Replanning requires exact current batch and selected size.")
         with self.collector.browser_admission, self.lock:
             if (self.worker and self.worker.is_alive()) or (
                     self.collector.worker and self.collector.worker.is_alive()):
-                raise ValueError("Pause all Chrome robots before changing a saved batch.")
+                raise ValueError("Pause all Chrome robots before replanning a saved batch.")
             if self.owner and (owner, account) != (self.owner, self.account):
                 raise ValueError("A different Instagram workspace is bound to the robot.")
             entries = self._review_batches(owner, account, task)
             pending = next((e for e in reversed(entries)
                             if not e.get("approved_at") and not e.get("deferred_at")), None)
             if not pending or pending.get("id") != batch_id:
-                raise ValueError("Saved batch changed; refresh and explicitly confirm again.")
+                raise ValueError("The saved batch changed; refresh and confirm again.")
             old_size = len(pending.get("targets", []))
             if old_size == desired:
-                raise ValueError("The selected batch size already matches the saved cohort.")
+                raise ValueError("Saved cohort already matches the selected size.")
+            baseline = pending.get("original_targets") or pending["targets"]
+            if (not isinstance(baseline, list) or
+                    any(valid_username(u) != u for u in baseline)):
+                raise ValueError("Original cohort is invalid; preserve it for manual review.")
             journal = _read_json(self._base_for(owner, account, task), {})
-            observed = sum(isinstance(journal.get(u), dict)
-                           and bool(journal[u].get("status"))
-                           for u in pending["targets"])
-            pending["deferred_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            pending["deferred_reason"] = "owner_changed_batch_size"
-            pending["deferred_action_recorded"] = observed
-            pending["deferred_untouched"] = old_size - observed
-            pending["deferred_protected_usernames"] = []
-            pending["replanned_batch_size"] = desired
+            protected = set(_read_json(self._protection_file_for(owner, account), []))
+            safe = [u for u in baseline if u not in protected and (
+                not isinstance(journal.get(u), dict) or
+                not journal[u].get("status") or _preclick_no_action(journal[u]))]
+            safe = list(dict.fromkeys(safe))
+            if not safe:
+                raise ValueError("No untouched or proven no-click profiles remain; verify prior attempts.")
+            new_targets = safe[:desired]
+            pending["original_targets"] = list(baseline)
+            pending["targets"] = new_targets
+            pending["carryover_targets"] = safe[len(new_targets):]
+            pending.setdefault("replan_history", []).append({
+                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "previous_active_size": old_size,
+                "selected_size": desired,
+                "next_active_size": len(new_targets),
+                "reusable_after_next_batch": len(safe) - len(new_targets),
+            })
             _atomic_json(self._review_batches_file_for(owner, account, task), entries)
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "previous_size": old_size,
-                    "requested_new_size": desired, "deferred_at": pending["deferred_at"],
-                    "action_recorded": observed, "untouched": old_size - observed,
+                    "requested_new_size": desired, "active_size": len(new_targets),
+                    "reusable_after_active": len(safe) - len(new_targets),
+                    "action_recorded": len(baseline) - len(safe),
                     "marked_reviewed": False, "approved_usernames": [],
-                    "next_batch_requires_confirmation": True}
+                    "next_batch_requires_confirmation": True,
+                    "status": "replanned_active_cohort_not_archived"}
 
     def defer_protected_batch(self, data):
         """Archive a blocked cohort without approving any profile or action."""
