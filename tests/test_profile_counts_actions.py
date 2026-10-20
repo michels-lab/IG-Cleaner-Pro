@@ -2,6 +2,7 @@
 
 No real Instagram requests are sent in automated tests.
 """
+import json
 import tempfile
 from pathlib import Path
 import sys
@@ -396,11 +397,9 @@ class ActionSafetyTests(unittest.TestCase):
             # Cold Windows boot: no active worker or remembered task yet.
             # Saving favorite protections must still work for the exact scope.
             robot.protect({**scope, "protected": ["never.click"]})
-            self.assertIn("never.click",
-                          robot.protect({**scope, "protected": []})["message"]
-                          if False else set(
-                              __import__("json").loads(robot._protection_file_for(
-                                  scope["owner"], scope["account"]).read_text())))
+            robot.protect({**scope, "protected": []})
+            self.assertIn("never.click", json.loads(
+                robot._protection_file_for(scope["owner"], scope["account"]).read_text()))
             path = robot._protection_file_for(scope["owner"], scope["account"])
             original = path.read_bytes()
             for rejected in (
@@ -428,13 +427,13 @@ class ActionSafetyTests(unittest.TestCase):
             robot.worker = None
             robot.status = "paused"
             robot.protect(confirmed)
-            self.assertEqual(__import__("json").loads(path.read_text()), [])
+            self.assertEqual(json.loads(path.read_text()), [])
             # Unprotecting this owner never unprotects another Instagram scope.
             other_robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
             other_robot.protect({**other, "protected": ["other.user"]})
-            self.assertEqual(__import__("json").loads(other_robot._protection_file_for(
+            self.assertEqual(json.loads(other_robot._protection_file_for(
                 other["owner"], other["account"]).read_text()), ["other.user"])
-            self.assertEqual(__import__("json").loads(path.read_text()), [])
+            self.assertEqual(json.loads(path.read_text()), [])
 
     def test_desktop_toggle_never_sends_addition_for_unprotect(self):
         html = (Path(__file__).resolve().parents[1] / "desktop" /
