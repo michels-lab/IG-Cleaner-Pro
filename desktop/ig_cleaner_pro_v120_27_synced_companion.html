@@ -3771,6 +3771,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
   <div class="btnrow">
     <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
+    <button class="btn orange" id="igcAutoDeferProtected" type="button" onclick="igcAutoDeferProtectedBatch()" style="display:none">↷ Archive protected batch (not Reviewed)</button>
     <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Verify previous actions (read-only)</button>
     <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open only issue profiles</button>
   </div>
@@ -15182,7 +15183,7 @@ function igcAutoReplanStaleProtected(err,originalScope,originalMode){
  setStatus("No Instagram actions started. "+users.length+
   " selected account(s) were protected in the Windows journal ("+label+
   "). Local exclusions refreshed. "+(actionBatchReview?
-    "The original unapproved cohort remains unchanged; resolve it before continuing.":
+    "The original unapproved cohort remains unchanged; choose Archive protected batch (not Reviewed) to make a new plan.":
     "Choose Run again to inspect and confirm a NEW eligible batch."));
  return true;
 }
@@ -15566,6 +15567,8 @@ window.igcAutoRenderBatchApproval=function(){
  panel.style.display=actionBatchReview?"block":"none";
  if(!actionBatchReview)return;
  const outcome=igcAutoBatchOutcomes(),count=(actionBatchReview.targets||[]).length;
+ const blocked=Array.isArray(actionBatchReview.protected_in_cohort)?
+   actionBatchReview.protected_in_cohort.filter(norm):[];
  const busy=!!(actionState?.running && actionState?.owner===actionOwner().owner &&
                 actionState?.account===actionOwner().account);
  const msg=document.getElementById("igcAutoBatchApprovalDetails");
@@ -15578,7 +15581,11 @@ window.igcAutoRenderBatchApproval=function(){
   if(msg)msg.textContent=heading+count+" in batch · "+outcome.confirmed.length+
     " verified actions · "+outcome.already.length+" already not following (no click) · "+
     outcome.issues.length+" issues · "+
-    outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed.";
+    outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed."+
+    (blocked.length?" "+blocked.length+
+      " are protected on this Windows device. Archive this cohort WITHOUT marking any profiles Reviewed, then select a new batch.":"");
+  const defer=document.getElementById("igcAutoDeferProtected");
+  if(defer){defer.style.display=blocked.length?"inline-flex":"none";defer.disabled=busy;}
   const approve=document.getElementById("igcAutoApproveBatch");
   if(approve)approve.disabled=busy||outcome.unchecked.length>0;
   const recheck=document.getElementById("igcAutoRecheckBatch");
@@ -15620,6 +15627,52 @@ window.igcAutoRecheckBatch=async function(){
   });
   actionState=result;await window.igcAutoPoll();
  }catch(e){setStatus("Could not automatically recheck batch: "+e.message)}
+};
+window.igcAutoDeferProtectedBatch=async function(){
+ const b=actionBatchReview;
+ if(!b||actionState?.running||!Array.isArray(b.protected_in_cohort)||
+    !b.protected_in_cohort.length)return;
+ const initialScope=scope(),initialMode=mode,owner=actionOwner();
+ try{
+  // Refresh durable Windows evidence before showing a confirmation.
+  const check=await requestAction("review-batch",{...owner,task:initialMode});
+  const live=check?.batch;
+  if(initialScope!==scope()||initialMode!==mode||
+     check.owner!==owner.owner||check.account!==owner.account||
+     !live||live.id!==b.id)
+   throw Error("The account or pending cohort changed. Refresh before archiving.");
+  const protectedUsers=Array.isArray(live.protected_in_cohort)?
+    [...new Set(live.protected_in_cohort.map(norm).filter(Boolean))]:[];
+  if(!protectedUsers.length)throw Error("No saved protection blocks the cohort anymore. Use Run.");
+  const recorded=Object.values(live.action_results||{}).filter(v=>
+    v&&v.status&&v.status!=="pending").length;
+  const warning="Archive the blocked "+live.targets.length+"-profile "+initialMode+
+   " batch because "+protectedUsers.length+" saved profile(s) are protected?"+
+   "\n\n"+recorded+" profiles have original action records. These records, including "+
+   "uncertain clicks, stay saved. NO profile will be marked Reviewed, no action "+
+   "will be retried, and no Chrome tab will be opened."+
+   "\n\nAfter archiving, use Run and approve a NEW exact list. Continue?";
+  if(!window.confirm(warning))return;
+  if(initialScope!==scope()||initialMode!==mode)
+   throw Error("The Instagram workspace changed; no cohort was archived.");
+  const result=await requestAction("defer-protected-batch",{
+   ...owner,task:initialMode,batch_id:b.id,
+   confirmation:"defer-protected:"+b.id
+  });
+  if(result.marked_reviewed!==false||result.batch_id!==b.id||
+     result.owner!==owner.owner||result.account!==owner.account)
+   throw Error("Unexpected archive response. Refresh before any further action.");
+  if(initialScope!==scope()||initialMode!==mode){
+   setStatus("Previous account cohort archived; return to that workspace to view its history.");
+   return;
+  }
+  actionBatchReview=null;
+  window.igcAutoRenderBatchApproval();
+  await window.igcAutoPoll();
+  setStatus("Blocked batch archived without Reviewed approvals. "+result.action_recorded+
+    " original action records and "+result.untouched+
+    " untouched profiles preserved. Choose Run to confirm a new eligible batch.");
+ }catch(e){setStatus("Could not archive protected batch: "+e.message)}
 };
 window.igcAutoApproveBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;
