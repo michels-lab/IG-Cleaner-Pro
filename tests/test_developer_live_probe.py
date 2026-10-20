@@ -139,6 +139,31 @@ class DeveloperRealDOMTest(unittest.TestCase):
                 result=json.load(urlopen(Request(addr+"/api/developer/live-status",
                                                    headers=headers),timeout=5))
                 self.assertEqual(result["state"],"idle")
+                action_status=json.load(urlopen(Request(
+                    addr+"/api/developer/action-status",headers=headers),timeout=5))
+                self.assertEqual(action_status["status"],"idle")
+                # Developer mutation is impossible without exact-target consent.
+                base={"owner":"owner","account":"ig","task":"cancel",
+                      "expected_handle":"my.profile","targets":["test.target"]}
+                for payload in (
+                    base,
+                    {**base,"acknowledge_real_changes":True},
+                    {**base,"acknowledge_real_changes":True,
+                     "explicit_consent":"LIVE_TEST:unfollow:test.target"},
+                    {**base,"acknowledge_real_changes":True,
+                     "explicit_consent":"LIVE_TEST:cancel:test.target",
+                     "targets":["test.target"]*11},
+                    {**base,"acknowledge_real_changes":True,
+                     "explicit_consent":"LIVE_TEST:cancel:test.target",
+                     "targets":[None]},
+                ):
+                    with self.assertRaises(HTTPError) as forbidden:
+                        urlopen(Request(addr+"/api/developer/action-start",
+                           data=json.dumps(payload).encode(),headers=headers,
+                           method="POST"),timeout=5)
+                    self.assertEqual(forbidden.exception.code,400)
+                self.assertFalse(list(root.glob("instagram-actions-*.json")),
+                                 "Rejected tests must not create canonical action journals")
                 with self.assertRaises(HTTPError) as missing:
                     urlopen(Request(addr+"/api/developer/live-status"),timeout=5)
                 self.assertEqual(missing.exception.code,403)
