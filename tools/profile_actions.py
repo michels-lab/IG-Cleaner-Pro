@@ -1133,7 +1133,7 @@ class ActionRobot:
     def _pending_review(self, owner, account, task):
         batches = self._review_batches(owner, account, task)
         return next((entry for entry in reversed(batches)
-                     if not entry.get("approved_at")), None)
+                     if not entry.get("approved_at") and not entry.get("deferred_at")), None)
 
     def open_profile(self, data):
         """Open an owner-selected issue in the robot's persistent Chrome profile.
@@ -1183,6 +1183,10 @@ class ActionRobot:
             if entry:
                 journal = _read_json(self._base_for(owner, account, task), {})
                 details = dict(entry)
+                # Disk-only protection may have changed after this cohort was
+                # saved. Return a read-only conflict list to the owner UI.
+                guard = set(_read_json(self._protection_file_for(owner, account), []))
+                details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
                 details["action_results"] = {
                     username: {"status": journal.get(username, {}).get("status", "pending"),
                                "message": journal.get(username, {}).get("message", ""),
@@ -1201,6 +1205,44 @@ class ActionRobot:
             raise ValueError("Choose a valid owner, Instagram account and robot task.")
         return owner, account, task
 
+    def defer_protected_batch(self, data):
+        """Archive a blocked cohort without approving any profile or action."""
+        owner, account, task = self._review_scope(data)
+        batch_id = str(data.get("batch_id") or "")
+        if not batch_id or data.get("confirmation") != "defer-protected:" + batch_id:
+            raise ValueError("Deferring a protected cohort requires explicit batch confirmation.")
+        with self.collector.browser_admission, self.lock:
+            if (self.worker and self.worker.is_alive()) or (
+                    self.collector.worker and self.collector.worker.is_alive()):
+                raise ValueError("Pause all Chrome robots before deferring a protected batch.")
+            entries = self._review_batches(owner, account, task)
+            pending = next((entry for entry in reversed(entries)
+                            if not entry.get("approved_at") and not entry.get("deferred_at")), None)
+            if not pending or pending.get("id") != batch_id:
+                raise ValueError("The unapproved batch changed. Refresh before deferring.")
+            protected = set(_read_json(self._protection_file_for(owner, account), []))
+            collisions = sorted(set(pending["targets"]) & protected)
+            if not collisions:
+                raise ValueError("This cohort has no saved protected collision. Continue its exact batch.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            observed = [u for u in pending["targets"]
+                        if isinstance(journal.get(u), dict) and journal[u].get("status")]
+            # Preserve original targets and uncertainty: no fake Reviewed,
+            # no replay and no modification of action/protection journals.
+            pending["deferred_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            pending["deferred_reason"] = "protected_collision"
+            pending["deferred_protected_usernames"] = collisions
+            pending["deferred_action_recorded"] = len(observed)
+            pending["deferred_untouched"] = len(pending["targets"]) - len(observed)
+            _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+            return {"owner": owner, "account": account, "task": task,
+                    "batch_id": batch_id, "deferred_at": pending["deferred_at"],
+                    "protected_usernames": collisions,
+                    "action_recorded": len(observed),
+                    "untouched": len(pending["targets"]) - len(observed),
+                    "approved_usernames": [], "marked_reviewed": False,
+                    "next_batch_requires_confirmation": True}
+
     def approve_batch(self, data):
         owner, account, task = self._review_scope(data)
         batch_id = str(data.get("batch_id") or "")
@@ -1209,7 +1251,8 @@ class ActionRobot:
                 raise ValueError("Wait for the robot to finish before approving the batch.")
             entries = self._review_batches(owner, account, task)
             match = next((entry for entry in reversed(entries)
-                         if entry.get("id") == batch_id and not entry.get("approved_at")), None)
+                         if entry.get("id") == batch_id and not entry.get("approved_at")
+                         and not entry.get("deferred_at")), None)
             if match is None:
                 raise ValueError("The pending batch changed. Refresh before confirming.")
             if data.get("confirmation") != "reviewed:" + batch_id:
