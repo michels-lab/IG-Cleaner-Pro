@@ -47,7 +47,7 @@ class PrivateAndroidEvidenceTests(unittest.TestCase):
             calls.append(command)
             if len(calls) == 6:
                 return SimpleNamespace(returncode=1, stdout=b"", stderr=b"Permission denied")
-            return SimpleNamespace(returncode=0, stdout=sample_png(command[-1].split("-")[1]), stderr=b"")
+            return SimpleNamespace(returncode=0, stdout=sample_png(command[-1].rsplit("/", 1)[-1].split("-")[1]), stderr=b"")
         with tempfile.TemporaryDirectory() as root, patch(
             "collect_android_about_screenshots.subprocess.run", side_effect=pretend
         ):
