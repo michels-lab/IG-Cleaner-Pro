@@ -2,6 +2,7 @@
 
 No real Instagram requests are sent in automated tests.
 """
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -401,6 +402,10 @@ class ActionSafetyTests(unittest.TestCase):
             self.assertIn("never.click", json.loads(
                 robot._protection_file_for(scope["owner"], scope["account"]).read_text()))
             path = robot._protection_file_for(scope["owner"], scope["account"])
+            # Backward compatibility: never change the prior saved-journal
+            # filename when introducing a no-implicit-unprotect protocol.
+            expected_digest = hashlib.sha256(b"owner1\\0instagram1").hexdigest()[:32]
+            self.assertEqual(path.name, "action-protected-" + expected_digest + ".json")
             original = path.read_bytes()
             for rejected in (
                 {**scope, "unprotected": ["never.click"]},
