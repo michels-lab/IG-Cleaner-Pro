@@ -494,6 +494,166 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertIn('Choose Run again to inspect and confirm a NEW eligible batch', source)
         self.assertNotIn('requestAction("start",data).catch(', source)
 
+    def test_protected_pending_batch_can_be_safely_deferred_without_reviewed(self):
+        # New (protected) favorites during an already authorized batch must
+        # never force unprotection or false Reviewed on untouched profiles.
+        for task, size in (("cancel", 30), ("unfollow", 40)):
+            with self.subTest(task=task), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                counts = Collector(root / "data", root / "session")
+                robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+                robot._run = lambda: None
+                scope = dict(owner="owner-one", account="instagram-one", task=task,
+                             expected_handle="my.profile", batch_size=size,
+                             gap_seconds=10, rest_minutes=5,
+                             followers_evidence=task=="unfollow",
+                             confirmation=f"{task}:{size}")
+                imported = [f"candidate{i:03d}" for i in range(90)]
+                robot.start(dict(scope, targets=imported[:size], protected=[]))
+                robot.worker.join(timeout=2)
+                pending = robot._pending_review(scope["owner"], scope["account"], task)
+                self.assertIsNotNone(pending)
+                batch_id = pending["id"]
+                journal_path = robot._base_for(scope["owner"], scope["account"], task)
+                _atomic_json(journal_path, {
+                    "candidate001": {"status": "ok", "message": "Confirmed action",
+                                     "at": "2026-10-20T00:00:00Z"},
+                    "candidate002": {"status": "review", "message": "Uncertain after click",
+                                     "at": "2026-10-20T00:01:00Z"},
+                })
+                original_journal = journal_path.read_bytes()
+                robot.protect({"owner": scope["owner"], "account": scope["account"],
+                               "protected": ["candidate005", "candidate018"]})
+                protection_path = robot._protection_file_for(
+                    scope["owner"], scope["account"])
+                original_guard = protection_path.read_bytes()
+                original_batch = robot.batch_review(scope)["batch"]
+                self.assertEqual(original_batch["protected_in_cohort"],
+                                 ["candidate005", "candidate018"])
+                self.assertEqual(original_batch["action_results"]["candidate002"]["status"],
+                                 "review")
+                with self.assertRaises(ProtectedBatchCollision):
+                    robot.start(dict(scope, targets=imported[:size],
+                                     batch_id=batch_id, protected=[]))
+
+                for invalid in (
+                    dict(scope, batch_id="not-the-batch",
+                         confirmation="defer-protected:not-the-batch"),
+                    dict(scope, batch_id=batch_id, confirmation="defer-protected:wrong"),
+                    dict(scope, batch_id=batch_id, account="instagram-two",
+                         confirmation="defer-protected:"+batch_id),
+                    dict(scope, batch_id=batch_id, owner="owner-two",
+                         confirmation="defer-protected:"+batch_id),
+                    dict(scope, batch_id=batch_id, task="audit",
+                         confirmation="defer-protected:"+batch_id),
+                ):
+                    with self.subTest(invalid=invalid):
+                        with self.assertRaises(ValueError):
+                            robot.defer_protected_batch(invalid)
+                class BusyWorker:
+                    def is_alive(self): return True
+                robot.worker = BusyWorker()
+                with self.assertRaisesRegex(ValueError, "Pause all Chrome robots"):
+                    robot.defer_protected_batch(dict(
+                        scope, batch_id=batch_id,
+                        confirmation="defer-protected:"+batch_id))
+                robot.worker = None
+                counts.worker = BusyWorker()
+                with self.assertRaisesRegex(ValueError, "Pause all Chrome robots"):
+                    robot.defer_protected_batch(dict(
+                        scope, batch_id=batch_id,
+                        confirmation="defer-protected:"+batch_id))
+                counts.worker = None
+
+                archived = robot.defer_protected_batch(dict(
+                    scope, batch_id=batch_id,
+                    confirmation="defer-protected:"+batch_id))
+                self.assertFalse(archived["marked_reviewed"])
+                self.assertEqual(archived["approved_usernames"], [])
+                self.assertEqual(archived["action_recorded"], 2)
+                self.assertEqual(archived["untouched"], size-2)
+                self.assertEqual(archived["protected_usernames"],
+                                 ["candidate005", "candidate018"])
+                self.assertEqual(journal_path.read_bytes(), original_journal)
+                self.assertEqual(protection_path.read_bytes(), original_guard)
+                entries = robot._review_batches(scope["owner"], scope["account"], task)
+                self.assertEqual(len(entries), 1)
+                self.assertEqual(entries[0]["targets"], imported[:size])
+                self.assertIsNone(entries[0]["approved_at"])
+                self.assertEqual(entries[0]["deferred_reason"], "protected_collision")
+                self.assertFalse(robot.batch_review(scope)["batch"])
+                with self.assertRaises(ValueError):
+                    robot.approve_batch({**scope, "batch_id": batch_id,
+                                         "confirmation": "reviewed:"+batch_id})
+                with self.assertRaises(ValueError):
+                    robot.defer_protected_batch(dict(
+                        scope, batch_id=batch_id,
+                        confirmation="defer-protected:"+batch_id))
+                # Old click journals survive; a completely NEW, explicitly
+                # approved selection is now possible without either protected
+                # profile or the two saved uncertain/completed action targets.
+                self.assertEqual(set(robot.attempted_history(scope)["attempted_usernames"]),
+                                 {"candidate001", "candidate002"})
+                excluded = {"candidate001", "candidate002",
+                            "candidate005", "candidate018"}
+                corrected = [u for u in imported if u not in excluded][:size]
+                robot.start(dict(scope, targets=corrected, protected=[]))
+                robot.worker.join(timeout=2)
+                new_batch = robot._pending_review(scope["owner"], scope["account"], task)
+                self.assertNotEqual(new_batch["id"], batch_id)
+                self.assertEqual(new_batch["targets"], corrected)
+                self.assertEqual(len(robot._review_batches(
+                    scope["owner"], scope["account"], task)), 2)
+
+    def test_defer_requires_a_durable_protected_collision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot._run = lambda: None
+            payload = dict(owner="owner", account="account", task="cancel",
+                           expected_handle="my.profile", targets=["first.user"],
+                           batch_size=30, gap_seconds=10, rest_minutes=5,
+                           protected=[], confirmation="cancel:1")
+            robot.start(payload)
+            robot.worker.join(timeout=2)
+            pending = robot._pending_review("owner", "account", "cancel")
+            batch_id = pending["id"]
+            review_file = robot._review_batches_file_for("owner", "account", "cancel")
+            original = review_file.read_bytes()
+            with self.assertRaisesRegex(ValueError, "no saved protected collision"):
+                robot.defer_protected_batch({
+                    "owner": "owner", "account": "account", "task": "cancel",
+                    "batch_id": batch_id, "confirmation": "defer-protected:"+batch_id})
+            self.assertEqual(review_file.read_bytes(), original)
+            self.assertEqual(robot._pending_review(
+                "owner", "account", "cancel")["id"], batch_id)
+            # A protected profile outside this cohort is not justification
+            # to retire the current owner-approved batch.
+            robot.protect({"owner": "owner", "account": "account",
+                           "protected": ["unrelated.user"]})
+            with self.assertRaisesRegex(ValueError, "no saved protected collision"):
+                robot.defer_protected_batch({
+                    "owner": "owner", "account": "account", "task": "cancel",
+                    "batch_id": batch_id, "confirmation": "defer-protected:"+batch_id})
+            self.assertEqual(review_file.read_bytes(), original)
+
+    def test_desktop_defer_control_requires_explicit_confirmation(self):
+        root = Path(__file__).resolve().parents[1]
+        desktop = (root / "desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(
+            encoding="utf-8")
+        bridge = (root / "tools/profile_counts_bridge.py").read_text(encoding="utf-8")
+        self.assertIn('id="igcAutoDeferProtected"', desktop)
+        self.assertIn('window.igcAutoDeferProtectedBatch=async function()', desktop)
+        self.assertIn('check=await requestAction("review-batch"', desktop)
+        self.assertIn('if(!window.confirm(warning))return', desktop)
+        self.assertIn('confirmation:"defer-protected:"+b.id', desktop)
+        self.assertIn('requestAction("defer-protected-batch"', desktop)
+        self.assertIn('result.marked_reviewed!==false', desktop)
+        self.assertIn('defer.style.display=blocked.length?', desktop)
+        self.assertIn('"/api/actions/defer-protected-batch"', bridge)
+        self.assertIn('result = actions.defer_protected_batch(data)', bridge)
+
     def test_explicit_unprotect_is_confirmed_owner_scoped_and_idle_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
