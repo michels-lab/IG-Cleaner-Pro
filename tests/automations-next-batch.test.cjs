@@ -15,7 +15,8 @@ function el(id){if(!nodes.has(id))nodes.set(id,{
   replaceChildren(){this.children=[]},
   addEventListener(){},setAttribute(){},
  } );return nodes.get(id)}
-const store=new Map(),post=[];
+const store=new Map(),post=[],batchReplans=[];
+let pendingSaved=null;
 const profile=(name)=>({username:name,href:"https://www.instagram.com/"+name+"/"});
 const pending=[...Array(155)].map((_,i)=>profile("pending."+String(i).padStart(3,"0")));
 const already=pending.slice(0,60).map(x=>x.username);
@@ -40,6 +41,23 @@ const ctx={
   fetch:async(url,opts)=>{
     const op=url.split("/").at(-1);
     assert.equal(opts.headers["X-IGC-Bridge-Token"],"abcdefghijklmnopqrstuvwxy");
+    if(op==="review-batch"){
+      return {ok:true,json:async()=>({
+        owner:"owner1",account:"profile1",task:"cancel",batch:pendingSaved
+      })};
+    }
+    if(op==="defer-resized-batch"){
+      const payload=JSON.parse(opts.body);batchReplans.push(payload);
+      assert(pendingSaved,"Only a pending cohort can be replanned");
+      const old=pendingSaved;pendingSaved=null;
+      return {ok:true,json:async()=>({
+        owner:payload.owner,account:payload.account,task:payload.task,
+        batch_id:old.id,previous_size:old.targets.length,
+        requested_new_size:payload.desired_batch_size,
+        action_recorded:1,untouched:old.targets.length-1,
+        marked_reviewed:false
+      })};
+    }
     if(op==="history"){
       const data=JSON.parse(opts.body);
       return {ok:true,json:async()=>({
@@ -80,5 +98,36 @@ vm.createContext(ctx);vm.runInContext(source,ctx,{timeout:1200});
   await ctx.igcAutoPoll();
   await ctx.igcAutoStart();
   assert.deepEqual([...post.at(-1).targets],["fresh.from.new.export"]);
-  console.log("PASS: third batch advances; newly imported pending eligible; all profiles paginated; review button is read-only");
+  // The EXACT owner regression: a saved 40-target cohort must NOT hijack
+  // Run after choosing 10. The old cohort remains untouched until the owner
+  // explicitly archives it (never Reviewed), then a NEW 10-target selection.
+  const oldNames=[...Array(40)].map((_,i)=>"saved."+String(i).padStart(3,"0"));
+  pendingSaved={
+    id:"saved-40-batch",targets:oldNames,
+    action_results:Object.fromEntries(oldNames.map((u,i)=>[u,{status:i===0?"review":"pending",safe_no_click:false}])),
+    recheck_results:{},protected_in_cohort:[]
+  };
+  el("igcAutoBatch").value="10";
+  await ctx.igcAutoPoll();
+  assert.match(el("igcAutoBatchApprovalDetails").textContent,/SAVED BATCH: 40 profiles/);
+  assert.match(el("igcAutoBatchApprovalDetails").textContent,/NEW SELECTED SIZE: 10/);
+  assert.equal(el("igcAutoReplanSize").style.display,"inline-flex");
+  const before=post.length;
+  await ctx.igcAutoStart();
+  assert.equal(post.length,before,"Run must NOT start original saved 40 after selecting size 10");
+  assert.equal(batchReplans.length,0,"Run must NOT silently archive old cohort");
+  assert.match(el("igcAutoStatus").textContent,/SAVED COHORT: 40 profiles/);
+  await ctx.igcAutoReplanSavedBatch();
+  assert.equal(batchReplans.length,1);
+  assert.equal(batchReplans[0].batch_id,"saved-40-batch");
+  assert.equal(batchReplans[0].desired_batch_size,10);
+  assert.equal(batchReplans[0].confirmation,"replan-size:saved-40-batch:10");
+  assert.equal(pendingSaved,null);
+  state={...state,attempted_usernames:[]};
+  await ctx.igcAutoStart();
+  assert.equal(post.length,before+1);
+  assert.equal(post.at(-1).targets.length,10,
+    "After explicit archival, Run MUST honor the newly selected size 10");
+  assert.deepEqual([...post.at(-1).targets],pending.slice(0,10).map(x=>x.username));
+  console.log("PASS: third batch advances; reimport; saved 40 cannot override selected 10; explicit safe archive then new 10");
 })().catch(e=>{console.error(e);process.exitCode=1});
