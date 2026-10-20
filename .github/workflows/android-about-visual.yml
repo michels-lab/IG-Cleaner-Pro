@@ -8,6 +8,8 @@ on:
       - 'desktop/**'
       - 'tests/**'
       - 'tools/android_about_visual_evidence.py'
+      - 'tools/collect_android_about_screenshots.py'
+      - 'tools/run_android_about_ui.sh'
       - 'tools/create_master_visual_manifest.py'
       - 'tools/visual_release_gate.py'
       - '.github/workflows/android-about-visual.yml'
@@ -21,6 +23,8 @@ on:
       - '.michelslab/release-request.json'
       - '.github/workflows/android-about-visual.yml'
       - 'tools/android_about_visual_evidence.py'
+      - 'tools/collect_android_about_screenshots.py'
+      - 'tools/run_android_about_ui.sh'
       - 'tools/create_master_visual_manifest.py'
       - 'tools/visual_release_gate.py'
 permissions:
@@ -48,6 +52,8 @@ jobs:
       - name: Enable KVM for Android emulator
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Verify private Android screenshot extraction fails closed offline
+        run: python3 -m unittest discover -s tests -p 'test_android_visual_transfer.py' -v
       - name: Build debug candidate and run real UI screenshot test on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
