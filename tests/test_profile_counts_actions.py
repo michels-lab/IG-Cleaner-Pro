@@ -395,8 +395,14 @@ class ActionSafetyTests(unittest.TestCase):
             scope = {"owner": "owner1", "account": "instagram1"}
             other = {"owner": "owner1", "account": "instagram2"}
 
-            # Cold Windows boot: no active worker or remembered task yet.
-            # Saving favorite protections must still work for the exact scope.
+            # Cold Windows boot: an unbound loopback controller MUST reject
+            # arbitrary owner-scope mutations. UI stages favorites locally and
+            # passes them only with the next explicitly approved batch.
+            with self.assertRaisesRegex(ValueError, "same account"):
+                robot.protect({**scope, "protected": ["never.click"]})
+            self.assertFalse(robot._protection_file_for(
+                scope["owner"], scope["account"]).exists())
+            robot.owner, robot.account, robot.task = "owner1", "instagram1", "cancel"
             robot.protect({**scope, "protected": ["never.click"]})
             robot.protect({**scope, "protected": []})
             self.assertIn("never.click", json.loads(
@@ -435,6 +441,8 @@ class ActionSafetyTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text()), [])
             # Unprotecting this owner never unprotects another Instagram scope.
             other_robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            other_robot.owner, other_robot.account, other_robot.task = (
+                other["owner"], other["account"], "cancel")
             other_robot.protect({**other, "protected": ["other.user"]})
             self.assertEqual(json.loads(other_robot._protection_file_for(
                 other["owner"], other["account"]).read_text()), ["other.user"])
@@ -450,6 +458,7 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertIn("await requestAction(\"protect\"", section)
         self.assertIn("write(kind,u,nextProtected)", section)
         self.assertIn("Saved protection unchanged", section)
+        self.assertIn("Protected locally for the next approved Windows batch", section)
         self.assertNotIn("requestAction(\"protect\",{...actionOwner(),protected:[u]}).catch", section)
 
     def test_requires_explicit_approved_queue_and_full_followers(self):
