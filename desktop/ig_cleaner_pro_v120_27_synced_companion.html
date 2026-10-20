@@ -14995,13 +14995,38 @@ window.igcAutoSkip=function(kind,user){
  skips[kind].add(u);window.igcAutoRender();
  if(actionBridge)requestAction("skip",{...actionOwner(),username:u}).catch(()=>{});
 };
-window.igcAutoProtect=function(kind,user){
+window.igcAutoProtect=async function(kind,user){
  refreshScope();
  if(!["unfollow","cancel","audit"].includes(kind))return;
  const u=norm(user);if(!u)return;
- write(kind,u,!isProtected(kind,u));
- window.igcAutoRender();
- if(actionBridge)requestAction("protect",{...actionOwner(),protected:[u]}).catch(e=>setStatus("Protection saved; robot notice: "+e.message));
+ const nextProtected=!isProtected(kind,u),identityAtClick=scope();
+ if(!nextProtected){
+  // Absence from a stale UI snapshot cannot revoke a durable backend guard.
+  // Only a real owner-confirmed removal while the robot is idle can do that.
+  if(!actionBridge){setStatus("Open the installed Windows robot to remove a saved protection safely.");return}
+  if(!window.confirm("Remove @"+u+" from the saved robot protection list? This allows a FUTURE explicitly approved batch to include it."))return;
+ }
+ if(!actionBridge){
+  write(kind,u,true);window.igcAutoRender();
+  setStatus("Profile protected locally. The installed robot will preserve it for the next batch.");
+  return;
+ }
+ try{
+  const request=nextProtected?{protected:[u]}:{unprotected:[u],confirmation:"unprotect:"+u};
+  await requestAction("protect",{...actionOwner(),...request});
+  // Never apply an asynchronous response to a different visible account.
+  if(scope()!==identityAtClick){
+   setStatus("Protection changed for the previous Instagram workspace; switch back to view it.");
+   return;
+  }
+  write(kind,u,nextProtected);
+  window.igcAutoRender();
+  setStatus((nextProtected?"Protected @":"Protection removed for @")+u+
+            ". Active action batches never lose protection silently.");
+ }catch(e){
+  window.igcAutoRender();
+  setStatus("Saved protection unchanged: "+e.message);
+ }
 };
 window.igcAutoClearSkipped=function(){
  refreshScope();
