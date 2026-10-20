@@ -1418,9 +1418,10 @@ class ActionRobot:
             active = bool(self.worker and self.worker.is_alive())
             # Never change a different owner's saved guard during an active
             # robot; also retain paused-task identity guards.
-            if (self.owner and (owner, account) != (self.owner, self.account)
-                    and (active or self.status in
-                         ("paused", "starting", "running", "login", "waiting", "review", "blocked"))):
+            if self.owner and (owner, account) != (self.owner, self.account):
+                # A remembered owner remains the only update scope even when
+                # its worker is finished. A fresh Windows process (no owner
+                # selected yet) may write only the explicitly named workspace.
                 raise ValueError("Select the same account to update protected profiles.")
             if removals and active:
                 raise ValueError("Pause and finish the active robot before removing protection.")
