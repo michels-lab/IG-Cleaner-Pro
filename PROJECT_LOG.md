@@ -1,3 +1,11 @@
+## 2026-10-20 — GRANADA ambiciosa: macro-bloques multi-entregable (regla adoptada)
+
+**Orden del propietario:** evitar correcciones mínimas encadenadas; elegir campañas de desarrollo con aproximadamente **3–6 paquetes sustanciales relacionados y no interferentes**, cuando el backlog lo permita. Cada paquete debe entregar código/experiencia tangible, recuperar estados y bordes, añadir pruebas de regresión y documentar las verificaciones reales. El tamaño no justifica pisar ramas/claims, mezclar cuentas, omitir QA ni dar por concluida una aceptación física pendiente. Si algún paquete está bloqueado por login, hardware, CI o release, aparcarlo con issue/PR/SHA y continuar con otro trabajo seguro. El objetivo es hacer más, **no aparentarlo**. [Estándar maestro](https://github.com/michels-lab/Michel-Software-Standards/blob/main/standards/OPERACION_GRANADA_STANDARD.md).
+
+**Objetivo de producto para próximas Granadas:** Priority P0 Windows robots: Unfollow, Cancel Pending, Chrome identity/session, batch persistence/deferred histories, protected/uncertain profiles, Developer Twin diagnostics and exact-head installed Windows QA.
+
+**Estado de esta entrada:** adopción del protocolo únicamente; no afirma nueva funcionalidad, tests completados, integración de código ni publicación. Todo release/producción exige autorización expresa. Conservar los PRs y pendientes previamente registrados.
+
 ## 2026-10-20 — GRANADA #16 P0 Windows action batch protection collision: merged and exact-head CI green
 
 - **Integrated source:** [PR #168](https://github.com/michels-lab/IG-Cleaner-Pro/pull/168), merge commit `c9edb195562b1a98a6f4a865635b548a0f08b940`; [issue #167](https://github.com/michels-lab/IG-Cleaner-Pro/issues/167) closed. Source commit `893a27ce648ec60d57dd66651e51012e97fcb578` achieved **five SUCCESS** PR workflow checks: Windows integrated Setup installer and installed-app smoke; real Chromium offline action fixture; Desktop rendered UI; Profile Counts features; Android About rendered; Android Developer runtime. The generic `IG Cleaner Pro CI` run was **SKIPPED**, not counted as a pass. No live Instagram owner acceptance or physical Windows/Android device test occurred.
