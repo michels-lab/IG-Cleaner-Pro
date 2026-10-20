@@ -11,6 +11,7 @@ on:
       - 'tests/test_profile_counts_audit.py'
       - 'tests/test_granada_pacing_integrity.py'
       - 'tests/test_granada_false_success_resume.py'
+      - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -103,6 +104,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "GRANADA Profile Counts pacing ledger tests failed." }
           python -m unittest discover -s tests -p 'test_granada_false_success_resume.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA false-success resume tests failed." }
+          python -m unittest discover -s tests -p 'test_granada_csv_recovery.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA corrupt CSV fail-closed tests failed." }
       - name: Test verified GitHub Windows updater and opt-in install UX (offline)
         shell: pwsh
         run: |

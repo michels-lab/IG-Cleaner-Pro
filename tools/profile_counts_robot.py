@@ -135,10 +135,48 @@ def read_queue(path: Path):
 
 
 def read_results(path: Path):
+    """Restore a CSV journal without silently discarding earlier owner evidence.
+
+    Historic files can be malformed, duplicated, or carry columns that the
+    current writer would silently drop. Never collapse conflicting rows into a
+    dict then rewrite the source; require explicit owner review instead.
+    """
     if not path.exists():
         return {}
+    mandatory = {"username", "followers", "following", "checked_at", "status"}
     with path.open("r", encoding="utf-8-sig", newline="") as f:
-        return {r["username"]: r for r in csv.DictReader(f) if valid_username(r.get("username"))}
+        try:
+            reader = csv.DictReader(f, strict=True)
+            names = reader.fieldnames
+            if (not names or len(names) != len(set(names)) or
+                    not mandatory.issubset(names) or
+                    any(not isinstance(name, str) or name not in FIELDS for name in names)):
+                raise ValueError(
+                    "Profile Counts results have missing, duplicate or unknown CSV columns; "
+                    "the original file was not changed."
+                )
+            results = {}
+            for row in reader:
+                # DictReader puts surplus fields in the None key and missing
+                # cells into None values. Those are not blank but intact rows.
+                if None in row or any(value is None for value in row.values()):
+                    raise ValueError(
+                        f"Profile Counts results have an incomplete or extra-field CSV row "
+                        f"near line {reader.line_num}; the original file was not changed."
+                    )
+                name = valid_username(row.get("username"))
+                if not name or name in results:
+                    raise ValueError(
+                        f"Profile Counts results contain an invalid or duplicate profile "
+                        f"near line {reader.line_num}; the original file was not changed."
+                    )
+                results[name] = row
+            return results
+        except csv.Error as exc:
+            raise ValueError(
+                "Profile Counts results contain malformed CSV syntax; "
+                "the original file was not changed."
+            ) from exc
 
 
 def save_results(path: Path, results: dict):
