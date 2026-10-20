@@ -7,6 +7,8 @@ Si un bloque de desarrollo sigue incompleto, en pruebas, bloqueado por autentica
 Contrato maestro: [GRANADA Continuous Block Protocol](https://github.com/michels-lab/Michel-Software-Standards/blob/main/standards/GRANADA_CONTINUOUS_BLOCK_PROTOCOL.md).
 
 En **michels-lab/IG-Cleaner-Pro**:
+- **Prioridad vigente del propietario (2026-10-19): P0 ROBOTS DE ESCRITORIO WINDOWS.** Ejecutar primero los pendientes de Unfollow, Cancel Pending, Chrome/sesión única, continuidad de lotes, Profile Counts y aceptación del Setup **según [issue #164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164)**. Android Developer #135, traducción general #143 y mejoras estéticas quedan detrás, sin eliminar sus issues ni ignorar regresiones de seguridad.
+- Ante el siguiente comando GRANADA, elegir primero un **bloque real de código/QA del robot Windows** independiente de PRs activos; documentar bloqueos por Instagram real y pasar a otro pendiente de escritorio. Que una corrección esté en `main` no significa que esté en la versión pública v120.53; solo el release oficial autorizado permite pruebas del propietario.
 - Contexto: InstaCleaner; robots, account workspaces, Developer Windows/Android.
 - Bitácora/fuente local: `PROJECT_LOG.md`; issues y PRs activos tienen prioridad sobre una descripción antigua.
 - Antes de empezar, comprobar HEAD, estado, PRs, claims, riesgos P0, archivos de propiedad y CI. Un trabajo bloqueado NO se considera completo; solo se aparca de manera reversible y documentada.
