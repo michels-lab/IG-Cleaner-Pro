@@ -605,6 +605,44 @@ class ActionSafetyTests(unittest.TestCase):
                 self.assertEqual(len(robot._review_batches(
                     scope["owner"], scope["account"], task)), 2)
 
+    def test_archived_batch_summary_survives_restart_and_is_owner_scoped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot._run = lambda: None
+            scope = {"owner": "userA", "account": "igA", "task": "cancel"}
+            payload = {**scope, "expected_handle": "my.profile",
+                       "targets": ["first.user", "second.user"], "batch_size": 30,
+                       "gap_seconds": 10, "rest_minutes": 5,
+                       "protected": [], "confirmation": "cancel:2"}
+            robot.start(payload)
+            robot.worker.join(timeout=2)
+            batch_id = robot._pending_review("userA", "igA", "cancel")["id"]
+            robot.protect({**scope, "protected": ["second.user"]})
+            robot.defer_protected_batch({
+                **scope, "batch_id": batch_id,
+                "confirmation": "defer-protected:" + batch_id})
+            cold = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            summary = cold.deferred_batch_history(scope)
+            self.assertTrue(summary["read_only"])
+            self.assertEqual(summary["total_deferred"], 1)
+            self.assertEqual(summary["recent"][0]["batch_id"], batch_id)
+            self.assertEqual(summary["recent"][0]["target_count"], 2)
+            self.assertEqual(summary["recent"][0]["protected_count"], 1)
+            self.assertEqual(summary["recent"][0]["untouched"], 2)
+            self.assertFalse(summary["recent"][0]["marked_reviewed"])
+            self.assertNotIn("targets", summary["recent"][0],
+                             "Default UI summaries must not leak username lists")
+            for other in (
+                {**scope, "account": "igB"},
+                {**scope, "owner": "userB"},
+                {**scope, "task": "unfollow"},
+            ):
+                result = cold.deferred_batch_history(other)
+                self.assertEqual(result["total_deferred"], 0)
+                self.assertEqual(result["recent"], [])
+
     def test_defer_requires_a_durable_protected_collision(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -653,6 +691,10 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertIn('defer.style.display=blocked.length?', desktop)
         self.assertIn('"/api/actions/defer-protected-batch"', bridge)
         self.assertIn('result = actions.defer_protected_batch(data)', bridge)
+        self.assertIn('"/api/actions/deferred-batches"', bridge)
+        self.assertIn('result = actions.deferred_batch_history(data)', bridge)
+        self.assertIn('id="igcAutoDeferredSummary"', desktop)
+        self.assertIn('requestAction("deferred-batches"', desktop)
 
     def test_explicit_unprotect_is_confirmed_owner_scoped_and_idle_only(self):
         with tempfile.TemporaryDirectory() as directory:
