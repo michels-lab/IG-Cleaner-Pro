@@ -1,6 +1,6 @@
 # GRANADA #11 — Profile Counts release-guide drift (2026-10-19)
 
-**Issue:** [#156](https://github.com/michels-lab/IG-Cleaner-Pro/issues/156). **Base:** `main` commit `e8aa22a808e22b4e28b60d55aa9e4bb5d91f6657`. **Status:** isolated documentation/test candidate pending CI; never a published release.
+**Issue:** [#156](https://github.com/michels-lab/IG-Cleaner-Pro/issues/156). **Base:** `main` commit `e8aa22a808e22b4e28b60d55aa9e4bb5d91f6657`. **Status:** integrated in `main` via [PR #157](https://github.com/michels-lab/IG-Cleaner-Pro/pull/157) at `1730b1f5fe75c8e050ac01b7eef3969281a88d9a` after **5/5 exact-HEAD checks SUCCESS**, including same-SHA rerun of installed Android visual screenshot transfer. [Issue #156](https://github.com/michels-lab/IG-Cleaner-Pro/issues/156) closed. **No new public release.**
 
 ## Defect and remediation
 - The user guide `docs/PROFILE_COUNTS_ROBOT.md` still claimed that **v120.47** was the *current stable* and **v120.48** features were unpublished. In reality official stable is **v120.53** at this audit. A reader could install obsolete official packages or misjudge which features are shipped.
