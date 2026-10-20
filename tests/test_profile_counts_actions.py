@@ -321,6 +321,70 @@ class ActionSafetyTests(unittest.TestCase):
             self.assertEqual(result["protected"], 1)
             self.assertEqual(result["skipped"], 1)
 
+    def test_new_desktop_batch_cannot_implicitly_unprotect_saved_profile(self):
+        # Only fake worker threads are used: no Instagram navigation or clicks.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot._run = lambda: None
+            robot.owner, robot.account, robot.task = "owner1", "instagram1", "cancel"
+            _atomic_json(robot._protection_file(), ["permanent.user"])
+
+            first = {"owner": "owner1", "account": "instagram1",
+                     "expected_handle": "my.profile", "task": "cancel",
+                     "targets": ["first.user"], "batch_size": 20,
+                     "gap_seconds": 10, "rest_minutes": 5,
+                     "protected": [], "confirmation": "cancel:1"}
+            robot.start(first)
+            robot.worker.join(timeout=2)
+            self.assertTrue(robot._protected_for("permanent.user"),
+                            "Omitting persisted favorites from the UI must not erase them")
+            self.assertIn("permanent.user", robot._protected())
+
+            # An authorized next robot mode shares that SAME Instagram owner's
+            # global safety list but retains task-specific action journals.
+            second = dict(first, task="unfollow", targets=["second.user"],
+                          confirmation="unfollow:1", followers_evidence=True,
+                          protected=["new.favorite"])
+            robot.start(second)
+            robot.worker.join(timeout=2)
+            self.assertEqual(robot._protected(),
+                             {"permanent.user", "new.favorite"})
+            robot._protected_for("second.user")
+
+            # A different Instagram workspace does not inherit these guards:
+            # the source of truth is the owner + Instagram account pair.
+            other = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            other._run = lambda: None
+            other.start(dict(first, account="instagram2", targets=["other.user"],
+                             protected=["new.other"], confirmation="cancel:1"))
+            other.worker.join(timeout=2)
+            self.assertEqual(other._protected(), {"new.other"})
+            self.assertEqual(robot._protected(),
+                             {"permanent.user", "new.favorite"})
+
+    def test_live_protection_survives_empty_next_batch_ui_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            first = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            first.owner, first.account, first.task = "owner1", "instagram1", "cancel"
+            first._run = lambda: None
+            first.protect({"owner": "owner1", "account": "instagram1",
+                           "protected": ["saved.from.review"]})
+            restarted = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            restarted._run = lambda: None
+            restarted.start({"owner": "owner1", "account": "instagram1",
+                             "expected_handle": "my.profile", "task": "unfollow",
+                             "targets": ["unfollow.user"],
+                             "batch_size": 30, "gap_seconds": 10,
+                             "rest_minutes": 5, "protected": [],
+                             "followers_evidence": True,
+                             "confirmation": "unfollow:1"})
+            restarted.worker.join(timeout=2)
+            self.assertTrue(restarted._protected_for("saved.from.review"))
+
     def test_requires_explicit_approved_queue_and_full_followers(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
