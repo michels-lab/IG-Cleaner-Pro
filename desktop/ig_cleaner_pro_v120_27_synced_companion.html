@@ -15946,16 +15946,16 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   </div>
   <section id="igcDevChat" aria-label="Developer diagnostic chat">
    <div class="igc-dev-head">◇ ROBOT DIAGNOSTIC ASSISTANT · LOCAL CHAT</div>
-   <div class="igc-dev-note">Tell the Developer what failed. It can run local audit, inspect your real Instagram session (only after your consent), compare diagnostic observations and prepare a repair report. This is a LOCAL rule-guided assistant, not a live connection to ChatGPT. It cannot edit code, install updates or click relationship actions.</div>
+   <div class="igc-dev-note">Tell Developer what failed, or paste a short diagnostic instruction from ChatGPT. The local assistant runs read-only checks, saves results and helps you share them with ChatGPT. This is NOT a live ChatGPT connection and cannot edit code, install updates or click Follow/Unfollow/Cancel.</div>
    <div id="igcDevChatMessages" role="log" aria-live="polite" style="max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:80px"></div>
    <label for="igcDevChatInput">Tell the diagnostic assistant what to investigate</label>
    <textarea id="igcDevChatInput" maxlength="1500" rows="2" placeholder="Unfollow doesn't work. Diagnose with my real Instagram; compare whether the last fix helped."></textarea>
    <div class="igc-dev-actions">
     <button type="button" id="igcDevChatSend">Send instruction</button>
     <button type="button" id="igcDevChatCompare">Compare diagnostic runs</button>
-    <button type="button" id="igcDevChatCopy">Export chat + repair prompt</button>
+    <button type="button" id="igcDevChatCopy">Copy for ChatGPT</button>
    </div>
-   <div class="igc-dev-note">The conversation is saved only in this Developer workspace. Exports are manual; review your own messages before sharing.</div>
+   <div class="igc-dev-note">Simple handoff: copy the report into ChatGPT, then paste one short diagnostic instruction at a time back here. This chat stays local to your workspace. Review your notes before sharing; TXT/JSON downloads remain available above.</div>
   </section>
   <pre id="igcDevResults" aria-live="polite">Not audited yet. Notes can still be exported. No Instagram action is executed.</pre>
   <div class="igc-dev-note">The export includes your exact comments and section locations. Check them for personal information before sharing with an AI or another person.</div>
@@ -16203,6 +16203,20 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
      local_comparisons:data.diagnostic_comparisons},null,2)+
    "\n\nFor each annotation, identify the exact screen/section/control and propose a reproduction test. "+
    "Do not treat these reports as confirmed root causes. Preserve signed-in account isolation and user data.\n";
+  if(kind==="copy"){
+   // Manual handoff; never post diagnostics or credentials to any AI service.
+   // The disclosure confirmation above also applies to clipboard exports.
+   try{
+    if(typeof navigator==="undefined"||!navigator.clipboard?.writeText)
+     throw Error("Clipboard unavailable");
+    await navigator.clipboard.writeText(text);
+    chatAdd("local_assistant","Diagnostic report copied. Paste it into your ChatGPT conversation. Developer cannot send it directly or apply code edits.");
+   }catch{
+    download(text,prefix+"-AI-REPAIR.txt","text/plain;charset=utf-8");
+    chatAdd("local_assistant","Clipboard unavailable; a TXT diagnostic was saved instead. Attach or paste it into ChatGPT. No report was uploaded automatically.");
+   }
+   return;
+  }
   download(text,prefix+"-AI-REPAIR.txt","text/plain;charset=utf-8");
  }
  // Explicitly opt-in real-account Chrome diagnostic. There are NO click
@@ -16404,7 +16418,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
   chatAdd("owner","Compare saved real Instagram diagnostic runs");
   chatAdd("local_assistant",compareProbes());
  });
- el("igcDevChatCopy").addEventListener("click",()=>exportReport("text"));
+ el("igcDevChatCopy").addEventListener("click",()=>exportReport("copy"));
  renderChat();
  el("igcDevAccount").addEventListener("click",()=>{
   stopPicking();if(typeof window.showPage==="function")window.showPage("sync");
