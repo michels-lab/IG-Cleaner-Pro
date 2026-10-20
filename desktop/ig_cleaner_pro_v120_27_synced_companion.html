@@ -15944,6 +15944,20 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    </div>
    <pre id="igcDevLiveResults" role="status" aria-live="polite">Not started. The installed Developer Edition opens its own Chrome login; your existing public Instagram session is never copied or changed.</pre>
   </div>
+  <section id="igcDevRealActionTests" aria-label="Developer real account action tests">
+   <div class="igc-dev-head">LIVE ACTION TEST · CHANGES YOUR INSTAGRAM</div>
+   <div class="igc-dev-note">This is NOT read-only. With your express approval Developer can really Unfollow or Cancel Pending for 1–10 exact usernames. Uses the existing verified action robot, owner account, protection list and original non-replay history, in its own Chrome login. Stop public robots first.</div>
+   <label for="igcDevActionTask">Action</label>
+   <select id="igcDevActionTask"><option value="unfollow">Unfollow</option><option value="cancel">Cancel Pending</option></select>
+   <label for="igcDevActionTargets">Exact profiles (one per line, max 10)</label>
+   <textarea id="igcDevActionTargets" rows="4" maxlength="360" placeholder="first.profile&#10;second.profile"></textarea>
+   <label><input type="checkbox" id="igcDevActionFollowersEvidence"/> For Unfollow, I have verified the complete required Followers list</label>
+   <div class="igc-dev-actions">
+    <button type="button" id="igcDevActionStart">Test on real Instagram</button>
+    <button type="button" id="igcDevActionPause">Pause test</button>
+   </div>
+   <pre id="igcDevActionStatus" role="status" aria-live="polite">No real account actions started. Chat commands alone never run this test.</pre>
+  </section>
   <section id="igcDevChat" aria-label="Developer diagnostic chat">
    <div class="igc-dev-head">◇ ROBOT DIAGNOSTIC ASSISTANT · LOCAL CHAT</div>
    <div class="igc-dev-note">Tell Developer what failed, or paste a short diagnostic instruction from ChatGPT. The local assistant runs read-only checks, saves results and helps you share them with ChatGPT. This is NOT a live ChatGPT connection and cannot edit code, install updates or click Follow/Unfollow/Cancel.</div>
