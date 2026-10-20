@@ -1197,6 +1197,39 @@ class ActionRobot:
             return {"owner": owner, "account": account, "task": task,
                     "batch": details}
 
+    def deferred_batch_history(self, data):
+        """Read-only local evidence of owner-scoped archived cohorts.
+
+        Summaries never promote review or overwrite original action journals.
+        Users can inspect why an old authorized batch stopped after protection
+        changes and distinguish it from their new active cohort.
+        """
+        owner, account, task = self._review_scope(data)
+        with self.lock:
+            saved = self._review_batches(owner, account, task)
+            deferred = [
+                entry for entry in saved
+                if isinstance(entry, dict) and entry.get("deferred_at")
+            ]
+            recent = list(reversed(deferred))[:20]
+            rows = [
+                {"batch_id": str(entry.get("id", "")),
+                 "created_at": str(entry.get("created_at", "")),
+                 "deferred_at": str(entry.get("deferred_at", "")),
+                 "reason": str(entry.get("deferred_reason", "")),
+                 "target_count": len(entry.get("targets", []))
+                    if isinstance(entry.get("targets"), list) else 0,
+                 "protected_count": len(entry.get("deferred_protected_usernames", []))
+                    if isinstance(entry.get("deferred_protected_usernames"), list) else 0,
+                 "action_recorded": int(entry.get("deferred_action_recorded") or 0),
+                 "untouched": int(entry.get("deferred_untouched") or 0),
+                 "marked_reviewed": False}
+                for entry in recent
+            ]
+            return {"owner": owner, "account": account, "task": task,
+                    "total_deferred": len(deferred), "recent": rows,
+                    "read_only": True, "source": "local_saved_action_batches"}
+
     def _review_scope(self, data):
         owner = str(data.get("owner") or "").strip()
         account = str(data.get("account") or "").strip()
