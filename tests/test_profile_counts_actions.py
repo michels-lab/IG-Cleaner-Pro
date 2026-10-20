@@ -11,7 +11,8 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_actions import ActionRobot, perform_visible_action, _action_issue, _atomic_json, _preclick_identity_blocked
+from profile_actions import (ActionRobot, ProtectedBatchCollision, perform_visible_action,
+                             _action_issue, _atomic_json, _preclick_identity_blocked)
 from profile_counts_bridge import Collector
 
 
@@ -386,6 +387,112 @@ class ActionSafetyTests(unittest.TestCase):
                              "confirmation": "unfollow:1"})
             restarted.worker.join(timeout=2)
             self.assertTrue(restarted._protected_for("saved.from.review"))
+
+    def test_stale_disk_protected_cohort_rejected_atomically_then_replanned(self):
+        # No browser or Instagram account is contacted: the worker is faked.
+        for task, size in (("unfollow", 40), ("cancel", 30)):
+            with self.subTest(task=task), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                counts = Collector(root / "data", root / "session")
+                robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+                robot._run = lambda: None
+                owner, account = "owner-A", "ig-one"
+                protected = ["acct005", "acct016"]
+                path = robot._protection_file_for(owner, account)
+                _atomic_json(path, protected)
+                original_file = path.read_bytes()
+                all_targets = [f"acct{i:03d}" for i in range(75)]
+                first = all_targets[:size]
+                payload = dict(owner=owner, account=account, task=task,
+                               expected_handle="my.profile", targets=first,
+                               batch_size=size, gap_seconds=10, rest_minutes=5,
+                               protected=[], confirmation=f"{task}:{size}",
+                               followers_evidence=task=="unfollow")
+                review_file = robot._review_batches_file_for(owner, account, task)
+                journal_file = robot._base_for(owner, account, task)
+                with self.assertRaises(ProtectedBatchCollision) as raised:
+                    robot.start(payload)
+                conflict = raised.exception
+                self.assertEqual(conflict.usernames, protected)
+                self.assertEqual(conflict.task, task)
+                self.assertEqual(conflict.batch_size, size)
+                self.assertEqual(path.read_bytes(), original_file)
+                self.assertFalse(review_file.exists())
+                self.assertFalse(journal_file.exists())
+                self.assertIsNone(robot.worker)
+                self.assertEqual(robot.owner, "")
+                self.assertEqual(robot.status, "idle")
+                self.assertFalse(counts.session_dir.exists(),
+                                 "Rejected batch must not launch Chrome")
+
+                # The next exact cohort is computed from the full imported
+                # list; it is a distinct owner-approved plan with a NEW token.
+                corrected = [u for u in all_targets if u not in protected][:size]
+                robot.start(dict(payload, targets=corrected))
+                robot.worker.join(timeout=2)
+                self.assertEqual(robot.targets, corrected)
+                self.assertEqual(robot._protected(), set(protected))
+                self.assertEqual(len(robot._review_batches(owner, account, task)), 1)
+
+    def test_stale_ui_and_existing_review_batch_do_not_get_rewritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            counts = Collector(root / "data", root / "session")
+            robot = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            robot._run = lambda: None
+            scope = {"owner": "ownerA", "account": "account1",
+                     "expected_handle": "my.profile", "task": "cancel",
+                     "batch_size": 30, "gap_seconds": 10, "rest_minutes": 5,
+                     "confirmation": "cancel:30"}
+            targets = [f"pending{i:03d}" for i in range(30)]
+            # A UI-selected favorite must also invalidate its own proposed
+            # cohort even without an existing disk file.
+            with self.assertRaises(ProtectedBatchCollision) as rejected:
+                robot.start({**scope, "targets": targets,
+                             "protected": ["pending008"]})
+            self.assertEqual(rejected.exception.usernames, ["pending008"])
+            self.assertFalse(robot._protection_file_for("ownerA", "account1").exists())
+            self.assertFalse(robot._review_batches_file_for(
+                "ownerA", "account1", "cancel").exists())
+
+            robot.start({**scope, "targets": targets, "protected": []})
+            robot.worker.join(timeout=2)
+            original = robot._pending_review("ownerA", "account1", "cancel")
+            path = robot._review_batches_file_for("ownerA", "account1", "cancel")
+            before = path.read_bytes()
+            robot.protect({"owner": "ownerA", "account": "account1",
+                           "protected": ["pending008"]})
+            with self.assertRaises(ProtectedBatchCollision):
+                robot.start({**scope, "targets": targets, "protected": [],
+                             "batch_id": original["id"]})
+            self.assertEqual(path.read_bytes(), before,
+                             "An unapproved cohort must never be overwritten")
+            self.assertEqual(robot.active_batch_id, original["id"])
+            self.assertFalse(robot.worker.is_alive())
+
+            # Same username in another Instagram account is not a conflict.
+            other = ActionRobot(counts, counts.data_dir, counts.session_dir)
+            other._run = lambda: None
+            other.start({**scope, "account": "account2", "targets": targets,
+                         "protected": []})
+            other.worker.join(timeout=2)
+            self.assertEqual(len(other._review_batches(
+                "ownerA", "account2", "cancel")), 1)
+
+    def test_rejected_cohort_has_local_replan_protocol(self):
+        source = (Path(__file__).resolve().parents[1] /
+                  "desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(
+                      encoding="utf-8")
+        bridge = (Path(__file__).resolve().parents[1] /
+                  "tools/profile_counts_bridge.py").read_text(encoding="utf-8")
+        self.assertIn('except ProtectedBatchCollision as exc:', bridge)
+        self.assertIn('"code": "stale_protected_batch"', bridge)
+        self.assertIn('"protected_usernames": exc.usernames', bridge)
+        self.assertIn('if(value.code==="stale_protected_batch")', source)
+        self.assertIn('igcAutoReplanStaleProtected(e,originalScope,originalMode)', source)
+        self.assertIn('for(const user of users){write("unfollow",user,true);write("cancel",user,true)}', source)
+        self.assertIn('Choose Run again to inspect and confirm a NEW eligible batch', source)
+        self.assertNotIn('requestAction("start",data).catch(', source)
 
     def test_explicit_unprotect_is_confirmed_owner_scoped_and_idle_only(self):
         with tempfile.TemporaryDirectory() as directory:
