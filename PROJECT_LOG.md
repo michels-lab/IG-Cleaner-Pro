@@ -2192,3 +2192,12 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Adds positive/negative dynamic-copy assertions to the existing `tests/english-ui-contract.py`; preserved historical `pendiente` and `Seguidores que sigo` keys as well as bilingual Instagram DOM parsing.
 - The language pass has NOT been verified on the owner's full real dataset or all reachable UI states. Exact-head Desktop Chromium, Windows EXE, Android emulator and CI must be green before integration. Untranslated secondary runtime messages elsewhere may remain and continue to be tracked under #86.
 - Public stable remains **v120.46**, and newer v120.47 development cannot be published without an explicit release instruction.
+
+
+## 2026-10-20 — Orden permanente GRANADA GRANDE (gobernanza; no release)
+
+- El propietario exige bloques **más grandes y ambiciosos**, con entregables relacionados y funcionamiento de extremo a extremo. Vigente el protocolo maestro en `michels-lab/Michel-Software-Standards/standards/GRANADA_CONTINUOUS_BLOCK_PROTOCOL.md` y la copia local `.michelslab/GRANADA.md`.
+- Para el siguiente comando GRANADA: leer HEAD, issues, PR abiertos, claims y este log; escoger un paquete de **tres o más entregables sustanciales relacionados cuando haya alcance real**, incluyendo implementación, prueba del flujo principal, errores/reintentos y validación. Un solo P0 indivisible puede ser suficiente; no inventar trabajo artificial.
+- Si cualquier parte está ocupada por otra rama, requiere equipo físico, una cuenta de proveedor, resultados científicos que solo existen en el portátil o autorización del propietario, **aparcar con evidencia y pasar a otra subparte independiente**. Conservar identidad visual, datos, credenciales y estándares de publicación.
+- Registro obligatorio: A/B/C con estados separados, ruta/PR/sha, QA **ejecutado** (no simplemente escrito), bloqueos, recuperación, reentrada. Esta actualización de política **no significa ninguna funcionalidad del producto implementada, probada ni publicada**.
+- Repositorio: `michels-lab/IG-Cleaner-Pro`. En los siguientes bloques aplicar este alcance sin modificar los PR activos o trabajos no relacionados.
