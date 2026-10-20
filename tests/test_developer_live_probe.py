@@ -164,6 +164,34 @@ class DeveloperRealDOMTest(unittest.TestCase):
                     self.assertEqual(forbidden.exception.code,400)
                 self.assertFalse(list(root.glob("instagram-actions-*.json")),
                                  "Rejected tests must not create canonical action journals")
+                # A *valid* exact-target approval reaches only the explicit
+                # Developer test runner; mocked start means zero real clicks.
+                from profile_counts_bridge import ActionRobot
+                payload={**base,"acknowledge_real_changes":True,
+                         "explicit_consent":"LIVE_TEST:cancel:test.target"}
+                with patch.object(ActionRobot,"start",return_value={"status":"starting"}) as start:
+                    accepted=json.load(urlopen(Request(
+                        addr+"/api/developer/action-start",
+                        data=json.dumps(payload).encode(),headers=headers,
+                        method="POST"),timeout=5))
+                    self.assertEqual(accepted["status"],"starting")
+                    self.assertEqual(start.call_count,1)
+                    forwarded=start.call_args[0][0]
+                    self.assertEqual(forwarded["targets"],["test.target"])
+                    self.assertEqual(forwarded["batch_size"],1)
+                    self.assertEqual(forwarded["confirmation"],"cancel:1")
+                    self.assertGreaterEqual(forwarded["gap_seconds"],10)
+                # The same real-action route cannot silently Unfollow without
+                # independently verified Followers evidence.
+                unfollow={**base,"task":"unfollow",
+                          "acknowledge_real_changes":True,
+                          "explicit_consent":"LIVE_TEST:unfollow:test.target"}
+                with self.assertRaises(HTTPError) as unverified:
+                    urlopen(Request(addr+"/api/developer/action-start",
+                        data=json.dumps(unfollow).encode(),headers=headers,
+                        method="POST"),timeout=5)
+                self.assertEqual(unverified.exception.code,400)
+
                 with self.assertRaises(HTTPError) as missing:
                     urlopen(Request(addr+"/api/developer/live-status"),timeout=5)
                 self.assertEqual(missing.exception.code,403)
