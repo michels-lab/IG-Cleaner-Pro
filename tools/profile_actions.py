@@ -1380,7 +1380,7 @@ class ActionRobot:
                 self.owner, self.account, self.task), entries)
 
     def _protection_file_for(self, owner, account):
-        ident = "\\0".join((owner, account))
+        ident = "\0".join((owner, account))
         digest = hashlib.sha256(ident.encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("action-protected-" + digest + ".json")
 
