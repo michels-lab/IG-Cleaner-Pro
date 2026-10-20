@@ -15222,7 +15222,7 @@ window.igcAutoStart=async function(){
     const attempted=waiting.batch.action_results||{};
     const untouched=data.targets.filter(u=>
       attempted[u]?.safe_no_click===true ||
-      !["ok","already_not_following","review","error","blocked"].includes(attempted[u]?.status||"pending"));
+      !["ok","already_not_following","already_not_requested","review","error","blocked"].includes(attempted[u]?.status||"pending"));
     if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
     if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
       " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
@@ -15345,8 +15345,10 @@ window.igcAutoPoll=async function(){
     const count=history.counts||{};
     historyText.textContent=(count.total||0)
      ?("Historical read-only observations: "+(count.total||0)+
-       " profiles · "+(count.observed_not_following||0)+
-       " now observed not following · "+(count.still_unresolved||0)+
+       " profiles · "+(mode==="cancel"?
+          ((count.observed_not_requested||0)+" now verified no active request"):
+          ((count.observed_not_following||0)+" now observed not following"))+
+       " · "+(count.still_unresolved||0)+
        " still unresolved. No Unfollow/Cancel was repeated. No auto-Reviewed.")
      :"No historical read-only re-audit results for this account yet.";
    }catch{historyText.textContent="Historical re-audit status unavailable."}
@@ -15363,7 +15365,9 @@ window.igcAutoPoll=async function(){
     "No relationship changes or Reviewed approvals"
    ]:[
     "Processed: "+(state.processed??state.successful)+" / "+state.total,
-    "Unfollows confirmed: "+state.successful,"Already not following: "+(state.already_not_following||0),
+    (state.task==="cancel"?"Cancellations confirmed: ":"Unfollows confirmed: ")+state.successful,
+     (state.task==="cancel"?"Already no pending request: ":"Already not following: ")+
+       (state.task==="cancel"?(state.already_not_requested||0):(state.already_not_following||0)),
     "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
