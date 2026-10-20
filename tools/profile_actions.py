@@ -1238,6 +1238,52 @@ class ActionRobot:
             raise ValueError("Choose a valid owner, Instagram account and robot task.")
         return owner, account, task
 
+    def defer_resized_batch(self, data):
+        """Retire exact old unapproved batch after owner requests a NEW size.
+
+        This is an explicit switch of plans, NOT a Reviewed approval and NOT
+        an overwrite: existing action results, uncertain clicks, original
+        40-person cohort, protected profiles and Chrome sessions remain saved.
+        """
+        owner, account, task = self._review_scope(data)
+        batch_id = str(data.get("batch_id") or "")
+        desired = data.get("desired_batch_size")
+        if (type(desired) is not int or not 1 <= desired <= 1000
+                or not batch_id or data.get("confirmation") !=
+                "replan-size:" + batch_id + ":" + str(desired)):
+            raise ValueError("Changing a saved batch size requires explicit exact-batch approval.")
+        with self.collector.browser_admission, self.lock:
+            if (self.worker and self.worker.is_alive()) or (
+                    self.collector.worker and self.collector.worker.is_alive()):
+                raise ValueError("Pause all Chrome robots before changing a saved batch.")
+            if self.owner and (owner, account) != (self.owner, self.account):
+                raise ValueError("A different Instagram workspace is bound to the robot.")
+            entries = self._review_batches(owner, account, task)
+            pending = next((e for e in reversed(entries)
+                            if not e.get("approved_at") and not e.get("deferred_at")), None)
+            if not pending or pending.get("id") != batch_id:
+                raise ValueError("Saved batch changed; refresh and explicitly confirm again.")
+            old_size = len(pending.get("targets", []))
+            if old_size == desired:
+                raise ValueError("The selected batch size already matches the saved cohort.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            observed = sum(isinstance(journal.get(u), dict)
+                           and bool(journal[u].get("status"))
+                           for u in pending["targets"])
+            pending["deferred_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            pending["deferred_reason"] = "owner_changed_batch_size"
+            pending["deferred_action_recorded"] = observed
+            pending["deferred_untouched"] = old_size - observed
+            pending["deferred_protected_usernames"] = []
+            pending["replanned_batch_size"] = desired
+            _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+            return {"owner": owner, "account": account, "task": task,
+                    "batch_id": batch_id, "previous_size": old_size,
+                    "requested_new_size": desired, "deferred_at": pending["deferred_at"],
+                    "action_recorded": observed, "untouched": old_size - observed,
+                    "marked_reviewed": False, "approved_usernames": [],
+                    "next_batch_requires_confirmation": True}
+
     def defer_protected_batch(self, data):
         """Archive a blocked cohort without approving any profile or action."""
         owner, account, task = self._review_scope(data)
