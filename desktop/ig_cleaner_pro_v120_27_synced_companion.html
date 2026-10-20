@@ -15927,6 +15927,23 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    <button type="button" id="igcDevExport">Export AI repair prompt (.txt)</button>
    <button type="button" id="igcDevExportJson">Export report + notes (.json)</button>
   </div>
+  <div id="igcDevRealProbe" class="igc-dev-editor">
+   <div class="igc-dev-head">REAL INSTAGRAM · READ-ONLY ROBOT DIAGNOSTICS</div>
+   <div class="igc-dev-note">Uses your manually signed-in Instagram in isolated Developer Chrome. Automatically inspects up to five real profiles from your saved failed robot records. Checks exact account identity, target layout and Following / Requested controls. NEVER clicks Unfollow, Follow or Cancel Request.</div>
+   <div class="igc-dev-actions">
+    <label for="igcDevLiveTask">Robot to diagnose</label>
+    <select id="igcDevLiveTask"><option value="unfollow">Unfollow failures</option><option value="cancel">Cancel Pending failures</option></select>
+    <label for="igcDevLiveHandle">Instagram @username</label>
+    <input id="igcDevLiveHandle" type="text" maxlength="30" autocomplete="off" placeholder="Your signed-in Instagram handle"/>
+    <label for="igcDevLiveCount">Real examples</label>
+    <input id="igcDevLiveCount" type="number" min="1" max="5" value="3"/>
+   </div>
+   <div class="igc-dev-actions">
+    <button type="button" id="igcDevLiveStart">Inspect real failures (no clicks)</button>
+    <button type="button" id="igcDevLiveStop">Stop inspection</button>
+   </div>
+   <pre id="igcDevLiveResults" role="status" aria-live="polite">Not started. The installed Developer Edition opens its own Chrome login; your existing public Instagram session is never copied or changed.</pre>
+  </div>
   <pre id="igcDevResults" aria-live="polite">Not audited yet. Notes can still be exported. No Instagram action is executed.</pre>
   <div class="igc-dev-note">The export includes your exact comments and section locations. Check them for personal information before sharing with an AI or another person.</div>
  </div>
@@ -15944,6 +15961,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
  host.style.display="flex";
  const noteInput=el("igcDevNoteInput");
  let selected=null,editing=null,picking=false,activeScope="",lastReport=null,lastPrompt="";
+ let lastLiveReport=null,liveScope=null,livePolling=false;
  let runtimeErrors=0,runtimeRejections=0;
  window.addEventListener("error",()=>{runtimeErrors+=1});
  window.addEventListener("unhandledrejection",()=>{runtimeRejections+=1});
@@ -16130,6 +16148,7 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    note_scope:"current selected developer login and Instagram workspace",
    audit_status:lastReport?"completed":"not_available_or_not_run",
    audit:lastReport,client_ui_checks:clientChecks(),
+   real_instagram_readonly_probe:lastLiveReport,
    owner_section_annotations:annotationExport(),
    safety:"Owner annotations are user-reported observations, not verified automated failures. They may include private wording. Review before sharing. Never export sessions or access tokens."};
  }
@@ -16164,11 +16183,93 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
    JSON.stringify(data.owner_section_annotations,null,2)+
    "\n\n# UI CHECKS AND CONTEXT\n"+
    JSON.stringify({ui_checks:data.client_ui_checks,report_schema:data.schema,
-     audit_status:data.audit_status},null,2)+
+     audit_status:data.audit_status,real_instagram_readonly_probe:data.real_instagram_readonly_probe},null,2)+
    "\n\nFor each annotation, identify the exact screen/section/control and propose a reproduction test. "+
    "Do not treat these reports as confirmed root causes. Preserve signed-in account isolation and user data.\n";
   download(text,prefix+"-AI-REPAIR.txt","text/plain;charset=utf-8");
  }
+ // Explicitly opt-in real-account Chrome diagnostic. There are NO click
+ // APIs in this flow; bridge blocks all relationship-changing mutations.
+ async function devLiveRequest(endpoint, payload){
+  if(!match)throw Error("Real Instagram robot inspection is only available in installed Windows Developer Edition.");
+  const response=await fetch("http://127.0.0.1:"+match[1]+"/api/developer/"+endpoint,{
+   method:payload?"POST":"GET",mode:"cors",cache:"no-store",
+   headers:{"Content-Type":"application/json","X-IGC-Bridge-Token":match[2]},
+   ...(payload?{body:JSON.stringify(payload)}:{})
+  });
+  const result=await response.json();
+  if(!response.ok)throw Error(result.error||"Real Instagram diagnostic rejected by the local Windows controller.");
+  return result;
+ }
+ function devExpectedHandle(){
+  const raw=String(el("igcDevLiveHandle")?.value||"").trim().replace(/^@/,"");
+  return /^[A-Za-z0-9_.]{1,30}$/.test(raw)?raw:"";
+ }
+ function renderLiveReport(report){
+  const panel=el("igcDevLiveResults");
+  if(!panel)return;
+  panel.textContent=JSON.stringify({
+    state:report.state,phase:report.phase,checked:report.checked,total:report.total,
+    evidence:report.evidence,diagnoses:report.events,counts:report.counts,
+    safety:"No Instagram action was clicked; observations are read-only and usernames are excluded.",
+    next:"Export report + notes or AI repair prompt; only user-approved operations may change relationships."
+  },null,2);
+  if(report.state==="complete"||report.state==="stopped"){
+   lastLiveReport=report;
+  }
+ }
+ async function pollLiveProbe(){
+  if(!match||!liveScope||livePolling)return;
+  livePolling=true;
+  try{
+   const p=window.IGC_INSTAGRAM_PROFILES||{};
+   if(liveScope!==String(p.owner||"")+"|"+String(p.active||"")){
+    el("igcDevLiveResults").textContent="The selected account changed. Return to the original workspace before displaying its diagnostic.";
+    liveScope=null;return;
+   }
+   const report=await devLiveRequest("live-status");
+   renderLiveReport(report);
+   if(report.state==="complete"||report.state==="stopped")liveScope=null;
+  }catch(e){
+   el("igcDevLiveResults").textContent="Real Instagram diagnostic temporarily unavailable: "+e.message;
+  }finally{livePolling=false}
+ }
+ async function runLiveProbe(){
+  if(!match){el("igcDevLiveResults").textContent="The real Chrome probe requires the Windows Developer Edition.";return}
+  const p=window.IGC_INSTAGRAM_PROFILES||{},
+    owner=String(p.owner||"").trim(),account=String(p.active||"").trim();
+  const task=el("igcDevLiveTask").value,expected_handle=devExpectedHandle();
+  const max_profiles=Number(el("igcDevLiveCount").value);
+  if(!owner||!account||!expected_handle||
+     !Number.isInteger(max_profiles)||max_profiles<1||max_profiles>5){
+   el("igcDevLiveResults").textContent="Sign in to InstaCleaner, select an Instagram account and enter its exact @handle. Choose 1–5 records.";return;
+  }
+  if(!window.confirm("Open Developer Chrome to inspect up to "+max_profiles+
+    " REAL Instagram profiles from your previously failed "+task+" robot runs?"+
+    "\n\nSign in manually as @"+expected_handle+" in Developer Chrome if asked."+
+    "\n\nThis does NOT click Unfollow, Requested, Follow, Cancel Request or mark anyone Reviewed."+
+    "\nNo passwords, cookies or usernames are exported. Continue?"))return;
+  const button=el("igcDevLiveStart");
+  button.disabled=true;
+  try{
+   lastLiveReport=null;
+   liveScope=owner+"|"+account;
+   const result=await devLiveRequest("live-start",{owner,account,task,expected_handle,
+     max_profiles,confirmation:"READ_ONLY_REAL_INSTAGRAM"});
+   renderLiveReport(result);
+   await pollLiveProbe();
+  }catch(e){
+   liveScope=null;el("igcDevLiveResults").textContent="Could not start live read-only audit: "+e.message;
+  }finally{button.disabled=false}
+ }
+ el("igcDevLiveStart").addEventListener("click",runLiveProbe);
+ el("igcDevLiveStop").addEventListener("click",async()=>{
+  if(!match)return;
+  try{renderLiveReport(await devLiveRequest("live-stop",{}))}
+  catch(e){el("igcDevLiveResults").textContent="Stop request failed: "+e.message}
+ });
+ if(androidDeveloper){el("igcDevRealProbe").style.display="none"}
+ else setInterval(()=>{if(liveScope)pollLiveProbe()},2500);
  el("igcDevAccount").addEventListener("click",()=>{
   stopPicking();if(typeof window.showPage==="function")window.showPage("sync");
   else summary.textContent="Account screen unavailable in this build.";
