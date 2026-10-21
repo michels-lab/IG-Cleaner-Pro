@@ -12,12 +12,13 @@ val releaseSigningConfigured = listOf(
     releaseKeyPassword,
 ).all { !it.isNullOrBlank() }
 
+val developerPublicationRequested = System.getenv("IGC_ANDROID_SIGNED_DEVELOPER_REQUIRED") == "true"
 val releaseTaskRequested = gradle.startParameter.taskNames.any {
     it.contains("assembleRelease", ignoreCase = true) ||
         it.contains("bundleRelease", ignoreCase = true)
 }
 
-if (releaseTaskRequested && !releaseSigningConfigured) {
+if ((releaseTaskRequested || developerPublicationRequested) && !releaseSigningConfigured) {
     throw GradleException(
         "Production Android signing is required. Set IGC_ANDROID_KEYSTORE_PATH, " +
             "IGC_ANDROID_KEYSTORE_PASSWORD, IGC_ANDROID_KEY_ALIAS and IGC_ANDROID_KEY_PASSWORD."
@@ -71,6 +72,15 @@ android {
             initWith(getByName("debug"))
             applicationIdSuffix = ".developer"
             versionNameSuffix = "-developer"
+            // Local emulator QA may use its default debug signing key. The
+            // official Developer APK is independently installable but MUST
+            // be signed with the same persistent identity as the public APK.
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            if (developerPublicationRequested) {
+                isDebuggable = false
+            }
         }
     }
 
