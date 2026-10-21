@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "audit_kind": "deterministic_full_tracked_tree",
+  "tracked_files_total": 277,
+  "classified_files_total": 277,
+  "docs_content_inspected": 43,
+  "large_docs_skipped": 1,
+  "excluded_reports": 0,
+  "roles": {
+    "agent": 9,
+    "asset": 20,
+    "bitacora": 1,
+    "config": 69,
+    "document": 37,
+    "index": 6,
+    "source": 37,
+    "test": 65,
+    "unknown": 22,
+    "workflow": 11
+  },
+  "finding_counts": {
+    "BROKEN_RELATIVE_LINK": 1,
+    "POSSIBLY_REDUNDANT_NAME": 1,
+    "UNKNOWN_PURPOSE": 22
+  },
+  "finding_total": 24,
+  "inventory_fingerprint": "1b3005677f975f27970df43360915c4481c7388569d73daa95e15f0c8c016c1a",
+  "evidence_fingerprint": "7ed0e3486f0f21c3cccfed058456a001f0912110d90015b2c6c400aff488acd5",
+  "untracked_audited": false,
+  "ignored_audited": false,
+  "binary_contents_audited": false,
+  "scientific_validation": "NOT_CHECKED",
+  "app_installed_acceptance": "NOT_CHECKED",
+  "deletion_approved": false
+}

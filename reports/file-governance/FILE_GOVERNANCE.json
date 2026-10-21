@@ -1,0 +1,2194 @@
+{
+  "schema_version": 1,
+  "audit_kind": "deterministic_full_tracked_tree",
+  "tracked_files_total": 277,
+  "classified_files_total": 277,
+  "docs_content_inspected": 43,
+  "large_docs_skipped": 1,
+  "excluded_reports": 0,
+  "roles": {
+    "agent": 9,
+    "asset": 20,
+    "bitacora": 1,
+    "config": 69,
+    "document": 37,
+    "index": 6,
+    "source": 37,
+    "test": 65,
+    "unknown": 22,
+    "workflow": 11
+  },
+  "finding_counts": {
+    "BROKEN_RELATIVE_LINK": 1,
+    "POSSIBLY_REDUNDANT_NAME": 1,
+    "UNKNOWN_PURPOSE": 22
+  },
+  "finding_total": 24,
+  "inventory_fingerprint": "1b3005677f975f27970df43360915c4481c7388569d73daa95e15f0c8c016c1a",
+  "evidence_fingerprint": "7ed0e3486f0f21c3cccfed058456a001f0912110d90015b2c6c400aff488acd5",
+  "files": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "d270216ee576d05c597186139762d7054f3a44b6"
+    },
+    {
+      "path": ".github/agents/app-maintainer.agent.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "f3f18d6e875a1332ab6aaa0dcc6877ba71ce57e6"
+    },
+    {
+      "path": ".github/agents/qa-regression.agent.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "e854d971eeb88eb8cd9daf984ac7c39b15643850"
+    },
+    {
+      "path": ".github/agents/release-manager.agent.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "0499efb61b3b996bb46363fb6bfbf9cfcd9535fa"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "9a74e2e755dc08851b78657b4b72b401c53e7148"
+    },
+    {
+      "path": ".github/workflows/android-about-visual.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "814f5be5520ad9265ac52e4494435c9f71742942"
+    },
+    {
+      "path": ".github/workflows/android-companion.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "466ca2c4cf4dc0fb7283a8a7f2608184764876d0"
+    },
+    {
+      "path": ".github/workflows/android-developer-edition.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "2ad76caf3495665439eea1e8b6698a269447705e"
+    },
+    {
+      "path": ".github/workflows/backfill-v12036-desktop-html.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "f0d312990e8ed8ce4d58b77196e9ab1c7fd3c44a"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "2c42f42ae62797aae63615f319795e1224e9b068"
+    },
+    {
+      "path": ".github/workflows/desktop-rendered-ui.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "75b30f475cfe162b77444e8cc6fa41c3dfc3684f"
+    },
+    {
+      "path": ".github/workflows/file-governance-audit.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "88a8503d87246963bbcf991c07bf73570526e8ee"
+    },
+    {
+      "path": ".github/workflows/profile-counts-ci.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "93e4235fa2dc1d34101d3fd30a0165e23223d581"
+    },
+    {
+      "path": ".github/workflows/profile-counts-windows-preview.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "b8fc9be98a17748db459c433744ef9cb1da48b3d"
+    },
+    {
+      "path": ".github/workflows/release-v12034.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "b95c970d3f356ef625d1a3294767bbfebb10ddd4"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "role": "workflow",
+      "purpose": "GitHub Actions automation",
+      "certainty": "rule",
+      "blob": "bed370974921c901e6ef90e1ab72774782d678a8"
+    },
+    {
+      "path": ".gitignore",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "e973700df3aed161440316e0b5f59de3062caa67"
+    },
+    {
+      "path": ".michelslab/GRANADA.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "6ae49ea35c62d7a82bae72d1898de493e5cba1ce"
+    },
+    {
+      "path": ".michelslab/agents/contrarian.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "1a8a474bf103117b7a2ae06c9ed6c82f1a9cbec3"
+    },
+    {
+      "path": ".michelslab/agents/council.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "c2820177b0542c9012d21deadb49276fdf46b88e"
+    },
+    {
+      "path": ".michelslab/agents/file-steward.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "b1d01e48c04023ad108846e6f554987ed2fd56aa"
+    },
+    {
+      "path": ".michelslab/agents/intelligence-architect.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "9287832b753b6b5ccee1f40cc6628e409d167467"
+    },
+    {
+      "path": ".michelslab/agents/user-advocate.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "108d0d64649c79cd4eab83d7bc66cdb40689cc46"
+    },
+    {
+      "path": ".michelslab/file-audit-policy.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "9e531b43c7a171c8ae733ded2f2106e2e8775766"
+    },
+    {
+      "path": ".michelslab/project.yml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "6e96848dedc91f4250f420fb73d7f5ae784f7707"
+    },
+    {
+      "path": ".michelslab/release-request.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "e4b2eabe746fa06ba9b7ea7ab965aba1e6eba8ea"
+    },
+    {
+      "path": "AGENTS.md",
+      "role": "agent",
+      "purpose": "assistant role/instructions",
+      "certainty": "rule",
+      "blob": "a7f93339d65c2f6536be1bfcc87eb914f67b2251"
+    },
+    {
+      "path": "LICENSE.txt",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "8ca42838bc23d0ff5ff35b828cc0059350235fe9"
+    },
+    {
+      "path": "MICHELS_LAB_PROJECT.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "903cfe23c310887f58cbb1f6d3389dbc775aa8a5"
+    },
+    {
+      "path": "PROJECT_LOG.md",
+      "role": "bitacora",
+      "purpose": "technical/audit change history",
+      "certainty": "rule",
+      "blob": "7f6b70348114387b9168653f3abf29abe92d9cee"
+    },
+    {
+      "path": "README.md",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "66951649fd1ac8bb2c7bcf3273dfcf316f7a5568"
+    },
+    {
+      "path": "README_SYNC.md",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "3cd92c5f0cd072a6f5d89294046b4cb56e79bb31"
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "8f55cf503d733a38fdcb4c6ef0587e0bdd5435ae"
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "af42594b10a4623bc561dbeaef3bd0db8715f48a"
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/DeveloperEditionTest.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "86bfa3311f110fedaeda4fa6e9d6792d2732487f"
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/FocusInsightsTest.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "15cf3963f4860e53de981128b2793b638d5d8a0c"
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/InstagramAccountScopeTest.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1df172db167d296aa620aea3f6eab075f219f22c"
+    },
+    {
+      "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/RememberedAccountSwitchTest.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "133686ad899807f4a39186acee888c88a25ebe82"
+    },
+    {
+      "path": "android/app/src/developer/res/values/strings.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "698a113bff7d1e3c1e358e01860d91f29c4f76d8"
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "b77aa076abbdf5c652898ff7c70f53262aca7b80"
+    },
+    {
+      "path": "android/app/src/main/assets/ig_cleaner_workspace.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "13fd69dff76d462eecf1cdb93ff9ae117d141f1a"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/AccountSessionVault.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d457ff04b53f364650dfb96954365435aa45fc81"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/FocusInsights.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "71096632fcbd9b42197c6151b06df70c15dc16f7"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7d3c7835e092621a29e23912a6ebeaf20a27998d"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/ProfileAdapter.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "391eb3f400cd7c997f26b1756e5782f40f07d34b"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/SyncApi.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "376b47fc2f1108d0928a4a2aa10c72e0e7458b97"
+    },
+    {
+      "path": "android/app/src/main/java/com/michelslab/igcleaner/WorkspaceProfileAdapter.java",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "60647686666384ddf566d60f51cd22533bea46e1"
+    },
+    {
+      "path": "android/app/src/main/res/color/nav_item_color.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "f58f71866250210b197721fab3b09d3e2ca7f632"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-nodpi/ig_about_portrait.jpg",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "18fe1a68722850c3d8f918dc0799f46ffeb6dbaf"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-nodpi/ig_about_studio.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "7fd48093968b31ddacd3098f5b15d962de580652"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "6fdb47fc26ed125ec45439612ea83221965fc5d1"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_about_canvas.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "f8ae19002c54188c6ab61d40fc56443a2bd4f86c"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_about_social.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "617949987772e1c6d9a9f7ca0debb08fa9ff4a29"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_app.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "99a5d0de6949a8f7e015c58a5d8e0eac2f85b15a"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_avatar_circle.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "6103820fe76dcc1e3b91952405893a2f6a8b9cb4"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_badge.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "ef07cb18094cf0982ddc8ee8272d2b245a40bd5d"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_brand_mark.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "fa6513d7e2d0346711ecc415ec5b5ee7453459e2"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_header.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "3a5b9720268fd14c864fc4b137540888cfaa768e"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_nav_indicator.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "dda023295c87542c33083799844d3ac05e5aa51d"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_premium_hero.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "cba0e3a352891e810cdc0ecb39bf3cd2095c33a9"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/bg_premium_panel.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "de9b6601e5f04f0581489c9133fdf551cbd576c8"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_account.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "331c61c63905e72dbe24c23044e57a71c1422895"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_audit.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "e1a15e98aa190a9fa8b85c50071688356ef2793b"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_focus.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "826d4e469dac0b522e3143d8fa4a2d4f7c38fef8"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_home.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "35c4b5a7ffb7ea4f2ad56e9f5a5361e918b9ee11"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_info.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "e975e9429f2853d7de98b76310a33dddfced70d7"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_launcher_foreground.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "954c832fe4922977ebbe37daa5c51da06670331c"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_review.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "91aa084cbd25e2c135a3e9fa3365fb94f588eb56"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_sync.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "d309cb69da793de7166b912fae5e4efdea1c0086"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ic_workspace.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "fa2048d13ceea1c4969f84137d20ed1e8f684c9d"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_about_email.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "fc30e8e94cbcde4b05b60b2b7b10c1805189294c"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_about_facebook.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "896cab9a10773b16321c7549f90bc78a24735790"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_about_github.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "bb6428d9acd94ae4b2c34fec25c7f74a864baf3c"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_about_instagram.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "fd24a69b7520bc261ae489fb712e580629a07a24"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_about_linkedin.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "8902b67c950aba4a3f724a308bdfe078681175f5"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_brand_splash.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "9386e88c641b28ad2157b02cc1271eb15af7eb06"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/ig_official_mark.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "7c98a14cfaf33b4298e299611a3fe38d086e1fe2"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/nav_item_background.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "14517350187e7f1c17c664d2a6b6c8f54918ac62"
+    },
+    {
+      "path": "android/app/src/main/res/layout/activity_main.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "c52afa3bfa410625eca75071ac97489850cb981c"
+    },
+    {
+      "path": "android/app/src/main/res/layout/dialog_about.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "5ae515b26ec4dff3775b7bd8b08d9843abb365fa"
+    },
+    {
+      "path": "android/app/src/main/res/layout/item_profile.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "a14e4d72ad55de674406b40de5d796d2ae2f6d1b"
+    },
+    {
+      "path": "android/app/src/main/res/layout/item_workspace_profile.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "0961908eec994161af89dddab9d1f34ca9ec5326"
+    },
+    {
+      "path": "android/app/src/main/res/layout/screen_account.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "30100e52a3dd4b5e7a0724b601de2d784c8e2127"
+    },
+    {
+      "path": "android/app/src/main/res/layout/screen_audit.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "c89917ac617bc7ec56f5ca6baa492f49126812fb"
+    },
+    {
+      "path": "android/app/src/main/res/layout/screen_focus.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "605966ce4e7a6dad01b5a67f005568c5c019492d"
+    },
+    {
+      "path": "android/app/src/main/res/layout/screen_mobile_workspace.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "2f6b8234ee034796e4a884ef311889078f18a4df"
+    },
+    {
+      "path": "android/app/src/main/res/layout/screen_workspace.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "005328e3eda6286a47e6bf5c0ba0186cb01c7d3f"
+    },
+    {
+      "path": "android/app/src/main/res/menu/bottom_nav.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "bccaa4d45bb65e27c78d4df43479a2798efc609d"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "87aa48245129c0be9f461b4504c12b58500fe3df"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "87aa48245129c0be9f461b4504c12b58500fe3df"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "ad7a128e2596937e98a76335924c023ebe31258c"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "780a7342d1757810d1956742a39fa8cb5f325862"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "1f4bee4e7fa5abad26eb15d675e52791452137fc"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "1240c1dabb59411f5b7528e2fa0bd5052e6e3057"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "62c5ff4057b7a0108007e57735d10a598e4cf17d"
+    },
+    {
+      "path": "android/app/src/main/res/values/colors.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "48a4511b9fa0e9be5aab7d3f275e492c720038d9"
+    },
+    {
+      "path": "android/app/src/main/res/values/ic_launcher_background.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "00471974e919705b980dcaf018cc5fdf03317402"
+    },
+    {
+      "path": "android/app/src/main/res/values/strings.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "d55522df0c8d8bd4d38c39886254e8bfdfeb1852"
+    },
+    {
+      "path": "android/app/src/main/res/values/themes.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "aea18af95a5800a1f51cc91e1f508e26bc5bac52"
+    },
+    {
+      "path": "android/app/src/main/res/xml/backup_rules.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "0404322d1adea4cc3910e944b23638b3a3e095ed"
+    },
+    {
+      "path": "android/app/src/main/res/xml/data_extraction_rules.xml",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "ae5bae0771d0f88b840033620728d2a901eb729e"
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "22aaab52217f4166360aa7986437d64f3c58bd22"
+    },
+    {
+      "path": "android/gradle.properties",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "d56b7d7573c629ad68f042c8251465797b0e4c78"
+    },
+    {
+      "path": "android/settings.gradle.kts",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "fe159520f484e01f68ef7bb731225c1b23d8c3bf"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/approved-option-1-original.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "d01a96b5497e80aa274148c52489807ef3e7e13e"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-app-icon-1024.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "2ccc11a209cb2168a92649a03f7f159d6eb5bba9"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-app-icon.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "d01a96b5497e80aa274148c52489807ef3e7e13e"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-app-icon.svg",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "614bef0b103de344afb0ced115e8858f608a1aa9"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-lockup.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "d01a96b5497e80aa274148c52489807ef3e7e13e"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-lockup.svg",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "42e93129fc05c21c7147f64bd13925485687a6c0"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-mark.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "d01a96b5497e80aa274148c52489807ef3e7e13e"
+    },
+    {
+      "path": "branding/ig-cleaner-pro/official-mark.svg",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "dd4075217a7dbb51100dcd863fb6663ec55fbb91"
+    },
+    {
+      "path": "desktop/assets/ig-cleaner-pro/official-app-icon.ico",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "3ee0cbe2938c0857eb2f1215de99eb9be9e4efa3"
+    },
+    {
+      "path": "desktop/assets/ig-cleaner-pro/official-app-icon.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "6fdb47fc26ed125ec45439612ea83221965fc5d1"
+    },
+    {
+      "path": "desktop/assets/michel_duarte_avatar.jpg",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "18fe1a68722850c3d8f918dc0799f46ffeb6dbaf"
+    },
+    {
+      "path": "desktop/assets/michels-lab/official-lockup.png",
+      "role": "asset",
+      "purpose": "visual/audio/font asset",
+      "certainty": "rule",
+      "blob": "7fd48093968b31ddacd3098f5b15d962de580652"
+    },
+    {
+      "path": "desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "e10c74172bb23aa65de7f32335247d8ce4f5edae"
+    },
+    {
+      "path": "docs/ANDROID_SIGNING.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "cdc6ccf29388a09fc345e8b87f70ae47884f9075"
+    },
+    {
+      "path": "docs/AUTH_EMAIL_SETUP.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "60900e3a842771d248d5e93520e947bfc387de71"
+    },
+    {
+      "path": "docs/AUTOMATIONS.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "f2b34d2e7d2647aad9c4c55d0099896df61a050d"
+    },
+    {
+      "path": "docs/CURRENT_HANDOFF.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a221993fd57e097ed571f68eddf301d90e6362fe"
+    },
+    {
+      "path": "docs/DEVELOPER_EDITION.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "8d377b813c05badebf7850be376493ab386b94d9"
+    },
+    {
+      "path": "docs/GRANADA_02_WINDOWS_RESTORE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "23e70739e2fede43db76aad295a8ac844b5f6aab"
+    },
+    {
+      "path": "docs/GRANADA_03_STABLE_RELEASE_GUIDANCE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "3ea71ddc477d108cd2005b4fef321051170e50b6"
+    },
+    {
+      "path": "docs/GRANADA_05_RELEASE_AGENT_GOVERNANCE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "8efb8558673d4e7450cb596d9626c49d9daeb524"
+    },
+    {
+      "path": "docs/GRANADA_06_PROFILE_COUNTS_LEDGER_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "814b9ec1361ba4344aef0f4b1f06067f6202aa84"
+    },
+    {
+      "path": "docs/GRANADA_07_PROFILE_COUNTS_EVIDENCE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "d756aed2ed5cd1cf379469a6423f1066c78a488f"
+    },
+    {
+      "path": "docs/GRANADA_08_ANDROID_DEV_WEBVIEW_QA_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "070daa7691511f757f3aae0941df72fbcd9197f6"
+    },
+    {
+      "path": "docs/GRANADA_09_PROFILE_COUNTS_FALSE_SUCCESS_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "fba0b3362dff5c4d7ce3ac62acf70a7daef8ebe3"
+    },
+    {
+      "path": "docs/GRANADA_10_PROFILE_COUNTS_HISTORICAL_VIEW_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "92b4ac8f78e360f68380dfa33df05705e8b903d1"
+    },
+    {
+      "path": "docs/GRANADA_11_PROFILE_COUNTS_RELEASE_GUIDE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "0f0b034753d611be03093ff2431082297fa854d8"
+    },
+    {
+      "path": "docs/GRANADA_12_ANDROID_PRIVATE_VISUAL_EVIDENCE_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "3381feee87f70d5c092675c43a97a753d315dccc"
+    },
+    {
+      "path": "docs/GRANADA_13_PROFILE_COUNTS_CSV_FAILCLOSED_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "f877cd589f664a1f29e61c765d6248868705df60"
+    },
+    {
+      "path": "docs/GRANADA_14_DEVELOPER_PRIVACY_AUDIT_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "b6a191d9c3947f09290cd1e030bb5f2f306e2801"
+    },
+    {
+      "path": "docs/GRANADA_15_WINDOWS_ROBOT_PROTECTION_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "65eb4def5665f4e4875c6aeae0b4cc105eaa158a"
+    },
+    {
+      "path": "docs/GRANADA_16_DEVELOPER_COHORT_FORENSICS_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "2b6683358fbe691c8c83d849719930ccbf0cc648"
+    },
+    {
+      "path": "docs/GRANADA_17_WINDOWS_AUTOMATION_CENTER_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "51ee94305fdbbd72675e8968e5213f7198999291"
+    },
+    {
+      "path": "docs/GRANADA_18_ANDROID_DEVELOPER_ACCOUNT_NAVIGATION_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "f8ce8908e7a94fb6a3a1d7964f60c9969194e3a5"
+    },
+    {
+      "path": "docs/GRANADA_19_FINAL_STABLE_DEVELOPER_DEVICE_GATE_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "f85848cf4c8998e7657bc321018029cf84a17f5e"
+    },
+    {
+      "path": "docs/GRANADA_20_MALFORMED_JOURNAL_NO_REPLAY_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "6aaa14f70b4ede7d10b2d6140c60354b5f4254e5"
+    },
+    {
+      "path": "docs/GRANADA_21_FINAL_STABLE_V12055_STAGING_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "55bf74ea8ac0b199fb71d53638ab0fa79342cb81"
+    },
+    {
+      "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
+    },
+    {
+      "path": "docs/GRANADA_P0_CANCEL_POSITIVE_EVIDENCE_2026-10-20.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "5680dcb72c2adf90c488de75e44cf33efbdc0f42"
+    },
+    {
+      "path": "docs/GRANADA_P0_TEN_TAB_WAVES_2026-10-20.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "baa68a17e9d07f71cd75eb49c91e3a8452fa0982"
+    },
+    {
+      "path": "docs/INFRASTRUCTURE_AUDIT.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "fd65f31126155af46bede8a316938618f5802729"
+    },
+    {
+      "path": "docs/MULTI_INSTAGRAM_WORKSPACES.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "c2888b4333f10591fafbc1e0254222efce51b931"
+    },
+    {
+      "path": "docs/PENDING_BLOCK_ROBOT_RECOVERY_DEVELOPER_TWIN_2026-10-19.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "13c3365f7f25413747db879cdbd8c9fb455001f7"
+    },
+    {
+      "path": "docs/PRIVACY.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "5f52e5ec8544b8eda487195e076859fbf8872152"
+    },
+    {
+      "path": "docs/PROFILE_COUNTS_ROBOT.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a3cf31c477c643f44a59488fe3f78d88b74f862e"
+    },
+    {
+      "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "15ed783cdc69a3654670f985d4a524a4c14f034e"
+    },
+    {
+      "path": "docs/product-reviews/README.md",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "7aeaacd8cdbd0ff712d2bea3284ea9d66de9caf2"
+    },
+    {
+      "path": "index.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "283a01dd467d77938b712a01c4788e07a4d91b50"
+    },
+    {
+      "path": "packaging/chrome-extension/README.md",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "577c81f36c92dab2f2ed18393feb328b168b58a5"
+    },
+    {
+      "path": "packaging/chrome-extension/collector.js",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "63d85702cf3884a30e9e907d832be1b98f1911c3"
+    },
+    {
+      "path": "packaging/chrome-extension/manifest.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "4a55927d94be7ecdda783ff4481b0acd495a87cc"
+    },
+    {
+      "path": "packaging/chrome-extension/popup.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "c8a0b2176c5070689b553fd72f7566fd05cdc9f9"
+    },
+    {
+      "path": "packaging/chrome-extension/popup.js",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "f2c7c9454c5d2dc7c4b74b45163283a2ca419246"
+    },
+    {
+      "path": "packaging/profile-counts/README.txt",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "9cf28ce021c97940171fc88d0afc0e8b7f5b64ee"
+    },
+    {
+      "path": "packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "45329d9eb7c2adca732e744ea0067ab03bfdef9c"
+    },
+    {
+      "path": "packaging/windows-installer/InstaCleanerPro.iss",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "8f5c517165174085dcef35c52e2a8c3ba830c31a"
+    },
+    {
+      "path": "packaging/windows-installer/InstaCleanerProDeveloper.iss",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "cd77b1f6f27a1cd1c6c69c8987c636531f2597c4"
+    },
+    {
+      "path": "packaging/windows-installer/TaskbarPinning.txt",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "c1eb67659ccb5125ba28eb5ff8671e47bdb7cb91"
+    },
+    {
+      "path": "release/RELEASE_NOTES.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "78d14e78cb0311f977164eea949eae037e7a81fa"
+    },
+    {
+      "path": "release/android-signing.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "b43ba6d3f867f2ff2baf055b0ad0bda78c488f07"
+    },
+    {
+      "path": "release/distribution-manifest.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "6e71b42e7f030638040606210897c65914a1d6cf"
+    },
+    {
+      "path": "supabase/email-templates/confirmation.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "66b4943857a35aa9435fcd08c91d8c10e1e0c28d"
+    },
+    {
+      "path": "supabase/email-templates/magic_link.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "e6468b31f0935339748a1f89495cb670d187f8e3"
+    },
+    {
+      "path": "supabase/migrations/20261006_initialize_sync_schema.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "46717e9a0a522837e8ec5dcbfef3d8a113dd31ab"
+    },
+    {
+      "path": "supabase/migrations/20261007_optimize_rls_policies.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "870105af67ad4bddb6fd83b0d9e611fd86240ab8"
+    },
+    {
+      "path": "supabase/migrations/20261009_multi_instagram_workspaces.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "9a2c7b29c8762dae4ba10ed1ded51ee5b9bad519"
+    },
+    {
+      "path": "supabase/migrations/20261010_delete_instagram_profiles.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "2b46e9799cd08c0d18d7c09991cc3053a2b718c8"
+    },
+    {
+      "path": "supabase/migrations/20261011_profile_identity_and_summaries.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "4d2c4bb67558602eed45cb4da5706b2eadf03fff"
+    },
+    {
+      "path": "supabase/schema.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "ab59546739d62ec177311cf3ddb31e3e7b11cc83"
+    },
+    {
+      "path": "supabase/tests/rls_isolation.sql",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "21c35fa069a8f834d0b947ca7faf77bb04d6bd79"
+    },
+    {
+      "path": "tests/android-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7781950615bf13c478c3e36870db7cf354214205"
+    },
+    {
+      "path": "tests/android-native-english-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "84b4972b00f13f8cb4bc836e2097a63f363d971f"
+    },
+    {
+      "path": "tests/android-signing-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "2e2605d40a52de7790f60a16fd01253f34d44579"
+    },
+    {
+      "path": "tests/auth-account-switch-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "af9c52111de5b2d48346d37beba31fcb6d731bce"
+    },
+    {
+      "path": "tests/auth-account-switch.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "bbcbfc7ba22605e08eab575c95d6e888783f09a9"
+    },
+    {
+      "path": "tests/auth-email-templates-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1988edc3c014dd21c8eba53a7a5cee5503b3435e"
+    },
+    {
+      "path": "tests/auth-session-refresh.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7ea501921f31a54eeda3e3504b7941831ca78b47"
+    },
+    {
+      "path": "tests/automation-center-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7b3fe5a4d66e2f8b3208c7f963e9f860efa45145"
+    },
+    {
+      "path": "tests/automations-cold-start.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6f2cc1a5e8f9c280a90cca9019e6294757c94354"
+    },
+    {
+      "path": "tests/automations-execution.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ba32ec2bc14d1c9172818607d3b6022298b790c4"
+    },
+    {
+      "path": "tests/automations-issues.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6b38cc72314891eeaf1c6aedff472b3fe276ed21"
+    },
+    {
+      "path": "tests/automations-next-batch.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6d0c5697ad3d6fe6032a7d543ec004c9a223991e"
+    },
+    {
+      "path": "tests/automations-planner.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7be70094ef02fe28b0171fabc5ccb06964572e9a"
+    },
+    {
+      "path": "tests/branding-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0f694eeccde9390b31ecb57a22e1d929e0589f95"
+    },
+    {
+      "path": "tests/chrome-companion.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0a94718681fefcdff8c6e94d7864770fb3ce72e2"
+    },
+    {
+      "path": "tests/desktop-contract.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "2d1901bc72ac041033fcc592929619b94bcffdfb"
+    },
+    {
+      "path": "tests/desktop-standalone-smoke.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "955158e8268f1bf0e1be09364044dd7e4d46ae1e"
+    },
+    {
+      "path": "tests/desktop-visual-smoke.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "5ea63a5cbab759246f3ad71f0844cc10ca7877a1"
+    },
+    {
+      "path": "tests/developer-annotations-contract.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "19b36597d0ed9189295cc4979a50ac12fc518aa5"
+    },
+    {
+      "path": "tests/developer-release-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "32eb2e356759c5886df302deb7b312e316181d05"
+    },
+    {
+      "path": "tests/english-ui-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "34ea1dc057ab211a6e5af13dbb31b3c077acf8dc"
+    },
+    {
+      "path": "tests/fixture-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c6c1e14c272cf2996eebf7e3a89b8c72a3bbccb0"
+    },
+    {
+      "path": "tests/fixtures/README.md",
+      "role": "index",
+      "purpose": "navigation/onboarding",
+      "certainty": "rule",
+      "blob": "a7080815bc838b6f4cc0b5976946aa8c88da7679"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/blocked_profiles.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "fd41e3f851a771b6c49d800a4f3350735af02232"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/close_friends.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "d608aa5b4bef6f4d76615fbaeaa3df63f7d21a77"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/favorited_profiles.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "65c736b6bc903d3a8a3178ef71df4e900c7c27a1"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/followers_1.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "cec25c7fdaf6aae8a373537dc8106f280951681c"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/followers_2.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "6c401550a07411bcf3fa12a619f5bf76e38a0e15"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/followers_3.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "3304cd4fa59f2e16500dc24468f4a91c9b0776cb"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/following.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "a645578fda14c94477793588f222b6654918a4f0"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/following_hashtags.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "0d89301e722af9ee656bbdc7ce2073d511f40807"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/pending_follow_requests.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "b4a62394a27d542071782e2b3d62c968b5984b05"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/recent_follow_requests.html",
+      "role": "unknown",
+      "purpose": "function unknown: owner classification required",
+      "certainty": "unknown",
+      "blob": "0d731a74300ff7b69294b7330182ef2626f074e1"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/recently_unfollowed_profiles.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "bcd219c6c50bb27e6da77e1c5c6e30f522aa309f"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/removed_suggestions.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "3ec81a4a65ad53bbbbdf57c424082710a4c59a72"
+    },
+    {
+      "path": "tests/fixtures/instagram-export-sample/connections/synced_contacts/synced_contacts.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "1d531e61eb8b2328bf55e3a9eb238b9e60bd966b"
+    },
+    {
+      "path": "tests/focus-batch-priority.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "441d8fee0965d08c4387f558b7ef23ec4e2dc68f"
+    },
+    {
+      "path": "tests/multi-instagram-contract.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4b98a873069aedff920d25805983f1f420022f9c"
+    },
+    {
+      "path": "tests/mutual-focus-ratio.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ed669b92f886dd0de8c15acdcfc169cec9fff881"
+    },
+    {
+      "path": "tests/pending-focus-reimport.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e37e7f8a2694d14c77a001f9966a0d48cf22136f"
+    },
+    {
+      "path": "tests/premium-visual-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "b3dcceb6ba88f56befc03c046af20b43c94eb4ee"
+    },
+    {
+      "path": "tests/privacy-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "8717872e691b7b214758085997065ebe7c6e2ae2"
+    },
+    {
+      "path": "tests/profile-counts-browser-e2e.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ae61ef021497d356dc9ed1ac3499b925a048b0ec"
+    },
+    {
+      "path": "tests/profile-counts-indexeddb-browser.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9fe020610da904e48ac201539c8406ef0bd8c4c7"
+    },
+    {
+      "path": "tests/profile-counts-ui.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "34db4c17619ac362659eb840384793f1ac5a73f2"
+    },
+    {
+      "path": "tests/release-publisher-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "784bd20d2dc7ee8ac5d3b60988370488179756b5"
+    },
+    {
+      "path": "tests/rls-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "435b6338c0d78ec7dd9daaacefcef77482fdd1c0"
+    },
+    {
+      "path": "tests/standalone-desktop-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "8f8e11163ba49a1f72b6fde66475ad97d8e86ced"
+    },
+    {
+      "path": "tests/test_action_batch_history.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "31fefcd20a7926366e909ab791a3172dd8a268e9"
+    },
+    {
+      "path": "tests/test_action_click_wal.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "eee8ac602e405102198581f3606123f661b815a6"
+    },
+    {
+      "path": "tests/test_action_tab_waves.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
+    },
+    {
+      "path": "tests/test_android_visual_transfer.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "da98c7842c1dc2b55799d9b6a653be7517ea2351"
+    },
+    {
+      "path": "tests/test_developer_audit.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "87a1cf9babc39e5259d78f89df0104f44d2ed3e8"
+    },
+    {
+      "path": "tests/test_developer_live_probe.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e8e63fee9ba5923b2b8b6274e12c17d290039816"
+    },
+    {
+      "path": "tests/test_granada_csv_recovery.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9a137bb36e02994348d7247ecdd057b796711bfe"
+    },
+    {
+      "path": "tests/test_granada_false_success_resume.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e60f70df985d7c45635275152e1d7655be10ac0c"
+    },
+    {
+      "path": "tests/test_granada_pacing_integrity.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ed46c29ed6bb3047659020425b4e01c735c7eacc"
+    },
+    {
+      "path": "tests/test_historical_recheck.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a6e0d107112a2d7ba673a6c39400f8d91dce0f7a"
+    },
+    {
+      "path": "tests/test_master_visual_manifest.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1e4a88c6ff9b943781c88564534c994f5341553a"
+    },
+    {
+      "path": "tests/test_native_desktop.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "caa14aa419ef9ce777d24c7b5111952e6d9db1f5"
+    },
+    {
+      "path": "tests/test_profile_actions_chromium.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "802f72b1db726d46a63fbb0ee8e34575bab50382"
+    },
+    {
+      "path": "tests/test_profile_counts_actions.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "63d43bf387c2d6af2d9fac1a573c0d669041d7a7"
+    },
+    {
+      "path": "tests/test_profile_counts_audit.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a4e67cb13f68ec73e2e3a531750b8eab4ea1d8d8"
+    },
+    {
+      "path": "tests/test_profile_counts_bridge.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7bf378cc9de4634911d824882327d18ef151b1b2"
+    },
+    {
+      "path": "tests/test_profile_counts_home_identity.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7a33d71b93c73d1db25c1b438be7b5061d639587"
+    },
+    {
+      "path": "tests/test_profile_counts_pacing.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ce24340004d4867c6966cb1e0f6397aa1e32500a"
+    },
+    {
+      "path": "tests/test_profile_counts_recaptcha.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "5fbd61e1db9901c743533f209310b8a1bca7ba6d"
+    },
+    {
+      "path": "tests/test_profile_counts_robot.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0e7da5b35d797fa1f915321dccb2c9457275973e"
+    },
+    {
+      "path": "tests/test_release_agent_contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "5376062230b2c4049b9b60b902b98dceaa6e859f"
+    },
+    {
+      "path": "tests/test_robot_interlock.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "2146467a6d673dc97b130316d897bd7ae7fe1063"
+    },
+    {
+      "path": "tests/test_update_docs_contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0b3fb661a296de752a4269c4a49996166ea73fd2"
+    },
+    {
+      "path": "tests/test_windows_updater.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "31cdf70827b442c3cd9b0107d03af748b6aeae90"
+    },
+    {
+      "path": "tests/windows-automations-owner-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "63a90c62a1eefb0e63cb47ecc4a834cd259e201d"
+    },
+    {
+      "path": "tests/windows-installer-contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d39ef82128ec06607f3486766254eeecb9e3f88f"
+    },
+    {
+      "path": "tests/windows-updater-ui.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "8a1ffa92968bfa725a564095f046c59f6d5030c3"
+    },
+    {
+      "path": "tools/android_about_visual_evidence.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9841283b039668cfab3d6b802b5d57ad66d996e8"
+    },
+    {
+      "path": "tools/build_standalone_desktop_html.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d2e95487cb974d38ad78b6f9f4d7f952cb2e9e0f"
+    },
+    {
+      "path": "tools/build_windows_developer_installer.ps1",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "333d5646d6134ee01378eb428d8c0125cce25387"
+    },
+    {
+      "path": "tools/build_windows_installer.ps1",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "f7dfcfd3f1467f7977bea7d14b1eeb8a9044f7c4"
+    },
+    {
+      "path": "tools/collect_android_about_screenshots.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "419d59b1e01ca2c84c86baa7896d1efbc62d4da2"
+    },
+    {
+      "path": "tools/configure_auth_email_templates.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9ea6b7ca8a66f61deec4782652abed7bba663c9f"
+    },
+    {
+      "path": "tools/create_master_visual_manifest.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "53d12e7088f8ced8d893d23b64a288aa81270340"
+    },
+    {
+      "path": "tools/developer_audit.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e149c2d19735f58632e5567d6caa97918cbd0051"
+    },
+    {
+      "path": "tools/developer_live_probe.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "28821f9bd01ab321021bf94505db1f1cffd4e237"
+    },
+    {
+      "path": "tools/ig_cleaner_desktop.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "3f3e63abe4c794f2888302abd36b24c7b770af2f"
+    },
+    {
+      "path": "tools/profile_actions.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c7396bfa45f738afe5dad101c94ae115c1830b64"
+    },
+    {
+      "path": "tools/profile_counts_audit.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "eb23ffe8f96b298d331d42cb47fc872e2be93339"
+    },
+    {
+      "path": "tools/profile_counts_bridge.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "067c3bc1fa60a21e35d60cc14a2167ed84059e40"
+    },
+    {
+      "path": "tools/profile_counts_instagram.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9c50817fe2137b3dd1f5293d8fb38ad433b83e68"
+    },
+    {
+      "path": "tools/profile_counts_pacing.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6a963e344d634e946f3a1547690a6ca3f114bebd"
+    },
+    {
+      "path": "tools/profile_counts_robot.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4398bafb40c8ed29f2906ae39e2e55d47f940a4d"
+    },
+    {
+      "path": "tools/repository_file_auditor.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fe0546a76c0cf308c99f0cc4f1c11aa0677496ec"
+    },
+    {
+      "path": "tools/robot_interlock.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4e51eaf2ec6376b4acba21dc84ed3cb3a095cc4e"
+    },
+    {
+      "path": "tools/run_android_about_ui.sh",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "b3082c681b5f5c4cde9822f9a5c58ff2a56aa3fc"
+    },
+    {
+      "path": "tools/run_android_developer_ui.sh",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0d6e33cf134ec31f1003d74949aec60763c81e6f"
+    },
+    {
+      "path": "tools/test_repository_file_auditor.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "b94da69cd18c8066756acba162bc66618261b522"
+    },
+    {
+      "path": "tools/test_windows_developer_installer.ps1",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fcbdb2d5347d5d9473a64ef65c3ff1395d167812"
+    },
+    {
+      "path": "tools/test_windows_installer.ps1",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6931068e8aede19db282d80f09a7e434b9a9d1ca"
+    },
+    {
+      "path": "tools/test_windows_installer_wizard.ps1",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ae3d333abecd91eb7ce1c5e01b3875c86c838577"
+    },
+    {
+      "path": "tools/verify_android_visual_release_evidence.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d965b0d308f7062ee3e6ad43e04d29c0b1e2e780"
+    },
+    {
+      "path": "tools/verify_desktop_visual_release_evidence.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7625c08c9c05c8935629c21ddb7fcdb0ebcc2f27"
+    },
+    {
+      "path": "tools/visual_release_gate.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "724f2c9b5eb8b069e266eb1619375c97628d9202"
+    },
+    {
+      "path": "tools/windows_updater.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
+    }
+  ],
+  "findings": [
+    {
+      "id": "cb6e9232d5887dbd",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/PENDING_BLOCK_ROBOT_RECOVERY_DEVELOPER_TWIN_2026-10-19.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "d1bfe6794078b652",
+      "code": "POSSIBLY_REDUNDANT_NAME",
+      "severity": "review",
+      "path": "android/app/src/main/res/xml/backup_rules.xml",
+      "observation": "Backup/old/copy/draft name; may be intentional",
+      "recommendation": "Check references and history before archiving",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "b1f1bb5a1d0c7fe5",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "LICENSE.txt",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "19cd65c90b9e6cfc",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "android/app/build.gradle.kts",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "03c3bf6f89398080",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "android/app/src/main/assets/ig_cleaner_workspace.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "6b94bcefb2676ae0",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "android/build.gradle.kts",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "893790451fda3de8",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "android/settings.gradle.kts",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "46cc4e15452a5b6a",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "c2a507475709b660",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "index.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "f613e54200722998",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "packaging/chrome-extension/popup.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "585db8ee0d2682b7",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "77ffae88bc4fea3d",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "packaging/windows-installer/InstaCleanerPro.iss",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "64b3a56fa7004161",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "packaging/windows-installer/InstaCleanerProDeveloper.iss",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "75348e30dd4d8d8b",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "packaging/windows-installer/TaskbarPinning.txt",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "06bb17e0763452e5",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/email-templates/confirmation.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "b4a48ad93b0fd1d1",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/email-templates/magic_link.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "a7e8967bf2ec6bf1",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/migrations/20261006_initialize_sync_schema.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "b23e5621a2a793f3",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/migrations/20261007_optimize_rls_policies.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "5d1d9476c55f5021",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/migrations/20261009_multi_instagram_workspaces.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "31f8270f8834f5d8",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/migrations/20261010_delete_instagram_profiles.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "75566a574ae94c74",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/migrations/20261011_profile_identity_and_summaries.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "521c56b57127249b",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/schema.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "07ae6e565c212eaf",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "supabase/tests/rls_isolation.sql",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "110f34300db5ae95",
+      "code": "UNKNOWN_PURPOSE",
+      "severity": "review",
+      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/recent_follow_requests.html",
+      "observation": "No reliable purpose category from path",
+      "recommendation": "Declare role after reviewing usage",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
+  "untracked_audited": false,
+  "ignored_audited": false,
+  "binary_contents_audited": false,
+  "scientific_validation": "NOT_CHECKED",
+  "app_installed_acceptance": "NOT_CHECKED",
+  "deletion_approved": false
+}
