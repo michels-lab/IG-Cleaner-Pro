@@ -26,7 +26,7 @@
     "UNKNOWN_PURPOSE": 8
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9e48f3307de9e40120e51ed0dffd57d1e86e27f8872df3a242151ed1a2acee26",
+  "inventory_fingerprint": "d4dcc57fecef650785d4a381da6ea75c04b4972936e93013c1c6c3eea0755230",
   "evidence_fingerprint": "e5f510053d16a8bd6e6035f7bc15638ab67e5d4031934b80b19100ad65029234",
   "files": [
     {
@@ -125,7 +125,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "5b072239649e97b5558ba96e26384b2f3a53800c"
+      "blob": "374962ffd8a83ed7620834d4064cb3e35b491b38"
     },
     {
       "path": ".github/workflows/release-v12034.yml",
@@ -1945,7 +1945,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "312a89368f703d31de9799bcc561ee9783d4618f"
+      "blob": "25289fb68d11ffe83b60dba0ea06bf7ece06a18d"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",
