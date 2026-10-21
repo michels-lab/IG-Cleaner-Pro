@@ -1,3 +1,9 @@
+## 2026-10-21 — GRANADA #28 Developer forensic audit: malformed saved record is never untouched
+
+- Independent [root-cause and regression note](docs/GRANADA_28_DEVELOPER_AUDIT_RECORD_PRESENCE_2026-10-21.md): current source Developer read-only aggregate counters confused existing malformed/empty/statusless saved records with genuinely absent targets, and treated a present-null click intent like no intent, inconsistent with the main robot's already strict no-replay guard. The uploaded local Developer report cannot be tied to a precise installed source SHA (`unknown`).
+- Corrected ONLY `tools/developer_audit.py` classification: saved malformed evidence remains **uncertain**, never untouched, safe pre-click, or falsely recorded terminal. Synthetic immutable-journal tests added to `tests/test_developer_audit.py`; no personal Instagram names/raw logs, sessions, relationship clicks, history migration or cloud writes. Keep uncertain-click WAL, original cohorts, protections, account scope, and real Instagram issue #172 unchanged.
+- Merge only after exact-PR CI. The already-published official v120.55 FINAL release is unaffected and **no new release is being authorized** by this source-only work.
+
 ## 2026-10-21 — GRANADA README release claims and CI path enforcement (PR #202)
 
 - Source-of-truth regression detected: README's top declared official v120.54, but a second Run/develop sentence still called v120.53 published and v120.54 reserved. Corrected that lower sentence to currentStableRelease v120.54 / nextRelease v120.55, preserving the separate product-specific plugin audit link merged in PR #201.
