@@ -230,6 +230,97 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
+    def test_armed_click_with_familiar_missing_profile_issue_stops_wave(self):
+        """No second profile may receive an action after an uncertain first click.
+
+        Real worker control flow, local fake Chromium pages and durable journal;
+        this fixture never connects to Instagram.
+        """
+        import types
+        from unittest.mock import MagicMock
+        from profile_actions import ActionTabPool
+
+        class Tab:
+            def __init__(self):
+                self.url, self.closed = "about:blank", False
+            def goto(self, url, **kwargs):
+                self.url = url
+            def bring_to_front(self):
+                pass
+            def locator(self, *_):
+                return types.SimpleNamespace(count=lambda: 0)
+            def is_closed(self):
+                return self.closed
+            def close(self):
+                self.closed = True
+
+        class Browser:
+            def __init__(self):
+                self.pages = [Tab()]
+                self.pages[0].url = "https://www.instagram.com/"
+            def new_page(self):
+                page = Tab()
+                self.pages.append(page)
+                return page
+            def close(self):
+                for page in self.pages:
+                    page.close()
+
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.handle, robot.task = "owner.name", "unfollow"
+            robot.targets = ["uncertain.first", "must.not.click", "third.unacted"]
+            robot.active_batch_id = "approved-click-barrier"
+            robot.rest_minutes, robot.min_delay_seconds = 0, 0
+            browser = Browser()
+            calls = []
+
+            def ambiguous_after_possible_click(page, username, *args, **kwargs):
+                calls.append(username)
+                if username == "uncertain.first":
+                    kwargs["on_pre_click"]("relationship_control")
+                    return "review", "The profile does not show Following."
+                robot.stop_event.set()
+                return "ok", "Action confirmed: Follow."
+
+            # The original worker intentionally holds ambiguous tabs open
+            # for owner review. End that final wait, without influencing the
+            # earlier decision whether to click a SECOND account.
+            real_close = ActionTabPool.close_unacted_prefetches
+            def complete_fixture(pool):
+                real_close(pool)
+                robot.stop_event.set()
+
+            fake_pw = types.SimpleNamespace(chromium=types.SimpleNamespace(
+                launch_persistent_context=lambda **kwargs: browser))
+            fake_ctx = MagicMock()
+            fake_ctx.__enter__.return_value = fake_pw
+            with patch.dict(sys.modules, {
+                    "playwright": types.ModuleType("playwright"),
+                    "playwright.sync_api": types.SimpleNamespace(
+                        sync_playwright=lambda: fake_ctx)}), \
+                 patch("profile_actions.preserve_instagram_auth_page",return_value=True), \
+                 patch("profile_actions.challenge_detected",return_value=False), \
+                 patch("profile_actions.signed_in_handle",return_value="owner.name"), \
+                 patch("profile_actions.wait_required",return_value=0), \
+                 patch("profile_actions.batch_wait",return_value=0), \
+                 patch("profile_actions.ActionTabPool.close_unacted_prefetches",
+                       autospec=True,side_effect=complete_fixture), \
+                 patch("profile_actions.perform_visible_action",
+                       side_effect=ambiguous_after_possible_click):
+                robot._run()
+            self.assertEqual(calls, ["uncertain.first"],
+                             "A durable possible-click must stop this ten-tab wave")
+            journal = robot._journal()
+            self.assertEqual(journal["uncertain.first"]["status"], "review")
+            self.assertEqual(journal["uncertain.first"]["issue"], "missing_profile_info")
+            self.assertEqual(journal["uncertain.first"]["click_intent"]["phase"],
+                             "relationship_control")
+            self.assertFalse("must.not.click" in journal)
+            self.assertFalse("third.unacted" in journal)
+            self.assertTrue(all(tab.closed for tab in browser.pages))
+
     def test_forty_profiles_run_as_four_complete_ten_tab_waves(self):
         """Real _run state machine: 10 prepared -> ordered verify/close -> next 10."""
         from unittest.mock import MagicMock

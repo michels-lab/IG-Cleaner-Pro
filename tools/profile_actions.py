@@ -748,9 +748,11 @@ def _invalid_saved_action_record(record):
     status = record.get("status")
     if not isinstance(status, str) or status not in SAVED_ACTION_STATES:
         return True
-    intent = record.get("click_intent")
-    if intent is None:
+    # A present-but-null click intent is malformed, not proof that no
+    # click happened. Only ABSENCE of this field means no intent was saved.
+    if "click_intent" not in record:
         return False
+    intent = record["click_intent"]
     phase = intent.get("phase") if isinstance(intent, dict) else None
     if not isinstance(phase, str) or phase not in SAVED_CLICK_PHASES:
         return True
@@ -799,6 +801,22 @@ def _preclick_no_action(entry):
             and (message in (LEGACY_MISSING_RELATIONSHIP_CONTROL,
                              MISSING_RELATIONSHIP_CONTROL)
                  or message.startswith(MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
+
+
+def _benign_preclick_issue(issue, record):
+    """Continue only genuinely unclicked recoverable profile anomalies.
+
+    Historical issue labels alone are not proof that an action was untouched:
+    an Instagram DOM failure may occur AFTER a write-ahead click intent. In
+    that case the worker must stop and retain the uncertain tab for review,
+    even if the text resembles a familiar harmless missing-control error.
+    """
+    return (issue in {"pending_already_following", "pending_not_requested",
+                      "mutual_before_action", "missing_profile_info",
+                      "profile_load_timeout"}
+            and isinstance(record, dict)
+            and "click_intent" not in record
+            and not _invalid_saved_action_record(record))
 
 
 def _preclick_identity_blocked(entry):
@@ -2354,9 +2372,10 @@ class ActionRobot:
                             # Safe no-click: record and move to the next target.
                             # A challenge or possibly clicked action is NOT safe.
                             continue
-                        if issue in ("pending_already_following", "pending_not_requested",
-                                     "mutual_before_action", "missing_profile_info",
-                                     "profile_load_timeout"):
+                        if _benign_preclick_issue(issue, journal.get(user, {})):
+                            # A familiar issue label cannot override a durable
+                            # possible-click barrier. Stop on every uncertain
+                            # post-click outcome and preserve its tab/journal.
                             continue
                         with self.lock:
                             self.status, self.message = result, "@" + user + ": " + details
