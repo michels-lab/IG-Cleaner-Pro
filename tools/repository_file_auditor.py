@@ -22,11 +22,11 @@ DEFAULT = {"schema_version": 1, "canonical_logs": [], "purpose_overrides": {},
            "markdown_finding_limit": 120}
 LINK = re.compile(r'(?<!!)\[[^\]\n]*\]\((<?[^)\n]+>?)\)')
 DATE = re.compile(r'(?im)\b(?:last reviewed|last updated|última revisión|última actualización|revisado el|actualizado el)\s*:?\s*\*{0,2}(20\d{2}-\d{2}-\d{2})\b')
-OLD = re.compile(r'(?i)(?:^|[._/\-])(?:backup|bak|old|obsolete|deprecated|copy|copia|tmp|temp|draft)(?:[._/\-]|$)')
+OLD = re.compile(r'(?i)(?:^|[._/\-])(?:old|obsolete|deprecated|tmp|temp)(?:[._/\-]|$)')
 HISTORY = re.compile(r'(?i)(?:^|/)(?:archives?|historical|history|legacy|snapshots?|historial)(?:/|$)|(?:^|[/_-])20\d{2}[-_]\d{2}[-_]\d{2}')
 SRC = set(".py .js .jsx .ts .tsx .c .h .cc .cpp .cs .kt .java .go .rs .sh .ps1 .cjs .mjs".split())
 ASSET = set(".png .jpg .jpeg .webp .svg .gif .ico .woff .woff2 .ttf .mp3 .mp4 .ogg".split())
-DATA = set(".csv .tsv .parquet .sqlite .db".split())
+DATA = set(".csv .tsv .vtk .vtu .foam .stl .obj .step .iges .parquet".split())
 BINARY = set(".exe .apk .msix .aab .zip .dll .so .dylib .jar .7z .pdf".split())
 
 def git(root, *args, timeout=90):
@@ -47,6 +47,20 @@ def identify(path, custom):
     p=path.lower(); name=PurePosixPath(path).name.lower(); ext=PurePosixPath(path).suffix.lower()
     if p.startswith(".github/workflows/"): return "workflow", "GitHub Actions automation", "rule"
     if p.startswith(".github/agents/") or "/agents/" in p or name=="agents.md": return "agent", "assistant role/instructions", "rule"
+    if p.startswith(".michelslab/release-intents/") or p.startswith(".michelslab/candidate-intents/"):
+        return "release_intent","historical source-controlled release/candidate intent (preserve for traceability)","rule"
+    if p.endswith("/taskbarpinning.txt"):
+        return "installer_metadata","Windows taskbar installer configuration","inferred"
+    if ext==".sql":
+        if "/tests/" in p: return "test","SQL/RLS regression test; not evidence of execution","inferred"
+        if "/migrations/" in p: return "database_migration","ordered database schema migration; never discard automatically","rule"
+        return "database_schema","database schema/query source; verify against live DB separately","inferred"
+    if name.endswith(".cs.gz.b64"):
+        return "encoded_source","compressed/encoded C# source artifact; code meaning not audited","inferred"
+    if name.endswith(".manifest"):
+        return "config","native application execution manifest","rule"
+    if ext==".txt":
+        return "text_metadata","plain-text source/release/installer metadata; specific purpose inferred","inferred"
     if name in {"license","license.md","license.txt","copying","notice"}: return "license","licensing/notice", "rule"
     if name.startswith("readme") or name in {"index.md","documentation_index.md"}: return "index","navigation/onboarding", "rule"
     if name.endswith("log.md") or name.endswith("bitacora.md") or "audit_log" in name or "bitacora" in p or "changelog" in name:
@@ -61,9 +75,24 @@ def identify(path, custom):
     if ext in BINARY: return "binary","binary/archive (not parsed)","rule"
     if ext in {".json",".yaml",".yml",".toml",".xml",".ini",".properties",".gradle"} or name in {"dockerfile","makefile",".gitignore",".gitattributes"}:
         return "config","machine-readable configuration","rule"
-    # Unknown extensions and app-specific files require explicit review.
-    # Do not copy data classifications from unrelated repositories: missing
-    # evidence is safer than a confidently wrong cross-product attribution.
+    # OpenFOAM is extensionless by design: classify *structure*, not unknown files.
+    # This is an inferred functional group, NEVER a solver verification.
+    parts=p.split("/")
+    if (parts[0] in {"cases","case","cleanproy","doctor_original","freesurface"} or parts[0].startswith("cases_")) and len(parts)>=2:
+        below=parts[1:] if parts[0]=="cleanproy" else parts[2:]
+        if not below:
+            return "simulation_case_file","OpenFOAM case support artifact","inferred"
+        if below[0] in {"0","constant","system"}:
+            return "simulation_input","OpenFOAM case field/dictionary input (content unvalidated)","inferred"
+        if "postprocessing" in below or any(b.replace(".", "", 1).isdigit() for b in below):
+            return "simulation_output","OpenFOAM solution time/postProcessing artifact (content unvalidated)","inferred"
+        if "logs" in below or name.startswith("log."):
+            return "simulation_log","OpenFOAM solver/run log (not proof of run quality)","inferred"
+        return "simulation_case_file","OpenFOAM case-specific support artifact","inferred"
+    if parts[0] in {"analysis_results","postprocessing","experiment_results"}:
+        return "scientific_analysis","research analysis/evidence artifact (not physically validated)","inferred"
+    if parts[0] == "analysis_tools":
+        return "analysis_tool","analysis helper/command (source must be inspected before executing)","inferred"
     return "unknown","function unknown: owner classification required","unknown"
 
 def link_result(source, raw, paths):
@@ -88,6 +117,36 @@ def log_age(root, path, today):
         d=git(root,"log","-1","--format=%cs","--",path,timeout=15).decode().strip()
         return (today-dt.date.fromisoformat(d)).days if d else None
     except (ValueError,subprocess.CalledProcessError,subprocess.TimeoutExpired): return None
+
+def log_change_candidates(root, log_path):
+    """Changed tracked implementation paths since the log's last recorded commit.
+
+    This only suggests a review; a canonical log may intentionally be less granular
+    than every code commit. Exclude this auditor's own churn and its reports.
+    """
+    try:
+        baseline=git(root,"log","-1","--format=%H","--",log_path,timeout=25).decode().strip()
+        if not baseline: return []
+        changed=git(root,"diff","--name-only","-z",baseline,"HEAD","--",timeout=60)
+    except (OSError,subprocess.CalledProcessError,subprocess.TimeoutExpired,UnicodeError):
+        return []
+    exempt={
+        "tools/repository_file_auditor.py","tools/test_repository_file_auditor.py",
+        ".github/workflows/file-governance-audit.yml",
+        ".michelslab/file-audit-policy.json",
+        "tools/collect_file_governance.py","tools/test_collect_file_governance.py",
+    }
+    relevant={"source","test","workflow","config","build_script","web_ui",
+              "database_migration","database_schema","release_intent","encoded_source"}
+    names=[]
+    for chunk in changed.split(b"\0"):
+        if not chunk: continue
+        path=chunk.decode("utf-8","surrogateescape")
+        if path in exempt or path.startswith(("reports/file-governance/","docs/audits/")):
+            continue
+        if identify(path,{})[0] in relevant:
+            names.append(path)
+    return sorted(set(names))
 
 def scan(root, policy=None, today=None):
     root=Path(root).resolve()
@@ -149,6 +208,11 @@ def scan(root, policy=None, today=None):
         if path not in paths:
             add("MISSING_LOG","confirmed",path,"Declared canonical bitacora absent","Restore authoritative log")
         else:
+            candidate_paths=log_change_candidates(root,path)
+            if candidate_paths:
+                add("POTENTIAL_UNLOGGED_CHANGES","review",path,
+                    str(len(candidate_paths))+" implementation/config paths changed since this log's last commit; examples: "+", ".join(candidate_paths[:6]),
+                    "Inspect diffs and reconcile only meaningful decisions/results in the canonical log")
             days=log_age(root,path,today)
             if days is not None and days>int(policy["log_stale_days"]):
                 add("LOG_UPDATE_REVIEW","review",path,
@@ -194,7 +258,7 @@ def write_reports(root, report, policy):
         lines.append("Remaining "+str(report["finding_total"]-int(policy["markdown_finding_limit"]))+" in complete JSON.")
     lines += ["","Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.",
               "A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.",
-              "No saved review histories, action journals, audit logs or evidence may be deleted automatically.",""]
+              "No historical science cases, audit logs or evidence may be deleted automatically.",""]
     (out/"FILE_GOVERNANCE.md").write_text("\n".join(lines),encoding="utf-8")
     if prior.get("inventory_fingerprint")!=report["inventory_fingerprint"] or prior.get("evidence_fingerprint")!=report["evidence_fingerprint"]:
         log=root/"docs/audits/FILE_GOVERNANCE_LOG.md"
