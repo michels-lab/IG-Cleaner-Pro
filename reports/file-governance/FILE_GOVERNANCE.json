@@ -1,31 +1,33 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 277,
-  "classified_files_total": 277,
-  "docs_content_inspected": 43,
+  "tracked_files_total": 284,
+  "classified_files_total": 280,
+  "docs_content_inspected": 44,
   "large_docs_skipped": 1,
-  "excluded_reports": 0,
+  "excluded_reports": 4,
   "roles": {
     "agent": 9,
     "asset": 20,
     "bitacora": 1,
+    "build_script": 6,
     "config": 69,
-    "document": 37,
+    "document": 38,
     "index": 6,
-    "source": 37,
-    "test": 65,
-    "unknown": 22,
+    "license": 1,
+    "source": 38,
+    "test": 66,
+    "unknown": 8,
+    "web_ui": 7,
     "workflow": 11
   },
   "finding_counts": {
     "BROKEN_RELATIVE_LINK": 1,
-    "POSSIBLY_REDUNDANT_NAME": 1,
-    "UNKNOWN_PURPOSE": 22
+    "UNKNOWN_PURPOSE": 8
   },
-  "finding_total": 24,
-  "inventory_fingerprint": "1b3005677f975f27970df43360915c4481c7388569d73daa95e15f0c8c016c1a",
-  "evidence_fingerprint": "7ed0e3486f0f21c3cccfed058456a001f0912110d90015b2c6c400aff488acd5",
+  "finding_total": 9,
+  "inventory_fingerprint": "3fce888daec6072513b16302cfce360a0b0dc2b72c4352e6e2f1cb739344c57b",
+  "evidence_fingerprint": "e5f510053d16a8bd6e6035f7bc15638ab67e5d4031934b80b19100ad65029234",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -95,7 +97,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "2c42f42ae62797aae63615f319795e1224e9b068"
+      "blob": "0b943ce250524198fe796121fd3ba68b10e2e6f4"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -137,7 +139,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "bed370974921c901e6ef90e1ab72774782d678a8"
+      "blob": "6fa25eea1b33bd62ac2b0968f6d4b52b6f6a3446"
     },
     {
       "path": ".gitignore",
@@ -207,7 +209,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "e4b2eabe746fa06ba9b7ea7ab965aba1e6eba8ea"
+      "blob": "845f915183cd9a5f0fae19a038db3a2eaec7b6bb"
     },
     {
       "path": "AGENTS.md",
@@ -218,9 +220,9 @@
     },
     {
       "path": "LICENSE.txt",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "license",
+      "purpose": "licensing/notice",
+      "certainty": "rule",
       "blob": "8ca42838bc23d0ff5ff35b828cc0059350235fe9"
     },
     {
@@ -253,9 +255,9 @@
     },
     {
       "path": "android/app/build.gradle.kts",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "8f55cf503d733a38fdcb4c6ef0587e0bdd5435ae"
     },
     {
@@ -309,9 +311,9 @@
     },
     {
       "path": "android/app/src/main/assets/ig_cleaner_workspace.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "13fd69dff76d462eecf1cdb93ff9ae117d141f1a"
     },
     {
@@ -736,9 +738,9 @@
     },
     {
       "path": "android/build.gradle.kts",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "22aaab52217f4166360aa7986437d64f3c58bd22"
     },
     {
@@ -750,9 +752,9 @@
     },
     {
       "path": "android/settings.gradle.kts",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "fe159520f484e01f68ef7bb731225c1b23d8c3bf"
     },
     {
@@ -841,9 +843,9 @@
     },
     {
       "path": "desktop/ig_cleaner_pro_v120_27_synced_companion.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "e10c74172bb23aa65de7f32335247d8ce4f5edae"
     },
     {
@@ -1015,6 +1017,13 @@
       "blob": "55bf74ea8ac0b199fb71d53638ab0fa79342cb81"
     },
     {
+      "path": "docs/GRANADA_22_RELEASE_DESKTOP_ARTIFACT_LAYOUT_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "543c02a9b9902b081759f96cc0271cb2c796167d"
+    },
+    {
       "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1086,9 +1095,9 @@
     },
     {
       "path": "index.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "283a01dd467d77938b712a01c4788e07a4d91b50"
     },
     {
@@ -1114,9 +1123,9 @@
     },
     {
       "path": "packaging/chrome-extension/popup.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "c8a0b2176c5070689b553fd72f7566fd05cdc9f9"
     },
     {
@@ -1135,23 +1144,23 @@
     },
     {
       "path": "packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "45329d9eb7c2adca732e744ea0067ab03bfdef9c"
     },
     {
       "path": "packaging/windows-installer/InstaCleanerPro.iss",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "8f5c517165174085dcef35c52e2a8c3ba830c31a"
     },
     {
       "path": "packaging/windows-installer/InstaCleanerProDeveloper.iss",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "build_script",
+      "purpose": "platform build/project/installer script",
+      "certainty": "inferred",
       "blob": "cd77b1f6f27a1cd1c6c69c8987c636531f2597c4"
     },
     {
@@ -1184,16 +1193,16 @@
     },
     {
       "path": "supabase/email-templates/confirmation.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "66b4943857a35aa9435fcd08c91d8c10e1e0c28d"
     },
     {
       "path": "supabase/email-templates/magic_link.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "e6468b31f0935339748a1f89495cb670d187f8e3"
     },
     {
@@ -1471,9 +1480,9 @@
     },
     {
       "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/recent_follow_requests.html",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "web_ui",
+      "purpose": "local HTML documentation or web interface",
+      "certainty": "inferred",
       "blob": "0d731a74300ff7b69294b7330182ef2626f074e1"
     },
     {
@@ -1565,7 +1574,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "784bd20d2dc7ee8ac5d3b60988370488179756b5"
+      "blob": "bcc3f29fc97d977189d9193f1bd3f160e21500c0"
     },
     {
       "path": "tests/rls-contract.py",
@@ -1608,6 +1617,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "da98c7842c1dc2b55799d9b6a653be7517ea2351"
+    },
+    {
+      "path": "tests/test_desktop_visual_artifact_resolution.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1530d4ded70276f21bb7723572a00688cc792b0b"
     },
     {
       "path": "tests/test_developer_audit.py",
@@ -1887,7 +1903,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fe0546a76c0cf308c99f0cc4f1c11aa0677496ec"
+      "blob": "3f704fa24a27aa107914d85b772b32227ffd82fa"
+    },
+    {
+      "path": "tools/resolve_desktop_visual_artifact_dir.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "7ee269c918f5650e39d6de616623a1c8f3d786bc"
     },
     {
       "path": "tools/robot_interlock.py",
@@ -1915,7 +1938,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b94da69cd18c8066756acba162bc66618261b522"
+      "blob": "ebac5d9cfe86ff3c1e94b96468027a6578d1d708"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",
@@ -1978,136 +2001,10 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "d1bfe6794078b652",
-      "code": "POSSIBLY_REDUNDANT_NAME",
-      "severity": "review",
-      "path": "android/app/src/main/res/xml/backup_rules.xml",
-      "observation": "Backup/old/copy/draft name; may be intentional",
-      "recommendation": "Check references and history before archiving",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "b1f1bb5a1d0c7fe5",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "LICENSE.txt",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "19cd65c90b9e6cfc",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "android/app/build.gradle.kts",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "03c3bf6f89398080",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "android/app/src/main/assets/ig_cleaner_workspace.html",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "6b94bcefb2676ae0",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "android/build.gradle.kts",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "893790451fda3de8",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "android/settings.gradle.kts",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "46cc4e15452a5b6a",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "desktop/ig_cleaner_pro_v120_27_synced_companion.html",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "c2a507475709b660",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "index.html",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "f613e54200722998",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "packaging/chrome-extension/popup.html",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "585db8ee0d2682b7",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "packaging/profile-counts/Start-Insta-Cleaner-Robot.cmd",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "77ffae88bc4fea3d",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "packaging/windows-installer/InstaCleanerPro.iss",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "64b3a56fa7004161",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "packaging/windows-installer/InstaCleanerProDeveloper.iss",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
       "id": "75348e30dd4d8d8b",
       "code": "UNKNOWN_PURPOSE",
       "severity": "review",
       "path": "packaging/windows-installer/TaskbarPinning.txt",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "06bb17e0763452e5",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/email-templates/confirmation.html",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "b4a48ad93b0fd1d1",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/email-templates/magic_link.html",
       "observation": "No reliable purpose category from path",
       "recommendation": "Declare role after reviewing usage",
       "state": "REVIEW_REQUIRED"
@@ -2171,15 +2068,6 @@
       "code": "UNKNOWN_PURPOSE",
       "severity": "review",
       "path": "supabase/tests/rls_isolation.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "110f34300db5ae95",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "tests/fixtures/instagram-export-sample/connections/followers_and_following/recent_follow_requests.html",
       "observation": "No reliable purpose category from path",
       "recommendation": "Declare role after reviewing usage",
       "state": "REVIEW_REQUIRED"
