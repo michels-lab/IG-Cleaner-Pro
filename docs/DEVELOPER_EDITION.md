@@ -1,3 +1,11 @@
+## 2026-10-20 — GRANADA P0 Developer QA source candidate (NOT SHIPPED)
+
+Developer is normally read-only, with a **distinct owner-approved real-action test mode on Windows**. The owner explicitly requires Developer to exercise real Unfollow/Cancel Pending actions to prove that Instagram's live selectors and post-click verification work. This mode accepts 1–10 exact usernames, lists them in an explicit irreversible-action confirmation, requires owner+Instagram account proof and verified complete Followers evidence for Unfollow, uses canonical protected/journal/batch guards to avoid future replays, and never starts from a freeform chat message. Original journal and account can change only after user approval. Do not launch public and Developer action workers simultaneously.
+
+The minimal local chat stores user instructions per account, dispatches existing bounded audits (read-only by default), compares saved read-only diagnostics, and supports **Copy for ChatGPT** with TXT fallback and owner-note privacy confirmation. It is **not connected directly to ChatGPT**, so the user pastes an exported report in the ChatGPT conversation and can paste instructions back to Developer.
+
+Source integration on branch `granada/p0-developer-mainline-integrated-20261020`, not official stable. Live Instagram actions, separate installed Developer Windows Setup, Android Developer signed APK, signed-in auth and security challenge handling require owner/governed release acceptance. See `docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md` and main robot ten-wave PR #177. v120.54 remains released, v120.55 not authorized.
+
 ## 2026-10-19 — Developer real-login preservation: OTP, device registration and production write barriers
 
 Found a **real user login regression** caused by trying to perform production writes from an otherwise read-only Developer Edition. A valid native Android password or OTP login was followed by `touchDevice()` (Supabase device upsert) and thus could appear failed despite authentication. Both normal-user auth and production safety are now separate:

@@ -8,7 +8,7 @@ assert(html.includes('igcDevPick'),'Select-section interaction missing');
 assert(html.includes('igcDevExportJson'),'Combined JSON export missing');
 
 function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}){
- const elements=new Map(),events=new Map(),downloads=[],intervals=[],files=[];
+ const elements=new Map(),events=new Map(),downloads=[],intervals=[],files=[],copied=[];
  function node(id=''){
   const e={id,tagName:'SECTION',style:{},children:[],textContent:'',value:'',disabled:false,
    attributes:new Map(),listeners:{},contains(){return false},addEventListener(type,handler){
@@ -24,6 +24,11 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
   'igcDevScope','igcDevPick','igcDevClear','igcDevSelected','igcDevSaveNote',
   'igcDevCancelEdit','igcDevNotesCount','igcDevNotes','igcDevRun',
   'igcDevExport','igcDevExportJson','igcDevAccount','igcDevCollapse',
+  'igcDevRealProbe','igcDevLiveTask','igcDevLiveHandle','igcDevLiveCount',
+  'igcDevLiveStart','igcDevLiveStop','igcDevLiveResults',
+  'igcDevChatMessages','igcDevChatInput','igcDevChatSend','igcDevChatCompare','igcDevChatCopy',
+  'igcDevRealActionTests','igcDevActionTask','igcDevActionTargets',
+  'igcDevActionFollowersEvidence','igcDevActionStart','igcDevActionPause','igcDevActionStatus',
   'igcAutoBatch','igcAutoRun','igcAutoRows','igcAutoExecutionMetrics','igcAutoBatchApproval',
   'page-automations'];
  ids.forEach(id=>elements.set(id,node(id)));
@@ -57,9 +62,10 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
    ai_prompt:'REDACTED AUDIT PROMPT',report:{generated_at:'2026-10-19',journals:1,
     profiles:3,findings:[{code:'RETRYABLE_ZERO_CLICK',count:1}],limitations:[]}})}),
   Blob,URL,Date,Math,JSON,Set,Array,Number,String,
+  navigator:{clipboard:{writeText:async value=>copied.push(value)}},
   setTimeout(fn){fn()},setInterval(fn){intervals.push(fn);return 1}};
  vm.runInNewContext(match[1],context,{timeout:5000});
- return {elements,downloads,files,store,context,window,events,intervals,selectTarget,storage};
+ return {elements,downloads,files,copied,store,context,window,events,intervals,selectTarget,storage};
 }
 (async()=>{
  const store=new Map(),identity={owner:'owner_1',active:'ig_00000001'};
@@ -90,6 +96,21 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  assert(prompt.includes('igcAutoBatchApproval'));
  assert(prompt.includes('Batch size resets from 20 to 40 on Refresh.'));
  assert(prompt.includes('owner_observation_not_automatically_verified'));
+ e.get('igcDevChatInput').value='Audit local robot errors and prepare a report';
+ await e.get('igcDevChatSend').listeners.click();
+ const chatEntries=[...store.entries()].filter(([key])=>key.includes('__diagnostic_chat_v1'));
+ assert.equal(chatEntries.length,1,'Scoped diagnostic instructions must be saved locally');
+ const messages=JSON.parse(chatEntries[0][1]);
+ assert(messages.some(x=>x.role==='owner'&&x.text.includes('Audit local robot errors')));
+ assert(messages.some(x=>x.role==='local_assistant'&&x.text.includes('audit completed')));
+ await e.get('igcDevChatCopy').listeners.click();
+ assert.equal(h.copied.length,1,'ChatGPT handoff copies a single local report');
+ assert(h.copied[0].includes('REDACTED AUDIT PROMPT'));
+ assert(h.copied[0].includes('Audit local robot errors'));
+ assert(!h.copied[0].includes('012345678901234567890123456789'));
+ assert.equal(h.copied[0].includes('developer_real_action_test_summary'),true);
+ assert(e.get('igcDevActionStart').listeners.click,'Explicit live-action control must be wired');
+ assert(e.get('igcDevActionPause').listeners.click,'Explicit live-action Pause must be wired');
  await e.get('igcDevExportJson').listeners.click();
  const report=JSON.parse(await h.files.at(-1).text());
  assert.equal(report.owner_section_annotations[0].comment,entries[0].comment);
@@ -108,10 +129,10 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  assert.match(newSession.elements.get('igcDevNotesCount').textContent,/1 saved section note/,
   'Developer notes must persist through app restart');
  identity.active='ig_00000002';
- h.intervals[0]();
+ h.intervals.at(-1)();
  assert.match(e.get('igcDevNotesCount').textContent,/0 saved section notes/,
   'Notes must not leak between Instagram workspaces');
- identity.active='ig_00000001';h.intervals[0]();
+ identity.active='ig_00000001';h.intervals.at(-1)();
  assert.match(e.get('igcDevNotesCount').textContent,/1 saved section note/);
  const deleteCard=e.get('igcDevNotes').children[0];
  await deleteCard.children[3].children[2].listeners.click();

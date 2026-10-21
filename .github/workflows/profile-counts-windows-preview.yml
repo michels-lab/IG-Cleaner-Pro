@@ -17,6 +17,10 @@ on:
       - 'tests/test_windows_updater.py'
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
+      - 'tools/developer_live_probe.py'
+      - 'tests/test_developer_live_probe.py'
+      - 'tools/build_windows_developer_installer.ps1'
+      - 'tools/test_windows_developer_installer.ps1'
       - 'tools/ig_cleaner_desktop.py'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
@@ -78,11 +82,13 @@ jobs:
           node tests/developer-annotations-contract.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Developer Edition section note/export contract failed." }
           python -m unittest discover -s tests -p 'test_developer_audit.py' -v
-          if ($LASTEXITCODE -ne 0) { throw "Automations action batch selection failed." }
+          if ($LASTEXITCODE -ne 0) { throw "Developer local audit privacy contract failed." }
+          python -m unittest discover -s tests -p 'test_developer_live_probe.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Developer real Instagram read-only/consent gate tests failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
-          if ($LASTEXITCODE -ne 0) { throw "Ten-tab wave and tab safety contract failed." }
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA full-wave robot regression failed." }
           python -m unittest discover -s tests -p 'test_historical_recheck.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Historical no-click re-audit safety contract failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
@@ -175,12 +181,22 @@ jobs:
           ./tools/test_windows_installer_wizard.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Screenshot artifacts/IG-Cleaner-Pro-Installer-EULA.png
           ./tools/test_windows_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Version $version
           if ($LASTEXITCODE -ne 0) { throw "Installed Windows runtime failed QA." }
+      - name: Build and smoke independent Developer Windows Setup
+        shell: pwsh
+        run: |
+          $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
+          ./tools/build_windows_developer_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version -AllowCurrentStablePreview
+          ./tools/test_windows_developer_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v$version.exe" -Version $version
+          if ($LASTEXITCODE -ne 0) { throw "Independent Developer Windows Setup/install/launch/uninstall QA failed." }
       - uses: actions/upload-artifact@v4
         with:
           name: Insta-Cleaner-Windows-Integrated-PREVIEW-${{ github.sha }}
           path: |
             artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe
             artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe.sha256
+            artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v*.exe
+            artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v*.exe.sha256
+            artifacts/IG-Cleaner-Pro-Developer-Installer-InstallLog.txt
             artifacts/Insta-Cleaner-Pro-Windows-Integrated-PREVIEW.zip
             artifacts/IG-Cleaner-Pro-Installer-InstallLog.txt
             artifacts/IG-Cleaner-Pro-Installer-EULA.png

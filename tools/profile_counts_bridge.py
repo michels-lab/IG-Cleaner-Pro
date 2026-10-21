@@ -692,7 +692,17 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # run Instagram jobs or alter production logs through the loopback API.
     if developer_mode:
         from developer_audit import run_audit, ai_prompt
+        from developer_live_probe import DeveloperLiveProbe
     audit_root = Path(audit_root) if audit_root is not None else collector.data_dir
+    live_probe = (DeveloperLiveProbe(audit_root, collector.session_dir)
+                  if developer_mode else None)
+    # Owner-approved Developer action tests intentionally write the canonical
+    # action/protection journal, rather than creating a parallel history that
+    # would later allow the public robot to replay the same Instagram click.
+    # The Chrome session remains separate from the public Windows robot.
+    dev_action_tests = (ActionRobot(collector, audit_root, collector.session_dir)
+                        if developer_mode else None)
+    developer_session_gate = threading.RLock()
     actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
     collector.actions = actions
     class Handler(BaseHTTPRequestHandler):
@@ -748,6 +758,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                 self._send(200, collector.following())
             elif self.path == "/api/actions/status":
                 self._send(200, actions.snapshot())
+            elif self.path == "/api/developer/live-status" and developer_mode:
+                self._send(200, live_probe.snapshot())
+            elif self.path == "/api/developer/action-status" and developer_mode:
+                self._send(200, dev_action_tests.snapshot())
             elif self.path == "/api/update/status":
                 self._send(200, updater.snapshot() if updater else
                            {"status":"unavailable","message":"Native Windows updater is not attached."})
@@ -757,7 +771,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/developer/audit", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -768,9 +782,53 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                 data = json.loads(body or b"{}")
                 if not isinstance(data, dict):
                     raise ValueError("Invalid request.")
-                if developer_mode and self.path != "/api/developer/audit":
-                    raise ValueError("Developer Edition is read-only. Relationship and update actions are disabled.")
-                if self.path == "/api/developer/audit" and developer_mode:
+                if developer_mode and self.path not in (
+                        "/api/developer/audit", "/api/developer/live-start",
+                        "/api/developer/live-stop", "/api/developer/action-start",
+                        "/api/developer/action-stop"):
+                    raise ValueError("Developer Edition permits only diagnostics and explicitly owner-approved bounded action tests; normal robot/update commands are disabled.")
+                if self.path == "/api/developer/live-start" and developer_mode:
+                    with developer_session_gate:
+                        if (dev_action_tests.worker and
+                                dev_action_tests.worker.is_alive()):
+                            raise ValueError("Pause the Developer live action test before opening read-only Chrome.")
+                        result = live_probe.start(data)
+                elif self.path == "/api/developer/live-stop" and developer_mode:
+                    result = live_probe.stop()
+                elif self.path == "/api/developer/action-start" and developer_mode:
+                    with developer_session_gate:
+                        if live_probe.worker and live_probe.worker.is_alive():
+                            raise ValueError("Finish read-only Developer Chrome inspection first.")
+                        task, targets = data.get("task"), data.get("targets")
+                        if (task not in ("unfollow", "cancel") or
+                                not isinstance(targets, list) or
+                                not 1 <= len(targets) <= 10 or
+                                any(not isinstance(user, str) or valid_username(user) != user for user in targets) or
+                                len(set(targets)) != len(targets)):
+                            raise ValueError("A live Developer test requires 1–10 distinct exact Instagram targets and Unfollow or Cancel.")
+                        expected_consent = "LIVE_TEST:" + task + ":" + ",".join(targets)
+                        if (data.get("explicit_consent") != expected_consent or
+                                data.get("acknowledge_real_changes") is not True):
+                            raise ValueError("Explicit confirmation of the exact profiles and irreversible real Instagram actions is required.")
+                        if task == "unfollow" and data.get("followers_evidence") is not True:
+                            raise ValueError("Confirm your verified Followers evidence before the real Unfollow test.")
+                        # Run the exact existing verified action robot, with all
+                        # its account/target/owner identity, protected exclusions,
+                        # previous-click no-replay and saved batch guards.
+                        # Never allow the client to bypass the journal authority.
+                        request = dict(data)
+                        request["batch_size"] = len(targets)
+                        request["gap_seconds"] = max(10, float(data.get("gap_seconds") or 10))
+                        request["rest_minutes"] = 0
+                        request["confirmation"] = task + ":" + str(len(targets))
+                        result = dev_action_tests.start(request)
+                elif self.path == "/api/developer/action-stop" and developer_mode:
+                    result = dev_action_tests.pause(data)
+                elif self.path in (
+                        "/api/developer/live-start", "/api/developer/live-stop",
+                        "/api/developer/action-start", "/api/developer/action-stop"):
+                    raise ValueError("Developer live diagnostics/actions require the separate Developer Edition.")
+                elif self.path == "/api/developer/audit" and developer_mode:
                     report = run_audit(audit_root)
                     result = {"report": report,
                               "ai_prompt": ai_prompt(report, data.get("client_checks"))}
