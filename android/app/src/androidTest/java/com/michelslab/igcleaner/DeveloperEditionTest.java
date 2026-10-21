@@ -36,13 +36,39 @@ public class DeveloperEditionTest {
     }
 
     private void untilDeveloperReady(ActivityScenario<MainActivity> scenario) throws Exception {
-        for(int attempt=0;attempt<30;attempt++){
-            String visible=js(scenario,
-                "(function(){var d=document.getElementById('igcDevConsole');return d&&d.style.display==='flex'})()");
-            if("true".equals(visible)) return;
+        // MainActivity.bootstrapWorkspace() reloads once after preparing the
+        // native account session. The panel may be visible in the FIRST document
+        // before that reload replaces its DOM. Wait for the finished native
+        // second document, not just a panel that is about to disappear.
+        String last = "unobserved";
+        for (int attempt = 0; attempt < 60; attempt++) {
+            last = js(scenario,
+                "(function(){var h=document.getElementById('igcDevConsole');" +
+                "return document.readyState==='complete' &&" +
+                "sessionStorage.getItem('igc_android_bootstrapped')==='1' &&" +
+                "document.documentElement.classList.contains('igc-android-host') &&" +
+                "h && h.style.display==='flex' &&" +
+                "!!document.getElementById('igcDevAccount') &&" +
+                "!!document.getElementById('page-sync') &&" +
+                "typeof window.showPage==='function' &&" +
+                "AndroidBridge.isDeveloperMode()})()");
+            if ("true".equals(last)) return;
             Thread.sleep(400L);
         }
-        fail("Android Developer panel never appeared on real embedded WebView");
+        // Only structural flags. No account data, cookies, tokens or storage
+        // values. Never synthesize the Account button or bypass its real click.
+        String diagnostic = js(scenario,
+            "(function(){var h=document.getElementById('igcDevConsole');" +
+            "return JSON.stringify({ready:document.readyState," +
+            "nativeHost:document.documentElement.classList.contains('igc-android-host')," +
+            "bootstrapFlag:sessionStorage.getItem('igc_android_bootstrapped')==='1'," +
+            "panelVisible:!!h&&h.style.display==='flex'," +
+            "buttonMounted:!!document.getElementById('igcDevAccount')," +
+            "syncMounted:!!document.getElementById('page-sync')," +
+            "showPageType:typeof window.showPage," +
+            "developerBridge:AndroidBridge.isDeveloperMode()})})()");
+        fail("Real Android Developer WebView not ready after native bootstrap;" +
+             " last=" + last + "; safe flags=" + diagnostic);
     }
 
     private void untilJsTrue(ActivityScenario<MainActivity> scenario,
@@ -94,6 +120,8 @@ public class DeveloperEditionTest {
                 "(function(){return document.readyState==='complete' "+
                 "&& typeof window.showPage==='function' "+
                 "&& AndroidBridge.isDeveloperMode() "+
+                "&& document.documentElement.classList.contains('igc-android-host') "+
+                "&& !!document.getElementById('igcDevAccount') "+
                 "&& !!document.getElementById('page-sync')})()",
                 "Developer native bridge or account screen not ready");
             // Separate navigation, selection and saving. Performing them all
