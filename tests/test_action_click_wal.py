@@ -124,7 +124,7 @@ class DurableClickIntentTests(unittest.TestCase):
                 page.choose_unfollow()
                 raise Interruption("Windows died after menu click but before verification")
             page.menu.clicker.callback=crash_after_menu_click
-            with patch("profile_actions.challenge_detected",return_value=False), \\
+            with patch("profile_actions.challenge_detected",return_value=False), \
                  patch("profile_actions.signed_in_handle",return_value="owner.name"):
                 with self.assertRaises(Interruption):
                     perform_visible_action(page,target,"unfollow","owner.name",
@@ -180,12 +180,12 @@ class DurableClickIntentTests(unittest.TestCase):
             ctx.__enter__.return_value=fake_playwright
             with patch.dict(sys.modules,{
                 "playwright":types.ModuleType("playwright"),
-                "playwright.sync_api":types.SimpleNamespace(sync_playwright=lambda:ctx)}), \\
-                patch("profile_actions.preserve_instagram_auth_page",return_value=True), \\
-                patch("profile_actions.challenge_detected",return_value=False), \\
-                patch("profile_actions.signed_in_handle",return_value="owner.name"), \\
-                patch("profile_actions.wait_required",return_value=0), \\
-                patch("profile_actions.batch_wait",return_value=0), \\
+                "playwright.sync_api":types.SimpleNamespace(sync_playwright=lambda:ctx)}), \
+                patch("profile_actions.preserve_instagram_auth_page",return_value=True), \
+                patch("profile_actions.challenge_detected",return_value=False), \
+                patch("profile_actions.signed_in_handle",return_value="owner.name"), \
+                patch("profile_actions.wait_required",return_value=0), \
+                patch("profile_actions.batch_wait",return_value=0), \
                 patch("profile_actions.perform_visible_action",side_effect=simulated_crash):
                 with self.assertRaises(Interruption):
                     robot._run()
