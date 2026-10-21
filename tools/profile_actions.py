@@ -1836,6 +1836,7 @@ class ActionRobot:
                        "issue": rows[u].get("issue", ""),
                        "message": rows[u].get("message", ""),
                        "safe_no_click": _preclick_no_action(rows[u]),
+                       "click_phase": (rows[u].get("click_intent") or {}).get("phase", ""),
                        "at": rows[u].get("at", "")}
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
@@ -1873,6 +1874,7 @@ class ActionRobot:
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
                               "message": rows[u].get("message", ""),
+                              "click_phase": (rows[u].get("click_intent") or {}).get("phase", ""),
                               "at": rows[u].get("at", "")} for u in self.targets]}
 
     def _record_readiness(self, username, phase, elapsed, limit, action_tabs):
@@ -2264,8 +2266,14 @@ class ActionRobot:
                                          "attempt_history": history,
                                          # Retain exact write-ahead phase trail
                                          # when the post-click result is saved.
-                                         **({"click_intent": previous_attempt["click_intent"]}
-                                            if previous_attempt.get("click_intent") else {})}
+                                         **({"click_intent": {
+                                               **previous_attempt["click_intent"],
+                                               "outcome_recorded": True,
+                                               "outcome_status": result,
+                                               "requires_manual_review": result not in
+                                                   ("ok", "already_not_following",
+                                                    "already_not_requested"),
+                                            }} if previous_attempt.get("click_intent") else {})}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
                     if action_tabs:
