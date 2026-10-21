@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 290; classified: 286; readable documents: 48; above read cap: 1; findings: 1.
+Tracked: 291; classified: 287; readable documents: 48; above read cap: 1; findings: 0.
 
 ## File roles
 
@@ -25,11 +25,10 @@ Tracked: 290; classified: 286; readable documents: 48; above read cap: 1; findin
 | test | 67 |
 | text_metadata | 2 |
 | web_ui | 7 |
-| workflow | 11 |
+| workflow | 12 |
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID e5e2f65c1d72250f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
