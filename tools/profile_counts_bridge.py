@@ -689,8 +689,9 @@ class Collector:
 
 def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                  *, developer_mode=False, audit_root=None):
-    # Developer twin is strictly read-only. Its separate local workspace cannot
-    # run Instagram jobs or alter production logs through the loopback API.
+    # Developer remains read-only by default. The ONLY relationship-changing
+    # path is exact-target owner-confirmed Developer action testing. This path
+    # writes canonical shared journals under a cross-process admission lease.
     if developer_mode:
         from developer_audit import run_audit, ai_prompt
         from developer_live_probe import DeveloperLiveProbe
