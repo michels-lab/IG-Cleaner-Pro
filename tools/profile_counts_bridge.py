@@ -922,6 +922,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # Native Windows launcher owns this server and pauses jobs before exit.
     server.actions = actions
     server.collector = collector
+    # The native host must also stop/await the Developer-only browser worker
+    # and action lease before closing the loopback server or app process.
+    server.dev_action_tests = dev_action_tests
+    server.live_probe = live_probe
     return server
 
 
