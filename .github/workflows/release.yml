@@ -93,6 +93,46 @@ jobs:
             --manifest desktop-visual-evidence/michelslab-manifest.json \
             --source-sha "$GITHUB_SHA" --platforms desktop --surfaces home,about
 
+  android-developer-qa:
+    # Product's separate Developer APK is a required FINAL stable artifact.
+    # It must actually launch and complete account/annotations/export checks
+    # on a real emulator, not merely compile with a disposable CI signer.
+    needs: release-request-gate
+    if: needs.release-request-gate.outputs.publish == 'true'
+    name: Install Android Developer APK; account, notes, JSON acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Validate separately governed Developer package and signing contract
+        run: python3 tests/developer-release-contract.py
+      - name: Enable emulator KVM
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Install BOTH public and Developer APKs, click real Account and export real note
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: bash tools/run_android_developer_ui.sh
+      - name: Preserve privacy-safe native Developer test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ig-cleaner-final-stable-developer-android-${{ github.sha }}
+          path: artifacts/android-developer/
+          retention-days: 30
+          if-no-files-found: warn
+
   windows-robot:
     needs: release-request-gate
     if: needs.release-request-gate.outputs.publish == 'true'
@@ -240,8 +280,8 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [release-request-gate, rendered-ui-qa, windows-robot]
-    if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success' && needs.windows-robot.result == 'success'
+    needs: [release-request-gate, rendered-ui-qa, windows-robot, android-developer-qa]
+    if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success' && needs.windows-robot.result == 'success' && needs.android-developer-qa.result == 'success'
     runs-on: ubuntu-latest
     env:
       IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
