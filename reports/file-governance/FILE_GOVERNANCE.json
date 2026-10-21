@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 11
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "300a9114e47c161808987b715fed75b537f316f4d942f854ed335b9d019cc69d",
-  "evidence_fingerprint": "fa35771ba115619861eace6fede198058df6a247cb49855cca2c2f44d8d6b8a4",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "a21562725cda7f028adeae0dd14c2ac9624d4934870a812d5b1a16925d96c567",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -238,7 +236,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "7f6b70348114387b9168653f3abf29abe92d9cee"
+      "blob": "528b2fb2d36217eaba6a74c4ced753ff0bb4533d"
     },
     {
       "path": "README.md",
@@ -2005,17 +2003,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "f8dfbc5ba10acee4",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/src/androidTest/java/com/michelslab/igcleaner/DeveloperEditionTest.java, tests/release-publisher-contract.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
