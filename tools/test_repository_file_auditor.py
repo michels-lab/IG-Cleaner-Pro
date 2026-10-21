@@ -57,24 +57,35 @@ class FileStewardTests(unittest.TestCase):
         summary=(self.root/"reports/file-governance/SUMMARY.json").read_text()
         self.assertNotIn("unsaved_personal_notes",summary)
         self.assertNotIn("README.md",summary)
-    def test_extensionless_openfoam_fields_and_timesteps(self):
+    def test_instacleaner_product_files_have_correct_roles(self):
         samples = {
-            "cases_controlled_buoyancy/B14/0/metal/T": "simulation_input",
-            "cases_buoyancy/B1/0/metal/T": "simulation_input",
-            "cases_buoyancy/B1/10/metal/T": "simulation_output",
-            "cleanproy/0/metal/T": "simulation_input",
-            "cleanproy/system/controlDict": "simulation_input",
-            "doctor_original/bcFourier/0/T": "simulation_input",
-            "freesurface/FS-C01/constant/g": "simulation_input",
-            "cases_controlled_buoyancy/B14/system/controlDict": "simulation_input",
-            "cases_controlled_buoyancy/B14/10/metal/T": "simulation_output",
-            "cases_controlled_buoyancy/B14/postProcessing/metal/T": "simulation_output",
-            "cases_controlled_buoyancy/B14/logs/CourantMax_0": "simulation_log",
-            "analysis_results/v15_v16_postpush_20261015/output.dat": "scientific_analysis",
+            "tools/profile_actions.py": "source",
+            "tools/ig_cleaner_desktop.py": "source",
+            "tests/test_action_click_wal.py": "test",
+            "desktop/ig_cleaner_pro_v120_27_synced_companion.html": "web_ui",
+            "android/app/src/main/AndroidManifest.xml": "config",
+            "release/distribution-manifest.json": "config",
+            "packaging/windows-installer/InstaCleanerPro.iss": "build_script",
+            "packaging/chrome-extension/manifest.json": "config",
+            ".github/workflows/profile-counts-windows-preview.yml": "workflow",
+            "docs/CURRENT_HANDOFF.md": "document",
         }
         for path, role in samples.items():
             with self.subTest(path=path):
                 self.assertEqual(audit.identify(path,{})[0], role)
+
+    def test_unrelated_extensionless_content_is_never_assumed_to_be_app_data(self):
+        self.assertEqual(audit.identify("unrelated_project/system/customDict",{})[0], "unknown")
+        self.assertEqual(audit.identify("unrelated_project/0/customField",{})[0], "unknown")
+
+    def test_windows_preview_pushes_only_for_product_changes(self):
+        workflow=(HERE.parent / ".github/workflows/profile-counts-windows-preview.yml").read_text()
+        push=workflow.split("  push:\n",1)[1].split("  pull_request:\n",1)[0]
+        self.assertIn("    paths:\n",push)
+        self.assertIn("'tools/profile_actions.py'",push)
+        self.assertIn("'desktop/ig_cleaner_pro_v120_27_synced_companion.html'",push)
+        self.assertNotIn("'tools/repository_file_auditor.py'",push)
+        self.assertNotIn("'tools/test_repository_file_auditor.py'",push)
     def test_android_backup_rules_not_disposable(self):
         self.assertEqual(audit.identify("android/app/src/main/res/xml/backup_rules.xml", {})[0], "config")
     def test_historical_is_not_assumed_obsolete(self):

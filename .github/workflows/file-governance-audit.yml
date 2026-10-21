@@ -3,6 +3,14 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '29 8 * * 2'
+  pull_request:
+    paths:
+      - 'tools/repository_file_auditor.py'
+      - 'tools/test_repository_file_auditor.py'
+      - '.michelslab/file-audit-policy.json'
+      - '.michelslab/agents/file-steward.md'
+      - '.github/workflows/file-governance-audit.yml'
+      - '.github/workflows/profile-counts-windows-preview.yml'
   push:
     branches: [main]
     paths:
@@ -32,6 +40,7 @@ jobs:
       - name: Enumerate all tracked paths, inspect documents and write local delta log
         run: python3 tools/repository_file_auditor.py --repo .
       - name: Commit only generated audit reports in this repository
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
