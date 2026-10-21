@@ -752,7 +752,12 @@ def _invalid_saved_action_record(record):
     if intent is None:
         return False
     phase = intent.get("phase") if isinstance(intent, dict) else None
-    return not isinstance(phase, str) or phase not in SAVED_CLICK_PHASES
+    if not isinstance(phase, str) or phase not in SAVED_CLICK_PHASES:
+        return True
+    # A terminal success cannot coexist with an unresolved write-ahead click.
+    # The journal is suspicious even if its recorded status says "ok".
+    return (status in {"ok", "already_not_following", "already_not_requested"}
+            and intent.get("outcome_recorded") is not True)
 
 
 def _public_action_record(record):
