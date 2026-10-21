@@ -46,15 +46,15 @@ class UpdateGuideContract(unittest.TestCase):
             readme,
         )
         claims = re.findall(
-            r"(?m)^\\*\\*Current published stable: (v\\d+\\.\\d+)\\. "
-            r"Next reserved version: (v\\d+\\.\\d+), not published\\.\\*\\*$",
+            r"(?m)^\*\*Current published stable: (v\d+\.\d+)\. "
+            r"Next reserved version: (v\d+\.\d+), not published\.\*\*$",
             readme,
         )
         self.assertEqual(claims, [(stable, reserved)])
         # Detect the historical stale one-line claim even if the valid
         # manifest-backed banner also exists elsewhere in the README.
         self.assertEqual(
-            re.findall(r"(?im)\\bcurrent published stable:\\s*(v\\d+\\.\\d+)", readme),
+            re.findall(r"(?im)\bcurrent published stable:\s*(v\d+\.\d+)", readme),
             [stable],
         )
         self.assertIn("Publication does not prove live Instagram Unfollow", readme)
