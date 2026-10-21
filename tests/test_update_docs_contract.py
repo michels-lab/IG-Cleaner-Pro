@@ -67,6 +67,24 @@ class UpdateGuideContract(unittest.TestCase):
             "Do not advertise the reserved version as published before promotion.",
         )
 
+    def test_published_stable_receipt_consumes_release_authorization(self):
+        """Disallow accidentally re-publishing an already shipped stable."""
+        policy = json.loads(MANIFEST.read_text(encoding="utf-8"))["releasePolicy"]
+        request = json.loads(
+            (ROOT / ".michelslab/release-request.json").read_text(encoding="utf-8")
+        )
+        if request.get("status") == "published":
+            self.assertIs(request.get("authorized"), False)
+            self.assertEqual(request.get("tag"), policy["currentStableRelease"])
+            self.assertEqual(request.get("published_run"), policy["lastPublishedRun"])
+            self.assertEqual(request.get("published_commit"), policy["lastPublishedCommit"])
+            self.assertEqual(request.get("published_at"), policy["lastPublishedAt"])
+            self.assertEqual(request.get("published_release_url"), policy["lastPublishedReleaseUrl"])
+            self.assertIn("/releases/tag/", request["published_release_url"])
+        else:
+            self.assertTrue(request.get("authorized"))
+            self.assertEqual(request.get("tag"), policy["nextRelease"])
+
     def test_profile_counts_guide_uses_release_feed_not_obsolete_stable_claim(self):
         guide = COUNTS_GUIDE.read_text(encoding="utf-8")
         self.assertIn("releasePolicy.currentStableRelease", guide)
