@@ -3,7 +3,7 @@
   "audit_kind": "deterministic_full_tracked_tree",
   "tracked_files_total": 285,
   "classified_files_total": 281,
-  "docs_content_inspected": 45,
+  "docs_content_inspected": 44,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -12,22 +12,23 @@
     "bitacora": 1,
     "build_script": 6,
     "config": 69,
+    "database_migration": 5,
+    "database_schema": 1,
     "document": 39,
-    "index": 6,
-    "license": 1,
+    "index": 5,
+    "installer_metadata": 1,
     "source": 38,
-    "test": 66,
-    "unknown": 8,
+    "test": 67,
+    "text_metadata": 2,
     "web_ui": 7,
     "workflow": 11
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "UNKNOWN_PURPOSE": 8
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "d4dcc57fecef650785d4a381da6ea75c04b4972936e93013c1c6c3eea0755230",
-  "evidence_fingerprint": "e5f510053d16a8bd6e6035f7bc15638ab67e5d4031934b80b19100ad65029234",
+  "finding_total": 1,
+  "inventory_fingerprint": "8b625d939b24cd691a5b5424622f9fb85ca86780a458d303e43297cf65a838d8",
+  "evidence_fingerprint": "b578d439203c6e23af6b306558644bb2c7053a61f0ec13f911901158b3ddcf27",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -220,9 +221,9 @@
     },
     {
       "path": "LICENSE.txt",
-      "role": "license",
-      "purpose": "licensing/notice",
-      "certainty": "rule",
+      "role": "text_metadata",
+      "purpose": "plain-text source/release/installer metadata; specific purpose inferred",
+      "certainty": "inferred",
       "blob": "8ca42838bc23d0ff5ff35b828cc0059350235fe9"
     },
     {
@@ -874,7 +875,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a221993fd57e097ed571f68eddf301d90e6362fe"
+      "blob": "f1f3a5600d26056c2ea4b9023787704ae910a1e9"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1144,9 +1145,9 @@
     },
     {
       "path": "packaging/profile-counts/README.txt",
-      "role": "index",
-      "purpose": "navigation/onboarding",
-      "certainty": "rule",
+      "role": "text_metadata",
+      "purpose": "plain-text source/release/installer metadata; specific purpose inferred",
+      "certainty": "inferred",
       "blob": "9cf28ce021c97940171fc88d0afc0e8b7f5b64ee"
     },
     {
@@ -1172,9 +1173,9 @@
     },
     {
       "path": "packaging/windows-installer/TaskbarPinning.txt",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "installer_metadata",
+      "purpose": "Windows taskbar installer configuration",
+      "certainty": "inferred",
       "blob": "c1eb67659ccb5125ba28eb5ff8671e47bdb7cb91"
     },
     {
@@ -1214,51 +1215,51 @@
     },
     {
       "path": "supabase/migrations/20261006_initialize_sync_schema.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
       "blob": "46717e9a0a522837e8ec5dcbfef3d8a113dd31ab"
     },
     {
       "path": "supabase/migrations/20261007_optimize_rls_policies.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
       "blob": "870105af67ad4bddb6fd83b0d9e611fd86240ab8"
     },
     {
       "path": "supabase/migrations/20261009_multi_instagram_workspaces.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
       "blob": "9a2c7b29c8762dae4ba10ed1ded51ee5b9bad519"
     },
     {
       "path": "supabase/migrations/20261010_delete_instagram_profiles.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
       "blob": "2b46e9799cd08c0d18d7c09991cc3053a2b718c8"
     },
     {
       "path": "supabase/migrations/20261011_profile_identity_and_summaries.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
       "blob": "4d2c4bb67558602eed45cb4da5706b2eadf03fff"
     },
     {
       "path": "supabase/schema.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "database_schema",
+      "purpose": "database schema/query source; verify against live DB separately",
+      "certainty": "inferred",
       "blob": "ab59546739d62ec177311cf3ddb31e3e7b11cc83"
     },
     {
       "path": "supabase/tests/rls_isolation.sql",
-      "role": "unknown",
-      "purpose": "function unknown: owner classification required",
-      "certainty": "unknown",
+      "role": "test",
+      "purpose": "SQL/RLS regression test; not evidence of execution",
+      "certainty": "inferred",
       "blob": "21c35fa069a8f834d0b947ca7faf77bb04d6bd79"
     },
     {
@@ -1910,7 +1911,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "91a1074a133e0f5fae6b23d37ab9f388d5a49f7c"
+      "blob": "50d28a76044b68d08461f77dca182750eaae8a92"
     },
     {
       "path": "tools/resolve_desktop_visual_artifact_dir.py",
@@ -1945,7 +1946,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "25289fb68d11ffe83b60dba0ea06bf7ece06a18d"
+      "blob": "bbec7d5a91fc96ac4915b703dc31ea7c075475f3"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",
@@ -1999,84 +2000,12 @@
   ],
   "findings": [
     {
-      "id": "cb6e9232d5887dbd",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/PENDING_BLOCK_ROBOT_RECOVERY_DEVELOPER_TWIN_2026-10-19.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "75348e30dd4d8d8b",
-      "code": "UNKNOWN_PURPOSE",
+      "id": "7a8eca742e89c1f6",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
-      "path": "packaging/windows-installer/TaskbarPinning.txt",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "a7e8967bf2ec6bf1",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/migrations/20261006_initialize_sync_schema.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "b23e5621a2a793f3",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/migrations/20261007_optimize_rls_policies.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "5d1d9476c55f5021",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/migrations/20261009_multi_instagram_workspaces.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "31f8270f8834f5d8",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/migrations/20261010_delete_instagram_profiles.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "75566a574ae94c74",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/migrations/20261011_profile_identity_and_summaries.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "521c56b57127249b",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/schema.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "07ae6e565c212eaf",
-      "code": "UNKNOWN_PURPOSE",
-      "severity": "review",
-      "path": "supabase/tests/rls_isolation.sql",
-      "observation": "No reliable purpose category from path",
-      "recommendation": "Declare role after reviewing usage",
+      "path": "PROJECT_LOG.md",
+      "observation": "7 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, tests/release-publisher-contract.py, tests/test_desktop_visual_artifact_resolution.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],

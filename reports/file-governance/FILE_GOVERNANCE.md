@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 285; classified: 281; readable documents: 45; above read cap: 1; findings: 9.
+Tracked: 285; classified: 281; readable documents: 44; above read cap: 1; findings: 1.
 
 ## File roles
 
@@ -16,27 +16,21 @@ Tracked: 285; classified: 281; readable documents: 45; above read cap: 1; findin
 | bitacora | 1 |
 | build_script | 6 |
 | config | 69 |
+| database_migration | 5 |
+| database_schema | 1 |
 | document | 39 |
-| index | 6 |
-| license | 1 |
+| index | 5 |
+| installer_metadata | 1 |
 | source | 38 |
-| test | 66 |
-| unknown | 8 |
+| test | 67 |
+| text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 11 |
 
 ## Findings (human review required)
 
-- **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/PENDING_BLOCK_ROBOT_RECOVERY_DEVELOPER_TWIN_2026-10-19.md. Next: Fix link or restore target (ID cb6e9232d5887dbd)
-- **REVIEW / UNKNOWN_PURPOSE** packaging/windows-installer/TaskbarPinning.txt: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 75348e30dd4d8d8b)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/migrations/20261006_initialize_sync_schema.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID a7e8967bf2ec6bf1)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/migrations/20261007_optimize_rls_policies.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID b23e5621a2a793f3)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/migrations/20261009_multi_instagram_workspaces.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 5d1d9476c55f5021)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/migrations/20261010_delete_instagram_profiles.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 31f8270f8834f5d8)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/migrations/20261011_profile_identity_and_summaries.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 75566a574ae94c74)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/schema.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 521c56b57127249b)
-- **REVIEW / UNKNOWN_PURPOSE** supabase/tests/rls_isolation.sql: No reliable purpose category from path. Next: Declare role after reviewing usage (ID 07ae6e565c212eaf)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 7 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, tests/release-publisher-contract.py, tests/test_desktop_visual_artifact_resolution.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 7a8eca742e89c1f6)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
-No saved review histories, action journals, audit logs or evidence may be deleted automatically.
+No historical science cases, audit logs or evidence may be deleted automatically.
