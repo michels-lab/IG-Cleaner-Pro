@@ -105,8 +105,10 @@ jobs:
         run: python3 tests/windows-automations-owner-contract.py
       - name: Validate Android production-signing contract
         run: python tests/android-signing-contract.py
-      - name: Validate generic release publisher
-        run: python tests/release-publisher-contract.py
+      - name: Validate generic release publisher and fail-closed Android co-install fixture
+        run: |
+          python tests/release-publisher-contract.py
+          python3 -m unittest discover -s tests -p 'test_android_signed_coinstall_runtime.py' -v
       - name: Validate current published update guidance against distribution manifest
         run: python3 -m unittest discover -s tests -p 'test_update_docs_contract.py' -v
       - name: Validate release-agent instructions use current source of truth
