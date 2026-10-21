@@ -38,7 +38,7 @@ class ActionLease:
                 # Closing/crashing releases it automatically. Unlike a named
                 # semaphore, it cannot remain at zero after an app crash.
                 if not os.fstat(fd).st_size:
-                    os.write(fd, b"\\0")
+                    os.write(fd, b"\0")
                 os.lseek(fd, 0, os.SEEK_SET)
                 msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
             else:
