@@ -1,3 +1,8 @@
+## 2026-10-21 — Owner correction: perspective roles are ChatGPT tools, not Copilot
+
+- New Perspective Council/Contrarian/User Advocate/Intelligence Architect contracts are now provider-neutral `.michelslab/agents/*.md` readable by the ChatGPT assistant. The four perspective-specific GitHub Copilot profiles introduced in error were removed while preexisting GitHub workflows/agents were preserved.
+- The master `tools/perspective_council.py` can prepare local prompts but does not execute models. No parallel AI execution, account mutation, robot operation, app build or release is claimed by this correction.
+
 ## 2026-10-21 — GRANADA #17 Windows two-lane Automation Center (isolated source candidate)
 
 - Issue [#176](https://github.com/michels-lab/IG-Cleaner-Pro/issues/176), branch `granada/p0-windows-automation-center-lanes-20261021`: refactored the real Automations landing structure into **permanent Analysis / Action lanes** with explicit status mirroring from the current Profile Counts and action robot, scoped responsive card layout, saved-cohort versus preferred next batch information, visible browser-admission warning, and a keyboard-accessible collapsible **Issue Review** containing the ORIGINAL issue filters and results (not a new journal or second action runner).
