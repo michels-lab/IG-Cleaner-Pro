@@ -743,11 +743,16 @@ SAVED_CLICK_PHASES = {"relationship_control", "unfollow_menu",
 
 def _invalid_saved_action_record(record):
     """A present unrecognized journal entry may conceal an irreversible click."""
-    if not isinstance(record, dict) or record.get("status") not in SAVED_ACTION_STATES:
+    if not isinstance(record, dict):
+        return True
+    status = record.get("status")
+    if not isinstance(status, str) or status not in SAVED_ACTION_STATES:
         return True
     intent = record.get("click_intent")
-    return intent is not None and (
-        not isinstance(intent, dict) or intent.get("phase") not in SAVED_CLICK_PHASES)
+    if intent is None:
+        return False
+    phase = intent.get("phase") if isinstance(intent, dict) else None
+    return not isinstance(phase, str) or phase not in SAVED_CLICK_PHASES
 
 
 def _public_action_record(record):
@@ -762,7 +767,7 @@ def _public_action_record(record):
 def _public_click_phase(record):
     intent = record.get("click_intent") if isinstance(record, dict) else None
     phase = intent.get("phase") if isinstance(intent, dict) else None
-    return phase if phase in SAVED_CLICK_PHASES else ""
+    return phase if isinstance(phase, str) and phase in SAVED_CLICK_PHASES else ""
 
 
 def _preclick_no_action(entry):
