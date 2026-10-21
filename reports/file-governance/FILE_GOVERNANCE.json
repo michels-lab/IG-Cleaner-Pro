@@ -23,10 +23,12 @@
     "web_ui": 7,
     "workflow": 11
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "77407c9cf09aa6c46b61334fb67afdc5dd908f50761651d588974391700247a2",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "29ea2fb4260a3d3d31206d8e7bbd93260be0eda6ea62080bb734b20b1e688d24",
+  "evidence_fingerprint": "33bfde253546cc3f9e7549afffe083c3465e56f88c4dde2566d1f2c488ace4cb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -208,7 +210,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "98e083fa02d61b0a9d3139ff5211dba4994ad652"
+      "blob": "456955b5f4c82e87dabf34f2c082b1daf8f37e8b"
     },
     {
       "path": "AGENTS.md",
@@ -1930,7 +1932,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a2e2dd275c8b272cee6c762f6edfd5d5566d7a2d"
+      "blob": "1369a4e6d1de4595876b07620b3161cb9ae654db"
     },
     {
       "path": "tools/resolve_desktop_visual_artifact_dir.py",
@@ -1965,7 +1967,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6019eea7ded1a67b43dfd3689b77bf2803f7409f"
+      "blob": "dd29fc514e35c47311babe66447c549d2e84ea64"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",
@@ -2024,7 +2026,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "e5e2f65c1d72250f",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
