@@ -35,6 +35,40 @@ class DeveloperAuditTest(unittest.TestCase):
             self.assertIn("uncaught_ui_errors", prompt)
             self.assertEqual(before, record_path.read_bytes())
 
+    def test_interrupted_click_aggregates_only_fixed_phases_without_identity(self):
+        with TemporaryDirectory() as directory:
+            root=Path(directory)
+            secret="SECRET_EXACT_INSTAGRAM_TARGET_883"
+            (root/"instagram-actions-a.json").write_text(json.dumps({
+                secret:{"status":"review","issue":"interrupted_action_uncertain",
+                        "click_intent":{"phase":"unfollow_menu",
+                                        "batch_id":"PRIVATE_BATCH_529",
+                                        "outcome_recorded":False},
+                        "message":"private journal result"},
+                "another.private.account":{"status":"ok",
+                    "click_intent":{"phase":"cancel_request_confirmation",
+                                    "outcome_recorded":True}},
+            }),encoding="utf-8")
+            report=run_audit(root)
+            self.assertEqual(report["interrupted_action_intents"],1)
+            self.assertEqual(report["click_phase_counts"],{"unfollow_menu":1})
+            self.assertEqual(report["issue_code_counts"],
+                             {"interrupted_action_uncertain":1})
+            findings={x["code"]:x["count"] for x in report["findings"]}
+            self.assertEqual(findings["INTERRUPTED_ACTION_INTENT"],1)
+            prompt=ai_prompt(report)
+            self.assertIn("INTERRUPTED_ACTION_INTENT",prompt)
+            self.assertIn("unfollow_menu",prompt)
+            self.assertNotIn(secret,json.dumps(report)+prompt)
+            self.assertNotIn("PRIVATE_BATCH_529",json.dumps(report)+prompt)
+            self.assertNotIn("another.private.account",json.dumps(report)+prompt)
+            compromised={**report,"click_phase_counts":{
+                "unfollow_menu":1,secret:999},
+                "interrupted_action_intents":True}
+            cleaned=json.loads(ai_prompt(compromised).split("\n\n",1)[1])["backend"]
+            self.assertEqual(cleaned["click_phase_counts"],{"unfollow_menu":1})
+            self.assertEqual(cleaned["interrupted_action_intents"],0)
+
     def test_corrupt_history_is_not_exception(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
