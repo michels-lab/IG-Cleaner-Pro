@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 284,
-  "classified_files_total": 280,
-  "docs_content_inspected": 44,
+  "tracked_files_total": 285,
+  "classified_files_total": 281,
+  "docs_content_inspected": 45,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -12,7 +12,7 @@
     "bitacora": 1,
     "build_script": 6,
     "config": 69,
-    "document": 38,
+    "document": 39,
     "index": 6,
     "license": 1,
     "source": 38,
@@ -26,7 +26,7 @@
     "UNKNOWN_PURPOSE": 8
   },
   "finding_total": 9,
-  "inventory_fingerprint": "7b293e946f97b81ad0a442f283f0b09317db41a0efbfd7ba73a521497349e4a8",
+  "inventory_fingerprint": "9e48f3307de9e40120e51ed0dffd57d1e86e27f8872df3a242151ed1a2acee26",
   "evidence_fingerprint": "e5f510053d16a8bd6e6035f7bc15638ab67e5d4031934b80b19100ad65029234",
   "files": [
     {
@@ -111,7 +111,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "88a8503d87246963bbcf991c07bf73570526e8ee"
+      "blob": "c5f9214c5c400e8bcb65fa8956f12031d2970bb6"
     },
     {
       "path": ".github/workflows/profile-counts-ci.yml",
@@ -125,7 +125,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b8fc9be98a17748db459c433744ef9cb1da48b3d"
+      "blob": "5b072239649e97b5558ba96e26384b2f3a53800c"
     },
     {
       "path": ".github/workflows/release-v12034.yml",
@@ -174,7 +174,7 @@
       "role": "agent",
       "purpose": "assistant role/instructions",
       "certainty": "rule",
-      "blob": "b1d01e48c04023ad108846e6f554987ed2fd56aa"
+      "blob": "597812095c7641028d626a3c09a178c37e3a9317"
     },
     {
       "path": ".michelslab/agents/intelligence-architect.md",
@@ -1022,6 +1022,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "543c02a9b9902b081759f96cc0271cb2c796167d"
+    },
+    {
+      "path": "docs/GRANADA_23_FILE_STEWARD_INSTA_SCOPE_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "7f8f9818879c4904aa95449518c6b580a9a9eb29"
     },
     {
       "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
@@ -1903,7 +1910,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "5233e1e0466ce9bf333e24177d66e21b7d8fef84"
+      "blob": "91a1074a133e0f5fae6b23d37ab9f388d5a49f7c"
     },
     {
       "path": "tools/resolve_desktop_visual_artifact_dir.py",
@@ -1938,7 +1945,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "de43a587db0cf63a8dbe1045e00a81704b4a0d75"
+      "blob": "312a89368f703d31de9799bcc561ee9783d4618f"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",

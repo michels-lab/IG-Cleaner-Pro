@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 284; classified: 280; readable documents: 44; above read cap: 1; findings: 9.
+Tracked: 285; classified: 281; readable documents: 45; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -16,7 +16,7 @@ Tracked: 284; classified: 280; readable documents: 44; above read cap: 1; findin
 | bitacora | 1 |
 | build_script | 6 |
 | config | 69 |
-| document | 38 |
+| document | 39 |
 | index | 6 |
 | license | 1 |
 | source | 38 |
@@ -39,4 +39,4 @@ Tracked: 284; classified: 280; readable documents: 44; above read cap: 1; findin
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
-No historical science cases, audit logs or evidence may be deleted automatically.
+No saved review histories, action journals, audit logs or evidence may be deleted automatically.
