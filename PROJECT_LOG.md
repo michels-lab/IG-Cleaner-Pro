@@ -1,3 +1,10 @@
+## 2026-10-20 — GRANADA P0 Developer mainline MERGED, exact-head CI green (no v120.55 release)
+
+- PR [#179](https://github.com/michels-lab/IG-Cleaner-Pro/pull/179) **MERGED**, merge commit `614071e11c66e6258c88b790ab63bcf186056578`; preserves merged ten-tab-wave PR #177 and batch 40→10 / Cancel Pending source fixes #174/#175. Conflicting older Developer draft #178 CLOSED as superseded.
+- Exact source head `526a0481b8606cdfea03216cb4aec8f10e0f34fe` had **5/5 relevant CI SUCCESS** (integrated Windows Setup + independent Developer Windows installer install/smoke/uninstall, Profile Counts, Desktop rendered, Android Developer runtime, Android About). Generic CI SKIPPED. Developer CI initially failed two brittle test assumptions (fixed in final exact-head run).
+- Developer has a scoped local diagnostic chat with owner annotations and a manual Copy for ChatGPT handoff. Separate Windows-only opt-in 1–10 exact-target real Unfollow/Cancel Pending test uses explicit consent, existing action robot, canonical journal and isolated Developer Chrome. **No actual owner Instagram relationship was changed/tested by us.** Free-text chat alone cannot execute mutation.
+- **Still OPEN:** signed independently downloadable Android `.developer` APK in governed release; official publisher and checksum manifest inclusion of both Developer assets; owner live Instagram installed acceptance of actions; explicit owner v120.55 publication authorization. Windows Developer Setup exists as green CI-built preview but **not** an officially published release asset. Official latest stable remains **v120.54**.
+
 ## 2026-10-20 — GRANADA merged ten-tab robot waves + candidate Developer real-action QA
 
 - Source verified merged PR #177 as `0de1ac78d9d09bff3a7c79136ccc498d3ad2ac43`: full 10-tab waves (open all targets, focus first, execute + verify, close confirmed, then next full wave), including 40-profile/four-wave fake-Chrome regression, protected/uncertain/no-replay rules and Windows installed CI. This is **source merged**, NOT officially published v120.55 or live owner Instagram tested.
