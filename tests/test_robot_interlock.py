@@ -87,9 +87,9 @@ class JournalInterlockTests(unittest.TestCase):
                 with self.assertRaisesRegex(ActionSessionBusy, "Another public/Developer"):
                     developer.start(payload("second.test", "other-account"))
                 self.assertEqual(developer.owner, "", "Denied Developer must not rebind its account")
-                self.assertFalse(canonical.joinpath(
-                    "instagram-action-admission.lock").exists(),
-                    "No unrelated admission side-effects expected")
+                self.assertTrue(canonical.joinpath(
+                    ".instagram-action-admission.lock").exists(),
+                    "The lockfile is retained without resetting the action journal.")
             finally:
                 stop.set()
                 if public.worker:
