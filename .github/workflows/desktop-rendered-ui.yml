@@ -49,6 +49,8 @@ jobs:
           node tests/desktop-standalone-smoke.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Verify actual Desktop Chromium file-to-localhost Profile Counts bridge
         run: node tests/profile-counts-browser-e2e.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
+      - name: Verify GRANADA Windows Analysis/Action command center in real Chromium
+        run: node tests/automation-center-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Click Switch Accounts and restore a separate saved login in Chromium
         run: node tests/auth-account-switch-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Capture real compact and wide Desktop visual tests from built artifact
@@ -71,6 +73,8 @@ jobs:
         if: always()
         with:
           name: ig-cleaner-real-desktop-ui-${{ github.sha }}
-          path: artifacts/desktop-visual/
+          path: |
+            artifacts/desktop-visual/
+            artifacts/automation-center/
           retention-days: 30
           if-no-files-found: warn

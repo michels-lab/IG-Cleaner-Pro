@@ -3732,18 +3732,46 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     </div>
 </div></div></div><div class="page" id="page-automations"><div class="igc-page-flow">
 <div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage every Instagram robot in one workspace. Insights is for analysis; Mutuals remains human-only Focus.</p></div>
-<div class="panel" id="igcAutomationsOverview">
-<div class="title">Automation Center · All Robots</div>
-<p class="note">Run and inspect all Instagram robots here, including every Profile Counts record. Insights is reserved for account-wide analytics. Only one robot may navigate Instagram at a time; local analysis is independent.</p>
-<div class="btnrow" id="igcAutomationRobotNav">
-<button class="btn primary" type="button" onclick="document.getElementById('igcAutomationsProfileCountsPanel').scrollIntoView({behavior:'smooth',block:'start'})">◎ Profile Counts</button>
-<button class="btn" type="button" onclick="igcAutoChoose('cancel');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Cancel Pending Requests</button>
-<button class="btn" type="button" onclick="igcAutoChoose('unfollow');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Unfollow</button>
-<button class="btn" type="button" onclick="igcAutoChoose('audit');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Followback Audit (optional)</button>
+<style id="igc-automation-center-style">
+/* Scoped Automation Center layout: no global theme or saved-state overrides. */
+#page-automations .igc-robot-lanes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:18px}
+#page-automations .igc-robot-lane{min-width:0;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--surface2);display:flex;flex-direction:column;gap:9px}
+#page-automations .igc-robot-lane h3{font-size:1.09rem;margin:0;line-height:1.35;overflow-wrap:anywhere}
+#page-automations .igc-robot-lane-label{font-size:.75rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
+#page-automations .igc-robot-lane-status{font-size:.88rem;line-height:1.5;overflow-wrap:anywhere;white-space:normal;flex:1;margin:0}
+#page-automations .igc-robot-lane .btnrow{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+#page-automations .igc-robot-lane .btn{min-height:37px;max-width:100%;white-space:normal}
+#page-automations .igc-robot-safety{margin:0 0 18px;line-height:1.55}
+#page-automations .igc-robot-section{min-width:0}
+#page-automations .igc-robot-section > .panel{min-width:0}
+#page-automations .igc-robot-review{margin-top:14px;min-width:0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+#page-automations .igc-robot-review > summary{cursor:pointer;display:list-item;padding:13px 16px;font-weight:650;background:var(--surface2);list-style-position:inside;overflow-wrap:anywhere}
+#page-automations .igc-robot-review[open] > summary{border-bottom:1px solid var(--border)}
+#page-automations .igc-robot-review > .panel{margin:0!important;border:0;border-radius:0}
+#page-automations .igc-robot-review > summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+@media(max-width:800px){#page-automations .igc-robot-lanes{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){#page-automations .igc-robot-lane{padding:13px}#page-automations .igc-robot-lane .btnrow .btn{flex:1 1 130px}}
+</style>
+<div class="igc-robot-lanes" id="igcAutomationCommandCenter" aria-label="Robot command center">
+<section class="igc-robot-lane" id="igcAutomationAnalysisLane" aria-labelledby="igcAutomationAnalysisTitle">
+<div class="igc-robot-lane-label">01 / Analysis · No relationship clicks</div>
+<h3 id="igcAutomationAnalysisTitle">Profile Counts &amp; read-only inspection</h3>
+<p class="igc-robot-lane-status" id="igcAutomationAnalysisStatus" role="status" aria-live="polite">Checking local Profile Counts connection…</p>
+<div class="btnrow"><button class="btn primary" type="button" onclick="document.getElementById('igcAutomationsProfileCountsPanel').scrollIntoView({behavior:'smooth',block:'start'})">Open Analysis</button>
+<button class="btn" type="button" onclick="igcAutoChoose('audit');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Followback audit (read-only)</button></div>
+</section>
+<section class="igc-robot-lane" id="igcAutomationActionLane" aria-labelledby="igcAutomationActionTitle">
+<div class="igc-robot-lane-label">02 / Action · Explicit owner approval</div>
+<h3 id="igcAutomationActionTitle">Unfollow &amp; Cancel Pending</h3>
+<p class="igc-robot-lane-status" id="igcAutomationActionStatus" role="status" aria-live="polite">Checking local action robot…</p>
+<p class="note" id="igcAutomationBatchSummary">Next batch preference: loading. Saved cohorts are kept separately.</p>
+<div class="btnrow"><button class="btn primary" type="button" onclick="document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Open Actions</button></div>
+</section>
 </div>
-</div>
+<p class="note igc-robot-safety" id="igcAutomationConcurrencyNotice"><strong>Browser session safety:</strong> Profile Counts and relationship-changing robots cannot navigate Instagram simultaneously in the current Windows runtime. Finish or pause one before starting the other. Local-only analysis and saved results remain available. Do not retry an uncertain click.</p>
+<section class="igc-robot-section" id="igcActionRobotSection" aria-labelledby="igcActionLaneTitle">
 <div class="panel" id="igcAutoPanel">
-<div class="title">Account Action Robots · Local Chrome</div>
+<div class="title" id="igcActionLaneTitle">Account Action Robots · Local Chrome</div>
 <p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
 <div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Unfollow · Not Following Back</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancel Sent Requests</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Protected Profiles</button><button type="button" class="btn" onclick="igcAutoChoose('audit')">🔎 Verify Followback (Optional)</button></div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
@@ -3787,7 +3815,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow"><button type="button" class="btn" onclick="showPage('pendingRequests')">Review Pending manually</button>
 <button type="button" class="btn" onclick="showPage('list')">Review Following manually</button></div></div>
 <progress id="igcAutoProgress" max="100" value="0" style="width:100%;height:12px;accent-color:var(--accent)" aria-label="Batch progress"></progress>
-<div class="panel" id="igcAutoIssuesPanel" style="margin-top:14px" aria-label="Issue Review">
+<details class="igc-robot-review" id="igcAutoReviewDrawer"><summary>Issue Review · <span id="igcAutoReviewCaption">Expand to inspect saved exceptions</span></summary>
+<div class="panel" id="igcAutoIssuesPanel" aria-label="Issue Review">
 <div class="title">Issue Review <span id="igcAutoIssueTotal" class="note" aria-live="polite">0</span></div>
 <p id="igcAutoIssueStatus" class="note" role="status" aria-live="polite">Unexpected relationships and missing evidence will appear here for manual review.</p>
 <div class="btnrow">
@@ -3804,7 +3833,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div style="overflow:auto;max-height:420px"><table class="igc-counts-table" style="width:100%;min-width:0;table-layout:fixed;text-align:left">
 <thead><tr><th style="width:20%">Profile</th><th style="width:57%">Reason / Result</th><th style="width:23%">Actions</th></tr></thead>
 <tbody id="igcAutoIssueRows"></tbody></table></div>
-</div>
+</div></details>
 <div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
 <div class="btnrow" style="align-items:center;gap:8px;margin-top:8px">
  <button class="btn" type="button" onclick="igcAutoPageMove(-1)">← Previous</button>
@@ -3813,8 +3842,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <p class="note">Skip excludes a profile from the current batch; protection persists until removed. Mutuals are human-only Focus lists, never automated account changes.</p>
 </div>
+</section>
+<section class="igc-robot-section" id="igcAnalysisRobotSection" aria-labelledby="igcAnalysisLaneTitle">
 <div class="panel" id="igcAutomationsProfileCountsPanel">
-<div class="title">◎ Profile Counts Robot · Local Chrome</div>
+<div class="title" id="igcAnalysisLaneTitle">◎ Profile Counts Robot · Local Chrome</div>
 <p class="note">Every part of Profile Counts is here: collect, pace, monitor, inspect individual Followers / Following values and export the results. Insights is for account-wide analyses only. No new Following export is required.</p>
 <div id="igcCountsRobotBridge" class="igc-counts-robot" style="padding:12px;border:1px solid var(--border);border-radius:12px;margin:12px 0;background:var(--surface2)">
 <strong>Automatic Instagram profile collection</strong>
@@ -3899,6 +3930,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div class="note" id="igcCountsFootnote"></div>
 </div>
+</section>
 </div></div><div class="page" id="page-profileStats">
 
 
@@ -15872,6 +15904,43 @@ for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap"]){
 }
 if(actionBridge&&typeof setInterval==="function")
  setInterval(()=>{if(!document.hidden)window.igcAutoPoll()},5000);
+})();
+</script>
+
+<script id="igc-automation-command-center-runtime">
+(function(){
+'use strict';
+// Read only authoritative UI/status nodes. Do not create parallel batch state,
+// new robot actions, storage keys, or polling intervals.
+const get=id=>document.getElementById(id);
+function refresh(){
+ const action=get('igcAutoLiveStatus'),analysis=get('igcCountsRobotStatus');
+ const actionCard=get('igcAutomationActionStatus'),analysisCard=get('igcAutomationAnalysisStatus');
+ if(actionCard&&action)actionCard.textContent=action.textContent||'Robot status not available.';
+ if(analysisCard&&analysis)analysisCard.textContent=analysis.textContent||'Robot status not available.';
+ const batch=get('igcAutoBatch'),batchInfo=get('igcAutoBatchApprovalDetails'),summary=get('igcAutomationBatchSummary');
+ if(summary){
+  const pref=batch&&/^[0-9]+$/.test(String(batch.value))?batch.value:'not selected';
+  const approval=get('igcAutoBatchApproval');
+  summary.textContent='Next batch preference: '+pref+
+   (approval&&approval.style.display!=='none'&&batchInfo&&batchInfo.textContent
+     ? ' · Saved cohort: '+batchInfo.textContent : ' · Existing saved cohorts are never resized automatically.');
+ }
+ const issues=get('igcAutoIssueTotal'),caption=get('igcAutoReviewCaption');
+ if(caption&&issues)caption.textContent=issues.textContent||'No issue results yet';
+}
+window.igcAutomationCommandCenterRefresh=refresh;
+for(const id of ['igcAutoLiveStatus','igcCountsRobotStatus','igcAutoBatchApprovalDetails',
+                 'igcAutoIssueTotal','igcAutoBatchApproval']){
+ const element=get(id);
+ if(element&&typeof MutationObserver!=='undefined')
+  new MutationObserver(refresh).observe(element,{childList:true,characterData:true,subtree:true,
+                                               attributes:id==='igcAutoBatchApproval',
+                                               attributeFilter:id==='igcAutoBatchApproval'?['style']:undefined});
+}
+const batch=get('igcAutoBatch');
+if(batch)batch.addEventListener('input',refresh);
+refresh();
 })();
 </script>
 
