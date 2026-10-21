@@ -41,6 +41,11 @@ for token in (
     "bash tools/run_android_developer_ui.sh",
     "ig-cleaner-final-stable-developer-android-",
     'tools/verify_android_visual_release_evidence.py',
+    'tools/resolve_desktop_visual_artifact_dir.py',
+    'EVIDENCE_DIR="$(python3 tools/resolve_desktop_visual_artifact_dir.py --artifact desktop-visual-evidence)"',
+    '--artifact "$EVIDENCE_DIR"',
+    '--html "$EVIDENCE_DIR/IG-Cleaner-Pro-standalone-rebuilt.html"',
+    '--manifest "$EVIDENCE_DIR/michelslab-manifest.json"',
     'gh run download',
     '--commit "$GITHUB_SHA"',
 ):
