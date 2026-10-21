@@ -6,6 +6,14 @@
 - **Source not merged/published;** screenshots/tests added but exact-head conclusions must be inspected before declaring PASS. No actual owner's Instagram action, machine install or independent concurrent browser session established by source changes. v120.54 stays last official stable; v120.55 unauthorized. Detailed handoff: `docs/GRANADA_17_WINDOWS_AUTOMATION_CENTER_2026-10-21.md`. Separate Developer PR #183 and English PR #143 untouched.
 - The complete issue #176 remains open for remaining information-architecture consolidation and proven safe analysis/action concurrency; issue #172 live action reliability remains open.
 
+## 2026-10-21 — GRANADA P0 Developer read-only pending-cohort diagnostics (isolated source candidate)
+
+- Branch `granada/p0-developer-cohort-forensics-20261021`, scoped to `tools/developer_audit.py`, `tests/test_developer_audit.py`, documentation. Original Windows Unfollow/Cancel executor, Chrome sessions, persisted account journals, private identifiers and releases were **not** modified.
+- Fixed Developer audit false positives: a deferred cohort is no longer counted as pending approval; an error row with any saved click-intent cannot be labeled `RETRYABLE_ZERO_CLICK` even if its message resembles a pre-click failure. Malformed click-intent and unrelated/unreadable journals fail closed.
+- Aggregate matching-scope saved batch diagnostics now distinguish untouched, proven pre-click, uncertain, recorded terminal, unreadable/missing journal, and read-only recheck evidence; all identifiers remain local and absent from AI exports. Cases with attempts but zero recorded terminals produce an explicit, non-actionable diagnostic warning rather than suggested repeated Run.
+- Added regression tests for historical 40-like pending cohorts, deferred records, journal scoping/missing journal, malformed or duplicated targets, click-intent masking and redaction; see `docs/GRANADA_16_DEVELOPER_COHORT_FORENSICS_2026-10-21.md`.
+- **Validation:** tests committed but same-SHA CI still to be checked; no claim of local Python/Windows execution, live Instagram action, merge, stable binary, or v120.55 release. P0 issue #172 owner live actions and #176 dual-lane UI stay open; v120.54 is latest authorized stable.
+
 ## 2026-10-21 — GRANADA P0 durable pre-click no-replay WAL MERGED; v120.54 still stable
 
 - [PR #182](https://github.com/michels-lab/IG-Cleaner-Pro/pull/182) **MERGED into main** at `1a7a9301c5fefaa630c48205c70fdb620d621f90` (tested source SHA `6f32854881fb5b1b21857fe2d1bf2177e94d6d26`).

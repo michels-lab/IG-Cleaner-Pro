@@ -6,6 +6,12 @@
 - **Source not merged/published;** screenshots/tests added but exact-head conclusions must be inspected before declaring PASS. No actual owner's Instagram action, machine install or independent concurrent browser session established by source changes. v120.54 stays last official stable; v120.55 unauthorized. Detailed handoff: `docs/GRANADA_17_WINDOWS_AUTOMATION_CENTER_2026-10-21.md`. Separate Developer PR #183 and English PR #143 untouched.
 - The complete issue #176 remains open for remaining information-architecture consolidation and proven safe analysis/action concurrency; issue #172 live action reliability remains open.
 
+## 2026-10-21 — GRANADA Developer pending-cohort forensics: separate candidate, no release
+
+- Source branch `granada/p0-developer-cohort-forensics-20261021` isolates diagnostic-only work from recent merged WAL #182 and open Desktop English PR #143. Scope: `tools/developer_audit.py`, Developer regression tests and docs; no production action worker or live account mutation.
+- Corrects deferred cohort false pending counts and unsafe diagnostic classification of click-intent records as retriable pre-click failures. Exact matching journal+batch aggregate provides untouched, safe pre-click, uncertain, saved terminal, missing-journal and read-only observation counts without exporting identities. Explicit warning when attempted profiles have zero saved terminals.
+- Tests are added, **not yet executed**; inspect PR same-SHA CI before integration. Live owner Instagram remains unverified; official v120.54 stable / v120.55 unauthorized. Detailed gate and reentry: `docs/GRANADA_16_DEVELOPER_COHORT_FORENSICS_2026-10-21.md`.
+
 ## 2026-10-21 — GRANADA P0 durable pre-click no-replay WAL MERGED; v120.54 still stable
 
 - [PR #182](https://github.com/michels-lab/IG-Cleaner-Pro/pull/182) **MERGED into main** at `1a7a9301c5fefaa630c48205c70fdb620d621f90` (tested source SHA `6f32854881fb5b1b21857fe2d1bf2177e94d6d26`).
