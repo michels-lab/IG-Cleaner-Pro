@@ -1,3 +1,11 @@
+## 2026-10-21 — GRANADA P0 source: interrupted-click write-ahead safety (PR #182, release NOT authorized)
+
+- [PR #182](https://github.com/michels-lab/IG-Cleaner-Pro/pull/182) implements a **fsynced, atomic write-ahead record BEFORE any Instagram relationship-control click**: first Following/Requested control, Unfollow menu, private confirmation and Cancel Request confirmation. Each stage is bound to owner/account/task, exact approved batch ID and target, with explicit phase history; failures to save the barrier prevent the action click.
+- An unexpected exit after preparing/sending a click but before the verified result leaves `status=review`, `issue=interrupted_action_uncertain`, `click_intent.phase` in the canonical journal. On startup, this target is **not** a proven no-click, is excluded from auto-replay and instead available for manual/read-only inspection; no automatic success is counted.
+- Final confirmed result retains the intent/phase trail and sets `outcome_recorded=true`. Owner's Issue Review gains a dedicated "Interrupted / possible click" filter, last armed click phase and recovery explanation. Developer's original shared canonical journal and cross-process lock remain authoritative.
+- New offline regression suite `tests/test_action_click_wal.py` covers process loss before first click and after Unfollow menu click, actual ActionRobot worker wiring, both task stages, duplicate phase, disk write denial, true no-click and prior-history retention. Linux Profile Counts, installed Windows preview and official manual publisher all require this suite; separate JS Issue Review filtering assertion added.
+- **Validation status:** PR checks requested/running; this note records source candidate rather than falsely asserting green before finished. Latest official download is **v120.54**; no v120.55 authorization, asset upload or live Instagram owner action. Power-failure/hardware-storage behavior cannot be proven by simulated CI: claims limited to write ordering and crash restart semantics.
+
 ## 2026-10-20 — GRANADA P0: public/Developer cross-process Instagram action interlock MERGED (no release)
 
 - [PR #181](https://github.com/michels-lab/IG-Cleaner-Pro/pull/181) **MERGED main** at `4f8b4b9f17e26c71b32203c301ae404ec655a071`, source head `ec00a2cc302d83ebf8992ade741ac9730a86033b`.

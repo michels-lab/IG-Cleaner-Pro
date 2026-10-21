@@ -3792,7 +3792,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p id="igcAutoIssueStatus" class="note" role="status" aria-live="polite">Unexpected relationships and missing evidence will appear here for manual review.</p>
 <div class="btnrow">
 <label>Task <select id="igcAutoIssueTask" onchange="igcAutoRenderIssues()"><option value="unfollow">Not Following Back</option><option value="cancel">Sent Requests</option><option value="audit">Followback Audit</option></select></label>
-<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="missing_profile_info">Missing evidence</option><option value="profile_load_timeout">Profile still loading / timed out</option></select></label>
+<label>Show <select id="igcAutoIssueFilter" onchange="igcAutoRenderIssues()"><option value="pending">Not reviewed</option><option value="all">All</option><option value="reviewed">Reviewed</option><option value="unexpected_followback">Unexpected followback</option><option value="pending_already_following">Request already accepted</option><option value="pending_cancel_unverified">Cancellation not confirmed</option><option value="interrupted_action_uncertain">Interrupted / possible click</option><option value="missing_profile_info">Missing evidence</option><option value="profile_load_timeout">Profile still loading / timed out</option></select></label>
 <input id="igcAutoIssueSearch" type="search" placeholder="Find @username in issues" oninput="igcAutoRenderIssues()" style="flex:1;min-width:160px">
 </div>
 <style>
@@ -15442,6 +15442,7 @@ const issueLabels={
  pending_already_following:"Stale request: now following",
  pending_not_requested:"Not a pending request anymore",
  pending_cancel_unverified:"Cancellation click sent; status not confirmed after read-only refresh",
+ interrupted_action_uncertain:"Interrupted before result was saved; click MAY have occurred — never auto-retry",
  mutual_before_action:"This account follows you; no unfollow action was taken",
  missing_profile_info:"Instagram control not found; no action clicked",
  profile_load_timeout:"Timed out waiting for Instagram to load the requested control; no click",
@@ -15496,11 +15497,16 @@ window.igcAutoRenderIssues=function(){
     (issueLabels[issue.issue]||"Review required");
   reason.appendChild(heading);
   const detail=document.createElement("div");detail.className="note";
-  detail.textContent=issue.message||issue.status||"";
+  detail.textContent=(issue.message||issue.status||"")+(issue.click_phase?" · Last armed click phase: "+issue.click_phase.replaceAll("_"," "):"");
   reason.appendChild(detail);
   if(selected==="cancel"&&issue.issue==="pending_cancel_unverified"){
    const recovery=document.createElement("div");recovery.className="note";
    recovery.textContent="The click may have succeeded. Open the profile to inspect Follow / Requested; do not re-run Cancel Request automatically.";
+   reason.appendChild(recovery);
+  }
+  if(issue.issue==="interrupted_action_uncertain"){
+   const recovery=document.createElement("div");recovery.className="note";
+   recovery.textContent="Windows may have stopped between writing a pre-click intent and saving Instagram's outcome. No automatic retry is allowed. Use read-only profile inspection and the saved action journal to verify this account before proceeding.";
    reason.appendChild(recovery);
   }
   if(issue.issue==="profile_load_timeout"){

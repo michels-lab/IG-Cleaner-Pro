@@ -5,6 +5,7 @@ on:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
+      - 'tests/test_action_click_wal.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -33,6 +34,7 @@ on:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
+      - 'tests/test_action_click_wal.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -63,6 +65,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
       - name: GRANADA cross-process public/Developer action guard and crash recovery
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
+      - name: GRANADA durable write-ahead click intent and no-replay on power loss
+        run: python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
       - name: GRANADA ten-tab waves with verified-close safety
         run: python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
       - name: GRANADA verify persisted visit and rest journal integrity
