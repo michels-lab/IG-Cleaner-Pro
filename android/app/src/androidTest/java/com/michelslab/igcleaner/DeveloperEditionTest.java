@@ -100,10 +100,42 @@ public class DeveloperEditionTest {
             // inside one evaluateJavascript() is racy: WebView may respond
             // null if a screen transition invalidates the pending callback,
             // even when the button's action completed successfully.
-            js(scenario, "document.getElementById('igcDevAccount').click();true");
-            untilJsTrue(scenario,
-                "(function(){return !!document.querySelector('#page-sync.active')})()",
-                "Developer Account navigation did not activate the real sign-in screen");
+            // Exercise the owner-visible button first. Capture ONLY route
+            // ids/boolean state (never login inputs, session tokens, or cookies).
+            // A WebView evaluateJavascript callback returning true alone does
+            // not prove the click handler actually opened the account view.
+            String clickEvidence = js(scenario,
+                "(function(){try{var b=document.getElementById('igcDevAccount');"+
+                "if(!b)return 'MISSING_BUTTON';"+
+                "b.click();var p=document.querySelector('.page.active');"+
+                "return JSON.stringify({button:true,sync:!!document.getElementById('page-sync'),"+
+                "active:p?p.id:null,showPage:typeof window.showPage})"+
+                "}catch(e){return 'CLICK_EXCEPTION:'+String(e&&e.name||'Error')+':'+String(e&&e.message||'')}})()");
+            assertFalse("Developer Account button was not mounted: "+clickEvidence,
+                clickEvidence.contains("MISSING_BUTTON"));
+            assertFalse("Developer Account click handler raised: "+clickEvidence,
+                clickEvidence.contains("CLICK_EXCEPTION"));
+            try {
+                untilJsTrue(scenario,
+                    "(function(){return !!document.querySelector('#page-sync.active')})()",
+                    "Developer Account navigation did not activate the real sign-in screen");
+            } catch (AssertionError navigationFailure) {
+                // This probe is read-only: it cannot accidentally "fix" a broken
+                // button by invoking showPage itself. It distinguishes sync
+                // injection, active-screen collision and stale page navigation.
+                String diagnostic = js(scenario,
+                    "(function(){var p=document.querySelector('.page.active');"+
+                    "var sync=document.getElementById('page-sync');"+
+                    "var btn=document.getElementById('igcDevAccount');"+
+                    "return JSON.stringify({ready:document.readyState,"+
+                    "syncExists:!!sync,syncActive:!!sync&&sync.classList.contains('active'),"+
+                    "activePage:p?p.id:null,buttonExists:!!btn,"+
+                    "developerPanel:!!document.getElementById('igcDevConsole'),"+
+                    "showPageType:typeof window.showPage})})()");
+                fail(navigationFailure.getMessage()+
+                    "; immediately after click: "+clickEvidence+
+                    "; safe WebView route diagnostic: "+diagnostic);
+            }
             js(scenario, "window.showPage('automations');true");
             untilJsTrue(scenario,
                 "(function(){return !!document.querySelector('#page-automations.active')})()",
