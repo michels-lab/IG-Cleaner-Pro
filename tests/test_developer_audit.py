@@ -194,6 +194,8 @@ class DeveloperAuditTest(unittest.TestCase):
                 "null_click_ok": {"status": "ok", "click_intent": None},
                 "unrecognized_phase": {"status": "ok", "click_intent": {
                     "phase": "unexpected_private_action", "outcome_recorded": True}},
+                "list_phase": {"status": "ok", "click_intent": {
+                    "phase": ["nonhashable"], "outcome_recorded": True}},
                 "safe_block": {"status": "blocked", "message": no_click},
                 "valid_terminal": {"status": "already_not_following",
                                    "message": "Already not following: exact profile."},
@@ -208,11 +210,11 @@ class DeveloperAuditTest(unittest.TestCase):
             original_bytes, cohort_bytes = original.read_bytes(), cohorts.read_bytes()
 
             report = run_audit(root)
-            self.assertEqual(report["pending_batch_targets"], 11)
+            self.assertEqual(report["pending_batch_targets"], 12)
             self.assertEqual(report["pending_batch_untouched"], 1)
             self.assertEqual(report["pending_batch_safe_preclick"], 1)
             self.assertEqual(report["pending_batch_recorded_terminals"], 1)
-            self.assertEqual(report["pending_batch_uncertain"], 8)
+            self.assertEqual(report["pending_batch_uncertain"], 9)
             findings = {f["code"]: f["count"] for f in report["findings"]}
             self.assertEqual(findings["INVALID_ACTION_RECORD"], 2)
             self.assertEqual(findings["BATCH_UNCERTAIN_ACTIONS"], 1)
