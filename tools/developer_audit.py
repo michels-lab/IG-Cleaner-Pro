@@ -13,12 +13,15 @@ import json
 from pathlib import Path
 import re
 
-ACTION_STATES = {"ok", "already_not_following", "review", "error", "blocked"}
+ACTION_STATES = {"ok", "already_not_following", "already_not_requested", "review", "error", "blocked"}
+CLICK_PHASES = {"relationship_control", "unfollow_menu",
+                "private_unfollow_confirmation", "cancel_request_confirmation"}
 SAFE_ISSUES = {"missing_profile_info", "profile_load_timeout"}
 ISSUE_CODES = {
     "missing_profile_info", "profile_load_timeout", "requires_manual_review",
     "unexpected_followback", "pending_cancel_unverified",
-    "pending_already_following", "pending_not_requested", "mutual_before_action"
+    "pending_already_following", "pending_not_requested", "mutual_before_action",
+    "interrupted_action_uncertain"
 }
 MAX_BYTES = 5_000_000
 SAFE_REVISION = re.compile(r"(?:unknown|v?[0-9]+\.[0-9]+|[0-9a-fA-F]{7,40})\Z")
@@ -63,6 +66,7 @@ FINDING_CATALOG = {
     "INVALID_ACTION_RECORD": ("error", "Non-object journal entry; preserve provenance."),
     "RETRYABLE_ZERO_CLICK": ("warning", "Proven pre-click failures may be rechecked automatically in the authorized cohort."),
     "UNCERTAIN_OR_MANUAL": ("warning", "Unverified outcome: read-only evidence required; never repeat a possible click."),
+    "INTERRUPTED_ACTION_INTENT": ("error", "Durable intent was written before an Instagram relationship click but the outcome was not saved. Inspect exact target read-only; NEVER replay automatically."),
     "NONFOLLOW_EVIDENCE_INCONSISTENT": ("error", "Terminal already-not-following lacks expected evidence marker."),
     "BATCH_AWAITING_OWNER_APPROVAL": ("info", "Unapproved batch retained; automatic results are not Reviewed."),
     "MULTIPLE_UNAPPROVED_COHORTS": ("warning", "Several unapproved cohorts; reconcile scope without deleting history."),
@@ -95,6 +99,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
         "journals": 0, "profiles": 0, "unapproved_batches": 0,
         "historical_readonly_observations": 0,
         "action_status_counts": {}, "issue_code_counts": {},
+        "interrupted_action_intents": 0, "click_phase_counts": {},
         "findings": [], "limitations": list(SAFE_LIMITATIONS),
     }
     root = Path(data_root)
@@ -110,7 +115,8 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
         result["findings"].append({"code": "JOURNAL_DIRECTORY_MISSING", "severity": "info",
                                    "count": 1, "action": "Run the installed app before inspecting saved history."})
         return result
-    status_counts, issue_counts, finding_counts = Counter(), Counter(), Counter()
+    status_counts, issue_counts, finding_counts, phase_counts = (
+        Counter(), Counter(), Counter(), Counter())
     for path in sorted(root.glob("instagram-actions-*.json")):
         # Skip derived/auxiliary history; count it via the dedicated loop below.
         if path.name.endswith(("-batch-reviews.json", "-historical-rechecks.json")):
@@ -138,6 +144,13 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
                 continue
             status = _safe_status(record.get("status"))
             status_counts[status] += 1
+            intent = record.get("click_intent")
+            if isinstance(intent, dict) and intent.get("outcome_recorded") is not True:
+                finding_counts["INTERRUPTED_ACTION_INTENT"] += 1
+                result["interrupted_action_intents"] += 1
+                phase = intent.get("phase")
+                phase_counts[phase if isinstance(phase, str) and
+                             phase in CLICK_PHASES else "other"] += 1
             issue = record.get("issue")
             if issue:
                 issue_counts[issue if isinstance(issue, str) and issue in ISSUE_CODES else "other"] += 1
@@ -200,6 +213,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
         finding_counts["MULTIPLE_UNAPPROVED_COHORTS"] += 1
     result["action_status_counts"] = dict(sorted(status_counts.items()))
     result["issue_code_counts"] = dict(sorted(issue_counts.items()))
+    result["click_phase_counts"] = dict(sorted(phase_counts.items()))
     for code, count in sorted(finding_counts.items()):
         severity, action = FINDING_CATALOG[code]
         result["findings"].append({"code": code, "severity": severity,
@@ -252,6 +266,8 @@ def ai_prompt(report: dict, client_checks: dict | None = None) -> str:
         "historical_readonly_observations": _safe_number(report.get("historical_readonly_observations")),
         "action_status_counts": _safe_counts(report.get("action_status_counts"), ACTION_STATES | {"other"}),
         "issue_code_counts": _safe_counts(report.get("issue_code_counts"), ISSUE_CODES | {"other"}),
+        "interrupted_action_intents": _safe_number(report.get("interrupted_action_intents")),
+        "click_phase_counts": _safe_counts(report.get("click_phase_counts"), CLICK_PHASES | {"other"}),
         "findings": findings,
         "limitations": list(SAFE_LIMITATIONS),
     }
