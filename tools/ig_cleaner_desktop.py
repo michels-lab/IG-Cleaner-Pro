@@ -133,8 +133,19 @@ def stop_safely(server) -> None:
     """Do not lose a just-clicked action when the application window closes."""
     actions = server.actions
     actions.stop_event.set()
+    developer_actions = getattr(server, "dev_action_tests", None)
+    developer_probe = getattr(server, "live_probe", None)
+    if developer_actions is not None:
+        developer_actions.stop_event.set()
+    if developer_probe is not None:
+        developer_probe.stop()
     server.collector.stop()
-    for job in (actions.worker, server.collector.worker):
+    jobs = [actions.worker, server.collector.worker]
+    if developer_actions is not None:
+        jobs.append(developer_actions.worker)
+    if developer_probe is not None:
+        jobs.append(developer_probe.worker)
+    for job in jobs:
         if job and job.is_alive():
             job.join(timeout=60)
     server.shutdown()
