@@ -1,3 +1,13 @@
+## 2026-10-21 — GRANADA: v120.55 final stable authorized for gated publication (release still pending)
+
+- Owner's standing 2026-10-21 GRANADA order permits the FINAL stable release for InstaCleaner once mandatory checks succeed, no RC/pre-release. The publication request remains distinct from the source integration and MUST be checked by GitHub Actions before any `published` claim.
+- PR #186 merged `eef3f534402a8fb3666e55d7892407ef32941317`: the official publisher now requires an installed Android Developer APK emulator Account/notes/export suite; failing/skipped never publishes.
+- PR #184 merged `75b8a137c3eb73a328ecb5e561b32bf521ed86a5` after 6/6 exact-head checks: Windows persistent Analysis/Action lanes, source-backed robot status, active 40-cohort vs next 10 preference, collapsible original Issues; no extra Chrome navigation concurrency.
+- PR #189 merged `3423242b9b1d89ee373a45869f617a5fe6bce89c` after 6/6 exact-head checks: Desktop/Android `v120.55` version alignment, preserved production signing identity, truthful release notes. This was VERSION PREPARATION ONLY.
+- PR #188 merged `bc6bd68b5823f1ffe5c6444f76c5ceadc0bc684c` after 5/5 exact-head CI: malformed persisted relationship-click intents now fail closed before a new action; snapshot reports uncertain evidence rather than false terminal success. Original journals, saved approval cohorts, protected history and account scope untouched. Checks include installed Windows public+Developer Setup and simulated Chromium, not real signed-in Instagram.
+- Release policy: latest official **v120.54** until `v120.55` is verifiably published. A governed v120.55 authorization can now initiate exact-SHA stable publisher. Official release must pass rendered Desktop/Android QA, independent installed Windows + Android Developer tests, original production Android signer/cert, SHA256SUMS, all required assets and official feed verification. User tests real Instagram Unfollow/Cancel on final published version; issue #172/#164 remain OPEN and no uncertain click may be replayed.
+- Next state: `source integrated/green`; `publication request pending`; `release not yet published`; `real owner Instagram acceptance not established`.
+
 ## 2026-10-21 — Owner correction: perspective roles are ChatGPT tools, not Copilot
 
 - New Perspective Council/Contrarian/User Advocate/Intelligence Architect contracts are now provider-neutral `.michelslab/agents/*.md` readable by the ChatGPT assistant. The four perspective-specific GitHub Copilot profiles introduced in error were removed while preexisting GitHub workflows/agents were preserved.
