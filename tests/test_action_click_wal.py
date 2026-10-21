@@ -76,26 +76,30 @@ class DurableClickIntentTests(unittest.TestCase):
     def test_snapshot_quarantines_invalid_evidence_without_exposing_untrusted_phases(self):
         with tempfile.TemporaryDirectory() as directory:
             robot = self.make_robot(directory)
-            robot.targets = ["bad.value", "bad.phase", "bad.status", "good.terminal"]
+            robot.targets = ["bad.value", "bad.phase", "bad.status", "false.terminal",
+                             "good.terminal"]
             raw = {
                 "bad.value": ["private", "raw", "data"],
                 "bad.phase": {"status": "ok",
                               "click_intent": {"phase": {"owner_secret": "NEVER_EXPORT"}}},
                 "bad.status": {"status": ["unhashable"], "issue": "private_issue"},
+                "false.terminal": {"status": "ok",
+                                   "click_intent": {"phase": "unfollow_menu",
+                                                    "outcome_recorded": False}},
                 "good.terminal": {"status": "already_not_following",
                                   "message": "Already not following: verified"}
             }
             _atomic_json(robot._base(), raw)
             before = robot._base().read_bytes()
             snap = robot.snapshot()
-            self.assertEqual(snap["errors"], 3)
+            self.assertEqual(snap["errors"], 4)
             self.assertEqual(snap["already_not_following"], 1)
             self.assertEqual(snap["successful"], 0)
-            self.assertEqual(snap["issue_count"], 3)
-            self.assertTrue({"bad.value", "bad.phase", "bad.status"}.issubset(
+            self.assertEqual(snap["issue_count"], 4)
+            self.assertTrue({"bad.value", "bad.phase", "bad.status", "false.terminal"}.issubset(
                 set(snap["attempted_usernames"])))
             self.assertEqual([row["status"] for row in snap["rows"]],
-                             ["review", "review", "review", "already_not_following"])
+                             ["review", "review", "review", "review", "already_not_following"])
             self.assertTrue(all(issue["issue"] == "invalid_saved_action_evidence"
                                 and issue["click_phase"] == "" for issue in snap["issues"]))
             serialized = json.dumps(snap)
