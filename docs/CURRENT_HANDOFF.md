@@ -1,3 +1,10 @@
+## 2026-10-20 — GRANADA Developer distribution ready in main (NOT A RELEASE)
+
+- [PR #180](https://github.com/michels-lab/IG-Cleaner-Pro/pull/180) **MERGED**, main merge `73e91a1d917a70b578d9d2ade4ed39c78627bbd1`. Android Developer signed APK and separate Windows Developer Setup are now **mandatory artifacts in the governed release workflow**, including manifest/checksum/published-assets gates. Official Android publisher verifies the same persistent production signer + distinct `.developer` package and installs/launches both production APKs together before publication. Windows Setup tests independent AppId, data-safe install/startup/uninstall.
+- Source-head `2eedad32546f6fa9f8b8127cedc90c7349cfda15` passed five relevant PR workflows (Windows integrated setup, Developer signing-path with disposable CI key, Android Developer emulator, Android About, Desktop UI); generic broad CI skipped. Disposable CI key is not the real prod cert; official approved release must verify production certificate again.
+- Official v120.55 **NOT authorized, NOT published**. Latest GitHub release still v120.54; `.michelslab/release-request.json` remains authorized=false. A future authorized v120.55 build needs Gradle/signing/UI versions synchronized, exact-commit release hard gates and real-owner testing. Owner's live Unfollow/Cancel remains unverified. Keep issue #173 and #172 open until actual official installed/live acceptance.
+
+
 ## 2026-10-20 — Additional GRANADA official APK device gate
 
 - Authorized publisher now installs BOTH production-signed Android APKs on the SAME API-35 emulator, launches stable and Developer entry points and verifies both package paths still exist. This is a release hard gate after production certificate/package checks, before publishing. The PR's normal emulator test remains a separate debug/debug Developer coexistence check, not equivalent to production signing.
