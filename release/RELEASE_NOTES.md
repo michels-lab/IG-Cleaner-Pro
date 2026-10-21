@@ -1,4 +1,4 @@
-## v120.55 — Operación Granada: verifiable robot action recovery and safe diagnostics (final stable delivery pending)
+## v120.55 — Operación Granada: verifiable robot action recovery and safe diagnostics (published October 21, 2026)
 
 - **Windows Automation Center:** one coherent landing area with permanent Analysis and Action lanes, directly sourced robot status, true preferred next batch size distinguished from any older saved cohort, and native keyboard-accessible collapsible Issue Review. The backend still serializes browser-driven workers; two robots cannot safely navigate one Chrome profile simultaneously.
 - **Real 10-tab action waves:** the existing integrated Windows worker stages up to ten eligible Chrome profile tabs before the owner-approved relationship pass, then focuses/verifies each in order. Source tests enforce safe no-click retries versus unknown post-click outcomes, no stale 40-person cohort deletion, no forced batch archival, and saved protection of favorites.
