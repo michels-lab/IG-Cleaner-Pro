@@ -114,6 +114,89 @@ class DurableClickIntentTests(unittest.TestCase):
                 robot._persist_action_click_intent(journal,path,target,"relationship_control")
             self.assertEqual(before,path.read_bytes())
 
+    def test_power_loss_after_final_unfollow_click_preserves_last_armed_phase(self):
+        with tempfile.TemporaryDirectory() as directory:
+            robot=self.make_robot(directory,target="private.profile")
+            target="private.profile"
+            journal,path=robot._journal(),robot._base()
+            page=FakePage("unfollow",target=target)
+            def crash_after_menu_click():
+                page.choose_unfollow()
+                raise Interruption("Windows died after menu click but before verification")
+            page.menu.clicker.callback=crash_after_menu_click
+            with patch("profile_actions.challenge_detected",return_value=False), \\
+                 patch("profile_actions.signed_in_handle",return_value="owner.name"):
+                with self.assertRaises(Interruption):
+                    perform_visible_action(page,target,"unfollow","owner.name",
+                        on_pre_click=lambda phase:
+                            robot._persist_action_click_intent(journal,path,target,phase))
+            self.assertEqual(page.header.clicker.clicked,1)
+            self.assertEqual(page.menu.clicker.clicked,1)
+            cold=self.make_robot(directory,target=target)
+            persisted=cold._journal()[target]
+            self.assertEqual(persisted["status"],"review")
+            self.assertEqual(persisted["click_intent"]["phase"],"unfollow_menu")
+            self.assertEqual(persisted["click_intent"]["phases"],
+                             ["relationship_control","unfollow_menu"])
+            self.assertNotIn("outcome_recorded",persisted["click_intent"])
+            self.assertFalse(_preclick_no_action(persisted))
+
+    def test_real_worker_threads_write_ahead_callback_before_simulated_crash(self):
+        # Exercise ActionRobot._run itself. No real browser/Instagram contacted.
+        import types
+        from unittest.mock import MagicMock
+        class Tab:
+            def __init__(self):
+                self.url="https://www.instagram.com/"
+                self.closed=False
+            def goto(self,url,**_): self.url=url
+            def bring_to_front(self): pass
+            def is_closed(self): return self.closed
+            def close(self): self.closed=True
+            def locator(self,_):
+                return types.SimpleNamespace(count=lambda:0)
+        class Browser:
+            def __init__(self):self.pages=[Tab()]
+            def new_page(self):
+                p=Tab()
+                self.pages.append(p)
+                return p
+            def close(self):
+                for p in self.pages:p.close()
+        with tempfile.TemporaryDirectory() as directory:
+            robot=self.make_robot(directory,task="cancel",target="pending.profile")
+            browser=Browser()
+            robot.rest_minutes,robot.min_delay_seconds=0,0
+            invoked=[]
+            def simulated_crash(page,username,task,expected,can_act,**kwargs):
+                self.assertEqual((username,task),("pending.profile","cancel"))
+                self.assertEqual(len(browser.pages),2)
+                kwargs["on_pre_click"]("relationship_control")
+                invoked.append("journal_before_click")
+                raise Interruption("simulated sudden process loss")
+            fake_playwright=types.SimpleNamespace(chromium=types.SimpleNamespace(
+                launch_persistent_context=lambda **kwargs:browser))
+            ctx=MagicMock()
+            ctx.__enter__.return_value=fake_playwright
+            with patch.dict(sys.modules,{
+                "playwright":types.ModuleType("playwright"),
+                "playwright.sync_api":types.SimpleNamespace(sync_playwright=lambda:ctx)}), \\
+                patch("profile_actions.preserve_instagram_auth_page",return_value=True), \\
+                patch("profile_actions.challenge_detected",return_value=False), \\
+                patch("profile_actions.signed_in_handle",return_value="owner.name"), \\
+                patch("profile_actions.wait_required",return_value=0), \\
+                patch("profile_actions.batch_wait",return_value=0), \\
+                patch("profile_actions.perform_visible_action",side_effect=simulated_crash):
+                with self.assertRaises(Interruption):
+                    robot._run()
+            self.assertEqual(invoked,["journal_before_click"])
+            self.assertTrue(all(p.closed for p in browser.pages))
+            cold=self.make_robot(directory,task="cancel",target="pending.profile")
+            saved=cold._journal()["pending.profile"]
+            self.assertEqual(saved["issue"],"interrupted_action_uncertain")
+            self.assertEqual(saved["click_intent"]["phase"],"relationship_control")
+            self.assertFalse(_preclick_no_action(saved))
+
     def test_proven_no_click_does_not_create_false_intent(self):
         with tempfile.TemporaryDirectory() as directory:
             robot=self.make_robot(directory,task="cancel")
