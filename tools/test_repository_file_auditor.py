@@ -86,6 +86,13 @@ class FileStewardTests(unittest.TestCase):
         self.assertIn("'desktop/ig_cleaner_pro_v120_27_synced_companion.html'",push)
         self.assertNotIn("'tools/repository_file_auditor.py'",push)
         self.assertNotIn("'tools/test_repository_file_auditor.py'",push)
+        # GitHub Actions YAML lists must use one consistent child indentation.
+        # Mixing 8- and 6-space bullets made the whole workflow invalid,
+        # even though the file-steward tests themselves passed.
+        candidates=[line for line in push.splitlines() if line.lstrip().startswith("- ")]
+        self.assertEqual(len(candidates), 42)
+        self.assertTrue(all(line.startswith("      - '") for line in candidates),
+                        "Every product-only push path must be a valid, aligned YAML sequence item")
     def test_android_backup_rules_not_disposable(self):
         self.assertEqual(audit.identify("android/app/src/main/res/xml/backup_rules.xml", {})[0], "config")
     def test_historical_is_not_assumed_obsolete(self):
