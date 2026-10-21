@@ -27,7 +27,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "8b625d939b24cd691a5b5424622f9fb85ca86780a458d303e43297cf65a838d8",
+  "inventory_fingerprint": "85d020de37659eda3d7237df1290066c49f05d1d734a99e0f455bb8e3cabd8a3",
   "evidence_fingerprint": "b578d439203c6e23af6b306558644bb2c7053a61f0ec13f911901158b3ddcf27",
   "files": [
     {
@@ -1911,7 +1911,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "50d28a76044b68d08461f77dca182750eaae8a92"
+      "blob": "0bf72f91e59ef91da61c95dd9586219583c02558"
     },
     {
       "path": "tools/resolve_desktop_visual_artifact_dir.py",
@@ -1946,7 +1946,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bbec7d5a91fc96ac4915b703dc31ea7c075475f3"
+      "blob": "b4831ec3831718ba9738f482654cf4dd6f524418"
     },
     {
       "path": "tools/test_windows_developer_installer.ps1",
