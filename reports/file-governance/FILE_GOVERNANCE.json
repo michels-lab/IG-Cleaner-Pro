@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 287,
-  "classified_files_total": 283,
-  "docs_content_inspected": 46,
+  "tracked_files_total": 289,
+  "classified_files_total": 285,
+  "docs_content_inspected": 47,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,19 +14,21 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 41,
+    "document": 42,
     "index": 5,
     "installer_metadata": 1,
-    "source": 38,
+    "source": 39,
     "test": 67,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 11
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "52de2c4b45440c412dee862888ce19ed2f33676e4c429e33c429feb995f28297",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "d313d0a1d51e3cebc9772de0ddf58d1b8437b8876aa4a4b45d28639568ffb668",
+  "evidence_fingerprint": "6e1c62a178fbae31fe9d8f81b915ec61611ffab5becab04362a20fde35fdc5cf",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -138,7 +140,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "6fa25eea1b33bd62ac2b0968f6d4b52b6f6a3446"
+      "blob": "9a8e9b6a2ad77335349f1737acb893fdbd5e65e1"
     },
     {
       "path": ".gitignore",
@@ -1044,6 +1046,13 @@
       "blob": "07083e14a2d5236088a780b8e687e587a053dbcc"
     },
     {
+      "path": "docs/GRANADA_25_PRODUCTION_ANDROID_BASH_DEVICE_GATE_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "485c5f852e0e06f216b77d62b6570cb14f7e134c"
+    },
+    {
       "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1594,7 +1603,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bcc3f29fc97d977189d9193f1bd3f160e21500c0"
+      "blob": "1cf7e2be61bc1d2f3819b97d30db1dc30765b5e2"
     },
     {
       "path": "tests/rls-contract.py",
@@ -1996,6 +2005,13 @@
       "blob": "7625c08c9c05c8935629c21ddb7fcdb0ebcc2f27"
     },
     {
+      "path": "tools/verify_production_android_coinstall.sh",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "95728bdbff462d95af7f3d3e71b658e285e2565a"
+    },
+    {
       "path": "tools/visual_release_gate.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2010,7 +2026,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "1cb3c9d3442fe460",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: .github/workflows/release.yml, tests/release-publisher-contract.py, tools/verify_production_android_coinstall.sh",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
