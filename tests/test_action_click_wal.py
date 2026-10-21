@@ -11,7 +11,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import (
-    ActionRobot, _preclick_no_action, perform_visible_action, _atomic_json)
+    ActionRobot, _preclick_no_action, _invalid_saved_action_record,
+    _benign_preclick_issue, perform_visible_action, _atomic_json)
 from profile_counts_bridge import Collector
 from test_profile_counts_actions import FakePage
 
@@ -72,6 +73,33 @@ class DurableClickIntentTests(unittest.TestCase):
             self.assertIsNone(robot.worker)
             self.assertEqual(journal_before, robot._base().read_bytes())
             self.assertEqual(batch_before, batch_file.read_bytes())
+
+    def test_familiar_no_click_issue_never_overrides_a_saved_click_intent(self):
+        safe = {"status": "review", "issue": "missing_profile_info",
+                "message": "The profile does not show Following."}
+        for issue in ("missing_profile_info", "profile_load_timeout",
+                      "pending_already_following", "pending_not_requested",
+                      "mutual_before_action"):
+            self.assertTrue(_benign_preclick_issue(issue, safe), issue)
+
+        # The SAME innocuous issue text after a durable relationship click
+        # is no longer a safe reason to continue to another Instagram target.
+        clicked = {**safe, "click_intent": {
+            "phase": "relationship_control", "task": "unfollow",
+            "outcome_recorded": True}}
+        for issue in ("missing_profile_info", "profile_load_timeout",
+                      "pending_already_following", "pending_not_requested",
+                      "mutual_before_action"):
+            self.assertFalse(_benign_preclick_issue(issue, clicked), issue)
+        self.assertFalse(_preclick_no_action(clicked))
+        self.assertFalse(_benign_preclick_issue("pending_cancel_unverified", safe))
+
+        # A present-but-null/malformed click intent is NEVER equivalent to an
+        # absent click intent. It cannot be silently classified as reusable.
+        null_intent = {**safe, "click_intent": None}
+        self.assertTrue(_invalid_saved_action_record(null_intent))
+        self.assertFalse(_preclick_no_action(null_intent))
+        self.assertFalse(_benign_preclick_issue("missing_profile_info", null_intent))
 
     def test_snapshot_quarantines_invalid_evidence_without_exposing_untrusted_phases(self):
         with tempfile.TemporaryDirectory() as directory:
