@@ -10,11 +10,14 @@
   "previous_stable_release": "v120.54",
   "owner_acceptance_note": "Release solely through .github/workflows/release.yml with exact-commit Android Home/About screenshots and installed Developer Account/notes/JSON export; installed Windows public and Developer Setup; pinned production-signed Android public+Developer APKs; version 120.55, SHA-256 and official asset/feed validation. Offline Chromium/source/CI tests do not establish real Instagram Unfollow/Cancel successes. Michel tests only the final official published stable Setup. Preserve protected profiles, original saved 40-cohort, attempted/uncertain click WAL and cloud account history; no CAPTCHA bypass or automatic uncertain-click replay. Keep owner live acceptance issues #172 and #164 open after release.",
   "requested_at": "2026-10-21",
-  "candidate_main_sha": "1f2441c83157a1cca818fd634d41b48e3538e304",
+  "candidate_main_sha": "eb9f3f0bc155be976ca7b7aea1e2b17624ee720a",
   "integrated_source_merge_shas": [
     "eef3f534402a8fb3666e55d7892407ef32941317",
     "75b8a137c3eb73a328ecb5e561b32bf521ed86a5",
     "3423242b9b1d89ee373a45869f617a5fe6bce89c",
     "bc6bd68b5823f1ffe5c6444f76c5ceadc0bc684c"
-  ]
+  ],
+  "retry_attempt": 2,
+  "retry_of_failed_run": 39626248768,
+  "retry_reason": "P0 repair #192 merged: genuine Desktop screenshot artifact root is resolved from flat or nested multi-folder GitHub upload; no visual gate bypass; strict same-SHA release verification still mandatory."
 }
