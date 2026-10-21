@@ -51,3 +51,61 @@ jobs:
           path: artifacts/android-developer/
           retention-days: 14
           if-no-files-found: warn
+
+  android-developer-signing-contract:
+    name: Build matching-key signed public + Developer APKs using disposable CI key
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      IGC_ANDROID_SIGNED_DEVELOPER_REQUIRED: "true"
+      IGC_ANDROID_KEYSTORE_PASSWORD: "local-disposable-ci-key-only"
+      IGC_ANDROID_KEY_ALIAS: "igc-ci-temporary"
+      IGC_ANDROID_KEY_PASSWORD: "local-disposable-ci-key-only"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Install Android build tools (no owner credentials)
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+      - name: Generate disposable CI signing key — never upload it
+        run: |
+          set -euo pipefail
+          export IGC_ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/igc-disposable-ci.jks"
+          keytool -genkeypair -noprompt -storetype JKS -keyalg RSA -keysize 2048             -validity 1 -alias "$IGC_ANDROID_KEY_ALIAS"             -dname "CN=IG Cleaner Disposable CI,OU=Testing,O=Michels Lab,C=MX"             -keystore "$IGC_ANDROID_KEYSTORE_PATH"             -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" -keypass "$IGC_ANDROID_KEY_PASSWORD"
+          echo "IGC_ANDROID_KEYSTORE_PATH=$IGC_ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
+      - name: Build BOTH signed variants via production signing path
+        run: gradle -p android :app:assembleRelease :app:assembleDeveloper
+      - name: Confirm matching signing identity and independently installable Android package IDs
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          AAPT="$(find "$SDK_ROOT/build-tools" -type f -name aapt | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          test -x "$AAPT"
+          PUBLIC_APK="android/app/build/outputs/apk/release/app-release.apk"
+          DEV_APK="android/app/build/outputs/apk/developer/app-developer.apk"
+          "$APKSIGNER" verify --print-certs "$PUBLIC_APK" > /tmp/igc-public-signer.txt
+          "$APKSIGNER" verify --print-certs "$DEV_APK" > /tmp/igc-dev-signer.txt
+          PUBLIC_CERT="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/igc-public-signer.txt)"
+          DEV_CERT="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/igc-dev-signer.txt)"
+          test -n "$PUBLIC_CERT" && test "$PUBLIC_CERT" = "$DEV_CERT"
+          "$AAPT" dump badging "$PUBLIC_APK" > /tmp/igc-public-badge.txt
+          "$AAPT" dump badging "$DEV_APK" > /tmp/igc-dev-badge.txt
+          grep -q "package: name='com.michelslab.igcleaner'" /tmp/igc-public-badge.txt
+          grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/igc-dev-badge.txt
+          grep -q "versionName='120.54-developer'" /tmp/igc-dev-badge.txt
+          echo "PASS: CI-disposable key proves the production release/developer signing configuration builds distinct identically signed APKs."
