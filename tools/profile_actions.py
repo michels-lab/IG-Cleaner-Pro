@@ -1096,6 +1096,8 @@ class ProtectedBatchCollision(ValueError):
         )
 
 
+from robot_interlock import ActionLease
+
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
         self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
@@ -1668,6 +1670,14 @@ class ActionRobot:
             self.skipped.add(user)
             return self.snapshot()
 
+    def _run_with_lease(self, lease):
+        # The worker, not the HTTP request thread, owns the full action lease.
+        # Always free it on login failure, exception, pause, or final review.
+        try:
+            self._run()
+        finally:
+            lease.release()
+
     def start(self, data, *, resume=False):
         owner = str(data.get("owner") or "").strip()
         account = str(data.get("account") or "").strip()
@@ -1691,83 +1701,90 @@ class ActionRobot:
             raise ValueError("The batch was not explicitly approved.")
         if task == "unfollow" and data.get("followers_evidence") is not True:
             raise ValueError("A complete Followers list has not been verified.")
-        with self.collector.browser_admission, self.lock:
-            if self.worker and self.worker.is_alive():
-                raise ValueError("An Instagram action robot is already running.")
-            if self.collector.worker and self.collector.worker.is_alive():
-                raise ValueError("Finish or pause Profile Counts before starting an action robot.")
-            if resume and (owner, account, task) != (self.owner, self.account, self.task):
-                raise ValueError("Cannot resume a different task or account.")
-            if resume and self.status not in ("paused", "error", "review", "blocked"):
-                raise ValueError("There is no paused task to resume.")
-            if resume and self.review_only:
-                raise ValueError("Read-only verification cannot resume as an Unfollow job.")
-            if resume and targets != self.targets:
-                raise ValueError("Resuming actions cannot change the saved target cohort.")
-            pending_entry = None if resume else self._pending_review(owner, account, task)
-            if not resume:
-                if pending_entry:
-                    if (data.get("batch_id") != pending_entry["id"] or
-                            targets != pending_entry["targets"]):
-                        raise ValueError("An unapproved batch exists. Continue its exact saved ID and profiles; never replace it.")
-                elif data.get("batch_id"):
-                    raise ValueError("Saved batch changed. Refresh before restarting actions.")
-                # Validate the EXACT owner-approved cohort before writing ANY
-                # review-batch row or rebinding the worker. A stale Desktop
-                # favorites snapshot cannot know about disk-only protections.
-                # Do not silently trim/reapprove targets: ask the owner to
-                # inspect and approve the replacement list explicitly.
-                disk_guard = set(_read_json(self._protection_file_for(owner, account), []))
-                ui_guard = set(_users(data.get("protected", [])))
-                collision = sorted(set(targets) & (disk_guard | ui_guard))
-                if collision:
-                    raise ProtectedBatchCollision(
-                        collision, task=task, batch_size=len(targets))
-            self.owner, self.account, self.handle, self.task = owner, account, expected, task
-            if not resume:
-                previous = self._journal()
-                if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-                       and not _preclick_no_action(record)
-                       for user in targets):
-                    raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
-            self.targets = targets
-            self.review_only = False
-            self.history_recheck_mode = False
-            if not resume:
-                self.continuing_batch = pending_entry is not None
-                if pending_entry:
-                    self.active_batch_id = pending_entry["id"]
-                else:
-                    entries = self._review_batches(owner, account, task)
-                    batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
-                                              owner + "\\0" + account + "\\0" + task).encode()).hexdigest()[:24]
-                    entries.append({"id": batch_id, "targets": list(targets),
-                                    "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                                    "approved_at": None, "recheck_results": {}})
-                    _atomic_json(self._review_batches_file_for(owner, account, task), entries)
-                    self.active_batch_id = batch_id
-            self.open_review_tabs = []
-            self.current_wait = None
-            if not resume:
-                self.skipped.clear()
-            self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
-            self.rest_minutes = rest
-            # A newly authorized batch uses the owner's current visible
-            # favorites. During an active run protection may only be added.
-            # The UI's visible favorites list can be stale or incomplete after
-            # a browser restart, an offline import or an account switch. Never
-            # turn absence from that payload into an implicit "unprotect".
-            # Both Unfollow and Cancel consult this owner/account-scoped guard
-            # immediately before any click. Explicit removal requires its own
-            # separate, owner-confirmed operation outside active jobs.
-            saved_protected = self._protected()
-            saved_protected.update(_users(data.get("protected", [])))
-            _atomic_json(self._protection_file(), sorted(saved_protected))
-            self.stop_event.clear()
-            self.status, self.message = "starting", "Opening Instagram in Chrome…"
-            self.worker = threading.Thread(target=self._run, daemon=True)
-            self.worker.start()
-            return self.snapshot()
+        lease = ActionLease(self.data_dir).acquire()
+        started = False
+        try:
+            with self.collector.browser_admission, self.lock:
+                if self.worker and self.worker.is_alive():
+                    raise ValueError("An Instagram action robot is already running.")
+                if self.collector.worker and self.collector.worker.is_alive():
+                    raise ValueError("Finish or pause Profile Counts before starting an action robot.")
+                if resume and (owner, account, task) != (self.owner, self.account, self.task):
+                    raise ValueError("Cannot resume a different task or account.")
+                if resume and self.status not in ("paused", "error", "review", "blocked"):
+                    raise ValueError("There is no paused task to resume.")
+                if resume and self.review_only:
+                    raise ValueError("Read-only verification cannot resume as an Unfollow job.")
+                if resume and targets != self.targets:
+                    raise ValueError("Resuming actions cannot change the saved target cohort.")
+                pending_entry = None if resume else self._pending_review(owner, account, task)
+                if not resume:
+                    if pending_entry:
+                        if (data.get("batch_id") != pending_entry["id"] or
+                                targets != pending_entry["targets"]):
+                            raise ValueError("An unapproved batch exists. Continue its exact saved ID and profiles; never replace it.")
+                    elif data.get("batch_id"):
+                        raise ValueError("Saved batch changed. Refresh before restarting actions.")
+                    # Validate the EXACT owner-approved cohort before writing ANY
+                    # review-batch row or rebinding the worker. A stale Desktop
+                    # favorites snapshot cannot know about disk-only protections.
+                    # Do not silently trim/reapprove targets: ask the owner to
+                    # inspect and approve the replacement list explicitly.
+                    disk_guard = set(_read_json(self._protection_file_for(owner, account), []))
+                    ui_guard = set(_users(data.get("protected", [])))
+                    collision = sorted(set(targets) & (disk_guard | ui_guard))
+                    if collision:
+                        raise ProtectedBatchCollision(
+                            collision, task=task, batch_size=len(targets))
+                self.owner, self.account, self.handle, self.task = owner, account, expected, task
+                if not resume:
+                    previous = self._journal()
+                    if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
+                           and not _preclick_no_action(record)
+                           for user in targets):
+                        raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
+                self.targets = targets
+                self.review_only = False
+                self.history_recheck_mode = False
+                if not resume:
+                    self.continuing_batch = pending_entry is not None
+                    if pending_entry:
+                        self.active_batch_id = pending_entry["id"]
+                    else:
+                        entries = self._review_batches(owner, account, task)
+                        batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
+                                                  owner + "\\0" + account + "\\0" + task).encode()).hexdigest()[:24]
+                        entries.append({"id": batch_id, "targets": list(targets),
+                                        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                        "approved_at": None, "recheck_results": {}})
+                        _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+                        self.active_batch_id = batch_id
+                self.open_review_tabs = []
+                self.current_wait = None
+                if not resume:
+                    self.skipped.clear()
+                self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
+                self.rest_minutes = rest
+                # A newly authorized batch uses the owner's current visible
+                # favorites. During an active run protection may only be added.
+                # The UI's visible favorites list can be stale or incomplete after
+                # a browser restart, an offline import or an account switch. Never
+                # turn absence from that payload into an implicit "unprotect".
+                # Both Unfollow and Cancel consult this owner/account-scoped guard
+                # immediately before any click. Explicit removal requires its own
+                # separate, owner-confirmed operation outside active jobs.
+                saved_protected = self._protected()
+                saved_protected.update(_users(data.get("protected", [])))
+                _atomic_json(self._protection_file(), sorted(saved_protected))
+                self.stop_event.clear()
+                self.status, self.message = "starting", "Opening Instagram in Chrome…"
+                self.worker = threading.Thread(target=self._run_with_lease, args=(lease,), daemon=True)
+                self.worker.start()
+                started = True
+                return self.snapshot()
+        finally:
+            if not started:
+                lease.release()
 
     def pause(self, data):
         with self.lock:

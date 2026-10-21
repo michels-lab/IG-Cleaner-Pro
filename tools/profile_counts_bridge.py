@@ -21,6 +21,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot, ProtectedBatchCollision
+from robot_interlock import ActionSessionBusy
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -688,8 +689,9 @@ class Collector:
 
 def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                  *, developer_mode=False, audit_root=None):
-    # Developer twin is strictly read-only. Its separate local workspace cannot
-    # run Instagram jobs or alter production logs through the loopback API.
+    # Developer remains read-only by default. The ONLY relationship-changing
+    # path is exact-target owner-confirmed Developer action testing. This path
+    # writes canonical shared journals under a cross-process admission lease.
     if developer_mode:
         from developer_audit import run_audit, ai_prompt
         from developer_live_probe import DeveloperLiveProbe
@@ -911,6 +913,11 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     "task": exc.task,
                     "retry_requires_confirmation": True,
                 })
+            except ActionSessionBusy as exc:
+                self._send(409, {"error": str(exc),
+                                 "code": "cross_process_action_busy",
+                                 "retry_requires_confirmation": False,
+                                 "safe_no_click": True})
             except (ValueError, json.JSONDecodeError) as exc:
                 self._send(400, {"error": str(exc)})
 
@@ -922,6 +929,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # Native Windows launcher owns this server and pauses jobs before exit.
     server.actions = actions
     server.collector = collector
+    # The native host must also stop/await the Developer-only browser worker
+    # and action lease before closing the loopback server or app process.
+    server.dev_action_tests = dev_action_tests
+    server.live_probe = live_probe
     return server
 
 
