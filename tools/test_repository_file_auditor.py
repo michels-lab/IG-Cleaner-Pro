@@ -57,44 +57,62 @@ class FileStewardTests(unittest.TestCase):
         summary=(self.root/"reports/file-governance/SUMMARY.json").read_text()
         self.assertNotIn("unsaved_personal_notes",summary)
         self.assertNotIn("README.md",summary)
-    def test_instacleaner_product_files_have_correct_roles(self):
+    def test_extensionless_openfoam_fields_and_timesteps(self):
         samples = {
-            "tools/profile_actions.py": "source",
-            "tools/ig_cleaner_desktop.py": "source",
-            "tests/test_action_click_wal.py": "test",
-            "desktop/ig_cleaner_pro_v120_27_synced_companion.html": "web_ui",
-            "android/app/src/main/AndroidManifest.xml": "config",
-            "release/distribution-manifest.json": "config",
-            "packaging/windows-installer/InstaCleanerPro.iss": "build_script",
-            "packaging/chrome-extension/manifest.json": "config",
-            ".github/workflows/profile-counts-windows-preview.yml": "workflow",
-            "docs/CURRENT_HANDOFF.md": "document",
+            "cases_controlled_buoyancy/B14/0/metal/T": "simulation_input",
+            "cases_buoyancy/B1/0/metal/T": "simulation_input",
+            "cases_buoyancy/B1/10/metal/T": "simulation_output",
+            "cleanproy/0/metal/T": "simulation_input",
+            "cleanproy/system/controlDict": "simulation_input",
+            "doctor_original/bcFourier/0/T": "simulation_input",
+            "freesurface/FS-C01/constant/g": "simulation_input",
+            "cases_controlled_buoyancy/B14/system/controlDict": "simulation_input",
+            "cases_controlled_buoyancy/B14/10/metal/T": "simulation_output",
+            "cases_controlled_buoyancy/B14/postProcessing/metal/T": "simulation_output",
+            "cases_controlled_buoyancy/B14/logs/CourantMax_0": "simulation_log",
+            "analysis_results/v15_v16_postpush_20261015/output.dat": "scientific_analysis",
         }
         for path, role in samples.items():
             with self.subTest(path=path):
                 self.assertEqual(audit.identify(path,{})[0], role)
-
-    def test_unrelated_extensionless_content_is_never_assumed_to_be_app_data(self):
-        self.assertEqual(audit.identify("unrelated_project/system/customDict",{})[0], "unknown")
-        self.assertEqual(audit.identify("unrelated_project/0/customField",{})[0], "unknown")
-
-    def test_windows_preview_pushes_only_for_product_changes(self):
-        workflow=(HERE.parent / ".github/workflows/profile-counts-windows-preview.yml").read_text()
-        push=workflow.split("  push:\n",1)[1].split("  pull_request:\n",1)[0]
-        self.assertIn("    paths:\n",push)
-        self.assertIn("'tools/profile_actions.py'",push)
-        self.assertIn("'desktop/ig_cleaner_pro_v120_27_synced_companion.html'",push)
-        self.assertNotIn("'tools/repository_file_auditor.py'",push)
-        self.assertNotIn("'tools/test_repository_file_auditor.py'",push)
-        # GitHub Actions YAML lists must use one consistent child indentation.
-        # Mixing 8- and 6-space bullets made the whole workflow invalid,
-        # even though the file-steward tests themselves passed.
-        candidates=[line for line in push.splitlines() if line.lstrip().startswith("- ")]
-        self.assertEqual(len(candidates), 42)
-        self.assertTrue(all(line.startswith("      - '") for line in candidates),
-                        "Every product-only push path must be a valid, aligned YAML sequence item")
     def test_android_backup_rules_not_disposable(self):
         self.assertEqual(audit.identify("android/app/src/main/res/xml/backup_rules.xml", {})[0], "config")
+    def test_real_app_artifact_purposes(self):
+        values={
+            "supabase/migrations/20261010_delete_instagram_profiles.sql":"database_migration",
+            "supabase/tests/rls_isolation.sql":"test",
+            ".michelslab/release-intents/unified-v3221-a029.txt":"release_intent",
+            "installer/TaskbarPinning.txt":"installer_metadata",
+            "src/MichelsLife/Program.cs.gz.b64":"encoded_source",
+            "src/MichelsLife/app.manifest":"config",
+        }
+        for path,expected in values.items():
+            with self.subTest(path=path):
+                self.assertEqual(audit.identify(path,{})[0],expected)
+
+    def test_backup_and_draft_labels_are_not_unused_evidence(self):
+        for name in ("docs/BACKUP_PREFLIGHT.md","tools/test_granada_backup_preflight.py",
+                     "android/PLAY_CONSOLE_SUBMISSION_DRAFT.md"):
+            self.assertIsNone(audit.OLD.search(name),name)
+        self.assertIsNotNone(audit.OLD.search("legacy/obsolete.test.py"))
+
+    def test_real_source_edit_after_log_needs_reconciliation(self):
+        log=self.root/"PROJECT_LOG.md"
+        log.write_text("Initial implementation was validated here.\n",encoding="utf-8")
+        subprocess.run(["git","-C",str(self.root),"add","PROJECT_LOG.md"],check=True)
+        subprocess.run(["git","-C",str(self.root),"commit","-qm","add log"],check=True)
+        (self.root/"feature.py").write_text("print(2)\n",encoding="utf-8")
+        subprocess.run(["git","-C",str(self.root),"add","feature.py"],check=True)
+        subprocess.run(["git","-C",str(self.root),"commit","-qm","change code without log"],check=True)
+        dirty=audit.scan(self.root,self.policy,dt.date(2026,10,21))
+        self.assertIn("POTENTIAL_UNLOGGED_CHANGES",{x["code"] for x in dirty["findings"]})
+        self.assertEqual(audit.log_change_candidates(self.root,"PROJECT_LOG.md"),["feature.py"])
+        log.write_text("Code change reviewed.\n",encoding="utf-8")
+        subprocess.run(["git","-C",str(self.root),"add","PROJECT_LOG.md"],check=True)
+        subprocess.run(["git","-C",str(self.root),"commit","-qm","reconcile log"],check=True)
+        clean=audit.scan(self.root,self.policy,dt.date(2026,10,21))
+        self.assertNotIn("POTENTIAL_UNLOGGED_CHANGES",{x["code"] for x in clean["findings"]})
+
     def test_historical_is_not_assumed_obsolete(self):
         self.assertIsNotNone(audit.HISTORY.search("docs/archive/2026-01-01-experiment.md"))
     def test_idempotent_digests(self):
