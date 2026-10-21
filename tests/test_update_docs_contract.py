@@ -9,6 +9,8 @@ MANIFEST = ROOT / "release" / "distribution-manifest.json"
 UPDATE_GUIDE = ROOT / "docs" / "UPDATE_AND_STATE_MIGRATION.md"
 README = ROOT / "README.md"
 COUNTS_GUIDE = ROOT / "docs" / "PROFILE_COUNTS_ROBOT.md"
+DOCS_WORKFLOW = ROOT / ".github" / "workflows" / "release-docs-contract.yml"
+APP_CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 
 
 class UpdateGuideContract(unittest.TestCase):
@@ -75,6 +77,30 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertNotRegex(guide, r"current Windows guidance\s*\(v[0-9]+\.[0-9]+")
         self.assertIn("historical [v120.47 release]", guide)
         self.assertIn("not claims about the latest stable", guide)
+
+    def test_readme_and_guides_trigger_lightweight_docs_contract(self):
+        gate = DOCS_WORKFLOW.read_text(encoding="utf-8")
+        for tracked_path in (
+            "README.md",
+            "docs/UPDATE_AND_STATE_MIGRATION.md",
+            "docs/PROFILE_COUNTS_ROBOT.md",
+            "release/distribution-manifest.json",
+            "tests/test_update_docs_contract.py",
+            ".github/workflows/release-docs-contract.yml",
+        ):
+            with self.subTest(tracked_path=tracked_path):
+                self.assertEqual(gate.count(f"      - '{tracked_path}'"), 2)
+        self.assertIn("pull_request:", gate)
+        self.assertIn("push:", gate)
+        self.assertIn("python3 -m unittest discover -s tests -p 'test_update_docs_contract.py' -v", gate)
+        self.assertIn("timeout-minutes: 5", gate)
+        self.assertIn("contents: read", gate)
+
+        # A documentation-only edit must not start all heavyweight Android,
+        # Windows, browser, database and production signing CI jobs.
+        app_ci_triggers = APP_CI_WORKFLOW.read_text(encoding="utf-8").split("jobs:", 1)[0]
+        self.assertNotIn("      - 'README.md'", app_ci_triggers)
+        self.assertNotIn("      - 'docs/PROFILE_COUNTS_ROBOT.md'", app_ci_triggers)
 
     def test_publishing_and_device_qa_are_not_conflated_with_candidate_builds(self):
         guide = UPDATE_GUIDE.read_text(encoding="utf-8")
