@@ -416,6 +416,28 @@ jobs:
           unzip -p "$DEV_APK" assets/ig_cleaner_pro_v120_27_synced_companion.html > /tmp/igc-developer-release-embedded.html
           grep -q 'igcDevSaveNote' /tmp/igc-developer-release-embedded.html
 
+      - name: Prove both production-signed Android packages install side by side
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: |
+            set -euo pipefail
+            PUBLIC_APK="android/app/build/outputs/apk/release/app-release.apk"
+            DEVELOPER_APK="android/app/build/outputs/apk/developer/app-developer.apk"
+            adb install -r "$PUBLIC_APK"
+            adb install -r "$DEVELOPER_APK"
+            adb shell pm list packages | tr -d '\r' > /tmp/installed-igc-packages.txt
+            grep -Fx 'package:com.michelslab.igcleaner' /tmp/installed-igc-packages.txt
+            grep -Fx 'package:com.michelslab.igcleaner.developer' /tmp/installed-igc-packages.txt
+            adb shell am start -W -n 'com.michelslab.igcleaner/.MainActivity'
+            adb shell am start -W -n 'com.michelslab.igcleaner.developer/com.michelslab.igcleaner.MainActivity'
+            # Both remain installed after the other is launched.
+            adb shell pm path com.michelslab.igcleaner | grep -Fq 'package:'
+            adb shell pm path com.michelslab.igcleaner.developer | grep -Fq 'package:'
+            echo 'PASS: stable and Developer production-signed Android variants coexist and launch.'
       - name: Build release bundle
         run: |
           rm -rf dist package
