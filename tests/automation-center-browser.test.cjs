@@ -65,6 +65,20 @@ const {chromium} = require('playwright');
    assert.match(await page.locator('#igcAutomationActionStatus').innerText(),/Verifying owner/);
    assert.match(await page.locator('#igcAutomationAnalysisStatus').innerText(),/blocked by separate Chrome/);
    assert.match(await page.locator('#igcAutomationBatchSummary').innerText(),/Next batch preference: 10/);
+   // An old, approved 40-target cohort is NOT overwritten when preference changes
+   // to 10. The command center must show both as distinct facts.
+   await page.evaluate(()=>{
+    document.getElementById('igcAutoBatchApproval').style.display='block';
+    document.getElementById('igcAutoBatchApprovalDetails').textContent=
+      'Saved cohort: 40 targets · 38 untouched; owner approval remains pending';
+    window.igcAutomationCommandCenterRefresh();
+   });
+   const batchSummary=await page.locator('#igcAutomationBatchSummary').innerText();
+   assert.match(batchSummary,/Next batch preference: 10/);
+   assert.match(batchSummary,/Saved cohort: .*40 targets/);
+   assert.equal(await page.locator('#igcAutoBatch').inputValue(),'10',
+     'Rendered status must not silently reset preferred size to the saved 40');
+
    assert.match(await page.locator('#igcAutoReviewCaption').innerText(),/6 unresolved issues/);
    const drawer=page.locator('#igcAutoReviewDrawer');
    await drawer.locator('summary').click();
