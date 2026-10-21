@@ -123,6 +123,8 @@ jobs:
       - name: Verify Pending import, focus, third-batch and no-click replay protections
         shell: pwsh
         run: |
+          python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Possible Instagram click could replay after shutdown; refuse publication.' }
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Cross-process owner action lock failed; refuse publication.' }
           node tests/automations-next-batch.test.cjs
