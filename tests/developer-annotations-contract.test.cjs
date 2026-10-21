@@ -129,10 +129,10 @@ function harness(store=new Map(),identity={owner:'owner_1',active:'ig_00000001'}
  assert.match(newSession.elements.get('igcDevNotesCount').textContent,/1 saved section note/,
   'Developer notes must persist through app restart');
  identity.active='ig_00000002';
- h.intervals[0]();
+ h.intervals.at(-1)();
  assert.match(e.get('igcDevNotesCount').textContent,/0 saved section notes/,
   'Notes must not leak between Instagram workspaces');
- identity.active='ig_00000001';h.intervals[0]();
+ identity.active='ig_00000001';h.intervals.at(-1)();
  assert.match(e.get('igcDevNotesCount').textContent,/1 saved section note/);
  const deleteCard=e.get('igcDevNotes').children[0];
  await deleteCard.children[3].children[2].listeners.click();
