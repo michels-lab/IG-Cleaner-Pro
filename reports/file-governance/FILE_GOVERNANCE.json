@@ -27,7 +27,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "31958143578bfa5ee6b6bcc7b6eb3e7cf4e514999f4ddc860f26a8dde98a3b20",
+  "inventory_fingerprint": "fd8426cb5f0b7d8099cd18629de7eec6f3d5f9ab99347fb6b5b79f82b6ad0be6",
   "evidence_fingerprint": "48555f566aba7e521ef35975bf6d1edfd578ef82656ab89f7d4173011c046334",
   "files": [
     {
@@ -875,7 +875,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ba7c99bd66526ea1af70f2e8fd5d15a68815a623"
+      "blob": "19f7e9f3d5dccc9b81da477caf74383772ed8c78"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
