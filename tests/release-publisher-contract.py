@@ -65,10 +65,15 @@ for token in (
     'adb install -r "$DEVELOPER_APK"',
     "package:com.michelslab.igcleaner",
     "package:com.michelslab.igcleaner.developer",
-    "adb shell am start -W",
-    "adb shell pm path com.michelslab.igcleaner",
-    "adb shell pm path com.michelslab.igcleaner.developer",
-    "Status: ok",
+    'adb shell am start -n "$component"',
+    'adb shell dumpsys activity activities',
+    'adb shell pidof "$package"',
+    "topResumedActivity",
+    "mResumedActivity",
+    "stable >= 2",
+    'grep -Fq "$package/"',
+    'adb shell pm path "$PUBLIC_PKG"',
+    'adb shell pm path "$DEVELOPER_PKG"',
 ):
     assert token in coinstall, "Signed Android device gate missing: "+token
 
