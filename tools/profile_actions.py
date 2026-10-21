@@ -735,6 +735,46 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
                                      str(exc)[:100] + "). Do not repeat the action.")
 
 
+SAVED_ACTION_STATES = {"ok", "already_not_following", "already_not_requested",
+                       "review", "error", "blocked"}
+SAVED_CLICK_PHASES = {"relationship_control", "unfollow_menu",
+                      "private_unfollow_confirmation", "cancel_request_confirmation"}
+
+
+def _invalid_saved_action_record(record):
+    """A present unrecognized journal entry may conceal an irreversible click."""
+    if not isinstance(record, dict):
+        return True
+    status = record.get("status")
+    if not isinstance(status, str) or status not in SAVED_ACTION_STATES:
+        return True
+    intent = record.get("click_intent")
+    if intent is None:
+        return False
+    phase = intent.get("phase") if isinstance(intent, dict) else None
+    if not isinstance(phase, str) or phase not in SAVED_CLICK_PHASES:
+        return True
+    # A terminal success cannot coexist with an unresolved write-ahead click.
+    # The journal is suspicious even if its recorded status says "ok".
+    return (status in {"ok", "already_not_following", "already_not_requested"}
+            and intent.get("outcome_recorded") is not True)
+
+
+def _public_action_record(record):
+    """Readable non-destructive status; never invent an action terminal."""
+    if not _invalid_saved_action_record(record):
+        return record
+    return {"status": "review", "issue": "invalid_saved_action_evidence",
+            "message": ("Saved action history contains unrecognized evidence. "
+                        "No automatic repeat is permitted; inspect it read-only.")}
+
+
+def _public_click_phase(record):
+    intent = record.get("click_intent") if isinstance(record, dict) else None
+    phase = intent.get("phase") if isinstance(intent, dict) else None
+    return phase if isinstance(phase, str) and phase in SAVED_CLICK_PHASES else ""
+
+
 def _preclick_no_action(entry):
     """Recognize a known failed *first* click, never an uncertain outcome.
 
@@ -743,8 +783,7 @@ def _preclick_no_action(entry):
     """
     # A durable click intent is never retryable simply because a later
     # read-only probe or stale error text resembles a pre-click failure.
-    if isinstance(entry, dict) and (
-            entry.get("click_intent") or
+    if _invalid_saved_action_record(entry) or entry.get("click_intent") is not None or (
             entry.get("issue") == "interrupted_action_uncertain"):
         return False
     if _preclick_identity_blocked(entry):
@@ -1172,13 +1211,15 @@ class ActionRobot:
             if not isinstance(base, list): continue
             for user in base:
                 if (valid_username(user) == user and user not in protected and
-                        (not isinstance(journal.get(user), dict) or
-                         not journal[user].get("status") or _preclick_no_action(journal[user]))):
+                        (user not in journal or
+                         (not _invalid_saved_action_record(journal[user]) and
+                          _preclick_no_action(journal[user])))):
                     reusable.append(user)
         attempted = sorted(user for user, record in journal.items()
-            if valid_username(user) == user and isinstance(record, dict)
-            and record.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-            and not _preclick_no_action(record))
+            if valid_username(user) == user and
+            (_invalid_saved_action_record(record) or
+             (record.get("status") in SAVED_ACTION_STATES
+              and not _preclick_no_action(record))))
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted,
                 "reusable_usernames": list(dict.fromkeys(reusable))}
@@ -1753,9 +1794,16 @@ class ActionRobot:
                     if collision:
                         raise ProtectedBatchCollision(
                             collision, task=task, batch_size=len(targets))
+                # Check original exact-scope evidence BEFORE rebinding,
+                # persisting a new cohort or opening any Instagram tab.
+                previous = _read_json(self._base_for(owner, account, task), {})
+                if any(user in previous and _invalid_saved_action_record(previous[user])
+                       for user in targets):
+                    raise ValueError(
+                        "Selected targets have invalid saved action evidence. "
+                        "Inspect the original journal read-only; never auto-retry.")
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
                 if not resume:
-                    previous = self._journal()
                     if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                            and not _preclick_no_action(record)
                            for user in targets):
@@ -1815,16 +1863,18 @@ class ActionRobot:
     def snapshot(self):
         with self.lock:
             journal = self._journal() if self.owner and self.task else {}
-            rows = {u: journal.get(u, {}) for u in self.targets}
+            rows = {u: (_public_action_record(journal[u]) if u in journal else {})
+                    for u in self.targets}
             historical_checked = len(self.historical_seen) if self.history_recheck_mode else 0
             historical_not_following = (
                 len(self.historical_not_following_seen) if self.history_recheck_mode else 0)
             # Persisted action journal spans ALL earlier batches, not merely
             # the latest 30 selected targets. Send usernames only, no secrets.
             attempted_usernames = sorted(u for u, record in journal.items()
-                if isinstance(record, dict)
-                and record.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-                and not _preclick_no_action(record))
+                if valid_username(u) == u and
+                (_invalid_saved_action_record(record) or
+                 (record.get("status") in SAVED_ACTION_STATES
+                  and not _preclick_no_action(record))))
             protected = self._protected() if self.owner else set()
             successful = sum(x.get("status") == "ok" for x in rows.values())
             already_not_following = sum(x.get("status") == "already_not_following"
@@ -1836,7 +1886,7 @@ class ActionRobot:
                        "issue": rows[u].get("issue", ""),
                        "message": rows[u].get("message", ""),
                        "safe_no_click": _preclick_no_action(rows[u]),
-                       "click_phase": (rows[u].get("click_intent") or {}).get("phase", ""),
+                       "click_phase": _public_click_phase(rows[u]),
                        "at": rows[u].get("at", "")}
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
@@ -1874,7 +1924,7 @@ class ActionRobot:
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
                               "message": rows[u].get("message", ""),
-                              "click_phase": (rows[u].get("click_intent") or {}).get("phase", ""),
+                              "click_phase": _public_click_phase(rows[u]),
                               "at": rows[u].get("at", "")} for u in self.targets]}
 
     def _record_readiness(self, username, phase, elapsed, limit, action_tabs):
