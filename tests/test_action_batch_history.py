@@ -133,6 +133,15 @@ class ActionTabPoolTests(unittest.TestCase):
 
 
 class ActionBatchHistoryTests(unittest.TestCase):
+    def setUp(self):
+        # These history-only tests deliberately replace threading.Thread with
+        # a mock whose start() NEVER invokes the worker's finally block.
+        # Mock the OS admission lease here; actual Windows/Linux process
+        # locking and release are validated in test_robot_interlock.py.
+        lease_patcher = patch("profile_actions.ActionLease")
+        lease_patcher.start()
+        self.addCleanup(lease_patcher.stop)
+
     def _action(self, root):
         collector=Collector(root/"counts",root/"chrome")
         return ActionRobot(collector,root/"actions",root/"chrome")
