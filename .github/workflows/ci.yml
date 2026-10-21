@@ -72,7 +72,9 @@ jobs:
       - name: Validate coherent premium visual source contract
         run: python tests/premium-visual-contract.py
       - name: Test canonical UI evidence adapter (no mock acceptance)
-        run: python tests/test_master_visual_manifest.py
+        run: |
+          python tests/test_master_visual_manifest.py
+          python3 -m unittest discover -s tests -p 'test_desktop_visual_artifact_resolution.py' -v
       - name: Validate privacy and data-handling contract
         run: python tests/privacy-contract.py
       - name: Validate Android UX and Focus regression contract
