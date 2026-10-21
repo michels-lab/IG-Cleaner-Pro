@@ -299,14 +299,14 @@ class ActionBatchHistoryTests(unittest.TestCase):
             with patch.dict(sys.modules, {
                     "playwright": types.ModuleType("playwright"),
                     "playwright.sync_api": types.SimpleNamespace(
-                        sync_playwright=lambda: fake_ctx)}), \\
-                 patch("profile_actions.preserve_instagram_auth_page",return_value=True), \\
-                 patch("profile_actions.challenge_detected",return_value=False), \\
-                 patch("profile_actions.signed_in_handle",return_value="owner.name"), \\
-                 patch("profile_actions.wait_required",return_value=0), \\
-                 patch("profile_actions.batch_wait",return_value=0), \\
+                        sync_playwright=lambda: fake_ctx)}), \
+                 patch("profile_actions.preserve_instagram_auth_page",return_value=True), \
+                 patch("profile_actions.challenge_detected",return_value=False), \
+                 patch("profile_actions.signed_in_handle",return_value="owner.name"), \
+                 patch("profile_actions.wait_required",return_value=0), \
+                 patch("profile_actions.batch_wait",return_value=0), \
                  patch("profile_actions.ActionTabPool.close_unacted_prefetches",
-                       autospec=True,side_effect=complete_fixture), \\
+                       autospec=True,side_effect=complete_fixture), \
                  patch("profile_actions.perform_visible_action",
                        side_effect=ambiguous_after_possible_click):
                 robot._run()
