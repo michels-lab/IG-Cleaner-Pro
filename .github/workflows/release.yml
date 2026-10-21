@@ -80,17 +80,23 @@ jobs:
           gh run download "$RUN_ID" --name "ig-cleaner-real-desktop-ui-${GITHUB_SHA}" --dir desktop-visual-evidence
       - name: Rebuild exact standalone HTML and verify runtime Desktop Home/About
         run: |
+          set -euo pipefail
+          # Multi-directory upload-artifact can preserve desktop-visual/ instead
+          # of flattening it. Select exactly ONE real two-manifest evidence root.
+          # Never fabricate, copy or ignore missing screenshots.
+          EVIDENCE_DIR="$(python3 tools/resolve_desktop_visual_artifact_dir.py --artifact desktop-visual-evidence)"
+          echo "Validating downloaded exact-commit Desktop screenshots at $EVIDENCE_DIR"
           python3 tools/build_standalone_desktop_html.py \
             --source desktop/ig_cleaner_pro_v120_27_synced_companion.html \
             --assets-root desktop \
-            --output desktop-visual-evidence/IG-Cleaner-Pro-standalone-rebuilt.html \
+            --output "$EVIDENCE_DIR/IG-Cleaner-Pro-standalone-rebuilt.html" \
             --version "$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
           python3 tools/verify_desktop_visual_release_evidence.py \
-            --artifact desktop-visual-evidence \
-            --html desktop-visual-evidence/IG-Cleaner-Pro-standalone-rebuilt.html \
+            --artifact "$EVIDENCE_DIR" \
+            --html "$EVIDENCE_DIR/IG-Cleaner-Pro-standalone-rebuilt.html" \
             --sha "$GITHUB_SHA"
           python3 tools/visual_release_gate.py \
-            --manifest desktop-visual-evidence/michelslab-manifest.json \
+            --manifest "$EVIDENCE_DIR/michelslab-manifest.json" \
             --source-sha "$GITHUB_SHA" --platforms desktop --surfaces home,about
 
   android-developer-qa:
