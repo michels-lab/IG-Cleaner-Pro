@@ -71,24 +71,31 @@ class FileStewardTests(unittest.TestCase):
         audit.write_reports(self.root,later,self.policy)
         self.assertEqual((self.root/"docs/audits/FILE_GOVERNANCE_LOG.md").read_text(encoding="utf-8"),history)
 
-    def test_extensionless_openfoam_fields_and_timesteps(self):
-        samples = {
-            "cases_controlled_buoyancy/B14/0/metal/T": "simulation_input",
-            "cases_buoyancy/B1/0/metal/T": "simulation_input",
-            "cases_buoyancy/B1/10/metal/T": "simulation_output",
-            "cleanproy/0/metal/T": "simulation_input",
-            "cleanproy/system/controlDict": "simulation_input",
-            "doctor_original/bcFourier/0/T": "simulation_input",
-            "freesurface/FS-C01/constant/g": "simulation_input",
-            "cases_controlled_buoyancy/B14/system/controlDict": "simulation_input",
-            "cases_controlled_buoyancy/B14/10/metal/T": "simulation_output",
-            "cases_controlled_buoyancy/B14/postProcessing/metal/T": "simulation_output",
-            "cases_controlled_buoyancy/B14/logs/CourantMax_0": "simulation_log",
-            "analysis_results/v15_v16_postpush_20261015/output.dat": "scientific_analysis",
+    def test_instacleaner_file_roles_and_no_solver_rules(self):
+        actual={
+            "tools/repository_file_auditor.py":"source",
+            "tools/test_repository_file_auditor.py":"test",
+            "desktop/ig_cleaner_pro_v120_27_synced_companion.html":"web_ui",
+            "android/app/src/main/AndroidManifest.xml":"config",
+            ".github/workflows/profile-counts-ci.yml":"workflow",
+            "reports/file-governance/SUMMARY.json":"config",
         }
-        for path, role in samples.items():
+        for path,role in actual.items():
             with self.subTest(path=path):
-                self.assertEqual(audit.identify(path,{})[0], role)
+                self.assertEqual(audit.identify(path,{})[0],role)
+        for foreign_path in ("case_export/0/metal/T", "cases_buoyancy/B14/system/controlDict",
+                             "cleanproy/constant/transportProperties",
+                             "doctor_original/bcFourier/0/T",
+                             "freesurface/FS-C01/system/controlDict",
+                             "analysis_results/simulated_result_unknown"):
+            with self.subTest(foreign_path=foreign_path):
+                self.assertEqual(audit.identify(foreign_path,{})[0],"unknown")
+        source=(HERE/"repository_file_auditor.py").read_text(encoding="utf-8")
+        for foreign_token in ("OpenFOAM", "simulation_case_file", "simulation_input",
+                              "simulation_output", "simulation_log", "scientific_analysis"):
+            with self.subTest(token=foreign_token):
+                self.assertNotIn(foreign_token, source)
+
     def test_android_backup_rules_not_disposable(self):
         self.assertEqual(audit.identify("android/app/src/main/res/xml/backup_rules.xml", {})[0], "config")
     def test_instacleaner_product_files_not_michels_life_artifacts(self):
