@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "296cf69c3ea5ae4cdeb75453d123b7e673b63ee50b416c314cf85da98b0478dc",
-  "evidence_fingerprint": "55440c6b0dfbffb659978f72ed874c2b45fd8a20c19ad77d87203ffa9413b275",
+  "inventory_fingerprint": "5582261cf6847ba103742ec1cf37a335efd332009f1592c0bca2e400e932e432",
+  "evidence_fingerprint": "5d2da1f2fccacaebbc5e14ef3b7ac34a227e43b58957d5e294d0a600cc11842d",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "456955b5f4c82e87dabf34f2c082b1daf8f37e8b"
+      "blob": "2ebc062526488c5fffd4d41328ad13cce7479e06"
     },
     {
       "path": "AGENTS.md",
@@ -2056,11 +2056,11 @@
   ],
   "findings": [
     {
-      "id": "f03c42bc63ea8d03",
+      "id": "7c6e18b9c4b109c2",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/release.yml, tests/release-publisher-contract.py, tests/test_android_signed_coinstall_runtime.py, tools/verify_production_android_coinstall.sh",
+      "observation": "6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/release.yml, .michelslab/release-request.json, tests/release-publisher-contract.py, tests/test_android_signed_coinstall_runtime.py, tools/verify_production_android_coinstall.sh",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
