@@ -1,3 +1,8 @@
+## 2026-10-20 — Additional GRANADA official APK device gate
+
+- Authorized publisher now installs BOTH production-signed Android APKs on the SAME API-35 emulator, launches stable and Developer entry points and verifies both package paths still exist. This is a release hard gate after production certificate/package checks, before publishing. The PR's normal emulator test remains a separate debug/debug Developer coexistence check, not equivalent to production signing.
+- Release request remains unauthorized and unchanged; source publication PR #180 is separate from the eventual v120.55 release operation. The owner's real Chrome/Instagram Unfollow and Cancel Pending acceptance remains outstanding.
+
 ## 2026-10-20 — GRANADA: governed Developer twins in official release (source, not published)
 
 - Added `androidDeveloper` and `windowsDeveloper` assets to `release/distribution-manifest.json`. Official publisher must build **both** independent Developer outputs, inspect them, include them in SHA256SUMS, upload them and confirm them after publication. Stable original outputs remain mandatory.
