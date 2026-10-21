@@ -10,15 +10,17 @@
   "previous_stable_release": "v120.54",
   "owner_acceptance_note": "Release solely through .github/workflows/release.yml with exact-commit Android Home/About screenshots and installed Developer Account/notes/JSON export; installed Windows public and Developer Setup; pinned production-signed Android public+Developer APKs; version 120.55, SHA-256 and official asset/feed validation. Offline Chromium/source/CI tests do not establish real Instagram Unfollow/Cancel successes. Michel tests only the final official published stable Setup. Preserve protected profiles, original saved 40-cohort, attempted/uncertain click WAL and cloud account history; no CAPTCHA bypass or automatic uncertain-click replay. Keep owner live acceptance issues #172 and #164 open after release.",
   "requested_at": "2026-10-21",
-  "candidate_main_sha": "ae3fc6f84ac49444ce33c242825b01ee35eb75d5",
+  "candidate_main_sha": "ac087e5bdd3802cea8c8838005ac7945cca3dd85",
   "integrated_source_merge_shas": [
     "eef3f534402a8fb3666e55d7892407ef32941317",
     "75b8a137c3eb73a328ecb5e561b32bf521ed86a5",
     "3423242b9b1d89ee373a45869f617a5fe6bce89c",
     "bc6bd68b5823f1ffe5c6444f76c5ceadc0bc684c",
-    "ae3fc6f84ac49444ce33c242825b01ee35eb75d5"
+    "ae3fc6f84ac49444ce33c242825b01ee35eb75d5",
+    "12ea8a4815f8601f5b967e35b0506ceabb498282",
+    "49f418919df796f7fc0b5b7e09a922906c3682f8"
   ],
-  "retry_attempt": 4,
-  "retry_of_failed_run": 39651351295,
-  "retry_reason": "PR #196 merged at main ae3fc6f84ac49444ce33c242825b01ee35eb75d5; installed exact-PR Android Developer real WebView Account button/navigation/note-restart/native JSON export and separate matching-key signing checks PASS on run 39654637579, Android About run 39654637640 PASS, general CI run 39654637560 PASS. Retry FULL final stable publisher at new exact-main-SHA. Previous run 39651351295 failed Android Developer Account MISSING_BUTTON; prior run 39629335827 separately timed out on Android production co-install emulator boot. ALL final gates including production signed public+Developer coexistence remain mandatory; never RC."
+  "retry_attempt": 5,
+  "retry_of_failed_run": 39655352708,
+  "retry_reason": "Fourth FINAL stable attempt 39655352708 passed visual/installed Windows/Android Developer/signed APK metadata and booted emulator but failed before adb install because YAML emulator-runner script was invoked with /bin/sh and rejected Bash `set -euo pipefail`. P0 PR #198 merged at 49f418919df796f7fc0b5b7e09a922906c3682f8 after 4/4 exact-head CI; mandatory actual signed APK co-install now uses explicit `bash tools/verify_production_android_coinstall.sh` with two installs/launches and postlaunch package verification. P0 Windows no-replay PR #197 merged at 12ea8a4815f8601f5b967e35b0506ceabb498282 after 5/5 exact-head CI. FULL publisher reruns every gate; no RC, no prerelease, no owner real Instagram proof claim."
 }
