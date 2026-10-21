@@ -188,6 +188,21 @@ class DeveloperRealDOMTest(unittest.TestCase):
                     self.assertEqual(forwarded["batch_size"],1)
                     self.assertEqual(forwarded["confirmation"],"cancel:1")
                     self.assertGreaterEqual(forwarded["gap_seconds"],10)
+                # A simultaneous public robot must fail closed with a
+                # truthful 409, without touching the Developer's journal.
+                from robot_interlock import ActionSessionBusy
+                with patch.object(ActionRobot, "start",
+                    side_effect=ActionSessionBusy(
+                        "Another public/Developer InstaCleaner action job is active")):
+                    with self.assertRaises(HTTPError) as busy:
+                        urlopen(Request(addr+"/api/developer/action-start",
+                            data=json.dumps(payload).encode(),headers=headers,
+                            method="POST"),timeout=5)
+                    self.assertEqual(busy.exception.code,409)
+                    body=json.loads(busy.exception.read().decode("utf-8"))
+                    self.assertEqual(body["code"],"cross_process_action_busy")
+                    self.assertTrue(body["safe_no_click"])
+                    self.assertFalse(body["retry_requires_confirmation"])
                 # The same real-action route cannot silently Unfollow without
                 # independently verified Followers evidence.
                 unfollow={**base,"task":"unfollow",
