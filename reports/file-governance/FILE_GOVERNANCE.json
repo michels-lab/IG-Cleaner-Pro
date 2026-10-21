@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 289,
-  "classified_files_total": 285,
-  "docs_content_inspected": 47,
+  "tracked_files_total": 290,
+  "classified_files_total": 286,
+  "docs_content_inspected": 48,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 42,
+    "document": 43,
     "index": 5,
     "installer_metadata": 1,
     "source": 39,
@@ -27,7 +27,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "29ea2fb4260a3d3d31206d8e7bbd93260be0eda6ea62080bb734b20b1e688d24",
+  "inventory_fingerprint": "d77b40a9b27a64734bbf9752b0f9f48c48c2ce756df8c9643844386e281ec80a",
   "evidence_fingerprint": "33bfde253546cc3f9e7549afffe083c3465e56f88c4dde2566d1f2c488ace4cb",
   "files": [
     {
@@ -217,7 +217,7 @@
       "role": "agent",
       "purpose": "assistant role/instructions",
       "certainty": "rule",
-      "blob": "b8780036ea32117977b33d2e2f359b41f3f96b7f"
+      "blob": "99880f720f8ac05a628797e6eccf97079e624031"
     },
     {
       "path": "LICENSE.txt",
@@ -245,7 +245,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "66951649fd1ac8bb2c7bcf3273dfcf316f7a5568"
+      "blob": "6cf52cef6466cebc89618af6fde08773ae0780fa"
     },
     {
       "path": "README_SYNC.md",
@@ -1051,6 +1051,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "485c5f852e0e06f216b77d62b6570cb14f7e134c"
+    },
+    {
+      "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "34a3b2faf9bc2bea9a5aacd3a5a1d2dc720c4ef6"
     },
     {
       "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
