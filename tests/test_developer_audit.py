@@ -170,6 +170,60 @@ class DeveloperAuditTest(unittest.TestCase):
             self.assertIn("BATCH_INVALID_TARGET", findings)
             self.assertNotIn("secret", json.dumps(report) + ai_prompt(report))
 
+    def test_present_malformed_journal_evidence_is_never_untouched_or_replayable(self):
+        """Developer forensic counters must agree with the real robot's no-replay gate."""
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = root / "instagram-actions-fixture.json"
+            no_click = (
+                "Instagram session verification failed before the first click. "
+                "No action performed."
+            )
+            saved = {
+                "bad_type": 123,
+                "nullvalue": None,
+                "empty": {},
+                "missing_status": {"click_intent": {
+                    "phase": "relationship_control", "outcome_recorded": False}},
+                "null_click_block": {"status": "blocked", "message": no_click,
+                                     "click_intent": None},
+                "null_click_review": {"status": "review",
+                                      "issue": "missing_profile_info",
+                                      "message": "The profile does not show the state required for this action.",
+                                      "click_intent": None},
+                "null_click_ok": {"status": "ok", "click_intent": None},
+                "unrecognized_phase": {"status": "ok", "click_intent": {
+                    "phase": "unexpected_private_action", "outcome_recorded": True}},
+                "safe_block": {"status": "blocked", "message": no_click},
+                "valid_terminal": {"status": "already_not_following",
+                                   "message": "Already not following: exact profile."},
+            }
+            original.write_text(json.dumps(saved), encoding="utf-8")
+            cohorts = root / "instagram-actions-fixture-batch-reviews.json"
+            cohorts.write_text(json.dumps([{
+                "id": "saved-private-batch",
+                "targets": list(saved) + ["genuinely_absent"],
+                "approved_at": None,
+            }]), encoding="utf-8")
+            original_bytes, cohort_bytes = original.read_bytes(), cohorts.read_bytes()
+
+            report = run_audit(root)
+            self.assertEqual(report["pending_batch_targets"], 11)
+            self.assertEqual(report["pending_batch_untouched"], 1)
+            self.assertEqual(report["pending_batch_safe_preclick"], 1)
+            self.assertEqual(report["pending_batch_recorded_terminals"], 1)
+            self.assertEqual(report["pending_batch_uncertain"], 8)
+            findings = {f["code"]: f["count"] for f in report["findings"]}
+            self.assertEqual(findings["INVALID_ACTION_RECORD"], 2)
+            self.assertEqual(findings["BATCH_UNCERTAIN_ACTIONS"], 1)
+            # The null click-intent is NOT a proven zero-click result.
+            self.assertEqual(findings["RETRYABLE_ZERO_CLICK"], 1)
+            self.assertEqual(original.read_bytes(), original_bytes)
+            self.assertEqual(cohorts.read_bytes(), cohort_bytes)
+            exported = json.dumps(report) + ai_prompt(report)
+            for private in (*saved.keys(), "saved-private-batch"):
+                self.assertNotIn(private, exported)
+
     def test_corrupt_history_is_not_exception(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
