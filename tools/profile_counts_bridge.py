@@ -21,6 +21,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot, ProtectedBatchCollision
+from robot_interlock import ActionSessionBusy
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -911,6 +912,11 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     "task": exc.task,
                     "retry_requires_confirmation": True,
                 })
+            except ActionSessionBusy as exc:
+                self._send(409, {"error": str(exc),
+                                 "code": "cross_process_action_busy",
+                                 "retry_requires_confirmation": False,
+                                 "safe_no_click": True})
             except (ValueError, json.JSONDecodeError) as exc:
                 self._send(400, {"error": str(exc)})
 
