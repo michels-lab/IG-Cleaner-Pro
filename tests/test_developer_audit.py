@@ -69,6 +69,107 @@ class DeveloperAuditTest(unittest.TestCase):
             self.assertEqual(cleaned["click_phase_counts"],{"unfollow_menu":1})
             self.assertEqual(cleaned["interrupted_action_intents"],0)
 
+    def test_pending_cohort_forensics_keep_old_batches_and_original_journals(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            secret = "SECRET_BROKEN_COUPLING_917"
+            journal = root / "instagram-actions-scope-a.json"
+            journal.write_text(json.dumps({
+                "terminal": {"status": "ok", "message": "Unfollow verified"},
+                "safeblocked": {
+                    "status": "blocked", "issue": "requires_manual_review",
+                    "message": "Instagram session verification failed before the first click. No action performed."},
+                secret: {"status": "review", "issue": "interrupted_action_uncertain",
+                         "click_intent": {"phase": "unfollow_menu",
+                                          "outcome_recorded": False,
+                                          "batch_id": "PRIVATE_COHORT_123"}},
+                "errormaybe": {"status": "error", "message": "No action clicked."},
+                "badintent": {"status": "ok", "click_intent": "malformed intent"},
+            }), encoding="utf-8")
+            batch = root / "instagram-actions-scope-a-batch-reviews.json"
+            batch.write_text(json.dumps([
+                {"id": "original cohort secret", "targets": [
+                    "terminal", "safeblocked", secret, "untouched",
+                    "errormaybe", "badintent"], "approved_at": None,
+                 "recheck_results": {
+                     "untouched": {"status": "observed_not_following"}}},
+                {"id": "deferred secret", "targets": ["historical"],
+                 "approved_at": None, "deferred_at": "2026-10-20T00:00:00Z"},
+                {"id": "approved secret", "targets": ["other"],
+                 "approved_at": "2026-10-20T00:00:00Z"},
+            ]), encoding="utf-8")
+            journal_before, batch_before = journal.read_bytes(), batch.read_bytes()
+            report = run_audit(root)
+            expected = {
+                "unapproved_batches": 1, "pending_batch_targets": 6,
+                "pending_batch_recorded_terminals": 1,
+                "pending_batch_safe_preclick": 1,
+                "pending_batch_uncertain": 3,
+                "pending_batch_untouched": 1,
+                "pending_batch_unknown_journal": 0,
+                "pending_batch_readonly_observations": 1,
+            }
+            for key, value in expected.items():
+                self.assertEqual(report[key], value, key)
+            findings = {x["code"] for x in report["findings"]}
+            self.assertIn("BATCH_UNTOUCHED_PROFILES", findings)
+            self.assertIn("BATCH_UNCERTAIN_ACTIONS", findings)
+            self.assertNotIn("BATCH_ZERO_RECORDED_TERMINALS", findings)
+            self.assertNotIn("BATCH_JOURNAL_UNKNOWN", findings)
+            self.assertEqual(journal_before, journal.read_bytes())
+            self.assertEqual(batch_before, batch.read_bytes())
+            exported = json.loads(ai_prompt(report).split("\n\n", 1)[1])["backend"]
+            self.assertEqual(exported["pending_batch_uncertain"], 3)
+            self.assertNotIn(secret, json.dumps(report) + ai_prompt(report))
+            self.assertNotIn("PRIVATE_COHORT_123", json.dumps(report) + ai_prompt(report))
+            self.assertNotIn("original cohort secret", json.dumps(report) + ai_prompt(report))
+
+    def test_no_journal_or_click_intent_cannot_be_classified_as_safe_retry(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            secret = "PRIVATE_ACCOUNT_EVIDENCE_288"
+            (root / "instagram-actions-known.json").write_text(json.dumps({
+                secret: {
+                    "status": "blocked", "issue": "requires_manual_review",
+                    "message": "Instagram session verification failed before the first click. No action performed.",
+                    "click_intent": {"phase": "relationship_control",
+                                     "outcome_recorded": False}},
+            }), encoding="utf-8")
+            (root / "instagram-actions-known-batch-reviews.json").write_text(
+                json.dumps([{"targets": [secret], "approved_at": None}]),
+                encoding="utf-8")
+            (root / "instagram-actions-missing-batch-reviews.json").write_text(
+                json.dumps([{"targets": ["unrecorded", "alsounrecorded"],
+                             "approved_at": None, "recheck_results": {}}]),
+                encoding="utf-8")
+            report = run_audit(root)
+            self.assertEqual(report["unapproved_batches"], 2)
+            self.assertEqual(report["pending_batch_targets"], 3)
+            self.assertEqual(report["pending_batch_unknown_journal"], 2)
+            self.assertEqual(report["pending_batch_untouched"], 0)
+            self.assertEqual(report["pending_batch_safe_preclick"], 0)
+            self.assertEqual(report["pending_batch_uncertain"], 1)
+            findings = {x["code"] for x in report["findings"]}
+            self.assertIn("BATCH_JOURNAL_UNKNOWN", findings)
+            self.assertIn("BATCH_ZERO_RECORDED_TERMINALS", findings)
+            self.assertNotIn("RETRYABLE_ZERO_CLICK", findings)
+            self.assertNotIn(secret, json.dumps(report) + ai_prompt(report))
+
+    def test_malformed_or_duplicate_cohort_targets_never_crash_audit(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "instagram-actions-shape.json").write_text("{}")
+            (root / "instagram-actions-shape-batch-reviews.json").write_text(
+                json.dumps([{"targets": ["one", "one", 12, {"private": "secret"},
+                                         "x" * 90], "approved_at": None}]))
+            report = run_audit(root)
+            self.assertEqual(report["pending_batch_targets"], 1)
+            self.assertEqual(report["pending_batch_untouched"], 1)
+            self.assertEqual(report["unapproved_batches"], 1)
+            findings = {x["code"] for x in report["findings"]}
+            self.assertIn("BATCH_INVALID_TARGET", findings)
+            self.assertNotIn("secret", json.dumps(report) + ai_prompt(report))
+
     def test_corrupt_history_is_not_exception(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
