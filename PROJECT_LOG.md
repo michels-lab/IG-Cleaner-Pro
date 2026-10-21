@@ -1,3 +1,8 @@
+## 2026-10-21 — Product Perspective Council agent profiles (branch candidate)
+
+- Added **read-first review agents**: independent Contrarian, User Advocate, Intelligence Architect and Council with product-specific instructions. The Council synthesizes overlooked opportunities, alternative designs and measurable experiments; shared source-of-truth is `michels-lab/Michel-Software-Standards/standards/PERSPECTIVE_COUNCIL_STANDARD.md`.
+- Applies to real Instagram review batches, reliable counts, account switching, Developer diagnostic parity, opened/reviewed/unfollowed evidence and privacy of Supabase workflow metadata; no automatic account actions. Product-specific reviews are proposals, not implemented features or established test evidence. No live agent execution, CI validation, installed QA, production code changes or release claimed in this change.
+
 ## 2026-10-21 — GRANADA P0 Developer read-only pending-cohort diagnostics (isolated source candidate)
 
 - Branch `granada/p0-developer-cohort-forensics-20261021`, scoped to `tools/developer_audit.py`, `tests/test_developer_audit.py`, documentation. Original Windows Unfollow/Cancel executor, Chrome sessions, persisted account journals, private identifiers and releases were **not** modified.
