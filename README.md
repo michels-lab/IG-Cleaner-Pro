@@ -4,15 +4,17 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.53 — official stable GitHub release, published October 19, 2026.** [Download all nine verified official assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.53).
+**v120.54 — official stable GitHub release, published October 20, 2026.** [Download the nine official v120.54 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.54).
 
 | Platform | Official published asset |
 | --- | --- |
-| Windows app with integrated action robot | `IG-Cleaner-Pro-Windows-Setup-v120.53.exe` |
-| Android with original production signing | `IG-Cleaner-Pro-Android-v120.53.apk` |
-| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.53.html` |
-| Optional Windows portable archive | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.53.zip` |
-| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.53.zip` |
+| Windows app with integrated action robot | `IG-Cleaner-Pro-Windows-Setup-v120.54.exe` |
+| Android with original production signing | `IG-Cleaner-Pro-Android-v120.54.apk` |
+| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.54.html` |
+| Optional Windows portable archive | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.54.zip` |
+| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.54.zip` |
+
+**Publication does not prove live Instagram Unfollow or Cancel Pending acceptance.** The v120.55 developer work is source-only and not an authorized release; the user tests only officially published installers.
 
 **Fixed:** an unapproved batch could have 38 untouched targets but pressing Run silently entered read-only recheck; v120.53 resumes the exact saved cohort for owner-approved actions on previously untouched or provably no-click targets, never repeating uncertain relationship clicks. **Already not following** is now an explicit terminal no-click result when the exact logged-in target shows Follow/Seguir or Follow Back/Seguir también; the robot records it, closes its safe tab, and advances to the next target without counting a successful Unfollow. Confirmed Unfollows and already-not-followed profiles have separate live totals. Whole-batch Reviewed approval is still a separate owner action.
 
