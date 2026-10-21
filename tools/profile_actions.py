@@ -741,6 +741,12 @@ def _preclick_no_action(entry):
     Prior versions labeled these misses "nothing clicked" but blocked them
     forever as attempted. Rechecking requires a new owner-approved batch.
     """
+    # A durable click intent is never retryable simply because a later
+    # read-only probe or stale error text resembles a pre-click failure.
+    if isinstance(entry, dict) and (
+            entry.get("click_intent") or
+            entry.get("issue") == "interrupted_action_uncertain"):
+        return False
     if _preclick_identity_blocked(entry):
         return True
     if not isinstance(entry, dict) or entry.get("status") != "review":
@@ -794,7 +800,7 @@ def _action_issue(task, result, message):
 
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
-                           on_wait=None, *, preloaded=False):
+                           on_wait=None, *, preloaded=False, on_pre_click=None):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -913,6 +919,11 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
         return "blocked", "Instagram session verification failed before the first click. No action performed."
+    # Durable write-ahead intent MUST be fsynced and atomically renamed
+    # before Playwright may initiate even a menu-opening relationship click.
+    # Failure to persist intent prevents the click entirely.
+    if on_pre_click:
+        on_pre_click("relationship_control")
     active.click(timeout=10000)
 
     if task == "unfollow":
@@ -926,6 +937,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             return "review", "Menu opened, but protection changed. Review before continuing."
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before the final Unfollow click. Inspect the open menu manually."
+        if on_pre_click:
+            on_pre_click("unfollow_menu")
         choice.click(timeout=10000)
         # Public: await the final state; private accounts may show a second dialog.
         status, message = _verify_final_state(page, expected_handle, username, checks=2)
@@ -942,6 +955,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                     return "review", "Private confirmation pending; protection changed."
                 if not _verified_action_owner(page, expected_handle):
                     return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
+                if on_pre_click:
+                    on_pre_click("private_unfollow_confirmation")
                 confirm.click(timeout=10000)
                 return _verify_final_state(page, expected_handle, username)
         return _verify_unfollow_after_readonly_refresh(page, username, expected_handle)
@@ -957,6 +972,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             return "review", "Protection changed before canceling the request."
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before Cancel Request confirmation. No final click was performed."
+        if on_pre_click:
+            on_pre_click("cancel_request_confirmation")
         choice.click(timeout=10000)
     # A click may have succeeded even if Instagram's client UI has not caught
     # up. A *read-only* fresh profile load may confirm it; never click again.
@@ -1877,6 +1894,76 @@ class ActionRobot:
                 action_tabs.tabs[username]["status"] = phase
                 self.open_review_tabs = action_tabs.overview()
 
+    def _persist_action_click_intent(self, journal, path, username, phase):
+        """Write-ahead no-replay barrier; durable BEFORE any relationship click.
+
+        The owner may lose power after Playwright sends a click but before its
+        callback returns. Startup must therefore treat an orphan intent as
+        *uncertain*, not a proven no-click and not a successful action.
+        """
+        if self.review_only or self.task not in ("unfollow", "cancel"):
+            raise ValueError("Read-only jobs cannot stage a relationship click.")
+        if not self.owner or not self.account or not self.active_batch_id:
+            raise ValueError("Cannot stage an action without a saved owner-approved batch.")
+        allowed = {
+            "unfollow": {"relationship_control", "unfollow_menu",
+                         "private_unfollow_confirmation"},
+            "cancel": {"relationship_control", "cancel_request_confirmation"},
+        }
+        if phase not in allowed[self.task]:
+            raise ValueError("Unknown Instagram click phase; refusing to act.")
+        before = journal.get(username, {})
+        if before.get("click_intent"):
+            prior = before["click_intent"]
+            if (prior.get("batch_id") != self.active_batch_id or
+                    prior.get("task") != self.task):
+                raise ValueError("Another action intent already exists. No replay allowed.")
+            phases = list(prior.get("phases", []))
+            attempt_history = list(before.get("attempt_history", []))
+        else:
+            if (before.get("status") in ("ok", "already_not_following",
+                                         "already_not_requested", "review", "error",
+                                         "blocked")
+                    and not _preclick_no_action(before)):
+                raise ValueError("Existing possible click must be reviewed; no replay.")
+            phases = []
+            attempt_history = list(before.get("attempt_history", []))
+            if before.get("status"):
+                attempt_history.append({k: v for k, v in before.items()
+                                        if k != "attempt_history"})
+        if phase in phases:
+            raise ValueError("A relationship click phase was already armed; no replay.")
+        phases.append(phase)
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        pending = {
+            "status": "review",
+            "issue": "interrupted_action_uncertain",
+            "message": ("A real Instagram click was prepared but its outcome "
+                        "may be unknown. Do not retry automatically. "
+                        "Inspect this target read-only."),
+            "at": now,
+            "click_intent": {
+                "batch_id": self.active_batch_id,
+                "task": self.task,
+                "phase": phase,
+                "phases": phases,
+                "written_at": now,
+                "requires_manual_review": True,
+            },
+            "attempt_history": attempt_history,
+        }
+        # Publishing only AFTER fsync+rename preserves the original evidence
+        # when a disk error prevents the click.
+        updated = dict(journal)
+        updated[username] = pending
+        _atomic_json(path, updated)
+        journal[username] = pending
+        with self.lock:
+            self.status = "running"
+            self.message = ("@" + username + ": " + phase.replace("_", " ") +
+                            " saved to durable action journal; verifying Instagram.")
+        return pending
+
     def _run(self):
         browser = None
         try:
@@ -2142,7 +2229,10 @@ class ActionRobot:
                                     self._record_readiness(user, phase, elapsed, limit,
                                                            action_tabs),
                                 preloaded=bool(prepared_item and
-                                               prepared_item.get("status") == "prefetched"))
+                                               prepared_item.get("status") == "prefetched"),
+                                on_pre_click=lambda phase:
+                                    self._persist_action_click_intent(
+                                        journal, path, user, phase))
                     except Exception as exc:
                         result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
@@ -2171,7 +2261,11 @@ class ActionRobot:
                         journal[user] = {"status": result, "message": details,
                                          "audit_relation": relation, "issue": issue,
                                          "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                                         "attempt_history": history}
+                                         "attempt_history": history,
+                                         # Retain exact write-ahead phase trail
+                                         # when the post-click result is saved.
+                                         **({"click_intent": previous_attempt["click_intent"]}
+                                            if previous_attempt.get("click_intent") else {})}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
                     if action_tabs:
