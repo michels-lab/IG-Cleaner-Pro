@@ -106,6 +106,35 @@ class DesktopAppTests(unittest.TestCase):
         self.assertEqual(calls[0:2], ["stop_requested", "collector_paused"])
         self.assertEqual(calls[-2:], ["shutdown", "closed"])
 
+    def test_developer_shutdown_stops_real_action_worker_and_live_probe(self):
+        calls = []
+        class FakeWorker:
+            def is_alive(self): return True
+            def join(self, timeout): calls.append(("join", timeout))
+        class FakeEvent:
+            def set(self): calls.append("stop_action")
+        class FakeAction:
+            stop_event = FakeEvent()
+            worker = FakeWorker()
+        class FakeCollector:
+            worker = FakeWorker()
+            def stop(self): calls.append("stop_counts")
+        class FakeProbe:
+            worker = FakeWorker()
+            def stop(self): calls.append("stop_live_probe")
+        class FakeServer:
+            actions = FakeAction()
+            collector = FakeCollector()
+            dev_action_tests = FakeAction()
+            live_probe = FakeProbe()
+            def shutdown(self): calls.append("server_shutdown")
+            def server_close(self): calls.append("server_closed")
+        native.stop_safely(FakeServer())
+        self.assertEqual(calls.count("stop_action"), 2)
+        self.assertIn("stop_live_probe", calls)
+        self.assertEqual(calls.count(("join", 60)), 4)
+        self.assertEqual(calls[-2:], ["server_shutdown", "server_closed"])
+
     def test_launcher_starts_only_one_executable_not_cmd(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
