@@ -406,14 +406,15 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs "$DEV_APK" | tee /tmp/dev-apksigner.txt
           "$AAPT" dump badging "$DEV_APK" | tee /tmp/dev-badging.txt
           grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/dev-badging.txt
-          grep -q "versionCode='\u0024{{ steps.release.outputs.version_code }}'" /tmp/dev-badging.txt
-          grep -q "versionName='\u0024{{ steps.release.outputs.version }}-developer'" /tmp/dev-badging.txt
+          grep -q "versionCode='${{ steps.release.outputs.version_code }}'" /tmp/dev-badging.txt
+          grep -q "versionName='${{ steps.release.outputs.version }}-developer'" /tmp/dev-badging.txt
           DEV_CERT="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/dev-apksigner.txt | tr '[:upper:]' '[:lower:]')"
           test "$DEV_CERT" = "$ACTUAL"
           # aapt package IDs are authoritative: separate app, separate storage.
           ! grep -q "package: name='com.michelslab.igcleaner'" /tmp/dev-badging.txt
           ! grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/badging.txt
-          unzip -p "$DEV_APK" assets/ig_cleaner_pro_v120_27_synced_companion.html | grep -q 'igcDevSaveNote'
+          unzip -p "$DEV_APK" assets/ig_cleaner_pro_v120_27_synced_companion.html > /tmp/igc-developer-release-embedded.html
+          grep -q 'igcDevSaveNote' /tmp/igc-developer-release-embedded.html
 
       - name: Build release bundle
         run: |
@@ -515,7 +516,7 @@ jobs:
           ## Windows integrated app + automation
           **Recommended Windows installer:** download `IG-Cleaner-Pro-Windows-Setup-v${{ steps.release.outputs.version }}.exe`. Run Setup, accept the complete license, select any optional shortcut, and launch **Insta Cleaner Pro** from Start. It installs the complete robot, a read-only Chrome Companion folder, taskbar pinning instructions, and a Windows uninstaller. Later versions upgrade in place without deleting local imported lists, browser workspaces, or robot history. Chrome is still required.
 
-          **Developer Edition — independent Windows installation:** \${{ steps.release.outputs.windows_developer_artifact }}. Installs next to the public app, not on top of it. Its basic local diagnostic chat, section notes and report copy are local. It can modify real Instagram relationships ONLY in the separate owner-authorized, exact-target 1–10 Unfollow/Cancel test; never from free-text chat. Tests are not proof of success in the owner's live Instagram.
+          **Developer Edition — independent Windows installation:** ${{ steps.release.outputs.windows_developer_artifact }}. Installs next to the public app, not on top of it. Its basic local diagnostic chat, section notes and report copy are local. It can modify real Instagram relationships ONLY in the separate owner-authorized, exact-target 1–10 Unfollow/Cancel test; never from free-text chat. Tests are not proof of success in the owner's live Instagram.
 
           **Optional legacy portable archive:** `IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip` remains available for compatibility, but Setup is the normal Windows download. Robots still require explicit batch approval and Instagram identity verification; Mutuals is Focus-only.
 
@@ -523,7 +524,7 @@ jobs:
           ## Android
           Use **${{ steps.release.outputs.android_artifact }}**. It is the stable package **com.michelslab.igcleaner**, signed with the persistent IG Cleaner Pro production identity.
 
-          **Android Developer Edition:** \${{ steps.release.outputs.android_developer_artifact }} installs next to the stable Android app as \`com.michelslab.igcleaner.developer\`. It uses the SAME production signing certificate, but has independent local data. Android Developer diagnostics are read-only; the Windows-only live action tester is not available on Android.
+          **Android Developer Edition:** ${{ steps.release.outputs.android_developer_artifact }} installs next to the stable Android app as `com.michelslab.igcleaner.developer`. It uses the SAME production signing certificate, but has independent local data. Android Developer diagnostics are read-only; the Windows-only live action tester is not available on Android.
 
           SHA-256 checksums are included in **SHA256SUMS.txt**.
           EOF
