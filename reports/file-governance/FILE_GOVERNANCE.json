@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 291,
-  "classified_files_total": 287,
-  "docs_content_inspected": 48,
+  "tracked_files_total": 293,
+  "classified_files_total": 289,
+  "docs_content_inspected": 49,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,19 +14,21 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 43,
+    "document": 44,
     "index": 5,
     "installer_metadata": 1,
     "source": 39,
-    "test": 67,
+    "test": 68,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "531f272e9f1da36b215bc311a44b41111005f9beb7a69eeb0483d3adb274a5fa",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "296cf69c3ea5ae4cdeb75453d123b7e673b63ee50b416c314cf85da98b0478dc",
+  "evidence_fingerprint": "55440c6b0dfbffb659978f72ed874c2b45fd8a20c19ad77d87203ffa9413b275",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -96,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0b943ce250524198fe796121fd3ba68b10e2e6f4"
+      "blob": "b76624977dff53cf427d3b71f420c33cccaa46b0"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -145,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "9a8e9b6a2ad77335349f1737acb893fdbd5e65e1"
+      "blob": "fed9f28755f070085a986368135de1d5b945706a"
     },
     {
       "path": ".gitignore",
@@ -1058,6 +1060,13 @@
       "blob": "485c5f852e0e06f216b77d62b6570cb14f7e134c"
     },
     {
+      "path": "docs/GRANADA_26_SIGNED_ANDROID_FOREGROUND_LAUNCH_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "4f3e3d3f31bf462c7d111a8d7f6b867797f91e7c"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1615,7 +1624,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1cf7e2be61bc1d2f3819b97d30db1dc30765b5e2"
+      "blob": "c00dea4b3b95cdbd79217dd0d13e787e186b22ad"
     },
     {
       "path": "tests/rls-contract.py",
@@ -1651,6 +1660,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
+    },
+    {
+      "path": "tests/test_android_signed_coinstall_runtime.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9af2f07db625d185f0cf88a665d97a2d5ed1932d"
     },
     {
       "path": "tests/test_android_visual_transfer.py",
@@ -2021,7 +2037,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "95728bdbff462d95af7f3d3e71b658e285e2565a"
+      "blob": "cdba747ccd32bb19630a07343774746af81064b6"
     },
     {
       "path": "tools/visual_release_gate.py",
@@ -2038,7 +2054,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "f03c42bc63ea8d03",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/release.yml, tests/release-publisher-contract.py, tests/test_android_signed_coinstall_runtime.py, tools/verify_production_android_coinstall.sh",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
