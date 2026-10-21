@@ -31,6 +31,40 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertEqual(set(current_claims), {stable},
                          "Update guide must not tell users an old or reserved version is currently shipped.")
 
+    def test_readme_all_current_and_reserved_release_claims_match_manifest(self):
+        """Catch stale owner-facing guidance, not just the first README banner."""
+        policy = json.loads(MANIFEST.read_text(encoding="utf-8"))["releasePolicy"]
+        stable = policy["currentStableRelease"]
+        reserved = policy["nextRelease"]
+        readme = README.read_text(encoding="utf-8")
+        self.assertIn(
+            f"**{stable} — official stable GitHub release",
+            readme,
+        )
+        self.assertIn(
+            f"https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/{stable}",
+            readme,
+        )
+        claims = re.findall(
+            r"(?m)^\\*\\*Current published stable: (v\\d+\\.\\d+)\\. "
+            r"Next reserved version: (v\\d+\\.\\d+), not published\\.\\*\\*$",
+            readme,
+        )
+        self.assertEqual(claims, [(stable, reserved)])
+        # Detect the historical stale one-line claim even if the valid
+        # manifest-backed banner also exists elsewhere in the README.
+        self.assertEqual(
+            re.findall(r"(?im)\\bcurrent published stable:\\s*(v\\d+\\.\\d+)", readme),
+            [stable],
+        )
+        self.assertIn("Publication does not prove live Instagram Unfollow", readme)
+        self.assertIn("owner tests only officially published installers", readme)
+        self.assertNotIn(
+            f"**{reserved} — official stable GitHub release",
+            readme,
+            "Do not advertise the reserved version as published before promotion.",
+        )
+
     def test_profile_counts_guide_uses_release_feed_not_obsolete_stable_claim(self):
         guide = COUNTS_GUIDE.read_text(encoding="utf-8")
         self.assertIn("releasePolicy.currentStableRelease", guide)
