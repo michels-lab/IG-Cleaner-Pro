@@ -1,3 +1,10 @@
+## 2026-10-21 — GRANADA README release claims and CI path enforcement (PR #202)
+
+- Source-of-truth regression detected: README's top declared official v120.54, but a second Run/develop sentence still called v120.53 published and v120.54 reserved. Corrected that lower sentence to currentStableRelease v120.54 / nextRelease v120.55, preserving the separate product-specific plugin audit link merged in PR #201.
+- Added manifest-backed `tests/test_update_docs_contract.py` coverage for BOTH actual owner-facing release claims, canonical stable URL, candidate-not-published language and honest real-owner Instagram acceptance limitation. Hardened `.github/workflows/ci.yml` path triggers so README-only and Profile Counts guide-only PR changes also run these tests instead of slipping past CI.
+- Independent branch `granada/readme-release-source-of-truth-20261021`, [PR #202](https://github.com/michels-lab/IG-Cleaner-Pro/pull/202); exact-head CI pending at time of this log. No release/version signing change, Instagram account mutation, robot source change, data migration or alteration of the approved original 40-person cohort.
+- Official v120.55 six-attempt release request committed separately at `de6343fecf6986f8f3287757e309f7d8f5c886f8`; do NOT infer publication from this branch or claim any GitHub release until independent final stable tag/assets/signatures/checksums verification. Issue #172 live Instagram acceptance remains open.
+
 ## 2026-10-21 — GRANADA #25 release-shell fix MERGED; governed v120.55 final publish reattempt 5
 
 - [PR #198](https://github.com/michels-lab/IG-Cleaner-Pro/pull/198) merged at `49f418919df796f7fc0b5b7e09a922906c3682f8`. 4/4 relevant exact-PR CI SUCCESS: Android Developer installed Account/notes/JSON device test and disposable matching-key signature build, Android rendered screenshots, Desktop rendered Chromium, generic application/cloud checks. The real publisher's signed coexistence emulator now launches **Bash explicitly** to run strict real APK installation and both Android package-launch verification. Never skip signing/coexistence.
