@@ -10,7 +10,7 @@
   "previous_stable_release": "v120.54",
   "owner_acceptance_note": "Release solely through .github/workflows/release.yml with exact-commit Android Home/About screenshots and installed Developer Account/notes/JSON export; installed Windows public and Developer Setup; pinned production-signed Android public+Developer APKs; version 120.55, SHA-256 and official asset/feed validation. Offline Chromium/source/CI tests do not establish real Instagram Unfollow/Cancel successes. Michel tests only the final official published stable Setup. Preserve protected profiles, original saved 40-cohort, attempted/uncertain click WAL and cloud account history; no CAPTCHA bypass or automatic uncertain-click replay. Keep owner live acceptance issues #172 and #164 open after release.",
   "requested_at": "2026-10-21",
-  "candidate_main_sha": "ac087e5bdd3802cea8c8838005ac7945cca3dd85",
+  "candidate_main_sha": "462d552478fd2679dddc94d51f669eab9aeb8541",
   "integrated_source_merge_shas": [
     "eef3f534402a8fb3666e55d7892407ef32941317",
     "75b8a137c3eb73a328ecb5e561b32bf521ed86a5",
@@ -18,9 +18,11 @@
     "bc6bd68b5823f1ffe5c6444f76c5ceadc0bc684c",
     "ae3fc6f84ac49444ce33c242825b01ee35eb75d5",
     "12ea8a4815f8601f5b967e35b0506ceabb498282",
-    "49f418919df796f7fc0b5b7e09a922906c3682f8"
+    "49f418919df796f7fc0b5b7e09a922906c3682f8",
+    "45294e022e91a4a2394678497290d48edd7616b3",
+    "4711f491556f40c982d96cd1063a5a840564ab61"
   ],
-  "retry_attempt": 5,
-  "retry_of_failed_run": 39655352708,
-  "retry_reason": "Fourth FINAL stable attempt 39655352708 passed visual/installed Windows/Android Developer/signed APK metadata and booted emulator but failed before adb install because YAML emulator-runner script was invoked with /bin/sh and rejected Bash `set -euo pipefail`. P0 PR #198 merged at 49f418919df796f7fc0b5b7e09a922906c3682f8 after 4/4 exact-head CI; mandatory actual signed APK co-install now uses explicit `bash tools/verify_production_android_coinstall.sh` with two installs/launches and postlaunch package verification. P0 Windows no-replay PR #197 merged at 12ea8a4815f8601f5b967e35b0506ceabb498282 after 5/5 exact-head CI. FULL publisher reruns every gate; no RC, no prerelease, no owner real Instagram proof claim."
+  "retry_attempt": 6,
+  "retry_of_failed_run": 39659943579,
+  "retry_reason": "Fifth exact-commit official FINAL stable publisher #39659943579 ended with its Windows installer job cancelled during 'Compile governed Windows Setup, install/launch/uninstall'; Android Developer and visual jobs had succeeded, release publish job was skipped. No failed Windows test or real Instagram result may be inferred from cancellation. Re-run ALL governed QA from the newer main source that includes merged cross-product domain isolation PRs #199 and #200. Retain all installed Windows+Developer, Android+Developer, production signing/co-install, screenshots, SHA256, feed and publisher gates; NEVER publish an RC or silently override user journals."
 }
