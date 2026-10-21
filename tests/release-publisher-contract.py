@@ -30,12 +30,16 @@ for token in (
 # GitHub must not publish a visually changed app on mere source/build success.
 for token in (
     'rendered-ui-qa:',
-    'needs: [release-request-gate, rendered-ui-qa, windows-robot]',
+    'needs: [release-request-gate, rendered-ui-qa, windows-robot, android-developer-qa]',
     'windows-robot:',
     'ig-cleaner-stable-windows-robot-',
     'IG-Cleaner-Pro-Automatic-Robot-Windows-v',
     'needs.windows-robot.result',
     "needs.rendered-ui-qa.result == 'success'",
+    "android-developer-qa:",
+    "needs.android-developer-qa.result == 'success'",
+    "bash tools/run_android_developer_ui.sh",
+    "ig-cleaner-final-stable-developer-android-",
     'tools/verify_android_visual_release_evidence.py',
     'gh run download',
     '--commit "$GITHUB_SHA"',
