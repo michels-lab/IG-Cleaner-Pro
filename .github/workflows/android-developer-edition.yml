@@ -5,6 +5,10 @@ on:
       - 'android/**'
       - 'desktop/**'
       - 'tests/developer-annotations-contract.test.cjs'
+      - 'tests/developer-release-contract.py'
+      - 'release/distribution-manifest.json'
+      - '.github/workflows/release.yml'
+      - 'tools/run_android_developer_ui.sh'
       - '.github/workflows/android-developer-edition.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +31,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Verify governed Developer signing and separate release artifacts
+        run: python3 tests/developer-release-contract.py
       - name: Enable emulator KVM
         run: |
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
