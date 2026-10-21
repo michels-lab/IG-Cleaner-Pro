@@ -22,6 +22,12 @@ Fix in `tools/verify_production_android_coinstall.sh`:
 
 Offline adversarial fixture `tests/test_android_signed_coinstall_runtime.py` uses fake adb strictly to prove gate behavior: delayed valid foreground success, never resumed, wrong account foreground, missing process, missing boot/package, rejected start/install and missing APK must all have correct outcomes. It does **not** substitute for the real emulator in the governed publisher. `tests/release-publisher-contract.py`, broad CI and the mandatory publisher additionally execute these regressions. The existing mandatory `reactivecircus/android-emulator-runner@v2`, real signed APKs, real-device launch, Android Developer UI, Windows installers, visual QA and SHA256 gates are **not removed**.
 
+## Emulator hardware-acceleration contributing factor
+
+The sixth publisher log explicitly reported that Linux hardware acceleration was unavailable to `reactivecircus/android-emulator-runner@v2`; its software emulator needed roughly eight minutes to finish booting, more than two minutes for both APK installs and still exceeded ActivityManager's 30-second synchronous launch wait. The separate Android Developer and About QA workflows already enable usable `/dev/kvm` when available, whereas the `publish` job had omitted that step.
+
+The actual publisher now attempts to enable `/dev/kvm` **before** the signed coexistence emulator starts and verifies read/write access; on a host without KVM it logs a warning but still requires the exact same real signed device gate (never fake success). This addresses an observed environment/configuration difference and may improve performance, but success and physical acceptance must be measured rather than assumed. The release contract requires this acceleration step to precede the mandatory device execution.
+
 ## Acceptance and continuation
 
 1. All exact-branch PR CI must pass (offline failure modes plus existing Android emulator / Windows / Desktop gates). Do not merge red CI.
