@@ -116,9 +116,16 @@ class DeveloperRealDOMTest(unittest.TestCase):
             snapshot=probe.snapshot()
             self.assertEqual(snapshot["counts"],{"REQUESTED_VISIBLE":1})
             self.assertTrue(snapshot["events"][0]["meaning"])
-            for private in ("confidential.profile","my.profile","owner","ig",
+            serialized=json.dumps(snapshot)
+            for private in ("confidential.profile","my.profile",
                             "012345678901234567890123456789"):
-                self.assertNotIn(private,json.dumps(snapshot))
+                self.assertNotIn(private, serialized)
+            # "owner" and "ig" are ordinary words inside our fixed schema
+            # ("owner_installed", "Instagram"). Test structured identifiers,
+            # not arbitrary substrings of public metadata.
+            self.assertNotIn('"owner": "owner"', serialized)
+            self.assertNotIn('"account": "ig"', serialized)
+            self.assertFalse(any(x in snapshot for x in ("owner","account","targets","username")))
             self.assertEqual(snapshot["evidence"],"real_visible_dom_no_relationship_click")
             self.assertFalse(snapshot["contains_usernames"])
             self.assertTrue(all(x in LIVE_CODES for x in snapshot["counts"]))
