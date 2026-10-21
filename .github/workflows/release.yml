@@ -466,6 +466,11 @@ jobs:
           unzip -p "$DEV_APK" assets/ig_cleaner_pro_v120_27_synced_companion.html > /tmp/igc-developer-release-embedded.html
           grep -q 'igcDevSaveNote' /tmp/igc-developer-release-embedded.html
 
+      - name: Reject unproven signed Android launch (offline adversarial fixture)
+        run: |
+          python3 tests/release-publisher-contract.py
+          python3 -m unittest discover -s tests -p 'test_android_signed_coinstall_runtime.py' -v
+
       - name: Prove both production-signed Android packages install side by side
         uses: reactivecircus/android-emulator-runner@v2
         with:
