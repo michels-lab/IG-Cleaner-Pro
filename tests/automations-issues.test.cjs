@@ -65,5 +65,18 @@ vm.createContext(ctx);vm.runInContext(match[1],ctx);
  ctx.window.igcAutoRenderIssues();
  assert.equal(elements.igcAutoIssueRows.children.length,2,"Return to account restores saved result cache");
  assert.match(elements.igcAutoIssueTotal.textContent,/1 need manual review/);
- console.log("Automations issue summaries, filters, profile navigation, reviewed state and account isolation: PASS");
+ issues.push({username:"interrupted.after.crash",status:"review",
+  issue:"interrupted_action_uncertain",safe_no_click:false,
+  message:"Result unknown after a durable pre-click intent",
+  click_phase:"unfollow_menu",at:"2026-10-21"});
+ await ctx.window.igcAutoPoll();
+ elements.igcAutoIssueFilter.value="interrupted_action_uncertain";
+ ctx.window.igcAutoRenderIssues();
+ assert.equal(elements.igcAutoIssueRows.children.length,1,
+  "Interrupted click must have a dedicated filter, not be confused with harmless no-click failures");
+ const interrupted=elements.igcAutoIssueRows.children[0];
+ assert.match(interrupted.children[1].children[0].textContent,/never auto-retry/);
+ assert.match(interrupted.children[1].children[1].textContent,/Last armed click phase: unfollow menu/);
+ assert.match(interrupted.children[1].children[2].textContent,/No automatic retry/);
+ console.log("Automations issue summaries, filters, profile navigation, reviewed state, interrupted-click diagnosis and account isolation: PASS");
 })().catch(e=>{console.error(e);process.exitCode=1});
