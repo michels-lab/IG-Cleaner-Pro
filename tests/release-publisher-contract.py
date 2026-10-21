@@ -63,14 +63,32 @@ for token in (
     "app-release.apk", "app-developer.apk",
     'adb install -r "$PUBLIC_APK"',
     'adb install -r "$DEVELOPER_APK"',
-    "package:com.michelslab.igcleaner",
-    "package:com.michelslab.igcleaner.developer",
-    "adb shell am start -W",
-    "adb shell pm path com.michelslab.igcleaner",
-    "adb shell pm path com.michelslab.igcleaner.developer",
-    "Status: ok",
+    'PUBLIC_PKG="com.michelslab.igcleaner"',
+    'DEVELOPER_PKG="com.michelslab.igcleaner.developer"',
+    'grep -Fxq "package:$PUBLIC_PKG"',
+    'grep -Fxq "package:$DEVELOPER_PKG"',
+    'adb shell am start -n "$component"',
+    'adb shell dumpsys activity activities',
+    'adb shell pidof "$package"',
+    "topResumedActivity",
+    "mResumedActivity",
+    "stable >= 2",
+    'grep -Fq "$package/"',
+    'adb shell pm path "$PUBLIC_PKG"',
+    'adb shell pm path "$DEVELOPER_PKG"',
 ):
     assert token in coinstall, "Signed Android device gate missing: "+token
+
+# The sixth real publisher ran the signed Android emulator without usable
+# hardware acceleration. Opt into available KVM before launching BOTH APKs,
+# while keeping the actual emulator gate mandatory even on fallback hosts.
+publish = workflow.split("\n  publish:\n", 1)[1]
+kvm_step = publish.index("Enable Android emulator hardware acceleration for signed coexistence")
+device_step = publish.index("Prove both production-signed Android packages install side by side")
+assert kvm_step < device_step
+assert "sudo chmod 666 /dev/kvm" in publish[kvm_step:device_step]
+assert "test -r /dev/kvm && test -w /dev/kvm" in publish[kvm_step:device_step]
+assert "script: bash tools/verify_production_android_coinstall.sh" in publish[device_step:]
 
 # The stable Windows publisher must match the exact tested integrated app,
 # never silently regress to the removed legacy CMD + standalone collector.
