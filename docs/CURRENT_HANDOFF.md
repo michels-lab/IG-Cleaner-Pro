@@ -1,3 +1,10 @@
+## 2026-10-21 — GRANADA official v120.55 release gate — source integrated, publication not yet proven
+
+- All independent required source PRs merged: #186 final release Android Developer installed QA gate `eef3f53`, #184 two-lane Windows Automation Center `75b8a13`, #189 v120.55 version/source/notes `3423242`, #188 malformed saved journal no-replay `bc6bd68`. **Original saved batches/uncertain journal/protected profiles preserved.**
+- Exact-head PR verification: #186 4/4; #184 6/6; #189 6/6; #188 5/5. Windows integrated installer tests are offline fixture/installed local Setup, not proof of live signed-in Instagram Unfollow or Cancel Pending.
+- Current officially published v120.54 until verifiable new GitHub tag/assets. Owner's standing GRANADA instruction permits v120.55 FINAL STABLE (never RC) upon mandatory publisher checks: Desktop/Android screenshot, Windows public+Developer installation, Android Developer real emulator navigation/JSON export, persistent production Android signer, integrity SHA-256/asset/feed verification.
+- The release request is `authorized` only when set explicitly in `.michelslab/release-request.json` for v120.55. Do not merge other agent-owned Desktop translation #143 into this release unseen. If publisher fails, retain exact failure and do not claim publication or switch manifest/README currentStableRelease. After publication, record confirmed SHA/run/assets and separate owner real Instagram acceptance #172.
+
 ## 2026-10-21 — GRANADA #17 Windows two-lane Automation Center (isolated source candidate)
 
 - Issue [#176](https://github.com/michels-lab/IG-Cleaner-Pro/issues/176), branch `granada/p0-windows-automation-center-lanes-20261021`: refactored the real Automations landing structure into **permanent Analysis / Action lanes** with explicit status mirroring from the current Profile Counts and action robot, scoped responsive card layout, saved-cohort versus preferred next batch information, visible browser-admission warning, and a keyboard-accessible collapsible **Issue Review** containing the ORIGINAL issue filters and results (not a new journal or second action runner).
