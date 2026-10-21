@@ -1,3 +1,12 @@
+## 2026-10-20 — GRANADA: governed Developer twins in official release (source, not published)
+
+- Added `androidDeveloper` and `windowsDeveloper` assets to `release/distribution-manifest.json`. Official publisher must build **both** independent Developer outputs, inspect them, include them in SHA256SUMS, upload them and confirm them after publication. Stable original outputs remain mandatory.
+- Android `:app:assembleDeveloper`: local emulator checks may continue with debug key. Official release requires `IGC_ANDROID_SIGNED_DEVELOPER_REQUIRED=true` and the same persistent production signing configuration/certificate as the normal `:app:assembleRelease`; signed Developer becomes nondebuggable. Package `com.michelslab.igcleaner.developer`, separate app storage and display identity. Fail if unsigned, wrong package, wrong version or certificate mismatch.
+- Windows source builds and smoke-tests its independent Developer Setup in the **official publisher job** (not only its development PR): separate Inno AppId, installation path and forced `--developer` entry point; installed healthcheck/launch/uninstall and production-data sentinel. Official publish job checks both Windows installers' .sha256 hashes and sizes.
+- Android Developer emulator also installs public **debug** (.beta) and Developer side by side and checks both package IDs after installation. Signed production APKs are validated separately in guarded publication; emulator debug tests alone are *not* signing proof.
+- Added `tests/developer-release-contract.py` and Android Developer CI trigger for manifest, release policy and these gates. Release remains **manual authorization only**. No publication command or release request update made. Original `v120.54` remains last stable and owner real Instagram Unfollow/Cancel verification stays unperformed.
+- On authorized v120.55 release only, normal version/build metadata will need synchronized bump and exact-commit visual+Windows+Android gates; no user's real account is used during CI and no future approval is presumed.
+
 ## 2026-10-20 — GRANADA P0 Developer mainline MERGED, exact-head CI green (no v120.55 release)
 
 - PR [#179](https://github.com/michels-lab/IG-Cleaner-Pro/pull/179) **MERGED**, merge commit `614071e11c66e6258c88b790ab63bcf186056578`; preserves merged ten-tab-wave PR #177 and batch 40→10 / Cancel Pending source fixes #174/#175. Conflicting older Developer draft #178 CLOSED as superseded.
