@@ -107,5 +107,6 @@ jobs:
           "$AAPT" dump badging "$DEV_APK" > /tmp/igc-dev-badge.txt
           grep -q "package: name='com.michelslab.igcleaner'" /tmp/igc-public-badge.txt
           grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/igc-dev-badge.txt
-          grep -q "versionName='120.54-developer'" /tmp/igc-dev-badge.txt
+          VERSION="$(python3 -c 'import json; print(json.load(open("release/android-signing.json"))["versionName"])')"
+          grep -Fq "versionName='$VERSION-developer'" /tmp/igc-dev-badge.txt
           echo "PASS: CI-disposable key proves the production release/developer signing configuration builds distinct identically signed APKs."
