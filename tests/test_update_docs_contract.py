@@ -46,7 +46,7 @@ class UpdateGuideContract(unittest.TestCase):
             readme,
         )
         claims = re.findall(
-            r"(?m)^\*\*Current published stable: (v\d+\.\d+)\. "
+            r"\*\*Current published stable: (v\d+\.\d+)\. "
             r"Next reserved version: (v\d+\.\d+), not published\.\*\*$",
             readme,
         )
