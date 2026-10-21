@@ -1,0 +1,29 @@
+name: IG Cleaner release documentation contract
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'docs/UPDATE_AND_STATE_MIGRATION.md'
+      - 'docs/PROFILE_COUNTS_ROBOT.md'
+      - 'release/distribution-manifest.json'
+      - 'tests/test_update_docs_contract.py'
+      - '.github/workflows/release-docs-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'docs/UPDATE_AND_STATE_MIGRATION.md'
+      - 'docs/PROFILE_COUNTS_ROBOT.md'
+      - 'release/distribution-manifest.json'
+      - 'tests/test_update_docs_contract.py'
+      - '.github/workflows/release-docs-contract.yml'
+permissions:
+  contents: read
+jobs:
+  docs-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_update_docs_contract.py' -v
