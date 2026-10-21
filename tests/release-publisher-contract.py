@@ -52,6 +52,26 @@ for token in (
     assert token in workflow, f"Release P0 missing protected visual approval: {token}"
 
 
+# A real production-signed Android coexistence test is a hard publish gate.
+# The emulator action invokes its `script` using /bin/sh, so strict bash
+# syntax must be executed explicitly through bash (never inline sh + pipefail).
+coinstall = (ROOT/"tools/verify_production_android_coinstall.sh").read_text(encoding="utf-8")
+assert "script: bash tools/verify_production_android_coinstall.sh" in workflow
+assert workflow.count("Prove both production-signed Android packages install side by side") == 1
+for token in (
+    "#!/usr/bin/env bash", "set -euo pipefail",
+    "app-release.apk", "app-developer.apk",
+    'adb install -r "$PUBLIC_APK"',
+    'adb install -r "$DEVELOPER_APK"',
+    "package:com.michelslab.igcleaner",
+    "package:com.michelslab.igcleaner.developer",
+    "adb shell am start -W",
+    "adb shell pm path com.michelslab.igcleaner",
+    "adb shell pm path com.michelslab.igcleaner.developer",
+    "Status: ok",
+):
+    assert token in coinstall, "Signed Android device gate missing: "+token
+
 # The stable Windows publisher must match the exact tested integrated app,
 # never silently regress to the removed legacy CMD + standalone collector.
 for token in (
