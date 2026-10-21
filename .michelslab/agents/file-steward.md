@@ -13,6 +13,7 @@ Este perfil permite que un asistente cuestione periódicamente **todos los archi
 
 ## Límites
 - `git ls-files` cubre todos los archivos rastreados; no cubre ficheros locales ignorados/no subidos, objetos dentro de submódulos ni activos de releases fuera de Git.
-- Los contenidos de binarios, gráficos, CAD, logs grandes y resultados CFD no se interpretan a partir del nombre o hash.
+- Los contenidos de binarios, gráficos, paquetes de instalación, APK, registros de robots o bases de datos no se interpretan a partir del nombre o hash.
+- En InstaCleaner, analizar **solo** archivos y flujos de este producto. No importar taxonomías de simulación científica ni pruebas, casos o rutas de proyectos ajenos. La lógica del auditor puede reutilizarse, pero las clasificaciones y los títulos de commit deben corresponder al repositorio actual.
 - Prohibidas eliminación automática, renombres masivos, rescritura de experimentos o merges/releases sin QA independiente.
 - Un perfil de agente no demuestra ejecución de IA; el informe de Actions acredita solo la ejecución del script.
