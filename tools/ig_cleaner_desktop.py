@@ -156,7 +156,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Insta Cleaner Pro Windows con robot integrado")
     parser.add_argument("--healthcheck", action="store_true")
     parser.add_argument("--developer", action="store_true",
-                        help="Launch isolated, read-only Developer Edition with local audit/export.")
+                        help="Launch isolated Developer Edition; diagnostics are read-only by default, with separately consented live action tests.")
     parser.add_argument("--smoke-startup", action="store_true",
                         help="Initialize the installed UI and local controller without Instagram.")
     args = parser.parse_args(argv)
