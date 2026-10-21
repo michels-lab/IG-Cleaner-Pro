@@ -1,3 +1,15 @@
+## 2026-10-21 — GRANADA #23: Android Developer real WebView bootstrap gate validated and merged; stable v120.55 attempt 4 initiated
+
+**Verified failure:** governed v120.55 release attempt 3 [run 39651351295](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39651351295) passed rendered screenshots and Windows public/Developer Setup, but failed installed Android Developer `realDeveloperBuildSupportsAccountNotesAndRestart` due to `MISSING_BUTTON` for `igcDevAccount`. No tag/assets were published, so v120.54 remains last official stable.
+
+**Root-cause candidate and remedy:** native `MainActivity.bootstrapWorkspace()` intentionally triggers an initial WebView reload after writing session state; test incorrectly accepted visible Developer panel on a transient first document. PR [#196](https://github.com/michels-lab/IG-Cleaner-Pro/pull/196) requires the actual completed post-reload native host, mounted button, sync page, Developer bridge and live click. It retains restart-persistent annotations/native JSON checks and fail-closed diagnostics; no product HTML, robots, owner data, WAL, signer or saved 40-profile batch changed. Squash merged `c446e32f3f55ab9e65c98c18633ba56308bda417`.
+
+**Validation PASS:** exact PR source run [39654637579](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39654637579) Android Developer installed WebView and matching-key disposable CI signer; [39654637640](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39654637640) Android Home/About; [39654637560](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39654637560) generic app/Android/cloud contract CI. Physical owner live Instagram Unfollow/Cancel remains **unverified** (#172).
+
+**Release action:** owner standing final-only authorization used to trigger exact-request-SHA governed v120.55 [attempt 4, run 39655352708](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39655352708), request commit `c9534b739aaac65cb9069daf07937088ddee0c4a`. At writing: **IN PROGRESS; do NOT claim published**. Mandatory independent production-signed Android public+Developer APK coexistence, Desktop/Android UI evidence, installed Windows installers, checksums/asset presence/feed, no-replay and Developer acceptance must all pass. Prior run 39629335827 had independent emulator-boot timeout, not an APK rejection. If blocked, log failure rather than bypassing gates. No RC/prerelease.
+
+Detailed handoff: `docs/GRANADA_23_NATIVE_DEVELOPER_WEBVIEW_BOOTSTRAP_GATE_2026-10-21.md` and `docs/CURRENT_HANDOFF.md`.
+
 ## 2026-10-21 — GRANADA: v120.55 final stable authorized for gated publication (release still pending)
 
 - Owner's standing 2026-10-21 GRANADA order permits the FINAL stable release for InstaCleaner once mandatory checks succeed, no RC/pre-release. The publication request remains distinct from the source integration and MUST be checked by GitHub Actions before any `published` claim.
