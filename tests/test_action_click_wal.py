@@ -30,6 +30,97 @@ class DurableClickIntentTests(unittest.TestCase):
         robot.active_batch_id = "approved-batch-123"
         return robot
 
+    def test_malformed_present_journal_is_never_a_reusable_action(self):
+        # Exact historical issue: a saved target with an unreadable prior
+        # action record was advertised as untouched by cold-start history.
+        # A possible earlier click can therefore never be replayed blindly.
+        with tempfile.TemporaryDirectory() as directory:
+            robot = self.make_robot(directory)
+            malformed = ["chosen.user", "bad.intent", "nested.phase"]
+            journal = {
+                "chosen.user": 17,
+                "bad.intent": {"status": "review", "issue": "missing_profile_info",
+                               "message": "The profile does not show the state required for this action.",
+                               "click_intent": "PRIVATE_INVALID_CLICK_INTENT"},
+                "nested.phase": {"status": "blocked",
+                                 "message": "Instagram session verification failed before the first click. No action performed.",
+                                 "click_intent": {"phase": ["PRIVATE", "SECRET"]}},
+                "safe.miss": {"status": "blocked",
+                              "message": "Instagram session verification failed before the first click. No action performed."},
+            }
+            _atomic_json(robot._base(), journal)
+            batch_file = robot._review_batches_file_for(robot.owner, robot.account, robot.task)
+            _atomic_json(batch_file, [{
+                "id": "saved-malformed-batch", "targets": malformed,
+                "original_targets": [*malformed, "safe.miss", "untouched"],
+                "approved_at": None, "recheck_results": {}
+            }])
+            journal_before, batch_before = robot._base().read_bytes(), batch_file.read_bytes()
+            history = robot.attempted_history({
+                "owner": robot.owner, "account": robot.account, "task": robot.task})
+            self.assertTrue(set(malformed).issubset(set(history["attempted_usernames"])))
+            self.assertEqual(set(history["reusable_usernames"]), {"safe.miss", "untouched"})
+            self.assertFalse(_preclick_no_action(journal["bad.intent"]))
+            self.assertFalse(_preclick_no_action(journal["nested.phase"]))
+            with self.assertRaisesRegex(ValueError, "invalid saved action evidence"):
+                robot.start({"owner": robot.owner, "account": robot.account,
+                             "expected_handle": robot.handle, "task": robot.task,
+                             "targets": malformed, "batch_id": "saved-malformed-batch",
+                             "batch_size": 3, "confirmation": "unfollow:3",
+                             "protected": [], "followers_evidence": True,
+                             "gap_seconds": 10, "rest_minutes": 0})
+            self.assertIsNone(robot.worker)
+            self.assertEqual(journal_before, robot._base().read_bytes())
+            self.assertEqual(batch_before, batch_file.read_bytes())
+
+    def test_snapshot_quarantines_invalid_evidence_without_exposing_untrusted_phases(self):
+        with tempfile.TemporaryDirectory() as directory:
+            robot = self.make_robot(directory)
+            robot.targets = ["bad.value", "bad.phase", "bad.status", "good.terminal"]
+            raw = {
+                "bad.value": ["private", "raw", "data"],
+                "bad.phase": {"status": "ok",
+                              "click_intent": {"phase": {"owner_secret": "NEVER_EXPORT"}}},
+                "bad.status": {"status": ["unhashable"], "issue": "private_issue"},
+                "good.terminal": {"status": "already_not_following",
+                                  "message": "Already not following: verified"}
+            }
+            _atomic_json(robot._base(), raw)
+            before = robot._base().read_bytes()
+            snap = robot.snapshot()
+            self.assertEqual(snap["errors"], 3)
+            self.assertEqual(snap["already_not_following"], 1)
+            self.assertEqual(snap["successful"], 0)
+            self.assertEqual(snap["issue_count"], 3)
+            self.assertTrue({"bad.value", "bad.phase", "bad.status"}.issubset(
+                set(snap["attempted_usernames"])))
+            self.assertEqual([row["status"] for row in snap["rows"]],
+                             ["review", "review", "review", "already_not_following"])
+            self.assertTrue(all(issue["issue"] == "invalid_saved_action_evidence"
+                                and issue["click_phase"] == "" for issue in snap["issues"]))
+            serialized = json.dumps(snap)
+            self.assertNotIn("NEVER_EXPORT", serialized)
+            self.assertNotIn("private_issue", serialized)
+            self.assertEqual(robot._base().read_bytes(), before)
+
+    def test_missing_journal_profile_and_proven_preclick_remain_recoverable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            robot = self.make_robot(directory)
+            report = {"status": "blocked",
+                      "message": "Instagram session verification failed before the first click. No action performed."}
+            _atomic_json(robot._base(), {"safe.miss": report})
+            batch_file = robot._review_batches_file_for(robot.owner, robot.account, robot.task)
+            _atomic_json(batch_file, [{
+                "id": "safe-known", "targets": ["safe.miss", "not.recorded"],
+                "original_targets": ["safe.miss", "not.recorded"], "approved_at": None
+            }])
+            history = robot.attempted_history({
+                "owner": robot.owner, "account": robot.account, "task": robot.task})
+            self.assertEqual(set(history["reusable_usernames"]),
+                             {"safe.miss", "not.recorded"})
+            self.assertNotIn("safe.miss", history["attempted_usernames"])
+            self.assertTrue(_preclick_no_action(report))
+
     def test_power_loss_after_intent_before_first_click_survives_restart(self):
         with tempfile.TemporaryDirectory() as directory:
             robot = self.make_robot(directory)
