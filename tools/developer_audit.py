@@ -258,7 +258,7 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
                             and record.get("issue") != "interrupted_action_uncertain"
                             and ("click_intent" not in record or
                                  (isinstance(record["click_intent"], dict)
-                                  and record["click_intent"].get("phase") in CLICK_PHASES
+                                  and isinstance(record["click_intent"].get("phase"), str) and record["click_intent"].get("phase") in CLICK_PHASES
                                   and record["click_intent"].get("outcome_recorded") is True))):
                         recorded_terminal += 1
                     elif _proven_preclick(record):
