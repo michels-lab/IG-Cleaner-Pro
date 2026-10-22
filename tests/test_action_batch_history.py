@@ -826,6 +826,15 @@ class ActionBatchHistoryTests(unittest.TestCase):
             page.goto.assert_not_called()
 
             lookup.reset_mock(return_value=True)
+            lookup.return_value = "STRUCTURED_SESSION_REQUIRED"
+            result, details = perform_visible_action(
+                page, "test.target", "unfollow", "owner.name",
+                preloaded=True, on_pre_click=pre_click)
+            self.assertEqual(result, "review")
+            self.assertIn("not exposed", details)
+            pre_click.assert_not_called()
+
+            lookup.reset_mock(return_value=True)
             lookup.return_value = "STRUCTURED_RATE_LIMITED"
             result, details = perform_visible_action(
                 page, "test.target", "unfollow", "owner.name",
