@@ -91,6 +91,43 @@ class DeveloperRealDOMTest(unittest.TestCase):
             self.assertEqual(inspect_real_profile(page,"test.target","unfollow","owner"),
                              "PROFILE_REDIRECT")
 
+    def test_ambiguous_dom_uses_owner_verified_readonly_structured_evidence(self):
+        page = FakePage()
+        with patch("developer_live_probe.challenge_detected", return_value=False), \
+             patch("developer_live_probe._wait_for_target_profile_shell", return_value=True), \
+             patch("developer_live_probe._verified_action_owner", return_value=True), \
+             patch("developer_live_probe._profile_relationship_control", return_value=None), \
+             patch("developer_live_probe._follow_state", return_value=None), \
+             patch("developer_live_probe.inspect_structured_following",
+                   return_value="FOLLOWING_STRUCTURED") as transport:
+            self.assertEqual(
+                inspect_real_profile(page, "test.target", "unfollow", "owner"),
+                "FOLLOWING_STRUCTURED",
+            )
+            transport.assert_called_once_with(page, "test.target", owner_verified=True)
+
+        with patch("developer_live_probe.challenge_detected", return_value=False), \
+             patch("developer_live_probe._wait_for_target_profile_shell", return_value=True), \
+             patch("developer_live_probe._verified_action_owner", return_value=False), \
+             patch("developer_live_probe.inspect_structured_following") as transport:
+            self.assertEqual(
+                inspect_real_profile(page, "test.target", "unfollow", "owner"),
+                "OWNER_IDENTITY_UNVERIFIED",
+            )
+            transport.assert_not_called()
+
+        with patch("developer_live_probe.challenge_detected", return_value=False), \
+             patch("developer_live_probe._wait_for_target_profile_shell", return_value=True), \
+             patch("developer_live_probe._verified_action_owner", return_value=True), \
+             patch("developer_live_probe._profile_relationship_control", return_value=None), \
+             patch("developer_live_probe._follow_state", return_value=None), \
+             patch("developer_live_probe.inspect_structured_following") as transport:
+            self.assertEqual(
+                inspect_real_profile(page, "test.target", "cancel", "owner"),
+                "RELATIONSHIP_UNKNOWN",
+            )
+            transport.assert_not_called()
+
     def test_probe_fail_closed_and_exports_redacted(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
