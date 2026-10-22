@@ -989,8 +989,13 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                 return "blocked", ("Instagram rejected the read-only Following"
                                    " lookup (403/429). No action clicked; stop.")
             elif structured == "STRUCTURED_SESSION_REQUIRED":
-                return "blocked", ("Instagram's browser-local Following lookup"
-                                   " lacks verified session evidence. No click.")
+                # A cookie unavailable to JavaScript does NOT prove the
+                # already owner-verified Chrome login is invalid. The optional
+                # private API diagnostic must never override the real UI
+                # missing-control review or create an auth false positive.
+                note += (" Structured lookup unavailable (owner ID cookie"
+                         " not exposed); Chrome identity is not disproved."
+                         " No action clicked.")
             else:
                 note += (" Structured lookup could not verify Following;"
                          " absence is NOT proof of an unfollow. No click.")
