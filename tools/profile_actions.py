@@ -969,6 +969,13 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
                              else [r"Requested", r"Solicitado", r"Solicitada"]))
         if task == "unfollow":
+            # The session may have changed while a slow profile was hydrating.
+            # Re-verify owner immediately before even this read-only lookup.
+            if not _verified_action_owner(page, expected_handle):
+                return "blocked", ("Instagram account could not be verified"
+                                   " before structured diagnosis. No click.")
+            if challenge_detected(page) or page.locator('input[name="password"]').count():
+                return "blocked", "Instagram requested verification. No click."
             # Same-owner browser-local GET is diagnostic only. No new
             # relationship mutation, action replay or public API guarantee.
             from ig_structured_probe import inspect_structured_following
