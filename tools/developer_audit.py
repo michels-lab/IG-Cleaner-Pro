@@ -93,7 +93,7 @@ def _proven_preclick(record):
     In particular a saved write-ahead click intent always wins over legacy
     error text. A read-only auditor never grants action replay permission.
     """
-    if not isinstance(record, dict) or (record.get("click_intent") is not None) or (
+    if not isinstance(record, dict) or ("click_intent" in record) or (
             record.get("issue") == "interrupted_action_uncertain"):
         return False
     message = record.get("message")
@@ -246,19 +246,28 @@ def run_audit(data_root: Path, *, source_revision: str = "unknown") -> dict:
                     if scoped_journal is None:
                         result["pending_batch_unknown_journal"] += 1
                         continue
-                    record = scoped_journal.get(username)
-                    if not isinstance(record, dict) or not record.get("status"):
+                    if username not in scoped_journal:
+                        # Only a genuinely ABSENT key is unvisited. A present
+                        # malformed entry could hide a previously armed click.
                         untouched += 1
-                    elif (record.get("status") in ("ok", "already_not_following",
-                                                   "already_not_requested")
-                          and (record.get("click_intent") is None or
-                               (isinstance(record.get("click_intent"), dict) and
-                                record["click_intent"].get("outcome_recorded") is True))):
+                        continue
+                    record = scoped_journal[username]
+                    if (isinstance(record, dict)
+                            and record.get("status") in ("ok", "already_not_following",
+                                                         "already_not_requested")
+                            and record.get("issue") != "interrupted_action_uncertain"
+                            and ("click_intent" not in record or
+                                 (isinstance(record["click_intent"], dict)
+                                  and isinstance(record["click_intent"].get("phase"), str) and record["click_intent"].get("phase") in CLICK_PHASES
+                                  and record["click_intent"].get("outcome_recorded") is True))):
                         recorded_terminal += 1
                     elif _proven_preclick(record):
                         safe_preclick += 1
                         attempted += 1
                     else:
+                        # Includes non-object records, empty/incomplete objects,
+                        # null/unknown click intents, and unresolved attempts.
+                        # None can be promoted to untouched or retryable.
                         uncertain += 1
                         attempted += 1
                 result["pending_batch_untouched"] += untouched
