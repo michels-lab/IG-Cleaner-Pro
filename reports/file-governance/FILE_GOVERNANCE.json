@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 296,
-  "classified_files_total": 292,
-  "docs_content_inspected": 50,
+  "tracked_files_total": 297,
+  "classified_files_total": 293,
+  "docs_content_inspected": 51,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 45,
+    "document": 46,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "2d9eb4e46e7f9c42febcd1e140100eb7b29483f21baaef67a25c1c43b8e687dc",
-  "evidence_fingerprint": "5f82072177d34c04263c56272243cff79cb893463d8b27c58deccce590b35009",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "b5f64997e56dbe66cc001fe7baa2f9a1e001e1757234f13091bb160d2feef459",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "7f3a27d7072223a208c030404ece3256847e6bec"
+      "blob": "784dd35471f9eb3c13f9a93d4d00c0668a606475"
     },
     {
       "path": "README.md",
@@ -1067,6 +1065,13 @@
       "blob": "4f3e3d3f31bf462c7d111a8d7f6b867797f91e7c"
     },
     {
+      "path": "docs/GRANADA_28_DEVELOPER_AUDIT_RECORD_PRESENCE_2026-10-21.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a66a9762afe400caa5a986856367bf0321394459"
+    },
+    {
       "path": "docs/GRANADA_29_BROWSER_LOCAL_STRUCTURED_TRANSPORT_2026-10-22.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1694,7 +1699,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "87a1cf9babc39e5259d78f89df0104f44d2ed3e8"
+      "blob": "8f5f961bfe1c4c3282d7d35f410306e0f2d5e794"
     },
     {
       "path": "tests/test_developer_live_probe.py",
@@ -1911,7 +1916,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e149c2d19735f58632e5567d6caa97918cbd0051"
+      "blob": "3d08f9d4f48e5c2147e2c6125ede8b277e9944a4"
     },
     {
       "path": "tools/developer_live_probe.py",
@@ -2075,17 +2080,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "42d58e467f44583f",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, tests/test_developer_live_probe.py, tests/test_ig_structured_probe.py, tools/developer_live_probe.py, tools/ig_structured_probe.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,

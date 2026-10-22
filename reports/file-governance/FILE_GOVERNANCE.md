@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 296; classified: 292; readable documents: 50; above read cap: 1; findings: 1.
+Tracked: 297; classified: 293; readable documents: 51; above read cap: 1; findings: 0.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 296; classified: 292; readable documents: 50; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 45 |
+| document | 46 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 40 |
@@ -29,7 +29,6 @@ Tracked: 296; classified: 292; readable documents: 50; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, tests/test_developer_live_probe.py, tests/test_ig_structured_probe.py, tools/developer_live_probe.py, tools/ig_structured_probe.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 42d58e467f44583f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
