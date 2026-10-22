@@ -20,6 +20,7 @@ import time
 from urllib.parse import urlparse
 
 from profile_counts_robot import valid_username
+from ig_structured_probe import inspect_structured_following
 from profile_counts_instagram import (
     challenge_detected, preserve_instagram_auth_page, signed_in_handle,
     verify_selected_owner_profile,
@@ -36,11 +37,17 @@ LIVE_CODES = frozenset({
     "LOGIN_REQUIRED", "LOGIN_ACCOUNT_MISMATCH", "SECURITY_CHALLENGE",
     "PROFILE_REDIRECT", "PROFILE_LOAD_TIMEOUT", "DOM_PROBE_EXCEPTION",
     "BROWSER_START_FAILED", "STOPPED_BY_OWNER",
+    "FOLLOWING_STRUCTURED", "STRUCTURED_RATE_LIMITED",
+    "STRUCTURED_SESSION_REQUIRED", "STRUCTURED_UNAVAILABLE",
 })
 ALLOWED_TASKS = frozenset({"unfollow", "cancel"})
 MAX_SAMPLES = 5
 SCAN_LABELS = {
     "FOLLOWING_VISIBLE": "Exact target's Following control found; unfollow control locator is available.",
+    "FOLLOWING_STRUCTURED": "Independent same-origin read-only GET returned this exact target as followed; does NOT confirm an Unfollow or enable automatic action.",
+    "STRUCTURED_RATE_LIMITED": "Instagram limited or rejected the read-only lookup; stop and require owner verification.",
+    "STRUCTURED_SESSION_REQUIRED": "No valid isolated Developer browser session ID was available; no action attempted.",
+    "STRUCTURED_UNAVAILABLE": "Read-only structured lookup could not verify the target; no negative relationship inference.",
     "NOT_FOLLOWING_VISIBLE": "Exact target consistently shows Follow; no Unfollow needed at observation time.",
     "REQUESTED_VISIBLE": "Exact target's Requested control found; cancellation entry is available.",
     "NO_REQUEST_VISIBLE": "Exact target consistently shows Follow; no pending request visible at observation time.",
@@ -116,6 +123,10 @@ def inspect_real_profile(page, username, task, expected_handle):
         if task == "cancel" and _profile_relationship_control(
                 page, username, [r"Following", r"Siguiendo"]) is not None:
             return "NOW_FOLLOWING"
+        if task == "unfollow":
+            # A positive exact-target response is useful evidence when the
+            # DOM lacks a unique control, but NEVER an action authorization.
+            return inspect_structured_following(page, username, owner_verified=True)
         return "RELATIONSHIP_UNKNOWN"
     except Exception:
         return "DOM_PROBE_EXCEPTION"
