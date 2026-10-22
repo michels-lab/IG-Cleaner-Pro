@@ -61,7 +61,7 @@ class ReadOnlyStructuredTransport(TestCase):
         self.assertIn("credentials: 'same-origin'", sent.args[0])
         self.assertIn("redirect: 'error'", sent.args[0])
         self.assertNotIn("method: 'POST'", sent.args[0])
-        self.assertNotIn("mutation", sent.args[0].lower())
+        self.assertNotIn("/api/graphql", sent.args[0])
         self.assertNotIn("return {code: 'FOLLOWING_STRUCTURED', id:", sent.args[0])
 
     def test_one_real_javascript_execution_using_fake_network_only(self):
