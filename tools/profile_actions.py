@@ -1355,10 +1355,19 @@ class ActionRobot:
                 # saved. Return a read-only conflict list to the owner UI.
                 guard = set(_read_json(self._protection_file_for(owner, account), []))
                 details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
+                def _safe_batch_result(username):
+                    if username not in journal:
+                        return {"status": "pending", "message": "",
+                                "safe_no_click": False}
+                    source = journal[username]
+                    public = _public_action_record(source)
+                    return {"status": public.get("status", "review"),
+                            "message": public.get("message", ""),
+                            "safe_no_click": (
+                                not _invalid_saved_action_record(source) and
+                                _preclick_no_action(source))}
                 details["action_results"] = {
-                    username: {"status": journal.get(username, {}).get("status", "pending"),
-                               "message": journal.get(username, {}).get("message", ""),
-                               "safe_no_click": _preclick_no_action(journal.get(username, {}))}
+                    username: _safe_batch_result(username)
                     for username in entry["targets"]}
             else:
                 details = None
@@ -1544,6 +1553,14 @@ class ActionRobot:
                 raise ValueError(
                     "The batch still has " + str(len(untouched)) +
                     " untouched profiles. Continue the saved cohort before approval.")
+            # Never let a malformed but superficially "ok" journal row
+            # become approved through its forged/stale status field.
+            if any(username in journal and
+                   _invalid_saved_action_record(journal[username])
+                   for username in match["targets"]):
+                raise ValueError(
+                    "Invalid saved action evidence requires manual review;"
+                    " do not mark this batch approved.")
             approved = []
             unresolved = []
             for username in match["targets"]:
