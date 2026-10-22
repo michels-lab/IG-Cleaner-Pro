@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 293,
-  "classified_files_total": 289,
-  "docs_content_inspected": 49,
+  "tracked_files_total": 296,
+  "classified_files_total": 292,
+  "docs_content_inspected": 50,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,19 +14,21 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 44,
+    "document": 45,
     "index": 5,
     "installer_metadata": 1,
-    "source": 39,
-    "test": 68,
+    "source": 40,
+    "test": 69,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "b8825a331d299e176710e220927813bf1f0858c0b629ea808c892759e7ebd8d1",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "2d9eb4e46e7f9c42febcd1e140100eb7b29483f21baaef67a25c1c43b8e687dc",
+  "evidence_fingerprint": "5f82072177d34c04263c56272243cff79cb893463d8b27c58deccce590b35009",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -96,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b76624977dff53cf427d3b71f420c33cccaa46b0"
+      "blob": "7ad0d95828597b96ece6e4bf2d452c21d0fe39e2"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -1065,6 +1067,13 @@
       "blob": "4f3e3d3f31bf462c7d111a8d7f6b867797f91e7c"
     },
     {
+      "path": "docs/GRANADA_29_BROWSER_LOCAL_STRUCTURED_TRANSPORT_2026-10-22.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "20f571350aa83a33d9af702b47eaa5b81ec94cc7"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1692,7 +1701,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e8e63fee9ba5923b2b8b6274e12c17d290039816"
+      "blob": "56b0927b4a33f58c340734a833c1c84e83066655"
     },
     {
       "path": "tests/test_granada_csv_recovery.py",
@@ -1721,6 +1730,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "a6e0d107112a2d7ba673a6c39400f8d91dce0f7a"
+    },
+    {
+      "path": "tests/test_ig_structured_probe.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a600a5ea6dad2d992d6dc8941da7882864c7e2b9"
     },
     {
       "path": "tests/test_master_visual_manifest.py",
@@ -1902,7 +1918,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "28821f9bd01ab321021bf94505db1f1cffd4e237"
+      "blob": "8e4230f19e014ae8661368a5fb2d806881ad47f0"
     },
     {
       "path": "tools/ig_cleaner_desktop.py",
@@ -1910,6 +1926,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "3f3e63abe4c794f2888302abd36b24c7b770af2f"
+    },
+    {
+      "path": "tools/ig_structured_probe.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "70acb22ccd6c7b989cb82c0f71336f7dbb02d12d"
     },
     {
       "path": "tools/profile_actions.py",
@@ -2052,7 +2075,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "42d58e467f44583f",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, tests/test_developer_live_probe.py, tests/test_ig_structured_probe.py, tools/developer_live_probe.py, tools/ig_structured_probe.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
