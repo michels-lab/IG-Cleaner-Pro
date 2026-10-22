@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "5582261cf6847ba103742ec1cf37a335efd332009f1592c0bca2e400e932e432",
-  "evidence_fingerprint": "5d2da1f2fccacaebbc5e14ef3b7ac34a227e43b58957d5e294d0a600cc11842d",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "b8825a331d299e176710e220927813bf1f0858c0b629ea808c892759e7ebd8d1",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +215,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "2ebc062526488c5fffd4d41328ad13cce7479e06"
+      "blob": "c89fc4652c202205d35510e08d6a76bda584b5ae"
     },
     {
       "path": "AGENTS.md",
@@ -245,14 +243,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "12a777bf6359127fa4e9c860cbcc1f6d7351f701"
+      "blob": "7f3a27d7072223a208c030404ece3256847e6bec"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "668eebbeb4f59cbfb8006380a09a70e6691f9baf"
+      "blob": "fe07fe2ea9e8cb30b74220997675c0eed62de9cc"
     },
     {
       "path": "README_SYNC.md",
@@ -882,7 +880,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "19f7e9f3d5dccc9b81da477caf74383772ed8c78"
+      "blob": "db72cf468617364ce13fc482a3783f9cbfab2bc1"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1134,7 +1132,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "15ed783cdc69a3654670f985d4a524a4c14f034e"
+      "blob": "a8ddb55d50a815e2791b2df3d7dc0be6f7cc6ac9"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1225,7 +1223,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "78d14e78cb0311f977164eea949eae037e7a81fa"
+      "blob": "7fb464afc486a744a9c41944c3d533b431a3eb9d"
     },
     {
       "path": "release/android-signing.json",
@@ -1239,7 +1237,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "6e71b42e7f030638040606210897c65914a1d6cf"
+      "blob": "ceae9c7c1dde8d91187f738272cd04313e467c74"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -1813,7 +1811,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b30500ee5c9bb137ecd77af309bff3b9c5f44771"
+      "blob": "183b63362148d46afb84da51bce73e603d1da516"
     },
     {
       "path": "tests/test_windows_updater.py",
@@ -2054,17 +2052,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "7c6e18b9c4b109c2",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/release.yml, .michelslab/release-request.json, tests/release-publisher-contract.py, tests/test_android_signed_coinstall_runtime.py, tools/verify_production_android_coinstall.sh",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
