@@ -272,7 +272,8 @@ class DeveloperLiveProbe:
                         code = "DOM_PROBE_EXCEPTION"
                     self._add(i, code)
                     if code in ("SECURITY_CHALLENGE", "OWNER_IDENTITY_UNVERIFIED",
-                                "PROFILE_REDIRECT"):
+                                "PROFILE_REDIRECT", "STRUCTURED_RATE_LIMITED",
+                                "STRUCTURED_SESSION_REQUIRED", "STRUCTURED_UNAVAILABLE"):
                         break  # Do not continue navigating when trust is uncertain.
                     self.stop_event.wait(1)
         except Exception:
