@@ -1,3 +1,9 @@
+## 2026-10-21 — GRANADA #28 Developer forensic audit: malformed saved record is never untouched
+
+- Independent [root-cause and regression note](docs/GRANADA_28_DEVELOPER_AUDIT_RECORD_PRESENCE_2026-10-21.md): current source Developer read-only aggregate counters confused existing malformed/empty/statusless saved records with genuinely absent targets, and treated a present-null click intent like no intent, inconsistent with the main robot's already strict no-replay guard. The uploaded local Developer report cannot be tied to a precise installed source SHA (`unknown`).
+- Corrected ONLY `tools/developer_audit.py` classification: saved malformed evidence remains **uncertain**, never untouched, safe pre-click, or falsely recorded terminal. Synthetic immutable-journal tests added to `tests/test_developer_audit.py`; no personal Instagram names/raw logs, sessions, relationship clicks, history migration or cloud writes. Keep uncertain-click WAL, original cohorts, protections, account scope, and real Instagram issue #172 unchanged.
+- Merge only after exact-PR CI. The already-published official v120.55 FINAL release is unaffected and **no new release is being authorized** by this source-only work.
+
 ## 2026-10-21 — GRANADA #27 official v120.55 FINAL release published; canonical receipt reconciliation
 
 - Official [v120.55 **stable**, not an RC or prerelease](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55) independently verified on GitHub: 12 assets (public and Developer Windows/Android packages plus SHA256SUMS), `draft=false`, `prerelease=false`, published 2026-10-21 21:32:41 UTC; tag targets exact SHA `10f1e4cb9b3990ea47045ff37aa674ce27c2cebb`.
