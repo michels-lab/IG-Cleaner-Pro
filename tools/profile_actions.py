@@ -965,13 +965,33 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                                   "no change was made.")
         control_name = ("Following/Siguiendo" if task == "unfollow"
                         else "Requested/Solicitado")
+        note = _relationship_layout_note(
+            page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
+                             else [r"Requested", r"Solicitado", r"Solicitada"]))
+        if task == "unfollow":
+            # Same-owner browser-local GET is diagnostic only. No new
+            # relationship mutation, action replay or public API guarantee.
+            from ig_structured_probe import inspect_structured_following
+            structured = inspect_structured_following(
+                page, username, owner_verified=True)
+            if structured == "FOLLOWING_STRUCTURED":
+                note += (" Structured lookup: Instagram returned this exact"
+                         " profile in your Following list, but the required"
+                         " Following control is missing. No action clicked.")
+            elif structured == "STRUCTURED_RATE_LIMITED":
+                return "blocked", ("Instagram rejected the read-only Following"
+                                   " lookup (403/429). No action clicked; stop.")
+            elif structured == "STRUCTURED_SESSION_REQUIRED":
+                return "blocked", ("Instagram's browser-local Following lookup"
+                                   " lacks verified session evidence. No click.")
+            else:
+                note += (" Structured lookup could not verify Following;"
+                         " absence is NOT proof of an unfollow. No click.")
         return "review", (MISSING_RELATIONSHIP_CONTROL +
             " Waiting timed out: " + control_name +
             " was not verifiable after 20 seconds. No action clicked. "
             "The tab remains open for manual review; the robot will not silently skip it." +
-            _relationship_layout_note(
-                page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
-                                 else [r"Requested", r"Solicitado", r"Solicitada"])))
+            note)
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
@@ -1414,9 +1434,13 @@ class ActionRobot:
                 raise ValueError("Original cohort is invalid; preserve it for manual review.")
             journal = _read_json(self._base_for(owner, account, task), {})
             protected = set(_read_json(self._protection_file_for(owner, account), []))
+            # A present malformed/empty/statusless record is NOT an untouched
+            # profile. Replanning must use the same strict no-replay evidence
+            # as start() and the Developer forensic auditor.
             safe = [u for u in baseline if u not in protected and (
-                not isinstance(journal.get(u), dict) or
-                not journal[u].get("status") or _preclick_no_action(journal[u]))]
+                u not in journal or
+                (not _invalid_saved_action_record(journal[u])
+                 and _preclick_no_action(journal[u])))]
             safe = list(dict.fromkeys(safe))
             if not safe:
                 raise ValueError("No untouched or proven no-click profiles remain; verify prior attempts.")
