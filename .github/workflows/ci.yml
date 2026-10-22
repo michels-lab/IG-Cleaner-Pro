@@ -93,6 +93,8 @@ jobs:
           node tests/automations-cold-start.test.cjs
           node tests/developer-annotations-contract.test.cjs
           python3 -m unittest discover -s tests -p 'test_developer_audit.py' -v
+          python3 -m unittest discover -s tests -p 'test_developer_live_probe.py' -v
+          python3 -m unittest discover -s tests -p 'test_ig_structured_probe.py' -v
           node tests/pending-focus-reimport.test.cjs
           node tests/focus-batch-priority.test.cjs
           python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
