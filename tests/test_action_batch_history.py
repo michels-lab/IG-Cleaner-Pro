@@ -750,9 +750,10 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertIsNone(replanned["approved_at"])
                 self.assertEqual(saved, robot._base().read_bytes())
                 self.assertEqual(result["marked_reviewed"], False)
-                # Restarting on malformed old records is separately denied by
-                # the irreversible-click journal guard, not silently retried.
-                with self.assertRaisesRegex(ValueError, "invalid saved action evidence"):
+                # A stale 10-profile request cannot replace the newly
+                # replanned two-profile active cohort; original evidence lives
+                # in the unchanged journal and original_targets snapshot.
+                with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
                     robot.start({**request, "batch_id": batch["id"]})
 
     def test_malformed_terminal_must_not_be_approved_as_reviewed(self):
