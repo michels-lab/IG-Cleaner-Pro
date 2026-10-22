@@ -725,6 +725,15 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 }
                 _atomic_json(robot._base(), before)
                 saved = robot._base().read_bytes()
+                # Before resizing, original saved cohort remains inspectable,
+                # including corrupt entries, without interpreting them as idle.
+                unsafe_view = robot.batch_review(request)["batch"]
+                self.assertEqual(
+                    unsafe_view["action_results"]["bad.type"]["status"], "review")
+                self.assertFalse(
+                    unsafe_view["action_results"]["bad.type"]["safe_no_click"])
+                self.assertIn("unrecognized evidence",
+                              unsafe_view["action_results"]["null.intent"]["message"])
                 payload = {**request, "batch_id": batch["id"],
                            "desired_batch_size": 2,
                            "confirmation": "replan-size:" + batch["id"] + ":2"}
@@ -735,15 +744,6 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 replanned = robot.batch_review(request)["batch"]
                 self.assertEqual(replanned["targets"],
                                  ["safe.no.click", "fresh.one"])
-                # The read-only review must still display malformed evidence
-                # without raising or falsely allowing a replay.
-                unsafe_view = robot.batch_review(request)["batch"]
-                self.assertEqual(
-                    unsafe_view["action_results"]["bad.type"]["status"], "review")
-                self.assertFalse(
-                    unsafe_view["action_results"]["bad.type"]["safe_no_click"])
-                self.assertIn("unrecognized evidence",
-                              unsafe_view["action_results"]["null.intent"]["message"])
                 self.assertEqual(replanned["carryover_targets"],
                                  ["fresh.two", "fresh.three"])
                 self.assertEqual(replanned["original_targets"], targets)
