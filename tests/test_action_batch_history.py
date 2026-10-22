@@ -735,6 +735,15 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 replanned = robot.batch_review(request)["batch"]
                 self.assertEqual(replanned["targets"],
                                  ["safe.no.click", "fresh.one"])
+                # The read-only review must still display malformed evidence
+                # without raising or falsely allowing a replay.
+                unsafe_view = robot.batch_review(request)["batch"]
+                self.assertEqual(
+                    unsafe_view["action_results"]["bad.type"]["status"], "review")
+                self.assertFalse(
+                    unsafe_view["action_results"]["bad.type"]["safe_no_click"])
+                self.assertIn("unrecognized evidence",
+                              unsafe_view["action_results"]["null.intent"]["message"])
                 self.assertEqual(replanned["carryover_targets"],
                                  ["fresh.two", "fresh.three"])
                 self.assertEqual(replanned["original_targets"], targets)
@@ -745,6 +754,30 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 # the irreversible-click journal guard, not silently retried.
                 with self.assertRaisesRegex(ValueError, "invalid saved action evidence"):
                     robot.start({**request, "batch_id": batch["id"]})
+
+    def test_malformed_terminal_must_not_be_approved_as_reviewed(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            request = self._request(["bad.terminal", "valid.terminal"], task="unfollow")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.start(request)
+                batch = robot.batch_review(request)["batch"]
+                _atomic_json(robot._base(), {
+                    "bad.terminal": {"status": "ok", "click_intent": None},
+                    "valid.terminal": {"status": "already_not_following",
+                                      "message": "Exact Follow, no click"},
+                })
+                with self.assertRaisesRegex(ValueError, "Invalid saved action evidence"):
+                    robot.approve_batch({
+                        **request, "batch_id": batch["id"],
+                        "confirmation": "reviewed:" + batch["id"],
+                    })
+                after = robot.batch_review(request)["batch"]
+                self.assertIsNone(after["approved_at"])
+                self.assertEqual(after["action_results"]["bad.terminal"]["status"], "review")
+                self.assertFalse(after["action_results"]["bad.terminal"]["safe_no_click"])
 
     def test_missing_following_uses_readonly_structured_diagnosis_no_action(self):
         from unittest.mock import Mock
