@@ -694,6 +694,163 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
                     cold.start(self._request(["maybe.clicked"],task="unfollow"))
 
+    def test_replan_only_truly_absent_or_proven_preclick_and_preserves_evidence(self):
+        """A saved malformed entry cannot be recycled into an approved 10->2 wave."""
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            targets = [
+                "bad.type", "null.value", "empty.record", "missing.status",
+                "null.intent", "uncertain.clicked", "safe.no.click",
+                "fresh.one", "fresh.two", "fresh.three",
+            ]
+            request = self._request(targets, task="unfollow")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.start(request)
+                batch = robot.batch_review(request)["batch"]
+                before = {
+                    "bad.type": 123,
+                    "null.value": None,
+                    "empty.record": {},
+                    "missing.status": {"message": "no status or phase"},
+                    "null.intent": {"status": "blocked",
+                                    "message": "Instagram session verification failed before the first click. No action performed.",
+                                    "click_intent": None},
+                    "uncertain.clicked": {"status": "review",
+                                          "click_intent": {"phase": "relationship_control",
+                                                           "outcome_recorded": False}},
+                    "safe.no.click": {"status": "blocked",
+                                      "message": "Instagram session verification failed before the first click. No action performed."},
+                }
+                _atomic_json(robot._base(), before)
+                saved = robot._base().read_bytes()
+                # Before resizing, original saved cohort remains inspectable,
+                # including corrupt entries, without interpreting them as idle.
+                unsafe_view = robot.batch_review(request)["batch"]
+                self.assertEqual(
+                    unsafe_view["action_results"]["bad.type"]["status"], "review")
+                self.assertFalse(
+                    unsafe_view["action_results"]["bad.type"]["safe_no_click"])
+                self.assertIn("unrecognized evidence",
+                              unsafe_view["action_results"]["null.intent"]["message"])
+                payload = {**request, "batch_id": batch["id"],
+                           "desired_batch_size": 2,
+                           "confirmation": "replan-size:" + batch["id"] + ":2"}
+                result = robot.replan_incomplete_batch(payload)
+                self.assertEqual(result["active_size"], 2)
+                self.assertEqual(result["reusable_after_active"], 2)
+                self.assertEqual(result["action_recorded"], 6)
+                replanned = robot.batch_review(request)["batch"]
+                self.assertEqual(replanned["targets"],
+                                 ["safe.no.click", "fresh.one"])
+                self.assertEqual(replanned["carryover_targets"],
+                                 ["fresh.two", "fresh.three"])
+                self.assertEqual(replanned["original_targets"], targets)
+                self.assertIsNone(replanned["approved_at"])
+                self.assertEqual(saved, robot._base().read_bytes())
+                self.assertEqual(result["marked_reviewed"], False)
+                # A stale 10-profile request cannot replace the newly
+                # replanned two-profile active cohort; original evidence lives
+                # in the unchanged journal and original_targets snapshot.
+                with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
+                    robot.start({**request, "batch_id": batch["id"]})
+
+    def test_malformed_terminal_must_not_be_approved_as_reviewed(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            request = self._request(["bad.terminal", "valid.terminal"], task="unfollow")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.start(request)
+                batch = robot.batch_review(request)["batch"]
+                _atomic_json(robot._base(), {
+                    "bad.terminal": {"status": "ok", "click_intent": None},
+                    "valid.terminal": {"status": "already_not_following",
+                                      "message": "Exact Follow, no click"},
+                })
+                with self.assertRaisesRegex(ValueError, "Invalid saved action evidence"):
+                    robot.approve_batch({
+                        **request, "batch_id": batch["id"],
+                        "confirmation": "reviewed:" + batch["id"],
+                    })
+                after = robot.batch_review(request)["batch"]
+                self.assertIsNone(after["approved_at"])
+                self.assertEqual(after["action_results"]["bad.terminal"]["status"], "review")
+                self.assertFalse(after["action_results"]["bad.terminal"]["safe_no_click"])
+
+    def test_missing_following_uses_readonly_structured_diagnosis_no_action(self):
+        from unittest.mock import Mock
+        from profile_actions import perform_visible_action, _preclick_no_action
+        from profile_actions import MISSING_RELATIONSHIP_CONTROL
+
+        page = Mock()
+        page.url = "https://www.instagram.com/test.target/"
+        page.locator.return_value.count.return_value = 0
+        page.locator.return_value.first.count.return_value = 1
+        page.locator.return_value.first.is_visible.return_value = True
+        page.locator.return_value.first.inner_text.return_value = "Profile test.target"
+        pre_click = Mock()
+        guards = (
+            patch("profile_actions.challenge_detected", return_value=False),
+            patch("profile_actions._wait_for_target_profile_shell", return_value=True),
+            patch("profile_actions._verified_action_owner", return_value=True),
+            patch("profile_actions._wait_for_profile_relationship_control", return_value=None),
+            patch("profile_actions._profile_relationship_control", return_value=None),
+            patch("profile_actions._relationship_layout_note",
+                  return_value=" Profile layout: exact target yes, control no."),
+            patch("profile_actions._follow_state", return_value=None),
+        )
+        from contextlib import ExitStack
+        with ExitStack() as stack:
+            for guard in guards:
+                stack.enter_context(guard)
+            lookup = stack.enter_context(patch(
+                "ig_structured_probe.inspect_structured_following",
+                return_value="FOLLOWING_STRUCTURED"))
+            result, details = perform_visible_action(
+                page, "test.target", "unfollow", "owner.name",
+                can_act=lambda name: name == "test.target",
+                preloaded=True, on_pre_click=pre_click)
+            self.assertEqual(result, "review")
+            self.assertIn(MISSING_RELATIONSHIP_CONTROL, details)
+            self.assertIn("Structured lookup:", details)
+            self.assertIn("No action clicked", details)
+            self.assertTrue(_preclick_no_action({
+                "status": "review", "issue": "profile_load_timeout",
+                "message": details}))
+            lookup.assert_called_once_with(page, "test.target",
+                                           owner_verified=True)
+            pre_click.assert_not_called()
+            page.goto.assert_not_called()
+
+            lookup.reset_mock(return_value=True)
+            lookup.return_value = "STRUCTURED_SESSION_REQUIRED"
+            result, details = perform_visible_action(
+                page, "test.target", "unfollow", "owner.name",
+                preloaded=True, on_pre_click=pre_click)
+            self.assertEqual(result, "review")
+            self.assertIn("not exposed", details)
+            pre_click.assert_not_called()
+
+            lookup.reset_mock(return_value=True)
+            lookup.return_value = "STRUCTURED_RATE_LIMITED"
+            result, details = perform_visible_action(
+                page, "test.target", "unfollow", "owner.name",
+                preloaded=True, on_pre_click=pre_click)
+            self.assertEqual(result, "blocked")
+            self.assertIn("403/429", details)
+            pre_click.assert_not_called()
+
+            lookup.reset_mock(return_value=True)
+            result, details = perform_visible_action(
+                page, "test.target", "cancel", "owner.name",
+                preloaded=True, on_pre_click=pre_click)
+            self.assertEqual(result, "review")
+            lookup.assert_not_called()
+            pre_click.assert_not_called()
+
     def test_journal_is_owner_and_task_scoped(self):
         with TemporaryDirectory() as temporary:
             robot=self._action(Path(temporary))

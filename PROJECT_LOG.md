@@ -1,3 +1,10 @@
+## 2026-10-22 — GRANADA #30 robot P0: malformed journal must not re-enter smaller cohorts
+
+- Found cross-workflow inconsistency after #208: `ActionRobot.replan_incomplete_batch` treated existing non-object, empty and statusless saved records as untouched/reusable, contrary to main action-start refusal. Fixed at source without touching owner journals, original 40-target cohort or protected entries; 40→10 uses only truly absent and proven pre-click eligible usernames.
+- Fixed `batch_review` to render malformed records as uncertain instead of crashing; `approve_batch` refuses forged `ok` rows with malformed click intent. Synthetic owner/account scoped regression asserts correct carryover, no false Reviewed, and unchanged original journal bytes.
+- Unfollow's missing-control path now re-verifies owner and performs at most one browser-local, exact-match **read-only** following lookup as a diagnostic. A positive following hit explains that the relationship still exists but the DOM action control is missing; 403/429 blocks, unknown never implies success. This is NOT a GraphQL Unfollow or real-account acceptance.
+- Details and acceptance: [GRANADA #30](docs/GRANADA_30_REPLAN_JOURNAL_TRUST_2026-10-22.md), original unresolved live #172/#164. No release candidate, automatic uncertain-click replay or unrelated app changes.
+
 ## 2026-10-21 — GRANADA #28 Developer forensic audit: malformed saved record is never untouched
 
 - Independent [root-cause and regression note](docs/GRANADA_28_DEVELOPER_AUDIT_RECORD_PRESENCE_2026-10-21.md): current source Developer read-only aggregate counters confused existing malformed/empty/statusless saved records with genuinely absent targets, and treated a present-null click intent like no intent, inconsistent with the main robot's already strict no-replay guard. The uploaded local Developer report cannot be tied to a precise installed source SHA (`unknown`).

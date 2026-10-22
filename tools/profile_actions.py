@@ -965,13 +965,45 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                                   "no change was made.")
         control_name = ("Following/Siguiendo" if task == "unfollow"
                         else "Requested/Solicitado")
+        note = _relationship_layout_note(
+            page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
+                             else [r"Requested", r"Solicitado", r"Solicitada"]))
+        if task == "unfollow":
+            # The session may have changed while a slow profile was hydrating.
+            # Re-verify owner immediately before even this read-only lookup.
+            if not _verified_action_owner(page, expected_handle):
+                return "blocked", ("Instagram account could not be verified"
+                                   " before structured diagnosis. No click.")
+            if challenge_detected(page) or page.locator('input[name="password"]').count():
+                return "blocked", "Instagram requested verification. No click."
+            # Same-owner browser-local GET is diagnostic only. No new
+            # relationship mutation, action replay or public API guarantee.
+            from ig_structured_probe import inspect_structured_following
+            structured = inspect_structured_following(
+                page, username, owner_verified=True)
+            if structured == "FOLLOWING_STRUCTURED":
+                note += (" Structured lookup: Instagram returned this exact"
+                         " profile in your Following list, but the required"
+                         " Following control is missing. No action clicked.")
+            elif structured == "STRUCTURED_RATE_LIMITED":
+                return "blocked", ("Instagram rejected the read-only Following"
+                                   " lookup (403/429). No action clicked; stop.")
+            elif structured == "STRUCTURED_SESSION_REQUIRED":
+                # A cookie unavailable to JavaScript does NOT prove the
+                # already owner-verified Chrome login is invalid. The optional
+                # private API diagnostic must never override the real UI
+                # missing-control review or create an auth false positive.
+                note += (" Structured lookup unavailable (owner ID cookie"
+                         " not exposed); Chrome identity is not disproved."
+                         " No action clicked.")
+            else:
+                note += (" Structured lookup could not verify Following;"
+                         " absence is NOT proof of an unfollow. No click.")
         return "review", (MISSING_RELATIONSHIP_CONTROL +
             " Waiting timed out: " + control_name +
             " was not verifiable after 20 seconds. No action clicked. "
             "The tab remains open for manual review; the robot will not silently skip it." +
-            _relationship_layout_note(
-                page, username, ([r"Following", r"Siguiendo"] if task == "unfollow"
-                                 else [r"Requested", r"Solicitado", r"Solicitada"])))
+            note)
     if can_act and not can_act(username):
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
@@ -1328,10 +1360,19 @@ class ActionRobot:
                 # saved. Return a read-only conflict list to the owner UI.
                 guard = set(_read_json(self._protection_file_for(owner, account), []))
                 details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
+                def _safe_batch_result(username):
+                    if username not in journal:
+                        return {"status": "pending", "message": "",
+                                "safe_no_click": False}
+                    source = journal[username]
+                    public = _public_action_record(source)
+                    return {"status": public.get("status", "review"),
+                            "message": public.get("message", ""),
+                            "safe_no_click": (
+                                not _invalid_saved_action_record(source) and
+                                _preclick_no_action(source))}
                 details["action_results"] = {
-                    username: {"status": journal.get(username, {}).get("status", "pending"),
-                               "message": journal.get(username, {}).get("message", ""),
-                               "safe_no_click": _preclick_no_action(journal.get(username, {}))}
+                    username: _safe_batch_result(username)
                     for username in entry["targets"]}
             else:
                 details = None
@@ -1414,9 +1455,13 @@ class ActionRobot:
                 raise ValueError("Original cohort is invalid; preserve it for manual review.")
             journal = _read_json(self._base_for(owner, account, task), {})
             protected = set(_read_json(self._protection_file_for(owner, account), []))
+            # A present malformed/empty/statusless record is NOT an untouched
+            # profile. Replanning must use the same strict no-replay evidence
+            # as start() and the Developer forensic auditor.
             safe = [u for u in baseline if u not in protected and (
-                not isinstance(journal.get(u), dict) or
-                not journal[u].get("status") or _preclick_no_action(journal[u]))]
+                u not in journal or
+                (not _invalid_saved_action_record(journal[u])
+                 and _preclick_no_action(journal[u])))]
             safe = list(dict.fromkeys(safe))
             if not safe:
                 raise ValueError("No untouched or proven no-click profiles remain; verify prior attempts.")
@@ -1513,6 +1558,14 @@ class ActionRobot:
                 raise ValueError(
                     "The batch still has " + str(len(untouched)) +
                     " untouched profiles. Continue the saved cohort before approval.")
+            # Never let a malformed but superficially "ok" journal row
+            # become approved through its forged/stale status field.
+            if any(username in journal and
+                   _invalid_saved_action_record(journal[username])
+                   for username in match["targets"]):
+                raise ValueError(
+                    "Invalid saved action evidence requires manual review;"
+                    " do not mark this batch approved.")
             approved = []
             unresolved = []
             for username in match["targets"]:
