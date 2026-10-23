@@ -251,12 +251,13 @@ class RealBrowserSelectorTests(unittest.TestCase):
         # only AFTER the mutation was successfully clicked. The fresh GET
         # produces independent evidence and must never trigger another click.
         initial = html
+        starting_label = ">Siguiendo</button>" if locale == "es" else ">Following</button>"
         if task == "cancel" and not pending_already_following and not missing_profile:
             initial = initial.replace(
-                ">Following</button>",
+                starting_label,
                 ">Solicitado</button>" if locale == "es" else ">Requested</button>", 1)
         if missing_profile:
-            initial = initial.replace(">Following</button>", ">Unknown status</button>", 1)
+            initial = initial.replace(starting_label, ">Unknown status</button>", 1)
         persisted = initial
         if result in ("follow", "followback") and not blocked:
             persisted = html.replace(
