@@ -9,6 +9,7 @@ from unittest.mock import Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"tools"))
 from instagram_unfollow_reference import (
     reference_unfollow,_REFERENCE_EXACT_FOLLOWING,_REFERENCE_UNFOLLOW_MUTATION)
+from profile_actions import _action_issue, _preclick_no_action, _saved_journal_blocks_action
 
 
 class FakePage:
@@ -72,9 +73,25 @@ class ReferenceUnfollowTests(unittest.TestCase):
                      "MUTATION_UNCERTAIN"):
             with self.subTest(code=code):
                 page=FakePage(mutation={"code":code})
-                result=self.call(page)
+                # No fresh evidence: never infer success from an ambiguous
+                # mutation response. A separate test proves that an
+                # independently verified Follow state may rescue this case.
+                result=self.call(page, fresh=lambda *_:("review","Still Following"))
                 self.assertIn(result[0],("blocked","review"))
                 self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
+    def test_uncertain_response_can_only_be_saved_by_fresh_readonly_confirmation(self):
+        page=FakePage(mutation={"code":"MUTATION_UNCERTAIN"})
+        calls=[]
+        status, note=self.call(page, fresh=lambda *_:(calls.append("fresh") or
+            ("ok","Fresh verified Follow")))
+        self.assertEqual(status,"ok")
+        self.assertEqual(calls,["fresh"])
+        self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
+        page2=FakePage(mutation={"code":"MUTATION_UNCERTAIN"})
+        status,_=self.call(page2, fresh=lambda *_:("review","Still Following"))
+        self.assertEqual(status,"review")
+        self.assertEqual([x[0] for x in page2.steps],["GET","READY","WAL","POST"])
+
     def test_failed_wal_never_calls_post(self):
         page=FakePage()
         def bad(_): raise OSError("Disk full")
@@ -92,6 +109,30 @@ class ReferenceUnfollowTests(unittest.TestCase):
         result=self.call(page)
         self.assertEqual(result[0],"review")
         self.assertEqual([x[0] for x in page.steps],["GET","READY"])
+    def test_no_post_reference_failure_revisitable_only_on_fresh_owner_consent(self):
+        cases=[
+            ("review","Reference Unfollow read-only lookup: LOOKUP_UNAVAILABLE. No GraphQL request sent."),
+            ("blocked","Reference Unfollow read-only lookup: RATE_LIMITED. No GraphQL request sent."),
+            ("review","Reference Unfollow session preparation unavailable. No POST or write-ahead action intent; review Chrome sign-in."),
+            ("blocked","Reference Unfollow: exact Instagram target or signed-in owner not verified; no action clicked."),
+        ]
+        for status,message in cases:
+            with self.subTest(message=message):
+                issue=_action_issue("unfollow",status,message)
+                self.assertEqual(issue,"reference_preclick_unavailable")
+                record={"status":status,"issue":issue,"message":message}
+                self.assertTrue(_preclick_no_action(record))
+                self.assertFalse(_saved_journal_blocks_action({"target.user":record},"target.user"))
+                # An orphan intent always makes this outcome uncertain, even
+                # if the human-readable message suggests no POST occurred.
+                armed={**record,"click_intent":{"phase":"relationship_control",
+                    "batch_id":"x","task":"unfollow","phases":["relationship_control"]}}
+                self.assertFalse(_preclick_no_action(armed))
+                self.assertTrue(_saved_journal_blocks_action({"target.user":armed},"target.user"))
+        ambiguous={"status":"review","issue":"requires_manual_review",
+                   "message":"Reference Unfollow read-only lookup: LOOKUP_UNAVAILABLE. No GraphQL request sent."}
+        self.assertFalse(_preclick_no_action(ambiguous))
+
     def test_reference_transport_keeps_sessions_in_chrome(self):
         self.assertIn("usePolarisUnfollowMutation",_REFERENCE_UNFOLLOW_MUTATION)
         self.assertIn("27789106940691111",_REFERENCE_UNFOLLOW_MUTATION)

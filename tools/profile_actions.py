@@ -892,6 +892,18 @@ def _preclick_no_action(entry):
         return False
     if _preclick_identity_blocked(entry):
         return True
+    # The owner-supplied GraphQL transport can refuse before its FIRST POST.
+    # Such rows may be revisited only under a fresh owner-approved cohort.
+    # An armed WAL always wins and can NEVER be replayed.
+    if (entry.get("issue") == "reference_preclick_unavailable"
+            and entry.get("status") in ("review", "blocked")
+            and str(entry.get("message") or "").startswith((
+                "Reference Unfollow read-only lookup:",
+                "Reference Unfollow session preparation unavailable.",
+                "Reference Unfollow: ambiguous target ID;",
+                "Reference Unfollow: exact Instagram target or signed-in owner not verified;",
+                "Reference Unfollow: target or owner changed before mutation;"))):
+        return True
     if not isinstance(entry, dict) or entry.get("status") != "review":
         return False
     message = str(entry.get("message") or "")
@@ -926,7 +938,7 @@ def _benign_preclick_issue(issue, record):
     """
     return (issue in {"pending_already_following", "pending_not_requested",
                       "mutual_before_action", "missing_profile_info",
-                      "profile_load_timeout"}
+                      "profile_load_timeout", "reference_preclick_unavailable"}
             and isinstance(record, dict)
             and "click_intent" not in record
             and not _invalid_saved_action_record(record))
@@ -964,6 +976,13 @@ def _action_issue(task, result, message):
         return "profile_load_timeout"
     if result == "review" and message.startswith(("The profile does not show", "El perfil no muestra")):
         return "missing_profile_info"
+    if task == "unfollow" and result in ("review", "blocked") and message.startswith((
+        "Reference Unfollow read-only lookup:",
+        "Reference Unfollow session preparation unavailable.",
+        "Reference Unfollow: ambiguous target ID;",
+        "Reference Unfollow: exact Instagram target or signed-in owner not verified;",
+        "Reference Unfollow: target or owner changed before mutation;")):
+        return "reference_preclick_unavailable"
     if result in ("review", "error", "blocked"):
         return "requires_manual_review"
     return ""

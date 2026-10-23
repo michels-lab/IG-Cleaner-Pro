@@ -134,6 +134,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
           python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          python -m unittest discover -s tests -p 'test_instagram_unfollow_chromium_e2e.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Chromium user-reference actual worker offline integration failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'User supplied single-POST Unfollow and no-replay contract failed.' }
           node tests/owner-unfollow-transport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw 'User reference JavaScript browser-context action contract failed.' }
