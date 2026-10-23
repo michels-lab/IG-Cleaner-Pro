@@ -17,6 +17,7 @@ on:
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/developer_live_probe.py'
@@ -61,6 +62,7 @@ on:
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/developer_live_probe.py'
@@ -124,6 +126,8 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
+          python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
