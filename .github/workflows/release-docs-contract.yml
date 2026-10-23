@@ -8,6 +8,8 @@ on:
       - 'docs/PROFILE_COUNTS_ROBOT.md'
       - 'release/distribution-manifest.json'
       - 'tests/test_update_docs_contract.py'
+      - '.michelslab/release-request.json'
+      - 'docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md'
       - '.github/workflows/release-docs-contract.yml'
   push:
     branches: [main]
@@ -17,6 +19,8 @@ on:
       - 'docs/PROFILE_COUNTS_ROBOT.md'
       - 'release/distribution-manifest.json'
       - 'tests/test_update_docs_contract.py'
+      - '.michelslab/release-request.json'
+      - 'docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md'
       - '.github/workflows/release-docs-contract.yml'
 permissions:
   contents: read
