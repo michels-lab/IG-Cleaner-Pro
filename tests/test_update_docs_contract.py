@@ -60,6 +60,7 @@ class UpdateGuideContract(unittest.TestCase):
             [stable],
         )
         self.assertIn("Publication does not prove live Instagram Unfollow", readme)
+        self.assertIn(f"docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md", readme)
         self.assertIn("owner tests only officially published installers", readme)
         self.assertNotIn(
             f"**{reserved} — official stable GitHub release",
@@ -103,6 +104,8 @@ class UpdateGuideContract(unittest.TestCase):
             "docs/UPDATE_AND_STATE_MIGRATION.md",
             "docs/PROFILE_COUNTS_ROBOT.md",
             "release/distribution-manifest.json",
+            ".michelslab/release-request.json",
+            "docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md",
             "tests/test_update_docs_contract.py",
             ".github/workflows/release-docs-contract.yml",
         ):

@@ -1,3 +1,16 @@
+## v120.59 — GRANADA owner-reference Unfollow (prepared; NOT PUBLISHED)
+
+- Windows normal Unfollow now uses owner's supplied code mechanism: exact numeric Following target, authenticated same-origin GraphQL mutation, durable write-ahead intent and independent post-action read-only confirmation. Run admission failures are shown to the owner, not hidden by queue summaries.
+- Includes real Chromium offline end-to-end test, no-click recovery and safe treatment of ambiguous responses, with original protected lists and action journals preserved. Live signed-in Instagram Unfollow/Cancel outcome still needs user acceptance; do not infer from CI.
+- Next artifact metadata is prepared for v120.59, but final publication remains gated by installed Windows, production-signed Android twins, visuals and checksums. No RC or prerelease.
+
+## v120.58 — Operación Granada: saved journal quarantine and exact Instagram target identity (official stable, October 23, 2026)
+
+- **Normal Windows Unfollow/Cancel worker:** independent worker-side saved-record validation after sign-in and before ten-tab preparation, preventing malformed or ambiguous history from appearing untouched; every click-phase write-ahead guard refuses unsafe replay.
+- **Strict exact-target evidence:** before relationship clicks, require exact HTTPS Instagram target and matching actionable header identity; a conflicting visible header cannot be overridden by a main-profile username. Changes preserve existing account/task scope, protections and pending cohorts.
+- **Release:** independently verified 12 assets on GitHub v120.58; governed publisher run [#39917647988](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39917647988) completed successfully on SHA `401389c67e997c81ee5559d3a08989749adbcd62`. GitHub release is FINAL stable, not prerelease or RC; separate signed production Android public+Developer and installed Windows public+Developer gates are mandatory.
+- **Acceptance gap:** CI/emulator/Chromium cannot verify that Unfollow and Cancel Pending actually changed the owner's Instagram following/request relationships. P0 issues #172 and #164 remain open. Nothing in this receipt changes or resets the original protected/saved 40-target batch, action click WAL or Chrome session.
+
 ## v120.55 — Operación Granada: verifiable robot action recovery and safe diagnostics (published October 21, 2026)
 
 - **Windows Automation Center:** one coherent landing area with permanent Analysis and Action lanes, directly sourced robot status, true preferred next batch size distinguished from any older saved cohort, and native keyboard-accessible collapsible Issue Review. The backend still serializes browser-driven workers; two robots cannot safely navigate one Chrome profile simultaneously.
