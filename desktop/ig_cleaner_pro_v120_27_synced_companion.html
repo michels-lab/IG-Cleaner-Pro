@@ -3802,9 +3802,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
-  <div class="title">Is this batch OK?</div>
+  <div class="title">Batch results · owner confirmation</div>
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
   <div class="btnrow">
+    <button class="btn primary" id="igcAutoShowBatchReview" type="button" onclick="igcAutoShowBatchReview()">Review exact profiles</button>
     <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
     <button class="btn orange" id="igcAutoDeferProtected" type="button" onclick="igcAutoDeferProtectedBatch()" style="display:none">↷ Archive protected batch (not Reviewed)</button>
     <button class="btn orange" id="igcAutoReplanSize" type="button" onclick="igcAutoReplanSavedBatch()" style="display:none">↷ Replan unfinished profiles · keep everyone</button>
@@ -14925,6 +14926,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #igcAutoCancel{background:#422234;color:#ffdce5;border:1px solid #ab6070;font-weight:800}
 #igcAutoCancel:not(:disabled):hover{background:#682d41}
 #igcAutoCancel:disabled{opacity:.45}
+.igc-auto-review-dialog{max-width:min(860px,calc(100vw - 26px));width:100%;max-height:85dvh;overflow:auto;background:#102034;color:#f0f6ff;border:1px solid #5c91c2;border-radius:18px;padding:20px;box-shadow:0 35px 100px #000b}
+.igc-auto-review-dialog::backdrop{background:rgba(1,9,19,.8)}
+.igc-auto-review-dialog h2{font-size:21px;margin:0 0 10px}
+.igc-auto-review-dialog table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.igc-auto-review-dialog td,.igc-auto-review-dialog th{border-bottom:1px solid #29415b;padding:10px 8px;text-align:left;vertical-align:middle}
+.igc-auto-review-dialog td{overflow-wrap:anywhere}
+.igc-auto-review-dialog .igc-auto-review-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 </style>
 <script id="igc-automations-plan">
 (function(){
@@ -15476,6 +15484,7 @@ window.igcAutoPoll=async function(){
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
   }else actionBatchReview=null;
   window.igcAutoRenderBatchApproval();
+  igcAutoMaybePromptBatchReview(state);
   const deferredLine=document.getElementById("igcAutoDeferredSummary");
   if(deferredLine&&["unfollow","cancel","audit"].includes(mode)){
    try{
@@ -15832,6 +15841,7 @@ window.igcAutoRenderBatchApproval=function(){
    replan.textContent="↷ Use "+chosenSize+" from unfinished "+count+" · keep remaining";}
   const defer=document.getElementById("igcAutoDeferProtected");
   if(defer){defer.style.display=blocked.length?"inline-flex":"none";defer.disabled=busy;}
+  const show=document.getElementById("igcAutoShowBatchReview");if(show)show.disabled=busy;
   const approve=document.getElementById("igcAutoApproveBatch");
   if(approve)approve.disabled=busy||outcome.unchecked.length>0;
   const recheck=document.getElementById("igcAutoRecheckBatch");
