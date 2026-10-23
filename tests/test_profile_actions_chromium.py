@@ -225,18 +225,33 @@ class RealBrowserSelectorTests(unittest.TestCase):
         recorded_steps = []
         self.page.on("console", lambda msg: recorded_steps.append(msg.text.split("IGC_STEP:", 1)[1])
                      if msg.text.startswith("IGC_STEP:") else None)
-        # Intercept all Instagram URLs, even accidental external navigations.
-        self.page.route("https://www.instagram.com/**",
-                        lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        # An optimistic browser label is not a saved Instagram relationship.
+        # Offline responses emulate a real server that persists the new state
+        # only AFTER the mutation was successfully clicked. The fresh GET
+        # produces independent evidence and must never trigger another click.
+        initial = html
         if task == "cancel" and not pending_already_following and not missing_profile:
-            self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
-                document.querySelector('#relationship').textContent =
-                    document.documentElement.lang==='es'?'Solicitado':'Requested';
-            });""")
+            initial = initial.replace(
+                ">Following</button>",
+                ">Solicitado</button>" if locale == "es" else ">Requested</button>", 1)
         if missing_profile:
-            self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
-                document.querySelector('#relationship').textContent = 'Unknown status';
-            });""")
+            initial = initial.replace(">Following</button>", ">Unknown status</button>", 1)
+        persisted = initial
+        if result in ("follow", "followback") and not blocked:
+            persisted = html.replace(
+                ">Siguiendo</button>" if locale == "es" else ">Following</button>",
+                (">Seguir también</button>" if result == "followback" else ">Seguir</button>")
+                if locale == "es" else
+                (">Follow Back</button>" if result == "followback" else ">Follow</button>"),
+                1)
+        if result == "unchanged" or blocked:
+            persisted = initial
+        visits = []
+        def offline_route(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html",
+                          body=initial if len(visits) == 1 else persisted)
+        self.page.route("https://www.instagram.com/**", offline_route)
         status, message = perform_visible_action(
             self.page, "target.user", task, "my.profile",
             (lambda _: not protected))
