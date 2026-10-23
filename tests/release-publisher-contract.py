@@ -90,6 +90,25 @@ assert "sudo chmod 666 /dev/kvm" in publish[kvm_step:device_step]
 assert "test -r /dev/kvm && test -w /dev/kvm" in publish[kvm_step:device_step]
 assert "script: bash tools/verify_production_android_coinstall.sh" in publish[device_step:]
 
+# The owner-provided GraphQL Unfollow must be tested in the ACTUAL final
+# Windows publisher, not merely in advisory CI or candidate preview.
+# Fail closed if an agent drops any of these exact tests from release.yml.
+owner_suite=workflow.index("Offline owner-reference Unfollow, durable WAL and real Chromium acceptance")
+legacy_suite=workflow.index("Offline public/private Instagram action flows in real Chromium")
+packaging_step=workflow.index("Build Windows executable with embedded Playwright driver")
+assert owner_suite < legacy_suite < packaging_step
+for required_test in (
+    "test_instagram_unfollow_reference.py",
+    "test_instagram_unfollow_chromium_e2e.py",
+    "tests/owner-unfollow-transport.test.cjs",
+    "Owner reference Unfollow and no-replay tests failed; refuse FINAL release.",
+    "One-POST exact-target real Chromium Unfollow regression failed; refuse FINAL release.",
+    "Supplied-JavaScript Unfollow transport contract failed; refuse FINAL release.",
+):
+    assert required_test in workflow[owner_suite:legacy_suite], (
+        "Final Windows publisher omitted the owner-Unfollow safety gate: "+required_test
+    )
+
 # The stable Windows publisher must match the exact tested integrated app,
 # never silently regress to the removed legacy CMD + standalone collector.
 for token in (
