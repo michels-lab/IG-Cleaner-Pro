@@ -25,7 +25,7 @@
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "3a939331155b0c4ad58402ac89f7576a51d5a5f130fb992bdb5a5ad68b93c0e7",
+  "inventory_fingerprint": "e717e4965c144220933532818bead198b60b52189b7a50ed20c7ca8a17b9b060",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -1335,7 +1335,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d4fa19c12850330f3372c2d6dc2ea6b8002846af"
+      "blob": "9423e15c361c946f2c8dc69fdbd181c7eef57d83"
     },
     {
       "path": "release/android-signing.json",
