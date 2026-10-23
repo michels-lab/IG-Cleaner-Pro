@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 308,
-  "classified_files_total": 304,
-  "docs_content_inspected": 61,
+  "tracked_files_total": 312,
+  "classified_files_total": 308,
+  "docs_content_inspected": 62,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,21 +14,19 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 56,
+    "document": 57,
     "index": 5,
     "installer_metadata": 1,
-    "source": 40,
-    "test": 70,
+    "source": 41,
+    "test": 72,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "887f78acddc20a15c9eb9ead3ffa138169b284b1a81f51defddb9fc3a7746861",
-  "evidence_fingerprint": "b28b2154c64574474cfe7459361372ffbff28edff7b7975922ce2bdfc26867fc",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "9c56b32c1b9f0d7ab4af4016f4140bb50af013a1bb548230aaeaa6555dd6c529",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -98,7 +96,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "7ad0d95828597b96ece6e4bf2d452c21d0fe39e2"
+      "blob": "42623b1964211820d86d3c8f331fbd51c827d798"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -119,14 +117,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0d4825c41a2d1c776f3f960fdedf6e2b1654cc59"
+      "blob": "52fe70abf8f663793de1ed3047e541c55a448ada"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0d73b1646df9749ba42346603eaffa6239753a08"
+      "blob": "0785baab92ea5d0e6af606e1f9242cfd60018332"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "93554a30989ff468c6d84a68eb57da422e103650"
+      "blob": "5026363556fa5ee5469b38d019d12d550ee98df4"
     },
     {
       "path": "README.md",
@@ -1151,6 +1149,13 @@
       "blob": "ad77f805cbcf6cd9f2edca397f06cc04d28042b0"
     },
     {
+      "path": "docs/GRANADA_43_USER_REFERENCE_UNFOLLOW_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "77b9f2269ceb404df07b437be5a16c0b8a9a6c6d"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1662,6 +1667,13 @@
       "blob": "ed669b92f886dd0de8c15acdcfc169cec9fff881"
     },
     {
+      "path": "tests/owner-unfollow-transport.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "dcf36be8b17be8841faf2d6795113f6c4f029398"
+    },
+    {
       "path": "tests/pending-focus-reimport.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -1729,14 +1741,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "cface42e58c84ffa41a2b64b85a46e71e7f8a8ee"
+      "blob": "c8b552d674bd15d73c05d928f206b940222ef088"
     },
     {
       "path": "tests/test_action_click_wal.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "171a3042c121dfb0a75860abfd48af45cc1157f3"
+      "blob": "98208217da54559ea5452dbb2bfbaa5689a66b33"
     },
     {
       "path": "tests/test_action_tab_waves.py",
@@ -1821,6 +1833,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "a600a5ea6dad2d992d6dc8941da7882864c7e2b9"
+    },
+    {
+      "path": "tests/test_instagram_unfollow_reference.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "dcf57452db9e3bbc221c6b29fc2cb8a34d9aee17"
     },
     {
       "path": "tests/test_master_visual_manifest.py",
@@ -2019,11 +2038,18 @@
       "blob": "70acb22ccd6c7b989cb82c0f71336f7dbb02d12d"
     },
     {
+      "path": "tools/instagram_unfollow_reference.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "8b5e67d37ee7cc38f26da0099e46d1281d9e4859"
+    },
+    {
       "path": "tools/profile_actions.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "eaa7377108a600be55237b543477b6be28a03b4e"
+      "blob": "225f31ba35e7ad2ad6ea524748a6634c9443743a"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2159,17 +2185,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "33c438a8f0d4ca13",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
