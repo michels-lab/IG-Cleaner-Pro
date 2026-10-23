@@ -1,38 +1,27 @@
 {
-  "version": "120.60",
-  "tag": "v120.60",
-  "authorized": false,
+  "version": "120.61",
+  "tag": "v120.61",
+  "authorized": true,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.59",
-  "owner_acceptance_note": "GRANADA v120.60: owner requested real cancellation after cooldown/paused jobs, ability to switch jobs without erasing the original saved 40-person cohort, prominent actual active-task UX, exact journal date/time in lists and post-batch popup with per-user manual inspection. PR #229 passed all six exact-source suites including integrated installed Windows public+Developer Chromium and both Android runtime/visual gates. Stable FINAL release MUST pass new exact-commit production-signed Android public+Developer co-install, official installed Windows, visual evidence and SHA256 assets/feed. Original protected and possible-click WAL untouched; owner actual Instagram Unfollow/Cancel acceptance remains UNVERIFIED (#172/#164); no auto-retry or account action. No RC/beta/prerelease.",
+  "status": "requested",
+  "previous_stable_release": "v120.60",
+  "owner_acceptance_note": "GRANADA v120.61: PRs #232/#233/#234/#236 improve Windows Automation current selection vs real Chrome task, queue/control layout and explicit read-only alternative for complete owner Followers/Following lists; fix repeated self-profile navigation in Followback audit; bound redundant owner-profile proof navigation during post-action UI settling and display exact read-only owner-proof visit count. Seven PR #236 exact-head source/Windows installed/Android runtime/visual/feature gates passed. Official FINAL stable publisher MUST re-run full exact-commit protected tests, production-signed Android public+Developer co-install, Windows public+Developer Setup install/smoke, visual evidence and SHA-256 asset/update feed checks. User's real Instagram Unfollow/Cancel and live alternative list acceptance still UNVERIFIED (#172/#164/#230). Original 40-target cohort, protected profiles, WAL, session and old histories must not be modified. No automatic retry and no RC/beta.",
   "requested_at": "2026-10-23",
-  "candidate_main_sha": "9ebee370e735cf71041be072dc3513777d62763b",
+  "candidate_main_sha": "097a6ca0deabef2f9341dfac2c1a007eb4cedc48",
   "integrated_source_merge_shas": [
-    "1b9a18a6508bd2c3ee863f13989c2957bb2b7065",
-    "9ebee370e735cf71041be072dc3513777d62763b"
+    "1d27548921f174a7f6e3d5f512af0de0f87b6d75",
+    "b84c7904393ce3c4419adf003026d6f714bf1c97",
+    "ecf460724d6f692b0b3f3de630f6e5dc8d6ae7e0",
+    "8bbbf3f0f7832663e4381667afa68a96524392ea"
   ],
   "previous_publication": {
-    "tag": "v120.59",
-    "run": 39955452062,
-    "commit": "92d612377c2c8a6e56534465f86e3ddcfe86bc23",
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59",
-    "published_at": "2026-10-23T12:53:51Z"
-  },
-  "published_release": {
     "tag": "v120.60",
     "run": 39983124380,
     "commit": "457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60",
-    "published_at": "2026-10-23T18:20:49Z",
-    "prerelease": false,
-    "assets_count": 12
-  },
-  "published_run": 39983124380,
-  "published_commit": "457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9",
-  "published_at": "2026-10-23T18:20:49Z",
-  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60"
+    "published_at": "2026-10-23T18:20:49Z"
+  }
 }
