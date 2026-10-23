@@ -3774,6 +3774,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="title" id="igcActionLaneTitle">Account Action Robots · Local Chrome</div>
 <p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
 <div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Unfollow · Not Following Back</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancel Sent Requests</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Protected Profiles</button><button type="button" class="btn" onclick="igcAutoChoose('audit')">🔎 Verify Followback (Optional)</button></div>
+<div id="igcAutoCurrentJob" class="igc-auto-current-job" data-state="idle" role="status" aria-live="polite">
+ <span class="igc-auto-current-label">CURRENT AUTOMATION</span>
+ <strong id="igcAutoCurrentJobTitle">No robot running</strong>
+ <span id="igcAutoCurrentJobDetail">Choose a robot and prepare an approved batch.</span>
+</div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
 <div class="igc-counts-stats" id="igcAutoMetrics" aria-live="polite"></div>
 <div class="btnrow" id="igcAutoTiming">
@@ -3785,6 +3790,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Run Selected Batch</button>
 <button class="btn orange" id="igcAutoPause" type="button" onclick="igcAutoPause()">⏸ Pause</button>
+<button class="btn" id="igcAutoCancel" type="button" onclick="igcAutoCancel()" aria-label="Cancel current robot batch and preserve saved results">✕ Cancel batch</button>
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
 <button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
 <button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
@@ -14909,6 +14915,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <style id="igc-automations-metric-layout">
 #igcAutoMetrics,#igcAutoExecutionMetrics{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:12px 0}
 #igcAutoMetrics>span,#igcAutoExecutionMetrics>span{display:inline-flex;align-items:center;white-space:normal;overflow-wrap:anywhere;min-height:34px;padding:7px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);line-height:1.45}
+.igc-auto-current-job{display:flex;flex-direction:column;gap:5px;background:linear-gradient(110deg,#152b45,#0d1b2e);border:1px solid #4c8dbd;border-left:5px solid #69c9ed;border-radius:14px;padding:15px 18px;margin:12px 0}
+.igc-auto-current-label{font-size:11px;letter-spacing:.12em;color:#8adfff;font-weight:800}
+.igc-auto-current-job strong{font-size:20px;color:#f0f7ff}
+.igc-auto-current-job span:last-child{color:#c2d4e3;line-height:1.5}
+.igc-auto-current-job[data-state="waiting"]{border-left-color:#f8c870}
+.igc-auto-current-job[data-state="cancelling"],.igc-auto-current-job[data-state="blocked"]{border-left-color:#f28c85}
+.igc-auto-current-job[data-state="complete"],.igc-auto-current-job[data-state="cancelled"]{border-left-color:#59d1a0}
+#igcAutoCancel{background:#422234;color:#ffdce5;border:1px solid #ab6070;font-weight:800}
+#igcAutoCancel:not(:disabled):hover{background:#682d41}
+#igcAutoCancel:disabled{opacity:.45}
 </style>
 <script id="igc-automations-plan">
 (function(){
