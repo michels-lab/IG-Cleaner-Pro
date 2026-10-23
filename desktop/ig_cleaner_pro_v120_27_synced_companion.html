@@ -15243,7 +15243,12 @@ function selectedActionTargets(verifiedAttempts=null){
  // An explicit history read is mandatory before the robot starts. Its
  // authoritative journal overrides older browser-cache or idle poll values,
  // including v120.48 issues proven to have made zero relationship clicks.
- const attempted=verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
+ // The alternative never clicks any relationship control; owner-approved
+ // live-list scans may recheck old DOM-audit failures without replay risk.
+ const repeatReadOnly=mode==="audit"&&
+   document.getElementById("igcAutoAuditSource")?.value==="live_lists";
+ const attempted=repeatReadOnly?new Set():
+   verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
  const eligible=inputs().filter(r=>!isProtected(r.kind,r.username)&&
      !skips[r.kind].has(r.username)&&!attempted.has(r.username))
      .map(r=>r.username);
@@ -15368,7 +15373,9 @@ window.igcAutoStart=async function(){
    const names=targets.slice(0,15).map(u=>"@"+u).join(", ");
    summary="Run "+operation+" on "+targets.length+" profiles from @"+data.expected_handle+
      "?\\n"+names+(targets.length>15?" and more…":"")+
-     (mode==="audit"?"\\nRead-only: no relationship changes.":
+     (mode==="audit"?(data.audit_source==="live_lists"?
+       "\\nAlternative: read your complete live Followers and Following lists; no target tabs or relationship clicks. Incomplete lists block all conclusions.":
+       "\\nExisting visible Followers search; read-only with no relationship changes."):
       "\\nEach relationship-changing action is individually verified.");
   }
   reportActionCommand("approval","Waiting for your explicit confirmation. No relationship-changing action has begun.");
@@ -15732,7 +15739,9 @@ window.igcAutoRender=function(){
  const auditSourcePanel=document.getElementById("igcAutoAuditSourcePanel");
  if(auditSourcePanel)auditSourcePanel.style.display=mode==="audit"?"block":"none";
  igcAutoCurrentJob();
- const attempted=mode==="protected"?new Set():priorAttempts(mode);
+ const attempted=mode==="protected"||
+  (mode==="audit"&&document.getElementById("igcAutoAuditSource")?.value==="live_lists")?
+  new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
  const attemptedCount=all.filter(r=>attempted.has(r.username)).length;
