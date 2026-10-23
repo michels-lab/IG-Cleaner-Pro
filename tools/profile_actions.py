@@ -2646,7 +2646,14 @@ class ActionRobot:
                                     self._persist_action_click_intent(
                                         journal, path, user, phase))
                     except Exception as exc:
-                        result, details = "error", "The action could not be verified: " + str(exc)[:200]
+                        if (self.cancel_requested and self.stop_event.is_set() and
+                                str(exc).startswith("Owner stopped the batch before the relationship click;")):
+                            # The guarded WAL proves no mutation was armed for
+                            # this target. Keep it untouched, not an attempted
+                            # click that would block safe future selection.
+                            result, details = "skipped", "Owner cancelled before any click."
+                        else:
+                            result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
                         if not (prepared_item and
                                 prepared_item.get("visit_started_at") is not None):
