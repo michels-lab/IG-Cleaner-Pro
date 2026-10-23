@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 302,
-  "classified_files_total": 298,
-  "docs_content_inspected": 56,
+  "tracked_files_total": 304,
+  "classified_files_total": 300,
+  "docs_content_inspected": 57,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 51,
+    "document": 52,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
-    "test": 69,
+    "test": 70,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "1ff93b743cc15f23974d3259747fee116d26257dca0fec03fcfcea30ccfa80d8",
-  "evidence_fingerprint": "944a98c86a712b2d47c3a11bd9bcd0f4fe0ae734b37aa83c789184ca3dd58f5e",
+  "inventory_fingerprint": "cddc20d4fe391221f5c8f3c95baaa16b64686087d81fdc94126875782bb08003",
+  "evidence_fingerprint": "519312360cc27417c0eba7d8f7545039d4a4d950d988c41e4cdfe140cc45985b",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -119,14 +119,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "93e4235fa2dc1d34101d3fd30a0165e23223d581"
+      "blob": "0d4825c41a2d1c776f3f960fdedf6e2b1654cc59"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "374962ffd8a83ed7620834d4064cb3e35b491b38"
+      "blob": "b8a7ebc803f9ed2518dc44575ba8ac6c7d38a4c2"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -147,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "fed9f28755f070085a986368135de1d5b945706a"
+      "blob": "32bdbe2912118974c7ccb1779262e7f79c818f26"
     },
     {
       "path": ".gitignore",
@@ -1116,6 +1116,13 @@
       "blob": "6cf3afde2721c4e19d0b01787c5ce78333d7c354"
     },
     {
+      "path": "docs/GRANADA_36_NORMAL_ROBOT_WORKER_JOURNAL_QUARANTINE_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "7a3527e6c569a23da0f3d8ba5eacf8b4d840b6d1"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1711,6 +1718,13 @@
       "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
     },
     {
+      "path": "tests/test_action_worker_journal_gate.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ceebcc3412f9644583fc53fb7bfcb23ba82c41da"
+    },
+    {
       "path": "tests/test_android_signed_coinstall_runtime.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -1981,7 +1995,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "134cde1c0ee35772b33656512a6bc6f3e4c075f4"
+      "blob": "41ea7225a0b3122635f85b83dd98aab54d3550bb"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2119,11 +2133,11 @@
   ],
   "findings": [
     {
-      "id": "cf687e070ef265cc",
+      "id": "52d1e3c811772550",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json",
+      "observation": "10 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

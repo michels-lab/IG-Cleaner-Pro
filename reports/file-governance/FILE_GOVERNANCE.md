@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 302; classified: 298; readable documents: 56; above read cap: 1; findings: 1.
+Tracked: 304; classified: 300; readable documents: 57; above read cap: 1; findings: 1.
 
 ## File roles
 
@@ -18,18 +18,18 @@ Tracked: 302; classified: 298; readable documents: 56; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 51 |
+| document | 52 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 40 |
-| test | 69 |
+| test | 70 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID cf687e070ef265cc)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 10 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 52d1e3c811772550)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
