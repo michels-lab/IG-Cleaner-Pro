@@ -320,9 +320,28 @@ class RealBrowserSelectorTests(unittest.TestCase):
                 status, relation, details = perform_visible_followback_audit(
                     self.page, "target.user", "my.profile")
                 self.assertEqual((status,relation),("ok","follows_you" if follows else "not_following"),details)
+                # This 50-target audit must not revisit the owner's profile
+                # 50 times. Reuse the verified owner page + existing dialog.
+                status2, relation2, details2 = perform_visible_followback_audit(
+                    self.page, "target.user", "my.profile")
+                self.assertEqual((status2,relation2),(status,relation),details2)
                 self.assertEqual(self.page.evaluate("window.__dangerous"),[])
                 self.page.unroute_all()
 
+
+    def test_followback_audit_navigation_failure_is_readonly_and_bounded(self):
+        from unittest.mock import Mock, patch
+        page = Mock()
+        page.url = "https://www.instagram.com/"
+        with patch("profile_actions.signed_in_handle", return_value="my.profile"):
+            page.goto.side_effect = TimeoutError("fixture navigation failed")
+            status, relation, details = perform_visible_followback_audit(
+                page, "target.user", "my.profile")
+        self.assertEqual((status, relation), ("review", "unverified"))
+        self.assertIn("Owner Followers page unavailable", details)
+        self.assertEqual(page.goto.call_count, 1)
+        self.assertEqual(page.goto.call_args.kwargs["timeout"], 15000)
+        self.assertFalse(page.locator.called, "A failed read-only visit must not click anything")
 
     def test_login_detects_editable_owner_profile_without_profile_nav(self):
         from profile_counts_instagram import signed_in_handle
