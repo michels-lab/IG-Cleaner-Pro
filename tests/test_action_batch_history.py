@@ -180,13 +180,13 @@ class ActionBatchHistoryTests(unittest.TestCase):
             pw.chromium.launch_persistent_context.return_value = browser
             fake = ModuleType("playwright.sync_api")
             fake.sync_playwright = lambda: contextlib.nullcontext(pw)
-            with patch.dict(sys.modules, {"playwright.sync_api": fake}), \\
+            with patch.dict(sys.modules, {"playwright.sync_api": fake}), \
                  patch("profile_actions.preserve_instagram_auth_page",
-                       return_value=True), \\
+                       return_value=True), \
                  patch("profile_actions.challenge_detected",
-                       return_value=False), \\
+                       return_value=False), \
                  patch("profile_actions.signed_in_handle",
-                       return_value=None), \\
+                       return_value=None), \
                  patch("profile_actions.time.monotonic",
                        side_effect=[0, 250]):
                 robot._run()
@@ -217,10 +217,10 @@ class ActionBatchHistoryTests(unittest.TestCase):
             pw.chromium.launch_persistent_context.return_value=browser
             fake=ModuleType("playwright.sync_api")
             fake.sync_playwright=lambda:contextlib.nullcontext(pw)
-            with patch.dict(sys.modules,{"playwright.sync_api":fake}), \\
+            with patch.dict(sys.modules,{"playwright.sync_api":fake}), \
                  patch("profile_actions.preserve_instagram_auth_page",
-                       return_value=True), \\
-                 patch("profile_actions.challenge_detected",return_value=False), \\
+                       return_value=True), \
+                 patch("profile_actions.challenge_detected",return_value=False), \
                  patch("profile_actions.signed_in_handle",
                        return_value="other.owner"):
                 robot._run()
