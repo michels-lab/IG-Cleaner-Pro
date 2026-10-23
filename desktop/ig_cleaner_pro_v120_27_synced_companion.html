@@ -15392,6 +15392,28 @@ window.igcAutoPause=async function(){
   actionState=result;await window.igcAutoPoll();
  }catch(e){setStatus("Could not pause: "+e.message)}
 };
+window.igcAutoCancel=async function(){
+ if(!actionBridge)return;
+ try{
+  const state=await requestAction("status"),owner=actionOwner();
+  if(!state.task||state.owner!==owner.owner||state.account!==owner.account)
+   throw Error("There is no current task attached to this Instagram workspace.");
+  const id=String(state.review_batch?.id||"");
+  if(!state.running&&!id)throw Error("No active or unfinished batch is available to cancel.");
+  const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Audit"};
+  if(!window.confirm("CANCEL "+String(labels[state.task]||state.task).toUpperCase()+
+     " BATCH?\n\nStop all future visits and archive this unfinished cohort WITHOUT marking any profile Reviewed."+
+     "\nAn in-flight Instagram action MAY finish; original attempts, uncertain clicks and saved protections remain."+
+     "\nUntouched targets remain eligible for another explicitly approved batch. Continue?"))return;
+  actionState=await requestAction("cancel-batch",{...owner,task:state.task,
+   batch_id:id,confirmation:"cancel-batch:"+id});
+  setStatus(actionState.running?
+    "Cancellation sent. The current operation may still finish; no next target will start.":
+    "Batch cancelled; action evidence preserved. Another task may now start.");
+  igcAutoCurrentJob();
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Could not cancel this batch: "+e.message)}
+};
 window.igcAutoContinue=async function(){
  try{
   const state=await requestAction("status");
