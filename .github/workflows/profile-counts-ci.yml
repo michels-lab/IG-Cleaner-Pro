@@ -6,6 +6,7 @@ on:
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -35,6 +36,7 @@ on:
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -67,6 +69,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
       - name: GRANADA durable write-ahead click intent and no-replay on power loss
         run: python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
+      - name: GRANADA worker admission blocks malformed persisted action evidence
+        run: python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
       - name: GRANADA ten-tab waves with verified-close safety
         run: python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
       - name: GRANADA verify persisted visit and rest journal integrity

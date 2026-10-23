@@ -853,6 +853,17 @@ def _preclick_no_action(entry):
                  or message.startswith(MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
 
 
+def _saved_journal_blocks_action(journal, username):
+    """Fail closed on every saved target except an explicitly proven no-click miss.
+
+    This single rule governs ten-tab prefetch admission and the actual action
+    loop. An empty or malformed present record is never an untouched profile.
+    """
+    if username not in journal:
+        return False
+    return not _preclick_no_action(journal[username])
+
+
 def _benign_preclick_issue(issue, record):
     """Continue only genuinely unclicked recoverable profile anomalies.
 
@@ -2100,6 +2111,8 @@ class ActionRobot:
         if phase not in allowed[self.task]:
             raise ValueError("Unknown Instagram click phase; refusing to act.")
         before = journal.get(username, {})
+        if username in journal and _invalid_saved_action_record(before):
+            raise ValueError("Invalid saved action evidence. No relationship click allowed.")
         if before.get("click_intent"):
             prior = before["click_intent"]
             if (prior.get("batch_id") != self.active_batch_id or
@@ -2215,6 +2228,18 @@ class ActionRobot:
                     with self.lock: self.status = "paused"
                     return
                 journal = self._journal()
+                # Sign-in may take minutes after start() validated the cohort.
+                # Recheck original disk evidence before opening any target tabs.
+                if (not isinstance(journal, dict) or
+                        any(u in journal and _invalid_saved_action_record(journal[u])
+                            for u in self.targets)):
+                    with self.lock:
+                        self.status = "blocked"
+                        self.message = (
+                            "Saved Instagram action evidence is invalid or changed "
+                            "during sign-in. No profile action was attempted. "
+                            "Keep the original journal and inspect Issues before retrying.")
+                    return
                 path = self._base()
                 visits_file, rests_file = history_path(path), batch_path(path)
                 visits = load_history(visits_file)
@@ -2239,8 +2264,7 @@ class ActionRobot:
                         previous = journal.get(candidate, {})
                         if (self._protected_for(candidate) or candidate in self.skipped
                                 or (not self.review_only and
-                                    previous.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-                                    and not _preclick_no_action(previous))):
+                                    _saved_journal_blocks_action(journal, candidate))):
                             continue
                         if len(stage_names) >= MAX_ACTION_TABS:
                             break
@@ -2326,8 +2350,7 @@ class ActionRobot:
                     # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
                         (not self.review_only and
-                         previous.get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
-                         and not _preclick_no_action(previous))):
+                         _saved_journal_blocks_action(journal, user))):
                         if action_tabs and action_tabs.prepared(user) is not None:
                             action_tabs.record(user, "skipped", safe_no_click=True)
                             with self.lock:
