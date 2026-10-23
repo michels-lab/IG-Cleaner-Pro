@@ -718,8 +718,9 @@ class RealBrowserSelectorTests(unittest.TestCase):
             lambda _: True, preloaded=True)
         self.assertEqual(result, "ok", message)
         self.assertEqual(
-            sum("/target.user/" in url for url in visits), 1,
-            "Preloaded target page must not be fetched again before acting")
+            sum("/target.user/" in url for url in visits), 2,
+            "Preloaded target uses one initial GET and exactly one post-click "
+            "independent verification GET; there must be no pre-click double navigation")
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
@@ -821,8 +822,13 @@ class RealBrowserSelectorTests(unittest.TestCase):
         html = html.replace("</script>", (
             "setTimeout(() => document.querySelector('#relationship').textContent='Requested', 700);"
             "</script>"))
-        self.context.route("https://www.instagram.com/**",
-            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        visits = []
+        persisted = fake_profile().replace(">Following</button>", ">Follow</button>", 1)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html",
+                          body=html if len(visits) == 1 else persisted)
+        self.context.route("https://www.instagram.com/**", serve)
         with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 2200), \
              patch.object(profile_actions, "CANCEL_NO_REQUEST_MIN_WAIT_MS", 1300):
             status, message = perform_visible_action(
