@@ -1,12 +1,12 @@
 {
   "version": "120.57",
   "tag": "v120.57",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner standing Operacion Granada direction: publish only official FINAL stable after all governed source, device, Windows installer, visual and asset-integrity gates pass. Never RC or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.56",
   "owner_acceptance_note": "Includes normal Windows action-worker saved journal quarantine #215. Owner tests only FINAL official stable Setup. Publisher must pass production Android signing and real device co-install, installed Windows Setup, exact-commit Android/Desktop visuals and SHA256 asset/feed checks. Offline browser CI is not proof of Unfollow or Cancel Pending on a real Instagram account; keep #172/#164 open. Preserve original 40-profile cohort, protected list, uncertain-click WAL and all saved state.",
   "requested_at": "2026-10-23",
@@ -20,5 +20,11 @@
     "run": 39898552214,
     "commit": "1c004c0dc08194f832b7b3e95ce2942c957f5f32",
     "url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56"
-  }
+  },
+  "published_run": 39913984383,
+  "published_commit": "2ffea2280bc0438ad18931af655278b16a63edc1",
+  "published_at": "2026-10-23T07:02:01Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.57",
+  "published_asset_count": 12,
+  "final_channel": "stable"
 }

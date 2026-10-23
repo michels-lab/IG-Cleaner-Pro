@@ -8,19 +8,19 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.56 — official stable GitHub release, published October 22, 2026.**
+**v120.57 — official stable GitHub release, published October 23, 2026.**
 
-[Release verification and official publisher receipt](docs/GRANADA_35_V12056_STABLE_RECEIPT_2026-10-22.md). [Download the 12 official v120.56 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56).
+[Release verification and official publisher receipt](docs/GRANADA_38_V12057_STABLE_RECEIPT_2026-10-23.md). [Download the 12 official v120.57 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.57).
 
 | Platform | Official published asset |
 | --- | --- |
-| Windows app with integrated action robot | `IG-Cleaner-Pro-Windows-Setup-v120.56.exe` |
-| Android with original production signing | `IG-Cleaner-Pro-Android-v120.56.apk` |
-| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.56.html` |
-| Optional Windows portable archive | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.56.zip` |
-| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.56.zip` |
+| Windows app with integrated action robot | `IG-Cleaner-Pro-Windows-Setup-v120.57.exe` |
+| Android with original production signing | `IG-Cleaner-Pro-Android-v120.57.apk` |
+| Standalone Desktop HTML | `IG-Cleaner-Pro-Desktop-v120.57.html` |
+| Optional Windows portable archive | `IG-Cleaner-Pro-Automatic-Robot-Windows-v120.57.zip` |
+| Optional Desktop ZIP | `IG-Cleaner-Pro-Desktop-v120.57.zip` |
 
-**Publication does not prove live Instagram Unfollow or Cancel Pending acceptance.** v120.57 is reserved for future development, not yet a published release; the owner tests only officially published installers.
+**Publication does not prove live Instagram Unfollow or Cancel Pending acceptance.** v120.58 is reserved for future development, not yet a published release; the owner tests only officially published installers.
 
 **Fixed:** an unapproved batch could have 38 untouched targets but pressing Run silently entered read-only recheck; v120.53 resumes the exact saved cohort for owner-approved actions on previously untouched or provably no-click targets, never repeating uncertain relationship clicks. **Already not following** is now an explicit terminal no-click result when the exact logged-in target shows Follow/Seguir or Follow Back/Seguir también; the robot records it, closes its safe tab, and advances to the next target without counting a successful Unfollow. Confirmed Unfollows and already-not-followed profiles have separate live totals. Whole-batch Reviewed approval is still a separate owner action.
 
@@ -45,7 +45,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.56. Next reserved version: v120.57, not published.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.57. Next reserved version: v120.58, not published.**
 
 ## Identity and licensing
 
