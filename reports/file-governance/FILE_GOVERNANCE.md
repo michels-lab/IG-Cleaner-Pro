@@ -29,7 +29,7 @@ Tracked: 317; classified: 313; readable documents: 66; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 8d535d0b15e32368)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 4 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs, tests/test_profile_actions_chromium.py, tools/profile_actions.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID d17917e36d56080e)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

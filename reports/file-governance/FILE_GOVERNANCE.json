@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "634c2c9ea9a7c334f7e67b53443e74592b69c66f25d11ac19d1154b1eaf0134f",
-  "evidence_fingerprint": "16239b9b34a595f8dd6d12b85630f8adab6fd0a25026bb8fae01c39fb54291ba",
+  "inventory_fingerprint": "b675ead7f33489db80e7239a4ff5d79ae8e1060fb1f9bfe17474939b68537041",
+  "evidence_fingerprint": "07dde1cdd98c09d4f93a7df5c3ddf185a601d6c7b7124f4feb947c7bec38f27c",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1897,7 +1897,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1ffc1276ed9bc8fcc0804a6013f4c2d534281d50"
+      "blob": "097c1b8ea2f52f1f24e2bc0b8f29292325174b7a"
     },
     {
       "path": "tests/test_profile_counts_actions.py",
@@ -2086,7 +2086,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "df7f03d4769fccecfa7e0ea9fa8a9cf0590471cd"
+      "blob": "2a1e54266555f2846361ac68879310942089ce31"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2224,11 +2224,11 @@
   ],
   "findings": [
     {
-      "id": "8d535d0b15e32368",
+      "id": "d17917e36d56080e",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs",
+      "observation": "4 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs, tests/test_profile_actions_chromium.py, tools/profile_actions.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
