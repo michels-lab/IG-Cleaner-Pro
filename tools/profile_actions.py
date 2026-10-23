@@ -80,6 +80,10 @@ ACTION_CONTROL_WAIT_MS = 20000
 # in an apparently active state. Owner can restart after signing in manually.
 PUBLIC_ROBOT_LOGIN_WAIT_SECONDS = 240
 
+# Only the current robot worker may report how often it navigates to the
+# signed-in owner's own profile. It never includes cookies or account data.
+_OWNER_PROFILE_PROBE = threading.local()
+
 def _same_instagram_owner(observed, expected):
     """Exact Instagram handle, case-insensitive; never accept missing identity."""
     return (isinstance(observed, str) and isinstance(expected, str)
@@ -736,6 +740,9 @@ def _verified_action_owner(page, expected_handle):
     check = None
     try:
         check = page.context.new_page()
+        report = getattr(_OWNER_PROFILE_PROBE, 'report', None)
+        if callable(report):
+            report()  # Record read-only self-profile navigation, NOT a target action.
         return verify_selected_owner_profile(check, expected_handle) == expected_handle
     except Exception:
         return False
@@ -747,31 +754,61 @@ def _verified_action_owner(page, expected_handle):
                 pass
 
 def _verify_final_state(page, expected_handle, username, *, checks=3):
-    """Allow short UI settling but never infer success from a completed click."""
-    for _ in range(checks):
+    """Wait for exact target state with TWO owner proofs, not one per poll.
+
+    A missing Instagram sidebar previously caused five or more read-only
+    /owner/ navigations while the target's Follow control hydrated. Establish
+    an owner proof before polling, check any newly visible account identity and
+    login/challenge at EACH poll, and require a fresh owner proof immediately
+    before reporting success. No relationship-changing click occurs here.
+
+    Never retain identity across jobs, targets, profile reload boundaries or
+    actual irreversible clicks. A changed owner at either proof fails closed.
+    """
+    owner_proven = False
+    for owner_attempt in range(3):
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification after the action."
-        # The owner UI can transiently disappear during an Instagram rerender.
-        # Retry ONLY read-only identity evidence, never the relationship click.
-        owner_proven = False
-        for owner_attempt in range(3):
+        observed = signed_in_handle(page)
+        if observed is not None and not _same_instagram_owner(observed, expected_handle):
+            return "blocked", "Current Instagram account changed during verification."
+        if _verified_action_owner(page, expected_handle):
+            owner_proven = True
+            break
+        if owner_attempt < 2:
+            page.wait_for_timeout(900)
+    if not owner_proven:
+        return "blocked", ("Could not verify the current Instagram session after "
+                           "the action. Review manually; do not repeat the click.")
+    for attempt in range(checks):
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram requested verification after the action."
+        # A newly visible wrong Profile navigation disproves the earlier proof.
+        # Hidden Profile navigation is inconclusive, NOT evidence of an owner.
+        observed = signed_in_handle(page)
+        if observed is not None and not _same_instagram_owner(observed, expected_handle):
+            return "blocked", "Current Instagram account changed during verification."
+        state = _follow_state(page, username)
+        if state in ("follow_back", "follow"):
+            # Even when a state looks settled, a second fresh signed-in owner
+            # check is mandatory. The owner could have switched in Chrome.
+            if not _verified_action_owner(page, expected_handle):
+                return "blocked", ("Could not reverify Instagram owner at the final "
+                                   "read-only observation; no action replay allowed.")
             if challenge_detected(page) or page.locator('input[name="password"]').count():
                 return "blocked", "Instagram requested verification after the action."
-            if _verified_action_owner(page, expected_handle):
-                owner_proven = True
-                break
-            if owner_attempt < 2:
-                page.wait_for_timeout(900)
-        if not owner_proven:
-            return "blocked", "Could not verify the current Instagram session after the action. Review manually; do not repeat the click."
-        state = _follow_state(page, username)
-        if state == "follow_back":
-            return "ok", ("Action confirmed: Follow Back. "
-                          "The person still follows you, but you no longer follow them.")
-        if state == "follow":
+            # Target relationship might have rerendered during the owner proof.
+            if _follow_state(page, username) != state:
+                if attempt < checks-1:
+                    page.wait_for_timeout(650)
+                continue
+            if state == "follow_back":
+                return "ok", ("Action confirmed: Follow Back. "
+                              "The person still follows you, but you no longer follow them.")
             return "ok", ("Action confirmed: Follow. "
                           "You no longer follow this account; it does not show a followback.")
-        page.wait_for_timeout(650)
+        if attempt < checks-1:
+            page.wait_for_timeout(650)
     return "review", "Final state is ambiguous. Do not repeat this action automatically."
 
 
@@ -1409,6 +1446,7 @@ class ActionRobot:
         self.targets = []
         self.open_review_tabs = []
         self.current_wait = None
+        self.owner_profile_visits = 0  # read-only owner fallback, distinct from target visits
         self.review_only = False
         self.audit_source = "visible"
         self.history_recheck_mode = False
@@ -2188,6 +2226,7 @@ class ActionRobot:
                         self.active_batch_id = batch_id
                 self.open_review_tabs = []
                 self.current_wait = None
+                self.owner_profile_visits = 0
                 if not resume:
                     self.skipped.clear()
                 self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
@@ -2278,6 +2317,7 @@ class ActionRobot:
                     "audit_source": self.audit_source if self.task == "audit" else None,
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
+                    "owner_profile_visits": self.owner_profile_visits,
                     "review_only": self.review_only,
                     "cancel_requested": self.cancel_requested,
                     "continuing_batch": self.continuing_batch,
@@ -2389,8 +2429,13 @@ class ActionRobot:
                             " saved to durable action journal; verifying Instagram.")
         return pending
 
+    def _record_owner_profile_visit(self):
+        with self.lock:
+            self.owner_profile_visits += 1
+
     def _run(self):
         browser = None
+        _OWNER_PROFILE_PROBE.report = self._record_owner_profile_visit
         try:
             from playwright.sync_api import sync_playwright
             self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -2880,6 +2925,7 @@ class ActionRobot:
             with self.lock:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
         finally:
+            _OWNER_PROFILE_PROBE.report = None
             with self.lock:
                 self.current, self.wait_until, self.current_wait = "", 0, None
             if browser:
