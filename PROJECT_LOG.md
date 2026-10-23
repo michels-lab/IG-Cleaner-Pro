@@ -1,3 +1,10 @@
+## 2026-10-23 — GRANADA #46: official FINAL stable v120.60 published, verified and request consumed
+
+- **Published:** [v120.60](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60) with 12 production assets; exact release source `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`; official publisher [run #39983124380](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380) **SUCCESS after one failed emulator system-image download on attempt 1**. Attempt 2 passed full unchanged signed Android + installed Windows + rendered UI + checksum/asset gates. No testing was bypassed.
+- **User-facing shipped block:** PR #229 normal Windows true Cancel batch during wait/pause, release job after safe cleanup, clear active operation/countdown, exact saved action timestamps and owner post-batch popup with individual review links. Old 40-profile membership, unknown clicks, account scoping and protected history preserved.
+- **Documentation/governance closeout:** consume the authorization, set stable v120.60, reserve next v120.61 (NOT published/authorized), align Desktop dev version, Android dev code/name, signed-artifact metadata and update docs. docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md.
+- **Physical owner acceptance NOT verified:** actual Instagram relationship mutations remain open (#172/#164). Repeated own-profile read-only visits found in identity fallback; follow-up #230 must not weaken fail-closed guard. No user cookies, account data or journals handled in this closeout.
+
 ## 2026-10-23 — GRANADA P0 normal Windows robot cancellation, dates and batch-result review
 
 - **Root cause:** normal Windows ActionRobot implemented Pause/Resume only. A pause restarts the saved cohort rather than releasing it, and switching Instagram identities is correctly blocked while the Chrome worker is active. Saved visit pacing (user-configured 5-minute rest and 2-second gap) may leave the user waiting without a separate Cancel control. Status mixed the actual active task with the selected queue tab.

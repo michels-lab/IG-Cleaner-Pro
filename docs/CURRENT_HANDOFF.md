@@ -1,3 +1,10 @@
+## 2026-10-23 — GRANADA #46: official FINAL v120.60 published, request consumed
+
+- Verified [official v120.60 stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60), 12 downloadable assets, `draft=false` / `prerelease=false`, exact source `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`, publisher [#39983124380](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380) **SUCCESS** on attempt 2. First attempt failed to download Android SDK system image; mandatory emulator/Windows/signing/checksum gates remained intact and passed on retry.
+- [Authoritative publication receipt](GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md). Consumed the old requested authorization; stable = v120.60, next development reserved = v120.61 (neither published nor authorized).
+- Windows installed v120.60 includes true owner-scoped Cancel during cooldown/pause, current operation clarity, per-profile action timestamps and end-of-batch review dialog. This is code/CI/release evidence, **not** real Instagram action acceptance.
+- Remaining: physical owner signed-in Unfollow/Cancel verification [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172) / [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164), eliminate repeated own-profile probes safely [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Original 40-target evidence/protected/uncertain WAL untouched.
+
 ## 2026-10-23 — GRANADA #45: v120.59 officially published and publication receipt reconciled
 
 - FINAL v120.59 published 2026-10-23T12:53:51Z: [12 official assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59), exact source `92d612377c2c8a6e56534465f86e3ddcfe86bc23`, [governed publisher #39955452062](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39955452062) SUCCESS across all five mandatory jobs.

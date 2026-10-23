@@ -1,10 +1,10 @@
-## v120.60 — GRANADA safe Cancel batch and owner-review UX (governed FINAL publication)
+## v120.60 — GRANADA safe Cancel batch and owner-review UX (published FINAL stable October 23, 2026)
 
 - **Normal installed Windows app:** dedicated **Cancel batch** explicitly stops future target visits and retires only the exact selected cohort after the current operation and Chrome safely complete; previously completed/uncertain relationship-click evidence remains durable, never replayed, and no profile is automatically marked Reviewed.
 - **Current job visibility:** prominent current robot mode (Unfollow / Cancel Pending / read-only), actual state and countdown while reviewing another task; switching accounts remains blocked ONLY while the worker/Chrome can still act. A cancelled, stopped job no longer monopolizes the next robot task.
 - **Audit visibility:** full account/task-specific saved journal timestamps appear in the automations queue in local date and time; confirmed changes and ambiguous attempts no longer share the misleading "Already attempted" label.
 - **End-of-batch check:** popup displays the exact processed accounts, saved results and recorded dates; owner may approve only verified statuses, inspect profiles one-by-one or reopen exceptions manually. No automatic Unfollow or Cancel retry from the popup.
-- **Safety and validation:** negative tests for cancellation during cooldown, exact owner/target, preservation of journal bytes, safe switching, backend authorization, Chrome action integration and installed public/Developer Windows builds. Successful CI is **not** proof that Instagram accepted a real Unfollow/Cancel in the owner's account; live acceptance remains open. No RC or prerelease.
+- **Safety and validation:** negative tests for cancellation during cooldown, exact owner/target, preservation of journal bytes, safe switching, backend authorization, Chrome action integration and installed public/Developer Windows builds. [Official v120.60 FINAL assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60) and [successful governed publication](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380) at `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`; 12 assets, SHA-256 and production-signed Android checks. Successful CI is **not** proof that Instagram accepted a real Unfollow/Cancel in the owner's account; live acceptance remains open. No RC or prerelease.
 
 ## v120.59 — GRANADA owner-reference Unfollow and verified Windows start
 

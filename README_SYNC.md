@@ -1,8 +1,8 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.59; hosted email configuration remains separately unverified.
+> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.60; hosted email configuration remains separately unverified.
 
-Current published stable: **v120.59**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59), validated [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39955452062), exact source `92d612377c2c8a6e56534465f86e3ddcfe86bc23`. The next reserved development version **v120.60 is not authorized for publication**. Real owner Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
+Current published stable: **v120.60**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60), validated [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380), exact source `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`. The next reserved development version **v120.61 is not authorized for publication**. Real owner Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
