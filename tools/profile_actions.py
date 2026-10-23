@@ -1399,6 +1399,8 @@ class ActionRobot:
         self.historical_not_following_seen = set()
         self.continuing_batch = False
         self.active_batch_id = ""
+        self.cancel_requested = False
+        self.cancel_batch_id = ""
         self.skipped = set()
         self.max_count = 30
         self.window_minutes = ACTION_WINDOW_MINUTES
@@ -1819,6 +1821,8 @@ class ActionRobot:
             self.max_count, self.window_minutes, self.min_delay_seconds = count, window, delay
             self.rest_minutes = rest
             self.stop_event.clear()
+            self.cancel_requested = False
+            self.cancel_batch_id = ""
             self.status, self.message = ("starting",
                 "Re-auditing unresolved historical profiles (read-only, no actions).")
             self.worker = threading.Thread(target=self._run, daemon=True)
@@ -1856,6 +1860,8 @@ class ActionRobot:
             _, self.rest_minutes = check_batch_rest(
                 self.max_count if rest_input else 0, rest_input)
             self.stop_event.clear()
+            self.cancel_requested = False
+            self.cancel_batch_id = ""
             self.status, self.message = "starting", "Rechecking unapproved batch in Chrome (read-only)."
             self.worker = threading.Thread(target=self._run, daemon=True)
             self.worker.start()
@@ -1978,6 +1984,69 @@ class ActionRobot:
             self.skipped.add(user)
             return self.snapshot()
 
+    def _finish_owner_cancel_locked(self):
+        """Archive only the selected unapproved cohort; NEVER change the action WAL."""
+        if not self.cancel_requested:
+            return
+        batch_id = self.cancel_batch_id
+        if batch_id:
+            entries = self._review_batches(self.owner, self.account, self.task)
+            pending = next((e for e in reversed(entries)
+                            if not e.get("approved_at") and not e.get("deferred_at")), None)
+            if pending is None or pending.get("id") != batch_id:
+                raise ValueError("Saved cohort changed during cancellation; evidence preserved.")
+            journal = _read_json(self._base(), {})
+            if not isinstance(journal, dict):
+                raise ValueError("Action journal is invalid; preserve it for inspection.")
+            targets = pending.get("targets", [])
+            if not isinstance(targets, list):
+                raise ValueError("Saved cohort invalid; preserve it for inspection.")
+            recorded = sum(u in journal for u in targets)
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            pending["deferred_at"] = now
+            pending["cancelled_by_owner_at"] = now
+            pending["deferred_reason"] = "owner_cancelled"
+            pending["deferred_action_recorded"] = recorded
+            pending["deferred_untouched"] = len(targets) - recorded
+            pending["marked_reviewed"] = False
+            _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
+        self.cancel_requested = False
+        self.cancel_batch_id = ""
+        self.status = "cancelled"
+        self.message = ("Batch cancelled. Saved actions and possible clicks were preserved. "
+                        "You can switch jobs after Chrome closes.")
+        self.wait_until = 0
+        self.current_wait = None
+
+    def cancel_current_batch(self, data):
+        """Stop the next operations; never erase or repeat an in-flight action."""
+        owner, account, task = self._review_scope(data)
+        with self.lock:
+            if (owner, account, task) != (self.owner, self.account, self.task):
+                raise ValueError("Cancel must name the active owner, account and robot task.")
+            pending = self._pending_review(owner, account, task)
+            batch_id = pending.get("id") if pending else ""
+            if ((data.get("batch_id") or "") != batch_id or
+                    data.get("confirmation") != "cancel-batch:" + batch_id):
+                raise ValueError("Confirm the exact saved cohort before cancelling.")
+            if not batch_id and not (self.worker and self.worker.is_alive()):
+                raise ValueError("There is no active or saved unfinished job to cancel.")
+            self.cancel_requested = True
+            self.cancel_batch_id = batch_id
+            if self.worker and self.worker.is_alive():
+                self.stop_event.set()
+                self.status = "cancelling"
+                self.message = ("Cancellation requested. The current operation may be in flight; "
+                                "no new targets will start. Original evidence is preserved.")
+            else:
+                try:
+                    self._finish_owner_cancel_locked()
+                except Exception:
+                    self.cancel_requested = False
+                    self.cancel_batch_id = ""
+                    raise
+            return self.snapshot()
+
     def _run_with_lease(self, lease):
         # The worker, not the HTTP request thread, owns the full action lease.
         # Always free it on login failure, exception, pause, or final review.
@@ -2092,6 +2161,8 @@ class ActionRobot:
                 saved_protected.update(_users(data.get("protected", [])))
                 _atomic_json(self._protection_file(), sorted(saved_protected))
                 self.stop_event.clear()
+                self.cancel_requested = False
+                self.cancel_batch_id = ""
                 self.status, self.message = "starting", "Opening Instagram in Chrome…"
                 self.worker = threading.Thread(target=self._run_with_lease, args=(lease,), daemon=True)
                 self.worker.start()
@@ -2164,6 +2235,7 @@ class ActionRobot:
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
+                    "cancel_requested": self.cancel_requested,
                     "continuing_batch": self.continuing_batch,
                     "history_recheck": self.history_recheck_mode,
                     "historical_checked": historical_checked,
@@ -2707,3 +2779,13 @@ class ActionRobot:
                 except Exception: pass
             with self.lock:
                 self.open_review_tabs = []
+                if self.cancel_requested:
+                    try:
+                        self._finish_owner_cancel_locked()
+                    except Exception as exc:
+                        self.cancel_requested = False
+                        self.cancel_batch_id = ""
+                        self.status = "blocked"
+                        self.message = ("Chrome stopped, but the saved cohort could not be "
+                                        "archived: " + str(exc)[:180] +
+                                        ". Review the original journal before another batch.")
