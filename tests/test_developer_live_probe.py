@@ -128,6 +128,105 @@ class DeveloperRealDOMTest(unittest.TestCase):
             )
             transport.assert_not_called()
 
+    def test_terminal_states_do_not_turn_login_or_challenge_into_complete(self):
+        import contextlib
+        from unittest.mock import Mock
+        from types import ModuleType
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            page = Mock()
+            page.url = "https://www.instagram.com/"
+            page.is_closed.return_value = False
+            browser = Mock()
+            browser.pages = [page]
+            pw = Mock()
+            pw.chromium.launch_persistent_context.return_value = browser
+            fake = ModuleType("playwright.sync_api")
+            fake.sync_playwright = lambda: contextlib.nullcontext(pw)
+            with patch.dict(sys.modules, {"playwright.sync_api": fake}), \\
+                 patch("developer_live_probe.preserve_instagram_auth_page",
+                       return_value=False), \\
+                 patch("developer_live_probe.signed_in_handle",
+                       return_value="owner.account"), \\
+                 patch("developer_live_probe.challenge_detected",
+                       return_value=False), \\
+                 patch("developer_live_probe.inspect_real_profile") as scan:
+                probe = DeveloperLiveProbe(root / "read_only", root / "browser")
+                scan.side_effect = ["STRUCTURED_SESSION_REQUIRED",
+                                    "STRUCTURED_UNAVAILABLE",
+                                    "FOLLOWING_STRUCTURED"]
+                probe._run(["one.name", "two.name", "three.name"],
+                           "unfollow", "owner.account")
+                normal = probe.snapshot()
+                self.assertEqual(normal["state"], "complete")
+                self.assertEqual(normal["checked"], 3)
+                self.assertEqual(normal["uninspected"], 0)
+                self.assertEqual(normal["counts"]["STRUCTURED_UNAVAILABLE"], 1)
+                self.assertEqual(scan.call_count, 3,
+                    "Private GET uncertainty must not imply Chrome auth failure")
+                for name in ("one.name", "two.name", "three.name"):
+                    self.assertNotIn(name, json.dumps(normal))
+
+                scan.reset_mock(side_effect=True)
+                scan.side_effect = ["STRUCTURED_RATE_LIMITED",
+                                    "FOLLOWING_STRUCTURED"]
+                probe = DeveloperLiveProbe(root / "read_only", root / "browser")
+                probe._run(["one.name", "two.name"], "unfollow", "owner.account")
+                limited = probe.snapshot()
+                self.assertEqual(limited["state"], "blocked")
+                self.assertEqual(limited["phase"], "structured_rate_limited")
+                self.assertEqual(limited["checked"], 1)
+                self.assertEqual(limited["uninspected"], 1)
+                self.assertEqual(scan.call_count, 1)
+
+                scan.reset_mock(side_effect=True)
+                scan.return_value = "FOLLOWING_VISIBLE"
+                with patch("developer_live_probe.challenge_detected",
+                           return_value=True):
+                    probe = DeveloperLiveProbe(root / "read_only", root / "browser")
+                    probe._run(["one.name", "two.name"], "unfollow", "owner.account")
+                challenge = probe.snapshot()
+                self.assertEqual(challenge["state"], "blocked")
+                self.assertEqual(challenge["phase"], "security_challenge")
+                self.assertEqual(challenge["checked"], 0)
+                self.assertEqual(challenge["uninspected"], 2)
+                self.assertEqual(challenge["counts"], {"SECURITY_CHALLENGE": 1})
+                self.assertEqual(challenge["events"][0]["sample"], 0)
+                scan.assert_not_called()
+
+                with patch("developer_live_probe.time.monotonic",
+                           side_effect=[0, 80]), \\
+                     patch("developer_live_probe.signed_in_handle",
+                           return_value=None):
+                    probe = DeveloperLiveProbe(root / "read_only", root / "browser")
+                    probe._run(["one.name"], "unfollow", "owner.account")
+                login = probe.snapshot()
+                self.assertEqual(login["state"], "blocked")
+                self.assertEqual(login["phase"], "login_required")
+                self.assertEqual(login["checked"], 0)
+                self.assertEqual(login["uninspected"], 1)
+
+                # Owner stop is not a successful completion.
+                probe = DeveloperLiveProbe(root / "read_only", root / "browser")
+                probe.stop_event.set()
+                probe._run(["one.name"], "unfollow", "owner.account")
+                stopped = probe.snapshot()
+                self.assertEqual(stopped["state"], "stopped")
+                self.assertEqual(stopped["checked"], 0)
+                self.assertEqual(stopped["uninspected"], 1)
+
+    def test_https_target_required_before_owner_dom_or_private_get(self):
+        page = FakePage()
+        page.url = "http://www.instagram.com/test.target/"
+        with patch("developer_live_probe.challenge_detected", return_value=False), \\
+             patch("developer_live_probe._verified_action_owner") as owner, \\
+             patch("developer_live_probe.inspect_structured_following") as network:
+            self.assertEqual(
+                inspect_real_profile(page, "test.target", "unfollow", "owner"),
+                "PROFILE_REDIRECT")
+            owner.assert_not_called()
+            network.assert_not_called()
+
     def test_probe_fail_closed_and_exports_redacted(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
