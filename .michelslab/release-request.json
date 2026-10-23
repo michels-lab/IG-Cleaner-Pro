@@ -1,12 +1,12 @@
 {
   "version": "120.58",
   "tag": "v120.58",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.57",
   "owner_acceptance_note": "Normal Windows robot with integrated saved journal no-replay guard #215 and exact HTTPS action target/header proofs #219; owner must approve real targets, preserved original 40-profile batch, protected profiles and click WAL. Offline CI does not confirm actions in live Instagram; keep #172/#164 open. Official release only after complete publisher checks; no bypass or prerelease.",
   "requested_at": "2026-10-23",
@@ -21,5 +21,9 @@
     "run": 39913984383,
     "commit": "2ffea2280bc0438ad18931af655278b16a63edc1",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.57"
-  }
+  },
+  "published_run": 39917647988,
+  "published_commit": "401389c67e997c81ee5559d3a08989749adbcd62",
+  "published_at": "2026-10-23T07:37:10Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.58"
 }

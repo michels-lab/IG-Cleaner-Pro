@@ -1,3 +1,9 @@
+## 2026-10-23 — GRANADA #40 official published v120.58 receipt (no republish)
+
+- Verified FINAL stable v120.58 GitHub publication with 12 assets and governed publisher SUCCESS #39917647988 on SHA `401389c67e997c81ee5559d3a08989749adbcd62` at 2026-10-23T07:37:10Z.
+- Canonical manifest/README/update guide/release request reconciled to current v120.58, reserved v120.59. Release request marked consumed, preventing accidental second publication. See `docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md`.
+- Real owner signed-in Unfollow/Cancel acceptance (#172/#164) **not verified**; no new release or user action produced by this documentation change.
+
 ## 2026-10-21 — GRANADA #27 official v120.55 FINAL release published; canonical receipt reconciliation
 
 - Official [v120.55 **stable**, not an RC or prerelease](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55) independently verified on GitHub: 12 assets (public and Developer Windows/Android packages plus SHA256SUMS), `draft=false`, `prerelease=false`, published 2026-10-21 21:32:41 UTC; tag targets exact SHA `10f1e4cb9b3990ea47045ff37aa674ce27c2cebb`.
