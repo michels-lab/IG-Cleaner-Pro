@@ -76,7 +76,8 @@ def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
                     next:body.next_max_id??null,has_more:body.has_more??null};
           }catch{return {error:'read_failed'};}
         }""", {"kind": relation, "cursor": cursor})
-        if not isinstance(packet, dict) or packet.get("error"):
+        if (not isinstance(packet, dict) or packet.get("error") or
+                packet.get("status") not in (None, "ok")):
             reason = packet.get("error") if isinstance(packet, dict) else "invalid_response"
             raise LiveListsUnavailable(
                 "Instagram live " + relation + " list unavailable (" + str(reason)[:40] +
