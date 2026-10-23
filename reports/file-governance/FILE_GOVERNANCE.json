@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 299,
-  "classified_files_total": 295,
-  "docs_content_inspected": 53,
+  "tracked_files_total": 300,
+  "classified_files_total": 296,
+  "docs_content_inspected": 54,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 48,
+    "document": 49,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -25,7 +25,7 @@
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "e244b7d8966552422b4e4388640c0e29148f9b2147e154d90b0d4415d5238c76",
+  "inventory_fingerprint": "db00442d7358f034e03999233139723c33e6378978c8a3c518f048421cdfaa7c",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "c9bc2a7f7bd2b93cc467e0957da468f26a9f2137"
+      "blob": "2ca86a4d28e57fc5096d4ae64764b415de29e9a3"
     },
     {
       "path": "README.md",
@@ -1093,6 +1093,13 @@
       "blob": "cc177bb9ac85f214fa00e7524057975562e7bc15"
     },
     {
+      "path": "docs/GRANADA_32_PUBLIC_ROBOT_MULTITAB_LOGIN_2026-10-22.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "ace392198635f3f4313c486d00be033aee2229fb"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1671,7 +1678,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ae6b8b39aab40a198ef6084baf918ebdee2a89b9"
+      "blob": "cface42e58c84ffa41a2b64b85a46e71e7f8a8ee"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -1958,7 +1965,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "dd3bd6f1672adc278319565a56362b4ebf0b6e1f"
+      "blob": "9bae22798c5b01450d218835a15b1a393d18f734"
     },
     {
       "path": "tools/profile_counts_audit.py",
