@@ -5,6 +5,8 @@ on:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
+      - 'tools/profile_lists_live.py'
+      - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
@@ -38,6 +40,8 @@ on:
       - 'tools/profile_counts_robot.py'
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
+      - 'tools/profile_lists_live.py'
+      - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
@@ -71,6 +75,8 @@ jobs:
           node-version: '22'
       - name: Python profile counts parsing, queue and resume
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
+      - name: Optional live Followers and Following lists fail-closed pagination
+        run: python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
       - name: GRANADA cross-process public/Developer action guard and crash recovery
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
       - name: GRANADA durable write-ahead click intent and no-replay on power loss
