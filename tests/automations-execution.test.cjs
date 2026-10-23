@@ -291,6 +291,7 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  p.status='paused';p.running=false;p.task='cancel';
  batchFixture={id:'old-cancel',targets:['request.one'],approved_at:null,
    action_results:{'request.one':{status:'review'}},recheck_results:{}};
+ p.review_batch=batchFixture; // Status API exposes the authoritative saved cohort.
  ctx.window.igcAutoChoose('unfollow');
  await ctx.window.igcAutoPoll();
  await ctx.window.igcAutoCancel();
