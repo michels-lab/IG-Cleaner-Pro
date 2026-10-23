@@ -169,6 +169,13 @@ class TargetIdentityRegressionTests(unittest.TestCase):
         page.header.target_username = "other.user"
         self.assertIsNone(_profile_relationship_control(
             page, "target.user", [r"Following"]))
+        # A correct main hero must NOT authenticate a stale header's own
+        # Following button. Only that header's visible username can do so.
+        with patch("profile_actions._profile_hero_probe",
+                   return_value={"target_visible": True,
+                                 "candidate_indices": [], "main_present": True}):
+            self.assertIsNone(_profile_relationship_control(
+                page, "target.user", [r"Following"]))
         # The exact matching rendered target remains eligible.
         page.header.target_username = "target.user"
         self.assertIsNotNone(_profile_relationship_control(
