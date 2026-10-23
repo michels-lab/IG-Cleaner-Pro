@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 301,
-  "classified_files_total": 297,
-  "docs_content_inspected": 55,
+  "tracked_files_total": 302,
+  "classified_files_total": 298,
+  "docs_content_inspected": 56,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 50,
+    "document": 51,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "608267c27602b83a550d02376d0100907a0beee9693d54748e4955bcaebb619d",
-  "evidence_fingerprint": "498f2db58bb4c2b46cd601effeb87c568cbfa440c032b76d35dab01cb811e95a",
+  "inventory_fingerprint": "1ff93b743cc15f23974d3259747fee116d26257dca0fec03fcfcea30ccfa80d8",
+  "evidence_fingerprint": "944a98c86a712b2d47c3a11bd9bcd0f4fe0ae734b37aa83c789184ca3dd58f5e",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "49dc730cddf65292fcd952d035e9a04368239dd9"
+      "blob": "ef8208baa2af0b5b121271e008bdfc78132ca743"
     },
     {
       "path": "AGENTS.md",
@@ -252,7 +252,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "fe07fe2ea9e8cb30b74220997675c0eed62de9cc"
+      "blob": "78da4766d423038ef3358d932859596c65452a93"
     },
     {
       "path": "README_SYNC.md",
@@ -1109,6 +1109,13 @@
       "blob": "7c0aa3c7fd25cb211d0c653eeab6cd3b28bd012f"
     },
     {
+      "path": "docs/GRANADA_35_V12056_STABLE_RECEIPT_2026-10-22.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "6cf3afde2721c4e19d0b01787c5ce78333d7c354"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1176,7 +1183,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a8ddb55d50a815e2791b2df3d7dc0be6f7cc6ac9"
+      "blob": "2164ecfdaf766bfe5c9558d6d4cf68cd9d5894ed"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1281,7 +1288,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "ceae9c7c1dde8d91187f738272cd04313e467c74"
+      "blob": "115f5a55ccfa3328372a7a52cb6370c247663f47"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2112,11 +2119,11 @@
   ],
   "findings": [
     {
-      "id": "2099d92aabfdb70f",
+      "id": "cf687e070ef265cc",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
