@@ -8,7 +8,9 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.56 — official stable GitHub release, published October 22, 2026.** [Download the 12 official v120.56 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56).
+**v120.56 — official stable GitHub release, published October 22, 2026.**
+
+[Release verification and official publisher receipt](docs/GRANADA_35_V12056_STABLE_RECEIPT_2026-10-22.md). [Download the 12 official v120.56 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56).
 
 | Platform | Official published asset |
 | --- | --- |
