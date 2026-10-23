@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 313; classified: 309; readable documents: 62; above read cap: 1; findings: 1.
+Tracked: 315; classified: 311; readable documents: 64; above read cap: 1; findings: 1.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 313; classified: 309; readable documents: 62; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 57 |
+| document | 59 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 41 |
@@ -29,7 +29,7 @@ Tracked: 313; classified: 309; readable documents: 62; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/test_instagram_unfollow_chromium_e2e.py, tests/test_instagram_unfollow_reference.py, tools/instagram_unfollow_reference.py, tools/profile_actions.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID d7fa0ab1c75ea28b)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 12 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release-docs-contract.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID f5b4f768ce176c79)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

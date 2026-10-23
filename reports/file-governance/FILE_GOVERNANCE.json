@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 313,
-  "classified_files_total": 309,
-  "docs_content_inspected": 62,
+  "tracked_files_total": 315,
+  "classified_files_total": 311,
+  "docs_content_inspected": 64,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 57,
+    "document": 59,
     "index": 5,
     "installer_metadata": 1,
     "source": 41,
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "e7d8cb668e281560ddabfc7564decd3597aae86cd4636e33fd4a47578db3f69d",
-  "evidence_fingerprint": "07faa293d4685b111e83e2c7b75e0ded4d6a7fa53cae43bc8a4d383fe5a4572b",
+  "inventory_fingerprint": "b5d7e7149e5078798a56eff9123150e0f0211f5deea10841e1cf3fde1f3c1192",
+  "evidence_fingerprint": "66c6d57e9883d27e66ad2c7fc8c1be0ed1537d2948a166e752a7b2dca95d7185",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -133,7 +133,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "1412589c3ab305a3357dc6c21102c41782e1eb6b"
+      "blob": "d1a7569fefcff64fb88479bd37c354b3dd8365b1"
     },
     {
       "path": ".github/workflows/release-v12034.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "5a2e63abd2fe1c03cdeba1ba3447d19edf1c0d56"
+      "blob": "0e13c81fa2ac116568800b9a6f9c41953cac55e5"
     },
     {
       "path": "AGENTS.md",
@@ -252,7 +252,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "7f3eb7edbad2893aa78d8054514d51a19cd9d12f"
+      "blob": "ff8a59d6d9150e0249a9c454bb5181b2e39c45fb"
     },
     {
       "path": "README_SYNC.md",
@@ -266,7 +266,7 @@
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "3ac5d15da0c9f4c41091f86d205a5cc94d2af9f3"
+      "blob": "40daaa8f4cd8e44c98c98adc45da93a28d710c9a"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "af6d06775099f89d4637a918366f141ea04ec962"
+      "blob": "4cad59acead457724c20db88d212782711be668b"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "db72cf468617364ce13fc482a3783f9cbfab2bc1"
+      "blob": "d97c6c716fe6e3d80ac2fb121d6b7b049d472876"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1137,6 +1137,13 @@
       "blob": "e9cc984c609959bd22b93d9fed157dec70ed969c"
     },
     {
+      "path": "docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "10ca2cb6d94646c23c536f9e9850538987bea6fc"
+    },
+    {
       "path": "docs/GRANADA_41_WINDOWS_JOURNAL_DRIFT_GATE_2026-10-23.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1156,6 +1163,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "77b9f2269ceb404df07b437be5a16c0b8a9a6c6d"
+    },
+    {
+      "path": "docs/GRANADA_44_V12059_PREPARATION_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "4b5f0598e8d7429f1268ccc2fa782c1d7bed1b62"
     },
     {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
@@ -1225,7 +1239,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "2b6b3d49644c0347880bfd17ecf8e1b8e8757682"
+      "blob": "195c4dd8e36bce1c82c363de6398bcc588f91365"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1316,21 +1330,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "7fb464afc486a744a9c41944c3d533b431a3eb9d"
+      "blob": "914c5680ce2ac654222f19470851ef5485b8db81"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f5cd2a88daee1a0d13fe5a31c8568176c645d525"
+      "blob": "0d30e48121f6a3fe584568da77bed49a645762d4"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "cc1485ed31e0b9cf4ed699920dd1658a90fd4057"
+      "blob": "85072e28293ff9965085fe4d600812716bd33023"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -1939,7 +1953,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "183b63362148d46afb84da51bce73e603d1da516"
+      "blob": "338bab8ce0dfa4f473c4b8d1558090a09020560f"
     },
     {
       "path": "tests/test_windows_updater.py",
@@ -2196,11 +2210,11 @@
   ],
   "findings": [
     {
-      "id": "d7fa0ab1c75ea28b",
+      "id": "f5b4f768ce176c79",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/test_instagram_unfollow_chromium_e2e.py, tests/test_instagram_unfollow_reference.py, tools/instagram_unfollow_reference.py, tools/profile_actions.py",
+      "observation": "12 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release-docs-contract.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
