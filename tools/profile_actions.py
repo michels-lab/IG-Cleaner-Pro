@@ -332,10 +332,8 @@ def _exact_https_target_profile(page, username):
             and current.path.strip("/").casefold() == username.casefold())
 
 
-def _target_identity_visible(page, username):
-    """Prove rendered target identity: Instagram may retain a stale SPA header."""
-    if _profile_hero_probe(page, username, []).get("target_visible"):
-        return True
+def _header_target_identity_visible(page, username):
+    """Proof tied specifically to the header that owns its relationship button."""
     try:
         header = page.locator("header").first
         if not header.count() or not header.is_visible():
@@ -346,6 +344,12 @@ def _target_identity_visible(page, username):
                    for i in range(min(matches.count(), 10)))
     except Exception:
         return False
+
+
+def _target_identity_visible(page, username):
+    """Prove the exact target in a rendered hero or its semantic header."""
+    return (bool(_profile_hero_probe(page, username, []).get("target_visible"))
+            or _header_target_identity_visible(page, username))
 
 
 def _profile_relationship_control(page, username, words):
@@ -360,7 +364,7 @@ def _profile_relationship_control(page, username, words):
         return None
     labels = [r"(?:%s)(?:\s*[▾▼⌄])?" % word for word in words]
     header = page.locator("header").first
-    if header.count() and header.is_visible() and _target_identity_visible(page, username):
+    if header.count() and header.is_visible() and _header_target_identity_visible(page, username):
         found = _visible_named_control(header, labels, roles=("button",))
         if found is not None:
             return found
