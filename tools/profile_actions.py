@@ -63,6 +63,15 @@ def _read_json(path: Path, default):
 
 MAX_ACTION_TABS = 10
 ACTION_CONTROL_WAIT_MS = 20000
+# A disconnected/unverified Instagram session must not leave Run stuck forever
+# in an apparently active state. Owner can restart after signing in manually.
+PUBLIC_ROBOT_LOGIN_WAIT_SECONDS = 240
+
+def _same_instagram_owner(observed, expected):
+    """Exact Instagram handle, case-insensitive; never accept missing identity."""
+    return (isinstance(observed, str) and isinstance(expected, str)
+            and bool(observed) and bool(expected)
+            and observed.casefold() == expected.casefold())
 # Guard against temporary Follow before delayed Requested during hydration.
 CANCEL_NO_REQUEST_MIN_WAIT_MS = 5000
 
@@ -897,7 +906,9 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
     if not _verified_action_owner(page, expected_handle):
         return "blocked", "The active Instagram account cannot be verified. No action was performed. Open your own profile in Chrome and confirm Edit profile appears."
     url = urlparse(page.url)
-    if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").lower() != username:
+    if (url.scheme != "https" or
+            url.hostname not in ("www.instagram.com", "instagram.com") or
+            url.path.strip("/").casefold() != username.casefold()):
         return "blocked", "Instagram redirected to another profile."
     header = page.locator("header").first
     if not header.count() or not header.is_visible():
@@ -1093,12 +1104,13 @@ def perform_visible_followback_audit(page, username, expected_handle):
 
     Never click Follow, Following, Requested, Unfollow, or Cancel Request.
     """
-    if signed_in_handle(page) != expected_handle:
+    if not _same_instagram_owner(signed_in_handle(page), expected_handle):
         return "review", "unverified", "Active Instagram identity could not be confirmed."
     page.goto("https://www.instagram.com/" + expected_handle + "/",
               wait_until="domcontentloaded", timeout=45000)
     page.wait_for_timeout(950)
-    if challenge_detected(page) or signed_in_handle(page) != expected_handle:
+    if (challenge_detected(page) or
+            not _same_instagram_owner(signed_in_handle(page), expected_handle)):
         return "blocked", "unverified", "Instagram challenge or identity mismatch."
     link = page.locator('a[href*="/followers/"]')
     # Match the owner's exact Followers URL. Never inspect another account.
@@ -1122,7 +1134,8 @@ def perform_visible_followback_audit(page, username, expected_handle):
     page.wait_for_timeout(1400)
     observations = []
     for _ in range(2):
-        if challenge_detected(page) or signed_in_handle(page) != expected_handle:
+        if (challenge_detected(page) or
+                not _same_instagram_owner(signed_in_handle(page), expected_handle)):
             return "blocked", "unverified", "Instagram challenge or identity mismatch during audit."
         links = dialog.locator("a[href]").evaluate_all(
             "(els) => els.filter(el => el.getBoundingClientRect().width > 0).map(el => el.getAttribute('href') || '')")
@@ -2109,8 +2122,10 @@ class ActionRobot:
                             open_pages[0] if open_pages else browser.new_page())
                 if not preserve_instagram_auth_page(page):
                     page.goto("https://www.instagram.com/", wait_until="domcontentloaded", timeout=45000)
+                login_started = time.monotonic()
                 with self.lock:
-                    self.status, self.message = "login", "Sign in to Chrome as @" + self.handle
+                    self.status, self.message = "login", ("Waiting for manual Instagram sign-in "
+                        "as @" + self.handle + " in the robot Chrome window. No actions clicked.")
                 while not self.stop_event.is_set():
                     if any(challenge_detected(tab) for tab in browser.pages if not tab.is_closed()):
                         with self.lock:
@@ -2123,11 +2138,22 @@ class ActionRobot:
                         return
                     signed = signed_in_handle(page)
                     if signed:
-                        if signed != self.handle:
+                        if not _same_instagram_owner(signed, self.handle):
                             with self.lock:
-                                self.status, self.message = "blocked", "Chrome is signed in as @" + signed + "; expected @" + self.handle
+                                self.status, self.message = ("blocked",
+                                    "Robot Chrome is signed in as @" + signed +
+                                    "; expected @" + self.handle +
+                                    ". No Instagram relationship action clicked.")
                             return
                         break
+                    if time.monotonic() - login_started >= PUBLIC_ROBOT_LOGIN_WAIT_SECONDS:
+                        with self.lock:
+                            self.status, self.message = ("blocked",
+                                "Robot Chrome did not confirm Instagram login as @" +
+                                self.handle + " within four minutes. Sign in manually "
+                                "in that Chrome window and restart the saved batch; "
+                                "no profiles were unfollowed or cancelled.")
+                        return
                     self.stop_event.wait(3)
                 if self.stop_event.is_set():
                     with self.lock: self.status = "paused"

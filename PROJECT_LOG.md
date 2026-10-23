@@ -1,3 +1,10 @@
+## 2026-10-22 — GRANADA #31 owner redirected all engineering to the public InstaCleaner robot
+
+- Owner explicitly discontinued Developer Edition priority after unsuccessful real-account experience. No further Developer-only features, acceptance requests, tests or release justification are planned. Unmerged experimental Developer Chrome probe changes stay out of main; historic installations/data are untouched.
+- Found regular `ActionRobot._run` waits indefinitely if Chrome never returns a signed-in Instagram handle; no click, but Run looks inert. Add a bounded 240-second sign-in phase with honest `blocked` status and preserved journals/saved batch; still never bypass challenges or blindly retry.
+- Fix case-sensitive owner comparisons in the normal action worker/followback audit and one exact-HTTPS target URL check; protect against wrong-owner account mutation. Synthetic tests check zero action journal on timeout/owner mismatch; existing robot-Windows CI gates remain mandatory.
+- Source and acceptance: [GRANADA #31](docs/GRANADA_31_PUBLIC_ROBOT_ONLY_2026-10-22.md), #172/#164. Stable v120.55 unchanged; future official FINAL v120.56 only through governed publisher, never an RC. Live Instagram Unfollow/Cancel is not yet verified.
+
 ## 2026-10-22 — GRANADA #30 robot P0: malformed journal must not re-enter smaller cohorts
 
 - Found cross-workflow inconsistency after #208: `ActionRobot.replan_incomplete_batch` treated existing non-object, empty and statusless saved records as untouched/reusable, contrary to main action-start refusal. Fixed at source without touching owner journals, original 40-target cohort or protected entries; 40→10 uses only truly absent and proven pre-click eligible usernames.

@@ -153,6 +153,82 @@ class ActionBatchHistoryTests(unittest.TestCase):
                     followers_evidence=task=="unfollow",
                     confirmation=f"{task}:{len(users)}")
 
+    def test_public_robot_manual_login_does_not_wait_forever_or_fake_actions(self):
+        """No Developer Edition: normal Windows robot times out with honest status."""
+        import contextlib
+        from types import ModuleType
+        from unittest.mock import Mock
+
+        from profile_actions import _same_instagram_owner
+        self.assertTrue(_same_instagram_owner("OWNER.Name", "owner.name"))
+        self.assertTrue(_same_instagram_owner("owner.name", "OWNER.NAME"))
+        self.assertFalse(_same_instagram_owner("other.owner", "owner.name"))
+        self.assertFalse(_same_instagram_owner(None, "owner.name"))
+        self.assertFalse(_same_instagram_owner("", "owner.name"))
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            robot = self._action(root)
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.handle, robot.task = "owner.name", "unfollow"
+            robot.targets = ["test.profile"]
+            page = Mock()
+            page.is_closed.return_value = False
+            browser = Mock()
+            browser.pages = [page]
+            pw = Mock()
+            pw.chromium.launch_persistent_context.return_value = browser
+            fake = ModuleType("playwright.sync_api")
+            fake.sync_playwright = lambda: contextlib.nullcontext(pw)
+            with patch.dict(sys.modules, {"playwright.sync_api": fake}), \
+                 patch("profile_actions.preserve_instagram_auth_page",
+                       return_value=True), \
+                 patch("profile_actions.challenge_detected",
+                       return_value=False), \
+                 patch("profile_actions.signed_in_handle",
+                       return_value=None), \
+                 patch("profile_actions.time.monotonic",
+                       side_effect=[0, 250]):
+                robot._run()
+            self.assertEqual(robot.status, "blocked")
+            self.assertIn("within four minutes", robot.message)
+            self.assertIn("no profiles were unfollowed or cancelled",
+                          robot.message)
+            browser.close.assert_called_once()
+            self.assertFalse(robot._base().exists(),
+                             "Login failure cannot create an action journal")
+            page.goto.assert_not_called()
+
+    def test_public_robot_rejects_different_owner_without_click_or_journal(self):
+        import contextlib
+        from types import ModuleType
+        from unittest.mock import Mock
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            robot=self._action(root)
+            robot.owner,robot.account="owner1","ig_account_1"
+            robot.handle,robot.task="owner.name","cancel"
+            robot.targets=["sample.target"]
+            page=Mock()
+            page.is_closed.return_value=False
+            browser=Mock()
+            browser.pages=[page]
+            pw=Mock()
+            pw.chromium.launch_persistent_context.return_value=browser
+            fake=ModuleType("playwright.sync_api")
+            fake.sync_playwright=lambda:contextlib.nullcontext(pw)
+            with patch.dict(sys.modules,{"playwright.sync_api":fake}), \
+                 patch("profile_actions.preserve_instagram_auth_page",
+                       return_value=True), \
+                 patch("profile_actions.challenge_detected",return_value=False), \
+                 patch("profile_actions.signed_in_handle",
+                       return_value="other.owner"):
+                robot._run()
+            self.assertEqual(robot.status,"blocked")
+            self.assertIn("other.owner",robot.message)
+            self.assertFalse(robot._base().exists())
+            browser.close.assert_called_once()
+
     def test_real_runner_prepares_ten_urls_before_first_action(self):
         """Reproduces owner's failure: one ambiguous action must not limit prefill to 3."""
         import types
