@@ -1039,7 +1039,7 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                     "Already not following: verified Follow / Follow Back on this target. "
                     "No relationship-changing click; continuing to next profile.")
         return "review", "This account follows you; review required."
-    if task == "unfollow":
+    if task == "unfollow" and on_pre_click is not None:
         # The owner-supplied Pasted text(3).txt uses an authenticated
         # exact-ID following lookup and usePolarisUnfollowMutation. Do not
         # simulate a visible-button click as evidence that this happened.
