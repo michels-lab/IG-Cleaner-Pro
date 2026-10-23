@@ -610,6 +610,89 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertIsNone(fresh.batch_review(request)["batch"])
                 robot.start(self._request(["different.person"]))
 
+    def test_cancel_paused_batch_preserves_all_click_evidence_and_unlocks_new_task(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            old = self._request(["already.ok", "possible.click", "untouched.one"],
+                                task="cancel")
+            with patch("profile_actions.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value = False
+                robot.start(old)
+                batch = robot.batch_review(old)["batch"]
+                journal = {
+                    "already.ok": {"status": "ok", "at": "2026-10-23T08:20:00Z",
+                                   "message": "Verified no active request"},
+                    "possible.click": {"status": "review", "issue": "interrupted_action_uncertain",
+                                       "at": "2026-10-23T08:21:00Z",
+                                       "click_intent": {"batch_id": batch["id"], "task": "cancel",
+                                                        "phase": "request_cancel",
+                                                        "written_at": "2026-10-23T08:20:59Z",
+                                                        "requires_manual_review": True},
+                                       "message": "Click may have been sent"}
+                }
+                _atomic_json(robot._base(), journal)
+                original = robot._base().read_bytes()
+                cancel = {**old, "batch_id": batch["id"],
+                          "confirmation": "cancel-batch:" + batch["id"]}
+                with self.assertRaisesRegex(ValueError, "Confirm the exact saved cohort"):
+                    robot.cancel_current_batch({**cancel, "confirmation": "wrong"})
+                with self.assertRaisesRegex(ValueError, "active owner"):
+                    robot.cancel_current_batch({**cancel, "account": "other.account"})
+                result = robot.cancel_current_batch(cancel)
+                self.assertEqual(result["status"], "cancelled")
+                self.assertFalse(result["cancel_requested"])
+                self.assertIsNone(robot.batch_review(old)["batch"])
+                self.assertEqual(robot._base().read_bytes(), original,
+                                 "Cancelling must never edit the action journal")
+                saved = robot._review_batches(old["owner"], old["account"], old["task"])[-1]
+                self.assertEqual(saved["deferred_reason"], "owner_cancelled")
+                self.assertEqual(saved["deferred_action_recorded"], 2)
+                self.assertEqual(saved["deferred_untouched"], 1)
+                self.assertFalse(saved["marked_reviewed"])
+                self.assertIn("possible.click",
+                              robot.attempted_history(old)["attempted_usernames"])
+                # The cancelled task no longer monopolizes the normal robot.
+                next_job = self._request(["fresh.person"], task="unfollow")
+                started = robot.start(next_job)
+                self.assertEqual(started["task"], "unfollow")
+
+    def test_cancel_during_cooldown_sets_stop_before_archival(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as tmp:
+            robot = self._action(Path(tmp))
+            request = self._request(["possible.click", "waiting.two"], task="unfollow")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = True
+                robot.start(request)
+                batch = robot.batch_review(request)["batch"]
+                _atomic_json(robot._base(), {
+                    "possible.click": {"status": "review",
+                      "issue": "interrupted_action_uncertain",
+                      "at": "2026-10-23T08:21:00Z",
+                      "message": "Maybe changed"}
+                })
+                original = robot._base().read_bytes()
+                response = robot.cancel_current_batch({
+                    **request, "batch_id": batch["id"],
+                    "confirmation": "cancel-batch:" + batch["id"]})
+                self.assertEqual(response["status"], "cancelling")
+                self.assertTrue(response["running"])
+                self.assertTrue(robot.stop_event.is_set())
+                self.assertIsNotNone(robot.batch_review(request)["batch"],
+                                     "Never archive an in-flight write prematurely")
+                with self.assertRaisesRegex(ValueError, "Owner stopped"):
+                    robot._persist_action_click_intent(
+                        robot._journal(), robot._base(), "waiting.two",
+                        "unfollow_graphql")
+                # Simulate completion of the worker/browser cleanup callback.
+                with robot.lock:
+                    robot._finish_owner_cancel_locked()
+                worker.return_value.is_alive.return_value = False
+                self.assertEqual(robot.snapshot()["status"], "cancelled")
+                self.assertIsNone(robot.batch_review(request)["batch"])
+                self.assertEqual(robot._base().read_bytes(), original)
+
     def test_resume_pending_cohort_executes_only_untouched_without_new_batch(self):
         from profile_actions import _atomic_json
         with TemporaryDirectory() as tmp:
