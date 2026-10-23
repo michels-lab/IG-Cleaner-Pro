@@ -238,10 +238,12 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  batchFixture={id:'screen-ten',targets:ten,approved_at:null,
    action_results:{'saved.0':{status:'review'},'saved.1':{status:'review'}},
    recheck_results:{}};
- elements.igcAutoBatch.value='10';
  p.running=false;p.status='paused';p.task='unfollow';p.owner=context.owner;
  p.account=context.active;
  ctx.window.igcAutoChoose('unfollow');
+ // Mode switch hydrates the account's saved size preference. Mimic the
+ // owner's CURRENT visible choice after switching the action lane.
+ elements.igcAutoBatch.value='10';
  const startCount=calls.filter(c=>c.type==='start').length;
  await ctx.window.igcAutoStart();
  const submitted=calls.filter(c=>c.type==='start');
