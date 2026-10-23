@@ -16202,7 +16202,7 @@ const state=el("igcAutoCurrentJob"),technical=document.createElement("details");
 technical.id="igcAutoDiagnostics";
 technical.innerHTML='<summary>Show technical error details</summary><pre id="igcAutoTechnicalDetails"></pre>';
 state.appendChild(technical);technical.hidden=true;
-const config=el("igcAutoTiming"),actions=el("igcAutoRun").parentElement,controls=document.createElement("div");
+const config=el("igcAutoTiming"),actions=el("igcAutoRun").parentElement,searchInput=el("igcAutoSearch"),controls=document.createElement("div");
 controls.className="igc-auto-operations";controls.id="igcAutoOperations";
 const card=(num,title,subtitle)=>{
  const section=document.createElement("section");
@@ -16227,12 +16227,13 @@ const summary=document.createElement("summary");summary.textContent="More tools 
 const extraButtons=document.createElement("div");extraButtons.className="igc-auto-extra-buttons";
 for(const button of [...actions.querySelectorAll("button")])extraButtons.append(button);
 extra.append(summary,extraButtons);actionCard.append(extra);
-actions.remove();controls.append(configCard,actionCard);
+if(searchInput)searchInput.remove(); // preserve original search before removing toolbar
+ actions.remove();controls.append(configCard,actionCard);
 el("igcAutoMetrics").insertAdjacentElement("afterend",controls);
-const search=el("igcAutoSearch"),results=document.createElement("div");
+const search=searchInput,results=document.createElement("div");
 results.className="igc-auto-results-bar";results.id="igcAutoResultsBar";
 const heading=document.createElement("strong");heading.textContent="Profile queue · status & action history";
-results.append(heading,search);
+results.append(heading);if(search)results.append(search);
 const table=el("igcAutoRows")?.closest("table");
 if(table?.parentElement)table.parentElement.insertAdjacentElement("beforebegin",results);
 window.igcAutomationSelectionRefresh=function(view){
