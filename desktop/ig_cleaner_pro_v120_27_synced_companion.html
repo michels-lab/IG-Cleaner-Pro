@@ -15563,6 +15563,10 @@ window.igcAutoPoll=async function(){
     "Errors / review: "+state.errors,
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
     "Issues: "+(state.issue_count||0)];
+   // Keep actual owner-profile fallback navigation distinct from target
+   // processing or any claimed Instagram relationship change.
+   if(Number.isInteger(state.owner_profile_visits)&&state.owner_profile_visits>=0)
+    labels.push("Owner identity checks (read-only): "+state.owner_profile_visits);
    for(const label of labels){
     const span=document.createElement("span");span.textContent=label;metrics.appendChild(span);
    }
