@@ -1410,6 +1410,7 @@ class ActionRobot:
         self.open_review_tabs = []
         self.current_wait = None
         self.review_only = False
+        self.audit_source = "visible"
         self.history_recheck_mode = False
         self.historical_seen = set()
         self.historical_not_following_seen = set()
@@ -2096,6 +2097,10 @@ class ActionRobot:
         expected = valid_username(data.get("expected_handle"))
         task = str(data.get("task") or "")
         targets = _users(data.get("targets"))
+        audit_source = str(data.get("audit_source") or "visible")
+        if (audit_source not in ("visible", "live_lists") or
+                (task != "audit" and audit_source != "visible")):
+            raise ValueError("Alternative live lists are only available for read-only Followback Audit.")
         if not owner or not account or len(owner) > 200 or len(account) > 120:
             raise ValueError("Select an Insta Cleaner login and Instagram workspace first.")
         if not expected:
@@ -2129,6 +2134,8 @@ class ActionRobot:
                     raise ValueError("Read-only verification cannot resume as an Unfollow job.")
                 if resume and targets != self.targets:
                     raise ValueError("Resuming actions cannot change the saved target cohort.")
+                if resume and task == "audit" and audit_source != self.audit_source:
+                    raise ValueError("Resume must preserve the originally approved audit source.")
                 pending_entry = None if resume else self._pending_review(owner, account, task)
                 if not resume:
                     if pending_entry:
@@ -2157,12 +2164,13 @@ class ActionRobot:
                         "Selected targets have invalid saved action evidence. "
                         "Inspect the original journal read-only; never auto-retry.")
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
-                if not resume:
+                if not resume and not (task == "audit" and audit_source == "live_lists"):
                     if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                            and not _preclick_no_action(record)
                            for user in targets):
                         raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
                 self.targets = targets
+                self.audit_source = audit_source
                 self.review_only = False
                 self.history_recheck_mode = False
                 if not resume:
@@ -2267,6 +2275,7 @@ class ActionRobot:
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "open_review_tabs": list(self.open_review_tabs),
+                    "audit_source": self.audit_source if self.task == "audit" else None,
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "review_only": self.review_only,
@@ -2461,6 +2470,37 @@ class ActionRobot:
                 visits = load_history(visits_file)
                 rests = load_batch_state(rests_file)
                 action_tabs = ActionTabPool(browser) if self.task != "audit" else None
+                live_snapshot = self.task == "audit" and self.audit_source == "live_lists"
+                live_followers = live_following = None
+                if live_snapshot:
+                    # This is explicitly selected by the owner: read-only,
+                    # same-origin requests via the already verified session.
+                    # Both lists must be complete before any negative claim.
+                    try:
+                        try:
+                            from .profile_lists_live import read_live_friendship_list
+                        except ImportError:
+                            from profile_lists_live import read_live_friendship_list
+                        def progress_live(kind, index):
+                            if self.stop_event.is_set():
+                                raise ValueError("Owner stopped live list collection.")
+                            with self.lock:
+                                self.status = "running"
+                                self.message = ("Reading live " + kind +
+                                                " · page " + str(index) +
+                                                " (read-only; no account changes)")
+                        live_followers = read_live_friendship_list(
+                            page, self.handle, "followers", on_page=progress_live)
+                        live_following = read_live_friendship_list(
+                            page, self.handle, "following", on_page=progress_live)
+                    except Exception as exc:
+                        with self.lock:
+                            self.status = "paused" if self.stop_event.is_set() else "blocked"
+                            self.message = ("Live Followers/Following option unavailable: " +
+                                            str(exc)[:200] +
+                                            " No inferred non-followbacks. "
+                                            "The previous UI audit remains available.")
+                        return
                 stopped_for_review = False
                 def stage_next_wave(start_index):
                     """Open all ten target tabs before any action in that wave.
@@ -2565,7 +2605,7 @@ class ActionRobot:
                     # until the new outcome has been written, never delete
                     # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
-                        (not self.review_only and
+                        (not self.review_only and not live_snapshot and
                          _saved_journal_blocks_action(journal, user))):
                         if action_tabs and action_tabs.prepared(user) is not None:
                             action_tabs.record(user, "skipped", safe_no_click=True)
@@ -2588,7 +2628,7 @@ class ActionRobot:
                     # Already-prefetched target tabs have paid for their
                     # visit in the persistent ledger. Do not wait/charge again.
                     existing_tab = action_tabs.prepared(user) if action_tabs else None
-                    if existing_tab is None:
+                    if existing_tab is None and not live_snapshot:
                         while not self.stop_event.is_set():
                             delay = max(wait_required(visits, self.max_count,
                                                       self.window_minutes,
@@ -2633,6 +2673,8 @@ class ActionRobot:
                             self.open_review_tabs = action_tabs.overview()
                     if prepared_item and prepared_item.get("visit_started_at") is not None:
                         current_visit_started = prepared_item["visit_started_at"]
+                    elif live_snapshot:
+                        current_visit_started = None  # No target profile visit occurred.
                     else:
                         visits = register_visit(visits_file, visits)
                         current_visit_started = visits[-1]
@@ -2654,6 +2696,21 @@ class ActionRobot:
                                 preloaded=bool(prepared_item and
                                                prepared_item.get("status") == "prefetched"),
                                 allow_unacted_observation=self.history_recheck_mode)
+                        elif self.task == "audit" and live_snapshot:
+                            if user.casefold() not in live_following:
+                                result, relation = "review", "unverified"
+                                details = ("Live Following does not include @" + user +
+                                           "; this imported candidate is stale. "
+                                           "No relationship action or non-followback inference.")
+                            else:
+                                relation = ("follows_you" if user.casefold() in live_followers
+                                            else "not_following")
+                                result = "ok"
+                                details = ("Complete current Followers and Following lists "
+                                           "confirm @" + user +
+                                           (" follows you." if relation == "follows_you"
+                                            else " does not follow you.") +
+                                           " Read-only; no relationship click.")
                         elif self.task == "audit":
                             result, relation, details = perform_visible_followback_audit(
                                 work_page, user, self.handle)
@@ -2687,7 +2744,7 @@ class ActionRobot:
                         else:
                             result, details = "error", "The action could not be verified: " + str(exc)[:200]
                     finally:
-                        if not (prepared_item and
+                        if not live_snapshot and not (prepared_item and
                                 prepared_item.get("visit_started_at") is not None):
                             visits = finish_visit(
                                 visits_file, visits, started_at=current_visit_started)

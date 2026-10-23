@@ -3781,6 +3781,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
 <div class="igc-counts-stats" id="igcAutoMetrics" aria-live="polite"></div>
+<div id="igcAutoAuditSourcePanel" class="note" style="display:none;margin-top:9px;padding:11px;border:1px solid var(--border);border-radius:10px" aria-label="Followback audit source">
+ <label for="igcAutoAuditSource"><strong>Followback evidence:</strong></label>
+ <select id="igcAutoAuditSource" aria-label="Choose read-only audit source">
+  <option value="visible">Visible Followers search (existing)</option>
+  <option value="live_lists">Live Followers + Following lists (alternative)</option>
+ </select>
+ <small style="display:block;margin-top:6px">Alternative uses read-only, same-origin list pages from your authenticated Instagram Chrome session. Full pagination is required; unavailable, restricted or incomplete lists never count as non-followback. Does not change Profile Counts or open ten target tabs.</small>
+</div>
 <div class="btnrow" id="igcAutoTiming">
 <label>Batch size <input id="igcAutoBatch" type="number" min="1" max="1000" value="30" style="width:86px"></label>
 <label>Rest between batches (min) <input id="igcAutoRest" type="number" min="0" max="1440" value="5" style="width:78px"></label>
@@ -15241,7 +15249,12 @@ function selectedActionTargets(verifiedAttempts=null){
  // An explicit history read is mandatory before the robot starts. Its
  // authoritative journal overrides older browser-cache or idle poll values,
  // including v120.48 issues proven to have made zero relationship clicks.
- const attempted=verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
+ // The alternative never clicks any relationship control; owner-approved
+ // live-list scans may recheck old DOM-audit failures without replay risk.
+ const repeatReadOnly=mode==="audit"&&
+   document.getElementById("igcAutoAuditSource")?.value==="live_lists";
+ const attempted=repeatReadOnly?new Set():
+   verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
  const eligible=inputs().filter(r=>!isProtected(r.kind,r.username)&&
      !skips[r.kind].has(r.username)&&!attempted.has(r.username))
      .map(r=>r.username);
@@ -15271,6 +15284,7 @@ function actionConfig(task,targets){
   ...(["unfollow","audit"].includes(task)&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
  return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,
          protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
+         audit_source:task==="audit"?(document.getElementById("igcAutoAuditSource")?.value||"visible"):"visible",
          confirmation:task+":"+targets.length};
 }
 async function refreshActionHistoryForStart(task){
@@ -15365,7 +15379,9 @@ window.igcAutoStart=async function(){
    const names=targets.slice(0,15).map(u=>"@"+u).join(", ");
    summary="Run "+operation+" on "+targets.length+" profiles from @"+data.expected_handle+
      "?\\n"+names+(targets.length>15?" and more…":"")+
-     (mode==="audit"?"\\nRead-only: no relationship changes.":
+     (mode==="audit"?(data.audit_source==="live_lists"?
+       "\\nAlternative: read your complete live Followers and Following lists; no target tabs or relationship clicks. Incomplete lists block all conclusions.":
+       "\\nExisting visible Followers search; read-only with no relationship changes."):
       "\\nEach relationship-changing action is individually verified.");
   }
   reportActionCommand("approval","Waiting for your explicit confirmation. No relationship-changing action has begun.");
@@ -15726,8 +15742,12 @@ window.igcAutoRender=function(){
  refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ const auditSourcePanel=document.getElementById("igcAutoAuditSourcePanel");
+ if(auditSourcePanel)auditSourcePanel.style.display=mode==="audit"?"block":"none";
  igcAutoCurrentJob();
- const attempted=mode==="protected"?new Set():priorAttempts(mode);
+ const attempted=mode==="protected"||
+  (mode==="audit"&&document.getElementById("igcAutoAuditSource")?.value==="live_lists")?
+  new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
  const attemptedCount=all.filter(r=>attempted.has(r.username)).length;

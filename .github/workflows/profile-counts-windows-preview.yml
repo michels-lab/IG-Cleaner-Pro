@@ -16,6 +16,8 @@ on:
       - 'tests/test_windows_updater.py'
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
+      - 'tools/profile_lists_live.py'
+      - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
@@ -66,6 +68,8 @@ on:
       - 'tests/test_windows_updater.py'
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
+      - 'tools/profile_lists_live.py'
+      - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
@@ -165,6 +169,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Historical no-click re-audit safety contract failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Persisted prior-batch exclusions failed." }
+      - name: Verify owner-approved live list pagination cannot mutate Instagram
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |

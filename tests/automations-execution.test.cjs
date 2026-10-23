@@ -85,11 +85,14 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(requests[1].data.task,'cancel');
  assert.deepEqual(requests[1].data.targets,['request.one']);
  ctx.window.V119_HTML={partial:true};
+ elements.igcAutoAuditSource={value:'live_lists'}; // explicit opt-in in Audit only
  ctx.window.igcAutoChoose('audit');
  await ctx.window.igcAutoStart();
  const readOnly=calls.filter(c=>c.type==='start').at(-1);
  assert.equal(readOnly.data.task,'audit');
  assert.equal(readOnly.data.followers_evidence,false,'Optional audit must not require complete exports');
+ assert.equal(readOnly.data.audit_source,'live_lists','Opt-in live lists must reach Windows start');
+ assert.equal(requests[1].data.audit_source,'visible','Cancel must never use live-list mode');
  assert(texts.at(-1).includes('READ-ONLY'));
  ctx.window.igcAutoChoose('unfollow');
  await ctx.window.igcAutoStart();
