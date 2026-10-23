@@ -46,7 +46,7 @@ const mockFetch=async(url,options)=>{
   return {ok:true,json:async()=>result};
  }
  return {ok:true,json:async()=>type==='status'?p:
-   type==='start'?{...p,message:'fixture action started',status:p.status==='idle'?'idle':'starting',running:p.status!=='idle'}:
+   type==='start'?{...p,message:p.status==='idle'?p.message:'fixture action started',status:p.status==='idle'?'idle':'starting',running:p.status!=='idle'}:
    {...p,message:'fixture action started'}};
 };
 const localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};
