@@ -61,6 +61,19 @@ def _read_json(path: Path, default):
         raise ValueError("Corrupted robot activity journal. Review it before continuing.") from exc
 
 
+def _assert_unchanged_action_journal(path, snapshot):
+    """Reject local journal changes since the worker's last verified snapshot.
+
+    The OS process lease serializes InstaCleaner robots, but another program,
+    restore, or manual edit could still modify the file between actions.
+    Never overwrite that evidence with a stale in-memory target journal.
+    This is a best-effort drift guard, not a cross-process filesystem CAS.
+    """
+    if not isinstance(snapshot, dict) or _read_json(path, {}) != snapshot:
+        raise ValueError(
+            "Saved action journal changed on disk. No relationship click or "
+            "result overwrite is permitted; inspect the original history.")
+
 MAX_ACTION_TABS = 10
 ACTION_CONTROL_WAIT_MS = 20000
 # A disconnected/unverified Instagram session must not leave Run stuck forever
@@ -2209,6 +2222,9 @@ class ActionRobot:
         }
         # Publishing only AFTER fsync+rename preserves the original evidence
         # when a disk error prevents the click.
+        # Last-chance disk check before EACH click phase. A stale memory
+        # snapshot must not erase a newly written result or uncertain intent.
+        _assert_unchanged_action_journal(path, journal)
         updated = dict(journal)
         updated[username] = pending
         _atomic_json(path, updated)
@@ -2536,6 +2552,11 @@ class ActionRobot:
                     if self.review_only:
                         self._save_recheck_result(user, result, details)
                     elif result != "skipped":
+                        # A disk edit during Chrome navigation (or after a
+                        # possible click) is not permission to replace it.
+                        # In particular leave durable uncertain-click evidence
+                        # intact rather than writing a false success result.
+                        _assert_unchanged_action_journal(path, journal)
                         previous_attempt = journal.get(user, {})
                         history = list(previous_attempt.get("attempt_history", []))
                         if previous_attempt.get("status"):
