@@ -1,8 +1,8 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Public stable remains v120.41.
+> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.59; hosted email configuration remains separately unverified.
 
-Current published stable: **v120.44**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.44), validated [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/38525933376), exact source `90337e23b8bb91b3b2720f73a958c85cea152f77`. The next development target **v120.45 is not authorized for publication**. Real Windows/Samsung and Instagram live sessions remain unverified.
+Current published stable: **v120.59**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59), validated [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39955452062), exact source `92d612377c2c8a6e56534465f86e3ddcfe86bc23`. The next reserved development version **v120.60 is not authorized for publication**. Real owner Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 

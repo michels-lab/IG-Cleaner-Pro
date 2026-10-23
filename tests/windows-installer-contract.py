@@ -66,7 +66,14 @@ for path in [
         assert token in w, f"{path}: missing {token}"
 release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
 assert "gh release view" in release and "gh release create" in release
-assert "gh release upload" in release
+# Never allow a rerun with stale authorization to overwrite FINAL installers.
+# This formerly required gh release upload, which enabled asset clobbering.
+publish = release.split("      - name: Publish normal GitHub release", 1)[1].split(
+    "      - name: Verify published release", 1)[0]
+assert "Refusing to edit or overwrite published assets." in publish
+assert 'gh release create "$TAG" dist/*' in publish
+assert "gh release upload" not in publish
+assert "gh release edit" not in publish
 assert ".assets[].name" in release and "IG-Cleaner-Pro-Windows-Setup-v" in release
 assert 'release-request-gate:' in release and "request.get(\"authorized\") is True" in release
 assert "windows-robot" in release

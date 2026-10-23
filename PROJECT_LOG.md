@@ -1,3 +1,10 @@
+## 2026-10-23 — GRANADA #45: official v120.59 release and no-overwrite publishing rule
+
+- Independently verified GitHub FINAL v120.59 official 12 assets and governed publisher run #39955452062 SUCCESS at exact SHA `92d612377c2c8a6e56534465f86e3ddcfe86bc23`. Archived approval becomes `authorized=false,status=published`, with run, source SHA and release URL.
+- Reconciled manifest/README/update/sync guidance; reserve v120.60 candidate metadata (not a published build). Added `docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md`.
+- Prevent recurrence: former publisher used `gh release edit` + `gh release upload --clobber`, which could silently rewrite an already-published FINAL. Changed to create-only and reject existing tags, with deterministic negative regression in release contracts.
+- All fixes scoped to InstaCleaner repository. No user Instagram actions, session, original saved 40-target cohort, Protected list, questionable-click WAL or account data changed. Real owner Unfollow/Cancel Pending remains OPEN (#172/#164); offline Chromium and installed Windows Setup alone cannot close it.
+
 ## 2026-10-23 — GRANADA P0 FINAL publisher gate for owner-supplied Unfollow
 
 - Source-level release blocker found: the governed FINAL Windows release workflow ran the legacy DOM Chromium fixture but did **not** run the new owner-provided GraphQL Unfollow contract, real Chromium one-POST exact-ID/WAL fixture or supplied-JS verification. The preview CI exercised them, but an installed published EXE could have skipped the updated acceptance suite.

@@ -1,3 +1,10 @@
+## 2026-10-23 — GRANADA #45: v120.59 officially published and publication receipt reconciled
+
+- FINAL v120.59 published 2026-10-23T12:53:51Z: [12 official assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59), exact source `92d612377c2c8a6e56534465f86e3ddcfe86bc23`, [governed publisher #39955452062](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39955452062) SUCCESS across all five mandatory jobs.
+- v120.59 request consumed and canonical README/manifest/update and sync docs corrected; v120.60 reserved only (not published). New [v120.59 official receipt](GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md). No duplicate publication.
+- Root cause fixed: the old governed publisher could edit an existing published tag and upload assets with `--clobber`. It now refuses existing tags; negative contract requires create-only publication.
+- Functional caveat: the new Unfollow engine is included in the official Windows v120.59 release but **real owner Instagram relationship changes are not yet verified** (#172/#164). Original saved cohort, protected profiles, uncertain WAL, owner Chrome sessions unchanged.
+
 ## 2026-10-23 — GRANADA #40 official published v120.58 receipt (no republish)
 
 - Verified FINAL stable v120.58 GitHub publication with 12 assets and governed publisher SUCCESS #39917647988 on SHA `401389c67e997c81ee5559d3a08989749adbcd62` at 2026-10-23T07:37:10Z.

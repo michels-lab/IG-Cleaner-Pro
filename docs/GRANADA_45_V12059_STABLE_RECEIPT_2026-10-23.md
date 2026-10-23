@@ -1,0 +1,13 @@
+# GRANADA #45 — official v120.59 FINAL stable receipt
+
+Date: 2026-10-23. **Published** 2026-10-23T12:53:51Z.
+
+- **Authoritative public release:** https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59
+- **Exact published source:** `92d612377c2c8a6e56534465f86e3ddcfe86bc23`.
+- **Official publisher:** https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39955452062 — completed **SUCCESS**, five jobs (release gate, installed Windows Setup, installed Android Developer, rendered-UI provenance, and final publisher) completed successfully.
+- **Release state:** `draft=false`, `prerelease=false`; 12 GitHub assets including normal Windows Setup, separate Developer Setup, Windows ZIP, signed normal + Developer Android APKs, Desktop HTML/ZIP, logo, Privacy and `SHA256SUMS.txt`. No release candidate or beta.
+- **Normal Windows Unfollow:** this published source includes the owner's supplied authenticated exact numeric Following-ID lookup and one-shot `usePolarisUnfollowMutation` with independently verified account/target, persistent before-POST journal, post-request read-only Follow verification and no uncertain-action replay. Also includes corrected Windows Run admission/error visibility; real Chromium **offline** action fixtures and actual installed Setup were gated for this exact publisher SHA.
+- **Limits:** successful CI and official installer do **not** confirm that Instagram accepted Unfollow or Cancel Pending in the owner's real signed-in Chrome account. P0 issues #172 and #164 remain open until owner-installed-session evidence. No live Instagram actions, passwords, sessions or private account files were handled by this receipt.
+- **Postpublication repository reconciliation:** consume the authorized v120.59 request (`authorized=false,status=published`) with run, SHA, timestamp and canonical URL; advance `currentStableRelease=v120.59`, reserve `nextRelease=v120.60` with matching candidate version metadata; align README/update/sync guides and source bitácora. **This is not a new release**.
+- **Root cause / regression:** prior FINAL publisher had `gh release edit` plus `gh release upload --clobber` when the tag already existed, so an authorized retry could replace downloaded binaries after publication. Change to **create-only + reject an existing published tag** and enforce a negative publisher contract. No user records, saved 40-person cohort, Protected list, uncertain write-ahead history or other product repositories changed.
+- Windows installer is not Authenticode-signed; official SHA-256 checksums provide file integrity, not Windows publisher identity.

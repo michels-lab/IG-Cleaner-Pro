@@ -628,12 +628,16 @@ jobs:
         run: |
           TAG="${{ steps.release.outputs.tag }}"
           TITLE="Instagram Cleaner Pro v${{ steps.release.outputs.version }}"
+          # Published FINAL artifacts are immutable from our publisher.
+          # Re-run/dispatch with a stale authorized request must never edit or
+          # overwrite an already-published stable release or its checksum set.
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
-            gh release upload "$TAG" dist/* --clobber
-          else
-            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
+            echo "::error::FINAL release $TAG already exists. Refusing to edit or overwrite published assets."
+            exit 1
           fi
+          # If the existence check fails due to a provider/network error, the
+          # create-only API still rejects an existing tag instead of clobbering it.
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
 
       - name: Verify published release
         env:
