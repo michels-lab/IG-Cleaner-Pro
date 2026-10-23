@@ -3792,6 +3792,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" type="button" onclick="igcAutoPoll()">⟳ Refresh</button>
 <input id="igcAutoSearch" type="search" placeholder="Find @username" oninput="igcAutoRender()" style="min-width:150px;flex:1">
 </div>
+<p id="igcAutoCommandFeedback" role="status" aria-live="assertive" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 15px;border:1px solid var(--border);border-radius:12px;margin:12px 0"></p>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
@@ -15093,6 +15094,34 @@ window.igcAutoSaveTiming=function(){
 const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)?$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
+let actionCommandPending=false,actionCommandFeedback=null;
+function reportActionCommand(phase,message,failed=false){
+ actionCommandFeedback={phase,message:String(message||"Unknown result"),failed,
+   identity:scope(),task:mode};
+ renderActionCommandFeedback();
+}
+function renderActionCommandFeedback(){
+ const node=document.getElementById("igcAutoCommandFeedback");
+ if(!node)return;
+ const item=actionCommandFeedback&&actionCommandFeedback.identity===scope()
+   &&actionCommandFeedback.task===mode?actionCommandFeedback:null;
+ node.style.display=item?"block":"none";
+ if(!item){node.textContent="";return}
+ node.textContent=(item.failed?"ACTION BLOCKED · ":"ACTION "+item.phase.toUpperCase()+" · ")+item.message;
+ if(item.failed)setStatus(node.textContent);
+}
+function confirmActionStartResponse(value,requested){
+ // A 200 OK JSON response is not proof that the Chrome worker started.
+ // Require exact workspace/task + an active job, otherwise explain the
+ // backend state rather than claiming an Unfollow/Cancel was launched.
+ if(!value||value.owner!==requested.owner||value.account!==requested.account||
+    value.task!==requested.task||value.running!==true){
+   const state=String(value?.status||"unknown");
+   const detail=String(value?.message||"The Windows worker did not become active.");
+   throw Error("Windows did not start the robot ("+state+"): "+detail);
+ }
+ return value;
+}
 // Do not silently leave a running action job acting on a different identity.
 // Unknown connection state is fail-closed until the local robot is queried.
 window.igcAutoSwitchGuard=function(){
@@ -15228,61 +15257,83 @@ function igcAutoReplanStaleProtected(err,originalScope,originalMode){
  return true;
 }
 window.igcAutoStart=async function(){
- if(mode==="protected"){setStatus("Select Unfollow, Cancel Requests, or the optional Audit to run.");return}
+ if(actionCommandPending)return;
+ if(mode==="protected"){
+  reportActionCommand("blocked","Select Unfollow, Cancel Requests, or optional read-only Audit.",true);
+  return;
+ }
  const originalScope=scope(),originalMode=mode;
+ actionCommandPending=true;
+ reportActionCommand("checking","Checking the exact saved batch and Windows action history. No clicks yet.");
+ const button=document.getElementById("igcAutoRun");
+ if(button)button.disabled=true;
  try{
-  // An unapproved batch retains its original cohort. Never silently replace it
-  // with a fresh queue because some actions may have already been clicked.
   const waiting=await requestAction("review-batch",{...actionOwner(),task:mode});
+  if(scope()!==originalScope||mode!==originalMode)
+   throw Error("The selected account or robot mode changed during preparation.");
   actionBatchReview=waiting.batch||null;
   window.igcAutoRenderBatchApproval();
+  let data,summary;
   if(waiting.batch){
-    // Run performs owner-authorized actions on the SAME saved batch's
-    // untouched profiles; the separate Recheck button never clicks.
-    const savedSize=waiting.batch.targets.length;
-    const requestedSize=Number(document.getElementById("igcAutoBatch")?.value);
-    if(Number.isInteger(requestedSize)&&requestedSize!==savedSize&&
-       requestedSize!==waiting.batch.selected_batch_size){
-      setStatus("SAVED COHORT: "+savedSize+" profiles; NEW SELECTED SIZE: "+requestedSize+
-        ". The incomplete cohort remains saved. Choose Use "+requestedSize+
-        " from unfinished "+savedSize+" · keep remaining, then press Run again. "+
-        "No Instagram action was started.");
-      return;
-    }
-    const data=actionConfig(mode,waiting.batch.targets);
-    data.batch_id=waiting.batch.id;
-    const attempted=waiting.batch.action_results||{};
-    const untouched=data.targets.filter(u=>
-      attempted[u]?.safe_no_click===true ||
-      !["ok","already_not_following","already_not_requested","review","error","blocked"].includes(attempted[u]?.status||"pending"));
-    if(!untouched.length)throw Error("No untouched or provably no-click targets remain. Verify previous actions; uncertain clicks are never replayed.");
-    if(!window.confirm("CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
-      " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
-      "?\n"+untouched.length+" profiles are untouched or explicitly proven no-click. Only these safe profiles will be attempted; uncertain actions will NEVER be repeated."))return;
-    window.igcAutoSaveTiming();
-    actionState=await requestAction("start",data);
-    setStatus("Continuing saved batch: untouched profiles and proven no-click retries only.");
-    await window.igcAutoPoll();
+   // Never discard or automatically resize an unfinished, approved cohort.
+   const savedSize=waiting.batch.targets.length;
+   const requestedSize=Number(document.getElementById("igcAutoBatch")?.value);
+   if(Number.isInteger(requestedSize)&&requestedSize!==savedSize&&
+      requestedSize!==waiting.batch.selected_batch_size){
+    reportActionCommand("blocked","SAVED COHORT: "+savedSize+" profiles; NEW SELECTED SIZE: "+
+      requestedSize+". Replan unfinished profiles explicitly before Run. No Chrome action started.",true);
     return;
+   }
+   data=actionConfig(mode,waiting.batch.targets);
+   data.batch_id=waiting.batch.id;
+   const attempted=waiting.batch.action_results||{};
+   const untouched=data.targets.filter(u=>
+     attempted[u]?.safe_no_click===true ||
+     !["ok","already_not_following","already_not_requested","review","error","blocked"]
+       .includes(attempted[u]?.status||"pending"));
+   if(!untouched.length)throw Error("No untouched or proven no-click targets remain. Do not retry uncertain actions.");
+   summary="CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
+     " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
+     "?\\n"+untouched.length+" targets are untouched or proven no-click. Only these may be attempted; uncertain clicks will NEVER be repeated.";
+  }else{
+   // Fetch authoritative durable history before ever selecting new targets.
+   const verifiedHistory=await refreshActionHistoryForStart(mode);
+   const targets=selectedActionTargets(new Set(verifiedHistory.attempted_usernames.map(norm)));
+   data=actionConfig(mode,targets);
+   const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
+   const names=targets.slice(0,15).map(u=>"@"+u).join(", ");
+   summary="Run "+operation+" on "+targets.length+" profiles from @"+data.expected_handle+
+     "?\\n"+names+(targets.length>15?" and more…":"")+
+     (mode==="audit"?"\\nRead-only: no relationship changes.":
+      "\\nEach relationship-changing action is individually verified.");
   }
-  // Fail closed unless the latest persisted owner/account/task history
-  // is known. Never trust a stale in-memory batch or an idle snapshot.
-  const verifiedHistory=await refreshActionHistoryForStart(mode);
-  const targets=selectedActionTargets(new Set(verifiedHistory.attempted_usernames.map(norm)));
-  const data=actionConfig(mode,targets);
-  const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
-  const summary=targets.slice(0,15).map(u=>"@"+u).join(", ");
-  if(!window.confirm("Run "+operation+" on "+targets.length+" profiles from @"+
-       data.expected_handle+"?\n"+summary+(targets.length>15?" and more…":"")+
-       (mode==="audit"?"\nRead-only: no follow, unfollow, or cancel-request actions.":
-        "\nEach relationship-changing action is individually checked.")))return;
+  reportActionCommand("approval","Waiting for your explicit confirmation. No relationship-changing action has begun.");
+  if(!window.confirm(summary)){
+   reportActionCommand("cancelled","You cancelled this batch; no robot start was sent.");
+   return;
+  }
+  if(scope()!==originalScope||mode!==originalMode)
+   throw Error("The Instagram workspace changed after confirmation; start denied.");
   window.igcAutoSaveTiming();
-  const result=await requestAction("start",data);
-  actionState=result;
+  reportActionCommand("starting","Sending the approved exact batch to the local Windows robot…");
+  const accepted=confirmActionStartResponse(await requestAction("start",data),data);
+  actionState=accepted;
+  reportActionCommand("accepted","Windows accepted "+String(data.task).toUpperCase()+
+    " for "+data.targets.length+" exact targets. "+String(accepted.status||"starting")+
+    " · "+String(accepted.message||"Chrome startup pending")+
+    ". This is NOT a confirmed Instagram Unfollow/Cancel.");
   await window.igcAutoPoll();
  }catch(e){
-  if(!igcAutoReplanStaleProtected(e,originalScope,originalMode))
-   setStatus("Could not start: "+e.message);
+  const handled=igcAutoReplanStaleProtected(e,originalScope,originalMode);
+  const explanation=handled?(document.getElementById("igcAutoStatus")?.textContent||
+     "Saved protected target blocked the cohort."):(e?.message||"Unknown Windows action error");
+  reportActionCommand("blocked",explanation,true);
+ }finally{
+  actionCommandPending=false;
+  // Re-enable Run only when the latest actual local state allows it;
+  // never silently start a second batch while awaiting acceptance.
+  window.igcAutoRender();
+  renderActionCommandFeedback();
  }
 };
 window.igcAutoPause=async function(){
@@ -15607,7 +15658,7 @@ window.igcAutoRender=function(){
   const authChallenge=liveRobot&&actionState.status==="blocked"&&
     /recaptcha|challenge|security check|verification|identity/i.test(actionState.message||"");
   const run=document.getElementById("igcAutoRun");
-  if(run)run.disabled=mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge;
+  if(run)run.disabled=actionCommandPending||mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge;
   if(liveRobot){
    const batchId=actionState.review_batch?.id;
    setStatus("ROBOT · "+String(actionState.task).toUpperCase()+" · "+
@@ -15621,6 +15672,7 @@ window.igcAutoRender=function(){
  }else{
   setStatus("Queue prepared: "+(mode==="cancel"?"sent requests":mode==="audit"?"suspected non-followback accounts for OPTIONAL read-only verification":"unreviewed non-followbacks from imported exports")+". Review and authorize your batch.");
  }
+ renderActionCommandFeedback();
  root.replaceChildren();
  const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
  if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
