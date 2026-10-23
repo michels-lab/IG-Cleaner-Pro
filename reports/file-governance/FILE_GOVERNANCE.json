@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 306,
-  "classified_files_total": 302,
-  "docs_content_inspected": 59,
+  "tracked_files_total": 307,
+  "classified_files_total": 303,
+  "docs_content_inspected": 60,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 54,
+    "document": 55,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "63419f85c92f0c0e3e886a529ed71a0c25b36fbfa9dfac3e05fc368fe2ec090f",
-  "evidence_fingerprint": "e6f2a7d616b324fbfbd17988b33b486c99e1dfdbb25ce0d059224f4b5b1f5599",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "a32e1d0923fe3961e8e77aab5604cb5a4f001ce044f5b5b93f566233b9e26395",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "17fa55d687904a4e97712e8c19bf1fd292429b0d"
+      "blob": "93554a30989ff468c6d84a68eb57da422e103650"
     },
     {
       "path": "README.md",
@@ -1137,6 +1135,13 @@
       "blob": "e9cc984c609959bd22b93d9fed157dec70ed969c"
     },
     {
+      "path": "docs/GRANADA_41_WINDOWS_JOURNAL_DRIFT_GATE_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "c9983ec66c196a4bb70119b9d637f9948f7239b5"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1736,7 +1741,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ceebcc3412f9644583fc53fb7bfcb23ba82c41da"
+      "blob": "7ed61640a5a1ae905e6319f7e99b8d8f444c27c6"
     },
     {
       "path": "tests/test_android_signed_coinstall_runtime.py",
@@ -2009,7 +2014,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "56376c0a56d8dc35d38ebeee385d7799e3a698b7"
+      "blob": "eaa7377108a600be55237b543477b6be28a03b4e"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2145,17 +2150,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "82a25cce4bd91ba9",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,

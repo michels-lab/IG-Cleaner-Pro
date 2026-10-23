@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 306; classified: 302; readable documents: 59; above read cap: 1; findings: 1.
+Tracked: 307; classified: 303; readable documents: 60; above read cap: 1; findings: 0.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 306; classified: 302; readable documents: 59; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 54 |
+| document | 55 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 40 |
@@ -29,7 +29,6 @@ Tracked: 306; classified: 302; readable documents: 59; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 11 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 82a25cce4bd91ba9)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
