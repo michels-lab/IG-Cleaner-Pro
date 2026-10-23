@@ -2148,7 +2148,7 @@ class ActionRobot:
                         "Selected targets have invalid saved action evidence. "
                         "Inspect the original journal read-only; never auto-retry.")
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
-                if not resume:
+                if not resume and not (task == "audit" and audit_source == "live_lists"):
                     if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
                            and not _preclick_no_action(record)
                            for user in targets):
@@ -2589,7 +2589,7 @@ class ActionRobot:
                     # until the new outcome has been written, never delete
                     # historical failures just to unblock the queue.
                     if (self._protected_for(user) or user in self.skipped or
-                        (not self.review_only and
+                        (not self.review_only and not live_snapshot and
                          _saved_journal_blocks_action(journal, user))):
                         if action_tabs and action_tabs.prepared(user) is not None:
                             action_tabs.record(user, "skipped", safe_no_click=True)
