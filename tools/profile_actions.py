@@ -736,7 +736,9 @@ def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
             return "blocked", "Instagram requested verification after the action."
         page.goto("https://www.instagram.com/" + username + "/",
                   wait_until="domcontentloaded", timeout=45000)
-        result, message = _verify_final_state(page, expected_handle, username, checks=3)
+        # The fresh page may hydrate its exact target hero after DOMContentLoaded.
+        # Allow bounded read-only settling, NEVER another relationship click.
+        result, message = _verify_final_state(page, expected_handle, username, checks=5)
         if result == "ok":
             return result, "Unfollow confirmed after a read-only profile refresh. " + message
         if result == "blocked":
@@ -764,7 +766,9 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
         if (current.hostname not in ("www.instagram.com", "instagram.com")
                 or current.path.strip("/").casefold() != username.casefold()):
             return "review", prefix + "Instagram redirected away from the target; do not repeat the action."
-        result, message = _verify_final_state(page, expected_handle, username, checks=2)
+        # Cancellation can settle after the first new document has loaded.
+        # Re-observe only; a previously clicked request is never clicked again.
+        result, message = _verify_final_state(page, expected_handle, username, checks=4)
         if result == "ok":
             return "ok", ("Cancel Request confirmed after a read-only profile refresh. " + message)
         if result == "blocked":
@@ -1068,8 +1072,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         # Locate the "Unfollow" command in that menu (or a direct dialog).
         choice = _wait_for_unfollow_option(page, username, on_wait=on_wait)
         if choice is None:
-            # Rare layouts change directly on the first click. Do not guess.
-            return _verify_final_state(page, expected_handle, username)
+            # The first Following click might have changed the optimistic UI.
+            # Independently reload once; never count uncommitted UI state as OK.
+            return _verify_unfollow_after_readonly_refresh(
+                page, username, expected_handle)
         if can_act and not can_act(username):
             return "review", "Menu opened, but protection changed. Review before continuing."
         if not _verified_action_owner(page, expected_handle):
@@ -1079,8 +1085,13 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         choice.click(timeout=10000)
         # Public: await the final state; private accounts may show a second dialog.
         status, message = _verify_final_state(page, expected_handle, username, checks=2)
-        if status in ("ok", "blocked"):
+        if status == "blocked":
             return status, message
+        if status == "ok":
+            # Instagram may render Follow optimistically BEFORE its server
+            # accepts an Unfollow. A persisted state requires a fresh GET.
+            return _verify_unfollow_after_readonly_refresh(
+                page, username, expected_handle)
         # Private: Instagram may prompt one more explicit confirmation.
         dialog = _visible_dialog(page)
         if dialog is not None:
@@ -1095,7 +1106,8 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                 if on_pre_click:
                     on_pre_click("private_unfollow_confirmation")
                 confirm.click(timeout=10000)
-                return _verify_final_state(page, expected_handle, username)
+                return _verify_unfollow_after_readonly_refresh(
+                    page, username, expected_handle)
         return _verify_unfollow_after_readonly_refresh(page, username, expected_handle)
 
     # Cancel sent follow request: Instagram layouts vary between direct toggles
@@ -1115,8 +1127,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
     # A click may have succeeded even if Instagram's client UI has not caught
     # up. A *read-only* fresh profile load may confirm it; never click again.
     result, details = _verify_final_state(page, expected_handle, username)
-    if result != "review":
+    if result == "blocked":
         return result, details
+    # Both optimistic Follow and uncertain Requested need a read-only reload.
+    # No second cancellation click is ever allowed after write-ahead intent.
     return _verify_cancel_after_readonly_refresh(page, username, expected_handle)
 
 

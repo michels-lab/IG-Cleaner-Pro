@@ -20,7 +20,7 @@ except ImportError:
 
 def fake_profile(locale="en", private=False, account="my.profile", result="follow",
                  blocked=False, request_unfollow=False, warning_handle="target.user",
-                 include_warning=True):
+                 include_warning=True, persist=True):
     following, unfollow, follow = (("Siguiendo", "Dejar de seguir", "Seguir")
                                    if locale == "es" else
                                    ("Following", "Unfollow", "Follow"))
@@ -58,9 +58,37 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
     <script>
      const label={follow!r}, privateFlow={str(private).lower()},
            blocked={str(blocked).lower()}, result={result!r},
-           requestUnfollow={str(request_unfollow).lower()};
-     window.__steps=[];
-     function recordStep(value) {{ window.__steps.push(value); console.log("IGC_STEP:" + value); }}
+           requestUnfollow={str(request_unfollow).lower()},
+           persistenceEnabled={str(persist).lower()};
+     // Browser-local fixture ONLY: simulate Instagram committing a relationship
+     // to an independent state retained over a fresh document navigation.
+     // Real negative server-rejection fixtures disable this persistence.
+     // Hash the original fixture markup so separate subtests and layouts
+     // in the SAME Playwright tab never inherit each other's fake results.
+     const fixtureMarkup=document.body.innerHTML;
+     let fixtureHash=2166136261;
+     for(let i=0;i<fixtureMarkup.length;i++)
+       fixtureHash=Math.imul(fixtureHash ^ fixtureMarkup.charCodeAt(i),16777619);
+     const suffix=(fixtureHash>>>0).toString(36);
+     const fakeRelationKey='igc_test_server_relationship_v1_'+suffix;
+     const fakeStepsKey='igc_test_step_history_v1_'+suffix;
+     const fakeGet=k=>{{ try {{ return sessionStorage.getItem(k) }} catch(_) {{ return null }} }};
+     const fakeSet=(k,v)=>{{ try {{ sessionStorage.setItem(k,v) }} catch(_) {{ }} }};
+     window.__steps=JSON.parse(fakeGet(fakeStepsKey)||'[]');
+     const lastCommitted=fakeGet(fakeRelationKey);
+     if(lastCommitted&&persistenceEnabled) {{
+       document.addEventListener('DOMContentLoaded',()=>{{
+         const control=document.querySelector('#relationship');
+         if(control)control.textContent=lastCommitted==='followback'
+           ?(document.documentElement.lang==='es'?'Seguir también':'Follow Back')
+           :(document.documentElement.lang==='es'?'Seguir':'Follow');
+       }});
+     }}
+     function recordStep(value) {{
+       window.__steps.push(value);
+       fakeSet(fakeStepsKey,JSON.stringify(window.__steps));
+       console.log("IGC_STEP:" + value);
+     }}
      function openRelationship() {{
        recordStep('open');
        if(requestUnfollow) {{
@@ -92,6 +120,8 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        if(result==='follow')document.querySelector('#relationship').textContent=label;
        if(result==='followback')document.querySelector('#relationship').textContent=
          document.documentElement.lang==='es'?'Seguir también':'Follow Back';
+       if(persistenceEnabled&&!blocked&&(result==='follow'||result==='followback'))
+         fakeSet(fakeRelationKey,result);
        if(blocked)document.body.insertAdjacentHTML('beforeend','<span>Try again later</span>');
      }}
     </script>
@@ -225,18 +255,35 @@ class RealBrowserSelectorTests(unittest.TestCase):
         recorded_steps = []
         self.page.on("console", lambda msg: recorded_steps.append(msg.text.split("IGC_STEP:", 1)[1])
                      if msg.text.startswith("IGC_STEP:") else None)
-        # Intercept all Instagram URLs, even accidental external navigations.
-        self.page.route("https://www.instagram.com/**",
-                        lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        # An optimistic browser label is not a saved Instagram relationship.
+        # Offline responses emulate a real server that persists the new state
+        # only AFTER the mutation was successfully clicked. The fresh GET
+        # produces independent evidence and must never trigger another click.
+        initial = html
+        starting_label = ">Siguiendo</button>" if locale == "es" else ">Following</button>"
         if task == "cancel" and not pending_already_following and not missing_profile:
-            self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
-                document.querySelector('#relationship').textContent =
-                    document.documentElement.lang==='es'?'Solicitado':'Requested';
-            });""")
+            initial = initial.replace(
+                starting_label,
+                ">Solicitado</button>" if locale == "es" else ">Requested</button>", 1)
         if missing_profile:
-            self.page.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{
-                document.querySelector('#relationship').textContent = 'Unknown status';
-            });""")
+            initial = initial.replace(starting_label, ">Unknown status</button>", 1)
+        persisted = initial
+        if result in ("follow", "followback") and not blocked:
+            persisted = html.replace(
+                ">Siguiendo</button>" if locale == "es" else ">Following</button>",
+                (">Seguir también</button>" if result == "followback" else ">Seguir</button>")
+                if locale == "es" else
+                (">Follow Back</button>" if result == "followback" else ">Follow</button>"),
+                1)
+        if result == "unchanged" or blocked:
+            persisted = initial
+        visits = []
+        def offline_route(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html",
+                          body=initial if len(visits) == 1 else persisted)
+        self.page.route("https://www.instagram.com/**", offline_route)
+        self._last_action_visits = visits
         status, message = perform_visible_action(
             self.page, "target.user", task, "my.profile",
             (lambda _: not protected))
@@ -671,8 +718,9 @@ class RealBrowserSelectorTests(unittest.TestCase):
             lambda _: True, preloaded=True)
         self.assertEqual(result, "ok", message)
         self.assertEqual(
-            sum("/target.user/" in url for url in visits), 1,
-            "Preloaded target page must not be fetched again before acting")
+            sum("/target.user/" in url for url in visits), 2,
+            "Preloaded target uses one initial GET and exactly one post-click "
+            "independent verification GET; there must be no pre-click double navigation")
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
@@ -774,14 +822,24 @@ class RealBrowserSelectorTests(unittest.TestCase):
         html = html.replace("</script>", (
             "setTimeout(() => document.querySelector('#relationship').textContent='Requested', 700);"
             "</script>"))
-        self.context.route("https://www.instagram.com/**",
-            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        visits = []
+        events = []
+        self.page.on("console", lambda msg: events.append(
+            msg.text.split("IGC_STEP:", 1)[1])
+            if msg.text.startswith("IGC_STEP:") else None)
+        persisted = fake_profile().replace(">Following</button>", ">Follow</button>", 1)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html",
+                          body=html if len(visits) == 1 else persisted)
+        self.context.route("https://www.instagram.com/**", serve)
         with patch.object(profile_actions, "ACTION_CONTROL_WAIT_MS", 2200), \
              patch.object(profile_actions, "CANCEL_NO_REQUEST_MIN_WAIT_MS", 1300):
             status, message = perform_visible_action(
                 self.page, "target.user", "cancel", "my.profile", lambda _: True)
         self.assertEqual(status, "ok", message)
-        self.assertEqual(self.page.evaluate("window.__steps"), ["open", "confirmed"])
+        self.assertEqual(events, ["open", "confirmed"])
+        self.assertEqual(len(visits), 2, "Exactly one reload; no second Cancel click")
 
     def test_cancel_sidebar_follow_is_not_exact_target_evidence(self):
         import profile_actions
@@ -854,6 +912,46 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
+        self.assertEqual(len(self._last_action_visits), 2,
+                         "A successful Unfollow needs its own read-only reload")
+
+    def test_immediate_optimistic_unfollow_follow_is_not_persisted_success(self):
+        # The UI flips to Follow after clicking but a freshly loaded server
+        # response still says Following. NEVER claim an Unfollow or re-click.
+        initial = fake_profile(result="follow", persist=False)
+        visits, events = [], []
+        self.page.on("console", lambda msg: events.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html", body=initial)
+        self.page.route("https://www.instagram.com/**", serve)
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertIn("Do not repeat", message)
+        self.assertEqual(len(visits), 2, "One original load and one verification GET")
+        self.assertEqual(events, ["IGC_STEP:open", "IGC_STEP:unfollow",
+                                  "IGC_STEP:confirmed"])
+
+    def test_immediate_optimistic_cancel_follow_is_not_persisted_success(self):
+        # The UI flips to Follow after click; server still replies Requested.
+        initial = fake_profile(
+            request_unfollow=True, result="follow", persist=False).replace(
+            ">Following</button>", ">Requested</button>", 1)
+        visits, events = [], []
+        self.page.on("console", lambda msg: events.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html", body=initial)
+        self.page.route("https://www.instagram.com/**", serve)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertIn("still displays Requested", message)
+        self.assertEqual(len(visits), 2)
+        self.assertEqual(events, ["IGC_STEP:open", "IGC_STEP:confirmed"])
 
     def test_public_spanish_popup(self):
         status, message, events = self.attempt(locale="es")
