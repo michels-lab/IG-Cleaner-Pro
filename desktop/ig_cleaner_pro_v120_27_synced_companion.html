@@ -3841,7 +3841,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <thead><tr><th style="width:20%">Profile</th><th style="width:57%">Reason / Result</th><th style="width:23%">Actions</th></tr></thead>
 <tbody id="igcAutoIssueRows"></tbody></table></div>
 </div></details>
-<div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
+<div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action date / time</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
 <div class="btnrow" style="align-items:center;gap:8px;margin-top:8px">
  <button class="btn" type="button" onclick="igcAutoPageMove(-1)">← Previous</button>
  <span class="note" id="igcAutoPageStatus" role="status" aria-live="polite">Page 1</span>
@@ -15129,6 +15129,7 @@ window.igcAutoSaveTiming=function(){
 const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)?$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
+const igcAutoHistoryCache=new Map();
 let actionCommandPending=false,actionCommandFeedback=null;
 function reportActionCommand(phase,message,failed=false){
  actionCommandFeedback={phase,message:String(message||"Unknown result"),failed,
@@ -15270,6 +15271,7 @@ async function refreshActionHistoryForStart(task){
  const names=result.attempted_usernames.map(norm);
  if(names.some(u=>!u))throw Error("Robot history contains an invalid username. No actions started.");
  localStorage.setItem(actionAttemptedKey(task),JSON.stringify([...new Set(names)]));
+ if(Array.isArray(result.history_rows))igcAutoHistoryCache.set(scope()+"__"+task,result.history_rows);
  window.igcAutoReusable=Array.isArray(result.reusable_usernames)?
    result.reusable_usernames.map(norm).filter(Boolean):[];
  return result;
@@ -15461,6 +15463,14 @@ window.igcAutoPoll=async function(){
                        issues:state.issues,updated_at:new Date().toISOString()}));
   }
   window.igcAutoRenderIssues();
+  if(["unfollow","cancel","audit"].includes(mode)){
+   try{
+    const history=await requestAction("history",{...ctx,task:mode});
+    if(history.owner===ctx.owner&&history.account===ctx.account&&history.task===mode&&
+       Array.isArray(history.history_rows))
+     igcAutoHistoryCache.set(scope()+"__"+mode,history.history_rows);
+   }catch{} // Display old evidence but never authorize actions from this cached view.
+  }
   if(["unfollow","cancel","audit"].includes(mode)){
    const reviewed=await requestAction("review-batch",{...ctx,task:mode});
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
@@ -15743,13 +15753,18 @@ window.igcAutoRender=function(){
  renderActionCommandFeedback();
  root.replaceChildren();
  const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
- if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
+ const journalRows=new Map((igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
+ if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=4;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
  for(const item of visible){
-  const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),actions=document.createElement("td");
+  const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),when=document.createElement("td"),actions=document.createElement("td");
   const link=document.createElement("a");link.href="https://www.instagram.com/"+encodeURIComponent(item.username)+"/";
   link.target="_blank";link.rel="noopener noreferrer";link.textContent="@"+item.username;u.appendChild(link);
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
+  const history=journalRows.get(item.username)||{},evidence=live.at?live:history;
+  const at=String(evidence.at||""),date=at?new Date(at):null;
+  when.textContent=date&&!Number.isNaN(date.valueOf())?date.toLocaleString():"—";
+  when.title=at?"Windows journal timestamp: "+at:"No saved action timestamp; no action confirmed.";
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
      live.status==="already_not_following"?"✓ Already not following · no action needed":
       live.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
@@ -15767,7 +15782,7 @@ window.igcAutoRender=function(){
    skip.textContent=skipped?"Skipped":"Skip this time";skip.disabled=skipped||protectedNow;
    skip.addEventListener("click",()=>window.igcAutoSkip(item.kind,item.username));actions.appendChild(skip);
   }
-  tr.appendChild(u);tr.appendChild(status);tr.appendChild(actions);root.appendChild(tr);
+  tr.appendChild(u);tr.appendChild(status);tr.appendChild(when);tr.appendChild(actions);root.appendChild(tr);
  }
 };
 function igcAutoBatchOutcomes(){
