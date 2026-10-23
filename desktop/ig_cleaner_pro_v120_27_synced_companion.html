@@ -15797,15 +15797,18 @@ window.igcAutoRender=function(){
  }
 };
 function igcAutoMaybePromptBatchReview(state){
+ // Modal support is optional in test/embedded hosts. Never block status
+ // polling or the owner's Pause/Cancel controls when dialogs are absent.
+ if(typeof HTMLDialogElement==="undefined")return;
  if(!actionBatchReview||state?.running||state?.task!==mode||
     state.owner!==actionOwner().owner||state.account!==actionOwner().account||
     !["complete","partial","review"].includes(String(state.status)))return;
  const key="igc_robot_batch_prompt_v1__"+scope()+"__"+mode+"__"+actionBatchReview.id;
- if(sessionStorage.getItem(key))return;
+ try{if(sessionStorage.getItem(key))return;}catch{return;}
  const results=actionBatchReview.action_results||{};
  const hasEvidence=(actionBatchReview.targets||[]).some(u=>results[u]?.status&&results[u].status!=="pending");
  if(!hasEvidence)return;
- sessionStorage.setItem(key,"shown");
+ try{sessionStorage.setItem(key,"shown");}catch{return;}
  window.igcAutoShowBatchReview();
 }
 window.igcAutoShowBatchReview=function(){
