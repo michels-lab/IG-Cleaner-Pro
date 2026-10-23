@@ -1,36 +1,24 @@
 {
-  "version": "120.55",
-  "tag": "v120.55",
-  "authorized": false,
-  "authorization_source": "Michel standing directive 2026-10-21: Operación Granada MAY publish an official FINAL stable release for the named app when every governed gate passes; no Release Candidates, RCs, previews or prereleases. This GRANADA execution reached source integration with exact PR CI and now initiates only the governed stable publisher.",
+  "version": "120.56",
+  "tag": "v120.56",
+  "authorized": true,
+  "authorization_source": "Owner standing Operacion Granada authorization: publish FINAL stable releases only after all mandatory governed checks pass; never a release candidate or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.54",
-  "owner_acceptance_note": "Release solely through .github/workflows/release.yml with exact-commit Android Home/About screenshots and installed Developer Account/notes/JSON export; installed Windows public and Developer Setup; pinned production-signed Android public+Developer APKs; version 120.55, SHA-256 and official asset/feed validation. Offline Chromium/source/CI tests do not establish real Instagram Unfollow/Cancel successes. Michel tests only the final official published stable Setup. Preserve protected profiles, original saved 40-cohort, attempted/uncertain click WAL and cloud account history; no CAPTCHA bypass or automatic uncertain-click replay. Keep owner live acceptance issues #172 and #164 open after release.",
-  "requested_at": "2026-10-21",
-  "candidate_main_sha": "e2171db0f507b7449647c1b98f25f3659d70e022",
+  "status": "requested",
+  "previous_stable_release": "v120.55",
+  "owner_acceptance_note": "Official publisher must validate exact-source Windows installer, Desktop/Android renders, production Android signing and device coexistence, published assets and checksums. Browser fixture tests do not prove live account actions. Existing local history and safeguards remain intact.",
+  "requested_at": "2026-10-22",
+  "candidate_main_sha": "68e5a419d20a0ce14d015d801af3c438670bd6fe",
   "integrated_source_merge_shas": [
-    "eef3f534402a8fb3666e55d7892407ef32941317",
-    "75b8a137c3eb73a328ecb5e561b32bf521ed86a5",
-    "3423242b9b1d89ee373a45869f617a5fe6bce89c",
-    "bc6bd68b5823f1ffe5c6444f76c5ceadc0bc684c",
-    "ae3fc6f84ac49444ce33c242825b01ee35eb75d5",
-    "12ea8a4815f8601f5b967e35b0506ceabb498282",
-    "49f418919df796f7fc0b5b7e09a922906c3682f8",
-    "45294e022e91a4a2394678497290d48edd7616b3",
-    "4711f491556f40c982d96cd1063a5a840564ab61",
-    "430f520bad616dcca49a241173465a3f34033670",
-    "690c4ef3f5a606546a239b0cd7e70fbcb773efab"
+    "9546d1fae777fdcbac5ce01411d1c671621ecdb7",
+    "37e04d3011588af00626255e99ea5bedc8d91b1d"
   ],
-  "retry_attempt": 7,
-  "retry_of_failed_run": 39669433591,
-  "retry_reason": "Sixth FINAL stable governed publish run #39669433591: Windows public+Developer installed Setup, Android Developer real Account/notes/JSON, and Desktop/Android rendered QA succeeded. Publisher verified production-signed public+Developer APK signer/package metadata, booted an unaccelerated emulator, installed both APKs and confirmed both IDs; synchronous public Android am start -W returned Status: timeout after 30s; no Android runtime foreground success was proven, publisher failed closed, no GitHub v120.55 release. PR #204 at 690c4ef merged after four exact-PR green checks, enabling /dev/kvm when available and requiring 2 consecutive resumed MainActivity+live pidof proofs for EACH signed app plus postlaunch coexistence; offline adversarial tests are not replacement for real emulator. Retry #7 all mandatory checks on a new exact-main commit, never RC or prerelease; preserve owner data and live Instagram #172.",
-  "published_run": 39678605509,
-  "published_commit": "10f1e4cb9b3990ea47045ff37aa674ce27c2cebb",
-  "published_at": "2026-10-21T21:32:41Z",
-  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55",
-  "published_asset_count": 12,
-  "final_channel": "stable"
+  "previous_publication": {
+    "tag": "v120.55",
+    "run": 39678605509,
+    "commit": "10f1e4cb9b3990ea47045ff37aa674ce27c2cebb",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55"
+  }
 }
