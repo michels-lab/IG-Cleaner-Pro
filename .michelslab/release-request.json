@@ -1,30 +1,25 @@
 {
-  "version": "120.57",
-  "tag": "v120.57",
-  "authorized": false,
-  "authorization_source": "Owner standing Operacion Granada direction: publish only official FINAL stable after all governed source, device, Windows installer, visual and asset-integrity gates pass. Never RC or prerelease.",
+  "version": "120.58",
+  "tag": "v120.58",
+  "authorized": true,
+  "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.56",
-  "owner_acceptance_note": "Includes normal Windows action-worker saved journal quarantine #215. Owner tests only FINAL official stable Setup. Publisher must pass production Android signing and real device co-install, installed Windows Setup, exact-commit Android/Desktop visuals and SHA256 asset/feed checks. Offline browser CI is not proof of Unfollow or Cancel Pending on a real Instagram account; keep #172/#164 open. Preserve original 40-profile cohort, protected list, uncertain-click WAL and all saved state.",
+  "status": "requested",
+  "previous_stable_release": "v120.57",
+  "owner_acceptance_note": "Normal Windows robot with integrated saved journal no-replay guard #215 and exact HTTPS action target/header proofs #219; owner must approve real targets, preserved original 40-profile batch, protected profiles and click WAL. Offline CI does not confirm actions in live Instagram; keep #172/#164 open. Official release only after complete publisher checks; no bypass or prerelease.",
   "requested_at": "2026-10-23",
-  "candidate_main_sha": "9ab7f7bf107e8b446b0a0a96aaeeba780aa207d7",
+  "candidate_main_sha": "27cf7b4d8ffd702f76c9ec279ab2c3ec295e08cf",
   "integrated_source_merge_shas": [
     "1fa54a9a6d348b3c6820aa78d1b4d06f7a148882",
-    "04a80d138badaa838df9d950a231ab9dd6665bba"
+    "c5246b4a3fc2bb418f79f0b0d6ff1f276e7a6366",
+    "b4fa2239e3fc12e733cb170b917ef5f0166c0fa0"
   ],
   "previous_publication": {
-    "tag": "v120.56",
-    "run": 39898552214,
-    "commit": "1c004c0dc08194f832b7b3e95ce2942c957f5f32",
-    "url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56"
-  },
-  "published_run": 39913984383,
-  "published_commit": "2ffea2280bc0438ad18931af655278b16a63edc1",
-  "published_at": "2026-10-23T07:02:01Z",
-  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.57",
-  "published_asset_count": 12,
-  "final_channel": "stable"
+    "tag": "v120.57",
+    "run": 39913984383,
+    "commit": "2ffea2280bc0438ad18931af655278b16a63edc1",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.57"
+  }
 }
