@@ -788,6 +788,33 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate("window.__steps"),
                          ["open", "unfollow", "confirmed"])
 
+    def test_collapsed_owner_nav_two_actual_chrome_profile_visits_on_slow_settle(self):
+        """Real Chrome fallback count: two owner navigations, not five."""
+        import profile_actions
+        owner_visits = []
+        target = """<!doctype html><html><body>
+        <header><h1>target.user</h1><button>Following</button></header>
+        </body></html>"""
+        owner = """<!doctype html><html><body>
+        <header><h2>my.profile</h2><button>Edit profile</button></header>
+        </body></html>"""
+        def fixture(route):
+            if route.request.url.rstrip("/").endswith("/my.profile"):
+                owner_visits.append(route.request.url)
+                route.fulfill(status=200,content_type="text/html",body=owner)
+            else:
+                route.fulfill(status=200,content_type="text/html",body=target)
+        self.context.route("https://www.instagram.com/**", fixture)
+        self.page.goto("https://www.instagram.com/target.user/")
+        with patch.object(profile_actions, "_follow_state",
+                          side_effect=[None, None, None, "follow", "follow"]):
+            result, detail = profile_actions._verify_final_state(
+                self.page, "my.profile", "target.user", checks=5)
+        self.assertEqual(result, "ok", detail)
+        self.assertEqual(len(owner_visits), 2,
+            "One owner fallback before read-only settling and one before success.")
+        self.context.unroute_all()
+
     def test_post_click_transient_owner_failure_rechecks_without_reclick(self):
         from unittest.mock import patch
         import profile_actions
