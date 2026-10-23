@@ -63,10 +63,19 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
      // Browser-local fixture ONLY: simulate Instagram committing a relationship
      // to an independent state retained over a fresh document navigation.
      // Real negative server-rejection fixtures disable this persistence.
-     const fakeRelationKey='igc_test_server_relationship_v1';
-     const fakeStepsKey='igc_test_step_history_v1';
-     window.__steps=JSON.parse(sessionStorage.getItem(fakeStepsKey)||'[]');
-     const lastCommitted=sessionStorage.getItem(fakeRelationKey);
+     // Hash the original fixture markup so separate subtests and layouts
+     // in the SAME Playwright tab never inherit each other's fake results.
+     const fixtureMarkup=document.body.innerHTML;
+     let fixtureHash=2166136261;
+     for(let i=0;i<fixtureMarkup.length;i++)
+       fixtureHash=Math.imul(fixtureHash ^ fixtureMarkup.charCodeAt(i),16777619);
+     const suffix=(fixtureHash>>>0).toString(36);
+     const fakeRelationKey='igc_test_server_relationship_v1_'+suffix;
+     const fakeStepsKey='igc_test_step_history_v1_'+suffix;
+     const fakeGet=k=>{{ try {{ return sessionStorage.getItem(k) }} catch(_) {{ return null }} }};
+     const fakeSet=(k,v)=>{{ try {{ sessionStorage.setItem(k,v) }} catch(_) {{ }} }};
+     window.__steps=JSON.parse(fakeGet(fakeStepsKey)||'[]');
+     const lastCommitted=fakeGet(fakeRelationKey);
      if(lastCommitted&&persistenceEnabled) {{
        document.addEventListener('DOMContentLoaded',()=>{{
          const control=document.querySelector('#relationship');
@@ -77,7 +86,7 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
      }}
      function recordStep(value) {{
        window.__steps.push(value);
-       sessionStorage.setItem(fakeStepsKey,JSON.stringify(window.__steps));
+       fakeSet(fakeStepsKey,JSON.stringify(window.__steps));
        console.log("IGC_STEP:" + value);
      }}
      function openRelationship() {{
@@ -112,7 +121,7 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        if(result==='followback')document.querySelector('#relationship').textContent=
          document.documentElement.lang==='es'?'Seguir también':'Follow Back';
        if(persistenceEnabled&&!blocked&&(result==='follow'||result==='followback'))
-         sessionStorage.setItem(fakeRelationKey,result);
+         fakeSet(fakeRelationKey,result);
        if(blocked)document.body.insertAdjacentHTML('beforeend','<span>Try again later</span>');
      }}
     </script>
