@@ -222,9 +222,17 @@ def reference_unfollow(page, username, expected_handle, *,
         return "review", ("Instagram session tokens were unavailable; mutation was "
                           "not submitted, but the original durable click intent is "
                           "preserved conservatively. No automatic retry.")
+    # A successful Unfollow may have committed even when GraphQL's response is
+    # missing/unknown. Confirm the actual FOLLOW state with one *read-only*
+    # refresh before declaring uncertainty. Never issue a second POST.
+    # The same final independent proof is required for a nominal success.
+    verified, note=verify_after(page,username,expected_handle)
+    if verified=="ok":
+        return "ok", note
+    if verified=="blocked":
+        return "blocked", note
     if code!="MUTATION_ACCEPTED":
         return "review", ("User-reference GraphQL Unfollow did not positively confirm "
-                          "a response; outcome uncertain. Never send it again automatically.")
-    # A GraphQL response is not success. Require an independent fresh page
-    # reload and exact owner/target Follow or Follow Back evidence.
-    return verify_after(page,username,expected_handle)
+                          "a response and read-only verification remained uncertain. "
+                          "Never send it again automatically.")
+    return verified, note

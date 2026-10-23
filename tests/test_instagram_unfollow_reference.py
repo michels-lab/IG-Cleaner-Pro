@@ -76,6 +76,19 @@ class ReferenceUnfollowTests(unittest.TestCase):
                 result=self.call(page)
                 self.assertIn(result[0],("blocked","review"))
                 self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
+    def test_uncertain_response_can_only_be_saved_by_fresh_readonly_confirmation(self):
+        page=FakePage(mutation={"code":"MUTATION_UNCERTAIN"})
+        calls=[]
+        status, note=self.call(page, fresh=lambda *_:(calls.append("fresh") or
+            ("ok","Fresh verified Follow")))
+        self.assertEqual(status,"ok")
+        self.assertEqual(calls,["fresh"])
+        self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
+        page2=FakePage(mutation={"code":"MUTATION_UNCERTAIN"})
+        status,_=self.call(page2, fresh=lambda *_:("review","Still Following"))
+        self.assertEqual(status,"review")
+        self.assertEqual([x[0] for x in page2.steps],["GET","READY","WAL","POST"])
+
     def test_failed_wal_never_calls_post(self):
         page=FakePage()
         def bad(_): raise OSError("Disk full")
