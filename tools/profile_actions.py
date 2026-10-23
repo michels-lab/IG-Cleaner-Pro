@@ -1272,26 +1272,42 @@ def perform_visible_followback_audit(page, username, expected_handle):
     """
     if not _same_instagram_owner(signed_in_handle(page), expected_handle):
         return "review", "unverified", "Active Instagram identity could not be confirmed."
-    page.goto("https://www.instagram.com/" + expected_handle + "/",
-              wait_until="domcontentloaded", timeout=45000)
-    page.wait_for_timeout(950)
+    # A read-only audit reuses the SAME verified owner's Followers dialog.
+    # Reloading the owner profile for every target is unnecessary traffic
+    # and was causing repeated Playwright 45-second navigation failures.
+    parsed = urlparse(getattr(page, "url", "") or "")
+    on_owner = (parsed.hostname in ("www.instagram.com", "instagram.com")
+                and parsed.path.strip("/").casefold() == expected_handle.casefold())
+    if not on_owner:
+        try:
+            page.goto("https://www.instagram.com/" + expected_handle + "/",
+                      wait_until="domcontentloaded", timeout=15000)
+        except Exception:
+            return ("review", "unverified",
+                    "Owner Followers page unavailable: Chrome navigation timed out or failed. "
+                    "No conclusion and no relationship click; stop repeated retries.")
+        page.wait_for_timeout(950)
     if (challenge_detected(page) or
             not _same_instagram_owner(signed_in_handle(page), expected_handle)):
         return "blocked", "unverified", "Instagram challenge or identity mismatch."
-    link = page.locator('a[href*="/followers/"]')
-    # Match the owner's exact Followers URL. Never inspect another account.
-    target = None
-    for i in range(min(link.count(), 15)):
-        item = link.nth(i)
-        href = item.get_attribute("href") or ""
-        if item.is_visible() and re.search(r"/" + re.escape(expected_handle) + r"/followers/?(?:\?|$)", href, re.I):
-            target = item
-            break
-    if target is None:
-        return "review", "unverified", "Owner Followers link unavailable; no conclusion."
-    target.click(timeout=12000)
     dialog = page.locator('[role="dialog"]').last
-    dialog.wait_for(state="visible", timeout=12000)
+    if not dialog.count() or not dialog.is_visible():
+        link = page.locator('a[href*="/followers/"]')
+        target = None
+        for i in range(min(link.count(), 15)):
+            item = link.nth(i)
+            href = item.get_attribute("href") or ""
+            # Exact owner, no other profile's Followers widget.
+            if (item.is_visible() and re.search(
+                    r"/" + re.escape(expected_handle) + r"/followers/?(?:\\?|$)",
+                    href, re.I)):
+                target = item
+                break
+        if target is None:
+            return "review", "unverified", "Owner Followers link unavailable; no conclusion."
+        target.click(timeout=12000)
+        dialog = page.locator('[role="dialog"]').last
+        dialog.wait_for(state="visible", timeout=12000)
     # Different layouts label the visible search as Search or Buscar.
     searches = dialog.locator('input[placeholder*="Search"], input[placeholder*="Buscar"], input[aria-label*="Search"], input[aria-label*="Buscar"]')
     if searches.count() != 1 or not searches.first.is_visible():
@@ -2736,6 +2752,13 @@ class ActionRobot:
                             continue
                         # No-click preflight anomalies can be reviewed together after
                         # the batch. Potentially clicked/ambiguous results still stop.
+                        if self.task == "audit" and details.startswith("Owner Followers page unavailable:"):
+                            # One failed owner navigation affects the entire
+                            # read-only batch; stop instead of repeating it.
+                            with self.lock:
+                                self.status, self.message = "blocked", details
+                            stopped_for_review = True
+                            break
                         if self.task == "audit" and result == "review":
                             continue
                         if _preclick_no_action(journal.get(user, {})):
