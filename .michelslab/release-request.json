@@ -30,5 +30,9 @@
     "published_at": "2026-10-23T18:20:49Z",
     "prerelease": false,
     "assets_count": 12
-  }
+  },
+  "published_run": 39983124380,
+  "published_commit": "457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9",
+  "published_at": "2026-10-23T18:20:49Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60"
 }

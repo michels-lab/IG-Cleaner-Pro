@@ -66,6 +66,7 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertIn(f"next reserved development version **{reserved} is not authorized", sync)
         self.assertIn(f"https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/{stable}", sync)
         self.assertIn("docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md", readme)
+        self.assertIn("docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md", readme)
         self.assertIn("owner tests only officially published installers", readme)
         self.assertNotIn(
             f"**{reserved} — official stable GitHub release",
@@ -113,6 +114,7 @@ class UpdateGuideContract(unittest.TestCase):
             ".michelslab/release-request.json",
             "docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md",
             "docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md",
+            "docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md",
             "tests/test_update_docs_contract.py",
             ".github/workflows/release-docs-contract.yml",
         ):
