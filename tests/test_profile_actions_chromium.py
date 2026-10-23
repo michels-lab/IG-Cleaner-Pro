@@ -252,6 +252,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
             route.fulfill(status=200, content_type="text/html",
                           body=initial if len(visits) == 1 else persisted)
         self.page.route("https://www.instagram.com/**", offline_route)
+        self._last_action_visits = visits
         status, message = perform_visible_action(
             self.page, "target.user", task, "my.profile",
             (lambda _: not protected))
@@ -869,6 +870,45 @@ class RealBrowserSelectorTests(unittest.TestCase):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
         self.assertEqual(events, ["open", "unfollow", "confirmed"])
+        self.assertEqual(len(self._last_action_visits), 2,
+                         "A successful Unfollow needs its own read-only reload")
+
+    def test_immediate_optimistic_unfollow_follow_is_not_persisted_success(self):
+        # The UI flips to Follow after clicking but a freshly loaded server
+        # response still says Following. NEVER claim an Unfollow or re-click.
+        initial = fake_profile(result="follow")
+        visits, events = [], []
+        self.page.on("console", lambda msg: events.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html", body=initial)
+        self.page.route("https://www.instagram.com/**", serve)
+        status, message = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertIn("Do not repeat", message)
+        self.assertEqual(len(visits), 2, "One original load and one verification GET")
+        self.assertEqual(events, ["IGC_STEP:open", "IGC_STEP:unfollow",
+                                  "IGC_STEP:confirmed"])
+
+    def test_immediate_optimistic_cancel_follow_is_not_persisted_success(self):
+        # The UI flips to Follow after click; server still replies Requested.
+        initial = fake_profile(request_unfollow=True, result="follow").replace(
+            ">Following</button>", ">Requested</button>", 1)
+        visits, events = [], []
+        self.page.on("console", lambda msg: events.append(msg.text)
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html", body=initial)
+        self.page.route("https://www.instagram.com/**", serve)
+        status, message = perform_visible_action(
+            self.page, "target.user", "cancel", "my.profile", lambda _: True)
+        self.assertEqual(status, "review", message)
+        self.assertIn("still displays Requested", message)
+        self.assertEqual(len(visits), 2)
+        self.assertEqual(events, ["IGC_STEP:open", "IGC_STEP:confirmed"])
 
     def test_public_spanish_popup(self):
         status, message, events = self.attempt(locale="es")
