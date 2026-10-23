@@ -15031,6 +15031,24 @@ window.igcAutoOpenPendingReviewBatch=function(){
 function setStatus(text){
  const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
 }
+function igcAutoCurrentJob(){
+ const card=document.getElementById("igcAutoCurrentJob"),name=document.getElementById("igcAutoCurrentJobTitle"),
+  detail=document.getElementById("igcAutoCurrentJobDetail"),cancel=document.getElementById("igcAutoCancel");
+ const owner=actionOwner(),state=actionState;
+ const same=!!(state?.task&&state.owner===owner.owner&&state.account===owner.account);
+ const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Followback Audit"};
+ const running=same&&!!state.running,task=same?state.task:"",status=same?String(state.status||"idle"):"idle";
+ if(card)card.dataset.state=status;
+ if(name)name.textContent=task?(labels[task]||task)+" · "+status.toUpperCase():
+  "No active robot · "+(labels[mode]||"Choose a task");
+ if(detail)detail.textContent=task?
+  ("Viewing "+(labels[mode]||mode)+". "+
+   (running?"Finish or cancel the current worker before starting another task. ":"You can change tasks now. ")+
+   (state.wait_seconds?"Next visit in "+state.wait_seconds+" seconds. ":"")+
+   String(state.message||"")):"No active Chrome automation for this account.";
+ if(cancel)cancel.disabled=!actionBridge||actionCommandPending||!same||
+  status==="cancelling"||status==="cancelled"||!(running||state.review_batch?.id);
+}
 window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
  mode=next;actionPage=1;
@@ -15039,6 +15057,7 @@ window.igcAutoChoose=function(next){
  if(issuesTask&&next!=="protected")issuesTask.value=next;
  window.igcAutoRender();
  window.igcAutoRenderIssues();
+ igcAutoCurrentJob();
 };
 window.igcAutoSkip=function(kind,user){
  refreshScope();
@@ -15511,6 +15530,7 @@ window.igcAutoPoll=async function(){
      open.map(t=>"@"+String(t.username||"")+" — "+String(t.status||"checking")).join(" · ")+
      ". Only confirmed actions close automatically. Pause closes Chrome."): "";
   }
+  igcAutoCurrentJob();
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
   if(resume)resume.disabled=state.running||state.review_only||authBlocked||!["paused","blocked","review","error"].includes(state.status);
@@ -15658,6 +15678,7 @@ window.igcAutoRender=function(){
  refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ igcAutoCurrentJob();
  const attempted=mode==="protected"?new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
@@ -15683,7 +15704,7 @@ window.igcAutoRender=function(){
   const authChallenge=liveRobot&&actionState.status==="blocked"&&
     /recaptcha|challenge|security check|verification|identity/i.test(actionState.message||"");
   const run=document.getElementById("igcAutoRun");
-  if(run)run.disabled=actionCommandPending||mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge;
+  if(run)run.disabled=actionCommandPending||mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge||actionState?.status==="cancelling";
   if(liveRobot){
    const batchId=actionState.review_batch?.id;
    setStatus("ROBOT · "+String(actionState.task).toUpperCase()+" · "+
