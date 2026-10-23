@@ -3781,6 +3781,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
 <div class="igc-counts-stats" id="igcAutoMetrics" aria-live="polite"></div>
+<div id="igcAutoAuditSourcePanel" class="note" style="display:none;margin-top:9px;padding:11px;border:1px solid var(--border);border-radius:10px" aria-label="Followback audit source">
+ <label for="igcAutoAuditSource"><strong>Followback evidence:</strong></label>
+ <select id="igcAutoAuditSource" aria-label="Choose read-only audit source">
+  <option value="visible">Visible Followers search (existing)</option>
+  <option value="live_lists">Live Followers + Following lists (alternative)</option>
+ </select>
+ <small style="display:block;margin-top:6px">Alternative uses read-only, same-origin list pages from your authenticated Instagram Chrome session. Full pagination is required; unavailable, restricted or incomplete lists never count as non-followback. Does not change Profile Counts or open ten target tabs.</small>
+</div>
 <div class="btnrow" id="igcAutoTiming">
 <label>Batch size <input id="igcAutoBatch" type="number" min="1" max="1000" value="30" style="width:86px"></label>
 <label>Rest between batches (min) <input id="igcAutoRest" type="number" min="0" max="1440" value="5" style="width:78px"></label>
@@ -15265,6 +15273,7 @@ function actionConfig(task,targets){
   ...(["unfollow","audit"].includes(task)&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
  return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,
          protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
+         audit_source:task==="audit"?(document.getElementById("igcAutoAuditSource")?.value||"visible"):"visible",
          confirmation:task+":"+targets.length};
 }
 async function refreshActionHistoryForStart(task){
@@ -15720,6 +15729,8 @@ window.igcAutoRender=function(){
  refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ const auditSourcePanel=document.getElementById("igcAutoAuditSourcePanel");
+ if(auditSourcePanel)auditSourcePanel.style.display=mode==="audit"?"block":"none";
  igcAutoCurrentJob();
  const attempted=mode==="protected"?new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
