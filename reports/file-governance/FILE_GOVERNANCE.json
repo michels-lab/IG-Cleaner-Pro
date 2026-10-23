@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 317,
-  "classified_files_total": 313,
+  "tracked_files_total": 319,
+  "classified_files_total": 315,
   "docs_content_inspected": 66,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -17,8 +17,8 @@
     "document": 61,
     "index": 5,
     "installer_metadata": 1,
-    "source": 41,
-    "test": 73,
+    "source": 42,
+    "test": 74,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "b675ead7f33489db80e7239a4ff5d79ae8e1060fb1f9bfe17474939b68537041",
-  "evidence_fingerprint": "07dde1cdd98c09d4f93a7df5c3ddf185a601d6c7b7124f4feb947c7bec38f27c",
+  "inventory_fingerprint": "ee368e29873880a8474f0ababec7b734eab423dab85e55af34f68fe1077dbf1b",
+  "evidence_fingerprint": "d8e5108cdd7e7e064f09f5710a2748767bc1ad1bbce4af5cf384a1030a0afdf2",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -119,14 +119,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "52fe70abf8f663793de1ed3047e541c55a448ada"
+      "blob": "c6cb60df58d7db25474824cacd5ca7b312bd058d"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "5952998935ea685f468861f670b56ed31827f6c2"
+      "blob": "1a126b5c293253ad7cc8aff2faf38aa28cc323bb"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "537c1397379987d14c0f3160db424028b9bfd2a8"
+      "blob": "1cdc85e5c3872d32ead1a901ca0fd2d754fbdd82"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1491,7 +1491,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "876d13fc7ba8169691b35c3eafdb765e8719fe21"
+      "blob": "12592e9535cd488e2744bc4689b0498e76b83b01"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -1949,6 +1949,13 @@
       "blob": "0e7da5b35d797fa1f915321dccb2c9457275973e"
     },
     {
+      "path": "tests/test_profile_lists_live.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d9af4abf4803a95c3895ce4e3d4b184847a7b802"
+    },
+    {
       "path": "tests/test_release_agent_contract.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2086,7 +2093,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "2a1e54266555f2846361ac68879310942089ce31"
+      "blob": "ba391505b924f5ff32eb336a4135f6c49d103351"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2122,6 +2129,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "4398bafb40c8ed29f2906ae39e2e55d47f940a4d"
+    },
+    {
+      "path": "tools/profile_lists_live.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "612ec485e4e49c1fc9c33d67b6ae63a85ab022a9"
     },
     {
       "path": "tools/repository_file_auditor.py",
@@ -2224,11 +2238,11 @@
   ],
   "findings": [
     {
-      "id": "d17917e36d56080e",
+      "id": "8d48275cd52b06ef",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs, tests/test_profile_actions_chromium.py, tools/profile_actions.py",
+      "observation": "9 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs, tests/automations-execution.test.cjs, tests/test_profile_actions_chromium.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

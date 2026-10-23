@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 317,
-  "classified_files_total": 313,
+  "tracked_files_total": 319,
+  "classified_files_total": 315,
   "docs_content_inspected": 66,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -17,8 +17,8 @@
     "document": 61,
     "index": 5,
     "installer_metadata": 1,
-    "source": 41,
-    "test": 73,
+    "source": 42,
+    "test": 74,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "b675ead7f33489db80e7239a4ff5d79ae8e1060fb1f9bfe17474939b68537041",
-  "evidence_fingerprint": "07dde1cdd98c09d4f93a7df5c3ddf185a601d6c7b7124f4feb947c7bec38f27c",
+  "inventory_fingerprint": "ee368e29873880a8474f0ababec7b734eab423dab85e55af34f68fe1077dbf1b",
+  "evidence_fingerprint": "d8e5108cdd7e7e064f09f5710a2748767bc1ad1bbce4af5cf384a1030a0afdf2",
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
