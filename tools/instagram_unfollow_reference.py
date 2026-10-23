@@ -58,7 +58,7 @@ async ({username}) => {
 # It uses the exact numeric target ID obtained via the positive lookup above.
 # Token extraction and network response are NEVER returned to native Python.
 _REFERENCE_UNFOLLOW_MUTATION = r"""
-async ({targetId}) => {
+async ({targetId, dryRun=false}) => {
   const bad = code => ({code});
   if(location.protocol!=='https:'||
      !['instagram.com','www.instagram.com'].includes(location.hostname)||
@@ -84,6 +84,7 @@ async ({targetId}) => {
   const csrf=cookie('csrftoken'),owner=cookie('ds_user_id');
   if(!fbDtsg||!lsd||!csrf||!/^\d{1,24}$/.test(owner))
     return bad('SESSION_TOKENS_UNAVAILABLE');
+  if(dryRun) return bad('READY_TO_MUTATE');  // No POST, no WAL consumed.
   const jazoest='2'+[...fbDtsg].map(c=>c.charCodeAt(0)).join('');
   const form=new URLSearchParams({
     av:owner,__d:'www',__user:'0',__a:'1',__comet_req:'7',
@@ -171,13 +172,23 @@ def reference_unfollow(page, username, expected_handle, *,
     target_id=item.get("id")
     if not isinstance(target_id,str) or not target_id.isdecimal() or len(target_id)>24:
         return "blocked", "Reference Unfollow: ambiguous target ID; no action clicked."
+    # Confirm owner-session tokens exist while still read-only, BEFORE arming
+    # the one-shot journal. Never consume a target merely for missing tokens.
+    try:
+        readiness=page.evaluate(_REFERENCE_UNFOLLOW_MUTATION,
+                                {"targetId":target_id, "dryRun": True})
+    except Exception:
+        readiness=None
+    if not isinstance(readiness, dict) or readiness.get("code")!="READY_TO_MUTATE":
+        return "review", ("Reference Unfollow session preparation unavailable. "
+                          "No POST or write-ahead action intent; review Chrome sign-in.")
     if (can_act and not can_act(username)) or not verify_target(page,username) or not verify_owner(page,expected_handle):
         return "blocked", "Reference Unfollow: target or owner changed before mutation; no action clicked."
     # Atomic/fsynced persistent intent must exist BEFORE the very first POST.
     # If this raises (e.g. disk full), no network mutation is attempted.
     on_pre_click("relationship_control")
     try:
-        out=page.evaluate(_REFERENCE_UNFOLLOW_MUTATION, {"targetId":target_id})
+        out=page.evaluate(_REFERENCE_UNFOLLOW_MUTATION, {"targetId":target_id, "dryRun": False})
     except Exception:
         out=None
     code=out.get("code") if isinstance(out,dict) else "MUTATION_UNCERTAIN"
