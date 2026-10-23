@@ -18,8 +18,12 @@ class FakePage:
         self.mutation=mutation or {"code":"MUTATION_ACCEPTED"}
         self.steps=[]
     def evaluate(self, script, params):
-        self.steps.append(("GET" if script==_REFERENCE_EXACT_FOLLOWING else "POST",params))
-        return self.lookup if script==_REFERENCE_EXACT_FOLLOWING else self.mutation
+        stage=("GET" if script==_REFERENCE_EXACT_FOLLOWING else
+               ("READY" if params.get("dryRun") else "POST"))
+        self.steps.append((stage,params))
+        return (self.lookup if stage=="GET" else
+                {"code":"READY_TO_MUTATE"} if stage=="READY" else
+                self.mutation)
 
 
 class ReferenceUnfollowTests(unittest.TestCase):
@@ -37,9 +41,9 @@ class ReferenceUnfollowTests(unittest.TestCase):
         page=FakePage()
         result=self.call(page)
         self.assertEqual(result[0],"ok")
-        self.assertEqual([x[0] for x in page.steps],["GET","WAL","POST"])
+        self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
         self.assertEqual(page.steps[0][1],{"username":"target.user"})
-        self.assertEqual(page.steps[-1][1],{"targetId":"12345"})
+        self.assertEqual(page.steps[-1][1],{"targetId":"12345","dryRun":False})
     def test_missing_identity_never_even_looks_up(self):
         page=FakePage()
         result=self.call(page,verified=lambda *_:False)
@@ -62,7 +66,7 @@ class ReferenceUnfollowTests(unittest.TestCase):
         page=FakePage()
         result=self.call(page,fresh=lambda *_:("review","Still Following after reload"))
         self.assertEqual(result[0],"review")
-        self.assertEqual([x[0] for x in page.steps],["GET","WAL","POST"])
+        self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
     def test_uncertain_result_never_fallbacks_to_second_click(self):
         for code in ("ACTION_BLOCKED","SESSION_TOKENS_UNAVAILABLE",
                      "MUTATION_UNCERTAIN"):
@@ -70,13 +74,24 @@ class ReferenceUnfollowTests(unittest.TestCase):
                 page=FakePage(mutation={"code":code})
                 result=self.call(page)
                 self.assertIn(result[0],("blocked","review"))
-                self.assertEqual([x[0] for x in page.steps],["GET","WAL","POST"])
+                self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
     def test_failed_wal_never_calls_post(self):
         page=FakePage()
         def bad(_): raise OSError("Disk full")
         with self.assertRaises(OSError):
             self.call(page,consent=bad)
-        self.assertEqual([x[0] for x in page.steps],["GET"])
+        self.assertEqual([x[0] for x in page.steps],["GET","READY"])
+    def test_session_readiness_refusal_keeps_journal_available(self):
+        class MissingTokens(FakePage):
+            def evaluate(self, script, params):
+                if params.get("dryRun"):
+                    self.steps.append(("READY", params))
+                    return {"code":"SESSION_TOKENS_UNAVAILABLE"}
+                return super().evaluate(script, params)
+        page=MissingTokens()
+        result=self.call(page)
+        self.assertEqual(result[0],"review")
+        self.assertEqual([x[0] for x in page.steps],["GET","READY"])
     def test_reference_transport_keeps_sessions_in_chrome(self):
         self.assertIn("usePolarisUnfollowMutation",_REFERENCE_UNFOLLOW_MUTATION)
         self.assertIn("27789106940691111",_REFERENCE_UNFOLLOW_MUTATION)
