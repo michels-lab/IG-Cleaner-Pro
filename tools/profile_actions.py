@@ -72,6 +72,43 @@ def _same_instagram_owner(observed, expected):
     return (isinstance(observed, str) and isinstance(expected, str)
             and bool(observed) and bool(expected)
             and observed.casefold() == expected.casefold())
+
+
+def _find_verified_owner_tab(pages, expected_handle):
+    """Observe all Instagram tabs in the SAME robot Chrome; never click.
+
+    The login page we opened can remain stale while the owner signs in on a
+    second tab. A verified owner tab is usable only when NO visible tab proves
+    a different owner; conflicting identities fail closed instead of guessing.
+    A tab URL alone is not identity evidence.
+    """
+    own_page = None
+    mismatch = None
+    for candidate in pages:
+        try:
+            if candidate.is_closed():
+                continue
+            address = getattr(candidate, "url", "")
+            if not isinstance(address, str):
+                continue
+            parsed = urlparse(address)
+            if parsed.scheme != "https" or parsed.hostname not in (
+                    "instagram.com", "www.instagram.com"):
+                continue
+            observed = signed_in_handle(candidate)
+            if observed:
+                if not _same_instagram_owner(observed, expected_handle):
+                    mismatch = observed
+                elif own_page is None:
+                    own_page = candidate
+        except Exception:
+            # A tab that cannot be inspected provides no positive auth proof.
+            continue
+    if mismatch:
+        return None, mismatch
+    return own_page, None
+
+
 # Guard against temporary Follow before delayed Requested during hydration.
 CANCEL_NO_REQUEST_MIN_WAIT_MS = 5000
 
@@ -2136,15 +2173,20 @@ class ActionRobot:
                                 "verification manually; no automatic challenge retries are allowed."
                             )
                         return
-                    signed = signed_in_handle(page)
-                    if signed:
-                        if not _same_instagram_owner(signed, self.handle):
-                            with self.lock:
-                                self.status, self.message = ("blocked",
-                                    "Robot Chrome is signed in as @" + signed +
-                                    "; expected @" + self.handle +
-                                    ". No Instagram relationship action clicked.")
-                            return
+                    # Instagram may complete manual login in a NEW tab while
+                    # the original page remains at Login. Scan only the same
+                    # robot Chrome context, never the system/browser profile.
+                    verified_page, mismatched = _find_verified_owner_tab(
+                        browser.pages, self.handle)
+                    if mismatched:
+                        with self.lock:
+                            self.status, self.message = ("blocked",
+                                "Robot Chrome includes a signed-in Instagram tab for @" +
+                                mismatched + "; expected @" + self.handle +
+                                ". Conflicting owner identity; no relationship action clicked.")
+                        return
+                    if verified_page is not None:
+                        page = verified_page
                         break
                     if time.monotonic() - login_started >= PUBLIC_ROBOT_LOGIN_WAIT_SECONDS:
                         with self.lock:
