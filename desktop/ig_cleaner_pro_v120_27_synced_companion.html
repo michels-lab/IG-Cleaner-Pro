@@ -15138,6 +15138,7 @@ const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
 const igcAutoHistoryCache=new Map();
+const igcAutoModalSeen=new Set();
 let actionCommandPending=false,actionCommandFeedback=null;
 function reportActionCommand(phase,message,failed=false){
  actionCommandFeedback={phase,message:String(message||"Unknown result"),failed,
@@ -15804,11 +15805,13 @@ function igcAutoMaybePromptBatchReview(state){
     state.owner!==actionOwner().owner||state.account!==actionOwner().account||
     !["complete","partial","review"].includes(String(state.status)))return;
  const key="igc_robot_batch_prompt_v1__"+scope()+"__"+mode+"__"+actionBatchReview.id;
- try{if(sessionStorage.getItem(key))return;}catch{return;}
+ if(igcAutoModalSeen.has(key))return;
+ try{if(sessionStorage.getItem(key))return;}catch{}
  const results=actionBatchReview.action_results||{};
  const hasEvidence=(actionBatchReview.targets||[]).some(u=>results[u]?.status&&results[u].status!=="pending");
  if(!hasEvidence)return;
- try{sessionStorage.setItem(key,"shown");}catch{return;}
+ igcAutoModalSeen.add(key);
+ try{sessionStorage.setItem(key,"shown");}catch{}
  window.igcAutoShowBatchReview();
 }
 window.igcAutoShowBatchReview=function(){
