@@ -101,7 +101,8 @@ def inspect_real_profile(page, username, task, expected_handle):
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "SECURITY_CHALLENGE"
     current = urlparse(page.url)
-    if current.hostname not in ("instagram.com", "www.instagram.com") or (
+    if (current.scheme != "https" or
+            current.hostname not in ("instagram.com", "www.instagram.com") or
             current.path.strip("/").casefold() != username.casefold()):
         return "PROFILE_REDIRECT"
     if not _wait_for_target_profile_shell(page, username, timeout_ms=8000):
@@ -159,7 +160,10 @@ class DeveloperLiveProbe:
             "state": self.state,
             "phase": self.phase,
             "total": self.total,
+            # Sample 0 represents a browser/login failure, not a profile.
+            # It must NEVER inflate the number of actual targets inspected.
             "checked": self.checked,
+            "uninspected": max(0, self.total - self.checked),
             "counts": dict(sorted(self.codes.items())),
             "events": list(self.events),
             "started_at": self.started_at,
@@ -217,10 +221,25 @@ class DeveloperLiveProbe:
             self.codes[code] += 1
             self.events.append({"sample": index, "code": code,
                                 "meaning": SCAN_LABELS[code], "timestamp": _now()})
-            self.checked += 1
+            if index > 0:
+                self.checked += 1
+
+    def _finish(self, blocked_code=None):
+        """Never label an aborted/login-blocked real scan as completed."""
+        with self.lock:
+            if self.stop_event.is_set():
+                self.state, self.phase = "stopped", "owner_stopped_no_actions_clicked"
+            elif blocked_code:
+                self.state, self.phase = "blocked", blocked_code.lower()
+            elif self.checked == self.total and self.total > 0:
+                self.state, self.phase = "complete", "done_no_actions_clicked"
+            else:
+                self.state, self.phase = "blocked", "incomplete_inspection"
+            self.finished_at = _now()
 
     def _run(self, targets, task, handle):
         browser = None
+        blocked_code = None
         try:
             from playwright.sync_api import sync_playwright
             self.browser_dir.mkdir(parents=True, exist_ok=True)
@@ -243,11 +262,13 @@ class DeveloperLiveProbe:
                 authenticated = False
                 while not self.stop_event.is_set() and time.monotonic() < deadline:
                     if challenge_detected(page):
-                        self._add(0, "SECURITY_CHALLENGE")
+                        blocked_code = "SECURITY_CHALLENGE"
+                        self._add(0, blocked_code)
                         break
                     signed = signed_in_handle(page)
                     if signed and signed.casefold() != handle.casefold():
-                        self._add(0, "LOGIN_ACCOUNT_MISMATCH")
+                        blocked_code = "LOGIN_ACCOUNT_MISMATCH"
+                        self._add(0, blocked_code)
                         break
                     if signed and signed.casefold() == handle.casefold():
                         authenticated = True
@@ -257,7 +278,8 @@ class DeveloperLiveProbe:
                     self.stop_event.wait(3)
                 if not authenticated:
                     if not self.codes and not self.stop_event.is_set():
-                        self._add(0, "LOGIN_REQUIRED")
+                        blocked_code = "LOGIN_REQUIRED"
+                        self._add(0, blocked_code)
                     return
                 with self.lock:
                     self.state, self.phase = "running", "read_only_profile_checks"
@@ -272,20 +294,23 @@ class DeveloperLiveProbe:
                         code = "DOM_PROBE_EXCEPTION"
                     self._add(i, code)
                     if code in ("SECURITY_CHALLENGE", "OWNER_IDENTITY_UNVERIFIED",
-                                "PROFILE_REDIRECT", "STRUCTURED_RATE_LIMITED",
-                                "STRUCTURED_SESSION_REQUIRED", "STRUCTURED_UNAVAILABLE"):
-                        break  # Do not continue navigating when trust is uncertain.
+                                "PROFILE_REDIRECT", "LOGIN_ACCOUNT_MISMATCH",
+                                "STRUCTURED_RATE_LIMITED"):
+                        blocked_code = code
+                        break  # Owner mismatch, redirect or explicit API denial.
+                    # The OPTIONAL structured lookup can be unavailable when
+                    # cookies are HttpOnly or the private route changed. That
+                    # alone does not invalidate the proven Chrome owner: report
+                    # the unknown result and safely inspect the next profile.
                     self.stop_event.wait(1)
         except Exception:
             if not self.stop_event.is_set():
-                self._add(0, "BROWSER_START_FAILED")
+                blocked_code = "BROWSER_START_FAILED"
+                self._add(0, blocked_code)
         finally:
             if browser is not None:
                 try:
                     browser.close()
                 except Exception:
                     pass
-            with self.lock:
-                self.state = "stopped" if self.stop_event.is_set() else "complete"
-                self.phase = "done_no_actions_clicked"
-                self.finished_at = _now()
+            self._finish(blocked_code)
