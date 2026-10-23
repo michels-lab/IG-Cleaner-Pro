@@ -736,7 +736,9 @@ def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
             return "blocked", "Instagram requested verification after the action."
         page.goto("https://www.instagram.com/" + username + "/",
                   wait_until="domcontentloaded", timeout=45000)
-        result, message = _verify_final_state(page, expected_handle, username, checks=3)
+        # The fresh page may hydrate its exact target hero after DOMContentLoaded.
+        # Allow bounded read-only settling, NEVER another relationship click.
+        result, message = _verify_final_state(page, expected_handle, username, checks=5)
         if result == "ok":
             return result, "Unfollow confirmed after a read-only profile refresh. " + message
         if result == "blocked":
@@ -764,7 +766,9 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
         if (current.hostname not in ("www.instagram.com", "instagram.com")
                 or current.path.strip("/").casefold() != username.casefold()):
             return "review", prefix + "Instagram redirected away from the target; do not repeat the action."
-        result, message = _verify_final_state(page, expected_handle, username, checks=2)
+        # Cancellation can settle after the first new document has loaded.
+        # Re-observe only; a previously clicked request is never clicked again.
+        result, message = _verify_final_state(page, expected_handle, username, checks=4)
         if result == "ok":
             return "ok", ("Cancel Request confirmed after a read-only profile refresh. " + message)
         if result == "blocked":
