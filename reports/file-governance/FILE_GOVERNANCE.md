@@ -29,7 +29,7 @@ Tracked: 301; classified: 297; readable documents: 55; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 3 implementation/config paths changed since this log's last commit; examples: android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 267dcc751ec4c395)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 4 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 2099d92aabfdb70f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

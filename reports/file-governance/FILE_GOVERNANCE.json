@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "036b0cf7e393cb12ed46d49a0113a7234c4f9ec85341e64aa6973e741a864196",
-  "evidence_fingerprint": "8042f569acda0acc5e31c02172950b5d90db91b1d67c62d2b674d95ea7910e5f",
+  "inventory_fingerprint": "608267c27602b83a550d02376d0100907a0beee9693d54748e4955bcaebb619d",
+  "evidence_fingerprint": "498f2db58bb4c2b46cd601effeb87c568cbfa440c032b76d35dab01cb811e95a",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "c89fc4652c202205d35510e08d6a76bda584b5ae"
+      "blob": "49dc730cddf65292fcd952d035e9a04368239dd9"
     },
     {
       "path": "AGENTS.md",
@@ -2112,11 +2112,11 @@
   ],
   "findings": [
     {
-      "id": "267dcc751ec4c395",
+      "id": "2099d92aabfdb70f",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "3 implementation/config paths changed since this log's last commit; examples: android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
+      "observation": "4 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
