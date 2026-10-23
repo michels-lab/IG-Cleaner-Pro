@@ -1,0 +1,13 @@
+# GRANADA #46 — official v120.60 FINAL stable receipt
+
+Date: 2026-10-23. Independently observed **published** GitHub release `v120.60` at `2026-10-23T18:20:49Z`.
+
+- [Official GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60), `draft=false`, `prerelease=false`, **12 assets**, including public+Developer installed Windows Setup files, Android public+Developer production-signed APKs, Desktop HTML/ZIP, portable robot ZIP, logo, privacy and SHA256SUMS.
+- [Governed publisher run #39983124380](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380) **completed SUCCESS on attempt 2** at exact release SHA `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`. It passed release request, installed Windows public+Developer, rendered UI, Android Developer app runtime, signed Android public+Developer coexistence and final checksum/asset publication verification.
+- Attempt 1 did **not** publish: the Android 35 system-image SDK archive download failed with `Error on ZipFile unknown archive` before the emulator could launch. The existing failing job was retried without weakening/changing any quality gate; attempt 2 passed. No source code change or repeated mutation was used to bypass QA.
+- v120.60 contains PR #229 normal Windows `cancel-batch` scoped shutdown and persisted `owner_cancelled` cohort retirement, current-job status, timestamps and post-batch manual result dialog. UI wording and checks preserve original 40-target untouched, protected list and uncertain-click WAL; owner-approved relationship-changing work never runs as part of CI.
+- **Still unverified:** real owner Instagram Unfollow and Cancel Pending changes in installed Windows ([#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164)); repeated own-profile identity probes investigated in [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Automatic tests are not a real Instagram acceptance report.
+- Postpublication branch closes the now-consumed authorized request (`authorized=false,status=published`); advances manifest to `currentStableRelease=v120.60`, reserves **v120.61** as the **not yet authorized/published** development version, updates release/version docs and signing metadata without creating another release. The publisher is create-only and must never overwrite a published tag.
+- Windows setup does not have Authenticode signing. Signed Android uses the existing production certificate; no private signing key, real Instagram credentials, owner journal or personal records are committed here.
+
+Official v120.60 download: https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60

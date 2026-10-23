@@ -12,6 +12,7 @@ on:
       - '.michelslab/release-request.json'
       - 'docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md'
       - 'docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md'
+      - 'docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md'
       - '.github/workflows/release-docs-contract.yml'
   push:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - '.michelslab/release-request.json'
       - 'docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md'
       - 'docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md'
+      - 'docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md'
       - '.github/workflows/release-docs-contract.yml'
 permissions:
   contents: read

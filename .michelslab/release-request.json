@@ -1,12 +1,12 @@
 {
   "version": "120.60",
   "tag": "v120.60",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.59",
   "owner_acceptance_note": "GRANADA v120.60: owner requested real cancellation after cooldown/paused jobs, ability to switch jobs without erasing the original saved 40-person cohort, prominent actual active-task UX, exact journal date/time in lists and post-batch popup with per-user manual inspection. PR #229 passed all six exact-source suites including integrated installed Windows public+Developer Chromium and both Android runtime/visual gates. Stable FINAL release MUST pass new exact-commit production-signed Android public+Developer co-install, official installed Windows, visual evidence and SHA256 assets/feed. Original protected and possible-click WAL untouched; owner actual Instagram Unfollow/Cancel acceptance remains UNVERIFIED (#172/#164); no auto-retry or account action. No RC/beta/prerelease.",
   "requested_at": "2026-10-23",
@@ -21,5 +21,18 @@
     "commit": "92d612377c2c8a6e56534465f86e3ddcfe86bc23",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59",
     "published_at": "2026-10-23T12:53:51Z"
-  }
+  },
+  "published_release": {
+    "tag": "v120.60",
+    "run": 39983124380,
+    "commit": "457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60",
+    "published_at": "2026-10-23T18:20:49Z",
+    "prerelease": false,
+    "assets_count": 12
+  },
+  "published_run": 39983124380,
+  "published_commit": "457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9",
+  "published_at": "2026-10-23T18:20:49Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60"
 }
