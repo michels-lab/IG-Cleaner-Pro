@@ -109,6 +109,15 @@ for required_test in (
         "Final Windows publisher omitted the owner-Unfollow safety gate: "+required_test
     )
 
+# Changes to the FINAL publishing logic must run the real Windows preview
+# (which already exercises owner-supplied Unfollow in actual Chromium).
+preview=(ROOT/".github/workflows/profile-counts-windows-preview.yml").read_text(encoding="utf-8")
+for event in ("push:", "pull_request:"):
+    fragment=preview.split("\n  "+event+"\n", 1)[1]
+    fragment=fragment.split("\n  pull_request:\n",1)[0] if event=="push:" else fragment.split("\npermissions:",1)[0]
+    for tracked in (".github/workflows/release.yml", "tests/release-publisher-contract.py"):
+        assert tracked in fragment, "FINAL publisher edits bypass integrated Windows QA: "+tracked
+
 # The stable Windows publisher must match the exact tested integrated app,
 # never silently regress to the removed legacy CMD + standalone collector.
 for token in (
