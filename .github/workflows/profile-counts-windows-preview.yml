@@ -16,6 +16,9 @@ on:
       - 'tests/test_windows_updater.py'
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
+      - 'tools/instagram_unfollow_reference.py'
+      - 'tests/test_instagram_unfollow_reference.py'
+      - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
@@ -61,6 +64,9 @@ on:
       - 'tests/test_windows_updater.py'
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
+      - 'tools/instagram_unfollow_reference.py'
+      - 'tests/test_instagram_unfollow_reference.py'
+      - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
@@ -127,6 +133,10 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
+          python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'User supplied single-POST Unfollow and no-replay contract failed.' }
+          node tests/owner-unfollow-transport.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'User reference JavaScript browser-context action contract failed.' }
           python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
           python -m unittest discover -s tests -p 'test_profile_counts_actions.py' -v
