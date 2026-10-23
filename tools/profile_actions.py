@@ -1451,9 +1451,25 @@ class ActionRobot:
             (_invalid_saved_action_record(record) or
              (record.get("status") in SAVED_ACTION_STATES
               and not _preclick_no_action(record))))
+        # Timestamp/provenance for the full saved journal, not only the
+        # most recent active cohort. No cookies, HTTP payloads or secrets.
+        history_rows = []
+        for username, record in journal.items():
+            if valid_username(username) != username:
+                continue
+            clean = _public_action_record(record)
+            history_rows.append({
+                "username": username,
+                "status": clean.get("status", "review"),
+                "issue": clean.get("issue", ""),
+                "message": clean.get("message", ""),
+                "at": str(record.get("at") or "") if isinstance(record, dict) else "",
+                "click_phase": _public_click_phase(record),
+            })
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted,
-                "reusable_usernames": list(dict.fromkeys(reusable))}
+                "reusable_usernames": list(dict.fromkeys(reusable)),
+                "history_rows": history_rows}
 
     def _review_batches_file_for(self, owner, account, task):
         base = self._base_for(owner, account, task)
