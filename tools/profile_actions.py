@@ -2024,7 +2024,10 @@ class ActionRobot:
         with self.lock:
             if (owner, account, task) != (self.owner, self.account, self.task):
                 raise ValueError("Cancel must name the active owner, account and robot task.")
-            pending = self._pending_review(owner, account, task)
+            # A historical/recheck scan is READ-ONLY. Stopping that scan must
+            # never archive a separate action cohort just because it exists.
+            pending = (None if self.review_only else
+                       self._pending_review(owner, account, task))
             batch_id = pending.get("id") if pending else ""
             if ((data.get("batch_id") or "") != batch_id or
                     data.get("confirmation") != "cancel-batch:" + batch_id):
