@@ -3772,8 +3772,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <section class="igc-robot-section" id="igcActionRobotSection" aria-labelledby="igcActionLaneTitle">
 <div class="panel" id="igcAutoPanel">
 <div class="title" id="igcActionLaneTitle">Account Action Robots · Local Chrome</div>
-<p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
-<div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Unfollow · Not Following Back</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancel Sent Requests</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Protected Profiles</button><button type="button" class="btn" onclick="igcAutoChoose('audit')">🔎 Verify Followback (Optional)</button></div>
+<details id="igcAutoHelp" class="igc-auto-help"><summary>How Automation works · safety</summary><p>Prepare a batch and check protected profiles. Instagram opens in its own Chrome session; sign in there. Relationship-changing actions need approval and verified outcomes. Keep your PC on. Instagram restrictions can interrupt a job. Uncertain clicks are never replayed automatically.</p></details>
+<div class="btnrow igc-auto-mode-picker" id="igcAutoModePicker" role="group" aria-label="Select an automation task"><button type="button" class="btn igc-auto-mode" id="igcAutoModeUnfollow" data-robot-mode="unfollow" aria-pressed="true" onclick="igcAutoChoose('unfollow')">↗ Unfollow <small>Not following back</small></button><button type="button" class="btn igc-auto-mode" id="igcAutoModeCancel" data-robot-mode="cancel" aria-pressed="false" onclick="igcAutoChoose('cancel')">✕ Cancel requests <small>Outgoing pending</small></button><button type="button" class="btn igc-auto-mode" id="igcAutoModeProtected" data-robot-mode="protected" aria-pressed="false" onclick="igcAutoChoose('protected')">★ Protected <small>Do not action</small></button><button type="button" class="btn igc-auto-mode" id="igcAutoModeAudit" data-robot-mode="audit" aria-pressed="false" onclick="igcAutoChoose('audit')">◎ Followback audit <small>Read-only</small></button></div>
 <div id="igcAutoCurrentJob" class="igc-auto-current-job" data-state="idle" role="status" aria-live="polite">
  <span class="igc-auto-current-label">CURRENT AUTOMATION</span>
  <strong id="igcAutoCurrentJobTitle">No robot running</strong>
@@ -15056,6 +15056,12 @@ function igcAutoCurrentJob(){
    String(state.message||"")):"No active Chrome automation for this account.";
  if(cancel)cancel.disabled=!actionBridge||actionCommandPending||!same||
   status==="cancelling"||status==="cancelled"||!(running||state.review_batch?.id);
+ if(typeof window.igcAutomationSelectionRefresh==="function")
+  window.igcAutomationSelectionRefresh({
+   selected:mode,active:same&&!!state.running?state.task:null,
+   recent:same?state.task:null,status,running
+  });
+
 }
 window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
@@ -16131,6 +16137,145 @@ for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap"]){
 }
 if(actionBridge&&typeof setInterval==="function")
  setInterval(()=>{if(!document.hidden)window.igcAutoPoll()},5000);
+})();
+</script>
+<style id="igc-automation-workspace-ux">
+/* Automation-only, no changes to global themes or saved account state. */
+#page-automations #igcAutoPanel{min-width:0}
+#page-automations #igcAutoHelp{margin:8px 0 13px;padding:8px 11px;border:1px solid rgba(127,178,212,.23);border-radius:10px;color:var(--muted);font-size:.77rem}
+#page-automations #igcAutoHelp summary{cursor:pointer;color:#9fdbed;font-weight:800}
+#page-automations #igcAutoHelp p{line-height:1.5;margin:8px 0 2px}
+#page-automations .igc-auto-mode-picker{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 12px}
+#page-automations .igc-auto-mode-picker .igc-auto-mode{box-sizing:border-box;display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0;min-height:70px;white-space:normal!important;text-align:left;color:#e2f3ff!important;background:#11283d!important;border:1px solid rgba(133,192,225,.25)!important;border-radius:12px!important;padding:11px 13px!important;box-shadow:none!important;font-size:.9rem;line-height:1.25}
+#page-automations .igc-auto-mode small{display:block;color:#9ebbd0;font-size:.72rem;line-height:1.2;font-weight:500}
+#page-automations .igc-auto-mode-picker .igc-auto-mode[data-selected="true"]{background:linear-gradient(110deg,rgba(56,122,174,.45),rgba(17,62,98,.96))!important;border:2px solid #79e2ed!important;box-shadow:inset 4px 0 #79e2ed,0 0 0 2px rgba(120,224,238,.09)!important;color:#fff!important}
+#page-automations .igc-auto-mode[data-current="true"]:after{content:"● ACTIVE";color:#88e5bf;font-size:.64rem;letter-spacing:.08em;font-weight:850}
+#page-automations .igc-auto-context{display:flex;flex-wrap:wrap;gap:7px 11px;align-items:center;margin:0 0 11px;padding:9px 12px;border:1px solid rgba(113,179,215,.26);border-radius:10px;background:rgba(8,24,42,.65)}
+#page-automations .igc-auto-context-label{font-size:.66rem;letter-spacing:.11em;color:#92dfea;font-weight:850}
+#page-automations #igcAutoSelectedWorkspace{font-size:.84rem;color:#fff}
+#page-automations #igcAutoContextHint{font-size:.74rem;color:#aec7d9;flex:1 1 210px;text-align:right}
+#page-automations #igcAutoCurrentJob{margin:0 0 9px;padding:13px 15px;gap:5px}
+#page-automations #igcAutoCurrentJobTitle{font-size:1.04rem;line-height:1.25}
+#page-automations #igcAutoCurrentJobDetail{line-height:1.45;font-size:.81rem;overflow-wrap:anywhere}
+#page-automations #igcAutoTechnicalDetails{max-height:165px;overflow:auto;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.4 Consolas,monospace;color:#bed1e1}
+#page-automations #igcAutoDiagnostics summary{cursor:pointer;font-size:.72rem;color:#8ed4e8}
+#page-automations #igcAutoStatus{margin:0 0 9px;max-height:60px;overflow:auto;font-size:.75rem;line-height:1.4}
+#page-automations #igcAutoMetrics{margin:9px 0}
+#page-automations #igcAutoMetrics>span{min-height:30px;padding:5px 9px;font-size:.76rem}
+#page-automations .igc-auto-operations{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:11px;margin:12px 0}
+#page-automations .igc-auto-workcard{min-width:0;border:1px solid rgba(140,185,215,.24);border-radius:13px;background:rgba(8,21,37,.64);padding:13px}
+#page-automations .igc-auto-workcard-header{display:flex;align-items:center;gap:10px;margin:0 0 11px}
+#page-automations .igc-auto-workcard-header b{display:grid;place-items:center;width:28px;height:28px;border-radius:7px;background:rgba(104,191,225,.15);color:#a0e3eb;font-size:.8rem}
+#page-automations .igc-auto-workcard-header strong{display:block;font-size:.91rem;color:#f6faff}
+#page-automations .igc-auto-workcard-header small{display:block;color:#9bbbd3;font-size:.72rem;margin-top:2px}
+#page-automations #igcAutoTiming{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+#page-automations #igcAutoTiming label{display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:0;font-size:.74rem}
+#page-automations #igcAutoTiming input{box-sizing:border-box;width:100%!important;min-width:0}
+#page-automations #igcAutoTiming button{grid-column:1/-1;justify-self:end}
+#page-automations #igcAutoMainActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#page-automations #igcAutoMainActions .btn{min-height:40px;white-space:normal;justify-content:center;font-size:.82rem}
+#page-automations #igcAutoCancel:not(:disabled){border-color:rgba(234,149,162,.8)!important}
+#page-automations #igcAutoExtraTools{margin-top:12px;padding-top:8px;border-top:1px solid rgba(115,179,210,.2)}
+#page-automations #igcAutoExtraTools summary{cursor:pointer;color:#bad6e8;font-weight:800;font-size:.77rem}
+#page-automations .igc-auto-extra-buttons{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+#page-automations .igc-auto-extra-buttons .btn{font-size:.75rem;white-space:normal}
+#page-automations .igc-auto-results-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}
+#page-automations .igc-auto-results-bar strong{font-size:.95rem;color:#f4f8ff}
+#page-automations #igcAutoSearch{width:min(330px,100%);min-width:170px}
+#page-automations #igcAutoIssuesPanel>.title{display:none}
+#page-automations #igcAutoLiveStatus,#page-automations #igcAutoHistoricalSummary,#page-automations #igcAutoDeferredSummary{font-size:.76rem;overflow-wrap:anywhere}
+@media(max-width:1000px){#page-automations .igc-auto-mode-picker{grid-template-columns:repeat(2,minmax(0,1fr))}#page-automations .igc-auto-operations{grid-template-columns:1fr}}
+@media(max-width:560px){#page-automations #igcAutoTiming{grid-template-columns:repeat(2,minmax(0,1fr))}#page-automations .igc-auto-mode-picker .igc-auto-mode{padding:9px!important;min-height:64px}#page-automations #igcAutoContextHint{flex-basis:100%;text-align:left}}
+</style>
+<script id="igc-automation-workspace-runtime">
+(function(){
+"use strict";
+// Reorganize only the Automation controls; move existing nodes, not copies.
+// Existing handlers, saved batches and action admission logic remain intact.
+const el=id=>document.getElementById(id),root=el("igcAutoPanel");
+if(!root||!el("igcAutoModePicker")||!el("igcAutoRun"))return;
+const picker=el("igcAutoModePicker"),context=document.createElement("div");
+context.className="igc-auto-context";context.id="igcAutoWorkspaceContext";
+context.innerHTML='<span class="igc-auto-context-label">SELECTED</span><strong id="igcAutoSelectedWorkspace">Unfollow</strong><span id="igcAutoContextHint">Select a task and prepare a batch.</span>';
+picker.insertAdjacentElement("afterend",context);
+const state=el("igcAutoCurrentJob"),technical=document.createElement("details");
+technical.id="igcAutoDiagnostics";
+technical.innerHTML='<summary>Show technical error details</summary><pre id="igcAutoTechnicalDetails"></pre>';
+state.appendChild(technical);technical.hidden=true;
+const config=el("igcAutoTiming"),actions=el("igcAutoRun").parentElement,controls=document.createElement("div");
+controls.className="igc-auto-operations";controls.id="igcAutoOperations";
+const card=(num,title,subtitle)=>{
+ const section=document.createElement("section");
+ section.className="igc-auto-workcard";
+ const h=document.createElement("header");h.className="igc-auto-workcard-header";
+ const b=document.createElement("b");b.textContent=num;
+ const box=document.createElement("div");
+ const strong=document.createElement("strong");strong.textContent=title;
+ const small=document.createElement("small");small.textContent=subtitle;
+ box.append(strong,small);h.append(b,box);section.append(h);return section;
+};
+const configCard=card("01","Batch settings","Only the selected task");
+configCard.id="igcAutoConfigCard";configCard.append(config);
+const actionCard=card("02","Run & control","Cancel remains available during waits");
+actionCard.id="igcAutoControlsCard";
+const primary=document.createElement("div");primary.id="igcAutoMainActions";
+for(const id of ["igcAutoRun","igcAutoPause","igcAutoCancel","igcAutoResume"])
+ primary.append(el(id));
+actionCard.append(primary);
+const extra=document.createElement("details");extra.id="igcAutoExtraTools";
+const summary=document.createElement("summary");summary.textContent="More tools · reviews, re-audit and refresh";
+const extraButtons=document.createElement("div");extraButtons.className="igc-auto-extra-buttons";
+for(const button of [...actions.querySelectorAll("button")])extraButtons.append(button);
+extra.append(summary,extraButtons);actionCard.append(extra);
+actions.remove();controls.append(configCard,actionCard);
+el("igcAutoMetrics").insertAdjacentElement("afterend",controls);
+const search=el("igcAutoSearch"),results=document.createElement("div");
+results.className="igc-auto-results-bar";results.id="igcAutoResultsBar";
+const heading=document.createElement("strong");heading.textContent="Profile queue · status & action history";
+results.append(heading,search);
+const table=el("igcAutoRows")?.closest("table");
+if(table?.parentElement)table.parentElement.insertAdjacentElement("beforebegin",results);
+window.igcAutomationSelectionRefresh=function(view){
+ const selected=view?.selected||"unfollow",actual=view?.active||"";
+ const labels={unfollow:"Unfollow · Not following back",cancel:"Cancel sent requests",
+   protected:"Protected profiles",audit:"Followback audit · read-only"};
+ for(const button of picker.querySelectorAll("[data-robot-mode]")){
+  const mode=button.getAttribute("data-robot-mode"),isSelected=mode===selected;
+  button.dataset.selected=String(isSelected);
+  button.dataset.current=String(!!actual&&mode===actual);
+  button.setAttribute("aria-pressed",String(isSelected));
+ }
+ el("igcAutoSelectedWorkspace").textContent=labels[selected]||selected;
+ el("igcAutoContextHint").textContent=actual?
+   "Executing in Chrome: "+(labels[actual]||actual)+". The selected view may be different.":
+   view?.recent&&view?.status!=="idle"?
+   "Last Chrome run: "+(labels[view.recent]||view.recent)+" · "+String(view.status).toUpperCase():
+   selected==="audit"?"Read-only audit · no relationship clicks or ten-tab action wave":
+   "No active Chrome worker.";
+ const run=el("igcAutoRun");
+ if(run)run.textContent=selected==="audit"?"▶ Run read-only audit":
+  selected==="cancel"?"▶ Run cancellation batch":
+  selected==="protected"?"▶ Protected (no action)":"▶ Run unfollow batch";
+ configCard.hidden=selected==="protected";
+ const title=el("igcAutoCurrentJobTitle"),detail=el("igcAutoCurrentJobDetail");
+ if(title&&detail){
+  const text=detail.textContent||"",raw=text;
+  const at=raw.search(/(?:Call log\s*:|Page\.goto\s*:)/i);
+  technical.hidden=at<0;
+  el("igcAutoTechnicalDetails").textContent=at<0?"":raw;
+  if(at>=0)detail.textContent=raw.slice(0,at).trim()+
+   " · Chrome navigation timed out. Inspect technical details.";
+ }
+};
+const currentJob=el("igcAutoCurrentJob");
+if(typeof MutationObserver!=="undefined"){
+ new MutationObserver(()=>{
+  const raw=el("igcAutoStatus")?.textContent||"";
+  const technicalNode=el("igcAutoTechnicalDetails");
+  if(technicalNode&&!technical.hidden&&raw.includes("Call log"))technicalNode.textContent=raw;
+ }).observe(el("igcAutoStatus"),{subtree:true,childList:true,characterData:true});
+}
+window.igcAutoRender?.();
 })();
 </script>
 
