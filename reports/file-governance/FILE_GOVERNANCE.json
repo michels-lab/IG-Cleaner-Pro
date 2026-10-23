@@ -27,7 +27,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "de604f939a6d0cc37a7e4e9981004c4b33d87c12c1159cc111f2ac7534de74c6",
+  "inventory_fingerprint": "f431f392bda3353fd845e9fa9a5e9f9fd9fb3383533e69ef0e57a414e3327153",
   "evidence_fingerprint": "e6f2a7d616b324fbfbd17988b33b486c99e1dfdbb25ce0d059224f4b5b1f5599",
   "files": [
     {
@@ -266,7 +266,7 @@
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "664278857afb81a0af3d515a792d1b4de2125168"
+      "blob": "3ac5d15da0c9f4c41091f86d205a5cc94d2af9f3"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "87164d1cb55c7422d85225aaae15eb3e02d1c4e8"
+      "blob": "876c7a70681fef78282236318263f95ff8d728e5"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1302,7 +1302,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f128a6ca8432b2be402ece2b11df0fb4b4bfb783"
+      "blob": "f5cd2a88daee1a0d13fe5a31c8568176c645d525"
     },
     {
       "path": "release/distribution-manifest.json",
