@@ -71,21 +71,44 @@ async ({targetId, dryRun=false}) => {
     try { return typeof window.require==='function' ?
       (window.require(name)||{})[key]||'' : '' } catch(_) {return ''}
   };
-  const html=document.documentElement?.innerHTML||'';
-  const metaToken = (name) => {
-    const el=document.querySelector('input[name="'+name+'"]');
-    if(el&&el.value)return el.value;
-    const escaped=name.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&');
-    const match=html.match(new RegExp('name=["\\\']'+escaped+'["\\\'][^>]*value=["\\\']([^"\\\']+)'));
-    return match?match[1]:'';
+  const metaToken = name => document.querySelector('input[name="'+name+'"]')?.value||'';
+  const decodeTokens = html => {
+    const fbDtsg=(html.match(/"DTSGInitialData",\[\],\{"token":"([^"]+)"/)||[])[1]||
+      (html.match(/"dtsg":\{"token":"([^"]+)"/)||[])[1]||'';
+    const lsd=(html.match(/"LSD",\[\],\{"token":"([^"]+)"/)||[])[1]||'';
+    const revision=(html.match(/"client_revision":(\d+)/)||[])[1]||'';
+    return {fbDtsg,lsd,revision};
   };
-  const fbDtsg=metaToken('fb_dtsg')||moduleToken('DTSGInitialData')||moduleToken('DTSGInitData');
-  const lsd=metaToken('lsd')||moduleToken('LSD');
+  let fbDtsg=moduleToken('DTSGInitialData')||metaToken('fb_dtsg');
+  let lsd=moduleToken('LSD')||metaToken('lsd');
+  let revision=String(moduleToken('SiteData','client_revision')||'');
+  if(!fbDtsg||!lsd){
+    const found=decodeTokens(document.documentElement?.innerHTML||'');
+    fbDtsg=fbDtsg||found.fbDtsg;
+    lsd=lsd||found.lsd;
+    revision=revision||found.revision;
+  }
+  if(!fbDtsg||!lsd){
+    // User's source uses the authenticated Instagram Home HTML as its
+    // final read-only fallback. Never report the HTML or secrets to Python.
+    const preload=new AbortController(),timeout=setTimeout(()=>preload.abort(),10000);
+    try{
+      const r=await fetch('https://www.instagram.com/',{
+        method:'GET',credentials:'same-origin',redirect:'error',signal:preload.signal});
+      if(r.ok){
+        const found=decodeTokens(await r.text());
+        fbDtsg=fbDtsg||found.fbDtsg;
+        lsd=lsd||found.lsd;
+        revision=revision||found.revision;
+      }
+    }catch(_){}finally{clearTimeout(timeout)}
+  }
   const csrf=cookie('csrftoken'),owner=cookie('ds_user_id');
   if(!fbDtsg||!lsd||!csrf||!/^\d{1,24}$/.test(owner))
     return bad('SESSION_TOKENS_UNAVAILABLE');
-  if(dryRun) return bad('READY_TO_MUTATE');  // No POST, no WAL consumed.
-  const jazoest='2'+[...fbDtsg].map(c=>c.charCodeAt(0)).join('');
+  if(dryRun) return bad('READY_TO_MUTATE'); // No POST, no WAL consumed.
+  // Exact owner-supplied h(fbDtsg): prefix "2" + SUM of UTF-16 char codes.
+  const jazoest='2'+[...fbDtsg].reduce((sum,c)=>sum+c.charCodeAt(0),0);
   const form=new URLSearchParams({
     av:owner,__d:'www',__user:'0',__a:'1',__comet_req:'7',
     fb_dtsg:fbDtsg,jazoest,lsd,fb_api_caller_class:'RelayModern',
@@ -95,7 +118,6 @@ async ({targetId, dryRun=false}) => {
     server_timestamps:'true',doc_id:'27789106940691111'
   });
   try {
-    const revision=moduleToken('SiteData','client_revision');
     if(revision){form.set('__rev',String(revision));form.set('__spin_r',String(revision))}
   } catch(_) {}
   const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),15000);
