@@ -1,3 +1,9 @@
+## 2026-10-23 — GRANADA user-supplied Unfollow transport candidate
+
+- Follow owner-provided `Pasted text(3).txt` rather than treating Playwright Following selector clicks as success. New transport resolves exact target numeric ID via signed-in read-only following lookup, then makes at most one authenticated GraphQL `usePolarisUnfollowMutation` POST per owner-approved action after durable WAL. Fresh verified owner/target checks and independent read-only reload remain required to claim success.
+- No network credentials, cookies, token values or POST bodies escape the Chrome process. Unverified target lookup/tokens/GraphQL response block or require review; unknown action results never automatically replay. Cancel Pending flow unchanged.
+- Tests are offline fakes, **NOT actual Instagram success**. Preserve original 40-person batch, protected and uncertain histories; #172/#164 remain open. No new stable release until release gates and owner physical test.
+
 ## 2026-10-23 — GRANADA #41 P0 Windows saved action journal drift gate (source candidate)
 
 - Independent P0 safety fix for normal Windows robots: refuse action-phase click WAL and final outcome overwrite when the actual account/task journal diverges from the last worker snapshot, or becomes corrupt. Preserve existing snapshots and exact original approved saved cohorts; never replay uncertain clicks.
