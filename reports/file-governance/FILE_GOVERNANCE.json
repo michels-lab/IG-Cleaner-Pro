@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "b5d7e7149e5078798a56eff9123150e0f0211f5deea10841e1cf3fde1f3c1192",
-  "evidence_fingerprint": "66c6d57e9883d27e66ad2c7fc8c1be0ed1537d2948a166e752a7b2dca95d7185",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "a2cbb9c265a9ae098da1d9a64b4ee6ce5958aedf445e47ea2aead56ba3ad98fc",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -126,7 +124,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f4d36664be498a838e2cd4e4f77ac4f892fb30e3"
+      "blob": "5952998935ea685f468861f670b56ed31827f6c2"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -147,7 +145,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b8a8cbf71d695641575f62ce1fefc6bfdedc999c"
+      "blob": "95a2f79679d4a6e8975df9687a315b8c889363b1"
     },
     {
       "path": ".gitignore",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "5026363556fa5ee5469b38d019d12d550ee98df4"
+      "blob": "0032f90793a50ee4929ffe5a1c96bda713c54369"
     },
     {
       "path": "README.md",
@@ -1736,7 +1734,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c00dea4b3b95cdbd79217dd0d13e787e186b22ad"
+      "blob": "c89b6d55cb0db6e3c49d22674c5a4d58a241374f"
     },
     {
       "path": "tests/rls-contract.py",
@@ -2208,17 +2206,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "f5b4f768ce176c79",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "12 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release-docs-contract.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
