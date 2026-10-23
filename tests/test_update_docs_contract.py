@@ -60,7 +60,12 @@ class UpdateGuideContract(unittest.TestCase):
             [stable],
         )
         self.assertIn("Publication does not prove live Instagram Unfollow", readme)
-        self.assertIn(f"docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md", readme)
+        sync = (ROOT / "README_SYNC.md").read_text(encoding="utf-8")
+        self.assertIn(f"Current published stable: **{stable}**", sync,
+                      "Sync README may not advertise an obsolete stable release.")
+        self.assertIn(f"next reserved development version **{reserved} is not authorized", sync)
+        self.assertIn(f"https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/{stable}", sync)
+        self.assertIn("docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md", readme)
         self.assertIn("owner tests only officially published installers", readme)
         self.assertNotIn(
             f"**{reserved} — official stable GitHub release",
@@ -101,11 +106,13 @@ class UpdateGuideContract(unittest.TestCase):
         gate = DOCS_WORKFLOW.read_text(encoding="utf-8")
         for tracked_path in (
             "README.md",
+            "README_SYNC.md",
             "docs/UPDATE_AND_STATE_MIGRATION.md",
             "docs/PROFILE_COUNTS_ROBOT.md",
             "release/distribution-manifest.json",
             ".michelslab/release-request.json",
             "docs/GRANADA_40_V12058_STABLE_RECEIPT_2026-10-23.md",
+            "docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md",
             "tests/test_update_docs_contract.py",
             ".github/workflows/release-docs-contract.yml",
         ):
