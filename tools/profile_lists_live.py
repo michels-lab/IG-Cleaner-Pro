@@ -66,7 +66,7 @@ def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
               method:'GET',credentials:'same-origin',
               headers:{'X-IG-App-ID':'936619743392459','X-ASBD-ID':'129477',
                        'X-Requested-With':'XMLHttpRequest',Accept:'application/json'},
-              cache:'no-store'
+              cache:'no-store',signal:AbortSignal.timeout(20000)
             });
             if(!response.ok)return {error:'http_'+response.status};
             const body=await response.json();
@@ -76,6 +76,8 @@ def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
                     next:body.next_max_id??null,has_more:body.has_more??null};
           }catch{return {error:'read_failed'};}
         }""", {"kind": relation, "cursor": cursor})
+        # Never let a hanging browser GET make Cancel appear permanently stuck.
+        # Each network page is bounded to 20 seconds in the existing Chrome tab.
         if (not isinstance(packet, dict) or packet.get("error") or
                 packet.get("status") not in (None, "ok")):
             reason = packet.get("error") if isinstance(packet, dict) else "invalid_response"
