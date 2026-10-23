@@ -1,12 +1,12 @@
 {
   "version": "120.59",
   "tag": "v120.59",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.58",
   "owner_acceptance_note": "Owner supplied Pasted text(3).txt exact-ID GraphQL Unfollow now integrated into normal Windows robot with durable one-POST WAL and independent read-only verification, alongside corrected Run admission. PR #227 source gate passed six relevant exact-head workflows including installed Windows Chromium. Official v120.59 publishing REQUIRES fresh exact-request-commit Windows installer, Android production signed co-install/emulator, rendered visual, checksum/asset/feed gates. NO real owner Instagram mutation was performed by CI; #172/#164 remain open until physical owner test. Preserve original 40-cohort, protected targets and uncertain-click journals.",
   "requested_at": "2026-10-23",
@@ -25,5 +25,9 @@
     "commit": "401389c67e997c81ee5559d3a08989749adbcd62",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.58",
     "published_at": "2026-10-23T07:37:10Z"
-  }
+  },
+  "published_run": 39955452062,
+  "published_commit": "92d612377c2c8a6e56534465f86e3ddcfe86bc23",
+  "published_at": "2026-10-23T12:53:51Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.59"
 }
