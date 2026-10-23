@@ -166,7 +166,7 @@ class DurableClickIntentTests(unittest.TestCase):
                  patch("profile_actions.signed_in_handle", return_value="owner.name"):
                 with self.assertRaises(Interruption):
                     perform_visible_action(page,target,"unfollow","owner.name",
-                                           on_pre_click=power_lost)
+                                           use_reference_transport=False, on_pre_click=power_lost)
             self.assertEqual(page.header.clicker.clicked, 0)
             self.assertEqual(page.menu.clicker.clicked, 0)
             cold = self.make_robot(directory)
@@ -204,7 +204,7 @@ class DurableClickIntentTests(unittest.TestCase):
             with patch("profile_actions.challenge_detected",return_value=False), \
                  patch("profile_actions.signed_in_handle",return_value="owner.name"):
                 status,_ = perform_visible_action(page,target,"unfollow",
-                                                  "owner.name",on_pre_click=before_click)
+                                                  "owner.name",use_reference_transport=False, on_pre_click=before_click)
             self.assertEqual(status,"ok")
             self.assertEqual(phases, [
                 ("relationship_control",(0,0,0)),
@@ -228,7 +228,7 @@ class DurableClickIntentTests(unittest.TestCase):
             with patch("profile_actions.challenge_detected",return_value=False), \
                  patch("profile_actions.signed_in_handle",return_value="owner.name"):
                 status,_=perform_visible_action(page,target,"cancel","owner.name",
-                                                on_pre_click=save)
+                                                use_reference_transport=False, on_pre_click=save)
             self.assertEqual(status,"ok")
             self.assertEqual(phases,["relationship_control","cancel_request_confirmation"])
             self.assertEqual(journal[target]["click_intent"]["phases"],phases)
@@ -251,7 +251,7 @@ class DurableClickIntentTests(unittest.TestCase):
                  patch("profile_actions.signed_in_handle",return_value="owner.name"):
                 with self.assertRaises(Interruption):
                     perform_visible_action(page,target,"unfollow","owner.name",
-                        on_pre_click=lambda phase:
+                        use_reference_transport=False, on_pre_click=lambda phase:
                             robot._persist_action_click_intent(journal,path,target,phase))
             self.assertEqual(page.header.clicker.clicked,1)
             self.assertEqual(page.menu.clicker.clicked,1)
@@ -331,7 +331,7 @@ class DurableClickIntentTests(unittest.TestCase):
                  patch("profile_actions.CANCEL_NO_REQUEST_MIN_WAIT_MS",0):
                 status,_=perform_visible_action(
                     page,"target.user","cancel","owner.name",
-                    on_pre_click=lambda phase:self.fail("No click intent permitted"))
+                    use_reference_transport=False, on_pre_click=lambda phase:self.fail("No click intent permitted"))
             self.assertEqual(status,"already_not_requested")
             self.assertFalse(robot._base().exists())
 
@@ -348,7 +348,7 @@ class DurableClickIntentTests(unittest.TestCase):
                  patch("profile_actions.signed_in_handle",return_value="owner.name"):
                 with self.assertRaisesRegex(OSError,"disk full"):
                     perform_visible_action(page,target,"unfollow","owner.name",
-                                           on_pre_click=refuse)
+                                           use_reference_transport=False, on_pre_click=refuse)
             self.assertEqual(page.header.clicker.clicked,0)
             self.assertFalse(path.exists())
             self.assertEqual(journal,{})

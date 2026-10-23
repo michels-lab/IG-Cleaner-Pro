@@ -936,7 +936,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             result, details = perform_visible_action(
                 page, "test.target", "unfollow", "owner.name",
                 can_act=lambda name: name == "test.target",
-                preloaded=True, on_pre_click=pre_click)
+                preloaded=True, use_reference_transport=False, on_pre_click=pre_click)
             self.assertEqual(result, "review")
             self.assertIn(MISSING_RELATIONSHIP_CONTROL, details)
             self.assertIn("Structured lookup:", details)
@@ -953,7 +953,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             lookup.return_value = "STRUCTURED_SESSION_REQUIRED"
             result, details = perform_visible_action(
                 page, "test.target", "unfollow", "owner.name",
-                preloaded=True, on_pre_click=pre_click)
+                preloaded=True, use_reference_transport=False, on_pre_click=pre_click)
             self.assertEqual(result, "review")
             self.assertIn("not exposed", details)
             pre_click.assert_not_called()
@@ -962,7 +962,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             lookup.return_value = "STRUCTURED_RATE_LIMITED"
             result, details = perform_visible_action(
                 page, "test.target", "unfollow", "owner.name",
-                preloaded=True, on_pre_click=pre_click)
+                preloaded=True, use_reference_transport=False, on_pre_click=pre_click)
             self.assertEqual(result, "blocked")
             self.assertIn("403/429", details)
             pre_click.assert_not_called()
@@ -970,7 +970,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             lookup.reset_mock(return_value=True)
             result, details = perform_visible_action(
                 page, "test.target", "cancel", "owner.name",
-                preloaded=True, on_pre_click=pre_click)
+                preloaded=True, use_reference_transport=False, on_pre_click=pre_click)
             self.assertEqual(result, "review")
             lookup.assert_not_called()
             pre_click.assert_not_called()
