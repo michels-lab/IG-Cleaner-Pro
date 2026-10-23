@@ -98,9 +98,13 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  await ctx.window.igcAutoStart();
  assert.equal(calls.filter(c=>c.type==='start').length,3,'Partial HTML must reject an unfollow but allow optional audit');
  ctx.window.V119_HTML={partial:false};
+ p.owner_profile_visits=4; // owner checks are not Unfollow successes
  p.open_review_tabs=[{username:'needs.review',status:'review'},
                      {username:'pending.inspect',status:'checking'}];
  await ctx.window.igcAutoPoll();
+ assert(elements.igcAutoExecutionMetrics.children.some(c=>
+   c.textContent==='Owner identity checks (read-only): 4'),
+   'Identity fallback navigation count must be independently visible');
  assert.equal(elements.igcAutoOpenTabs.style.display,'block');
  assert.match(elements.igcAutoOpenTabs.textContent,/@needs.review/);
  assert(elements.igcAutoOpenTabs.textContent.includes('2/10'));
