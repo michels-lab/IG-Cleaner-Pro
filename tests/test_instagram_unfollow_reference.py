@@ -73,7 +73,10 @@ class ReferenceUnfollowTests(unittest.TestCase):
                      "MUTATION_UNCERTAIN"):
             with self.subTest(code=code):
                 page=FakePage(mutation={"code":code})
-                result=self.call(page)
+                # No fresh evidence: never infer success from an ambiguous
+                # mutation response. A separate test proves that an
+                # independently verified Follow state may rescue this case.
+                result=self.call(page, fresh=lambda *_:("review","Still Following"))
                 self.assertIn(result[0],("blocked","review"))
                 self.assertEqual([x[0] for x in page.steps],["GET","READY","WAL","POST"])
     def test_uncertain_response_can_only_be_saved_by_fresh_readonly_confirmation(self):
