@@ -185,6 +185,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Persisted prior-batch exclusions failed." }
+      - name: Offline owner-reference Unfollow, durable WAL and real Chromium acceptance
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Owner reference Unfollow and no-replay tests failed; refuse FINAL release." }
+          python -m unittest discover -s tests -p 'test_instagram_unfollow_chromium_e2e.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "One-POST exact-target real Chromium Unfollow regression failed; refuse FINAL release." }
+          node tests/owner-unfollow-transport.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Supplied-JavaScript Unfollow transport contract failed; refuse FINAL release." }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
