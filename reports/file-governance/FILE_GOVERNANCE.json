@@ -25,7 +25,7 @@
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "41ecfb6b2f2840620ada85654b088bfecdc8cc56b988c66e3b0f2dfa96af443f",
+  "inventory_fingerprint": "3a939331155b0c4ad58402ac89f7576a51d5a5f130fb992bdb5a5ad68b93c0e7",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "26556277cca0c0298dddb1a9e7abef7a48f37414"
+      "blob": "638d25ce4daefa165d5027298d8d05593ed35b81"
     },
     {
       "path": "README.md",
@@ -852,7 +852,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "f06a41c1551e885f7b2c3a200db1b954d16b2f27"
+      "blob": "bec98d755273c4c4bfa9488bcbd0d317ac591828"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1482,7 +1482,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a5cced590309462eaf3ff9ac045fe6d6a7147ca6"
+      "blob": "876d13fc7ba8169691b35c3eafdb765e8719fe21"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -1503,7 +1503,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7be70094ef02fe28b0171fabc5ccb06964572e9a"
+      "blob": "167f6389552e09a5732c1b58c04c6bd6600a750e"
     },
     {
       "path": "tests/branding-contract.py",
@@ -1762,7 +1762,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c8b552d674bd15d73c05d928f206b940222ef088"
+      "blob": "3ce07e4decfca8e5b75532e17fd179ae9b7a41b6"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -2077,7 +2077,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "64c93dbf616fc1092e6c4cfd6ccb4d9693560730"
+      "blob": "df7f03d4769fccecfa7e0ea9fa8a9cf0590471cd"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2091,7 +2091,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "067c3bc1fa60a21e35d60cc14a2167ed84059e40"
+      "blob": "f178c0ab8f4604f11cb20dc748919f2c14a62e04"
     },
     {
       "path": "tools/profile_counts_instagram.py",
