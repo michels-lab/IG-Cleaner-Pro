@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 307,
-  "classified_files_total": 303,
-  "docs_content_inspected": 60,
+  "tracked_files_total": 308,
+  "classified_files_total": 304,
+  "docs_content_inspected": 61,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 55,
+    "document": 56,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -23,10 +23,12 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "a32e1d0923fe3961e8e77aab5604cb5a4f001ce044f5b5b93f566233b9e26395",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "887f78acddc20a15c9eb9ead3ffa138169b284b1a81f51defddb9fc3a7746861",
+  "evidence_fingerprint": "b28b2154c64574474cfe7459361372ffbff28edff7b7975922ce2bdfc26867fc",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -852,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "876c7a70681fef78282236318263f95ff8d728e5"
+      "blob": "af6d06775099f89d4637a918366f141ea04ec962"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1140,6 +1142,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "c9983ec66c196a4bb70119b9d637f9948f7239b5"
+    },
+    {
+      "path": "docs/GRANADA_42_WINDOWS_START_ADMISSION_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "ad77f805cbcf6cd9f2edca397f06cc04d28042b0"
     },
     {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
@@ -1447,7 +1456,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ba32ec2bc14d1c9172818607d3b6022298b790c4"
+      "blob": "a5cced590309462eaf3ff9ac045fe6d6a7147ca6"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -2150,7 +2159,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "33c438a8f0d4ca13",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
