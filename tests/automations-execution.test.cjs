@@ -4,12 +4,13 @@ const source=fs.readFileSync(path.join(__dirname,'../desktop/ig_cleaner_pro_v120
 const script=source.match(/<script id="igc-automations-plan">([\s\S]*?)<\/script>/);
 assert(script,'Action script not found');
 const store=new Map(),calls=[],texts=[],opened=[];
-let batchFixture=null;
+let batchFixture=null, startFailure=null;
 const elements={};
 for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])elements[id]={
  children:[],replaceChildren(){this.children=[]},appendChild(node){this.children.push(node)}
 };
 for(const id of ['igcAutoStatus','igcAutoLiveStatus'])elements[id]={textContent:''};
+elements.igcAutoCommandFeedback={textContent:'',style:{display:'none'}};
 elements.igcAutoOpenTabs={textContent:'',style:{display:'none'}};
 for(const [id,value] of Object.entries({igcAutoSearch:'',igcAutoBatch:'2',igcAutoRest:'5',igcAutoGap:'5'}))elements[id]={value};
 elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elements.igcAutoResume={disabled:false};elements.igcAutoRun={disabled:false};
@@ -38,12 +39,15 @@ const mockFetch=async(url,options)=>{
  if(type==='review-batch')return {ok:true,json:async()=>({
     owner:context.owner,account:context.active,task:data.task,batch:batchFixture
  })};
+ if(type==='start'&&startFailure)return {ok:false,json:async()=>({error:startFailure})};
  if(type==='approve-batch'){
   const result={approved_usernames:['keep.me'],unresolved_usernames:['skip.me']};
   batchFixture=null;
   return {ok:true,json:async()=>result};
  }
- return {ok:true,json:async()=>type==='status'?p:{...p,message:'fixture action started'}};
+ return {ok:true,json:async()=>type==='status'?p:
+   type==='start'?{...p,message:p.status==='idle'?p.message:'fixture action started',status:p.status==='idle'?'idle':'starting',running:p.status!=='idle'}:
+   {...p,message:'fixture action started'}};
 };
 const localStorage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};
 const ctx={document,localStorage,
@@ -227,5 +231,59 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.match(elements.igcAutoBatchApprovalDetails.textContent,/verified no pending request \(no click\)/);
  assert.equal(elements.igcAutoApproveBatch.disabled,false,
   'Completed no-click result may be approved explicitly, never auto-Reviewed');
- console.log('Automations execution, live status, blocked Run, no-request evidence and batch approval: PASS');
+
+ // Screenshot-equivalent saved cohort: 10 targets, 2 unresolved and 8
+ // untouched must be sent to the Windows action endpoint, not read-only audit.
+ const ten=Array.from({length:10},(_,i)=>'saved.'+i);
+ batchFixture={id:'screen-ten',targets:ten,approved_at:null,
+   action_results:{'saved.0':{status:'review'},'saved.1':{status:'review'}},
+   recheck_results:{}};
+ p.running=false;p.status='paused';p.task='unfollow';p.owner=context.owner;
+ p.account=context.active;
+ ctx.window.igcAutoChoose('unfollow');
+ // Mode switch hydrates the account's saved size preference. Mimic the
+ // owner's CURRENT visible choice after switching the action lane.
+ elements.igcAutoBatch.value='10';
+ const startCount=calls.filter(c=>c.type==='start').length;
+ await ctx.window.igcAutoStart();
+ const submitted=calls.filter(c=>c.type==='start');
+ assert.equal(submitted.length,startCount+1,
+   'Screenshot-equivalent saved batch must reach real action start endpoint');
+ assert.equal(submitted.at(-1).data.batch_id,'screen-ten');
+ assert.equal(submitted.at(-1).data.targets.length,10);
+ assert.equal(submitted.at(-1).data.task,'unfollow');
+ assert(texts.at(-1).includes('8 targets are untouched or proven no-click'),
+   'Owner consent must distinguish 8 eligible versus 2 unresolved targets');
+ assert.match(elements.igcAutoCommandFeedback.textContent,/ACTION ACCEPTED/);
+ batchFixture=null;
+ // P0: An actual rejected Windows admission must remain visible after
+ // background poll/rerender instead of silently appearing as Queue prepared.
+ p.running=false;p.status='idle';p.owner=context.owner;p.account=context.active;
+ p.task='unfollow';p.message='No active Chrome worker';
+ // Use a deliberately untouched SAVED cohort, rather than the initial
+ // reviewed/skipped fixtures which have no remaining eligible targets.
+ batchFixture={id:'denied-cohort',targets:['refuse.me'],approved_at:null,
+   action_results:{},recheck_results:{}};
+ startFailure='The saved Windows cohort is blocked by a local journal conflict.';
+ ctx.window.igcAutoChoose('unfollow');
+ elements.igcAutoBatch.value='1';
+ await ctx.window.igcAutoStart();
+ assert.match(elements.igcAutoCommandFeedback.textContent,/ACTION BLOCKED/);
+ assert.match(elements.igcAutoCommandFeedback.textContent,/journal conflict/);
+ assert.equal(elements.igcAutoCommandFeedback.style.display,'block');
+ await ctx.window.igcAutoPoll();
+ ctx.window.igcAutoRender();
+ assert.match(elements.igcAutoCommandFeedback.textContent,/journal conflict/);
+ assert.match(elements.igcAutoStatus.textContent,/ACTION BLOCKED/);
+ assert.equal(elements.igcAutoRun.disabled,false,
+   'Rejected start can be retried by explicit click after resolving the issue');
+ startFailure=null;
+ // A backend returning a success HTTP status without an active worker
+ // must not be presented as "Unfollow started".
+ await ctx.window.igcAutoStart();
+ assert.match(elements.igcAutoCommandFeedback.textContent,/Windows did not start the robot/);
+ assert.match(elements.igcAutoCommandFeedback.textContent,/No active Chrome worker/);
+ assert(!/Queue prepared/.test(elements.igcAutoStatus.textContent));
+
+ console.log('Automations execution, visible Windows start failure, exact admission proof and batch approval: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
