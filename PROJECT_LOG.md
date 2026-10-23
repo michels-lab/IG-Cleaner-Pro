@@ -1,3 +1,9 @@
+## 2026-10-23 — GRANADA P0 FINAL publisher gate for owner-supplied Unfollow
+
+- Source-level release blocker found: the governed FINAL Windows release workflow ran the legacy DOM Chromium fixture but did **not** run the new owner-provided GraphQL Unfollow contract, real Chromium one-POST exact-ID/WAL fixture or supplied-JS verification. The preview CI exercised them, but an installed published EXE could have skipped the updated acceptance suite.
+- Release workflow now runs all three owner-reference tests **before** PyInstaller/Setup, aborts on any failure, and preserves existing legacy action, Windows install, signed Android, visual and SHA-256 gates. Negative contract in tests/release-publisher-contract.py prevents silent removal.
+- No user Instagram actions, original cohort/journal, credentials, protected accounts or other app repositories touched. Publication v120.59 only after exact-main and official full governed gates pass; real owner signed-in unfollow/cancel remains unconfirmed until user acceptance. No RC.
+
 ## 2026-10-23 — GRANADA user-supplied Unfollow transport candidate
 
 - Follow owner-provided `Pasted text(3).txt` rather than treating Playwright Following selector clicks as success. New transport resolves exact target numeric ID via signed-in read-only following lookup, then makes at most one authenticated GraphQL `usePolarisUnfollowMutation` POST per owner-approved action after durable WAL. Fresh verified owner/target checks and independent read-only reload remain required to claim success.

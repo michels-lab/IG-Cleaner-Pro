@@ -48,6 +48,8 @@ on:
       - 'tools/test_windows_installer.ps1'
       - 'tests/windows-installer-contract.py'
       - 'release/distribution-manifest.json'
+      - '.github/workflows/release.yml'
+      - 'tests/release-publisher-contract.py'
       - 'tests/chrome-companion.test.cjs'
       - '.github/workflows/profile-counts-windows-preview.yml'
       - '.michelslab/release-request.json'
@@ -96,6 +98,8 @@ on:
       - 'tools/test_windows_installer.ps1'
       - 'tests/windows-installer-contract.py'
       - 'release/distribution-manifest.json'
+      - '.github/workflows/release.yml'
+      - 'tests/release-publisher-contract.py'
       - 'tests/chrome-companion.test.cjs'
       - '.github/workflows/profile-counts-windows-preview.yml'
 
