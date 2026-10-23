@@ -285,5 +285,22 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.match(elements.igcAutoCommandFeedback.textContent,/No active Chrome worker/);
  assert(!/Queue prepared/.test(elements.igcAutoStatus.textContent));
 
+ // P0: Cancelling an old PAUSED job is distinct from Pause/Resume.
+ // The current backend task, not the currently selected queue tab,
+ // must be sent with the exact saved cohort ID and explicit consent.
+ p.status='paused';p.running=false;p.task='cancel';
+ batchFixture={id:'old-cancel',targets:['request.one'],approved_at:null,
+   action_results:{'request.one':{status:'review'}},recheck_results:{}};
+ p.review_batch=batchFixture; // Status API exposes the authoritative saved cohort.
+ ctx.window.igcAutoChoose('unfollow');
+ await ctx.window.igcAutoPoll();
+ await ctx.window.igcAutoCancel();
+ const cancellation=calls.filter(c=>c.type==='cancel-batch').at(-1);
+ assert(cancellation,'Cancel batch must call the real local Windows endpoint');
+ assert.equal(cancellation.data.task,'cancel','Use actual running/paused task, not selected Unfollow view');
+ assert.equal(cancellation.data.batch_id,'old-cancel');
+ assert.equal(cancellation.data.confirmation,'cancel-batch:old-cancel');
+ assert(texts.some(t=>t.includes('WITHOUT marking any profile Reviewed')),
+   'Cancellation requires informed owner consent; never silently mark all Reviewed');
  console.log('Automations execution, visible Windows start failure, exact admission proof and batch approval: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});

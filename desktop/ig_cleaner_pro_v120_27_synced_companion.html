@@ -3774,6 +3774,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="title" id="igcActionLaneTitle">Account Action Robots · Local Chrome</div>
 <p class="note">Prepare a batch, check protected profiles, and choose Run. Instagram opens in Chrome; sign in there. Each relationship-changing action requires your approval and individual verification. Keep your PC on; Instagram restrictions may interrupt the robot.</p>
 <div class="btnrow"><button type="button" class="btn primary" onclick="igcAutoChoose('unfollow')">Unfollow · Not Following Back</button><button type="button" class="btn" onclick="igcAutoChoose('cancel')">Cancel Sent Requests</button><button type="button" class="btn purple" onclick="igcAutoChoose('protected')">★ Protected Profiles</button><button type="button" class="btn" onclick="igcAutoChoose('audit')">🔎 Verify Followback (Optional)</button></div>
+<div id="igcAutoCurrentJob" class="igc-auto-current-job" data-state="idle" role="status" aria-live="polite">
+ <span class="igc-auto-current-label">CURRENT AUTOMATION</span>
+ <strong id="igcAutoCurrentJobTitle">No robot running</strong>
+ <span id="igcAutoCurrentJobDetail">Choose a robot and prepare an approved batch.</span>
+</div>
 <div id="igcAutoStatus" class="note" role="status" aria-live="polite">Preparing queue...</div>
 <div class="igc-counts-stats" id="igcAutoMetrics" aria-live="polite"></div>
 <div class="btnrow" id="igcAutoTiming">
@@ -3785,6 +3790,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="btnrow">
 <button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Run Selected Batch</button>
 <button class="btn orange" id="igcAutoPause" type="button" onclick="igcAutoPause()">⏸ Pause</button>
+<button class="btn" id="igcAutoCancel" type="button" onclick="igcAutoCancel()" aria-label="Cancel current robot batch and preserve saved results">✕ Cancel batch</button>
 <button class="btn" id="igcAutoResume" type="button" onclick="igcAutoContinue()">▶ Resume</button>
 <button class="btn" type="button" onclick="igcAutoClearSkipped()">↻ Clear skips</button>
 <button class="btn" type="button" onclick="igcAutoOpenPendingReviewBatch()">↗ Open next Pending review batch</button>
@@ -3796,9 +3802,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
-  <div class="title">Is this batch OK?</div>
+  <div class="title">Batch results · owner confirmation</div>
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
   <div class="btnrow">
+    <button class="btn primary" id="igcAutoShowBatchReview" type="button" onclick="igcAutoShowBatchReview()">Review exact profiles</button>
     <button class="btn green" id="igcAutoApproveBatch" type="button" onclick="igcAutoApproveBatch()">✓ Mark batch reviewed</button>
     <button class="btn orange" id="igcAutoDeferProtected" type="button" onclick="igcAutoDeferProtectedBatch()" style="display:none">↷ Archive protected batch (not Reviewed)</button>
     <button class="btn orange" id="igcAutoReplanSize" type="button" onclick="igcAutoReplanSavedBatch()" style="display:none">↷ Replan unfinished profiles · keep everyone</button>
@@ -3835,7 +3842,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <thead><tr><th style="width:20%">Profile</th><th style="width:57%">Reason / Result</th><th style="width:23%">Actions</th></tr></thead>
 <tbody id="igcAutoIssueRows"></tbody></table></div>
 </div></details>
-<div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
+<div style="overflow:auto;max-height:500px;margin-top:10px"><table class="igc-counts-table" style="width:100%;text-align:left"><thead><tr><th>Profile</th><th>Status</th><th>Action date / time</th><th>Action</th></tr></thead><tbody id="igcAutoRows"></tbody></table></div>
 <div class="btnrow" style="align-items:center;gap:8px;margin-top:8px">
  <button class="btn" type="button" onclick="igcAutoPageMove(-1)">← Previous</button>
  <span class="note" id="igcAutoPageStatus" role="status" aria-live="polite">Page 1</span>
@@ -14909,6 +14916,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <style id="igc-automations-metric-layout">
 #igcAutoMetrics,#igcAutoExecutionMetrics{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:12px 0}
 #igcAutoMetrics>span,#igcAutoExecutionMetrics>span{display:inline-flex;align-items:center;white-space:normal;overflow-wrap:anywhere;min-height:34px;padding:7px 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);line-height:1.45}
+.igc-auto-current-job{display:flex;flex-direction:column;gap:5px;background:linear-gradient(110deg,#152b45,#0d1b2e);border:1px solid #4c8dbd;border-left:5px solid #69c9ed;border-radius:14px;padding:15px 18px;margin:12px 0}
+.igc-auto-current-label{font-size:11px;letter-spacing:.12em;color:#8adfff;font-weight:800}
+.igc-auto-current-job strong{font-size:20px;color:#f0f7ff}
+.igc-auto-current-job span:last-child{color:#c2d4e3;line-height:1.5}
+.igc-auto-current-job[data-state="waiting"]{border-left-color:#f8c870}
+.igc-auto-current-job[data-state="cancelling"],.igc-auto-current-job[data-state="blocked"]{border-left-color:#f28c85}
+.igc-auto-current-job[data-state="complete"],.igc-auto-current-job[data-state="cancelled"]{border-left-color:#59d1a0}
+#igcAutoCancel{background:#422234;color:#ffdce5;border:1px solid #ab6070;font-weight:800}
+#igcAutoCancel:not(:disabled):hover{background:#682d41}
+#igcAutoCancel:disabled{opacity:.45}
+.igc-auto-review-dialog{max-width:min(860px,calc(100vw - 26px));width:100%;max-height:85dvh;overflow:auto;background:#102034;color:#f0f6ff;border:1px solid #5c91c2;border-radius:18px;padding:20px;box-shadow:0 35px 100px #000b}
+.igc-auto-review-dialog::backdrop{background:rgba(1,9,19,.8)}
+.igc-auto-review-dialog h2{font-size:21px;margin:0 0 10px}
+.igc-auto-review-dialog table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.igc-auto-review-dialog td,.igc-auto-review-dialog th{border-bottom:1px solid #29415b;padding:10px 8px;text-align:left;vertical-align:middle}
+.igc-auto-review-dialog td{overflow-wrap:anywhere}
+.igc-auto-review-dialog .igc-auto-review-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 </style>
 <script id="igc-automations-plan">
 (function(){
@@ -15015,6 +15039,24 @@ window.igcAutoOpenPendingReviewBatch=function(){
 function setStatus(text){
  const el=document.getElementById("igcAutoStatus");if(el)el.textContent=text;
 }
+function igcAutoCurrentJob(){
+ const card=document.getElementById("igcAutoCurrentJob"),name=document.getElementById("igcAutoCurrentJobTitle"),
+  detail=document.getElementById("igcAutoCurrentJobDetail"),cancel=document.getElementById("igcAutoCancel");
+ const owner=actionOwner(),state=actionState;
+ const same=!!(state?.task&&state.owner===owner.owner&&state.account===owner.account);
+ const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Followback Audit"};
+ const running=same&&!!state.running,task=same?state.task:"",status=same?String(state.status||"idle"):"idle";
+ if(card&&card.dataset)card.dataset.state=status;
+ if(name)name.textContent=task?(labels[task]||task)+" · "+status.toUpperCase():
+  "No active robot · "+(labels[mode]||"Choose a task");
+ if(detail)detail.textContent=task?
+  ("Viewing "+(labels[mode]||mode)+". "+
+   (running?"Finish or cancel the current worker before starting another task. ":"You can change tasks now. ")+
+   (state.wait_seconds?"Next visit in "+state.wait_seconds+" seconds. ":"")+
+   String(state.message||"")):"No active Chrome automation for this account.";
+ if(cancel)cancel.disabled=!actionBridge||actionCommandPending||!same||
+  status==="cancelling"||status==="cancelled"||!(running||state.review_batch?.id);
+}
 window.igcAutoChoose=function(next){
  if(!choices.includes(next))return;
  mode=next;actionPage=1;
@@ -15023,6 +15065,7 @@ window.igcAutoChoose=function(next){
  if(issuesTask&&next!=="protected")issuesTask.value=next;
  window.igcAutoRender();
  window.igcAutoRenderIssues();
+ igcAutoCurrentJob();
 };
 window.igcAutoSkip=function(kind,user){
  refreshScope();
@@ -15094,6 +15137,8 @@ window.igcAutoSaveTiming=function(){
 const robotMatch=/^igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&igc-developer=1)?$/.exec((window.location?.hash||"").replace(/^#/,""));
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
+const igcAutoHistoryCache=new Map();
+const igcAutoModalSeen=new Set();
 let actionCommandPending=false,actionCommandFeedback=null;
 function reportActionCommand(phase,message,failed=false){
  actionCommandFeedback={phase,message:String(message||"Unknown result"),failed,
@@ -15235,6 +15280,7 @@ async function refreshActionHistoryForStart(task){
  const names=result.attempted_usernames.map(norm);
  if(names.some(u=>!u))throw Error("Robot history contains an invalid username. No actions started.");
  localStorage.setItem(actionAttemptedKey(task),JSON.stringify([...new Set(names)]));
+ if(Array.isArray(result.history_rows))igcAutoHistoryCache.set(scope()+"__"+task,result.history_rows);
  window.igcAutoReusable=Array.isArray(result.reusable_usernames)?
    result.reusable_usernames.map(norm).filter(Boolean):[];
  return result;
@@ -15357,6 +15403,28 @@ window.igcAutoPause=async function(){
   actionState=result;await window.igcAutoPoll();
  }catch(e){setStatus("Could not pause: "+e.message)}
 };
+window.igcAutoCancel=async function(){
+ if(!actionBridge)return;
+ try{
+  const state=await requestAction("status"),owner=actionOwner();
+  if(!state.task||state.owner!==owner.owner||state.account!==owner.account)
+   throw Error("There is no current task attached to this Instagram workspace.");
+  const id=state.review_only||state.history_recheck?"":String(state.review_batch?.id||"");
+  if(!state.running&&!id)throw Error("No active or unfinished batch is available to cancel.");
+  const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Audit"};
+  if(!window.confirm("CANCEL "+String(labels[state.task]||state.task).toUpperCase()+
+     " BATCH?\n\nStop all future visits and archive this unfinished cohort WITHOUT marking any profile Reviewed."+
+     "\nAn in-flight Instagram action MAY finish; original attempts, uncertain clicks and saved protections remain."+
+     "\nUntouched targets remain eligible for another explicitly approved batch. Continue?"))return;
+  actionState=await requestAction("cancel-batch",{...owner,task:state.task,
+   batch_id:id,confirmation:"cancel-batch:"+id});
+  setStatus(actionState.running?
+    "Cancellation sent. The current operation may still finish; no next target will start.":
+    "Batch cancelled; action evidence preserved. Another task may now start.");
+  igcAutoCurrentJob();
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Could not cancel this batch: "+e.message)}
+};
 window.igcAutoContinue=async function(){
  try{
   const state=await requestAction("status");
@@ -15405,10 +15473,19 @@ window.igcAutoPoll=async function(){
   }
   window.igcAutoRenderIssues();
   if(["unfollow","cancel","audit"].includes(mode)){
+   try{
+    const history=await requestAction("history",{...ctx,task:mode});
+    if(history.owner===ctx.owner&&history.account===ctx.account&&history.task===mode&&
+       Array.isArray(history.history_rows))
+     igcAutoHistoryCache.set(scope()+"__"+mode,history.history_rows);
+   }catch{} // Display old evidence but never authorize actions from this cached view.
+  }
+  if(["unfollow","cancel","audit"].includes(mode)){
    const reviewed=await requestAction("review-batch",{...ctx,task:mode});
    actionBatchReview=reviewed.owner===ctx.owner&&reviewed.account===ctx.account?reviewed.batch:null;
   }else actionBatchReview=null;
   window.igcAutoRenderBatchApproval();
+  igcAutoMaybePromptBatchReview(state);
   const deferredLine=document.getElementById("igcAutoDeferredSummary");
   if(deferredLine&&["unfollow","cancel","audit"].includes(mode)){
    try{
@@ -15495,6 +15572,7 @@ window.igcAutoPoll=async function(){
      open.map(t=>"@"+String(t.username||"")+" — "+String(t.status||"checking")).join(" · ")+
      ". Only confirmed actions close automatically. Pause closes Chrome."): "";
   }
+  igcAutoCurrentJob();
   const pause=document.getElementById("igcAutoPause"),resume=document.getElementById("igcAutoResume");
   if(pause)pause.disabled=!state.running;
   if(resume)resume.disabled=state.running||state.review_only||authBlocked||!["paused","blocked","review","error"].includes(state.status);
@@ -15642,6 +15720,7 @@ window.igcAutoRender=function(){
  refreshScope();igcAutoHydrateTiming();
  const q=(document.getElementById("igcAutoSearch")?.value||"").trim().toLowerCase().replace(/^@/,"");
  const all=inputs(),list=all.filter(r=>r.username.includes(q));
+ igcAutoCurrentJob();
  const attempted=mode==="protected"?new Set():priorAttempts(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
@@ -15667,7 +15746,7 @@ window.igcAutoRender=function(){
   const authChallenge=liveRobot&&actionState.status==="blocked"&&
     /recaptcha|challenge|security check|verification|identity/i.test(actionState.message||"");
   const run=document.getElementById("igcAutoRun");
-  if(run)run.disabled=actionCommandPending||mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge;
+  if(run)run.disabled=actionCommandPending||mode==="protected"||!actionBridge||!!actionState?.running||!!authChallenge||actionState?.status==="cancelling";
   if(liveRobot){
    const batchId=actionState.review_batch?.id;
    setStatus("ROBOT · "+String(actionState.task).toUpperCase()+" · "+
@@ -15684,21 +15763,28 @@ window.igcAutoRender=function(){
  renderActionCommandFeedback();
  root.replaceChildren();
  const visible=list.slice((actionPage-1)*perPage,actionPage*perPage);
- if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=3;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
+ const journalRows=new Map((igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
+ if(!visible.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=4;td.textContent="No profiles match this filter.";tr.appendChild(td);root.appendChild(tr);return}
  for(const item of visible){
-  const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),actions=document.createElement("td");
+  const tr=document.createElement("tr"),u=document.createElement("td"),status=document.createElement("td"),when=document.createElement("td"),actions=document.createElement("td");
   const link=document.createElement("a");link.href="https://www.instagram.com/"+encodeURIComponent(item.username)+"/";
   link.target="_blank";link.rel="noopener noreferrer";link.textContent="@"+item.username;u.appendChild(link);
   const protectedNow=isProtected(item.kind,item.username),skipped=skips[item.kind].has(item.username);
   const live=actionState?.task===item.kind?((actionState.rows||[]).find(x=>x.username===item.username)||{}):{};
+  const history=journalRows.get(item.username)||{},evidence=live.at?live:history;
+  const at=String(evidence.at||""),date=at?new Date(at):null;
+  when.textContent=date&&!Number.isNaN(date.valueOf())?date.toLocaleString():"—";
+  when.title=at?"Windows journal timestamp: "+at:"No saved action timestamp; no action confirmed.";
+  const latest=live.status&&live.status!=="pending"?live:history;
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
-     live.status==="already_not_following"?"✓ Already not following · no action needed":
-      live.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
-     live.audit_relation==="follows_you"?"✓ Follows you (verified)":
-     live.audit_relation==="not_following"?"✓ Not following you (verified)":
-     attempted.has(item.username)?"Already attempted · inspect journal":
-     live.status==="ok"?"✓ Completed":
-     live.status&&live.status!=="pending"?(live.status+": "+live.message):"Not reviewed";
+     latest.status==="already_not_following"?"✓ Already not following · no action clicked":
+     latest.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
+     latest.audit_relation==="follows_you"?"✓ Follows you (verified)":
+     latest.audit_relation==="not_following"?"✓ Not following you (verified)":
+     latest.status==="ok"?"✓ Action confirmed by saved verification":
+     ["review","error","blocked"].includes(latest.status)?"⚠ Review saved action · "+String(latest.message||"Inspect journal").slice(0,100):
+     attempted.has(item.username)?"Previous attempt · outcome needs inspection":
+     latest.status&&latest.status!=="pending"?(latest.status+": "+(latest.message||"")):"Not reviewed";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
   protect.textContent=protectedNow?"Remove protection":"★ Protect / Favorite";
   protect.addEventListener("click",()=>window.igcAutoProtect(item.kind,item.username));
@@ -15708,8 +15794,87 @@ window.igcAutoRender=function(){
    skip.textContent=skipped?"Skipped":"Skip this time";skip.disabled=skipped||protectedNow;
    skip.addEventListener("click",()=>window.igcAutoSkip(item.kind,item.username));actions.appendChild(skip);
   }
-  tr.appendChild(u);tr.appendChild(status);tr.appendChild(actions);root.appendChild(tr);
+  tr.appendChild(u);tr.appendChild(status);tr.appendChild(when);tr.appendChild(actions);root.appendChild(tr);
  }
+};
+function igcAutoMaybePromptBatchReview(state){
+ // Modal support is optional in test/embedded hosts. Never block status
+ // polling or the owner's Pause/Cancel controls when dialogs are absent.
+ if(typeof HTMLDialogElement==="undefined")return;
+ if(!actionBatchReview||state?.running||state?.task!==mode||
+    state.owner!==actionOwner().owner||state.account!==actionOwner().account||
+    !["complete","partial","review"].includes(String(state.status)))return;
+ const key="igc_robot_batch_prompt_v1__"+scope()+"__"+mode+"__"+actionBatchReview.id;
+ if(igcAutoModalSeen.has(key))return;
+ try{if(sessionStorage.getItem(key))return;}catch{}
+ const results=actionBatchReview.action_results||{};
+ const hasEvidence=(actionBatchReview.targets||[]).some(u=>results[u]?.status&&results[u].status!=="pending");
+ if(!hasEvidence)return;
+ igcAutoModalSeen.add(key);
+ try{sessionStorage.setItem(key,"shown");}catch{}
+ window.igcAutoShowBatchReview();
+}
+window.igcAutoShowBatchReview=function(){
+ const batch=actionBatchReview;
+ if(!batch||actionState?.running)return;
+ const old=document.getElementById("igcAutoReviewDialog");
+ if(old){old.close();old.remove();}
+ const dialog=document.createElement("dialog");
+ dialog.id="igcAutoReviewDialog";dialog.className="igc-auto-review-dialog";
+ const h=document.createElement("h2");h.textContent="Check this batch before confirming";dialog.append(h);
+ const o=igcAutoBatchOutcomes();
+ const summary=document.createElement("p");summary.className="note";
+ summary.textContent=batch.targets.length+" selected profiles · "+
+   o.confirmed.length+" verified changed · "+o.already.length+
+   " already absent (no click) · "+o.issues.length+" unresolved · "+
+   o.unchecked.length+" untouched. Check each actual result. No uncertain click will be repeated.";
+ dialog.append(summary);
+ const wrap=document.createElement("div");wrap.style.cssText="max-height:48vh;overflow:auto";
+ const table=document.createElement("table"),thead=document.createElement("thead"),head=document.createElement("tr");
+ for(const title of ["Profile","Saved result","Recorded (local)","Inspect"]){
+  const th=document.createElement("th");th.textContent=title;head.append(th);
+ }
+ thead.append(head);table.append(thead);
+ const tbody=document.createElement("tbody"),hist=new Map(
+    (igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
+ for(const username of batch.targets){
+  const row=batch.recheck_results?.[username]||batch.action_results?.[username]||{};
+  const recent=hist.get(norm(username))||{};
+  const tr=document.createElement("tr");
+  const profile=document.createElement("td");profile.textContent="@"+username;
+  const status=document.createElement("td");
+  status.textContent=(row.status||"pending")+" · "+String(row.message||"No verified action result.").slice(0,140);
+  const td=document.createElement("td");
+  const date=new Date(row.at||recent.at||"");
+  td.textContent=Number.isNaN(date.valueOf())?"—":date.toLocaleString();
+  const action=document.createElement("td"),btn=document.createElement("button");
+  btn.type="button";btn.className="btn";btn.textContent="Open ↗";
+  btn.addEventListener("click",()=>window.igcAutoOpenProfile(username,mode));
+  action.append(btn);
+  tr.append(profile,status,td,action);tbody.append(tr);
+ }
+ table.append(tbody);wrap.append(table);dialog.append(wrap);
+ const bar=document.createElement("div");bar.className="igc-auto-review-buttons";
+ const confirm=document.createElement("button");confirm.type="button";confirm.className="btn green";
+ confirm.textContent="✓ Results look correct · approve verified";
+ confirm.disabled=o.unchecked.length>0;
+ confirm.addEventListener("click",async()=>{
+  await window.igcAutoApproveBatch();
+  if(!actionBatchReview&&dialog.open)dialog.close();
+ });
+ const inspect=document.createElement("button");inspect.type="button";inspect.className="btn";
+ inspect.textContent="↻ Reopen issues (manual)";
+ inspect.addEventListener("click",()=>{
+  window.igcAutoOpenBatchIssues(); // Read-only Chrome links; no re-click
+  dialog.close();
+ });
+ const later=document.createElement("button");later.type="button";later.className="btn";
+ later.textContent="Review later";later.addEventListener("click",()=>dialog.close());
+ bar.append(confirm,inspect,later);dialog.append(bar);
+ document.body.append(dialog);
+ dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+ if(typeof dialog.showModal==="function")dialog.showModal();
+ else dialog.setAttribute("open","");
 };
 function igcAutoBatchOutcomes(){
  const b=actionBatchReview;if(!b)return {confirmed:[],already:[],issues:[],unchecked:[]};
@@ -15758,6 +15923,7 @@ window.igcAutoRenderBatchApproval=function(){
    replan.textContent="↷ Use "+chosenSize+" from unfinished "+count+" · keep remaining";}
   const defer=document.getElementById("igcAutoDeferProtected");
   if(defer){defer.style.display=blocked.length?"inline-flex":"none";defer.disabled=busy;}
+  const show=document.getElementById("igcAutoShowBatchReview");if(show)show.disabled=busy;
   const approve=document.getElementById("igcAutoApproveBatch");
   if(approve)approve.disabled=busy||outcome.unchecked.length>0;
   const recheck=document.getElementById("igcAutoRecheckBatch");
