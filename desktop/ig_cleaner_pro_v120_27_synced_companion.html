@@ -15110,10 +15110,14 @@ function renderActionCommandFeedback(){
  node.textContent=(item.failed?"ACTION BLOCKED · ":"ACTION "+item.phase.toUpperCase()+" · ")+item.message;
  // Show an actual already-running Windows job before an unrelated rejected
  // second Start. Keep the failed request visible in the separate feedback box.
- if(item.failed && !(actionState?.running &&
-    actionState.owner===actionOwner().owner &&
-    actionState.account===actionOwner().account &&
-    actionState.task===mode))setStatus(node.textContent);
+ // A genuine current Chrome auth/security block also takes precedence
+ // over an older failed admission; both facts remain in separate panels.
+ const live=actionState?.owner===actionOwner().owner &&
+    actionState?.account===actionOwner().account && actionState?.task===mode;
+ const authBlock=live && actionState.status==="blocked" &&
+    /recaptcha|challenge|security check|verification|identity/i.test(actionState.message||"");
+ if(item.failed && !(live && actionState.running) && !authBlock)
+  setStatus(node.textContent);
 }
 function confirmActionStartResponse(value,requested){
  // A 200 OK JSON response is not proof that the Chrome worker started.
