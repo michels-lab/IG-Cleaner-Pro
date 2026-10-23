@@ -27,7 +27,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "f431f392bda3353fd845e9fa9a5e9f9fd9fb3383533e69ef0e57a414e3327153",
+  "inventory_fingerprint": "63419f85c92f0c0e3e886a529ed71a0c25b36fbfa9dfac3e05fc368fe2ec090f",
   "evidence_fingerprint": "e6f2a7d616b324fbfbd17988b33b486c99e1dfdbb25ce0d059224f4b5b1f5599",
   "files": [
     {
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "d9c0ac460e810f8388154956502d349fe0511e00"
+      "blob": "5a2e63abd2fe1c03cdeba1ba3447d19edf1c0d56"
     },
     {
       "path": "AGENTS.md",
