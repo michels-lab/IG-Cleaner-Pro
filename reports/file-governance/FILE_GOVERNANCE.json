@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 319,
-  "classified_files_total": 315,
+  "tracked_files_total": 320,
+  "classified_files_total": 316,
   "docs_content_inspected": 66,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,14 +18,14 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 74,
+    "test": 75,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "7b2f34c7151908f119a77990e7e26bcf1af68cf0a68e53432b4aeeecfbb453f0",
+  "inventory_fingerprint": "b1444c27179118b89c5e55c5f972772598768f9777b200a315ded9622772b94f",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -117,14 +117,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "c6cb60df58d7db25474824cacd5ca7b312bd058d"
+      "blob": "bec792c1bfddc8ce25975367240f355260b999cb"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "1a126b5c293253ad7cc8aff2faf38aa28cc323bb"
+      "blob": "17e1632f48b22d9492ab295ef2556afbf35c7d71"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -145,7 +145,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "3b597ac033e85b4f5de68325ba0f2330d0e84079"
+      "blob": "4bbde64cbc60dd33f7da86b1962838debc8ef59f"
     },
     {
       "path": ".gitignore",
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "0b967c40fa2dda78eef5b5f8a062d14c1ba5cae7"
+      "blob": "391666488faa56cc7a796f1f4093d7c486a492df"
     },
     {
       "path": "README.md",
@@ -852,7 +852,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "1cdc85e5c3872d32ead1a901ca0fd2d754fbdd82"
+      "blob": "95884e953655afb224c1198687e24692aa212c03"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1489,7 +1489,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "12592e9535cd488e2744bc4689b0498e76b83b01"
+      "blob": "2fd9c0e136f582dc4a778892d17127b0a51b9bdb"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -1779,6 +1779,13 @@
       "blob": "98208217da54559ea5452dbb2bfbaa5689a66b33"
     },
     {
+      "path": "tests/test_action_owner_probe_bound.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fd62d5f9a3c726877aa1e5dfd103caece3db3986"
+    },
+    {
       "path": "tests/test_action_tab_waves.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -1895,7 +1902,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "097c1b8ea2f52f1f24e2bc0b8f29292325174b7a"
+      "blob": "d66d35fe00944069a50faa33c438215704950e19"
     },
     {
       "path": "tests/test_profile_counts_actions.py",
@@ -2091,7 +2098,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ba391505b924f5ff32eb336a4135f6c49d103351"
+      "blob": "424b601550e6ae481aa9a130e06f589480ffe5ac"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2112,7 +2119,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9c50817fe2137b3dd1f5293d8fb38ad433b83e68"
+      "blob": "8bee8d9684c77751600b37ca363029effffe0038"
     },
     {
       "path": "tools/profile_counts_pacing.py",
