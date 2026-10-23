@@ -1,3 +1,11 @@
+## v120.60 — GRANADA safe Cancel batch and owner-review UX (governed FINAL publication)
+
+- **Normal installed Windows app:** dedicated **Cancel batch** explicitly stops future target visits and retires only the exact selected cohort after the current operation and Chrome safely complete; previously completed/uncertain relationship-click evidence remains durable, never replayed, and no profile is automatically marked Reviewed.
+- **Current job visibility:** prominent current robot mode (Unfollow / Cancel Pending / read-only), actual state and countdown while reviewing another task; switching accounts remains blocked ONLY while the worker/Chrome can still act. A cancelled, stopped job no longer monopolizes the next robot task.
+- **Audit visibility:** full account/task-specific saved journal timestamps appear in the automations queue in local date and time; confirmed changes and ambiguous attempts no longer share the misleading "Already attempted" label.
+- **End-of-batch check:** popup displays the exact processed accounts, saved results and recorded dates; owner may approve only verified statuses, inspect profiles one-by-one or reopen exceptions manually. No automatic Unfollow or Cancel retry from the popup.
+- **Safety and validation:** negative tests for cancellation during cooldown, exact owner/target, preservation of journal bytes, safe switching, backend authorization, Chrome action integration and installed public/Developer Windows builds. Successful CI is **not** proof that Instagram accepted a real Unfollow/Cancel in the owner's account; live acceptance remains open. No RC or prerelease.
+
 ## v120.59 — GRANADA owner-reference Unfollow and verified Windows start
 
 - Windows normal Unfollow now uses owner's supplied code mechanism: exact numeric Following target, authenticated same-origin GraphQL mutation, durable write-ahead intent and independent post-action read-only confirmation. Run admission failures are shown to the owner, not hidden by queue summaries.
