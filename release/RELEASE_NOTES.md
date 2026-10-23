@@ -1,8 +1,8 @@
-## v120.59 — GRANADA owner-reference Unfollow (prepared; NOT PUBLISHED)
+## v120.59 — GRANADA owner-reference Unfollow and verified Windows start
 
 - Windows normal Unfollow now uses owner's supplied code mechanism: exact numeric Following target, authenticated same-origin GraphQL mutation, durable write-ahead intent and independent post-action read-only confirmation. Run admission failures are shown to the owner, not hidden by queue summaries.
 - Includes real Chromium offline end-to-end test, no-click recovery and safe treatment of ambiguous responses, with original protected lists and action journals preserved. Live signed-in Instagram Unfollow/Cancel outcome still needs user acceptance; do not infer from CI.
-- Next artifact metadata is prepared for v120.59, but final publication remains gated by installed Windows, production-signed Android twins, visuals and checksums. No RC or prerelease.
+- Release publishing is gated by installed Windows, production-signed Android twins, visual checks, checksum verification and official GitHub stable publication. No RC or prerelease.
 
 ## v120.58 — Operación Granada: saved journal quarantine and exact Instagram target identity (official stable, October 23, 2026)
 
