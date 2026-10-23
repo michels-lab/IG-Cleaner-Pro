@@ -1,3 +1,10 @@
+## 2026-10-23 — GRANADA #36 normal robot: stale target hero blocked before relationship clicks
+
+- Found source-level P0 risk in the ordinary Windows ActionRobot: header Following/Requested selection trusted a matching URL without proving the rendered target username. During Instagram SPA hydration, a stale previous-profile control could be eligible; no real wrong-account click was observed.
+- Added exact HTTPS URL + visible target-handle verification before header action selection and immediately before first click, Unfollow menu/private confirmation or Cancel Request confirmation. Fail closed, no replay. Four negative regressions added in \`tests/test_profile_counts_actions.py\`.
+- Evidence: [GRANADA #36](docs/GRANADA_36_PUBLIC_TARGET_IDENTITY_PRECLICK_2026-10-23.md); proposed isolated PR requires exact-head CI, Windows installed/Chromium and existing safety gates before merge. Owner login, original 40-profile journal, protections and identities untouched.
+- Official stable is v120.56 with 12 assets; v120.57 RESERVED, no RC, no additional release. Real owner Unfollow and Cancel Pending still not verified (#172/#164). No Developer-only work.
+
 ## 2026-10-22 — GRANADA #33 normal robot: independent, durable action confirmation
 
 - After #211 verified owner login across Chrome tabs, found a separate public action correctness bug: `perform_visible_action` allowed immediate Instagram SPA `Follow` to count as `ok` for Unfollow or Cancel Pending, **without checking persistence on a fresh page request**. This could misreport an optimistic UI transition as an accepted action.
