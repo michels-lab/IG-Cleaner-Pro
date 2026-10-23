@@ -162,7 +162,7 @@ class WorkerJournalGateTests(unittest.TestCase):
 
     def test_final_result_write_is_also_guarded_against_stale_memory(self):
         run = inspect.getsource(ActionRobot._run)
-        self.assertRegex(run, r'elif result != "skipped":\\s*#.*')
+        self.assertIn('elif result != "skipped":', run)
         self.assertIn("_assert_unchanged_action_journal(path, journal)", run)
         with tempfile.TemporaryDirectory() as folder:
             robot = self.make_robot(folder)
