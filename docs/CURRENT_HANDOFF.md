@@ -1,3 +1,9 @@
+## 2026-10-23 — GRANADA #36 target identity safety candidate
+
+- P0 normal Windows worker patch: before selecting or clicking Following/Requested/Unfollow/Cancel, require exact HTTPS Instagram target route AND visible matching target identity to guard against stale SPA headers.
+- Four synthetic negative cases added for wrong username/protocol, pre-click swap and Unfollow/Cancel post-menu target swaps. Pending exact-PR CI and (still) real signed-in owner Unfollow/Cancel acceptance; do not mark real actions as verified.
+- See [GRANADA #36](GRANADA_36_PUBLIC_TARGET_IDENTITY_PRECLICK_2026-10-23.md). v120.56 is published final; v120.57 reserved only. Do not touch Developer, Instagram histories, saved protected entries or original 40-person batch.
+
 ## 2026-10-21 — GRANADA #27 official v120.55 FINAL release published; canonical receipt reconciliation
 
 - Official [v120.55 **stable**, not an RC or prerelease](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55) independently verified on GitHub: 12 assets (public and Developer Windows/Android packages plus SHA256SUMS), `draft=false`, `prerelease=false`, published 2026-10-21 21:32:41 UTC; tag targets exact SHA `10f1e4cb9b3990ea47045ff37aa674ce27c2cebb`.
