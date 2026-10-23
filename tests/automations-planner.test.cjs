@@ -27,6 +27,7 @@ const ctx={window:{IGC_INSTAGRAM_PROFILES:scope,showPage(id){return id}},
 vm.createContext(ctx);vm.runInContext(script[1],ctx);
 ctx.window.igcAutoRender();
 assert.equal(dom.igcAutoRows.children.length,2,'Only non-mutual accounts should enter unfollow queue');
+assert.equal(dom.igcAutoRows.children[0].children.length,4,'A dedicated action timestamp column must not replace profile actions');
 ctx.doneSet=new Set(['no.follow2']);
 ctx.window.igcAutoRender();
 assert.equal(dom.igcAutoRows.children.length,1,'Current reviewed non-followback must not enter Unfollow');
@@ -35,25 +36,25 @@ assert.equal(dom.igcAutoRows.children.length,2,'Optional audit can inspect any s
 ctx.window.igcAutoChoose('unfollow');
 ctx.doneSet=new Set();
 ctx.window.igcAutoRender();
-let buttons=dom.igcAutoRows.children[0].children[2].children;
+let buttons=dom.igcAutoRows.children[0].children[3].children;
 buttons[1].click();
 assert.match(dom.igcAutoMetrics.children[3].textContent,/Skipped: 1/);
 ctx.window.igcAutoClearSkipped();
 assert.match(dom.igcAutoMetrics.children[3].textContent,/Skipped: 0/);
-buttons=dom.igcAutoRows.children[0].children[2].children;
+buttons=dom.igcAutoRows.children[0].children[3].children;
 buttons[0].click();
 assert(protectedSet.has('no.follow'),'Protected favorite must be respected by existing Review/Mutuals');
 assert(persistCalls.length>0,'Protect in automation queue should persist to existing protected list');
 ctx.window.igcAutoChoose('protected');
 assert(dom.igcAutoRows.children.some(r=>r.children[0].children[0].textContent==='@no.follow'));
 const protectedRows=dom.igcAutoRows.children;
-protectedRows[0].children[2].children[0].click();
+protectedRows[0].children[3].children[0].click();
 assert(protectedSet.has('no.follow'),
  'Standalone HTML must not pretend to revoke Windows robot protections without its bridge');
 assert.match(dom.igcAutoStatus.textContent,/installed Windows robot/);
 ctx.window.igcAutoChoose('cancel');
 assert.equal(dom.igcAutoRows.children.length,1);
-dom.igcAutoRows.children[0].children[2].children[0].click();
+dom.igcAutoRows.children[0].children[3].children[0].click();
 assert.equal(dom.igcAutoRows.children[0].children[1].textContent,'★ Protected');
 ctx.window.igcAutoSaveTiming();
 assert([...store.keys()].some(k=>k.includes('igc_action_timing_v1__owner_A__ig_A__cancel')));
