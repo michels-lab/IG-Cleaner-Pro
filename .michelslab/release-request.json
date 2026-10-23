@@ -1,12 +1,12 @@
 {
   "version": "120.56",
   "tag": "v120.56",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner standing Operacion Granada authorization: publish FINAL stable releases only after all mandatory governed checks pass; never a release candidate or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.55",
   "owner_acceptance_note": "Official publisher must validate exact-source Windows installer, Desktop/Android renders, production Android signing and device coexistence, published assets and checksums. Browser fixture tests do not prove live account actions. Existing local history and safeguards remain intact.",
   "requested_at": "2026-10-22",
@@ -20,5 +20,11 @@
     "run": 39678605509,
     "commit": "10f1e4cb9b3990ea47045ff37aa674ce27c2cebb",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.55"
-  }
+  },
+  "published_run": 39898552214,
+  "published_commit": "1c004c0dc08194f832b7b3e95ce2942c957f5f32",
+  "published_at": "2026-10-23T04:17:13Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.56",
+  "published_asset_count": 12,
+  "final_channel": "stable"
 }
