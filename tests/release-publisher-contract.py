@@ -18,7 +18,6 @@ for token in (
     ':app:assembleRelease',
     'certificate SHA-256 digest:',
     'gh release create',
-    'gh release upload',
     'SHA256SUMS.txt',
     'tools/build_standalone_desktop_html.py',
     'desktop_html_artifact',
@@ -26,6 +25,19 @@ for token in (
     'tests/standalone-desktop-contract.py',
 ):
     assert token in workflow, f"Generic release publisher token missing: {token}"
+
+# Negative regression for repeated FINAL publication: older workflow edited
+# existing GitHub release tags and overwrote all assets with --clobber.
+# A successful rerun or stale request must never mutate official downloads.
+publish_section=workflow.split("      - name: Publish normal GitHub release",1)[1].split(
+    "      - name: Verify published release",1)[0]
+assert 'if gh release view "$TAG" >/dev/null 2>&1; then' in publish_section
+assert "Refusing to edit or overwrite published assets." in publish_section
+assert "exit 1" in publish_section
+assert 'gh release create "$TAG" dist/*' in publish_section
+assert "gh release edit" not in publish_section
+assert "gh release upload" not in publish_section
+assert all("--clobber" not in line for line in publish_section.splitlines() if not line.lstrip().startswith("#"))
 
 # GitHub must not publish a visually changed app on mere source/build success.
 for token in (
