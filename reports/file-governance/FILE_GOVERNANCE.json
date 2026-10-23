@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 305,
-  "classified_files_total": 301,
-  "docs_content_inspected": 58,
+  "tracked_files_total": 306,
+  "classified_files_total": 302,
+  "docs_content_inspected": 59,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 53,
+    "document": 54,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "f7c7c0a0ae2e5ae4e84b38d3ade04e32ffe118fa147d78218d73329b741a7265",
-  "evidence_fingerprint": "519312360cc27417c0eba7d8f7545039d4a4d950d988c41e4cdfe140cc45985b",
+  "inventory_fingerprint": "de604f939a6d0cc37a7e4e9981004c4b33d87c12c1159cc111f2ac7534de74c6",
+  "evidence_fingerprint": "e6f2a7d616b324fbfbd17988b33b486c99e1dfdbb25ce0d059224f4b5b1f5599",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b8a7ebc803f9ed2518dc44575ba8ac6c7d38a4c2"
+      "blob": "0d73b1646df9749ba42346603eaffa6239753a08"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -147,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "32bdbe2912118974c7ccb1779262e7f79c818f26"
+      "blob": "b8a8cbf71d695641575f62ce1fefc6bfdedc999c"
     },
     {
       "path": ".gitignore",
@@ -1130,6 +1130,13 @@
       "blob": "9dedb532e0d0d5c3b4fd2ed3e67a2821e1d360f2"
     },
     {
+      "path": "docs/GRANADA_39_EXACT_ACTION_TARGET_IDENTITY_2026-10-23.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "e9cc984c609959bd22b93d9fed157dec70ed969c"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1827,7 +1834,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "63d43bf387c2d6af2d9fac1a573c0d669041d7a7"
+      "blob": "931ebf881f7d78dac14267859f5fae247504f338"
     },
     {
       "path": "tests/test_profile_counts_audit.py",
@@ -2002,7 +2009,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "41ea7225a0b3122635f85b83dd98aab54d3550bb"
+      "blob": "56376c0a56d8dc35d38ebeee385d7799e3a698b7"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2140,11 +2147,11 @@
   ],
   "findings": [
     {
-      "id": "52d1e3c811772550",
+      "id": "82a25cce4bd91ba9",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "10 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
