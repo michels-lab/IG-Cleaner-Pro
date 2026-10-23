@@ -15398,7 +15398,7 @@ window.igcAutoCancel=async function(){
   const state=await requestAction("status"),owner=actionOwner();
   if(!state.task||state.owner!==owner.owner||state.account!==owner.account)
    throw Error("There is no current task attached to this Instagram workspace.");
-  const id=String(state.review_batch?.id||"");
+  const id=state.review_only||state.history_recheck?"":String(state.review_batch?.id||"");
   if(!state.running&&!id)throw Error("No active or unfinished batch is available to cancel.");
   const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Audit"};
   if(!window.confirm("CANCEL "+String(labels[state.task]||state.task).toUpperCase()+
