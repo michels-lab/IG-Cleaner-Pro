@@ -23,10 +23,12 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "4ed0ac97d7e02e6c517890f14001a56b3fd8588de74254faffb6a0f161a19399",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "634c2c9ea9a7c334f7e67b53443e74592b69c66f25d11ac19d1154b1eaf0134f",
+  "evidence_fingerprint": "16239b9b34a595f8dd6d12b85630f8adab6fd0a25026bb8fae01c39fb54291ba",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -852,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "f5167603c687f23170b9ab5d543e0b0a04f852e8"
+      "blob": "537c1397379987d14c0f3160db424028b9bfd2a8"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1475,7 +1477,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7b3fe5a4d66e2f8b3208c7f963e9f860efa45145"
+      "blob": "02c8cc65add77eefe68ae518a0bb62fd7c993747"
     },
     {
       "path": "tests/automations-cold-start.test.cjs",
@@ -2220,7 +2222,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "8d535d0b15e32368",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
