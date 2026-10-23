@@ -15774,14 +15774,16 @@ window.igcAutoRender=function(){
   const at=String(evidence.at||""),date=at?new Date(at):null;
   when.textContent=date&&!Number.isNaN(date.valueOf())?date.toLocaleString():"—";
   when.title=at?"Windows journal timestamp: "+at:"No saved action timestamp; no action confirmed.";
+  const latest=live.status&&live.status!=="pending"?live:history;
   status.textContent=protectedNow?"★ Protected":skipped?"Skipped":
-     live.status==="already_not_following"?"✓ Already not following · no action needed":
-      live.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
-     live.audit_relation==="follows_you"?"✓ Follows you (verified)":
-     live.audit_relation==="not_following"?"✓ Not following you (verified)":
-     attempted.has(item.username)?"Already attempted · inspect journal":
-     live.status==="ok"?"✓ Completed":
-     live.status&&live.status!=="pending"?(live.status+": "+live.message):"Not reviewed";
+     latest.status==="already_not_following"?"✓ Already not following · no action clicked":
+     latest.status==="already_not_requested"?"✓ No pending request · no cancellation clicked":
+     latest.audit_relation==="follows_you"?"✓ Follows you (verified)":
+     latest.audit_relation==="not_following"?"✓ Not following you (verified)":
+     latest.status==="ok"?"✓ Action confirmed by saved verification":
+     ["review","error","blocked"].includes(latest.status)?"⚠ Review saved action · "+String(latest.message||"Inspect journal").slice(0,100):
+     attempted.has(item.username)?"Previous attempt · outcome needs inspection":
+     latest.status&&latest.status!=="pending"?(latest.status+": "+(latest.message||"")):"Not reviewed";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
   protect.textContent=protectedNow?"Remove protection":"★ Protect / Favorite";
   protect.addEventListener("click",()=>window.igcAutoProtect(item.kind,item.username));
