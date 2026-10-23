@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 300,
-  "classified_files_total": 296,
-  "docs_content_inspected": 54,
+  "tracked_files_total": 301,
+  "classified_files_total": 297,
+  "docs_content_inspected": 55,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 49,
+    "document": 50,
     "index": 5,
     "installer_metadata": 1,
     "source": 40,
@@ -25,7 +25,7 @@
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "db00442d7358f034e03999233139723c33e6378978c8a3c518f048421cdfaa7c",
+  "inventory_fingerprint": "e434d7c68f24f2446f838977f3d1b74d5bb24056ba95d0410ebdfcdb448817f3",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "2ca86a4d28e57fc5096d4ae64764b415de29e9a3"
+      "blob": "17fa55d687904a4e97712e8c19bf1fd292429b0d"
     },
     {
       "path": "README.md",
@@ -1100,6 +1100,13 @@
       "blob": "ace392198635f3f4313c486d00be033aee2229fb"
     },
     {
+      "path": "docs/GRANADA_33_PUBLIC_PERSISTENT_RESULT_VERIFICATION_2026-10-22.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "7c0aa3c7fd25cb211d0c653eeab6cd3b28bd012f"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1783,7 +1790,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "802f72b1db726d46a63fbb0ee8e34575bab50382"
+      "blob": "1ffc1276ed9bc8fcc0804a6013f4c2d534281d50"
     },
     {
       "path": "tests/test_profile_counts_actions.py",
@@ -1965,7 +1972,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9bae22798c5b01450d218835a15b1a393d18f734"
+      "blob": "134cde1c0ee35772b33656512a6bc6f3e4c075f4"
     },
     {
       "path": "tools/profile_counts_audit.py",
