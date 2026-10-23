@@ -153,6 +153,52 @@ class ActionBatchHistoryTests(unittest.TestCase):
                     followers_evidence=task=="unfollow",
                     confirmation=f"{task}:{len(users)}")
 
+    def test_public_robot_find_owner_across_tabs_no_conflicting_identity(self):
+        from unittest.mock import Mock
+        from profile_actions import _find_verified_owner_tab
+
+        def tab(url, closed=False):
+            page = Mock()
+            page.url = url
+            page.is_closed.return_value = closed
+            return page
+
+        login = tab("https://www.instagram.com/accounts/login/")
+        owner = tab("https://www.instagram.com/owner.name/")
+        outsider = tab("https://not-instagram.example/fake/")
+        closed = tab("https://www.instagram.com/closed.owner/", closed=True)
+        insecure = tab("http://www.instagram.com/insecure/")
+        mismatch = tab("https://www.instagram.com/other.owner/")
+
+        def signed(page):
+            return {
+                owner: "OWNER.Name",
+                mismatch: "other.owner",
+                outsider: "other.owner",
+                closed: "other.owner",
+                insecure: "other.owner",
+            }.get(page)
+
+        with patch("profile_actions.signed_in_handle", side_effect=signed) as identity:
+            found, wrong = _find_verified_owner_tab(
+                [login, outsider, closed, insecure, owner], "owner.name")
+            self.assertIs(found, owner)
+            self.assertIsNone(wrong)
+            self.assertEqual(identity.call_count, 2, "Only HTTPS Instagram tabs observed")
+            identity.reset_mock()
+            found, wrong = _find_verified_owner_tab(
+                [login, owner, mismatch], "owner.name")
+            self.assertIsNone(found)
+            self.assertEqual(wrong, "other.owner")
+            identity.reset_mock()
+            found, wrong = _find_verified_owner_tab([login], "owner.name")
+            self.assertIsNone(found)
+            self.assertIsNone(wrong)
+        for page in (login, owner, outsider, closed, insecure, mismatch):
+            page.goto.assert_not_called()
+            page.locator.assert_not_called()
+            page.click.assert_not_called()
+
     def test_public_robot_manual_login_does_not_wait_forever_or_fake_actions(self):
         """No Developer Edition: normal Windows robot times out with honest status."""
         import contextlib
@@ -173,6 +219,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             robot.handle, robot.task = "owner.name", "unfollow"
             robot.targets = ["test.profile"]
             page = Mock()
+            page.url = "https://www.instagram.com/accounts/login/"
             page.is_closed.return_value = False
             browser = Mock()
             browser.pages = [page]
@@ -210,6 +257,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             robot.handle,robot.task="owner.name","cancel"
             robot.targets=["sample.target"]
             page=Mock()
+            page.url="https://www.instagram.com/accounts/login/"
             page.is_closed.return_value=False
             browser=Mock()
             browser.pages=[page]

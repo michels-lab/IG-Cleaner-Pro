@@ -1,3 +1,10 @@
+## 2026-10-22 — GRANADA #32 public action robot: verified login in second Chrome tab
+
+- Root cause after merged #210: standard Windows `ActionRobot._run` polled `signed_in_handle` only on the original Login Page object. If Instagram authenticated in a second tab, the first stayed stale; the robot appeared inert and later timed out after 240 seconds without attempting an action.
+- Added `_find_verified_owner_tab`: discover an independently proven exact owner inside the **same** persistent robot Chrome, HTTPS Instagram tabs only; reject conflicting account identities; never trust target/profile URLs alone. On matched owner, switch the worker reference to that tab. No cookies, credentials, automatic login, relationship changes or Developer-only flow involved.
+- Added owner-tab/closed-tab/off-origin/HTTP/conflicting-identity mocked regressions and explicit Instagram HTTPS test URLs in the older public-login worker fixtures. Preserve saved action journals, original 40-target cohort, protected accounts, click intents and manual approvals.
+- Evidence and limitations: [GRANADA #32](docs/GRANADA_32_PUBLIC_ROBOT_MULTITAB_LOGIN_2026-10-22.md); P0 #172/#164 remain open until real owner Unfollow and Cancel Pending are separately verified in the **normal** Windows application. Official stable remains v120.55 until governed FINAL publisher; no RC.
+
 ## 2026-10-22 — GRANADA #31 owner redirected all engineering to the public InstaCleaner robot
 
 - Owner explicitly discontinued Developer Edition priority after unsuccessful real-account experience. No further Developer-only features, acceptance requests, tests or release justification are planned. Unmerged experimental Developer Chrome probe changes stay out of main; historic installations/data are untouched.
