@@ -20,7 +20,7 @@ except ImportError:
 
 def fake_profile(locale="en", private=False, account="my.profile", result="follow",
                  blocked=False, request_unfollow=False, warning_handle="target.user",
-                 include_warning=True):
+                 include_warning=True, persist=True):
     following, unfollow, follow = (("Siguiendo", "Dejar de seguir", "Seguir")
                                    if locale == "es" else
                                    ("Following", "Unfollow", "Follow"))
@@ -58,9 +58,28 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
     <script>
      const label={follow!r}, privateFlow={str(private).lower()},
            blocked={str(blocked).lower()}, result={result!r},
-           requestUnfollow={str(request_unfollow).lower()};
-     window.__steps=[];
-     function recordStep(value) {{ window.__steps.push(value); console.log("IGC_STEP:" + value); }}
+           requestUnfollow={str(request_unfollow).lower()},
+           persistenceEnabled={str(persist).lower()};
+     // Browser-local fixture ONLY: simulate Instagram committing a relationship
+     // to an independent state retained over a fresh document navigation.
+     // Real negative server-rejection fixtures disable this persistence.
+     const fakeRelationKey='igc_test_server_relationship_v1';
+     const fakeStepsKey='igc_test_step_history_v1';
+     window.__steps=JSON.parse(sessionStorage.getItem(fakeStepsKey)||'[]');
+     const lastCommitted=sessionStorage.getItem(fakeRelationKey);
+     if(lastCommitted&&persistenceEnabled) {{
+       document.addEventListener('DOMContentLoaded',()=>{{
+         const control=document.querySelector('#relationship');
+         if(control)control.textContent=lastCommitted==='followback'
+           ?(document.documentElement.lang==='es'?'Seguir también':'Follow Back')
+           :(document.documentElement.lang==='es'?'Seguir':'Follow');
+       }});
+     }}
+     function recordStep(value) {{
+       window.__steps.push(value);
+       sessionStorage.setItem(fakeStepsKey,JSON.stringify(window.__steps));
+       console.log("IGC_STEP:" + value);
+     }}
      function openRelationship() {{
        recordStep('open');
        if(requestUnfollow) {{
@@ -92,6 +111,8 @@ def fake_profile(locale="en", private=False, account="my.profile", result="follo
        if(result==='follow')document.querySelector('#relationship').textContent=label;
        if(result==='followback')document.querySelector('#relationship').textContent=
          document.documentElement.lang==='es'?'Seguir también':'Follow Back';
+       if(persistenceEnabled&&!blocked&&(result==='follow'||result==='followback'))
+         sessionStorage.setItem(fakeRelationKey,result);
        if(blocked)document.body.insertAdjacentHTML('beforeend','<span>Try again later</span>');
      }}
     </script>
@@ -876,7 +897,7 @@ class RealBrowserSelectorTests(unittest.TestCase):
     def test_immediate_optimistic_unfollow_follow_is_not_persisted_success(self):
         # The UI flips to Follow after clicking but a freshly loaded server
         # response still says Following. NEVER claim an Unfollow or re-click.
-        initial = fake_profile(result="follow")
+        initial = fake_profile(result="follow", persist=False)
         visits, events = [], []
         self.page.on("console", lambda msg: events.append(msg.text)
                      if msg.text.startswith("IGC_STEP:") else None)
@@ -894,7 +915,8 @@ class RealBrowserSelectorTests(unittest.TestCase):
 
     def test_immediate_optimistic_cancel_follow_is_not_persisted_success(self):
         # The UI flips to Follow after click; server still replies Requested.
-        initial = fake_profile(request_unfollow=True, result="follow").replace(
+        initial = fake_profile(
+            request_unfollow=True, result="follow", persist=False).replace(
             ">Following</button>", ">Requested</button>", 1)
         visits, events = [], []
         self.page.on("console", lambda msg: events.append(msg.text)
