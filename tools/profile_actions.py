@@ -347,9 +347,22 @@ def _header_target_identity_visible(page, username):
 
 
 def _target_identity_visible(page, username):
-    """Prove the exact target in a rendered hero or its semantic header."""
-    return (bool(_profile_hero_probe(page, username, []).get("target_visible"))
-            or _header_target_identity_visible(page, username))
+    """Fail closed on conflicting or unproven actionable profile headers.
+
+    Instagram can retain a stale semantic header while the main hero already
+    renders a new target. A correct main hero must NEVER authenticate a click
+    belonging to a still-visible other/unidentified header. Main-only
+    layouts may instead prove their exact hero without a visible header.
+    """
+    if not _exact_https_target_profile(page, username):
+        return False
+    try:
+        header = page.locator("header").first
+        if header.count() and header.is_visible():
+            return _header_target_identity_visible(page, username)
+    except Exception:
+        return False
+    return bool(_profile_hero_probe(page, username, []).get("target_visible"))
 
 
 def _profile_relationship_control(page, username, words):
