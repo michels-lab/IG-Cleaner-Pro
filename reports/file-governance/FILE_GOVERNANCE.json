@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "ee368e29873880a8474f0ababec7b734eab423dab85e55af34f68fe1077dbf1b",
-  "evidence_fingerprint": "d8e5108cdd7e7e064f09f5710a2748767bc1ad1bbce4af5cf384a1030a0afdf2",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "7b2f34c7151908f119a77990e7e26bcf1af68cf0a68e53432b4aeeecfbb453f0",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "872ee1a886edbefd6ea6e17e8e6c9b11d536337b"
+      "blob": "0b967c40fa2dda78eef5b5f8a062d14c1ba5cae7"
     },
     {
       "path": "README.md",
@@ -2236,17 +2234,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "8d48275cd52b06ef",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "9 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automation-center-browser.test.cjs, tests/automations-execution.test.cjs, tests/test_profile_actions_chromium.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
