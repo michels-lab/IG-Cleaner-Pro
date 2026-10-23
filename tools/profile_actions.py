@@ -324,6 +324,30 @@ def _profile_hero_probe(page, username, words):
             "control_text_count": 0, "candidate_indices": [], "unavailable": True}
 
 
+def _exact_https_target_profile(page, username):
+    """Require the exact target URL on HTTPS before any relationship control."""
+    current = urlparse(page.url)
+    return (current.scheme == "https"
+            and current.hostname in ("www.instagram.com", "instagram.com")
+            and current.path.strip("/").casefold() == username.casefold())
+
+
+def _target_identity_visible(page, username):
+    """Prove rendered target identity: Instagram may retain a stale SPA header."""
+    if _profile_hero_probe(page, username, []).get("target_visible"):
+        return True
+    try:
+        header = page.locator("header").first
+        if not header.count() or not header.is_visible():
+            return False
+        exact = re.compile(r"^\s*@?" + re.escape(username) + r"\s*$", re.I)
+        matches = header.get_by_text(exact, exact=True)
+        return any(matches.nth(i).is_visible()
+                   for i in range(min(matches.count(), 10)))
+    except Exception:
+        return False
+
+
 def _profile_relationship_control(page, username, words):
     """Find one visible action in the verified target's profile hero.
 
@@ -332,13 +356,11 @@ def _profile_relationship_control(page, username, words):
     in nested divs. A read-only survey checks exact profile username plus
     action location. Never click a Following count or another user's control.
     """
-    current = urlparse(page.url)
-    if (current.hostname not in ("www.instagram.com", "instagram.com")
-            or current.path.strip("/").casefold() != username.casefold()):
+    if not _exact_https_target_profile(page, username):
         return None
     labels = [r"(?:%s)(?:\s*[▾▼⌄])?" % word for word in words]
     header = page.locator("header").first
-    if header.count() and header.is_visible():
+    if header.count() and header.is_visible() and _target_identity_visible(page, username):
         found = _visible_named_control(header, labels, roles=("button",))
         if found is not None:
             return found
@@ -1060,6 +1082,12 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
         return "skipped", "Skipped or protected before the first click."
     if not _verified_action_owner(page, expected_handle):
         return "blocked", "Instagram session verification failed before the first click. No action performed."
+    # The SPA may replace its header after readiness and owner checks.
+    # Stale controls must never be clicked on another profile.
+    if not (_exact_https_target_profile(page, username) and
+            _target_identity_visible(page, username)):
+        return "review", ("The exact target profile changed before the first click. "
+                          "No relationship action clicked; review manually.")
     # Durable write-ahead intent MUST be fsynced and atomically renamed
     # before Playwright may initiate even a menu-opening relationship click.
     # Failure to persist intent prevents the click entirely.
@@ -1080,6 +1108,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             return "review", "Menu opened, but protection changed. Review before continuing."
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before the final Unfollow click. Inspect the open menu manually."
+        if not (_exact_https_target_profile(page, username) and
+                _target_identity_visible(page, username)):
+            return "review", ("The target profile changed with the Unfollow menu open. "
+                              "No further click; review the saved intent manually.")
         if on_pre_click:
             on_pre_click("unfollow_menu")
         choice.click(timeout=10000)
@@ -1103,6 +1135,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                     return "review", "Private confirmation pending; protection changed."
                 if not _verified_action_owner(page, expected_handle):
                     return "review", "Session changed or could not be confirmed before private Unfollow confirmation."
+                if not (_exact_https_target_profile(page, username) and
+                        _target_identity_visible(page, username)):
+                    return "review", ("The target changed before private Unfollow confirmation. "
+                                      "No further click; review the saved intent manually.")
                 if on_pre_click:
                     on_pre_click("private_unfollow_confirmation")
                 confirm.click(timeout=10000)
@@ -1121,6 +1157,10 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             return "review", "Protection changed before canceling the request."
         if not _verified_action_owner(page, expected_handle):
             return "review", "Session could not be reverified before Cancel Request confirmation. No final click was performed."
+        if not (_exact_https_target_profile(page, username) and
+                _target_identity_visible(page, username)):
+            return "review", ("The target changed before Cancel Request confirmation. "
+                              "No further click; review the saved intent manually.")
         if on_pre_click:
             on_pre_click("cancel_request_confirmation")
         choice.click(timeout=10000)
