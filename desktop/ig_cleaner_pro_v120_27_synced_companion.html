@@ -15108,7 +15108,12 @@ function renderActionCommandFeedback(){
  node.style.display=item?"block":"none";
  if(!item){node.textContent="";return}
  node.textContent=(item.failed?"ACTION BLOCKED · ":"ACTION "+item.phase.toUpperCase()+" · ")+item.message;
- if(item.failed)setStatus(node.textContent);
+ // Show an actual already-running Windows job before an unrelated rejected
+ // second Start. Keep the failed request visible in the separate feedback box.
+ if(item.failed && !(actionState?.running &&
+    actionState.owner===actionOwner().owner &&
+    actionState.account===actionOwner().account &&
+    actionState.task===mode))setStatus(node.textContent);
 }
 function confirmActionStartResponse(value,requested){
  // A 200 OK JSON response is not proof that the Chrome worker started.
