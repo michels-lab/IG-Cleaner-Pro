@@ -11,6 +11,7 @@ on:
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -46,6 +47,7 @@ on:
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -79,6 +81,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
       - name: GRANADA cross-process public/Developer action guard and crash recovery
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
+      - name: Bound owner-profile visits with final re-verification and cross-account fail-closed tests
+        run: python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
       - name: GRANADA durable write-ahead click intent and no-replay on power loss
         run: python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
       - name: GRANADA owner-supplied Unfollow transport one-shot consent and negative evidence

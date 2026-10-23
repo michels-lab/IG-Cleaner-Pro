@@ -22,6 +22,7 @@ on:
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -74,6 +75,7 @@ on:
       - 'tests/test_instagram_unfollow_reference.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
+      - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -174,6 +176,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
+      - name: Bounded owner-navigation and wrong-session regression (offline)
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Owner navigation verification regression; refuse Windows Setup.' }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |

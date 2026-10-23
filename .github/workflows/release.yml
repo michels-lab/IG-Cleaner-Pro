@@ -170,6 +170,7 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
+          python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Existing write-ahead journal tests failed.' }
           python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Possible Instagram click could replay after shutdown; refuse publication.' }

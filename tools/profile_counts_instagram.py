@@ -174,7 +174,7 @@ def own_profile_edit_identity(page):
     return None
 
 
-def verify_selected_owner_profile(page, expected_handle):
+def verify_selected_owner_profile(page, expected_handle, *, on_navigation=None):
     """One read-only direct profile visit if Home has no verified identity.
 
     The selected @handle is a destination, NEVER ownership proof. A matching
@@ -186,6 +186,10 @@ def verify_selected_owner_profile(page, expected_handle):
     passwords = page.locator('input[name="password"]')
     if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
         return None
+    # Count the ACTUAL own-profile navigation just before Chrome attempts it,
+    # not creation of a blank tab that might fail the login/challenge guard.
+    if callable(on_navigation):
+        on_navigation()
     page.goto(following_page_url(expected), wait_until="domcontentloaded", timeout=20000)
     page.wait_for_timeout(900)
     passwords = page.locator('input[name="password"]')
