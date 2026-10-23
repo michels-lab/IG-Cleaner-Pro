@@ -15794,6 +15794,80 @@ window.igcAutoRender=function(){
   tr.appendChild(u);tr.appendChild(status);tr.appendChild(when);tr.appendChild(actions);root.appendChild(tr);
  }
 };
+function igcAutoMaybePromptBatchReview(state){
+ if(!actionBatchReview||state?.running||state?.task!==mode||
+    state.owner!==actionOwner().owner||state.account!==actionOwner().account||
+    !["complete","partial","review"].includes(String(state.status)))return;
+ const key="igc_robot_batch_prompt_v1__"+scope()+"__"+mode+"__"+actionBatchReview.id;
+ if(sessionStorage.getItem(key))return;
+ const results=actionBatchReview.action_results||{};
+ const hasEvidence=(actionBatchReview.targets||[]).some(u=>results[u]?.status&&results[u].status!=="pending");
+ if(!hasEvidence)return;
+ sessionStorage.setItem(key,"shown");
+ window.igcAutoShowBatchReview();
+}
+window.igcAutoShowBatchReview=function(){
+ const batch=actionBatchReview;
+ if(!batch||actionState?.running)return;
+ const old=document.getElementById("igcAutoReviewDialog");
+ if(old){old.close();old.remove();}
+ const dialog=document.createElement("dialog");
+ dialog.id="igcAutoReviewDialog";dialog.className="igc-auto-review-dialog";
+ const h=document.createElement("h2");h.textContent="Check this batch before confirming";dialog.append(h);
+ const o=igcAutoBatchOutcomes();
+ const summary=document.createElement("p");summary.className="note";
+ summary.textContent=batch.targets.length+" selected profiles · "+
+   o.confirmed.length+" verified changed · "+o.already.length+
+   " already absent (no click) · "+o.issues.length+" unresolved · "+
+   o.unchecked.length+" untouched. Check each actual result. No uncertain click will be repeated.";
+ dialog.append(summary);
+ const wrap=document.createElement("div");wrap.style.cssText="max-height:48vh;overflow:auto";
+ const table=document.createElement("table"),thead=document.createElement("thead"),head=document.createElement("tr");
+ for(const title of ["Profile","Saved result","Recorded (local)","Inspect"]){
+  const th=document.createElement("th");th.textContent=title;head.append(th);
+ }
+ thead.append(head);table.append(thead);
+ const tbody=document.createElement("tbody"),hist=new Map(
+    (igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
+ for(const username of batch.targets){
+  const row=batch.recheck_results?.[username]||batch.action_results?.[username]||{};
+  const recent=hist.get(norm(username))||{};
+  const tr=document.createElement("tr");
+  const profile=document.createElement("td");profile.textContent="@"+username;
+  const status=document.createElement("td");
+  status.textContent=(row.status||"pending")+" · "+String(row.message||"No verified action result.").slice(0,140);
+  const td=document.createElement("td");
+  const date=new Date(row.at||recent.at||"");
+  td.textContent=Number.isNaN(date.valueOf())?"—":date.toLocaleString();
+  const action=document.createElement("td"),btn=document.createElement("button");
+  btn.type="button";btn.className="btn";btn.textContent="Open ↗";
+  btn.addEventListener("click",()=>window.igcAutoOpenProfile(username,mode));
+  action.append(btn);
+  tr.append(profile,status,td,action);tbody.append(tr);
+ }
+ table.append(tbody);wrap.append(table);dialog.append(wrap);
+ const bar=document.createElement("div");bar.className="igc-auto-review-buttons";
+ const confirm=document.createElement("button");confirm.type="button";confirm.className="btn green";
+ confirm.textContent="✓ Results look correct · approve verified";
+ confirm.disabled=o.unchecked.length>0;
+ confirm.addEventListener("click",async()=>{
+  await window.igcAutoApproveBatch();
+  if(!actionBatchReview&&dialog.open)dialog.close();
+ });
+ const inspect=document.createElement("button");inspect.type="button";inspect.className="btn";
+ inspect.textContent="↻ Reopen issues (manual)";
+ inspect.addEventListener("click",()=>{
+  window.igcAutoOpenBatchIssues(); // Read-only Chrome links; no re-click
+  dialog.close();
+ });
+ const later=document.createElement("button");later.type="button";later.className="btn";
+ later.textContent="Review later";later.addEventListener("click",()=>dialog.close());
+ bar.append(confirm,inspect,later);dialog.append(bar);
+ document.body.append(dialog);
+ dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+ if(typeof dialog.showModal==="function")dialog.showModal();
+ else dialog.setAttribute("open","");
+};
 function igcAutoBatchOutcomes(){
  const b=actionBatchReview;if(!b)return {confirmed:[],already:[],issues:[],unchecked:[]};
  const confirmed=[],already=[],issues=[],unchecked=[];
