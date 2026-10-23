@@ -33,6 +33,38 @@ const {chromium} = require('playwright');
      'There must be one real relationship-action Run control, not duplicate UI proxies');
    assert.equal(await page.locator('#igcCountsRobotConnect').count(),1);
    assert.equal(await page.locator('#igcAutoIssueRows').count(),1);
+
+   // Selected view is NOT the same as the Chrome worker that may still be
+   // running. Never falsely highlight a completed/failed task as active.
+   for(const task of ['unfollow','cancel','protected','audit']){
+     const button=page.locator('#igcAutoMode'+task[0].toUpperCase()+task.slice(1));
+     assert.equal(await button.count(),1,'Missing task picker '+task);
+   }
+   await page.locator('#igcAutoModeAudit').click();
+   assert.equal(await page.locator('#igcAutoModeAudit').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('#igcAutoModeUnfollow').getAttribute('aria-pressed'),'false');
+   assert.match(await page.locator('#igcAutoRun').innerText(),/read-only audit/i);
+   await page.locator('#igcAutoModeProtected').click();
+   assert(!await page.locator('#igcAutoConfigCard').isVisible(),
+     'Protected profile management is not an actionable robot batch');
+   assert(await page.locator('#igcAutoCancel').count()===1,
+     'Stop current worker must remain available in Protected view');
+   await page.locator('#igcAutoModeCancel').click();
+   assert(await page.locator('#igcAutoConfigCard').isVisible());
+   assert.equal(await page.locator('#igcAutoModeCancel').getAttribute('aria-pressed'),'true');
+   await page.evaluate(()=>window.igcAutomationSelectionRefresh({
+     selected:'cancel',active:'audit',recent:'audit',status:'running',running:true
+   }));
+   assert.equal(await page.locator('#igcAutoModeCancel').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('#igcAutoModeAudit').getAttribute('data-current'),'true');
+   assert.match(await page.locator('#igcAutoContextHint').innerText(),/Executing in Chrome: Followback audit/);
+   assert(await page.locator('#igcAutoMoreTools').count()===0,
+     'Do not introduce a second parallel tools drawer');
+   assert(await page.locator('#igcAutoExtraTools').count()===1);
+   assert.equal(await page.locator('#igcAutoRun').count(),1);
+   assert.equal(await page.locator('#igcAutoBatch').count(),1);
+   await page.locator('#igcAutoModeUnfollow').click();
+
    assert(!await page.locator('#igcAutoReviewDrawer').evaluate(el=>el.open),
      'Large manual Issue Review must be initially collapsible');
    const geom=await page.evaluate(()=>{
