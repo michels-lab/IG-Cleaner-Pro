@@ -1,3 +1,10 @@
+## 2026-10-22 — GRANADA #33 normal robot: independent, durable action confirmation
+
+- After #211 verified owner login across Chrome tabs, found a separate public action correctness bug: `perform_visible_action` allowed immediate Instagram SPA `Follow` to count as `ok` for Unfollow or Cancel Pending, **without checking persistence on a fresh page request**. This could misreport an optimistic UI transition as an accepted action.
+- Fixed all real action-click success branches to use exactly one new read-only target profile navigation and independent signed-in owner/target `Follow` verification. A still-`Following`/`Requested`, login redirect or uncertain result is review/blocked and does not repeat clicks.
+- Added offline real-Chromium fixtures for frontend optimism reversed on reload, proper server persistence, unchanged no-click guards, en/es, private and pending dialogs. Maintains unmodified write-ahead no-replay journal, saved target batches, protection and user approval.
+- Detailed [GRANADA #33](docs/GRANADA_33_PUBLIC_PERSISTENT_RESULT_VERIFICATION_2026-10-22.md). Owner stopped Developer Edition work. No real Instagram mutation has been independently validated; #172/#164 remain P0. v120.55 stable remains published, no RC.
+
 ## 2026-10-22 — GRANADA #32 public action robot: verified login in second Chrome tab
 
 - Root cause after merged #210: standard Windows `ActionRobot._run` polled `signed_in_handle` only on the original Login Page object. If Instagram authenticated in a second tab, the first stayed stale; the robot appeared inert and later timed out after 240 seconds without attempting an action.
