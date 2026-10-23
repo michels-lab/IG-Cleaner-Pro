@@ -80,8 +80,8 @@ class OwnerProofBoundTests(unittest.TestCase):
         observed = []
         actions._OWNER_PROFILE_PROBE.report = lambda: observed.append("visit")
         try:
-            with patch.object(actions, "challenge_detected", return_value=False), \\
-                 patch.object(actions, "signed_in_handle", return_value=None), \\
+            with patch.object(actions, "challenge_detected", return_value=False), \
+                 patch.object(actions, "signed_in_handle", return_value=None), \
                  patch.object(actions, "verify_selected_owner_profile", return_value="my.profile") as proof:
                 result = actions._verified_action_owner(page, "my.profile")
             self.assertTrue(result)
