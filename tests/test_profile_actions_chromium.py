@@ -823,6 +823,10 @@ class RealBrowserSelectorTests(unittest.TestCase):
             "setTimeout(() => document.querySelector('#relationship').textContent='Requested', 700);"
             "</script>"))
         visits = []
+        events = []
+        self.page.on("console", lambda msg: events.append(
+            msg.text.split("IGC_STEP:", 1)[1])
+            if msg.text.startswith("IGC_STEP:") else None)
         persisted = fake_profile().replace(">Following</button>", ">Follow</button>", 1)
         def serve(route):
             visits.append(route.request.url)
@@ -834,7 +838,8 @@ class RealBrowserSelectorTests(unittest.TestCase):
             status, message = perform_visible_action(
                 self.page, "target.user", "cancel", "my.profile", lambda _: True)
         self.assertEqual(status, "ok", message)
-        self.assertEqual(self.page.evaluate("window.__steps"), ["open", "confirmed"])
+        self.assertEqual(events, ["open", "confirmed"])
+        self.assertEqual(len(visits), 2, "Exactly one reload; no second Cancel click")
 
     def test_cancel_sidebar_follow_is_not_exact_target_evidence(self):
         import profile_actions
