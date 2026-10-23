@@ -23,10 +23,12 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "e434d7c68f24f2446f838977f3d1b74d5bb24056ba95d0410ebdfcdb448817f3",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "036b0cf7e393cb12ed46d49a0113a7234c4f9ec85341e64aa6973e741a864196",
+  "evidence_fingerprint": "8042f569acda0acc5e31c02172950b5d90db91b1d67c62d2b674d95ea7910e5f",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -264,7 +266,7 @@
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "8f55cf503d733a38fdcb4c6ef0587e0bdd5435ae"
+      "blob": "2ed6b29ff585f2a4e4627785bbb25ef7ac9c5f41"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -852,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "e10c74172bb23aa65de7f32335247d8ce4f5edae"
+      "blob": "4a98a9abc731a53c7be862a149ad6243d9bf8860"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1272,7 +1274,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b43ba6d3f867f2ff2baf055b0ad0bda78c488f07"
+      "blob": "18bcb9c3f78a74bddd3b0554736146ec5ae4af7a"
     },
     {
       "path": "release/distribution-manifest.json",
@@ -2108,7 +2110,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "267dcc751ec4c395",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
