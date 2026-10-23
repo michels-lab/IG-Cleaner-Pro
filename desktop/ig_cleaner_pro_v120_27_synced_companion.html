@@ -15046,7 +15046,7 @@ function igcAutoCurrentJob(){
  const same=!!(state?.task&&state.owner===owner.owner&&state.account===owner.account);
  const labels={unfollow:"Unfollow",cancel:"Cancel Pending Requests",audit:"Read-only Followback Audit"};
  const running=same&&!!state.running,task=same?state.task:"",status=same?String(state.status||"idle"):"idle";
- if(card)card.dataset.state=status;
+ if(card&&card.dataset)card.dataset.state=status;
  if(name)name.textContent=task?(labels[task]||task)+" · "+status.toUpperCase():
   "No active robot · "+(labels[mode]||"Choose a task");
  if(detail)detail.textContent=task?
