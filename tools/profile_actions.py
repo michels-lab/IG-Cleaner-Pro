@@ -2275,6 +2275,8 @@ class ActionRobot:
         callback returns. Startup must therefore treat an orphan intent as
         *uncertain*, not a proven no-click and not a successful action.
         """
+        if self.stop_event.is_set() or self.cancel_requested:
+            raise ValueError("Owner stopped the batch before the relationship click; do not proceed.")
         if self.review_only or self.task not in ("unfollow", "cancel"):
             raise ValueError("Read-only jobs cannot stage a relationship click.")
         if not self.owner or not self.account or not self.active_batch_id:
