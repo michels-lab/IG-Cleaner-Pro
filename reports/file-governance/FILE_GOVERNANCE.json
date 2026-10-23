@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 312,
-  "classified_files_total": 308,
+  "tracked_files_total": 313,
+  "classified_files_total": 309,
   "docs_content_inspected": 62,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,15 +18,17 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 41,
-    "test": 72,
+    "test": 73,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "9c56b32c1b9f0d7ab4af4016f4140bb50af013a1bb548230aaeaa6555dd6c529",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "e7d8cb668e281560ddabfc7564decd3597aae86cd4636e33fd4a47578db3f69d",
+  "evidence_fingerprint": "07faa293d4685b111e83e2c7b75e0ded4d6a7fa53cae43bc8a4d383fe5a4572b",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -124,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0785baab92ea5d0e6af606e1f9242cfd60018332"
+      "blob": "f4d36664be498a838e2cd4e4f77ac4f892fb30e3"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1835,11 +1837,18 @@
       "blob": "a600a5ea6dad2d992d6dc8941da7882864c7e2b9"
     },
     {
+      "path": "tests/test_instagram_unfollow_chromium_e2e.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0cca73afc6b752203be2f822de89437233bcfd21"
+    },
+    {
       "path": "tests/test_instagram_unfollow_reference.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "dcf57452db9e3bbc221c6b29fc2cb8a34d9aee17"
+      "blob": "53c064f6ef6f5ed2c4ae1bf91d56690715622ff9"
     },
     {
       "path": "tests/test_master_visual_manifest.py",
@@ -2042,14 +2051,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8b5e67d37ee7cc38f26da0099e46d1281d9e4859"
+      "blob": "7eea79d62635cf114d2d74a7b49d3ace4452075f"
     },
     {
       "path": "tools/profile_actions.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "225f31ba35e7ad2ad6ea524748a6634c9443743a"
+      "blob": "64c93dbf616fc1092e6c4cfd6ccb4d9693560730"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2185,7 +2194,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "d7fa0ab1c75ea28b",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/test_instagram_unfollow_chromium_e2e.py, tests/test_instagram_unfollow_reference.py, tools/instagram_unfollow_reference.py, tools/profile_actions.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
