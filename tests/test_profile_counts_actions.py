@@ -184,6 +184,64 @@ class TargetIdentityRegressionTests(unittest.TestCase):
         self.assertIsNone(_profile_relationship_control(
             page, "target.user", [r"Following"]))
 
+    def test_stale_header_beats_correct_main_hero_before_first_click(self):
+        page = FakePage("unfollow")
+        page.header.target_username = "other.user"
+        # A fresh hero appears as target.user, but the actual actionable
+        # semantic header is still bound to other.user.
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions.signed_in_handle", return_value="my.profile"), \
+             patch("profile_actions._profile_hero_probe",
+                   return_value={"target_visible": True,
+                                 "candidate_indices": [], "main_present": True}), \
+             patch("profile_actions._wait_for_profile_relationship_control",
+                   return_value=page.header):
+            status, note = perform_visible_action(
+                page, "target.user", "unfollow", "my.profile")
+        self.assertEqual(status, "review")
+        self.assertIn("No relationship action clicked", note)
+        self.assertEqual(page.header.clicker.clicked, 0)
+
+    def test_main_only_hero_remains_eligible_without_semantic_header(self):
+        from profile_actions import _target_identity_visible
+        page = FakePage("unfollow")
+        page.goto("https://www.instagram.com/target.user/")
+        page.header.visible = False
+        with patch("profile_actions._profile_hero_probe",
+                   return_value={"target_visible": True,
+                                 "candidate_indices": [], "main_present": True}):
+            self.assertTrue(_target_identity_visible(page, "target.user"))
+        page.url = "http://www.instagram.com/target.user/"
+        with patch("profile_actions._profile_hero_probe",
+                   return_value={"target_visible": True,
+                                 "candidate_indices": [], "main_present": True}):
+            self.assertFalse(_target_identity_visible(page, "target.user"))
+
+    def test_correct_main_hero_never_overrides_target_swap_after_first_click(self):
+        for task in ("unfollow", "cancel"):
+            with self.subTest(task=task):
+                page = FakePage(task)
+                original = page.header.clicker.callback
+
+                def swap_after_open():
+                    original()
+                    page.header.target_username = "other.user"
+
+                page.header.clicker.callback = swap_after_open
+                with patch("profile_actions.challenge_detected", return_value=False), \
+                     patch("profile_actions.signed_in_handle", return_value="my.profile"), \
+                     patch("profile_actions._profile_hero_probe",
+                           return_value={"target_visible": True,
+                                         "candidate_indices": [],
+                                         "main_present": True}):
+                    status, note = perform_visible_action(
+                        page, "target.user", task, "my.profile")
+                self.assertEqual(status, "review")
+                self.assertIn("No further click", note)
+                self.assertEqual(page.header.clicker.clicked, 1)
+                self.assertEqual(
+                    (page.menu if task == "unfollow" else page.dialog).clicker.clicked, 0)
+
     def test_stale_profile_before_first_click_fails_closed(self):
         page = FakePage("unfollow")
         page.header.target_username = "other.user"
