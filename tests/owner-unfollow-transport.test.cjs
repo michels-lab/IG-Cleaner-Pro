@@ -17,6 +17,9 @@ function session(response){
                            q==='input[name="lsd"]'?{value:'lsd'}:null;}};
   const fetch=async (url,opts)=>{
     requested.push({url:String(url),opts});
+    if(opts.method==='GET'&&String(url)==='https://www.instagram.com/'){
+      return {status:200,ok:true,text:async()=>response?.home||''};
+    }
     return opts.method==='GET'?{status:200,ok:true,json:async()=>response?.get||
         {users:[{username:'target.user',pk:'123'}]}}:
       {status:response?.status||200,ok:response?.ok!==false,
@@ -49,6 +52,7 @@ function session(response){
   const form=new URLSearchParams(s.requested[1].opts.body);
   assert.equal(form.get('fb_api_req_friendly_name'),'usePolarisUnfollowMutation');
   assert.equal(form.get('doc_id'),'27789106940691111');
+  assert.equal(form.get('jazoest'),'2434','User sample requires character SUM, not digit concatenation');
   assert.equal(JSON.parse(form.get('variables')).target_user_id,'123');
   assert.deepEqual(Object.keys(changed),['code'],'No token leak into Python');
   s=session({get:{users:[{username:'other.account',pk:'123'}]}});
@@ -60,6 +64,21 @@ function session(response){
   s=session({post:{data:{unfollow:{friendship_status:{
     following:true,outgoing_request:false}}}}});
   assert.equal((await s.post({targetId:'123'})).code,'MUTATION_UNCERTAIN');
+  // Recover exactly the DTSG/LSD token pattern in owner's original Webpack
+  // bundle. Read only, before any relationship POST.
+  s=session();
+  s.doc.querySelector=()=>null;
+  s.doc.documentElement.innerHTML=
+    '"DTSGInitialData",[],{"token":"new_dtsg"} "LSD",[],{"token":"new_lsd"} "client_revision":555';
+  assert.equal((await s.post({targetId:'123',dryRun:true})).code,'READY_TO_MUTATE');
+  assert.equal(s.requested.length,0);
+  s=session({
+    home:'"DTSGInitialData",[],{"token":"home_dtsg"} "LSD",[],{"token":"home_lsd"} "client_revision":999'
+  });
+  s.doc.querySelector=()=>null;
+  assert.equal((await s.post({targetId:'123',dryRun:true})).code,'READY_TO_MUTATE');
+  assert.equal(s.requested.length,1,'Read-only same-origin Home GET is allowed');
+  assert.equal(s.requested[0].opts.method,'GET');
   s=session();s.doc.cookie='ds_user_id=999; csrftoken=';
   assert.equal((await s.post({targetId:'123',dryRun:true})).code,'SESSION_TOKENS_UNAVAILABLE');
   assert.equal(s.requested.length,0);
