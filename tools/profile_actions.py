@@ -740,10 +740,9 @@ def _verified_action_owner(page, expected_handle):
     check = None
     try:
         check = page.context.new_page()
-        report = getattr(_OWNER_PROFILE_PROBE, 'report', None)
-        if callable(report):
-            report()  # Record read-only self-profile navigation, NOT a target action.
-        return verify_selected_owner_profile(check, expected_handle) == expected_handle
+        return verify_selected_owner_profile(
+            check, expected_handle,
+            on_navigation=getattr(_OWNER_PROFILE_PROBE, "report", None)) == expected_handle
     except Exception:
         return False
     finally:
