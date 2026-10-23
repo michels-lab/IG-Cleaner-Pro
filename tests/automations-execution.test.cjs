@@ -260,9 +260,13 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  // background poll/rerender instead of silently appearing as Queue prepared.
  p.running=false;p.status='idle';p.owner=context.owner;p.account=context.active;
  p.task='unfollow';p.message='No active Chrome worker';
- batchFixture=null;
+ // Use a deliberately untouched SAVED cohort, rather than the initial
+ // reviewed/skipped fixtures which have no remaining eligible targets.
+ batchFixture={id:'denied-cohort',targets:['refuse.me'],approved_at:null,
+   action_results:{},recheck_results:{}};
  startFailure='The saved Windows cohort is blocked by a local journal conflict.';
  ctx.window.igcAutoChoose('unfollow');
+ elements.igcAutoBatch.value='1';
  await ctx.window.igcAutoStart();
  assert.match(elements.igcAutoCommandFeedback.textContent,/ACTION BLOCKED/);
  assert.match(elements.igcAutoCommandFeedback.textContent,/journal conflict/);
