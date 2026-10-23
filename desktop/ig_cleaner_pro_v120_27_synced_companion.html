@@ -15303,7 +15303,7 @@ window.igcAutoStart=async function(){
    if(!untouched.length)throw Error("No untouched or proven no-click targets remain. Do not retry uncertain actions.");
    summary="CONTINUE "+(mode==="cancel"?"CANCEL REQUESTS":mode==="audit"?"READ-ONLY AUDIT":"UNFOLLOW")+
      " on the SAME saved "+data.targets.length+"-profile batch from @"+data.expected_handle+
-     "?\\n"+untouched.length+" targets are untouched or proven no-click. Only these may be attempted; uncertain clicks will NEVER be repeated.";
+     "?\\n"+untouched.length+" targets are untouched or proven no-click. Only these safe profiles will be attempted; uncertain clicks will NEVER be repeated.";
   }else{
    // Fetch authoritative durable history before ever selecting new targets.
    const verifiedHistory=await refreshActionHistoryForStart(mode);
