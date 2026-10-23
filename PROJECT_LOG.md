@@ -1,3 +1,9 @@
+## 2026-10-23 — GRANADA #41 P0 Windows saved action journal drift gate (source candidate)
+
+- Independent P0 safety fix for normal Windows robots: refuse action-phase click WAL and final outcome overwrite when the actual account/task journal diverges from the last worker snapshot, or becomes corrupt. Preserve existing snapshots and exact original approved saved cohorts; never replay uncertain clicks.
+- Added offline tests for external completed/uncertain target edits, unrelated modified entries, malformed JSON, second click phase, unchanged original bytes and final result guard. No owner's Instagram accessed; no real Unfollow/Cancel acceptance claimed.
+- Candidate PR on `granada/p0-disk-journal-drift-gate-20261023` (see `docs/GRANADA_41_WINDOWS_JOURNAL_DRIFT_GATE_2026-10-23.md`). Await exact-head CI/merge; official v120.58 already published; live P0 #172/#164 remain OPEN.
+
 ## 2026-10-22 — GRANADA #33 normal robot: independent, durable action confirmation
 
 - After #211 verified owner login across Chrome tabs, found a separate public action correctness bug: `perform_visible_action` allowed immediate Instagram SPA `Follow` to count as `ok` for Unfollow or Cancel Pending, **without checking persistence on a fresh page request**. This could misreport an optimistic UI transition as an accepted action.

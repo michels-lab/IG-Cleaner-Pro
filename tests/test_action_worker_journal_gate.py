@@ -3,6 +3,7 @@
 Offline fake Chrome only. No real Instagram session, request or mutation.
 """
 import inspect
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -12,7 +13,8 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import (
-    ActionRobot, _atomic_json, _saved_journal_blocks_action)
+    ActionRobot, _assert_unchanged_action_journal,
+    _atomic_json, _saved_journal_blocks_action)
 from profile_counts_bridge import Collector
 
 
@@ -108,6 +110,68 @@ class WorkerJournalGateTests(unittest.TestCase):
                 self.assertIn("No profile action was attempted", robot.message)
                 self.assertEqual(chrome.created_targets, 0)
                 self.assertEqual(original, robot._base().read_bytes())
+
+
+    def test_disk_changes_block_click_without_overwriting_history(self):
+        for rogue in (
+            {"target.one": {"status": "ok", "message": "Different completed action"}},
+            {"target.one": {"status": "review", "click_intent": {
+                "batch_id": "different-batch", "phase": "relationship_control"}}},
+            {"unexpected.user": {"status": "review"}},
+        ):
+            with self.subTest(rogue=rogue), tempfile.TemporaryDirectory() as folder:
+                robot = self.make_robot(folder)
+                snapshot = {}
+                _atomic_json(robot._base(), snapshot)
+                _atomic_json(robot._base(), rogue)
+                original = robot._base().read_bytes()
+                with self.assertRaisesRegex(ValueError, "changed on disk"):
+                    robot._persist_action_click_intent(
+                        snapshot, robot._base(), "target.one", "relationship_control")
+                self.assertEqual(snapshot, {})
+                self.assertEqual(robot._base().read_bytes(), original)
+
+    def test_corrupted_disk_blocks_click_and_retains_original(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.make_robot(folder)
+            robot._base().parent.mkdir(parents=True, exist_ok=True)
+            robot._base().write_text("{truncated json", encoding="utf-8")
+            original = robot._base().read_bytes()
+            with self.assertRaisesRegex(ValueError, "Corrupted robot activity journal"):
+                robot._persist_action_click_intent(
+                    {}, robot._base(), "target.one", "relationship_control")
+            self.assertEqual(robot._base().read_bytes(), original)
+
+    def test_phase_two_rechecks_disk_and_refuses_conflicting_rewrite(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.make_robot(folder)
+            snapshot = {}
+            robot._persist_action_click_intent(
+                snapshot, robot._base(), "target.one", "relationship_control")
+            original_phase = snapshot["target.one"]["click_intent"]["phase"]
+            self.assertEqual(original_phase, "relationship_control")
+            rogue = {"target.one": {"status": "ok", "message": "External completion"}}
+            _atomic_json(robot._base(), rogue)
+            original = robot._base().read_bytes()
+            with self.assertRaisesRegex(ValueError, "changed on disk"):
+                robot._persist_action_click_intent(
+                    snapshot, robot._base(), "target.one", "unfollow_menu")
+            self.assertEqual(snapshot["target.one"]["click_intent"]["phase"],
+                             "relationship_control")
+            self.assertEqual(robot._base().read_bytes(), original)
+
+    def test_final_result_write_is_also_guarded_against_stale_memory(self):
+        run = inspect.getsource(ActionRobot._run)
+        self.assertRegex(run, r'elif result != "skipped":\\s*#.*')
+        self.assertIn("_assert_unchanged_action_journal(path, journal)", run)
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.make_robot(folder)
+            original = {"target.one": {"status": "review", "message": "Uncertain click"}}
+            _atomic_json(robot._base(), original)
+            with self.assertRaisesRegex(ValueError, "changed on disk"):
+                _assert_unchanged_action_journal(robot._base(), {})
+            self.assertEqual(json.loads(robot._base().read_text(encoding="utf-8")),
+                             original)
 
     def test_last_chance_write_ahead_guard_refuses_malformed_record(self):
         with tempfile.TemporaryDirectory() as folder:
