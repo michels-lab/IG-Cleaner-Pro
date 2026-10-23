@@ -232,6 +232,28 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(elements.igcAutoApproveBatch.disabled,false,
   'Completed no-click result may be approved explicitly, never auto-Reviewed');
 
+ // Screenshot-equivalent saved cohort: 10 targets, 2 unresolved and 8
+ // untouched must be sent to the Windows action endpoint, not read-only audit.
+ const ten=Array.from({length:10},(_,i)=>'saved.'+i);
+ batchFixture={id:'screen-ten',targets:ten,approved_at:null,
+   action_results:{'saved.0':{status:'review'},'saved.1':{status:'review'}},
+   recheck_results:{}};
+ elements.igcAutoBatch.value='10';
+ p.running=false;p.status='paused';p.task='unfollow';p.owner=context.owner;
+ p.account=context.active;
+ ctx.window.igcAutoChoose('unfollow');
+ const startCount=calls.filter(c=>c.type==='start').length;
+ await ctx.window.igcAutoStart();
+ const submitted=calls.filter(c=>c.type==='start');
+ assert.equal(submitted.length,startCount+1,
+   'Screenshot-equivalent saved batch must reach real action start endpoint');
+ assert.equal(submitted.at(-1).data.batch_id,'screen-ten');
+ assert.equal(submitted.at(-1).data.targets.length,10);
+ assert.equal(submitted.at(-1).data.task,'unfollow');
+ assert(texts.at(-1).includes('8 targets are untouched or proven no-click'),
+   'Owner consent must distinguish 8 eligible versus 2 unresolved targets');
+ assert.match(elements.igcAutoCommandFeedback.textContent,/ACTION ACCEPTED/);
+ batchFixture=null;
  // P0: An actual rejected Windows admission must remain visible after
  // background poll/rerender instead of silently appearing as Queue prepared.
  p.running=false;p.status='idle';p.owner=context.owner;p.account=context.active;
