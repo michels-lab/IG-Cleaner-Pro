@@ -1,3 +1,10 @@
+## 2026-10-24 — GRANADA v120.62 FINAL officially published and reconciled
+
+- [Official v120.62 FINAL stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), 12 assets, exact tagged commit `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`; [governed publisher 40121318686](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686) **SUCCESS**, including installed Windows public/Developer, production-signed Android public/Developer co-install, rendered UI, SHA-256 bundle and official GitHub feed.
+- [Permanent receipt](GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md) records asset fingerprints, merged #238 safe saved-10/new-40 decision, merged #239 7/7 exact-head checks and v120.60 provenance-drift regression caught before publishing.
+- One-time release authorization consumed; authoritative manifest/README/update guide now stable **v120.62**, next **v120.63 reserved and NOT authorized**. This documentation-only closeout does not repackage or republish v120.62.
+- **Physical owner Instagram Unfollow/Cancel Pending NOT verified**; keep #172/#164/#230 open, never label an uncertain click as confirmed. No existing action journal, Chrome session, protected account or user data was modified.
+
 ## 2026-10-24 — GRANADA v120.62 provenance regression caught before merge
 
 - **Root cause (docs/status drift + test gap):** the candidate correctly named published v120.61 but kept v120.60's `lastPublishedRun`, `lastPublishedCommit` and `lastPublishedAt` in `release/distribution-manifest.json`. The old docs-contract test only checked these values when the request was already marked `published`, not during an authorized *next* release.
