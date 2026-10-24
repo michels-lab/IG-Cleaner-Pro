@@ -16,7 +16,9 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Publication does not prove live Instagram Unfollow or Cancel Pending on the owner's actual account.** Installer/emulator/Chromium success is not evidence that Instagram accepted real relationship changes. The owner tests only officially published installers; independent physical acceptance remains open in [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Windows Setup has SHA-256 integrity but not Authenticode signing. No RC, beta or Google Play release.
 
-**Current published stable: v120.62. Next reserved version: v120.63, not published.** The next version is not authorized for publication. Earlier publication receipts remain historical: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
+**Current published stable: v120.62. Next reserved version: v120.63, not published.**
+
+The next version is not authorized for publication. Earlier publication receipts remain historical: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
 
 ## Features
 
