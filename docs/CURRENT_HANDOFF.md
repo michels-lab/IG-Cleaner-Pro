@@ -1,3 +1,9 @@
+## 2026-10-24 — GRANADA v120.62 provenance regression caught before merge
+
+- **Root cause (docs/status drift + test gap):** the candidate correctly named published v120.61 but kept v120.60's `lastPublishedRun`, `lastPublishedCommit` and `lastPublishedAt` in `release/distribution-manifest.json`. The old docs-contract test only checked these values when the request was already marked `published`, not during an authorized *next* release.
+- **Fix:** match authoritative v120.61 FINAL tag `148074c870a11068d809e1a12ba0384dbe6e4c3f`, successful publisher run `40017257499`, published `2026-10-23T20:19:53Z`; add a regression that requires the new request's `previous_publication` receipt to match every recorded manifest provenance field. The previous manifest fails this regression. No user state, protected cohorts, Instagram browser session or relationship-click logic changed.
+- **Gate:** rerun exact-head CI on this PR before merging. v120.62 remains unpublished until independent installed Windows, signed Android coinstall, visual and release-asset checks finish; real owner's Instagram Unfollow and Cancel Pending success remains **UNVERIFIED**.
+
 ## 2026-10-24 — GRANADA owner 10-vs-40 blocker fixed in source, v120.62 FINAL publication gated
 
 - [PR #238](https://github.com/michels-lab/IG-Cleaner-Pro/pull/238) merged after six exact-source checks, including installed Windows public/Developer, Chromium, Android runtime and desktop visual validation. Original old cohort remains protected; choose Continue saved 10 or explicitly save old cohort unchanged in local history and prepare new 40 with fresh Run approval. Five earlier attempts are preserved and cannot be blindly replayed; no action is marked Reviewed by planning. **Source change is not evidence of owner Instagram success**.
