@@ -16,7 +16,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **v120.62 reserved for development and fully gated publication.** Fixes an owner-reported `SAVED COHORT: 10; NEW SELECTED SIZE: 40` dead end: two explicit, safe options to continue the ten or preserve them in archived local history and prepare a fresh forty. Neither planning nor archiving clicks Instagram or marks old profiles Reviewed. Source is merged and automated Windows/Chrome, Android and desktop QA passed; this is **not yet an official release until the governed publisher passes**.
 
-**Live Instagram acceptance remains open:** published executable/Chromium tests do not prove that the owner's real account performed Unfollow or Cancel Pending. See [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). No beta/RC or Google Play distribution. Windows Setup has checksums, not Authenticode signing.
+**Publication does not prove live Instagram Unfollow or Cancel Pending.** The owner tests only officially published installers; no branch preview is real account acceptance. Earlier verified publication receipts remain in [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md) and [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md).\n\n**Live Instagram acceptance remains open:** published executable/Chromium tests do not prove that the owner's real account performed Unfollow or Cancel Pending. See [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). No beta/RC or Google Play distribution. Windows Setup has checksums, not Authenticode signing.
 
 ## Features
 
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.61. Next reserved version: v120.62, not published until official governed release succeeds.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.61. Next reserved version: v120.62, not published.**
 
 ## Identity and licensing
 
