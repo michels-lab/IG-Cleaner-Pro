@@ -1,12 +1,12 @@
 {
   "version": "120.62",
   "tag": "v120.62",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases for this app after all governed installed Windows, production Android signed device, visual, artifact, and checksum gates pass. No RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.61",
   "owner_acceptance_note": "GRANADA v120.62: exact owner screenshot shows Windows action blocked by SAVED COHORT 10 and NEW SELECTED SIZE 40, five prior attempts and no Chrome action started. PR #238 (source merge 632a0c01b9279d81bafb725b9c44c75c91de168a) provides explicitly separate Continue saved 10 or Plan new 40. Plan-new safely sets aside exact old incomplete cohort in original local history, retains all previous attempts, no-replay WAL and protections, and requires separate fresh owner approval before any real Chrome actions. Six exact-head source QA workflows passed including installed public/Developer Windows, Chromium and Python 10-to-40/5-attempt regression, Android Developer/native, visual and Supabase account isolation. v120.62 governed FINAL stable publisher MUST independently pass exact-commit installed Windows, production key signed Android public+Developer coinstall/runtime, visual proof and SHA256/checksum/updater provenance. Real account Instagram Unfollow/Cancel acceptance remains UNVERIFIED; never claim it and no RC/prerelease.",
   "requested_at": "2026-10-24",
@@ -20,5 +20,11 @@
     "commit": "148074c870a11068d809e1a12ba0384dbe6e4c3f",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.61",
     "published_at": "2026-10-23T20:19:53Z"
-  }
+  },
+  "published_run": 40121318686,
+  "published_commit": "9ad3719aa49378ee38bfb035bc4587ec1af7e7d4",
+  "published_at": "2026-10-24T18:44:16Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62",
+  "publication_verified_assets": 12,
+  "publication_verification": "official governed publisher SUCCESS; required Windows installed, production Android signer/coinstall, Desktop+Android visual, SHA-256 assets; live Instagram owner acceptance unverified"
 }
