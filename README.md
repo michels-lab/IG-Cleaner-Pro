@@ -8,7 +8,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.61 — official FINAL stable GitHub release, published October 23, 2026.** The [governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40017257499) completed **SUCCESS** on exact source `148074c870a11068d809e1a12ba0384dbe6e4c3f`, producing 12 assets, including public/Developer Windows and signed Android twins, visual and SHA-256 checks.
+**v120.61 — official stable GitHub release, published October 23, 2026.** The [governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40017257499) completed **SUCCESS** on exact source `148074c870a11068d809e1a12ba0384dbe6e4c3f`, producing 12 assets, including public/Developer Windows and signed Android twins, visual and SHA-256 checks.
 
 [**Download v120.61**](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.61) · Windows normal Setup `IG-Cleaner-Pro-Windows-Setup-v120.61.exe` · Android signed `IG-Cleaner-Pro-Android-v120.61.apk` · standalone Desktop `IG-Cleaner-Pro-Desktop-v120.61.html`.
 
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.60. Next reserved version: v120.61, not published.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.61. Next reserved version: v120.62, not published until official governed release succeeds.**
 
 ## Identity and licensing
 
