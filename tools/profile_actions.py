@@ -1738,6 +1738,73 @@ class ActionRobot:
                     "next_batch_requires_confirmation": True,
                     "status": "replanned_active_cohort_not_archived"}
 
+    def set_aside_incomplete_batch(self, data):
+        """Owner-confirmed safe transition from unfinished N to a NEW N.
+
+        This does not resize the original cohort, approve any result, visit
+        Instagram or mutate the action journal. It archives the *exact* saved
+        cohort so a fresh, independently approved batch may be planned.
+        Previously untouched names remain visible and eligible. Any possible
+        click or malformed journal entry stays excluded from automatic retry.
+        """
+        owner, account, task = self._review_scope(data)
+        batch_id = str(data.get("batch_id") or "")
+        desired = data.get("desired_batch_size")
+        if (type(desired) is not int or not 1 <= desired <= 1000 or
+                not batch_id or
+                data.get("confirmation") != "new-batch:" + batch_id + ":" + str(desired)):
+            raise ValueError("Confirm the exact saved batch and requested new size.")
+        with self.collector.browser_admission, self.lock:
+            if ((self.worker and self.worker.is_alive()) or
+                    (self.collector.worker and self.collector.worker.is_alive())):
+                raise ValueError("Finish or pause active Chrome robots before planning a new batch.")
+            if self.owner and (owner, account) != (self.owner, self.account):
+                raise ValueError("A different Instagram workspace is bound to the robot.")
+            entries = self._review_batches(owner, account, task)
+            pending = next((e for e in reversed(entries)
+                            if not e.get("approved_at") and not e.get("deferred_at")), None)
+            if not pending or pending.get("id") != batch_id:
+                raise ValueError("Saved cohort changed. Refresh before selecting a new batch.")
+            targets = pending.get("targets")
+            if (not isinstance(targets, list) or not targets or
+                    len(targets) > MAX_ACTIONS_PER_JOB or
+                    any(valid_username(u) != u for u in targets) or
+                    len(set(targets)) != len(targets)):
+                raise ValueError("Invalid saved cohort; preserve it for manual inspection.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            protected = set(_read_json(self._protection_file_for(owner, account), []))
+            historical = pending.get("original_targets") or targets
+            carried = pending.get("carryover_targets") or []
+            # Include earlier unacted carryovers so every original name stays
+            # represented after a previous resize. NEVER replay clicked or
+            # invalid attempts simply because the user selects a new size.
+            lineage = list(dict.fromkeys([*historical, *targets, *carried]))
+            reusable = [
+                username for username in lineage
+                if valid_username(username) == username
+                and username not in protected
+                and (username not in journal or (
+                    not _invalid_saved_action_record(journal[username]) and
+                    _preclick_no_action(journal[username])))
+            ]
+            recorded = sum(username in journal for username in lineage)
+            pending["deferred_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            pending["deferred_reason"] = "owner_new_batch_explicit"
+            pending["deferred_action_recorded"] = recorded
+            pending["deferred_untouched"] = len(reusable)
+            pending["requested_next_batch_size"] = desired
+            pending["marked_reviewed"] = False
+            # Single atomic write; do not touch saved click WAL, history, or
+            # protection at all. Reruns using a stale ID will be refused.
+            _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+            return {"owner": owner, "account": account, "task": task,
+                    "batch_id": batch_id, "saved_size": len(targets),
+                    "requested_new_size": desired, "reusable_usernames": reusable,
+                    "previous_action_records": recorded,
+                    "marked_reviewed": False, "approved_usernames": [],
+                    "next_batch_requires_confirmation": True,
+                    "status": "saved_cohort_set_aside_for_new_batch"}
+
     def defer_protected_batch(self, data):
         """Archive a blocked cohort without approving any profile or action."""
         owner, account, task = self._review_scope(data)
