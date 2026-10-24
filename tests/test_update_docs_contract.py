@@ -100,6 +100,15 @@ class UpdateGuideContract(unittest.TestCase):
         else:
             self.assertTrue(request.get("authorized"))
             self.assertEqual(request.get("tag"), policy["nextRelease"])
+            # Regression: an authorized NEXT release must not retain stale provenance
+            # (run/SHA/date) from a release older than the current published stable.
+            previous = request.get("previous_publication")
+            if previous:
+                self.assertEqual(previous.get("tag"), policy["currentStableRelease"])
+                self.assertEqual(previous.get("run"), policy["lastPublishedRun"])
+                self.assertEqual(previous.get("commit"), policy["lastPublishedCommit"])
+                self.assertEqual(previous.get("published_at"), policy["lastPublishedAt"])
+                self.assertEqual(previous.get("release_url"), policy["lastPublishedReleaseUrl"])
 
     def test_profile_counts_guide_uses_release_feed_not_obsolete_stable_claim(self):
         guide = COUNTS_GUIDE.read_text(encoding="utf-8")
