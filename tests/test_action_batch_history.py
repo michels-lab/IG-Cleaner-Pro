@@ -901,6 +901,95 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
                     cold.start(self._request(["maybe.clicked"],task="unfollow"))
 
+    def test_new_forty_after_saved_ten_preserves_all_history_and_never_autoclicks(self):
+        """Real owner case: 10 saved / 40 desired / 5 attempted / no Chrome start."""
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            original = [f"saved.{i:02d}" for i in range(10)]
+            payload = self._request(original, task="cancel")
+            with patch("profile_actions.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value = False
+                robot.start(payload)
+                before = robot.batch_review(payload)["batch"]
+                self.assertEqual(len(before["targets"]), 10)
+                journal = {original[0]: {
+                    "status": "review",
+                    "message": "An uncertain Request click; never replay.",
+                    "click_intent": {"phase": "relationship_control",
+                                     "outcome_recorded": False}},
+                    original[1]: {"status": "ok", "message": "Confirmed existing action"},
+                    original[2]: {"status": "blocked", "message":
+                                   "Instagram session verification failed before the first click. No action performed."},
+                    original[3]: {"status": "review", "message":
+                                   "Layout was not verifiable; click may have occurred.",
+                                   "click_intent": {"phase": "relationship_control"}},
+                    original[4]: {"status": "already_not_requested",
+                                   "message": "Follow verified; no Cancel Request clicked"}}
+                _atomic_json(robot._base(), journal)
+                preserved = robot._base().read_bytes()
+                result = robot.set_aside_incomplete_batch({
+                    **payload, "batch_id": before["id"], "desired_batch_size": 40,
+                    "confirmation": "new-batch:" + before["id"] + ":40"
+                })
+                self.assertEqual(result["status"], "saved_cohort_set_aside_for_new_batch")
+                self.assertEqual(result["saved_size"], 10)
+                self.assertEqual(result["requested_new_size"], 40)
+                self.assertFalse(result["marked_reviewed"])
+                self.assertEqual(result["approved_usernames"], [])
+                self.assertIn(original[2], result["reusable_usernames"])
+                self.assertIn(original[5], result["reusable_usernames"])
+                self.assertNotIn(original[0], result["reusable_usernames"])
+                self.assertNotIn(original[3], result["reusable_usernames"])
+                self.assertNotIn(original[4], result["reusable_usernames"])
+                self.assertEqual(preserved, robot._base().read_bytes(),
+                    "Set aside must not modify or overwrite possible-click journal bytes")
+                self.assertIsNone(robot.batch_review(payload)["batch"])
+                archived = robot._review_batches("owner", "profile", "cancel")
+                match = next(x for x in archived if x["id"] == before["id"])
+                self.assertEqual(match["targets"], original)
+                self.assertEqual(match["requested_next_batch_size"], 40)
+                self.assertEqual(match["deferred_reason"], "owner_new_batch_explicit")
+                self.assertFalse(match["marked_reviewed"])
+                self.assertFalse(bool(match.get("approved_at")))
+                with self.assertRaisesRegex(ValueError, "Saved cohort changed"):
+                    robot.set_aside_incomplete_batch({
+                        **payload, "batch_id": before["id"], "desired_batch_size": 40,
+                        "confirmation": "new-batch:" + before["id"] + ":40"})
+                # A fresh 40-person batch can now be PREPARED, but no worker
+                # action is run by this handoff; old clicked usernames absent.
+                safe = result["reusable_usernames"]
+                additions = [f"new.{i:02d}" for i in range(40-len(safe))]
+                next_request = self._request(safe + additions, task="cancel")
+                robot.start(next_request)
+                self.assertEqual(len(robot.batch_review(next_request)["batch"]["targets"]), 40)
+                self.assertNotIn(original[0],
+                    robot.batch_review(next_request)["batch"]["targets"])
+
+    def test_new_batch_rejects_unapproved_owner_size_and_running_workers(self):
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            payload = self._request(["old.one","old.two"], task="cancel")
+            with patch("profile_actions.threading.Thread") as thread:
+                thread.return_value.is_alive.return_value = False
+                robot.start(payload)
+                saved = robot.batch_review(payload)["batch"]
+                request = {**payload, "batch_id": saved["id"],
+                           "desired_batch_size": 40,
+                           "confirmation": "new-batch:" + saved["id"] + ":40"}
+                with self.assertRaisesRegex(ValueError, "exact saved batch"):
+                    robot.set_aside_incomplete_batch({**request,
+                        "confirmation": "new-batch:wrong-batch:40"})
+                with self.assertRaisesRegex(ValueError, "workspace"):
+                    robot.set_aside_incomplete_batch({**request,
+                        "account": "somebody-else"})
+                robot.worker.is_alive.return_value = True
+                with self.assertRaisesRegex(ValueError, "Chrome robots"):
+                    robot.set_aside_incomplete_batch(request)
+                robot.worker.is_alive.return_value = False
+                self.assertEqual(robot.batch_review(payload)["batch"]["targets"],
+                                 ["old.one","old.two"])
+
     def test_replan_only_truly_absent_or_proven_preclick_and_preserves_evidence(self):
         """A saved malformed entry cannot be recycled into an approved 10->2 wave."""
         from profile_actions import _atomic_json
