@@ -8,15 +8,15 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.61 — official stable GitHub release, published October 23, 2026.** The [governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40017257499) completed **SUCCESS** on exact source `148074c870a11068d809e1a12ba0384dbe6e4c3f`, producing 12 assets, including public/Developer Windows and signed Android twins, visual and SHA-256 checks.
+**v120.62 — official stable GitHub release, published October 24, 2026.** The [governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686) finished **SUCCESS** on exact source `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`, with 12 verified assets, installed Windows public/Developer, production-signed Android public/Developer co-install, rendered Desktop/Android UI and SHA-256 release checks.
 
-[**Download v120.61**](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.61) · Windows normal Setup `IG-Cleaner-Pro-Windows-Setup-v120.61.exe` · Android signed `IG-Cleaner-Pro-Android-v120.61.apk` · standalone Desktop `IG-Cleaner-Pro-Desktop-v120.61.html`.
+[**Download v120.62**](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62) · Windows Setup `IG-Cleaner-Pro-Windows-Setup-v120.62.exe` · signed Android `IG-Cleaner-Pro-Android-v120.62.apk` · standalone Desktop `IG-Cleaner-Pro-Desktop-v120.62.html`. Optional portable ZIP and Developer editions are available on the same official release.
 
-**What changed in v120.61:** clearer selection versus actual Chrome worker in Automation, reduced repeat owner-profile visits in Followback and final-state checks, and an optional read-only exact-owner full Followers/Following list evidence source. These changes preserve the existing Profile Counts numerical scraper, safe Cancel batch, owner-specific action journal, original cohorts and protected profiles.
+**What changed in v120.62:** an old saved ten-profile Windows action cohort no longer dead-ends when the selected next batch size is forty. Explicit **Continue saved 10** or **Plan new 40** options preserve prior attempt and protected-person evidence, require separate confirmation and never automatically replay an uncertain click or mark a profile Reviewed merely by planning. Includes the current Automation layout, read-only live-list alternative, dated action journal, Cancel batch and end-of-batch review.
 
-**v120.62 reserved for development and fully gated publication.** Fixes an owner-reported `SAVED COHORT: 10; NEW SELECTED SIZE: 40` dead end: two explicit, safe options to continue the ten or preserve them in archived local history and prepare a fresh forty. Neither planning nor archiving clicks Instagram or marks old profiles Reviewed. Source is merged and automated Windows/Chrome, Android and desktop QA passed; this is **not yet an official release until the governed publisher passes**.
+**Live Instagram Unfollow and Cancel Pending remain unverified on the owner's actual account.** Installer/emulator/Chromium success is not evidence that Instagram accepted real relationship changes. The owner tests only officially published installers; independent physical acceptance remains open in [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Windows Setup has SHA-256 integrity but not Authenticode signing. No RC, beta or Google Play release.
 
-**Publication does not prove live Instagram Unfollow or Cancel Pending.** The owner tests only officially published installers; no branch preview is real account acceptance. Earlier verified publication receipts remain in [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md) and [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md).\n\n**Live Instagram acceptance remains open:** published executable/Chromium tests do not prove that the owner's real account performed Unfollow or Cancel Pending. See [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). No beta/RC or Google Play distribution. Windows Setup has checksums, not Authenticode signing.
+**Current published stable: v120.62. Next reserved version: v120.63, not published.** The next version is not authorized for publication. Earlier publication receipts remain historical: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
 
 ## Features
 
@@ -37,7 +37,7 @@ The **original Instagram export is processed locally**, and raw Instagram ZIP/JS
 
 For Desktop, download the standalone `.html` asset from the latest GitHub release and open it locally. Developers can also use `index.html`; check the distribution manifest for the supported release artifact. For Android, install the signed APK supplied with the release. Keep app signing identity, browser state keys and Focus history compatible across upgrades.
 
-Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. **Current published stable: v120.61. Next reserved version: v120.62, not published.**
+Before changing product behavior, read [PROJECT_LOG.md](PROJECT_LOG.md), [Current Handoff](docs/CURRENT_HANDOFF.md), and [AGENTS.md](AGENTS.md). Preserve independent workspaces, Focus 20/30/40, Recheck/Double Check, history, protection, backup and user data. 
 
 ## Identity and licensing
 
