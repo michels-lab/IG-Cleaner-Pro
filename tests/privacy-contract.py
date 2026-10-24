@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from release_artifact_policy import artifact_release_tag
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,8 +42,9 @@ for token in (
     assert token in privacy, f"Privacy documentation token missing: {token}"
 
 stable_desktop = manifest["channels"]["desktop"]["artifact"]
-candidate = manifest["releasePolicy"]["nextRelease"]
-# Channel artifact names point to the NEXT candidate, not the last published tag.
+request = json.loads((ROOT / ".michelslab/release-request.json").read_text(encoding="utf-8"))
+candidate = artifact_release_tag(manifest, request)
+# During active authorization assets target NEXT; after publication they retain the exact published tag.
 assert stable_desktop == f"IG-Cleaner-Pro-Desktop-{candidate}.zip"
 assert manifest["channels"]["desktop"]["primaryArtifact"] == f"IG-Cleaner-Pro-Desktop-{candidate}.html"
 assert manifest["channels"]["android"]["artifact"] == f"IG-Cleaner-Pro-Android-{candidate}.apk"
