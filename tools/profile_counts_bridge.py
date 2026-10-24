@@ -861,6 +861,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     result = actions.defer_protected_batch(data)
                 elif self.path == "/api/actions/replan-batch":
                     result = actions.replan_incomplete_batch(data)
+                elif self.path == "/api/actions/new-batch":
+                    result = actions.set_aside_incomplete_batch(data)
                 elif self.path == "/api/actions/deferred-batches":
                     result = actions.deferred_batch_history(data)
                 elif self.path == "/api/actions/open-profile":
