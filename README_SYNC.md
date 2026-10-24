@@ -1,8 +1,8 @@
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
-> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.61; hosted email configuration remains separately unverified.
+> **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.62; hosted email configuration remains separately unverified.
 
-Current published stable: **v120.61**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.61), successful [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40017257499), exact source `148074c870a11068d809e1a12ba0384dbe6e4c3f`. The next reserved development version **v120.62 is authorized for governed FINAL publication** only after exact-source gates pass. It fixes a blocked old-ten/new-forty owner batch mismatch, retaining all locally stored action evidence and requiring fresh explicit consent. No release is claimed until publisher succeeds. Live Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
+Current published stable: **v120.62**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), successful [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686), exact source `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4` and 12 published checksum-verified assets. The next reserved development version **v120.63 is not authorized** for publication. The published v120.62 Windows fix gives explicit Continue saved 10 / Plan new 40 choices without replaying old uncertain attempts or deleting locally stored action evidence. Live Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,11 +99,11 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next governed release target is **v120.42** and GitHub `prerelease` must be **false**; the build version must advance and be validated before authorization.
+The next reserved release target is **v120.63 (not authorized)**. Any future GitHub publication must use `prerelease: false`, advance its build version and satisfy every installed, signed and distribution gate.
 
 Authority: `release/distribution-manifest.json`.
 
-Publication is never automatic and requires explicit user authorization. A stable Android artifact must not be a debug/`.beta` package presented as stable; it must be a proper release artifact with signing continuity established, or Android publication remains blocked.
+A guarded publication request must carry the owner's explicit scoped authorization (including the standing Operación Granada FINAL-only rule) and still pass every exact-source release gate. A stable Android artifact must not be a debug/`.beta` package presented as stable; it must be a proper release artifact with signing continuity established, or Android publication remains blocked.
 
 The **primary Desktop artifact is a single standalone offline HTML** that embeds the canonical About identity images; an **optional secondary ZIP bundle** includes these original files separately:
 - `IG-Cleaner-Pro.html`;
