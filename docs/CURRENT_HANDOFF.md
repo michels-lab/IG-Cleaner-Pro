@@ -1,3 +1,15 @@
+## 2026-10-24 — GRANADA v120.62 provenance regression caught before merge
+
+- **Root cause (docs/status drift + test gap):** the candidate correctly named published v120.61 but kept v120.60's `lastPublishedRun`, `lastPublishedCommit` and `lastPublishedAt` in `release/distribution-manifest.json`. The old docs-contract test only checked these values when the request was already marked `published`, not during an authorized *next* release.
+- **Fix:** match authoritative v120.61 FINAL tag `148074c870a11068d809e1a12ba0384dbe6e4c3f`, successful publisher run `40017257499`, published `2026-10-23T20:19:53Z`; add a regression that requires the new request's `previous_publication` receipt to match every recorded manifest provenance field. The previous manifest fails this regression. No user state, protected cohorts, Instagram browser session or relationship-click logic changed.
+- **Gate:** rerun exact-head CI on this PR before merging. v120.62 remains unpublished until independent installed Windows, signed Android coinstall, visual and release-asset checks finish; real owner's Instagram Unfollow and Cancel Pending success remains **UNVERIFIED**.
+
+## 2026-10-24 — GRANADA owner 10-vs-40 blocker fixed in source, v120.62 FINAL publication gated
+
+- [PR #238](https://github.com/michels-lab/IG-Cleaner-Pro/pull/238) merged after six exact-source checks, including installed Windows public/Developer, Chromium, Android runtime and desktop visual validation. Original old cohort remains protected; choose Continue saved 10 or explicitly save old cohort unchanged in local history and prepare new 40 with fresh Run approval. Five earlier attempts are preserved and cannot be blindly replayed; no action is marked Reviewed by planning. **Source change is not evidence of owner Instagram success**.
+- [v120.61 official FINAL release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.61) confirmed 12 assets, run [40017257499](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40017257499) SUCCESS, exact published SHA `148074c870a11068d809e1a12ba0384dbe6e4c3f`, October 23. The consumed v120.61 publication is reconciled to current stable, with **v120.62** reserved and specifically authorized for the full official publisher; no local-installed acceptance is claimed.
+- Do not test the owner's real Instagram relationship-changing actions from CI. Preserve the original saved 10/40 histories, the write-ahead click journal, the protected list, no-replay barriers, old Profile Counts and the separate Developer twins.
+
 ## 2026-10-23 — GRANADA #46: official FINAL v120.60 published, request consumed
 
 - Verified [official v120.60 stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.60), 12 downloadable assets, `draft=false` / `prerelease=false`, exact source `457506c814c64f4ee31e5cbf0c7fbf6d472fa1f9`, publisher [#39983124380](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/39983124380) **SUCCESS** on attempt 2. First attempt failed to download Android SDK system image; mandatory emulator/Windows/signing/checksum gates remained intact and passed on retry.
