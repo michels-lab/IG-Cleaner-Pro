@@ -945,7 +945,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 self.assertEqual(preserved, robot._base().read_bytes(),
                     "Set aside must not modify or overwrite possible-click journal bytes")
                 self.assertIsNone(robot.batch_review(payload)["batch"])
-                archived = robot._review_batches("owner", "profile", "cancel")
+                archived = robot._review_batches("owner1", "ig_account_1", "cancel")
                 match = next(x for x in archived if x["id"] == before["id"])
                 self.assertEqual(match["targets"], original)
                 self.assertEqual(match["requested_next_batch_size"], 40)
