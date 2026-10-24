@@ -23,12 +23,10 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "780f045b26fed55c117bd2c31b0541c629b8cb4a23c33f63ba702e411bb8c414",
-  "evidence_fingerprint": "33bfde253546cc3f9e7549afffe083c3465e56f88c4dde2566d1f2c488ace4cb",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "5d8c7a809ece8e6da2151cc1db8549067c9ab3d225204d4f895f258c6c5c81f3",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "391666488faa56cc7a796f1f4093d7c486a492df"
+      "blob": "5a54173a50d3315c98b8e5ce247946a0aadc0190"
     },
     {
       "path": "README.md",
@@ -854,7 +852,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "95884e953655afb224c1198687e24692aa212c03"
+      "blob": "243025ab9c118aaf73353836062fb2cfff0d8515"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1505,7 +1503,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6d0c5697ad3d6fe6032a7d543ec004c9a223991e"
+      "blob": "c5be0a35abd949ebbb5bbaf8cce209f9d7c4375e"
     },
     {
       "path": "tests/automations-planner.test.cjs",
@@ -1771,7 +1769,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3ce07e4decfca8e5b75532e17fd179ae9b7a41b6"
+      "blob": "1bae4394d53dd66992480e19e574ee6f83d500ed"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -2100,7 +2098,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "424b601550e6ae481aa9a130e06f589480ffe5ac"
+      "blob": "af81170df49d94e98f4ce0025e30987b257c9bc2"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2114,7 +2112,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f178c0ab8f4604f11cb20dc748919f2c14a62e04"
+      "blob": "869ac89d64f005c5c7df61e292d2cd8b059922b7"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2243,17 +2241,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "e5e2f65c1d72250f",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
