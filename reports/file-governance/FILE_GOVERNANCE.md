@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 320; classified: 316; readable documents: 66; above read cap: 1; findings: 0.
+Tracked: 320; classified: 316; readable documents: 66; above read cap: 1; findings: 1.
 
 ## File roles
 
@@ -29,6 +29,7 @@ Tracked: 320; classified: 316; readable documents: 66; above read cap: 1; findin
 
 ## Findings (human review required)
 
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 6 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, tests/test_update_docs_contract.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 78483f9728cf1c0f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
