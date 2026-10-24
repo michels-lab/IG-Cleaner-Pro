@@ -63,7 +63,16 @@ class UpdateGuideContract(unittest.TestCase):
         sync = (ROOT / "README_SYNC.md").read_text(encoding="utf-8")
         self.assertIn(f"Current published stable: **{stable}**", sync,
                       "Sync README may not advertise an obsolete stable release.")
-        self.assertIn(f"next reserved development version **{reserved} is not authorized", sync)
+        request = json.loads((ROOT / ".michelslab" / "release-request.json").read_text(encoding="utf-8"))
+        if request.get("authorized") is True and request.get("status") in ("requested", "authorized"):
+            self.assertEqual(request.get("tag"), reserved,
+                "An authorized request must target exactly the next reserved release.")
+            self.assertIn(
+                f"next reserved development version **{reserved} is authorized for governed FINAL publication",
+                sync)
+            self.assertIn("only after exact-source gates pass", sync)
+        else:
+            self.assertIn(f"next reserved development version **{reserved} is not authorized", sync)
         self.assertIn(f"https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/{stable}", sync)
         self.assertIn("docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md", readme)
         self.assertIn("docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md", readme)
