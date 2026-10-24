@@ -15,7 +15,7 @@ function el(id){if(!nodes.has(id))nodes.set(id,{
   replaceChildren(){this.children=[]},
   addEventListener(){},setAttribute(){},
  } );return nodes.get(id)}
-const store=new Map(),post=[],batchReplans=[];
+const store=new Map(),post=[],batchReplans=[],newBatchRequests=[];
 let pendingSaved=null;
 const profile=(name)=>({username:name,href:"https://www.instagram.com/"+name+"/"});
 const pending=[...Array(155)].map((_,i)=>profile("pending."+String(i).padStart(3,"0")));
@@ -44,6 +44,24 @@ const ctx={
     if(op==="review-batch"){
       return {ok:true,json:async()=>({
         owner:"owner1",account:"profile1",task:"cancel",batch:pendingSaved
+      })};
+    }
+    if(op==="new-batch"){
+      const payload=JSON.parse(opts.body);newBatchRequests.push(payload);
+      assert(pendingSaved,"Previous batch must still exist before new-batch confirmation");
+      const old=pendingSaved;
+      assert.equal(payload.confirmation,
+        "new-batch:"+old.id+":"+payload.desired_batch_size);
+      const safe=old.targets.filter((u,i)=>i>=5);
+      pendingSaved=null; // only after explicit owner consent; old file preserved by real server
+      return {ok:true,json:async()=>({
+        owner:payload.owner,account:payload.account,task:payload.task,
+        batch_id:old.id,saved_size:old.targets.length,
+        requested_new_size:payload.desired_batch_size,
+        reusable_usernames:safe,previous_action_records:5,
+        marked_reviewed:false,approved_usernames:[],
+        next_batch_requires_confirmation:true,
+        status:"saved_cohort_set_aside_for_new_batch"
       })};
     }
     if(op==="replan-batch"){
@@ -140,5 +158,58 @@ vm.createContext(ctx);vm.runInContext(source,ctx,{timeout:1200});
     "After explicit archival, Run MUST honor the newly selected size 10");
   assert.deepEqual([...post.at(-1).targets],pendingSaved.targets,
     "Run reuses the exact ten previously untouched users without skipping everyone else");
+
+  // Exact owner screenshot: 10 saved, five past attempts, preference now 40.
+  // Run must NOT launch a stale 10-wave or quietly mark five as Reviewed.
+  const ten=pending.slice(95,105).map(x=>x.username);
+  const tried=ten.slice(0,5);
+  pendingSaved={
+    id:"saved-10-batch",targets:ten,selected_batch_size:10,
+    action_results:Object.fromEntries(ten.map((u,i)=>[u,{
+      status:i<5?"review":"pending",safe_no_click:false
+    }])),
+    recheck_results:{},protected_in_cohort:[]
+  };
+  state={...state,status:"complete",running:false,attempted_usernames:tried,rows:[],remaining:0};
+  el("igcAutoBatch").value="40";
+  await ctx.igcAutoPoll();
+  assert.equal(el("igcAutoCohortChoice").hidden,false);
+  assert.match(el("igcAutoCohortChoiceTitle").textContent,/Saved 10 · requested 40/);
+  assert.match(el("igcAutoPlanNew").textContent,/new 40/);
+  assert.equal(el("igcAutoReplanSize").style.display,"none",
+    "Replan must not pretend ten old accounts form forty new targets");
+  const before40=post.length;
+  await ctx.igcAutoStart();
+  assert.equal(post.length,before40,"Mismatch cannot start Chrome");
+  assert.match(el("igcAutoStatus").textContent,/SAVED COHORT: 10 profiles/);
+  await ctx.igcAutoNewBatchFromSaved();
+  assert.equal(newBatchRequests.length,1,"A single explicit new-batch handoff");
+  assert.equal(newBatchRequests[0].batch_id,"saved-10-batch");
+  assert.equal(newBatchRequests[0].desired_batch_size,40);
+  assert.equal(post.length,before40,"Planning a new forty does NOT click Instagram");
+  assert.equal(pendingSaved,null,"Old cohort no longer blocks a newly approved one");
+  await ctx.igcAutoStart();
+  assert.equal(post.length,before40+1);
+  assert.equal(post.at(-1).targets.length,40,
+    "Fresh run must honor forty, not an old ten");
+  assert(!post.at(-1).targets.some(u=>tried.includes(u)),
+    "Old five uncertain outcomes cannot be replayed automatically");
+  assert.equal(post.at(-1).batch_size,40);
+  // The owner may choose instead to CONTINUE the old exact ten. This must
+  // preserve cohort ID, force the size to ten, and still require Run approval.
+  pendingSaved={
+    id:"another-saved-10",targets:ten,selected_batch_size:10,
+    action_results:Object.fromEntries(ten.map((u,i)=>[u,{
+      status:i===0?"review":"pending",safe_no_click:false
+    }])),recheck_results:{},protected_in_cohort:[]
+  };
+  el("igcAutoBatch").value="40";
+  state={...state,attempted_usernames:[ten[0]],status:"complete",running:false};
+  await ctx.igcAutoPoll();
+  await ctx.igcAutoContinueSavedCohort();
+  assert.equal(el("igcAutoBatch").value,"10");
+  assert.equal(post.at(-1).batch_id,"another-saved-10");
+  assert.equal(post.at(-1).targets.length,10);
+  assert.equal(post.at(-1).batch_size,10);
   console.log("PASS: third batch advances; reimport; saved 40 cannot override selected 10; 40 remain saved, 10 active, 29 reusable");
 })().catch(e=>{console.error(e);process.exitCode=1});
