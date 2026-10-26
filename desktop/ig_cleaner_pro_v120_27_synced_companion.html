@@ -3813,7 +3813,12 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <label>Batch size <input id="igcAutoBatch" type="number" min="1" max="1000" value="30" style="width:86px"></label>
 <label>Rest between batches (min) <input id="igcAutoRest" type="number" min="0" max="1440" value="5" style="width:78px"></label>
 <label>Delay between profiles (sec) <input id="igcAutoGap" type="number" min="0" max="3600" value="10" style="width:78px"></label>
+<label>Chrome tab flow <select id="igcAutoTabFlow" aria-label="Chrome target navigation order" style="min-width:192px">
+<option value="sequential" selected>One profile at a time (recommended)</option>
+<option value="ten_tabs">Prepare 10 tabs (legacy)</option>
+</select></label>
 <button class="btn" type="button" onclick="igcAutoSaveTiming()">Save timing</button>
+<small class="note">Sequential mode finishes checking one profile before opening the next. Ten-tab mode prepares all 10 first and returns to the first; both keep the same safety and verification checks.</small>
 </div>
 <div class="btnrow">
 <button class="btn primary" id="igcAutoRun" type="button" onclick="igcAutoStart()">▶ Run Selected Batch</button>
@@ -14986,6 +14991,7 @@ function igcAutoHydrateTiming(){
    if(Number.isInteger(t.count)&&t.count>=1&&t.count<=1000)document.getElementById("igcAutoBatch").value=String(t.count);
    if(Number.isFinite(t.rest)&&t.rest>=0&&t.rest<=1440)document.getElementById("igcAutoRest").value=String(t.rest);
    if(Number.isFinite(t.gap)&&t.gap>=0&&t.gap<=3600)document.getElementById("igcAutoGap").value=String(t.gap);
+   document.getElementById("igcAutoTabFlow").value=t.tab_flow==="ten_tabs"?"ten_tabs":"sequential";
   }
  }catch{}
 }
@@ -14993,10 +14999,11 @@ function igcAutoPersistTiming(){
  const count=Number(document.getElementById("igcAutoBatch")?.value);
  const rest=Number(document.getElementById("igcAutoRest")?.value);
  const gap=Number(document.getElementById("igcAutoGap")?.value);
+ const tab_flow=document.getElementById("igcAutoTabFlow")?.value==="ten_tabs"?"ten_tabs":"sequential";
  if(Number.isInteger(count)&&count>=1&&count<=1000&&
     Number.isFinite(rest)&&rest>=0&&rest<=1440&&
     Number.isFinite(gap)&&gap>=0&&gap<=3600)
-  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
+  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap,tab_flow}));
 }
 function saved(){
  try{
@@ -15160,10 +15167,11 @@ window.igcAutoSaveTiming=function(){
   const count=Number(document.getElementById("igcAutoBatch")?.value);
   const rest=Number(document.getElementById("igcAutoRest")?.value);
   const gap=Number(document.getElementById("igcAutoGap")?.value);
+  const tab_flow=document.getElementById("igcAutoTabFlow")?.value==="ten_tabs"?"ten_tabs":"sequential";
   if(!Number.isInteger(count)||count<1||count>1000||
      !Number.isFinite(rest)||rest<0||rest>1440||
      !Number.isFinite(gap)||gap<0||gap>3600)throw Error("Check the batch size and timing.");
-  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap}));
+  localStorage.setItem(timingKey(),JSON.stringify({count,rest,gap,tab_flow}));
   setStatus("Timing saved for this account and task. It will apply to the next batch.");
  }catch(e){setStatus(e.message)}
 };
@@ -15291,6 +15299,7 @@ function actionConfig(task,targets){
  const rest_minutes=Number(document.getElementById("igcAutoRest")?.value);
  const gap_seconds=Number(document.getElementById("igcAutoGap")?.value);
  const batch_size=Number(document.getElementById("igcAutoBatch")?.value);
+ const tab_flow=document.getElementById("igcAutoTabFlow")?.value==="ten_tabs"?"ten_tabs":"sequential";
  if(!Number.isInteger(batch_size)||batch_size<1||batch_size>1000||
     !Number.isFinite(rest_minutes)||rest_minutes<0||rest_minutes>1440||
     !Number.isFinite(gap_seconds)||gap_seconds<0||gap_seconds>3600)
@@ -15302,7 +15311,7 @@ function actionConfig(task,targets){
  if(!targets.length)throw Error("No eligible profiles. Check protected accounts, skips, and filters.");
  const protected_all=[...new Set([...(saved()[task==="audit"?"unfollow":task]||[]),
   ...(["unfollow","audit"].includes(task)&&typeof protectedSet!=="undefined"?[...protectedSet]:[])])].map(norm).filter(Boolean);
- return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,
+ return {owner,account,expected_handle,task,targets,batch_size,rest_minutes,gap_seconds,tab_flow,
          protected:protected_all,followers_evidence:task==="unfollow"&&!!followersRaw.length&&!window.V119_HTML?.partial,
          audit_source:task==="audit"?(document.getElementById("igcAutoAuditSource")?.value||"visible"):"visible",
          confirmation:task+":"+targets.length};
@@ -16256,7 +16265,7 @@ if(typeof original==="function")window.showPage=function(id){
  if(id==="automations"){window.igcAutoRender();window.igcAutoRenderIssues();if(actionBridge)window.igcAutoPoll()}
  return ret;
 };
-for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap"]){
+for(const id of ["igcAutoBatch","igcAutoRest","igcAutoGap","igcAutoTabFlow"]){
  const control=document.getElementById(id);
  if(control&&typeof control.addEventListener==="function")
   control.addEventListener("input",igcAutoPersistTiming);
