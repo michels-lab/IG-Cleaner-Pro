@@ -3834,6 +3834,14 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <p id="igcAutoCommandFeedback" role="status" aria-live="assertive" style="display:none;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 15px;border:1px solid var(--border);border-radius:12px;margin:12px 0"></p>
 <div class="igc-counts-stats" id="igcAutoExecutionMetrics" aria-live="polite"></div>
 <p class="note" id="igcAutoHistoricalSummary" role="status" aria-live="polite">Older robot failures can be re-audited automatically without repeating any relationship click.</p>
+<style id="igc-batch-review-result-colors">
+#igcAutoReviewDialog tr.igc-result-ok{background:rgba(35,165,96,.16);border-left:4px solid #37bb76}
+#igcAutoReviewDialog tr.igc-result-review{background:rgba(245,187,58,.17);border-left:4px solid #ecb83f}
+#igcAutoReviewDialog tr.igc-result-untouched{border-left:4px solid #949ba6}
+#igcAutoReviewDialog .igc-status-ok{color:#53dd91;font-weight:750}
+#igcAutoReviewDialog .igc-status-review{color:#f5c857;font-weight:750}
+#igcAutoReviewDialog .igc-status-untouched{font-weight:650}
+</style>
 <div class="panel" id="igcAutoBatchApproval" aria-label="Automatic batch approval" style="display:none;margin:12px 0">
   <div class="title">Batch results · owner confirmation</div>
   <p class="note" id="igcAutoBatchApprovalDetails" role="status" aria-live="polite">Waiting for a batch.</p>
@@ -3843,7 +3851,9 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button class="btn orange" id="igcAutoDeferProtected" type="button" onclick="igcAutoDeferProtectedBatch()" style="display:none">↷ Archive protected batch (not Reviewed)</button>
     <button class="btn orange" id="igcAutoReplanSize" type="button" onclick="igcAutoReplanSavedBatch()" style="display:none">↷ Replan unfinished profiles · keep everyone</button>
     <button class="btn primary" id="igcAutoRecheckBatch" type="button" onclick="igcAutoRecheckBatch()">↻ Verify previous actions (read-only)</button>
-    <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open only issue profiles</button>
+    <button class="btn primary" id="igcAutoReviewOnly" type="button" onclick="igcAutoInspectReviewProfiles()">↻ Open Review profiles · robot checks</button>
+    <button class="btn" id="igcAutoRetryReviewed" type="button" onclick="igcAutoRetryReviewed()">▶ Retry verified no-click profiles</button>
+    <button class="btn" id="igcAutoOpenBatchIssues" type="button" onclick="igcAutoOpenBatchIssues()">↗ Open issues manually</button>
   </div>
   <p class="note">Automatic actions are not marked reviewed until you approve. Rechecking uses Chrome automatically and never repeats a possibly completed Unfollow or Cancel Request.</p>
 </div>
@@ -15919,7 +15929,14 @@ window.igcAutoShowBatchReview=function(){
   const tr=document.createElement("tr");
   const profile=document.createElement("td");profile.textContent="@"+username;
   const status=document.createElement("td");
-  status.textContent=(row.status||"pending")+" · "+String(row.message||"No verified action result.").slice(0,140);
+  const result=String(row.status||"pending");
+  const confirmed=["ok","already_not_following","already_not_requested"].includes(result)&&row.observation_only!==true;
+  const untouched=result==="pending";
+  const visual=confirmed?"ok":untouched?"untouched":"review";
+  tr.className="igc-result-"+visual;
+  status.className="igc-status-"+visual;
+  status.textContent=(confirmed?"✓ OK · ":untouched?"○ Not checked · ":"⚠ Review · ")+
+      String(row.message||(untouched?"Chrome did not finish checking this profile.":"No verified action result.")).slice(0,140);
   const td=document.createElement("td");
   const date=new Date(row.at||recent.at||"");
   td.textContent=Number.isNaN(date.valueOf())?"—":date.toLocaleString();
@@ -15938,20 +15955,36 @@ window.igcAutoShowBatchReview=function(){
   await window.igcAutoApproveBatch();
   if(!actionBatchReview&&dialog.open)dialog.close();
  });
- const inspect=document.createElement("button");inspect.type="button";inspect.className="btn";
- inspect.textContent="↻ Reopen issues (manual)";
- inspect.addEventListener("click",()=>{
-  window.igcAutoOpenBatchIssues(); // Read-only Chrome links; no re-click
-  dialog.close();
- });
+ const inspect=document.createElement("button");inspect.type="button";inspect.className="btn primary";
+ inspect.textContent="↻ Open Review profiles · robot checks";
+ inspect.disabled=o.issues.length+o.unchecked.length===0;
+ inspect.addEventListener("click",async()=>{dialog.close();await window.igcAutoInspectReviewProfiles();});
+ const retry=document.createElement("button");retry.type="button";retry.className="btn";
+ retry.textContent="▶ Retry verified no-click ("+igcAutoReviewRetryUsers().length+")";
+ retry.disabled=!igcAutoReviewRetryUsers().length;
+ retry.addEventListener("click",async()=>{dialog.close();await window.igcAutoRetryReviewed();});
+ const manual=document.createElement("button");manual.type="button";manual.className="btn";
+ manual.textContent="Open ambiguous profiles manually";
+ manual.addEventListener("click",()=>{dialog.close();window.igcAutoOpenBatchIssues();});
  const later=document.createElement("button");later.type="button";later.className="btn";
  later.textContent="Review later";later.addEventListener("click",()=>dialog.close());
- bar.append(confirm,inspect,later);dialog.append(bar);
+ bar.append(confirm,inspect,retry,manual,later);dialog.append(bar);
  document.body.append(dialog);
  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
  if(typeof dialog.showModal==="function")dialog.showModal();
  else dialog.setAttribute("open","");
 };
+function igcAutoReviewRetryUsers(){
+ const b=actionBatchReview;
+ if(!b||!["unfollow","cancel"].includes(mode))return [];
+ const expected=mode==="unfollow"?"still_following":"still_requested";
+ return (b.targets||[]).filter(u=>{
+  const original=b.action_results?.[u]||{},scan=b.recheck_results?.[u]||{};
+  const eligible=(!original.status||original.status==="pending"||original.safe_no_click===true);
+  return eligible&&scan.observation_only===true&&scan.read_only===true&&
+      scan.status===expected&&!isProtected(mode,u)&&!skips[mode].has(u);
+ });
+}
 function igcAutoBatchOutcomes(){
  const b=actionBatchReview;if(!b)return {confirmed:[],already:[],issues:[],unchecked:[]};
  const confirmed=[],already=[],issues=[],unchecked=[];
@@ -16024,7 +16057,15 @@ window.igcAutoRenderBatchApproval=function(){
   const recheck=document.getElementById("igcAutoRecheckBatch");
   if(recheck)recheck.disabled=busy;
   const open=document.getElementById("igcAutoOpenBatchIssues");
-  if(open)open.disabled=!outcome.issues.some(u=>!actionBatchReview.action_results?.[u]?.safe_no_click);
+  if(open)open.disabled=busy||!outcome.issues.length;
+  const inspect=document.getElementById("igcAutoReviewOnly");
+  if(inspect)inspect.disabled=busy||actionCommandPending||!(outcome.issues.length+outcome.unchecked.length);
+  const retry=document.getElementById("igcAutoRetryReviewed");
+  if(retry){
+   const count=igcAutoReviewRetryUsers().length;
+   retry.disabled=busy||actionCommandPending||!count;
+   retry.textContent="▶ Retry "+count+" verified no-click "+(mode==="cancel"?"requests":"profiles");
+  }
 };
 window.igcAutoRecheckHistory=async function(){
  if(!actionBridge){setStatus("Historical audits require the installed Windows robot.");return}
@@ -16046,6 +16087,58 @@ window.igcAutoRecheckHistory=async function(){
   setStatus("Historical re-audit started: Chrome will inspect old issues automatically, without clicks.");
   await window.igcAutoPoll();
  }catch(e){setStatus("Historical re-audit unavailable: "+e.message)}
+};
+window.igcAutoInspectReviewProfiles=async function(){
+ const b=actionBatchReview;
+ if(!b||actionState?.running||actionCommandPending||!["unfollow","cancel"].includes(mode))return;
+ const outcome=igcAutoBatchOutcomes(),initial=scope(),task=mode;
+ if(!outcome.issues.length&&!outcome.unchecked.length){setStatus("There are no Review or untouched profiles.");return;}
+ if(!window.confirm("Open Review / unchecked profiles in robot Chrome?\n\nFIRST PASS IS READ-ONLY: no Unfollow or Cancel Request click. The original possibly-clicked history remains protected. A separate approval is required for any proven-no-click retry."))return;
+ actionCommandPending=true;
+ try{
+  const checked=await requestAction("review-batch",{...actionOwner(),task});
+  if(initial!==scope()||task!==mode||checked.batch?.id!==b.id)
+   throw Error("Saved batch or Instagram account changed. Nothing started.");
+  actionState=await requestAction("recheck-batch",{
+   ...actionOwner(),task,batch_id:b.id,confirmation:"recheck:"+b.id,
+   review_profiles_only:true,expected_handle:ownInstagramHandle(),
+   batch_size:Number(document.getElementById("igcAutoBatch")?.value||30),
+   gap_seconds:Number(document.getElementById("igcAutoGap")?.value||10),
+   rest_minutes:Number(document.getElementById("igcAutoRest")?.value||5)
+  });
+  setStatus("Review-only Chrome scan started. It checks unresolved / unprocessed profiles without changing relationships.");
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Review-only scan blocked: "+e.message);}
+ finally{actionCommandPending=false;window.igcAutoRenderBatchApproval();}
+};
+window.igcAutoRetryReviewed=async function(){
+ const b=actionBatchReview,users=igcAutoReviewRetryUsers();
+ if(!b||!users.length||actionState?.running||actionCommandPending)return;
+ const initial=scope(),task=mode;
+ try{
+  const data=actionConfig(task,b.targets);
+  data.batch_size=b.targets.length;
+  data.batch_id=b.id;
+  data.review_retry_usernames=users;
+  data.review_retry_confirmation="review-retry:"+b.id+":"+users.join(",");
+  if(!window.confirm("APPROVE "+task.toUpperCase()+" on ONLY these "+users.length+
+   " read-only-verified, proven NO-CLICK profiles?\n\n"+
+   users.map(u=>"@"+u).join(", ")+"\n\n"+
+   "The robot re-verifies exact Instagram owner/target before any action. Uncertain clicks are never retried."))return;
+  actionCommandPending=true;
+  const checked=await requestAction("review-batch",{...actionOwner(),task});
+  if(initial!==scope()||mode!==task||checked.batch?.id!==b.id)
+   throw Error("Saved cohort changed after approval. No Chrome actions started.");
+  const result=await requestAction("start",data);
+  if(result.owner!==data.owner||result.account!==data.account||
+     result.task!==task||result.total!==users.length)
+   throw Error("Unexpected Windows retry response. Refresh the saved batch.");
+  actionState=result;
+  setStatus("Windows accepted "+users.length+" approved no-click "+task+
+    " profiles. Success is recorded only after Instagram verification.");
+  await window.igcAutoPoll();
+ }catch(e){setStatus("Review retry blocked: "+e.message);}
+ finally{actionCommandPending=false;window.igcAutoRenderBatchApproval();}
 };
 window.igcAutoRecheckBatch=async function(){
  const b=actionBatchReview;if(!b||actionState?.running)return;

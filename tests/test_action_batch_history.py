@@ -1317,5 +1317,132 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 robot.start(fresh)
                 self.assertEqual(robot.snapshot()["attempted_usernames"],[])
 
+
+class GranadaReviewRecoveryTests(unittest.TestCase):
+    """Negative tests for last-profile Chrome close and zero-click Review recovery."""
+
+    def _robot(self, root):
+        import threading
+        from types import SimpleNamespace
+        collector = SimpleNamespace(browser_admission=threading.RLock(), worker=None)
+        robot = ActionRobot(collector, root, root / "chrome-session")
+        robot.owner, robot.account, robot.task = "lab-owner", "workspace-A", "unfollow"
+        return robot
+
+    def _saved(self, robot):
+        from profile_actions import _atomic_json, MISSING_RELATIONSHIP_CONTROL
+        now = __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime())
+        targets = ["confirmed.ok", "uncertain.click", "no.click", "last.untouched"]
+        batch = {"id": "review-one", "targets": targets, "approved_at": None,
+                 "recheck_results": {
+                     "no.click": {"status": "still_following", "read_only": True,
+                                  "observation_only": True, "at": now},
+                     "last.untouched": {"status": "still_following", "read_only": True,
+                                        "observation_only": True, "at": now},
+                     "uncertain.click": {"status": "still_following", "read_only": True,
+                                         "observation_only": True, "at": now}}}
+        _atomic_json(robot._review_batches_file_for(
+            "lab-owner", "workspace-A", "unfollow"), [batch])
+        _atomic_json(robot._base(), {
+            "confirmed.ok": {"status": "ok", "message": "confirmed"},
+            "uncertain.click": {
+                "status": "review", "issue": "interrupted_action_uncertain",
+                "message": "A click may have occurred",
+                "click_intent": {"phase": "relationship_control",
+                                 "batch_id": "review-one", "task": "unfollow"}},
+            "no.click": {"status": "review", "issue": "missing_profile_info",
+                         "message": MISSING_RELATIONSHIP_CONTROL},
+        })
+        return targets
+
+    def _data(self, targets):
+        return {"owner": "lab-owner", "account": "workspace-A",
+                "task": "unfollow", "expected_handle": "my.profile",
+                "targets": targets, "batch_id": "review-one",
+                "batch_size": len(targets), "rest_minutes": 0, "gap_seconds": 8,
+                "confirmation": "unfollow:" + str(len(targets)),
+                "followers_evidence": True}
+
+    def test_review_scan_selects_only_unresolved_and_untouched_without_action(self):
+        from unittest.mock import MagicMock
+        with TemporaryDirectory() as temporary:
+            robot = self._robot(Path(temporary))
+            targets = self._saved(robot)
+            data = self._data(targets)
+            data.update(confirmation="recheck:review-one",
+                        review_profiles_only=True)
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.recheck_batch(data)
+            self.assertEqual(robot.targets, targets[1:])
+            self.assertTrue(robot.review_only)
+            self.assertTrue(robot.review_profiles_only)
+            self.assertEqual(robot.batch_review(data)["batch"]["action_results"]["confirmed.ok"]["status"], "ok")
+            self.assertNotIn("last.untouched", robot._journal())
+            self.assertNotIn("click_intent", robot._journal()["no.click"])
+            self.assertIn("click_intent", robot._journal()["uncertain.click"])
+
+    def test_explicit_review_retry_only_opens_zero_click_subset(self):
+        from profile_actions import ActionLease
+        with TemporaryDirectory() as temporary:
+            robot = self._robot(Path(temporary))
+            targets = self._saved(robot)
+            data = self._data(targets)
+            chosen = ["no.click", "last.untouched"]
+            data.update(review_retry_usernames=chosen,
+                        review_retry_confirmation="review-retry:review-one:" + ",".join(chosen))
+            with patch.object(ActionLease, "acquire") as acquire, patch("profile_actions.threading.Thread") as worker:
+                acquire.return_value.release = lambda: None
+                worker.return_value.is_alive.return_value = False
+                result = robot.start(data)
+            self.assertEqual(robot.targets, chosen,
+                             "A Review retry must not silently act on the whole saved batch")
+            self.assertEqual(result["total"], 2)
+            self.assertEqual(robot._pending_review("lab-owner", "workspace-A", "unfollow")["targets"], targets)
+            self.assertEqual(robot._journal()["confirmed.ok"]["status"], "ok")
+            self.assertEqual(robot._journal()["uncertain.click"]["status"], "review")
+
+    def test_uncertain_click_cannot_retry_even_when_currently_following(self):
+        from profile_actions import ActionLease
+        with TemporaryDirectory() as temporary:
+            robot = self._robot(Path(temporary))
+            targets = self._saved(robot)
+            data = self._data(targets)
+            data.update(review_retry_usernames=["uncertain.click"],
+                        review_retry_confirmation="review-retry:review-one:uncertain.click")
+            saved_before = robot._base().read_bytes()
+            with patch.object(ActionLease, "acquire") as acquire, patch("profile_actions.threading.Thread") as worker:
+                acquire.return_value.release = lambda: None
+                with self.assertRaisesRegex(ValueError, "may have clicked"):
+                    robot.start(data)
+                worker.assert_not_called()
+            self.assertEqual(robot._base().read_bytes(), saved_before)
+
+    def test_retry_requires_positive_fresh_review_observation(self):
+        from profile_actions import ActionLease, _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._robot(Path(temporary))
+            targets = self._saved(robot)
+            data = self._data(targets)
+            data.update(review_retry_usernames=["last.untouched"],
+                        review_retry_confirmation="review-retry:review-one:last.untouched")
+            batch_file = robot._review_batches_file_for("lab-owner", "workspace-A", "unfollow")
+            contents = json.loads(batch_file.read_text(encoding="utf-8"))
+            for forged in (
+                {"status": "still_following", "read_only": False, "observation_only": True,
+                 "at": "2026-10-26T00:00:00Z"},
+                {"status": "still_following", "read_only": True, "observation_only": True,
+                 "at": "2020-01-01T00:00:00Z"},
+                {"status": "review", "read_only": True, "observation_only": True,
+                 "at": "2026-10-26T00:00:00Z"},
+            ):
+                contents[0]["recheck_results"]["last.untouched"] = forged
+                _atomic_json(batch_file, contents)
+                with patch.object(ActionLease, "acquire") as acquire, patch("profile_actions.threading.Thread") as worker:
+                    acquire.return_value.release = lambda: None
+                    with self.assertRaises(ValueError):
+                        robot.start(data)
+                    worker.assert_not_called()
+
 if __name__=="__main__":
     unittest.main()
