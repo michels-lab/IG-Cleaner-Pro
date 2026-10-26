@@ -28,7 +28,31 @@ from profile_counts_pacing import (
 
 TASKS = {"unfollow": "unfollow", "cancel": "cancel request", "audit": "read-only followback audit"}
 ACTION_WINDOW_MINUTES = 60
+# Explicit independent hourly safety budget. Owner batch size is NEVER a 60m
+# throttle; batch breaks and visit history remain separate and persistent.
+ACTION_PROFILE_VISITS_PER_HOUR = 120
 MAX_ACTIONS_PER_JOB = 1000
+
+def action_wait_detail(visits, rests, *, batch_size, rest_minutes,
+                       gap_seconds, now=None):
+    """Attribute waits to one of three independent, persisted pacing clocks."""
+    now = time.time() if now is None else now
+    hourly = wait_required(visits, ACTION_PROFILE_VISITS_PER_HOUR,
+                           ACTION_WINDOW_MINUTES, 0, now=now)
+    spacing = max(0.0, max(visits, default=-1e30) + gap_seconds - now)
+    rest = batch_wait(rests, batch_size if rest_minutes > 0 else 0,
+                      rest_minutes, now=now)
+    choices = [
+        (hourly, "Hourly visit safety limit: " +
+         str(ACTION_PROFILE_VISITS_PER_HOUR) + " visits per " +
+         str(ACTION_WINDOW_MINUTES) + " minutes"),
+        (rest, "Between-batch rest: " + str(rest_minutes) +
+         " min after " + str(batch_size) + " profiles"),
+        (spacing, "Between-profile spacing: " + str(gap_seconds) + " s"),
+    ]
+    delay, reason = max(choices, key=lambda item: item[0])
+    return max(0.0, delay), (reason if delay > 0 else "")
+
 
 # Retry only verified pre-click misses after owner approves a new batch.
 MISSING_RELATIONSHIP_CONTROL = (
@@ -1528,7 +1552,8 @@ class ActionRobot:
         self.cancel_requested = False
         self.cancel_batch_id = ""
         self.skipped = set()
-        self.max_count = 30
+        self.batch_size = 30
+        self.max_count = ACTION_PROFILE_VISITS_PER_HOUR
         self.window_minutes = ACTION_WINDOW_MINUTES
         self.min_delay_seconds = 10.0
         self.rest_minutes = 5.0
@@ -2027,7 +2052,8 @@ class ActionRobot:
             self.continuing_batch = False
             self.open_review_tabs, self.current_wait = [], None
             self.skipped.clear()
-            self.max_count, self.window_minutes, self.min_delay_seconds = count, window, delay
+            self.batch_size = count
+            self.max_count, self.window_minutes, self.min_delay_seconds = ACTION_PROFILE_VISITS_PER_HOUR, window, delay
             self.rest_minutes = rest
             self.stop_event.clear()
             self.cancel_requested = False
@@ -2062,12 +2088,13 @@ class ActionRobot:
             self.open_review_tabs = []
             self.current_wait = None
             self.skipped.clear()
+            self.batch_size = int(data.get("batch_size", 30))
             self.max_count, self.window_minutes, self.min_delay_seconds = check_pacing(
-                int(data.get("batch_size", 30)), ACTION_WINDOW_MINUTES,
+                ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                 data.get("gap_seconds", 10))
             rest_input = data.get("rest_minutes", 5)
             _, self.rest_minutes = check_batch_rest(
-                self.max_count if rest_input else 0, rest_input)
+                self.batch_size if rest_input else 0, rest_input)
             self.stop_event.clear()
             self.cancel_requested = False
             self.cancel_batch_id = ""
@@ -2286,7 +2313,7 @@ class ActionRobot:
         count = int(data.get("batch_size", 30))
         if count != data.get("batch_size", 30) or not 1 <= count <= 1000:
             raise ValueError("The batch size must be between 1 and 1,000.")
-        max_count, window, delay = check_pacing(count, ACTION_WINDOW_MINUTES,
+        max_count, window, delay = check_pacing(ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                                                  data.get("gap_seconds", 10))
         rest_input = data.get("rest_minutes", 5)
         every, rest = check_batch_rest(count if rest_input else 0, rest_input)
@@ -2367,6 +2394,7 @@ class ActionRobot:
                 self.owner_profile_visits = 0
                 if not resume:
                     self.skipped.clear()
+                self.batch_size = count
                 self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
                 self.rest_minutes = rest
                 # A newly authorized batch uses the owner's current visible
@@ -2456,6 +2484,9 @@ class ActionRobot:
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "owner_profile_visits": self.owner_profile_visits,
+                    "batch_size": self.batch_size,
+                    "hourly_visit_limit": self.max_count,
+                    "hourly_visit_window_minutes": self.window_minutes,
                     "review_only": self.review_only,
                     "cancel_requested": self.cancel_requested,
                     "continuing_batch": self.continuing_batch,
@@ -2720,20 +2751,18 @@ class ActionRobot:
                         if self.stop_event.is_set():
                             break
                         while not self.stop_event.is_set():
-                            delay = max(
-                                wait_required(visits, self.max_count, self.window_minutes,
-                                              self.min_delay_seconds),
-                                batch_wait(rests,
-                                           self.max_count if self.rest_minutes > 0 else 0,
-                                           self.rest_minutes))
+                            delay, wait_reason = action_wait_detail(
+                                visits, rests, batch_size=self.batch_size,
+                                rest_minutes=self.rest_minutes,
+                                gap_seconds=self.min_delay_seconds)
                             if delay <= 0:
                                 break
                             with self.lock:
                                 self.status = "waiting"
                                 self.wait_until = time.time() + delay
                                 self.message = ("Preparing ten tabs: waiting " +
-                                                str(int(delay+0.999)) +
-                                                " s before opening @" + warm_user)
+                                                str(int(delay+0.999)) + " s (" +
+                                                wait_reason + ") before opening @" + warm_user)
                             self.stop_event.wait(min(delay, 2.0))
                         if self.stop_event.is_set():
                             break
@@ -2760,7 +2789,7 @@ class ActionRobot:
                                                   started_at=started)
                             rests = finish_batch_visit(
                                 rests_file, rests,
-                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.batch_size if self.rest_minutes > 0 else 0,
                                 self.rest_minutes)
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
@@ -2814,16 +2843,15 @@ class ActionRobot:
                     existing_tab = action_tabs.prepared(user) if action_tabs else None
                     if existing_tab is None and not live_snapshot:
                         while not self.stop_event.is_set():
-                            delay = max(wait_required(visits, self.max_count,
-                                                      self.window_minutes,
-                                                      self.min_delay_seconds),
-                                        batch_wait(rests,
-                                                   self.max_count if self.rest_minutes > 0 else 0,
-                                                   self.rest_minutes))
+                            delay, wait_reason = action_wait_detail(
+                                visits, rests, batch_size=self.batch_size,
+                                rest_minutes=self.rest_minutes,
+                                gap_seconds=self.min_delay_seconds)
                             if delay <= 0: break
                             with self.lock:
                                 self.status, self.wait_until = "waiting", time.time() + delay
-                                self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
+                                self.message = ("Scheduled wait: " + str(int(delay+0.999)) +
+                                                " s (" + wait_reason + ")")
                             self.stop_event.wait(min(delay, 2.0))
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
@@ -2934,7 +2962,7 @@ class ActionRobot:
                                 visits_file, visits, started_at=current_visit_started)
                             rests = finish_batch_visit(
                                 rests_file, rests,
-                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.batch_size if self.rest_minutes > 0 else 0,
                                 self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
