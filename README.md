@@ -18,7 +18,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Current published stable: v120.63. Next reserved version: v120.64, not published.**
 
-The next version is not authorized; the owner tests only officially published installers. Source changes after this tag, including any fixes under [PR #245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245), are not part of the v120.63 binary. No source-only test proves real Instagram acceptance.
+The next reserved development version **v120.64 is authorized ONLY for governed FINAL publication after all exact-source Windows, Android production signing, visual, SHA-256, installer and updater-feed gates pass**. It is not yet published; the owner tests only officially published installers. Post-v120.63 code [PR #245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245) has been merged: the Windows robot now defaults to one target at a time instead of opening ten and foregrounding an older tab, while an explicit ten-tab mode remains optional. This change is **not** in published v120.63; it is proposed for v120.64. No source-only test proves real Instagram acceptance.
 
 [Official v120.63 publication receipt](docs/GRANADA_V12063_FINAL_RECEIPT_2026-10-26.md). Historical receipts: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
 
