@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 326; classified: 322; readable documents: 68; above read cap: 1; findings: 1.
+Tracked: 327; classified: 323; readable documents: 69; above read cap: 1; findings: 2.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 326; classified: 322; readable documents: 68; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 63 |
+| document | 64 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 42 |
@@ -29,7 +29,8 @@ Tracked: 326; classified: 322; readable documents: 68; above read cap: 1; findin
 
 ## Findings (human review required)
 
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID c561afe41176ea51)
+- **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 4 implementation/config paths changed since this log's last commit; examples: tests/automations-cold-start.test.cjs, tests/automations-execution.test.cjs, tests/test_action_batch_history.py, tests/test_action_click_wal.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 55d5e0941629d229)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 326,
-  "classified_files_total": 322,
-  "docs_content_inspected": 68,
+  "tracked_files_total": 327,
+  "classified_files_total": 323,
+  "docs_content_inspected": 69,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 63,
+    "document": 64,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
+    "BROKEN_RELATIVE_LINK": 1,
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 1,
-  "inventory_fingerprint": "db286cf4084e7c4b95ef6cdbad1e7d284a7d35c8c30671a9a4ad31b06b57fbf4",
-  "evidence_fingerprint": "2f40079ecfa37e8f4b327d4b3e1658e5e0df4c46316f0c91012521edc18af822",
+  "finding_total": 2,
+  "inventory_fingerprint": "3fc815d96baa9ebe7d85e438f26571e334c0a293e01f65e10347aae567da2be2",
+  "evidence_fingerprint": "5d27abc8fe02425014ad502e64f76db28e215ddcce5046d509ad01d46130e3d9",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -245,7 +246,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "056b99098d4578f4689909334d77fcd3083f318f"
+      "blob": "5d9c42280e4accd86646b9aff9bd87969726b19a"
     },
     {
       "path": "README.md",
@@ -854,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "b2c918bc4483c7130153c88a7b337ad6c57b286a"
+      "blob": "94955551454879de67636ac25f1a47c57bc3e705"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "5ca91662519bbc43ab2988e975db3bc5407a5e28"
+      "blob": "51690cdb6d4d15048f552d24ab15f363cb500e35"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1200,6 +1201,13 @@
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
     },
     {
+      "path": "docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "df62a65c884b65347c9855dd743b69d827d6e155"
+    },
+    {
       "path": "docs/GRANADA_P0_CANCEL_POSITIVE_EVIDENCE_2026-10-20.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1498,14 +1506,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6f2cc1a5e8f9c280a90cca9019e6294757c94354"
+      "blob": "e0c1ccc7974a61104e93347f7c5ac2eb2ec5ecb3"
     },
     {
       "path": "tests/automations-execution.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "2fd9c0e136f582dc4a778892d17127b0a51b9bdb"
+      "blob": "e31849f2593484de95d3f1afd05e4a366bc32dd4"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -1519,7 +1527,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c5be0a35abd949ebbb5bbaf8cce209f9d7c4375e"
+      "blob": "a3addf4f252b1036a692a89eb114a2492d883c2f"
     },
     {
       "path": "tests/automations-planner.test.cjs",
@@ -1792,14 +1800,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9e6ff932cf9b768b2a7b6901793156d05ea56514"
+      "blob": "7b9d2ac9be6b93c8f50080a0d503d04a99c54088"
     },
     {
       "path": "tests/test_action_click_wal.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "98208217da54559ea5452dbb2bfbaa5689a66b33"
+      "blob": "4dad0b40a84f108849668a41aa0544f4234d1383"
     },
     {
       "path": "tests/test_action_owner_probe_bound.py",
@@ -2142,7 +2150,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "12d920670409e46b2047dbea011693e4f5ee4d87"
+      "blob": "d7c27a0b5ff10893f9da07444b5076bfd259f75a"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2287,11 +2295,20 @@
   ],
   "findings": [
     {
-      "id": "c561afe41176ea51",
+      "id": "df925d8ba69bac5a",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "55d5e0941629d229",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "4 implementation/config paths changed since this log's last commit; examples: tests/automations-cold-start.test.cjs, tests/automations-execution.test.cjs, tests/test_action_batch_history.py, tests/test_action_click_wal.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
