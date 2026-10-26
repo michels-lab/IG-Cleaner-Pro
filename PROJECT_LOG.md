@@ -1,3 +1,10 @@
+## 2026-10-26 — GRANADA v120.63 FINAL release authorized; publisher still gated
+
+- Registered one-time governed **v120.63 FINAL** authorization referencing verified published v120.62 receipt #40121318686 and exact source `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`. Stable GitHub release remains **v120.62 until successful new publisher receipt**.
+- Package versions / filenames advanced to 120.63 together: Windows public+Developer, portable and Desktop artifacts, Android public+Developer versionCode 12063, production certificate fingerprint unchanged. The release pipeline must independently rebuild, install, screenshot and verify all assets, signing and checksums before publishing.
+- Includes merged owner-session repeat-navigation fix #241 and false 2,670-second wait fix #242; preserved saved ten/forty cohorts, WAL and protections. Explicit hourly safety 120/60 is independent from batch 20/rest 1/gap 8.
+- **Live owner's Instagram relationship changes not verified.** Do not close #172/#164/#230 or assume successful Unfollow/Cancel from CI. No RC/prerelease, no silent installs.
+
 ## 2026-10-26 — GRANADA: fix 2,670-second false action-batch wait
 
 - **Owner screenshot:** Windows showed `Batch size 20`, `Rest between batches 1 min`, `Delay between profiles 8 sec` yet refused to open the next target tab for `2,670 s` (~44m30s). This is a misleading, implicit pacing coupling, not evidence of an Instagram rate-limit response.
