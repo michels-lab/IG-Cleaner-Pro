@@ -21,7 +21,7 @@ const storage=new Map(),posts=[],historyCalls=[];
 const first60=[...Array(60)].map((_,i)=>"requested."+String(i).padStart(3,"0"));
 const profiles=[...Array(95)].map((_,i)=>({username:"requested."+String(i).padStart(3,"0")}));
 const owner={owner:"login1",active:"ig1",accounts:[{account_key:"ig1",username:"my.handle"}]};
-let failHistory=false,wrongOwner=false;
+let failHistory=false,wrongOwner=false,visitedNoClick=false;
 let state={owner:"",account:"",task:"",status:"idle",running:false,rows:[],
  attempted_usernames:[],total:0,remaining:0,successful:0,errors:0,protected:0,skipped:0,issues:[]};
 const ctx={
@@ -40,7 +40,8 @@ const ctx={
      if(failHistory)throw Error("Windows robot history unavailable");
      return {ok:true,json:async()=>({
        ...request,owner:wrongOwner?"different-owner":request.owner,
-       attempted_usernames:first60
+       attempted_usernames:first60,
+       visited_usernames:visitedNoClick?[...first60,"requested.090"]:first60
      })};
    }
    if(op==="start"){
@@ -65,19 +66,22 @@ vm.createContext(ctx);vm.runInContext(script[1],ctx,{timeout:1500});
    "First batch after app restart must start after previous 60 attempts");
  assert.equal(JSON.parse([...storage.values()].find(x=>x.includes("requested.000"))).length,60);
 
- // A v120.48 no-click review may remain cached as "already attempted"
- // in an idle browser, while the corrected Windows journal now proves it is
- // retryable. Fresh authoritative disk history must win.
+ // A no-click profile was already OPENED: it is not a completed
+ // relationship mutation, but it MUST NOT enter another NEW batch. The
+ // authoritative Windows visited ledger supersedes any stale client cache.
  const attemptedKey=[...storage.keys()].find(k=>k.startsWith("igc_actions_attempted_v1__"));
  assert(attemptedKey,"Expected persisted attempts cache");
- storage.set(attemptedKey,JSON.stringify([...first60,"requested.090"]));
- state.attempted_usernames=[...first60,"requested.090"];
+ storage.set(attemptedKey,JSON.stringify([...first60]));
+ state.attempted_usernames=[...first60];
+ visitedNoClick=true;
  el("igcAutoBatch").value="35";
  await ctx.igcAutoStart();
  assert.equal(posts.length,2);
- assert.equal(posts[1].targets.length,35);
- assert(posts[1].targets.includes("requested.090"),
-   "An old no-click browser cache must not hide a safely retryable target");
+ assert.equal(posts[1].targets.length,34,
+   "Only 34 fresh targets remain after excluding one previously opened no-click");
+ assert(!posts[1].targets.includes("requested.090"),
+   "An opened no-click target cannot be repeated in another automatic NEW batch");
+ assert(posts[1].targets.includes("requested.091"));
 
  // Never fall back to a stale client cache when robot disk cannot be read.
  failHistory=true;
@@ -89,5 +93,5 @@ vm.createContext(ctx);vm.runInContext(script[1],ctx,{timeout:1500});
  await ctx.igcAutoStart();
  assert.equal(posts.length,2,"No action start on unexpected history scope");
  assert.match(el("igcAutoStatus").textContent,/did not match/);
- console.log("PASS: cold launch, verified no-click retry over stale cache, fail-closed foreign histories");
+ console.log("PASS: cold launch, no-click visited exclusion, fail-closed foreign histories");
 })().catch(error=>{console.error(error);process.exitCode=1});
