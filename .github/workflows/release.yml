@@ -174,6 +174,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Bounded owner profile navigation regression failed; refuse FINAL release.' }
           python -m unittest discover -s tests -p 'test_action_owner_proof_reuse.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Owner session-bound proof reuse/changed-session tests failed; refuse FINAL release.' }
+          python -m unittest discover -s tests -p 'test_action_tab_flow.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Target navigation A-to-B-to-A backtrack regression; refuse FINAL release.' }
           python -m unittest discover -s tests -p 'test_action_visit_pacing.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Independent hourly/batch/personal visit pacing tests failed; refuse FINAL release.' }
           python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
