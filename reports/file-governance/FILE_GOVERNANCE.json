@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 322,
-  "classified_files_total": 318,
-  "docs_content_inspected": 66,
+  "tracked_files_total": 324,
+  "classified_files_total": 320,
+  "docs_content_inspected": 67,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,18 +14,18 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 61,
+    "document": 62,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 77,
+    "test": 78,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "2b835a1cee2749a6192d68af14dfef6031da1763a9b9bb504a004a504c457e03",
+  "inventory_fingerprint": "88dbdaa90dba2b24659414c79fc36c2a871e42d1a31475835468a44388f158f4",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -96,7 +96,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "42623b1964211820d86d3c8f331fbd51c827d798"
+      "blob": "3ebcaf8992923b2510bc842099b76263e86eb976"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -215,7 +215,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "0833816fee86b418a6e75a361329deafe3cc2b0d"
+      "blob": "ceff91ce32878d502a07a4326836a651f8ab616e"
     },
     {
       "path": "AGENTS.md",
@@ -243,21 +243,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "aae9371f5e07afa4e06f2ec1a575bb2c7fe82cdd"
+      "blob": "5c81bbd62ab655c4ac45a2ac819b0278911514b0"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "af7c9cd8400e6e62936af932ff1c17e6295a2294"
+      "blob": "2562dda7f9e76dd287e47735d1a659c34980585d"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "865c5ad6245aa1948530df7ebb8dd30dd58db5ed"
+      "blob": "8ab0dfb05a4a6ffcd23f2721a5d747e94a5510ba"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -880,7 +880,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d076685836903f2f1d81543fc1bd4eccd24295e0"
+      "blob": "a9ad798cacfff8fb1befd3c1103bed0fc7378610"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1212,6 +1212,13 @@
       "blob": "baa68a17e9d07f71cd75eb49c91e3a8452fa0982"
     },
     {
+      "path": "docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a35745352a67d1e2375c7e0bf9f02f2a73f0f848"
+    },
+    {
       "path": "docs/INFRASTRUCTURE_AUDIT.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1251,7 +1258,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "491538e118f060df1b030dbedc46a0bb46f80d19"
+      "blob": "b886044938d4c4d12d843211bd2f7cc69aba5867"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1342,7 +1349,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "28b2342284fe1f8acc4839533aa2a1167317e0a0"
+      "blob": "5bd270f852b0cd03263dba6836a17fd999797003"
     },
     {
       "path": "release/android-signing.json",
@@ -1356,7 +1363,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "bea017ac3a96c1dc312532136ab4059065148979"
+      "blob": "7d7f736a32e0c62617fad83eb54a637941e4c2a0"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -1559,7 +1566,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "32eb2e356759c5886df302deb7b312e316181d05"
+      "blob": "4bbbb830aca135598df7a0a0f7038195a7883ead"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -1720,7 +1727,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8717872e691b7b214758085997065ebe7c6e2ae2"
+      "blob": "0f2e7488a267e5d918867ca6117eb1a9d5f815ab"
     },
     {
       "path": "tests/profile-counts-browser-e2e.cjs",
@@ -1748,7 +1755,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "2aa3c4bf49b581ee1a7ef4262c1dedfc5ef0c9ea"
+      "blob": "1019d4010ae34ef35ac6f5e2f61d6a7c1a9eb241"
+    },
+    {
+      "path": "tests/release_artifact_policy.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c87cc0d29a7f8fc322aabddd40f7b406b7a1d3c7"
     },
     {
       "path": "tests/rls-contract.py",
@@ -1993,7 +2007,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4811e69487a20deefd4eb0475663318366a741b5"
+      "blob": "334d26af06b6435c91766e6a5e9ee6eb11e645a3"
     },
     {
       "path": "tests/test_windows_updater.py",
@@ -2014,7 +2028,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3598b0d355a739605d4ad36f3420933631df7018"
+      "blob": "a3600268579927272a37f64fbcbd3ab9f23c955c"
     },
     {
       "path": "tests/windows-updater-ui.test.cjs",
