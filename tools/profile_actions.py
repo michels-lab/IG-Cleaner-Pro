@@ -1520,6 +1520,25 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
             "Read-only recheck: prior non-followed state could not be confirmed; no click.")
     result, details = _verify_final_state(page, expected_handle, username, checks=3)
     if allow_unacted_observation:
+        # Observing a current relationship is NOT evidence that an earlier
+        # Unfollow succeeded. A positive Following/Requested reading permits
+        # a later, separately authorized action only for proven zero-click rows.
+        if result == "ok":
+            return "observed_not_following", (
+                "Read-only observation: the exact target now shows Follow / Follow Back. "
+                "No relationship-changing click was made by this scan.")
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Read-only observation could not verify the signed-in owner; no click."
+        if task == "unfollow" and _profile_relationship_control(
+                page, username, [r"Following", r"Siguiendo"]):
+            return "still_following", (
+                "Read-only observation: still Following this exact profile. "
+                "No click. Only an explicitly approved proven-no-click retry is eligible.")
+        if task == "cancel" and _profile_relationship_control(
+                page, username, [r"Requested", r"Solicitado", r"Solicitada"]):
+            return "still_requested", (
+                "Read-only observation: this exact profile still displays Requested. "
+                "No click. Only an explicitly approved proven-no-click retry is eligible.")
         return result, ("Current read-only relationship observation: " +
                         details.replace("Action confirmed:", "Current visible state:") +
                         " No relationship-changing click was made by this scan.")
@@ -1556,6 +1575,7 @@ class ActionRobot:
         self.current_wait = None
         self.owner_profile_visits = 0  # read-only owner fallback, distinct from target visits
         self.review_only = False
+        self.review_profiles_only = False
         self.audit_source = "visible"
         self.history_recheck_mode = False
         self.historical_seen = set()
@@ -2092,6 +2112,7 @@ class ActionRobot:
             self.targets = to_revisit[:MAX_ACTIONS_PER_JOB]
             self.active_batch_id = ""
             self.review_only, self.history_recheck_mode = True, True
+            self.review_profiles_only = False
             self.historical_seen, self.historical_not_following_seen = set(), set()
             self.continuing_batch = False
             self.open_review_tabs, self.current_wait = [], None
@@ -2125,9 +2146,29 @@ class ActionRobot:
                 raise ValueError("Verify the active Instagram handle first.")
             # Never initiate a relationship-changing click during recheck.
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
-            self.targets = list(entry["targets"])
+            only_issues = data.get("review_profiles_only") is True
+            if "review_profiles_only" in data and not isinstance(data["review_profiles_only"], bool):
+                raise ValueError("Review-only selection must be explicit and Boolean.")
+            if only_issues and task not in ("unfollow", "cancel"):
+                raise ValueError("Targeted Review scan supports only Unfollow or Cancel Pending.")
+            if only_issues:
+                journal = _read_json(self._base_for(owner, account, task), {})
+                if not isinstance(journal, dict):
+                    raise ValueError("Original action journal is invalid. No Chrome navigation.")
+                protected = set(_read_json(self._protection_file_for(owner, account), []))
+                targets = [u for u in entry["targets"]
+                           if u not in protected and
+                           (u not in journal or
+                            (isinstance(journal[u], dict) and
+                             journal[u].get("status") in ("review", "error", "blocked")))]
+                if not targets:
+                    raise ValueError("No Review or untouched profiles remain to inspect.")
+            else:
+                targets = list(entry["targets"])
+            self.targets = targets
             self.active_batch_id = entry["id"]
             self.review_only = True
+            self.review_profiles_only = only_issues
             self.history_recheck_mode = False
             self.continuing_batch = False
             self.open_review_tabs = []
@@ -2144,7 +2185,9 @@ class ActionRobot:
             self.stop_event.clear()
             self.cancel_requested = False
             self.cancel_batch_id = ""
-            self.status, self.message = "starting", "Rechecking unapproved batch in Chrome (read-only)."
+            self.status, self.message = "starting", (
+                "Reopening only Review and untouched profiles in Chrome (read-only)."
+                if only_issues else "Rechecking unapproved batch in Chrome (read-only).")
             self.worker = threading.Thread(target=self._run, daemon=True)
             self.worker.start()
             return self.snapshot()
@@ -2181,6 +2224,8 @@ class ActionRobot:
         if entry:
             entry.setdefault("recheck_results", {})[user] = {
                 "status": result, "message": message,
+                "read_only": True,
+                "observation_only": self.review_profiles_only,
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
             _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
 
@@ -2369,6 +2414,16 @@ class ActionRobot:
             raise ValueError("The batch was not explicitly approved.")
         if task == "unfollow" and data.get("followers_evidence") is not True:
             raise ValueError("A complete Followers list has not been verified.")
+        retry_selection = data.get("review_retry_usernames")
+        if retry_selection is not None:
+            if task not in ("unfollow", "cancel") or resume or not isinstance(retry_selection, list):
+                raise ValueError("Review retry requires a new named owner-approved relationship action.")
+            if not retry_selection or _users(retry_selection) != retry_selection or len(set(retry_selection)) != len(retry_selection):
+                raise ValueError("Review retry requires a nonempty unique valid target list.")
+            if not set(retry_selection).issubset(set(targets)):
+                raise ValueError("Review retry must be a subset of the exact saved cohort.")
+            if data.get("review_retry_confirmation") != "review-retry:" + str(data.get("batch_id") or "") + ":" + ",".join(retry_selection):
+                raise ValueError("Review retry requires separate exact-target consent.")
         lease = ActionLease(self.data_dir).acquire()
         started = False
         try:
@@ -2406,6 +2461,29 @@ class ActionRobot:
                     if collision:
                         raise ProtectedBatchCollision(
                             collision, task=task, batch_size=len(targets))
+                if retry_selection is not None:
+                    if pending_entry is None:
+                        raise ValueError("Review retry cannot create a new cohort.")
+                    # Explicit scan/consent + durable zero-click proof is required.
+                    # A preceding possible click remains blocked regardless of
+                    # current Following state.
+                    observations = pending_entry.get("recheck_results", {})
+                    for user in retry_selection:
+                        observed = observations.get(user, {})
+                        prior = _read_json(self._base_for(owner, account, task), {}).get(user)
+                        if prior is not None and not _preclick_no_action(prior):
+                            raise ValueError("A previous action may have clicked @" + user + "; no automatic replay.")
+                        expected_state = "still_following" if task == "unfollow" else "still_requested"
+                        if not isinstance(observed, dict) or observed.get("status") != expected_state or not observed.get("observation_only") or not observed.get("read_only"):
+                            raise ValueError("Run the read-only Review scan and verify current relationship before retry.")
+                        try:
+                            timestamp = time.strptime(observed["at"], "%Y-%m-%dT%H:%M:%SZ")
+                            import calendar
+                            age = time.time() - calendar.timegm(timestamp)
+                        except (TypeError, KeyError, ValueError):
+                            raise ValueError("Missing review observation timestamp.")
+                        if age < -120 or age > 900:
+                            raise ValueError("Review observation expired; re-inspect profiles before action.")
                 # Check original exact-scope evidence BEFORE rebinding,
                 # persisting a new cohort or opening any Instagram tab.
                 previous = _read_json(self._base_for(owner, account, task), {})
@@ -2433,9 +2511,10 @@ class ActionRobot:
                            and not _preclick_no_action(record)
                            for user in targets):
                         raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
-                self.targets = targets
+                self.targets = list(retry_selection) if retry_selection is not None else targets
                 self.audit_source = audit_source
                 self.review_only = False
+                self.review_profiles_only = False
                 self.history_recheck_mode = False
                 if not resume:
                     self.continuing_batch = pending_entry is not None
@@ -2983,7 +3062,8 @@ class ActionRobot:
                                                            action_tabs),
                                 preloaded=bool(prepared_item and
                                                prepared_item.get("status") == "prefetched"),
-                                allow_unacted_observation=self.history_recheck_mode)
+                                allow_unacted_observation=(self.history_recheck_mode or
+                                                            self.review_profiles_only))
                         elif self.task == "audit" and live_snapshot:
                             if user.casefold() not in live_following:
                                 result, relation = "review", "unverified"
