@@ -155,6 +155,19 @@ CANCEL_NO_REQUEST_MIN_WAIT_MS = 5000
 
 
 
+def action_tab_stage_limit(tab_flow):
+    """Stage a single target by default; preserve optional ten-tab mode.
+
+    By processing A before loading B, sequential mode avoids the automatic
+    foreground jump from A -> B -> ... -> A.
+    """
+    if tab_flow == "sequential":
+        return 1
+    if tab_flow == "ten_tabs":
+        return MAX_ACTION_TABS
+    raise ValueError("Choose sequential navigation or ten-tab preparation.")
+
+
 class ActionTabPool:
     """Keep up to ten visible target tabs; close only verified outcomes.
 
@@ -1553,6 +1566,7 @@ class ActionRobot:
         self.cancel_batch_id = ""
         self.skipped = set()
         self.batch_size = 30
+        self.tab_flow = "sequential"
         self.max_count = ACTION_PROFILE_VISITS_PER_HOUR
         self.window_minutes = ACTION_WINDOW_MINUTES
         self.min_delay_seconds = 10.0
@@ -2053,6 +2067,7 @@ class ActionRobot:
             self.open_review_tabs, self.current_wait = [], None
             self.skipped.clear()
             self.batch_size = count
+            self.tab_flow = "sequential"
             self.max_count, self.window_minutes, self.min_delay_seconds = ACTION_PROFILE_VISITS_PER_HOUR, window, delay
             self.rest_minutes = rest
             self.stop_event.clear()
@@ -2089,6 +2104,7 @@ class ActionRobot:
             self.current_wait = None
             self.skipped.clear()
             self.batch_size = int(data.get("batch_size", 30))
+            self.tab_flow = "sequential"  # read-only rechecks do not need ten-tab jumping
             self.max_count, self.window_minutes, self.min_delay_seconds = check_pacing(
                 ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                 data.get("gap_seconds", 10))
@@ -2310,6 +2326,8 @@ class ActionRobot:
             raise ValueError("Assign the active Instagram @handle before starting.")
         if task not in TASKS or not targets:
             raise ValueError("Select a job containing valid profiles.")
+        tab_flow = str(data.get("tab_flow") or "sequential")
+        action_tab_stage_limit(tab_flow)  # reject unknown navigation modes
         count = int(data.get("batch_size", 30))
         if count != data.get("batch_size", 30) or not 1 <= count <= 1000:
             raise ValueError("The batch size must be between 1 and 1,000.")
@@ -2395,6 +2413,7 @@ class ActionRobot:
                 if not resume:
                     self.skipped.clear()
                 self.batch_size = count
+                self.tab_flow = tab_flow
                 self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
                 self.rest_minutes = rest
                 # A newly authorized batch uses the owner's current visible
@@ -2483,6 +2502,8 @@ class ActionRobot:
                     "audit_source": self.audit_source if self.task == "audit" else None,
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
+                    "tab_flow": self.tab_flow,
+                    "target_tabs_per_wave": action_tab_stage_limit(self.tab_flow),
                     "owner_profile_visits": self.owner_profile_visits,
                     "batch_size": self.batch_size,
                     "hourly_visit_limit": self.max_count,
@@ -2718,18 +2739,19 @@ class ActionRobot:
                         return
                 stopped_for_review = False
                 def stage_next_wave(start_index):
-                    """Open all ten target tabs before any action in that wave.
+                    """Stage one target by default; ten only on explicit selection.
 
                     Visit pacing and rest apply to each navigation. Never
                     reallocate a tab while unresolved tabs from an older wave
-                    remain visible for manual inspection.
+                    remain visible for manual inspection. A sequential target
+                    is processed immediately, BEFORE opening the next user.
                     """
                     nonlocal visits, rests, stopped_for_review
                     if not action_tabs or action_tabs.has_open_tabs():
                         return False
-                    # Prepare a genuine ten-profile window *before* attempting
-                    # any relationship-changing clicks. All navigation still
-                    # honors the owner's per-visit cadence and mandatory rests.
+                    # Sequential avoids jumping back to the first tab after
+                    # opening ten in Chrome. Legacy ten-tab staging stays opt-in.
+                    stage_limit = action_tab_stage_limit(self.tab_flow)
                     stage_names = []
                     for candidate in self.targets[start_index:]:
                         previous = journal.get(candidate, {})
@@ -2737,7 +2759,7 @@ class ActionRobot:
                                 or (not self.review_only and
                                     _saved_journal_blocks_action(journal, candidate))):
                             continue
-                        if len(stage_names) >= MAX_ACTION_TABS:
+                        if len(stage_names) >= stage_limit:
                             break
                         if action_tabs.open(candidate) is None:
                             break
@@ -2745,8 +2767,11 @@ class ActionRobot:
                         stage_names.append(candidate)
                     with self.lock:
                         self.open_review_tabs = action_tabs.overview()
-                        self.message = ("Preparing " + str(len(stage_names)) +
-                                        " Instagram profile tabs with saved visit spacing.")
+                        self.message = (
+                            "Opening the next Instagram profile sequentially."
+                            if self.tab_flow == "sequential" else
+                            "Preparing " + str(len(stage_names)) +
+                            " Instagram profile tabs with saved visit spacing.")
                     for warm_user in stage_names:
                         if self.stop_event.is_set():
                             break
@@ -2760,9 +2785,11 @@ class ActionRobot:
                             with self.lock:
                                 self.status = "waiting"
                                 self.wait_until = time.time() + delay
-                                self.message = ("Preparing ten tabs: waiting " +
-                                                str(int(delay+0.999)) + " s (" +
-                                                wait_reason + ") before opening @" + warm_user)
+                                self.message = (
+                                    "Waiting " + str(int(delay+0.999)) +
+                                    " s (" + wait_reason + ") before @" + warm_user +
+                                    (" (sequential)" if self.tab_flow == "sequential"
+                                     else " (ten-tab preparation)"))
                             self.stop_event.wait(min(delay, 2.0))
                         if self.stop_event.is_set():
                             break
@@ -2838,8 +2865,8 @@ class ActionRobot:
                             if stopped_for_review or self.stop_event.is_set():
                                 break
                             continue
-                    # Already-prefetched target tabs have paid for their
-                    # visit in the persistent ledger. Do not wait/charge again.
+                    # The prepared target (one sequential tab or one of ten)
+                    # has already paid for its initial visit. Do not charge again.
                     existing_tab = action_tabs.prepared(user) if action_tabs else None
                     if existing_tab is None and not live_snapshot:
                         while not self.stop_event.is_set():
@@ -2891,8 +2918,8 @@ class ActionRobot:
                         visits = register_visit(visits_file, visits)
                         current_visit_started = visits[-1]
 
-                    # Focus the first, then the second, and so on. No rolling
-                    # one-by-one prefetch outside this complete ten-tab wave.
+                    # Sequential: this is the only staged target.
+                    # Legacy: focus previously staged ten tabs in turn.
                     if action_tabs and not work_page.is_closed():
                         work_page.bring_to_front()
 
