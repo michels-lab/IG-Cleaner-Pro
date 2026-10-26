@@ -1583,6 +1583,34 @@ class ActionRobot:
     def _base(self, task=None):
         return self._base_for(self.owner, self.account, task or self.task)
 
+    def _target_visits_file_for(self, owner, account, task):
+        """Owner/account/task-scoped write-ahead evidence of target navigation."""
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-target-visits.json")
+
+    def _visited_usernames(self, owner, account, task, journal):
+        """All past targets, including confirmed, no-click and interrupted visits."""
+        visits = _read_json(self._target_visits_file_for(owner, account, task), {})
+        if (not isinstance(journal, dict) or
+                any(valid_username(u) != u or not isinstance(record, dict)
+                    for u, record in visits.items())):
+            raise ValueError("Saved target-visit history is invalid; inspect it before a new batch.")
+        return sorted(set(journal) | set(visits))
+
+    def _reserve_target_visit(self, username):
+        """Persist BEFORE opening an Instagram target URL; never imply a click."""
+        if self.review_only or self.task not in ("unfollow", "cancel"):
+            return
+        path = self._target_visits_file_for(self.owner, self.account, self.task)
+        marks = _read_json(path, {})
+        if username not in marks:
+            marks[username] = {
+                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "batch_id": self.active_batch_id,
+                "state": "target_navigation_reserved_not_action_confirmed",
+            }
+            _atomic_json(path, marks)
+
     def attempted_history(self, data):
         """Read a named owner/account/task journal even on a fresh Windows launch.
 
@@ -1611,6 +1639,7 @@ class ActionRobot:
                          (not _invalid_saved_action_record(journal[user]) and
                           _preclick_no_action(journal[user])))):
                     reusable.append(user)
+        visited = self._visited_usernames(owner, account, task, journal)
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and
             (_invalid_saved_action_record(record) or
@@ -1633,6 +1662,7 @@ class ActionRobot:
             })
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted,
+                "visited_usernames": visited,
                 "reusable_usernames": list(dict.fromkeys(reusable)),
                 "history_rows": history_rows}
 
@@ -2384,6 +2414,19 @@ class ActionRobot:
                     raise ValueError(
                         "Selected targets have invalid saved action evidence. "
                         "Inspect the original journal read-only; never auto-retry.")
+                # A NEW action cohort must never navigate already inspected targets,
+                # even if the previous visit ended before any relationship click.
+                # Only continuing the exact saved cohort may retry proven no-click.
+                if not resume and pending_entry is None and task in ("unfollow", "cancel"):
+                    visited = set(self._visited_usernames(owner, account, task, previous))
+                    reused = sorted(set(targets) & visited)
+                    if reused:
+                        raise ValueError(
+                            "New batch includes " + str(len(reused)) +
+                            " previously opened/reviewed Instagram profile(s): @" +
+                            ", @".join(reused[:5]) +
+                            ". They are excluded from automatic new batches. "
+                            "Use the saved-cohort Continue or an explicit read-only recheck.")
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
                 if not resume and not (task == "audit" and audit_source == "live_lists"):
                     if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
@@ -2458,6 +2501,8 @@ class ActionRobot:
                 len(self.historical_not_following_seen) if self.history_recheck_mode else 0)
             # Persisted action journal spans ALL earlier batches, not merely
             # the latest 30 selected targets. Send usernames only, no secrets.
+            visited_usernames = self._visited_usernames(
+                self.owner, self.account, self.task, journal) if self.owner and self.task else []
             attempted_usernames = sorted(u for u, record in journal.items()
                 if valid_username(u) == u and
                 (_invalid_saved_action_record(record) or
@@ -2496,6 +2541,7 @@ class ActionRobot:
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
                     "attempted_usernames": attempted_usernames,
+                    "visited_usernames": visited_usernames,
                     "remaining": pending,
                     "wait_seconds": max(0, int(self.wait_until-time.time()+0.999)) if self.wait_until else 0,
                     "open_review_tabs": list(self.open_review_tabs),
@@ -2802,6 +2848,9 @@ class ActionRobot:
                         visits = register_visit(visits_file, visits)
                         started = visits[-1]
                         tab["visit_started_at"] = started
+                        # Write-ahead profile-visit record prevents a later NEW
+                        # cohort from re-opening a URL after a crash/forced close.
+                        self._reserve_target_visit(warm_user)
                         try:
                             tab["page"].goto(
                                 "https://www.instagram.com/" + warm_user + "/",
