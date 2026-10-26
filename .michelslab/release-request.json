@@ -1,12 +1,12 @@
 {
   "version": "120.65",
   "tag": "v120.65",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases after exact-source installed Windows, production-signed Android public/Developer co-install, visual, SHA-256 and update-feed gates pass. No RC/beta.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.64",
   "owner_acceptance_note": "Owner confirmed Instagram Unfollow actually changes relationships in installed Windows v120.64, but NEW batches unnecessarily reopen previously inspected profiles. v120.65 fixes source #249: an owner/account/task-scoped durable visited profile ledger and write-ahead URL reservations, plus authoritative UI selection and independent backend new-cohort admission excludes ALL previously opened profiles, including no-click/review. Exact old batch Continue, protected profiles, action WAL, original histories, user-data persistence and separate read-only recheck remain. Per-profile and Cancel Pending physical acceptance still needs owner confirmation; source tests are not account mutation proof. Release only normal FINAL stable after installed Windows public+Developer, production signed Android public+Developer co-install, Desktop/Android rendered UI, SHA-256 + update feed. No RC or beta.",
   "requested_at": "2026-10-26",
@@ -20,5 +20,10 @@
     "commit": "593f9d4d0598ea6056bca2247c99e899970ffcb1",
     "published_at": "2026-10-26T21:39:35Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.64"
-  }
+  },
+  "published_run": 40416690593,
+  "published_commit": "8570e12836afd3fde966eb8c590c7604aaf224a8",
+  "published_at": "2026-10-26T23:09:53Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65",
+  "publication_asset_count": 12
 }
