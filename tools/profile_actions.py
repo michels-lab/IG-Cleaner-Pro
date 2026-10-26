@@ -2104,6 +2104,7 @@ class ActionRobot:
             self.current_wait = None
             self.skipped.clear()
             self.batch_size = int(data.get("batch_size", 30))
+            self.tab_flow = "sequential"  # read-only rechecks do not need ten-tab jumping
             self.max_count, self.window_minutes, self.min_delay_seconds = check_pacing(
                 ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                 data.get("gap_seconds", 10))
