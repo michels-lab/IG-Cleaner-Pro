@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 327,
-  "classified_files_total": 323,
-  "docs_content_inspected": 69,
+  "tracked_files_total": 328,
+  "classified_files_total": 324,
+  "docs_content_inspected": 70,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 64,
+    "document": 65,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -24,12 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
+    "BROKEN_RELATIVE_LINK": 2,
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "3fc815d96baa9ebe7d85e438f26571e334c0a293e01f65e10347aae567da2be2",
-  "evidence_fingerprint": "5d27abc8fe02425014ad502e64f76db28e215ddcce5046d509ad01d46130e3d9",
+  "finding_total": 3,
+  "inventory_fingerprint": "0e7815d473871f169cfba6f0fb31ae6b8c29a636828bff295b6f6943b2d15f52",
+  "evidence_fingerprint": "1ae11f97ef87f28e43eff23be5c7d67d4b9d162f99f7173e20f222af0ce247ea",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "509232f36afe7881753749772a7be228691e65fe"
+      "blob": "644171998bc608d8e28120d1f3fcc4f190138126"
     },
     {
       "path": "AGENTS.md",
@@ -246,28 +246,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "5d9c42280e4accd86646b9aff9bd87969726b19a"
+      "blob": "503d6112653d816d65dcdd112650a3b5c9a48ebe"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "c736dd9a8dd39c937b5dc87940fd101a109b7a8d"
+      "blob": "78baff720883c0fc4674a06710de1df2d2ab1e1a"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "073bc4e51d5797bcfd911b49048106597151696f"
+      "blob": "5463dd05323bd183b1f7309a56b375c227427c90"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "f80ed12e6227af63a92c85378cd5be63000ba1ea"
+      "blob": "8f0029dac592c0a8b9bfabe223d323ef9cad49cd"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "94955551454879de67636ac25f1a47c57bc3e705"
+      "blob": "19148fa6de98a42a9daffdb22384d342265e834d"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "51690cdb6d4d15048f552d24ab15f363cb500e35"
+      "blob": "74f39ae3fea90cbe145c2c4920e2654865e48eca"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1236,6 +1236,13 @@
       "blob": "8291f0682c6ba73a795d44497cda60ca5b5954ef"
     },
     {
+      "path": "docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "743a18a0cc7e722a86495a9f63c16f638e4883d9"
+    },
+    {
       "path": "docs/INFRASTRUCTURE_AUDIT.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1275,7 +1282,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "7562a8ee9bd4f12ce1c129508fcece3679ebc940"
+      "blob": "9cfc70e30a709bb3703385e038113ea348b3d447"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1366,21 +1373,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "db7a7c92c83b7bdd62815958a4f59fff9eccf2c9"
+      "blob": "fec309784b90db65a30301c6a4de0b2eb0f4a925"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "36a1bb8c10f0760158729ba0bab26b727b9c2a5f"
+      "blob": "35749349f9153987a014d9e725c115fbfa996a98"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "11c3a042b38b2d3774272aa7ccaa09b724d8c7c8"
+      "blob": "1eb17ab89073abe39f648d69dfbd7d40ccdd8cd0"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2295,6 +2302,15 @@
   ],
   "findings": [
     {
+      "id": "d6a887cd4cf4669d",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
       "id": "df925d8ba69bac5a",
       "code": "BROKEN_RELATIVE_LINK",
       "severity": "confirmed",
@@ -2304,11 +2320,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "55d5e0941629d229",
+      "id": "e4e12e1b3ac88ede",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: tests/automations-cold-start.test.cjs, tests/automations-execution.test.cjs, tests/test_action_batch_history.py, tests/test_action_click_wal.py",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: release/android-signing.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
