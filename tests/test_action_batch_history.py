@@ -871,7 +871,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                     "a.one":{"status":"review","message":"Prior uncertain result."}})
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
-                with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
                     robot.start(self._request(["target.79"]))
                 robot.start(self._request(["fresh.81"]))
                 self.assertEqual(robot.targets,["fresh.81"])
@@ -888,7 +888,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                                        "message": "Action confirmed: Follow."},
                 "already.gone": {"status": "already_not_following"},
                 "no.click": {"status": "review", "issue": "profile_load_timeout",
-                             "message": "No relationship control found. Waiting timed out: Following. No action clicked."},
+                             "message": __import__("profile_actions").MISSING_RELATIONSHIP_CONTROL +
+                                 " Waiting timed out: Following. No action clicked."},
                 "possibly.clicked": {"status": "review",
                                      "message": "Final verification uncertain."},
             }
@@ -1106,12 +1107,18 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 # A fresh 40-person batch can now be PREPARED, but no worker
                 # action is run by this handoff; old clicked usernames absent.
                 safe = result["reusable_usernames"]
-                additions = [f"new.{i:02d}" for i in range(40-len(safe))]
-                next_request = self._request(safe + additions, task="cancel")
+                # Saved-cohort handoff preserves historically no-click records,
+                # but a completely NEW automatic cohort must NOT reopen them.
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                    robot.start(self._request(safe[:1], task="cancel"))
+                never_opened = [u for u in safe if u not in journal]
+                additions = [f"new.{i:02d}" for i in range(40-len(never_opened))]
+                next_request = self._request(never_opened + additions, task="cancel")
                 robot.start(next_request)
-                self.assertEqual(len(robot.batch_review(next_request)["batch"]["targets"]), 40)
-                self.assertNotIn(original[0],
-                    robot.batch_review(next_request)["batch"]["targets"])
+                targets = robot.batch_review(next_request)["batch"]["targets"]
+                self.assertEqual(len(targets), 40)
+                self.assertFalse(set(targets) & set(journal),
+                    "No inspected/no-click or ambiguous old target can enter new cohort")
 
     def test_new_batch_rejects_unapproved_owner_size_and_running_workers(self):
         with TemporaryDirectory() as temporary:
