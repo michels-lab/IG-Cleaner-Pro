@@ -132,6 +132,10 @@ class ActionTabPoolTests(unittest.TestCase):
             {"username": "possibly.clicked", "status": "error"}])
 
 
+def _read_json_for_test(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 class ActionBatchHistoryTests(unittest.TestCase):
     def setUp(self):
         # These history-only tests deliberately replace threading.Thread with
@@ -867,10 +871,73 @@ class ActionBatchHistoryTests(unittest.TestCase):
                     "a.one":{"status":"review","message":"Prior uncertain result."}})
                 robot.approve_batch({**request,"task":"cancel", "batch_id":current["id"],
                                      "confirmation":"reviewed:"+current["id"]})
-                with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
                     robot.start(self._request(["target.79"]))
                 robot.start(self._request(["fresh.81"]))
                 self.assertEqual(robot.targets,["fresh.81"])
+
+    def test_new_cohort_never_reopens_any_previous_journal_target(self):
+        """Previously visited is different from successfully unfollowed."""
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            scope = self._request(["fresh.one"], task="unfollow")
+            source = robot._base_for(scope["owner"], scope["account"], scope["task"])
+            original = {
+                "confirmed.unfollow": {"status": "ok",
+                                       "message": "Action confirmed: Follow."},
+                "already.gone": {"status": "already_not_following"},
+                "no.click": {"status": "review", "issue": "profile_load_timeout",
+                             "message": __import__("profile_actions").MISSING_RELATIONSHIP_CONTROL +
+                                 " Waiting timed out: Following. No action clicked."},
+                "possibly.clicked": {"status": "review",
+                                     "message": "Final verification uncertain."},
+            }
+            _atomic_json(source, original)
+            history = robot.attempted_history(scope)
+            self.assertEqual(history["visited_usernames"], sorted(original))
+            self.assertNotIn("no.click", history["attempted_usernames"],
+                             "Old attempted-only filter caused repeat visits")
+            fresh = self._action(Path(temporary))
+            self.assertEqual(fresh.attempted_history(scope)["visited_usernames"], sorted(original))
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                for username in original:
+                    with self.subTest(username=username), self.assertRaisesRegex(
+                            ValueError, "previously opened/reviewed"):
+                        fresh.start(self._request([username], task="unfollow"))
+                self.assertFalse(worker.called, "No Chrome job must start for old targets")
+                self.assertEqual(_read_json_for_test(source), original)
+                fresh.start(scope)
+                self.assertEqual(fresh.targets, ["fresh.one"])
+
+    def test_new_cohort_blocks_crashed_navigation_without_false_unfollow(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = self._action(root)
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.task, robot.active_batch_id = "unfollow", "previous-cohort"
+            robot._reserve_target_visit("opened.but.not.actioned")
+            path = robot._target_visits_file_for(robot.owner, robot.account, robot.task)
+            marks = _read_json_for_test(path)
+            self.assertEqual(marks["opened.but.not.actioned"]["state"],
+                "target_navigation_reserved_not_action_confirmed")
+            self.assertFalse(robot._base().exists(),
+                             "Target visit must never impersonate a relationship result")
+            scope = self._request(["opened.but.not.actioned"], task="unfollow")
+            history = self._action(root).attempted_history(scope)
+            self.assertEqual(history["visited_usernames"], ["opened.but.not.actioned"])
+            self.assertEqual(history["attempted_usernames"], [])
+            with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                self._action(root).start(scope)
+            self.assertFalse(robot._base().exists())
+            # Malformed visit evidence fails closed instead of losing exclusions.
+            path.write_text("{not JSON", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Corrupted robot activity journal"):
+                self._action(root).attempted_history(scope)
+            with self.assertRaisesRegex(ValueError, "Corrupted robot activity journal"):
+                self._action(root).start(scope)
 
     def test_no_click_failure_is_retryable_but_uncertain_click_is_not(self):
         with TemporaryDirectory() as temporary:
@@ -890,8 +957,12 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 b=robot.batch_review(self._request(["pending.old"]))["batch"]
                 robot.approve_batch({**self._request(["pending.old"]), "batch_id":b["id"],
                                      "confirmation":"reviewed:"+b["id"]})
-                robot.start(self._request(["pending.old"]))
-                with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
+                # New cohorts exclude old inspected profiles even when no click.
+                # The original saved cohort can still continue its exact approved
+                # set or use explicit read-only recheck.
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                    robot.start(self._request(["pending.old"]))
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
                     robot.start(self._request(["pending.clicked"]))
 
     def test_read_prior_attempts_on_fresh_windows_launch_without_starting_worker(self):
@@ -968,17 +1039,15 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertFalse(_preclick_no_action(historical["reported.no.click"]))
             with patch("profile_actions.threading.Thread") as worker:
                 worker.return_value.is_alive.return_value = False
-                # New explicit owner approval is required to rerun the
-                # profiles where no relationship-changing click occurred.
-                request=self._request(["missing.old"],task="unfollow")
-                cold.start(request)
-                self.assertEqual(cold.targets, ["missing.old"])
-                b=cold.batch_review(request)["batch"]
-                cold.approve_batch({**request,"batch_id":b["id"],
-                                    "confirmation":"reviewed:"+b["id"]})
-                cold.start(self._request(["missing.new"],task="unfollow"))
-                with self.assertRaisesRegex(ValueError, "unapproved batch exists"):
-                    cold.start(self._request(["maybe.clicked"],task="unfollow"))
+                # New cohorts exclude all inspected profiles, including
+                # previously harmless no-click observations. Continue is only
+                # allowed on the original saved, still-open cohort.
+                for user in ("missing.old", "missing.new",
+                             "missing.diagnostic", "maybe.clicked"):
+                    with self.subTest(user=user), self.assertRaisesRegex(
+                            ValueError, "previously opened/reviewed"):
+                        cold.start(self._request([user], task="unfollow"))
+                worker.assert_not_called()
 
     def test_new_forty_after_saved_ten_preserves_all_history_and_never_autoclicks(self):
         """Real owner case: 10 saved / 40 desired / 5 attempted / no Chrome start."""
@@ -1038,12 +1107,18 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 # A fresh 40-person batch can now be PREPARED, but no worker
                 # action is run by this handoff; old clicked usernames absent.
                 safe = result["reusable_usernames"]
-                additions = [f"new.{i:02d}" for i in range(40-len(safe))]
-                next_request = self._request(safe + additions, task="cancel")
+                # Saved-cohort handoff preserves historically no-click records,
+                # but a completely NEW automatic cohort must NOT reopen them.
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                    robot.start(self._request(safe[:1], task="cancel"))
+                never_opened = [u for u in safe if u not in journal]
+                additions = [f"new.{i:02d}" for i in range(40-len(never_opened))]
+                next_request = self._request(never_opened + additions, task="cancel")
                 robot.start(next_request)
-                self.assertEqual(len(robot.batch_review(next_request)["batch"]["targets"]), 40)
-                self.assertNotIn(original[0],
-                    robot.batch_review(next_request)["batch"]["targets"])
+                targets = robot.batch_review(next_request)["batch"]["targets"]
+                self.assertEqual(len(targets), 40)
+                self.assertFalse(set(targets) & set(journal),
+                    "No inspected/no-click or ambiguous old target can enter new cohort")
 
     def test_new_batch_rejects_unapproved_owner_size_and_running_workers(self):
         with TemporaryDirectory() as temporary:

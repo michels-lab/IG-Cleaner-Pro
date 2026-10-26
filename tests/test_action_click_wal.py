@@ -180,7 +180,7 @@ class DurableClickIntentTests(unittest.TestCase):
             self.assertIn(target, history["attempted_usernames"])
             # No cold restart may manufacture a new approved batch for a
             # possibly-clicked target even when the original Chrome is gone.
-            with self.assertRaisesRegex(ValueError,"No untouched profiles remain"):
+            with self.assertRaisesRegex(ValueError,"previously opened/reviewed"):
                 cold.start({"owner":"owner.account","account":"ig-account",
                             "expected_handle":"owner.name","task":"unfollow",
                             "targets":[target],"batch_size":1,"protected":[],
