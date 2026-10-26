@@ -13,6 +13,13 @@
 - **No relationship click policy changed:** same exact target URL+header guard, WAL before a single possible mutation, no replay after uncertainty, original protected lists/cohorts, ten-tab flows and pause/cancel preserved. The actual visible signed-in owner remains preferred evidence. Owner-navigation counter now records only actual fallback navigations, not every proof from an unchanged session.
 - **Negative coverage:** new `test_action_owner_proof_reuse.py` checks multi-target reuse, pre/post-action proof, account switch, challenge, missing/ambiguous cookie, expiry, protocol/context mismatch and session switch DURING initial proof; old bound test retained and Windows installed CI explicitly runs both. Real Instagram signed-in account success remains **UNVERIFIED** and separate from local/CI evidence; no FINAL release until release gates, no beta/RC.
 
+## 2026-10-24 — GRANADA: official FINAL stable v120.62 complete
+
+- Merged [#239](https://github.com/michels-lab/IG-Cleaner-Pro/pull/239) (7/7 exact-head checks) with [#238](https://github.com/michels-lab/IG-Cleaner-Pro/pull/238)'s safe explicit saved-10 vs selected-40 batch decision, all old attempts/protections/WAL retained.
+- Official stable [v120.62](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62) published 2026-10-24T18:44:16Z, exact SHA `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`, [publisher 40121318686](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686) **SUCCESS**, 12 SHA-256-verified assets and required installed Windows, signed Android co-install and screenshot-backed Desktop/Android QA.
+- Pre-merge publication metadata bug fixed: manifest had v120.60 run/SHA/time despite advertising v120.61; new requested-release provenance negative regression in `tests/test_update_docs_contract.py` passed exact-head CI. See [release receipt](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
+- Postpublication governance sync consumes v120.62 request, advances current stable to v120.62 and reserves unauthorised v120.63; no second publication. Real owner-account Instagram Unfollow/Cancel success remains **UNVERIFIED** (#172/#164); do not infer from offline CI.
+
 ## 2026-10-24 — GRANADA: Saved cohort 10 vs selected 40 — safe explicit decision
 
 - **Owner screenshot:** Windows Automation reports `ACTION BLOCKED · SAVED COHORT: 10 profiles; NEW SELECTED SIZE: 40`, 813 in queue, 5 previously attempted, current execution 0/0 and 4 historical read-only observations (not relationship changes). No Chrome action started. Old UI only said `Replan`; backend replan can choose at most existing ten, never create a forty-person fresh cohort. Suppressing the mismatch via `selected_batch_size=40` when active targets remain ten is misleading.

@@ -7,12 +7,14 @@ builds. The gated release workflow performs real binary/signature validation.
 from pathlib import Path
 import json
 import re
+from release_artifact_policy import artifact_release_tag
 
 root = Path(__file__).resolve().parents[1]
 read = lambda p: (root / p).read_text(encoding="utf-8")
 m = json.loads(read("release/distribution-manifest.json"))
 policy = m["releasePolicy"]
-version = policy["nextRelease"][1:]
+request = json.loads(read(".michelslab/release-request.json"))
+version = artifact_release_tag(m, request)[1:]
 win = m["channels"]["windowsDeveloper"]
 android = m["channels"]["androidDeveloper"]
 workflow = read(".github/workflows/release.yml")
@@ -20,7 +22,6 @@ gradle = read("android/app/build.gradle.kts")
 installer = read("packaging/windows-installer/InstaCleanerProDeveloper.iss")
 win_builder = read("tools/build_windows_developer_installer.ps1")
 win_smoke = read("tools/test_windows_developer_installer.ps1")
-request = json.loads(read(".michelslab/release-request.json"))
 
 assert policy["automaticPublishFromMain"] is False
 assert policy["explicitManualPublishRequired"] is True

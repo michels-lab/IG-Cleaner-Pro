@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 from pathlib import Path
+from release_artifact_policy import artifact_release_tag
 
 ROOT=Path(__file__).resolve().parents[1]
 workflow=(ROOT/".github/workflows/release.yml").read_text(encoding="utf-8")
@@ -154,6 +155,7 @@ assert "tools/test_windows_installer.ps1" in workflow
 assert 'gh release view "$TAG" --json assets' in workflow
 assert "IG-Cleaner-Pro-Windows-Setup-v" in workflow
 
+artifact_tag=artifact_release_tag(manifest, request)
 desktop=manifest["channels"]["desktop"]
 android=manifest["channels"]["android"]
 policy=manifest["releasePolicy"]
@@ -163,9 +165,9 @@ assert desktop["primaryArtifactTemplate"]=="IG-Cleaner-Pro-Desktop-v{version}.ht
 assert desktop["primaryFormat"]=="html"
 assert desktop["standaloneOffline"] is True
 assert desktop["zipSecondary"] is True
-assert desktop["primaryArtifact"]==f"IG-Cleaner-Pro-Desktop-{policy['nextRelease']}.html"
-assert desktop["artifact"]==f"IG-Cleaner-Pro-Desktop-{policy['nextRelease']}.zip"
-assert android["artifact"]==f"IG-Cleaner-Pro-Android-{policy['nextRelease']}.apk"
+assert desktop["primaryArtifact"]==f"IG-Cleaner-Pro-Desktop-{artifact_tag}.html"
+assert desktop["artifact"]==f"IG-Cleaner-Pro-Desktop-{artifact_tag}.zip"
+assert android["artifact"]==f"IG-Cleaner-Pro-Android-{artifact_tag}.apk"
 assert android["artifactTemplate"]=="IG-Cleaner-Pro-Android-v{version}.apk"
 assert policy["genericPublisher"]==".github/workflows/release.yml"
 assert policy["explicitManualPublishRequired"] is True

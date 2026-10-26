@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import re
+from release_artifact_policy import artifact_release_tag
 
 ROOT = Path(__file__).resolve().parents[1]
 script = ROOT / "packaging/windows-installer/InstaCleanerPro.iss"
@@ -10,6 +11,8 @@ installer = script.read_text(encoding="utf-8")
 license_text = (ROOT / "LICENSE.txt").read_text(encoding="utf-8")
 guide = (ROOT / "packaging/windows-installer/TaskbarPinning.txt").read_text(encoding="utf-8")
 manifest = json.loads((ROOT / "release/distribution-manifest.json").read_text(encoding="utf-8"))
+request = json.loads((ROOT / ".michelslab/release-request.json").read_text(encoding="utf-8"))
+artifact_tag = artifact_release_tag(manifest, request)
 win = manifest["channels"]["windowsRobot"]
 assert script.is_file() and (ROOT / "tools/test_windows_installer.ps1").is_file()
 assert (ROOT / "tools/test_windows_installer_wizard.ps1").is_file()
@@ -33,7 +36,7 @@ assert re.search(r"^Source:\s+\"{#PayloadDir}\\InstaCleanerPro.exe\"", installer
 assert 'anclar' in guide.lower() and 'pin' in guide.lower()
 assert 'taskbar' in guide.lower()
 assert win["artifactTemplate"] == "IG-Cleaner-Pro-Windows-Setup-v{version}.exe"
-assert win["artifact"] == f"IG-Cleaner-Pro-Windows-Setup-{manifest['releasePolicy']['nextRelease']}.exe"
+assert win["artifact"] == f"IG-Cleaner-Pro-Windows-Setup-{artifact_tag}.exe"
 assert win["portableLegacyZipTemplate"] == "IG-Cleaner-Pro-Automatic-Robot-Windows-v{version}.zip"
 assert win["installation"] == "inno-setup-per-user"
 assert win["authenticode"].startswith("not-configured")

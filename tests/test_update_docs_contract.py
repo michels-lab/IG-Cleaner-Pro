@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import re
 import unittest
+from release_artifact_policy import artifact_release_tag
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "release" / "distribution-manifest.json"
@@ -157,6 +158,59 @@ class UpdateGuideContract(unittest.TestCase):
         self.assertIn("not the candidate asset names", guide)
         self.assertIn("browser origin", guide)
         self.assertIn("idempotently", guide)
+
+
+class ReleaseArtifactStateRegression(unittest.TestCase):
+    """Negative fixtures: never equate the reserved NEXT tag with shipped artifacts."""
+
+    def setUp(self):
+        self.manifest = {"releasePolicy": {
+            "currentStableRelease": "v120.62",
+            "nextRelease": "v120.63",
+            "lastPublishedRun": 40121318686,
+            "lastPublishedCommit": "tagged-source-sha",
+            "lastPublishedAt": "2026-10-24T18:44:16Z",
+            "lastPublishedReleaseUrl": "https://github.com/example/app/releases/tag/v120.62",
+        }}
+        self.published = {
+            "authorized": False, "status": "published",
+            "tag": "v120.62", "version": "120.62",
+            "published_run": 40121318686,
+            "published_commit": "tagged-source-sha",
+            "published_at": "2026-10-24T18:44:16Z",
+            "published_release_url": "https://github.com/example/app/releases/tag/v120.62",
+        }
+
+    def test_consumed_request_checks_current_published_binary_not_reserved_next(self):
+        self.assertEqual(artifact_release_tag(self.manifest, self.published), "v120.62")
+
+    def test_next_authorized_release_checks_new_binary(self):
+        proposed = {
+            "authorized": True, "status": "requested",
+            "tag": "v120.63", "version": "120.63",
+        }
+        self.assertEqual(artifact_release_tag(self.manifest, proposed), "v120.63")
+
+    def test_mislabeled_binaries_or_inconsistent_provenance_are_rejected(self):
+        wrong_tag = {**self.published, "tag": "v120.63", "version": "120.63"}
+        with self.assertRaises(ValueError):
+            artifact_release_tag(self.manifest, wrong_tag)
+        wrong_run = {**self.published, "published_run": 39983124380}
+        with self.assertRaises(ValueError):
+            artifact_release_tag(self.manifest, wrong_run)
+        wrong_candidate = {"authorized": True, "status": "requested",
+                           "tag": "v120.62", "version": "120.62"}
+        with self.assertRaises(ValueError):
+            artifact_release_tag(self.manifest, wrong_candidate)
+
+    def test_unauthorized_ambiguous_or_identical_next_release_fails_closed(self):
+        with self.assertRaises(ValueError):
+            artifact_release_tag(self.manifest, {"authorized": False, "status": "requested"})
+        with self.assertRaises(ValueError):
+            artifact_release_tag(
+                {"releasePolicy": {**self.manifest["releasePolicy"], "nextRelease": "v120.62"}},
+                self.published,
+            )
 
 
 if __name__ == "__main__":
