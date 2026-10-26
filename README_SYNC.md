@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration must be corrected server-side. Canonical code-only email templates, safe verification helper and dashboard instructions: [Auth email setup](docs/AUTH_EMAIL_SETUP.md). Source templates do not imply that production mail is already changed. Current official stable is v120.62; hosted email configuration remains separately unverified.
 
-Current published stable: **v120.62**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), successful [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686), exact source `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4` and 12 published checksum-verified assets. The next reserved development version **v120.63 is not authorized** for publication. The published v120.62 Windows fix gives explicit Continue saved 10 / Plan new 40 choices without replaying old uncertain attempts or deleting locally stored action evidence. Live Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
+Current published stable: **v120.62**, official [GitHub stable release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), successful [governed workflow](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686), exact source `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4` and 12 published checksum-verified assets. The next reserved development version **v120.63 is authorized for governed FINAL publication** only after exact-source gates pass. The published stable remains v120.62 until the official publisher and release asset verification succeed. The published v120.62 Windows fix gives explicit Continue saved 10 / Plan new 40 choices without replaying old uncertain attempts or deleting locally stored action evidence. Live Instagram Unfollow/Cancel and physical Samsung cross-device acceptance remain unverified.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.63 (not authorized)**. Any future GitHub publication must use `prerelease: false`, advance its build version and satisfy every installed, signed and distribution gate.
+The next reserved release target is **v120.63 (governed FINAL candidate; not yet published)**. Any future GitHub publication must use `prerelease: false`, advance its build version and satisfy every installed, signed and distribution gate.
 
 Authority: `release/distribution-manifest.json`.
 
