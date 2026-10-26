@@ -8,17 +8,17 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.63 — official FINAL GitHub stable, published October 26, 2026.** [Governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40394937018) completed **SUCCESS** for exact tagged source `cb47df2eeda2f158df408e7a57dbda84600b622d`, with 12 published checksum-verified assets, installed Windows public/Developer checks, production-signed Android public/Developer co-install, Desktop/Android rendered UI and release-feed verification.
+**v120.63 — official stable GitHub release, published October 26, 2026.** [Governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40394937018) completed **SUCCESS** for exact tagged source `cb47df2eeda2f158df408e7a57dbda84600b622d`, with 12 published checksum-verified assets, installed Windows public/Developer checks, production-signed Android public/Developer co-install, Desktop/Android rendered UI and release-feed verification.
 
 [**Download v120.63**](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.63) · Windows Setup `IG-Cleaner-Pro-Windows-Setup-v120.63.exe` · Android `IG-Cleaner-Pro-Android-v120.63.apk` · standalone Desktop `IG-Cleaner-Pro-Desktop-v120.63.html`. Optional Windows portable ZIP and separate Developer editions are available from the same release.
 
 **Changes:** [#241](https://github.com/michels-lab/IG-Cleaner-Pro/pull/241) reduced repeated signed-in owner-profile navigation using short-lived, session-bound owner proof; [#242](https://github.com/michels-lab/IG-Cleaner-Pro/pull/242) separated the visible 20-person batch/1-minute rest from the former implicit 20-visits-per-hour limit. An explicit 120-visits/60-minute safety budget and between-profile spacing still apply. The previously shipped [v120.62](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62) saved-10/new-40 decision, action journal, cancel and end-of-batch review remain available.
 
-**Publication does not prove Unfollow/Cancel Pending succeeded on the owner's live Instagram account.** Independent real-account acceptance remains open in [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Windows Setup has SHA-256 integrity but no Authenticode signature. No RC/beta or Play publication.
+**Publication does not prove live Instagram Unfollow or Cancel Pending succeeded on the owner's account.** Independent real-account acceptance remains open in [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172), [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). Windows Setup has SHA-256 integrity but no Authenticode signature. No RC/beta or Play publication.
 
-**Current published stable: v120.63. Next reserved development version: v120.64, NOT authorized or published.** Source changes after this tag, including any fixes under [PR #245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245), are not part of the v120.63 binary. No source-only test proves real Instagram acceptance.
+**Current published stable: v120.63. Next reserved version: v120.64, not published.** The next version is not authorized; the owner tests only officially published installers. Source changes after this tag, including any fixes under [PR #245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245), are not part of the v120.63 binary. No source-only test proves real Instagram acceptance.
 
-[Official v120.63 publication receipt](docs/GRANADA_V12063_FINAL_RECEIPT_2026-10-26.md).
+[Official v120.63 publication receipt](docs/GRANADA_V12063_FINAL_RECEIPT_2026-10-26.md). Historical receipts: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
 
 ## Features
 
