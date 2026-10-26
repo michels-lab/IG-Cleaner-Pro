@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 322; classified: 318; readable documents: 66; above read cap: 1; findings: 0.
+Tracked: 324; classified: 320; readable documents: 67; above read cap: 1; findings: 0.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 322; classified: 318; readable documents: 66; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 61 |
+| document | 62 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 42 |
-| test | 77 |
+| test | 78 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
