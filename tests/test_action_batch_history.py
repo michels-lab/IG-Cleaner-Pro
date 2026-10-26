@@ -1363,6 +1363,39 @@ class GranadaReviewRecoveryTests(unittest.TestCase):
                 "confirmation": "unfollow:" + str(len(targets)),
                 "followers_evidence": True}
 
+    def test_last_untouched_profile_is_actually_observed_readonly(self):
+        from unittest.mock import MagicMock
+        from profile_actions import recheck_action_readonly
+        page = MagicMock()
+        page.url = "https://www.instagram.com/last.untouched/"
+        page.locator.return_value.count.return_value = 0
+        with patch("profile_actions._wait_for_target_profile_shell", return_value=True), \
+             patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("review", "Final state is ambiguous.")) as verifier, \
+             patch("profile_actions._verified_action_owner", return_value=True), \
+             patch("profile_actions._profile_relationship_control", return_value=True):
+            status, message = recheck_action_readonly(
+                page, "last.untouched", "unfollow", "my.profile", {},
+                preloaded=True, allow_unacted_observation=True,
+                distinguish_observation=True)
+        self.assertEqual(status, "still_following")
+        self.assertIn("No click", message)
+        verifier.assert_called_once()
+        page.locator.return_value.click.assert_not_called()
+
+    def test_untouched_profile_must_not_be_observed_in_ordinary_historical_recheck(self):
+        from unittest.mock import MagicMock
+        from profile_actions import recheck_action_readonly
+        page = MagicMock()
+        with patch("profile_actions._verify_final_state") as verifier:
+            status, message = recheck_action_readonly(
+                page, "last.untouched", "unfollow", "my.profile", {},
+                preloaded=True, allow_unacted_observation=True)
+        self.assertEqual(status, "review")
+        self.assertIn("No completed Instagram action", message)
+        verifier.assert_not_called()
+
     def test_review_scan_selects_only_unresolved_and_untouched_without_action(self):
         from unittest.mock import MagicMock
         with TemporaryDirectory() as temporary:
