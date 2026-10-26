@@ -1,3 +1,9 @@
+## 2026-10-26 — GRANADA FINAL v120.63 packaging candidate (not yet published)
+
+- Earlier root causes and same-failure negative regression documented: owner self-profile repeated fallback ([#241](https://github.com/michels-lab/IG-Cleaner-Pro/pull/241)); invisible 20-visit/60m limiter creating 2670-second owner wait despite 1-minute batch rest ([#242](https://github.com/michels-lab/IG-Cleaner-Pro/pull/242)). Both merged into main, six exact-head workflows each passed.
+- New gated FINAL release staging: versionCode `12063`, versionName `120.63`, Desktop/embedded Android UI `UI v120.63`, exact Windows/Android public and Developer distribution filenames; last published verified stable **v120.62**, next proposed `v120.63`. Original published provenance (run `40121318686`, tagged SHA `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`) reconciled and preserved as `previous_publication`.
+- FINAL publisher now must run both `test_action_owner_proof_reuse.py` and `test_action_visit_pacing.py` as hard Windows Setup gates. Existing owner profile challenge, protected targets, WAL no-replay, recorded attempts, action cohorts, rest history, physical acceptance #172/#164 and cloud isolation remain unchanged. **No user-account Instagram mutation performed by these changes; no release claimed before exact-source full required publisher SUCCESS and all 12 assets.** No RC.
+
 ## 2026-10-26 — GRANADA: fix 2,670-second false action-batch wait
 
 - **Owner screenshot:** Windows showed `Batch size 20`, `Rest between batches 1 min`, `Delay between profiles 8 sec` yet refused to open the next target tab for `2,670 s` (~44m30s). This is a misleading, implicit pacing coupling, not evidence of an Instagram rate-limit response.
