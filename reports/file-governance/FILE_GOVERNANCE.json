@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 320,
-  "classified_files_total": 316,
+  "tracked_files_total": 322,
+  "classified_files_total": 318,
   "docs_content_inspected": 66,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,17 +18,15 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 75,
+    "test": 77,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {
-    "POTENTIAL_UNLOGGED_CHANGES": 1
-  },
-  "finding_total": 1,
-  "inventory_fingerprint": "51d522ff97a54e777980bf7e2a246574f26f2015265dbc109f20c4e0ec11e69b",
-  "evidence_fingerprint": "7be84049efa38239afe031b15b0af157c48a6a0560726953b2f5c8edd66d8d4e",
+  "finding_counts": {},
+  "finding_total": 0,
+  "inventory_fingerprint": "2b835a1cee2749a6192d68af14dfef6031da1763a9b9bb504a004a504c457e03",
+  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -126,7 +124,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "17e1632f48b22d9492ab295ef2556afbf35c7d71"
+      "blob": "015f8fbe7c558ef67c18b6d1aa6bf7d0fb27f773"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "5a54173a50d3315c98b8e5ce247946a0aadc0190"
+      "blob": "aae9371f5e07afa4e06f2ec1a575bb2c7fe82cdd"
     },
     {
       "path": "README.md",
@@ -1785,7 +1783,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fd62d5f9a3c726877aa1e5dfd103caece3db3986"
+      "blob": "0151c27faf6166c37de7a38df079c296bc4524fc"
+    },
+    {
+      "path": "tests/test_action_owner_proof_reuse.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "21e0972dee34293ad57b71722d0e6f01b76a4fce"
     },
     {
       "path": "tests/test_action_tab_waves.py",
@@ -1793,6 +1798,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
+    },
+    {
+      "path": "tests/test_action_visit_pacing.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "13dd30c99d3727191ae3563a280bda48c194fe50"
     },
     {
       "path": "tests/test_action_worker_journal_gate.py",
@@ -2100,7 +2112,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "af81170df49d94e98f4ce0025e30987b257c9bc2"
+      "blob": "a10784f7e3c0d6999486ca72c9efa2ff278a01dd"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2243,17 +2255,7 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [
-    {
-      "id": "78483f9728cf1c0f",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "6 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, tests/test_update_docs_contract.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
-      "state": "REVIEW_REQUIRED"
-    }
-  ],
+  "findings": [],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,

@@ -9,6 +9,7 @@ on:
       - 'tools/profile_counts_audit.py'
       - 'tests/test_profile_counts_audit.py'
       - 'tests/test_granada_pacing_integrity.py'
+      - 'tests/test_action_visit_pacing.py'
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
@@ -23,6 +24,7 @@ on:
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
+      - 'tests/test_action_owner_proof_reuse.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -62,6 +64,7 @@ on:
       - 'tools/profile_counts_audit.py'
       - 'tests/test_profile_counts_audit.py'
       - 'tests/test_granada_pacing_integrity.py'
+      - 'tests/test_action_visit_pacing.py'
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
@@ -76,6 +79,7 @@ on:
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
+      - 'tests/test_action_owner_proof_reuse.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -181,6 +185,8 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Owner navigation verification regression; refuse Windows Setup.' }
+          python -m unittest discover -s tests -p 'test_action_owner_proof_reuse.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Session-bound owner proof navigation regression; refuse Windows Setup.' }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
@@ -198,6 +204,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
           python -m unittest discover -s tests -p 'test_granada_pacing_integrity.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA Profile Counts pacing ledger tests failed." }
+          python -m unittest discover -s tests -p 'test_action_visit_pacing.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA independent action hourly-vs-batch pacing regression failed." }
           python -m unittest discover -s tests -p 'test_granada_false_success_resume.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA false-success resume tests failed." }
           python -m unittest discover -s tests -p 'test_granada_csv_recovery.py' -v

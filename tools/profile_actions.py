@@ -28,7 +28,31 @@ from profile_counts_pacing import (
 
 TASKS = {"unfollow": "unfollow", "cancel": "cancel request", "audit": "read-only followback audit"}
 ACTION_WINDOW_MINUTES = 60
+# Explicit independent hourly safety budget. Owner batch size is NEVER a 60m
+# throttle; batch breaks and visit history remain separate and persistent.
+ACTION_PROFILE_VISITS_PER_HOUR = 120
 MAX_ACTIONS_PER_JOB = 1000
+
+def action_wait_detail(visits, rests, *, batch_size, rest_minutes,
+                       gap_seconds, now=None):
+    """Attribute waits to one of three independent, persisted pacing clocks."""
+    now = time.time() if now is None else now
+    hourly = wait_required(visits, ACTION_PROFILE_VISITS_PER_HOUR,
+                           ACTION_WINDOW_MINUTES, 0, now=now)
+    spacing = max(0.0, max(visits, default=-1e30) + gap_seconds - now)
+    rest = batch_wait(rests, batch_size if rest_minutes > 0 else 0,
+                      rest_minutes, now=now)
+    choices = [
+        (hourly, "Hourly visit safety limit: " +
+         str(ACTION_PROFILE_VISITS_PER_HOUR) + " visits per " +
+         str(ACTION_WINDOW_MINUTES) + " minutes"),
+        (rest, "Between-batch rest: " + str(rest_minutes) +
+         " min after " + str(batch_size) + " profiles"),
+        (spacing, "Between-profile spacing: " + str(gap_seconds) + " s"),
+    ]
+    delay, reason = max(choices, key=lambda item: item[0])
+    return max(0.0, delay), (reason if delay > 0 else "")
+
 
 # Retry only verified pre-click misses after owner approves a new batch.
 MISSING_RELATIONSHIP_CONTROL = (
@@ -720,29 +744,100 @@ def _stable_no_requested_state(page, username):
     return True
 
 
-def _verified_action_owner(page, expected_handle):
-    """Fail-closed session proof for collapsed Instagram sidebar layouts.
+# A positive signed-in owner proof can be used briefly for the SAME Chrome
+# context, but only while its authenticated ds_user_id cookie stays unchanged.
+# An unverified/absent cookie never authorizes reuse. Keep only in robot-thread
+# memory; never log, serialize, include in a snapshot or persist this value.
+OWNER_PROOF_REUSE_SECONDS = 180.0
 
-    On another user's profile, Instagram often hides the nav Profile href
-    even though the session is signed in. Inspect a separate, read-only tab in
-    the SAME persistent Chrome context. Require matching owner header AND an
-    Edit profile control; URL, target username, or a stored handle alone never
-    prove ownership. Keep the target page (and any menu) untouched.
+
+def _local_owner_session_id(context):
+    """Read only the numeric Instagram session identity in current Chrome."""
+    try:
+        cookies = context.cookies(["https://www.instagram.com/"])
+        if not isinstance(cookies, list):
+            return None
+        values = {item.get("value") for item in cookies
+                  if isinstance(item, dict) and item.get("name") == "ds_user_id"}
+        if (len(values) != 1 or
+                not all(isinstance(value, str) and
+                        re.fullmatch(r"[0-9]{1,24}", value) for value in values)):
+            return None
+        return next(iter(values))
+    except Exception:
+        return None
+
+
+def _verified_action_owner(page, expected_handle):
+    """Prove the signed-in owner without repeatedly reopening /owner/.
+
+    Prefer the target's *live* visible owner identity. If Instagram hides that
+    navigation, accept a recently proved owner profile ONLY while the same
+    persistent Chrome context retains the exact bound authenticated user ID.
+    Check this cookie afresh for EACH action and final-state verification; a
+    different/missing value, expired proof, challenged page, or visibly wrong
+    owner revokes reuse. Then re-open a read-only owner proof tab, fail closed
+    on any ambiguity and never carry the proof between Chrome jobs.
+
+    The selected username or profile URL alone never authenticates ownership.
     """
     if challenge_detected(page):
+        _OWNER_PROFILE_PROBE.bound_session = None
         return False
     passwords = page.locator('input[name="password"]')
     if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
+        _OWNER_PROFILE_PROBE.bound_session = None
+        return False
+    current = urlparse(getattr(page, "url", ""))
+    if current.scheme != "https" or current.hostname not in (
+            "www.instagram.com", "instagram.com"):
+        _OWNER_PROFILE_PROBE.bound_session = None
         return False
     identified = signed_in_handle(page)
     if identified is not None:
-        return identified.casefold() == expected_handle.casefold()
+        if not _same_instagram_owner(identified, expected_handle):
+            _OWNER_PROFILE_PROBE.bound_session = None
+            return False
+        # A visible owner is a fresh proof in its own right; the fallback
+        # cache requires independent matching owner-profile evidence.
+        return True
+
+    context = page.context
+    session_id = _local_owner_session_id(context)
+    bound = getattr(_OWNER_PROFILE_PROBE, "bound_session", None)
+    if bound is not None:
+        if (session_id and bound["context"] is context
+                and _same_instagram_owner(bound["handle"], expected_handle)
+                and bound["session_id"] == session_id
+                and 0 <= time.monotonic() - bound["verified_at"] <
+                OWNER_PROOF_REUSE_SECONDS):
+            # Fresh browser-cookie evidence with previous own-profile + Edit
+            # profile proof, never a mere remembered username.
+            return True
+        _OWNER_PROFILE_PROBE.bound_session = None
+
     check = None
     try:
-        check = page.context.new_page()
-        return verify_selected_owner_profile(
+        check = context.new_page()
+        verified = verify_selected_owner_profile(
             check, expected_handle,
-            on_navigation=getattr(_OWNER_PROFILE_PROBE, "report", None)) == expected_handle
+            on_navigation=getattr(_OWNER_PROFILE_PROBE, "report", None))
+        if not _same_instagram_owner(verified, expected_handle):
+            return False
+        # Never succeed on a stale proof if the Chrome owner session switched
+        # WHILE Instagram loaded its own profile. Without a cookie, preserve
+        # the original live owner-profile proof but do not cache it.
+        session_after = _local_owner_session_id(context)
+        if session_id is not None and session_after != session_id:
+            return False
+        if session_id and session_after == session_id:
+            _OWNER_PROFILE_PROBE.bound_session = {
+                "context": context,
+                "handle": expected_handle,
+                "session_id": session_id,
+                "verified_at": time.monotonic(),
+            }
+        return True
     except Exception:
         return False
     finally:
@@ -751,6 +846,7 @@ def _verified_action_owner(page, expected_handle):
                 check.close()
             except Exception:
                 pass
+
 
 def _verify_final_state(page, expected_handle, username, *, checks=3):
     """Wait for exact target state with TWO owner proofs, not one per poll.
@@ -1456,7 +1552,8 @@ class ActionRobot:
         self.cancel_requested = False
         self.cancel_batch_id = ""
         self.skipped = set()
-        self.max_count = 30
+        self.batch_size = 30
+        self.max_count = ACTION_PROFILE_VISITS_PER_HOUR
         self.window_minutes = ACTION_WINDOW_MINUTES
         self.min_delay_seconds = 10.0
         self.rest_minutes = 5.0
@@ -1955,7 +2052,8 @@ class ActionRobot:
             self.continuing_batch = False
             self.open_review_tabs, self.current_wait = [], None
             self.skipped.clear()
-            self.max_count, self.window_minutes, self.min_delay_seconds = count, window, delay
+            self.batch_size = count
+            self.max_count, self.window_minutes, self.min_delay_seconds = ACTION_PROFILE_VISITS_PER_HOUR, window, delay
             self.rest_minutes = rest
             self.stop_event.clear()
             self.cancel_requested = False
@@ -1990,12 +2088,13 @@ class ActionRobot:
             self.open_review_tabs = []
             self.current_wait = None
             self.skipped.clear()
+            self.batch_size = int(data.get("batch_size", 30))
             self.max_count, self.window_minutes, self.min_delay_seconds = check_pacing(
-                int(data.get("batch_size", 30)), ACTION_WINDOW_MINUTES,
+                ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                 data.get("gap_seconds", 10))
             rest_input = data.get("rest_minutes", 5)
             _, self.rest_minutes = check_batch_rest(
-                self.max_count if rest_input else 0, rest_input)
+                self.batch_size if rest_input else 0, rest_input)
             self.stop_event.clear()
             self.cancel_requested = False
             self.cancel_batch_id = ""
@@ -2214,7 +2313,7 @@ class ActionRobot:
         count = int(data.get("batch_size", 30))
         if count != data.get("batch_size", 30) or not 1 <= count <= 1000:
             raise ValueError("The batch size must be between 1 and 1,000.")
-        max_count, window, delay = check_pacing(count, ACTION_WINDOW_MINUTES,
+        max_count, window, delay = check_pacing(ACTION_PROFILE_VISITS_PER_HOUR, ACTION_WINDOW_MINUTES,
                                                  data.get("gap_seconds", 10))
         rest_input = data.get("rest_minutes", 5)
         every, rest = check_batch_rest(count if rest_input else 0, rest_input)
@@ -2295,6 +2394,7 @@ class ActionRobot:
                 self.owner_profile_visits = 0
                 if not resume:
                     self.skipped.clear()
+                self.batch_size = count
                 self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
                 self.rest_minutes = rest
                 # A newly authorized batch uses the owner's current visible
@@ -2384,6 +2484,9 @@ class ActionRobot:
                     "current_wait": dict(self.current_wait) if self.current_wait else None,
                     "max_action_tabs": MAX_ACTION_TABS,
                     "owner_profile_visits": self.owner_profile_visits,
+                    "batch_size": self.batch_size,
+                    "hourly_visit_limit": self.max_count,
+                    "hourly_visit_window_minutes": self.window_minutes,
                     "review_only": self.review_only,
                     "cancel_requested": self.cancel_requested,
                     "continuing_batch": self.continuing_batch,
@@ -2501,6 +2604,7 @@ class ActionRobot:
 
     def _run(self):
         browser = None
+        _OWNER_PROFILE_PROBE.bound_session = None
         _OWNER_PROFILE_PROBE.report = self._record_owner_profile_visit
         try:
             from playwright.sync_api import sync_playwright
@@ -2647,20 +2751,18 @@ class ActionRobot:
                         if self.stop_event.is_set():
                             break
                         while not self.stop_event.is_set():
-                            delay = max(
-                                wait_required(visits, self.max_count, self.window_minutes,
-                                              self.min_delay_seconds),
-                                batch_wait(rests,
-                                           self.max_count if self.rest_minutes > 0 else 0,
-                                           self.rest_minutes))
+                            delay, wait_reason = action_wait_detail(
+                                visits, rests, batch_size=self.batch_size,
+                                rest_minutes=self.rest_minutes,
+                                gap_seconds=self.min_delay_seconds)
                             if delay <= 0:
                                 break
                             with self.lock:
                                 self.status = "waiting"
                                 self.wait_until = time.time() + delay
                                 self.message = ("Preparing ten tabs: waiting " +
-                                                str(int(delay+0.999)) +
-                                                " s before opening @" + warm_user)
+                                                str(int(delay+0.999)) + " s (" +
+                                                wait_reason + ") before opening @" + warm_user)
                             self.stop_event.wait(min(delay, 2.0))
                         if self.stop_event.is_set():
                             break
@@ -2687,7 +2789,7 @@ class ActionRobot:
                                                   started_at=started)
                             rests = finish_batch_visit(
                                 rests_file, rests,
-                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.batch_size if self.rest_minutes > 0 else 0,
                                 self.rest_minutes)
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
@@ -2741,16 +2843,15 @@ class ActionRobot:
                     existing_tab = action_tabs.prepared(user) if action_tabs else None
                     if existing_tab is None and not live_snapshot:
                         while not self.stop_event.is_set():
-                            delay = max(wait_required(visits, self.max_count,
-                                                      self.window_minutes,
-                                                      self.min_delay_seconds),
-                                        batch_wait(rests,
-                                                   self.max_count if self.rest_minutes > 0 else 0,
-                                                   self.rest_minutes))
+                            delay, wait_reason = action_wait_detail(
+                                visits, rests, batch_size=self.batch_size,
+                                rest_minutes=self.rest_minutes,
+                                gap_seconds=self.min_delay_seconds)
                             if delay <= 0: break
                             with self.lock:
                                 self.status, self.wait_until = "waiting", time.time() + delay
-                                self.message = "Scheduled cooldown: " + str(int(delay+0.999)) + " s"
+                                self.message = ("Scheduled wait: " + str(int(delay+0.999)) +
+                                                " s (" + wait_reason + ")")
                             self.stop_event.wait(min(delay, 2.0))
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
@@ -2861,7 +2962,7 @@ class ActionRobot:
                                 visits_file, visits, started_at=current_visit_started)
                             rests = finish_batch_visit(
                                 rests_file, rests,
-                                self.max_count if self.rest_minutes > 0 else 0,
+                                self.batch_size if self.rest_minutes > 0 else 0,
                                 self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
@@ -2991,6 +3092,7 @@ class ActionRobot:
             with self.lock:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
         finally:
+            _OWNER_PROFILE_PROBE.bound_session = None
             _OWNER_PROFILE_PROBE.report = None
             with self.lock:
                 self.current, self.wait_until, self.current_wait = "", 0, None
