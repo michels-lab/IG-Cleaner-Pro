@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 324,
-  "classified_files_total": 320,
+  "tracked_files_total": 325,
+  "classified_files_total": 321,
   "docs_content_inspected": 67,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,14 +18,14 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 78,
+    "test": 79,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "b663c38ba300f27e7f23002934318a172ec4dae83fdebaf244a9949c0b648aeb",
+  "inventory_fingerprint": "d10f76a94d2354447f78e8b0b316b5fbf797c53d253a40439620696254e6e821",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -124,7 +124,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "015f8fbe7c558ef67c18b6d1aa6bf7d0fb27f773"
+      "blob": "006c0faef01b66366a8f4a002ab127ec9413bb6b"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -145,7 +145,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0f05dee2784ead835806fbc6a7861b07cfa84590"
+      "blob": "f4d079bf0742826b2cb104128e9da122cda558d2"
     },
     {
       "path": ".gitignore",
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "6c39ea31be1a316f1b8ec5bbe558c51fecb3cf73"
+      "blob": "9b0b19b4ce8ccbce4172fd73302b1a3991b648ac"
     },
     {
       "path": "README.md",
@@ -852,7 +852,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "21fc37b4966624034524e4218fc19db0a5dfb9d9"
+      "blob": "ac64be953fe7924d8bdf7350eab9d3885ebf4aa7"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1783,7 +1783,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1bae4394d53dd66992480e19e574ee6f83d500ed"
+      "blob": "9e6ff932cf9b768b2a7b6901793156d05ea56514"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -1805,6 +1805,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "21e0972dee34293ad57b71722d0e6f01b76a4fce"
+    },
+    {
+      "path": "tests/test_action_tab_flow.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c08113d51a86150a1bb376284d7c48f53af81c99"
     },
     {
       "path": "tests/test_action_tab_waves.py",
@@ -2126,7 +2133,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a10784f7e3c0d6999486ca72c9efa2ff278a01dd"
+      "blob": "12d920670409e46b2047dbea011693e4f5ee4d87"
     },
     {
       "path": "tools/profile_counts_audit.py",
