@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 321,
-  "classified_files_total": 317,
+  "tracked_files_total": 322,
+  "classified_files_total": 318,
   "docs_content_inspected": 66,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,14 +18,14 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 76,
+    "test": 77,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "c0705da6b7ebab3db6768677950a897cc508b7583ed3b49d0020c260a4a05c17",
+  "inventory_fingerprint": "2b835a1cee2749a6192d68af14dfef6031da1763a9b9bb504a004a504c457e03",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -124,7 +124,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "d40411d014ebc2e8b31010b4b6003e1daf1041df"
+      "blob": "015f8fbe7c558ef67c18b6d1aa6bf7d0fb27f773"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -243,7 +243,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "38489f7589bc17e9ead34e9be1dc0079addc5e5e"
+      "blob": "aae9371f5e07afa4e06f2ec1a575bb2c7fe82cdd"
     },
     {
       "path": "README.md",
@@ -1800,6 +1800,13 @@
       "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
     },
     {
+      "path": "tests/test_action_visit_pacing.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "13dd30c99d3727191ae3563a280bda48c194fe50"
+    },
+    {
       "path": "tests/test_action_worker_journal_gate.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2105,7 +2112,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "21f0bc11f80324624658198c7155c67b1bfad06c"
+      "blob": "a10784f7e3c0d6999486ca72c9efa2ff278a01dd"
     },
     {
       "path": "tools/profile_counts_audit.py",
