@@ -1,3 +1,10 @@
+## 2026-10-26 — GRANADA FINAL v120.65 published and verified
+
+- Official stable [v120.65](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65) published `2026-10-26T23:09:53Z`, 12 SHA-256-verified assets, normal not prerelease. [Governed publisher 40416690593](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40416690593) completed SUCCESS on exact source `8570e12836afd3fde966eb8c590c7604aaf224a8` after 10/10 exact-head PR #250 checks.
+- Merged [#249](https://github.com/michels-lab/IG-Cleaner-Pro/pull/249) fixes NEW batch repeated visits by preserving a separate durable `visited_usernames` ledger before Chrome navigation and enforcing target exclusions both in the UI and Windows worker; existing click journal/protections/cohorts remain intact. An explicitly continued same saved cohort can retry only proven no-click; no uncertain click replays.
+- [Official release receipt](docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md) records each of twelve digest-bearing assets and independent Windows/Android signed/rendered/install checks. Release request consumed; current stable **v120.65**, next reserved **v120.66 not authorized**. Do not overwrite published tags or touch browser data.
+- Real owner reported v120.64 Unfollow success; v120.65 no-repeat and Cancel Pending physical owner acceptance remain to verify separately.
+
 ## 2026-10-26 — GRANADA v120.65 governed FINAL candidate (new-batch visited-target exclusion)
 
 - [#249](https://github.com/michels-lab/IG-Cleaner-Pro/pull/249) **merged** into main at `ef60e6710fa2e0bf0c390a7c26edd819c8355ef3`, passing **9/9 exact-head checks**, including Windows installed Setup and real Chromium UI, Android public/Developer, Supabase RLS and offline target-history regression. Real owner reports Instagram Unfollow functions in published v120.64 but NEW batches reopened previously visited profiles. New durable visit ledger, visited-vs-clicked distinction, fail-closed start admission and UI filter are source-complete. No owner Chrome credentials or local accounts were touched.
