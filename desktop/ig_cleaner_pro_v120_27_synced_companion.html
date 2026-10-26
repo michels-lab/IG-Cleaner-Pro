@@ -15050,6 +15050,17 @@ function refreshScope(){
  if(identity!==active){identity=active;actionPage=1;skips={unfollow:new Set(),cancel:new Set(),audit:new Set()}}
 }
 function actionAttemptedKey(task){return "igc_actions_attempted_v1__"+scope()+"__"+task}
+function actionVisitedKey(task){return "igc_actions_visited_v1__"+scope()+"__"+task}
+function priorVisits(task){
+ let saved=[];
+ try{saved=JSON.parse(localStorage.getItem(actionVisitedKey(task))||"[]")}catch{}
+ const visited=new Set(Array.isArray(saved)?saved.map(norm).filter(Boolean):[]);
+ const current=actionOwner();
+ if(actionState?.task===task&&actionState.owner===current.owner&&actionState.account===current.account)
+  for(const user of actionState.visited_usernames||[])if(norm(user))visited.add(norm(user));
+ for(const user of priorAttempts(task))visited.add(user);
+ return visited;
+}
 function priorAttempts(task){
  let saved=[];
  try{saved=JSON.parse(localStorage.getItem(actionAttemptedKey(task))||"[]")}catch{}
@@ -15270,21 +15281,21 @@ function ownInstagramHandle(){
  }
  return handle;
 }
-function selectedActionTargets(verifiedAttempts=null){
+function selectedActionTargets(verifiedVisits=null){
  refreshScope();
  const limit=Number(document.getElementById("igcAutoBatch")?.value||30);
  if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error("Choose 1–1,000 profiles per batch.");
- // An explicit history read is mandatory before the robot starts. Its
- // authoritative journal overrides older browser-cache or idle poll values,
- // including v120.48 issues proven to have made zero relationship clicks.
+ // The Windows worker tracks ALL previously opened targets, not only clicked
+ // actions. New cohorts must never re-open old no-click/review rows by default.
+ // Continue saved batch and read-only recheck remain separate owner choices.
  // The alternative never clicks any relationship control; owner-approved
  // live-list scans may recheck old DOM-audit failures without replay risk.
  const repeatReadOnly=mode==="audit"&&
    document.getElementById("igcAutoAuditSource")?.value==="live_lists";
- const attempted=repeatReadOnly?new Set():
-   verifiedAttempts===null?priorAttempts(mode):verifiedAttempts;
+ const visited=repeatReadOnly?new Set():
+   verifiedVisits===null?priorVisits(mode):verifiedVisits;
  const eligible=inputs().filter(r=>!isProtected(r.kind,r.username)&&
-     !skips[r.kind].has(r.username)&&!attempted.has(r.username))
+     !skips[r.kind].has(r.username)&&!visited.has(r.username))
      .map(r=>r.username);
  const allowed=new Set(eligible);
  const carryover=Array.isArray(window.igcAutoReusable)?window.igcAutoReusable:[];
@@ -15324,11 +15335,15 @@ async function refreshActionHistoryForStart(task){
  const result=await requestAction("history",{...owner,task});
  if(before!==scope()||mode!==task)throw Error("Account or task changed during batch preparation. Please try again.");
  if(result.owner!==owner.owner||result.account!==owner.account||
-    result.task!==task||!Array.isArray(result.attempted_usernames))
-  throw Error("Robot history did not match the selected Instagram account. No actions started.");
+    result.task!==task||!Array.isArray(result.attempted_usernames)||
+    !Array.isArray(result.visited_usernames))
+  throw Error("Robot visited history did not match this Instagram account. No actions started.");
  const names=result.attempted_usernames.map(norm);
- if(names.some(u=>!u))throw Error("Robot history contains an invalid username. No actions started.");
+ const visited=result.visited_usernames.map(norm);
+ if(names.some(u=>!u)||visited.some(u=>!u)||names.some(u=>!visited.includes(u)))
+  throw Error("Robot visited history is incomplete or invalid. No actions started.");
  localStorage.setItem(actionAttemptedKey(task),JSON.stringify([...new Set(names)]));
+ localStorage.setItem(actionVisitedKey(task),JSON.stringify([...new Set(visited)]));
  if(Array.isArray(result.history_rows))igcAutoHistoryCache.set(scope()+"__"+task,result.history_rows);
  window.igcAutoReusable=Array.isArray(result.reusable_usernames)?
    result.reusable_usernames.map(norm).filter(Boolean):[];
@@ -15401,7 +15416,7 @@ window.igcAutoStart=async function(){
   }else{
    // Fetch authoritative durable history before ever selecting new targets.
    const verifiedHistory=await refreshActionHistoryForStart(mode);
-   const targets=selectedActionTargets(new Set(verifiedHistory.attempted_usernames.map(norm)));
+   const targets=selectedActionTargets(new Set(verifiedHistory.visited_usernames.map(norm)));
    data=actionConfig(mode,targets);
    const operation=mode==="cancel"?"CANCEL SENT REQUESTS":mode==="audit"?"READ-ONLY FOLLOWBACK AUDIT":"UNFOLLOW";
    const names=targets.slice(0,15).map(u=>"@"+u).join(", ");
@@ -15503,6 +15518,9 @@ window.igcAutoPoll=async function(){
    // state.rows (which covers only the latest batch).
    localStorage.setItem(actionAttemptedKey(state.task),
      JSON.stringify(state.attempted_usernames.map(norm).filter(Boolean)));
+   if(Array.isArray(state.visited_usernames))
+    localStorage.setItem(actionVisitedKey(state.task),
+      JSON.stringify(state.visited_usernames.map(norm).filter(Boolean)));
   }
   if(state.owner&&(state.owner!==ctx.owner||state.account!==ctx.account)){
    // Never show a previous Instagram workspace's pending batch after switch.
@@ -15779,7 +15797,7 @@ window.igcAutoRender=function(){
  igcAutoCurrentJob();
  const attempted=mode==="protected"||
   (mode==="audit"&&document.getElementById("igcAutoAuditSource")?.value==="live_lists")?
-  new Set():priorAttempts(mode);
+  new Set():priorVisits(mode);
  const protectedCount=all.filter(r=>isProtected(r.kind,r.username)).length;
  const skippedCount=all.filter(r=>skips[r.kind].has(r.username)&&!isProtected(r.kind,r.username)).length;
  const attemptedCount=all.filter(r=>attempted.has(r.username)).length;
@@ -15841,7 +15859,7 @@ window.igcAutoRender=function(){
      latest.audit_relation==="not_following"?"✓ Not following you (verified)":
      latest.status==="ok"?"✓ Action confirmed by saved verification":
      ["review","error","blocked"].includes(latest.status)?"⚠ Review saved action · "+String(latest.message||"Inspect journal").slice(0,100):
-     attempted.has(item.username)?"Previous attempt · outcome needs inspection":
+     attempted.has(item.username)?"Previously opened · excluded from new automatic batches":
      latest.status&&latest.status!=="pending"?(latest.status+": "+(latest.message||"")):"Not reviewed";
   const protect=document.createElement("button");protect.className="btn";protect.type="button";
   protect.textContent=protectedNow?"Remove protection":"★ Protect / Favorite";
