@@ -25,7 +25,7 @@
   },
   "finding_counts": {},
   "finding_total": 0,
-  "inventory_fingerprint": "88dbdaa90dba2b24659414c79fc36c2a871e42d1a31475835468a44388f158f4",
+  "inventory_fingerprint": "b663c38ba300f27e7f23002934318a172ec4dae83fdebaf244a9949c0b648aeb",
   "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "files": [
     {
@@ -145,7 +145,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "4bbde64cbc60dd33f7da86b1962838debc8ef59f"
+      "blob": "0f05dee2784ead835806fbc6a7861b07cfa84590"
     },
     {
       "path": ".gitignore",
@@ -215,7 +215,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "ceff91ce32878d502a07a4326836a651f8ab616e"
+      "blob": "584dae5d27920d04c461df8602533fb1167c0ee0"
     },
     {
       "path": "AGENTS.md",
@@ -243,28 +243,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "5c81bbd62ab655c4ac45a2ac819b0278911514b0"
+      "blob": "6c39ea31be1a316f1b8ec5bbe558c51fecb3cf73"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "2562dda7f9e76dd287e47735d1a659c34980585d"
+      "blob": "799cb755785e00713e58a9558c6991ade7e5a08f"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "8ab0dfb05a4a6ffcd23f2721a5d747e94a5510ba"
+      "blob": "bfd5bfca75f2417593207a56d7b25dd756f3873b"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "8507a626884bef2baae3ca392849256e78cd1a97"
+      "blob": "8f881a6248f5ff8959f443af05dbceff1952babb"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -852,7 +852,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "0529e7b33004deb43d0f5cde2af320251d52fab1"
+      "blob": "21fc37b4966624034524e4218fc19db0a5dfb9d9"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -880,7 +880,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a9ad798cacfff8fb1befd3c1103bed0fc7378610"
+      "blob": "37784f1bfe8ba678177a64e38742dc110174203b"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1349,21 +1349,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "5bd270f852b0cd03263dba6836a17fd999797003"
+      "blob": "d3467cd61b93aee76e5ea679fcb3632f7b6d2427"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "7241eed4f70abe4c50d5ed5864512629abfdeb60"
+      "blob": "cb7a61eb4beb5547c3d499178ad933985a28c3e1"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "7d7f736a32e0c62617fad83eb54a637941e4c2a0"
+      "blob": "a6c6086feb466855725995a384da0851cfde2d31"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
