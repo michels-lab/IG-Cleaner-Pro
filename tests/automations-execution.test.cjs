@@ -34,7 +34,7 @@ const mockFetch=async(url,options)=>{
  calls.push({type,data,url});
  assert.equal(options.headers['X-IGC-Bridge-Token'],'0123456789abcdefghijabcdefgh');
  if(type==='history')return {ok:true,json:async()=>({
-   owner:context.owner,account:context.active,task:data.task,attempted_usernames:[]
+   owner:context.owner,account:context.active,task:data.task,attempted_usernames:[],visited_usernames:[]
  })};
  if(type==='review-batch')return {ok:true,json:async()=>({
     owner:context.owner,account:context.active,task:data.task,batch:batchFixture
