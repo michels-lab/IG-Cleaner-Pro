@@ -1,3 +1,10 @@
+## 2026-10-26 — GRANADA: prevent already visited profiles in NEW action batches
+
+- **Owner-observed:** Windows InstaCleaner v120.64 now performs actual Unfollow, but a fresh batch reopens profiles from earlier review. Confirmed source cause: `attempted_usernames` intentionally excludes safe no-click rows and the new-batch UI/worker reused those rows from stale imported Following/Pending lists.
+- **Code:** new `visited_usernames` response = every owner/account/task journal entry plus write-ahead reserved target navigation. Record each target before opening Chrome URL, independently from any relationship-changing click. Fresh batches exclude ALL visited names and the backend refuses stale direct calls; exact saved cohort Continue and owner-requested read-only recheck remain separate. Invalid evidence blocks, never resets. Protect prior batches, journal, click WAL, account separation and owner data.
+- **Regressions:** `tests/test_action_batch_history.py` and `tests/automations-next-batch.test.cjs`; full explanation [here](docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md).
+- **Status:** isolated source branch; requires exact-head CI and new official FINAL stable installer before owner acceptance. Published v120.64 is unchanged. No real Instagram clicks were initiated from this development environment.
+
 ## 2026-10-26 — GRANADA v120.64 FINAL packaging: sequential Chrome target navigation
 
 - **Published stable:** v120.63, exact tagged source `cb47df2eeda2f158df408e7a57dbda84600b622d`; successful publisher [40394937018](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40394937018) and 12 assets. Release receipt reconciled by [#246](https://github.com/michels-lab/IG-Cleaner-Pro/pull/246).
