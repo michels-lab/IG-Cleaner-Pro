@@ -319,6 +319,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             robot.handle = "owner.name"
             robot.task = "unfollow"
             robot.targets = [f"test.{n}" for n in range(12)]
+            robot.tab_flow = "ten_tabs"  # legacy mode remains explicit
             robot.rest_minutes = 0
             robot.min_delay_seconds = 0
             seen = []
@@ -350,6 +351,83 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertEqual(
                 seen[0], ["https://www.instagram.com/test." + str(n) + "/"
                           for n in range(10)])
+            self.assertEqual(robot._journal()["test.0"]["status"], "review")
+            self.assertNotIn("test.1", robot._journal())
+            self.assertTrue(all(page.closed for page in browser.pages))
+
+    def test_real_runner_sequential_opens_only_current_before_first_action(self):
+        """Sequential: an unprocessed future target must never be opened."""
+        import types
+        from unittest.mock import MagicMock
+
+        class Tab:
+            def __init__(self):
+                self.url = "about:blank"
+                self.visited = []
+                self.closed = False
+            def goto(self, url, **kwargs):
+                self.url = url
+                self.visited.append(url)
+            def bring_to_front(self):
+                self.was_focused = True
+            def locator(self, *_):
+                return types.SimpleNamespace(count=lambda: 0)
+            def is_closed(self):
+                return self.closed
+            def close(self):
+                self.closed = True
+
+        class Browser:
+            def __init__(self):
+                self.pages = [Tab()]
+            def new_page(self):
+                page = Tab()
+                self.pages.append(page)
+                return page
+            def close(self):
+                for p in self.pages:
+                    p.close()
+
+        with TemporaryDirectory() as temporary:
+            browser = Browser()
+            browser.pages[0].url = "https://www.instagram.com/"
+            robot = self._action(Path(temporary))
+            robot.owner = "owner1"
+            robot.account = "ig_account_1"
+            robot.handle = "owner.name"
+            robot.task = "unfollow"
+            robot.targets = [f"test.{n}" for n in range(12)]
+            robot.rest_minutes = 0
+            robot.min_delay_seconds = 0
+            seen = []
+            def one_uncertain_click(*args, **kwargs):
+                # Future targets must not open before the first action is processed.
+                seen.append([p.url for p in browser.pages[1:]])
+                robot.stop_event.set()
+                return "review", "Final state is ambiguous; no click can be replayed."
+            fake_playwright = types.SimpleNamespace(
+                chromium=types.SimpleNamespace(
+                    launch_persistent_context=lambda **kwargs: browser))
+            fake_context = MagicMock()
+            fake_context.__enter__.return_value = fake_playwright
+            with patch.dict(sys.modules, {
+                    "playwright": types.ModuleType("playwright"),
+                    "playwright.sync_api": types.SimpleNamespace(
+                        sync_playwright=lambda: fake_context)}), \
+                 patch("profile_actions.preserve_instagram_auth_page", return_value=True), \
+                 patch("profile_actions.challenge_detected", return_value=False), \
+                 patch("profile_actions.signed_in_handle", return_value="owner.name"), \
+                 patch("profile_actions.wait_required", return_value=0), \
+                 patch("profile_actions.batch_wait", return_value=0), \
+                 patch("profile_actions.perform_visible_action", side_effect=one_uncertain_click):
+                robot._run()
+            self.assertEqual(len(seen), 1)
+            self.assertTrue(browser.pages[1].was_focused,
+                            "The first Instagram target tab must receive focus before its action")
+            self.assertEqual(len(seen[0]), 1)
+            self.assertEqual(
+                seen[0], ["https://www.instagram.com/test." + str(n) + "/"
+                          for n in range(1)])
             self.assertEqual(robot._journal()["test.0"]["status"], "review")
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
@@ -484,6 +562,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             robot.owner, robot.account = "owner1", "ig_account_1"
             robot.handle, robot.task = "owner.name", "unfollow"
             robot.targets = ["wave." + str(i) for i in range(40)]
+            robot.tab_flow = "ten_tabs"  # four complete explicit legacy waves
             robot.rest_minutes, robot.min_delay_seconds = 0, 0
             observations = []
             def real_verified_action(page, username, *_args, **_kwargs):
