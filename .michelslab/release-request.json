@@ -1,12 +1,12 @@
 {
   "version": "120.64",
   "tag": "v120.64",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases after exact-source installed Windows, production-signed Android public/Developer co-install, visual, SHA-256 and update-feed gates pass. No RC/beta.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.63",
   "owner_acceptance_note": "GRANADA v120.64: fixes owner-reported Chrome target bouncing A -> B -> A by processing one profile at a time (sequential default) while retaining explicit legacy Prepare 10 tabs opt-in per account/task. PR #245 merged source 26f1773efc563f585aa2b0c93d5be014237e54f4 after 10 exact-head installed Windows/Chromium/Android/visual/RLS checks. Preserves v120.63 signed-in owner-proof reuse and independently explained action batch pacing, original saved ten/forty cohorts, protected profiles, action WAL, Cancel, confirmation dialogs and histories. Publication is ONLY FINAL stable after exact-source installed public/Developer Windows, production signed Android public/Developer co-install, rendered Home/About, checksum and updater/feed gates. Actual owner-account Instagram Unfollow/Cancel remains UNVERIFIED (#164/#172); no browser-account actions are claimed or attempted during CI.",
   "requested_at": "2026-10-26",
@@ -20,5 +20,11 @@
     "commit": "cb47df2eeda2f158df408e7a57dbda84600b622d",
     "published_at": "2026-10-26T20:32:03Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.63"
-  }
+  },
+  "published_run": 40404587656,
+  "published_commit": "593f9d4d0598ea6056bca2247c99e899970ffcb1",
+  "published_at": "2026-10-26T21:39:35Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.64",
+  "publication_verified_assets": 12,
+  "publication_verification": "Governed FINAL publisher 40404587656 completed SUCCESS on exact tagged SHA 593f9d4, 12 assets, independently installed Windows public/Developer, production signed Android public/Developer co-install, Desktop/Android rendered Home/About, SHA-256 and official update feed. Actual owner Instagram Unfollow/Cancel Pending acceptance remains unverified."
 }
