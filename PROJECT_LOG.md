@@ -1,3 +1,10 @@
+## 2026-10-26 — GRANADA v120.64 FINAL packaging: sequential Chrome target navigation
+
+- **Published stable:** v120.63, exact tagged source `cb47df2eeda2f158df408e7a57dbda84600b622d`; successful publisher [40394937018](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40394937018) and 12 assets. Release receipt reconciled by [#246](https://github.com/michels-lab/IG-Cleaner-Pro/pull/246).
+- **Functional code merged:** [#245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245) passed ten exact-head jobs. Sequential Chrome target navigation is the default instead of the observed A → B → ... → A foreground backtrack. Original ten-tab opt-in retained per selected account and task; no-click, account protection, WAL no-replay, identity proof and timing histories stay intact.
+- **This pass:** candidate versions 120.64 for public/Developer Windows, signed Android, standalone Desktop and UI; create one-time guarded FINAL request. Manifest stable stays v120.63 and next reserved v120.64 until official release completes.
+- **Publication remains gated:** exact-source installed Windows public/Developer, Android signed public/Developer co-install, native and rendered UI, SHA-256 and update-feed checks. No RC or beta. Owner's real Instagram Unfollow/Cancel Pending success remains **UNVERIFIED** (#164/#172), with no user data or live relationship mutation in CI.
+
 ## 2026-10-26 — GRANADA: Chrome returns to past target tabs after preparing ten
 
 - **Owner's observed behavior:** robot visibly opens profile A, then B and other targets, then returns to an earlier profile, appearing to open it repeatedly. This is distinct from the already-fixed redundant **owner** `@realmichelduarte` verification and distinct from the necessary one-time **same-target** post-click read-only reload.

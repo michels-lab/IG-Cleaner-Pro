@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.63.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.64.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.63.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.64.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,7 +27,7 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.63.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.64.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
@@ -36,7 +36,7 @@
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     },
     "windowsRobot": {
-      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.63.exe",
+      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.64.exe",
       "artifactTemplate": "IG-Cleaner-Pro-Windows-Setup-v{version}.exe",
       "transport": "github-release",
       "runtime": "local-windows-chrome",
@@ -68,7 +68,7 @@
       "updateFeed": "https://api.github.com/repos/michels-lab/IG-Cleaner-Pro/releases/latest"
     },
     "androidDeveloper": {
-      "artifact": "IG-Cleaner-Pro-Android-Developer-v120.63.apk",
+      "artifact": "IG-Cleaner-Pro-Android-Developer-v120.64.apk",
       "artifactTemplate": "IG-Cleaner-Pro-Android-Developer-v{version}.apk",
       "packageId": "com.michelslab.igcleaner.developer",
       "signedWith": "same persistent production certificate as Android stable; separate package and data",
@@ -79,7 +79,7 @@
       "coexistence": "independent Android package ID and on-device storage"
     },
     "windowsDeveloper": {
-      "artifact": "IG-Cleaner-Pro-Windows-Developer-Setup-v120.63.exe",
+      "artifact": "IG-Cleaner-Pro-Windows-Developer-Setup-v120.64.exe",
       "artifactTemplate": "IG-Cleaner-Pro-Windows-Developer-Setup-v{version}.exe",
       "installerSource": "packaging/windows-installer/InstaCleanerProDeveloper.iss",
       "appId": "{A8B19C6D-6C31-45B4-92DF-4B4DB20CB7DA}",
