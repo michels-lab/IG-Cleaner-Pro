@@ -1,24 +1,24 @@
 {
-  "version": "120.64",
-  "tag": "v120.64",
+  "version": "120.65",
+  "tag": "v120.65",
   "authorized": true,
   "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases after exact-source installed Windows, production-signed Android public/Developer co-install, visual, SHA-256 and update-feed gates pass. No RC/beta.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
   "status": "requested",
-  "previous_stable_release": "v120.63",
-  "owner_acceptance_note": "GRANADA v120.64: fixes owner-reported Chrome target bouncing A -> B -> A by processing one profile at a time (sequential default) while retaining explicit legacy Prepare 10 tabs opt-in per account/task. PR #245 merged source 26f1773efc563f585aa2b0c93d5be014237e54f4 after 10 exact-head installed Windows/Chromium/Android/visual/RLS checks. Preserves v120.63 signed-in owner-proof reuse and independently explained action batch pacing, original saved ten/forty cohorts, protected profiles, action WAL, Cancel, confirmation dialogs and histories. Publication is ONLY FINAL stable after exact-source installed public/Developer Windows, production signed Android public/Developer co-install, rendered Home/About, checksum and updater/feed gates. Actual owner-account Instagram Unfollow/Cancel remains UNVERIFIED (#164/#172); no browser-account actions are claimed or attempted during CI.",
+  "previous_stable_release": "v120.64",
+  "owner_acceptance_note": "Owner confirmed Instagram Unfollow actually changes relationships in installed Windows v120.64, but NEW batches unnecessarily reopen previously inspected profiles. v120.65 fixes source #249: an owner/account/task-scoped durable visited profile ledger and write-ahead URL reservations, plus authoritative UI selection and independent backend new-cohort admission excludes ALL previously opened profiles, including no-click/review. Exact old batch Continue, protected profiles, action WAL, original histories, user-data persistence and separate read-only recheck remain. Per-profile and Cancel Pending physical acceptance still needs owner confirmation; source tests are not account mutation proof. Release only normal FINAL stable after installed Windows public+Developer, production signed Android public+Developer co-install, Desktop/Android rendered UI, SHA-256 + update feed. No RC or beta.",
   "requested_at": "2026-10-26",
-  "candidate_main_sha": "f6c25fea75c5f9cc98c3c3bb1d4e201b432f7da8",
+  "candidate_main_sha": "5b2dc5722926e224a80f2bad2df8f5a645c806ea",
   "integrated_source_merge_shas": [
-    "26f1773efc563f585aa2b0c93d5be014237e54f4"
+    "ef60e6710fa2e0bf0c390a7c26edd819c8355ef3"
   ],
   "previous_publication": {
-    "tag": "v120.63",
-    "run": 40394937018,
-    "commit": "cb47df2eeda2f158df408e7a57dbda84600b622d",
-    "published_at": "2026-10-26T20:32:03Z",
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.63"
+    "tag": "v120.64",
+    "run": 40404587656,
+    "commit": "593f9d4d0598ea6056bca2247c99e899970ffcb1",
+    "published_at": "2026-10-26T21:39:35Z",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.64"
   }
 }
