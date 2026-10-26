@@ -9,6 +9,7 @@ on:
       - 'tools/profile_counts_audit.py'
       - 'tests/test_profile_counts_audit.py'
       - 'tests/test_granada_pacing_integrity.py'
+      - 'tests/test_action_visit_pacing.py'
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
@@ -63,6 +64,7 @@ on:
       - 'tools/profile_counts_audit.py'
       - 'tests/test_profile_counts_audit.py'
       - 'tests/test_granada_pacing_integrity.py'
+      - 'tests/test_action_visit_pacing.py'
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
@@ -202,6 +204,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows re-audit history tests failed." }
           python -m unittest discover -s tests -p 'test_granada_pacing_integrity.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA Profile Counts pacing ledger tests failed." }
+          python -m unittest discover -s tests -p 'test_action_visit_pacing.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "GRANADA independent action hourly-vs-batch pacing regression failed." }
           python -m unittest discover -s tests -p 'test_granada_false_success_resume.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA false-success resume tests failed." }
           python -m unittest discover -s tests -p 'test_granada_csv_recovery.py' -v
