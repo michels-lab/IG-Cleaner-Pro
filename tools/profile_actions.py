@@ -720,29 +720,100 @@ def _stable_no_requested_state(page, username):
     return True
 
 
-def _verified_action_owner(page, expected_handle):
-    """Fail-closed session proof for collapsed Instagram sidebar layouts.
+# A positive signed-in owner proof can be used briefly for the SAME Chrome
+# context, but only while its authenticated ds_user_id cookie stays unchanged.
+# An unverified/absent cookie never authorizes reuse. Keep only in robot-thread
+# memory; never log, serialize, include in a snapshot or persist this value.
+OWNER_PROOF_REUSE_SECONDS = 180.0
 
-    On another user's profile, Instagram often hides the nav Profile href
-    even though the session is signed in. Inspect a separate, read-only tab in
-    the SAME persistent Chrome context. Require matching owner header AND an
-    Edit profile control; URL, target username, or a stored handle alone never
-    prove ownership. Keep the target page (and any menu) untouched.
+
+def _local_owner_session_id(context):
+    """Read only the numeric Instagram session identity in current Chrome."""
+    try:
+        cookies = context.cookies(["https://www.instagram.com/"])
+        if not isinstance(cookies, list):
+            return None
+        values = {item.get("value") for item in cookies
+                  if isinstance(item, dict) and item.get("name") == "ds_user_id"}
+        if (len(values) != 1 or
+                not all(isinstance(value, str) and
+                        re.fullmatch(r"[0-9]{1,24}", value) for value in values)):
+            return None
+        return next(iter(values))
+    except Exception:
+        return None
+
+
+def _verified_action_owner(page, expected_handle):
+    """Prove the signed-in owner without repeatedly reopening /owner/.
+
+    Prefer the target's *live* visible owner identity. If Instagram hides that
+    navigation, accept a recently proved owner profile ONLY while the same
+    persistent Chrome context retains the exact bound authenticated user ID.
+    Check this cookie afresh for EACH action and final-state verification; a
+    different/missing value, expired proof, challenged page, or visibly wrong
+    owner revokes reuse. Then re-open a read-only owner proof tab, fail closed
+    on any ambiguity and never carry the proof between Chrome jobs.
+
+    The selected username or profile URL alone never authenticates ownership.
     """
     if challenge_detected(page):
+        _OWNER_PROFILE_PROBE.bound_session = None
         return False
     passwords = page.locator('input[name="password"]')
     if any(passwords.nth(i).is_visible() for i in range(min(passwords.count(), 6))):
+        _OWNER_PROFILE_PROBE.bound_session = None
+        return False
+    current = urlparse(getattr(page, "url", ""))
+    if current.scheme != "https" or current.hostname not in (
+            "www.instagram.com", "instagram.com"):
+        _OWNER_PROFILE_PROBE.bound_session = None
         return False
     identified = signed_in_handle(page)
     if identified is not None:
-        return identified.casefold() == expected_handle.casefold()
+        if not _same_instagram_owner(identified, expected_handle):
+            _OWNER_PROFILE_PROBE.bound_session = None
+            return False
+        # A visible owner is a fresh proof in its own right; the fallback
+        # cache requires independent matching owner-profile evidence.
+        return True
+
+    context = page.context
+    session_id = _local_owner_session_id(context)
+    bound = getattr(_OWNER_PROFILE_PROBE, "bound_session", None)
+    if bound is not None:
+        if (session_id and bound["context"] is context
+                and _same_instagram_owner(bound["handle"], expected_handle)
+                and bound["session_id"] == session_id
+                and 0 <= time.monotonic() - bound["verified_at"] <
+                OWNER_PROOF_REUSE_SECONDS):
+            # Fresh browser-cookie evidence with previous own-profile + Edit
+            # profile proof, never a mere remembered username.
+            return True
+        _OWNER_PROFILE_PROBE.bound_session = None
+
     check = None
     try:
-        check = page.context.new_page()
-        return verify_selected_owner_profile(
+        check = context.new_page()
+        verified = verify_selected_owner_profile(
             check, expected_handle,
-            on_navigation=getattr(_OWNER_PROFILE_PROBE, "report", None)) == expected_handle
+            on_navigation=getattr(_OWNER_PROFILE_PROBE, "report", None))
+        if not _same_instagram_owner(verified, expected_handle):
+            return False
+        # Never succeed on a stale proof if the Chrome owner session switched
+        # WHILE Instagram loaded its own profile. Without a cookie, preserve
+        # the original live owner-profile proof but do not cache it.
+        session_after = _local_owner_session_id(context)
+        if session_id is not None and session_after != session_id:
+            return False
+        if session_id and session_after == session_id:
+            _OWNER_PROFILE_PROBE.bound_session = {
+                "context": context,
+                "handle": expected_handle,
+                "session_id": session_id,
+                "verified_at": time.monotonic(),
+            }
+        return True
     except Exception:
         return False
     finally:
@@ -751,6 +822,7 @@ def _verified_action_owner(page, expected_handle):
                 check.close()
             except Exception:
                 pass
+
 
 def _verify_final_state(page, expected_handle, username, *, checks=3):
     """Wait for exact target state with TWO owner proofs, not one per poll.
@@ -2501,6 +2573,7 @@ class ActionRobot:
 
     def _run(self):
         browser = None
+        _OWNER_PROFILE_PROBE.bound_session = None
         _OWNER_PROFILE_PROBE.report = self._record_owner_profile_visit
         try:
             from playwright.sync_api import sync_playwright
@@ -2991,6 +3064,7 @@ class ActionRobot:
             with self.lock:
                 self.status, self.message = "error", "Robot stopped: " + str(exc)[:220]
         finally:
+            _OWNER_PROFILE_PROBE.bound_session = None
             _OWNER_PROFILE_PROBE.report = None
             with self.lock:
                 self.current, self.wait_until, self.current_wait = "", 0, None
