@@ -86,7 +86,8 @@ const ctx={
       const data=JSON.parse(opts.body);
       return {ok:true,json:async()=>({
         owner:data.owner,account:data.account,task:data.task,
-        attempted_usernames:state.attempted_usernames
+        attempted_usernames:state.attempted_usernames,
+        visited_usernames:state.visited_usernames||state.attempted_usernames
       })};
     }
     if(op==="start"){const payload=JSON.parse(opts.body);post.push(payload);
@@ -108,6 +109,16 @@ vm.createContext(ctx);vm.runInContext(source,ctx,{timeout:1200});
   assert.equal(post.length,1);
   assert.deepEqual([...post[0].targets],pending.slice(60,90).map(x=>x.username),
     "Third batch must NOT restart from first 30 / second 30");
+
+  // Real user regression: a previously opened but NO-CLICK target must not
+  // appear again in the next newly authorized cohort.
+  state={...state,attempted_usernames:pending.slice(0,90).map(x=>x.username),
+    visited_usernames:pending.slice(0,91).map(x=>x.username)};
+  await ctx.igcAutoStart();
+  assert.deepEqual([...post.at(-1).targets],pending.slice(91,121).map(x=>x.username),
+    "Fresh cohort must exclude past inspected no-click profiles");
+  delete state.visited_usernames;
+
   ctx.igcAutoPageMove(1);
   assert.match(el("igcAutoPageStatus").textContent,/Page 2 \/ 2/);
   assert(el("igcAutoRows").children.length>0,"Import beyond first page must remain accessible");
