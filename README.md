@@ -18,7 +18,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Current published stable: v120.62. Next reserved version: v120.63, not published.**
 
-The next version is not authorized for publication. Earlier publication receipts remain historical: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
+The next reserved v120.63 is authorized **only for gated FINAL publication** after exact-source installed Windows, signed Android public/Developer co-install, visual, SHA-256 and release-feed checks pass; it is NOT the current published stable. It includes separately tested owner-proof reuse and independently explained visit pacing (PRs #241 and #242). No real-owner Instagram Unfollow/Cancel success is claimed. Earlier publication receipts remain historical: [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md) and [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md).
 
 ## Features
 

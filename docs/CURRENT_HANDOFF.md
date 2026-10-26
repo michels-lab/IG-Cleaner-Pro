@@ -1,3 +1,9 @@
+## 2026-10-26 — GRANADA: v120.63 FINAL candidate; owner-profile and false cooldown fixed
+
+- Source merges [#241](https://github.com/michels-lab/IG-Cleaner-Pro/pull/241) and [#242](https://github.com/michels-lab/IG-Cleaner-Pro/pull/242) both completed six exact-head checks and landed in `main`. Repeated owner profile fallback during every action-stage proof is replaced with short-lived, cookie-bound, same-Chrome positive identity proof that never bypasses visible owner mismatch/challenge or loses WAL/no-replay barriers.
+- The owner saw **2,670 s** before next tab despite `Batch size 20`, `Rest 1 min`, `Gap 8 s`. Root cause: the selected batch size was being used as a hidden 60-minute visit limit. Fix separates batch rest from explicit 120-visits/hour visit safety policy, preserves original visit/rest histories and identifies the active pause reason. Original 10/40 saved cohort, protection, review tabs, cancel and pending verification are unchanged.
+- Official stable stays **v120.62**, published receipt [here](GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md). Conditional **v120.63 FINAL** release request stages exact public/Developer Windows+Android version increments, UI badge and official source SHA gate. Publication remains blocked until all exact-source installed Windows, Android signed-key co-install/visual, SHA-256 and update feed checks pass. No RC/beta and **no real owner Instagram Unfollow/Cancel success yet verified**.
+
 ## 2026-10-24 — GRANADA v120.62 FINAL officially published and reconciled
 
 - [Official v120.62 FINAL stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), 12 assets, exact tagged commit `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`; [governed publisher 40121318686](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686) **SUCCESS**, including installed Windows public/Developer, production-signed Android public/Developer co-install, rendered UI, SHA-256 bundle and official GitHub feed.

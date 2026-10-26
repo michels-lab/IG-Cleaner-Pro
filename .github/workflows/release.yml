@@ -171,7 +171,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
           python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
-          if ($LASTEXITCODE -ne 0) { throw 'Existing write-ahead journal tests failed.' }
+          if ($LASTEXITCODE -ne 0) { throw 'Bounded owner profile navigation regression failed; refuse FINAL release.' }
+          python -m unittest discover -s tests -p 'test_action_owner_proof_reuse.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Owner session-bound proof reuse/changed-session tests failed; refuse FINAL release.' }
+          python -m unittest discover -s tests -p 'test_action_visit_pacing.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Independent hourly/batch/personal visit pacing tests failed; refuse FINAL release.' }
           python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Possible Instagram click could replay after shutdown; refuse publication.' }
           python -m unittest discover -s tests -p 'test_profile_counts_actions.py' -v
