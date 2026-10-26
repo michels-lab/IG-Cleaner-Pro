@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 325,
-  "classified_files_total": 321,
-  "docs_content_inspected": 67,
+  "tracked_files_total": 326,
+  "classified_files_total": 322,
+  "docs_content_inspected": 68,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 62,
+    "document": 63,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -23,10 +23,12 @@
     "web_ui": 7,
     "workflow": 12
   },
-  "finding_counts": {},
-  "finding_total": 0,
-  "inventory_fingerprint": "d10f76a94d2354447f78e8b0b316b5fbf797c53d253a40439620696254e6e821",
-  "evidence_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "finding_counts": {
+    "POTENTIAL_UNLOGGED_CHANGES": 1
+  },
+  "finding_total": 1,
+  "inventory_fingerprint": "fc792645ed4ee25937d2a818e915b648601630b4b3d7e27a05879ed6cdb3c618",
+  "evidence_fingerprint": "5fcfd8cc188ab26c30326f065ad3b7c7fdadc407fa97783e840199d6b9c25283",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -215,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "584dae5d27920d04c461df8602533fb1167c0ee0"
+      "blob": "778ee46788f873cb5dd4aa9ede1d16289325a6df"
     },
     {
       "path": "AGENTS.md",
@@ -250,14 +252,14 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "799cb755785e00713e58a9558c6991ade7e5a08f"
+      "blob": "228bce9ec278ebc1e910a0ca21a5a4b4fecdc7aa"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "bfd5bfca75f2417593207a56d7b25dd756f3873b"
+      "blob": "4f65a0c46f8eb2b2e017e02127b87110bd1a3a0c"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -1219,6 +1221,13 @@
       "blob": "a35745352a67d1e2375c7e0bf9f02f2a73f0f848"
     },
     {
+      "path": "docs/GRANADA_V12063_FINAL_RECEIPT_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "8291f0682c6ba73a795d44497cda60ca5b5954ef"
+    },
+    {
       "path": "docs/INFRASTRUCTURE_AUDIT.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1258,7 +1267,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "b886044938d4c4d12d843211bd2f7cc69aba5867"
+      "blob": "7562a8ee9bd4f12ce1c129508fcece3679ebc940"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1349,7 +1358,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d3467cd61b93aee76e5ea679fcb3632f7b6d2427"
+      "blob": "cb49669f32fa1746d76b76f37a3613e09ae00529"
     },
     {
       "path": "release/android-signing.json",
@@ -1363,7 +1372,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "a6c6086feb466855725995a384da0851cfde2d31"
+      "blob": "f0754064de6e2d7f34994b8ef9a66e448a3844c7"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2276,7 +2285,17 @@
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
     }
   ],
-  "findings": [],
+  "findings": [
+    {
+      "id": "d3f036355166b18d",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, release/distribution-manifest.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
+      "state": "REVIEW_REQUIRED"
+    }
+  ],
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
