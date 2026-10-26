@@ -4,6 +4,7 @@ const source=fs.readFileSync(path.join(__dirname,'../desktop/ig_cleaner_pro_v120
 const script=source.match(/<script id="igc-automations-plan">([\s\S]*?)<\/script>/);
 assert(script,'Action script not found');
 const store=new Map(),calls=[],texts=[],opened=[];
+let lastReviewDialog=null;
 let batchFixture=null, startFailure=null;
 const elements={};
 for(const id of ['igcAutoRows','igcAutoMetrics','igcAutoExecutionMetrics'])elements[id]={
@@ -17,9 +18,12 @@ elements.igcAutoProgress={value:0};elements.igcAutoPause={disabled:false};elemen
 elements.igcActionAuthFallback={style:{display:'none'}};
 elements.igcAutoBatchApproval={style:{display:'none'}};
 elements.igcAutoBatchApprovalDetails={textContent:''};
-for(const id of ['igcAutoApproveBatch','igcAutoRecheckBatch','igcAutoOpenBatchIssues'])elements[id]={disabled:false};
+for(const id of ['igcAutoApproveBatch','igcAutoRecheckBatch','igcAutoOpenBatchIssues','igcAutoReviewOnly','igcAutoRetryReviewed'])elements[id]={disabled:false};
 const document={hidden:false,getElementById:id=>elements[id]||null,
- createElement:tag=>({tag,children:[],textContent:'',appendChild(node){this.children.push(node)},
+ body:{append(node){if(node.tag==='dialog')lastReviewDialog=node}},
+ createElement:tag=>({tag,children:[],textContent:'',style:{},appendChild(node){this.children.push(node)},
+  append(...nodes){this.children.push(...nodes)},remove(){},close(){this.open=false},
+  showModal(){this.open=true},setAttribute(){},
   addEventListener(type,fn){if(type==='click')this.click=fn}})};
 const context={owner:'owner_A',active:'ig_A',accounts:[{account_key:'ig_A',username:'my.profile'}]};
 const p={
@@ -309,5 +313,52 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(cancellation.data.confirmation,'cancel-batch:old-cancel');
  assert(texts.some(t=>t.includes('WITHOUT marking any profile Reviewed')),
    'Cancellation requires informed owner consent; never silently mark all Reviewed');
- console.log('Automations execution, visible Windows start failure, exact admission proof and batch approval: PASS');
+ // GRANADA regression: a final target was not checked when Chrome closed.
+ // Review scans are read-only; ambiguous prior clicks cannot be repeated.
+ p.status='partial';p.running=false;p.task='unfollow';p.owner=context.owner;
+ p.account=context.active;p.total=1;p.message='Some profiles need review';
+ batchFixture={id:'recovery-batch',targets:['ok.user','uncertain.user','last.untouched'],approved_at:null,
+  action_results:{
+   'ok.user':{status:'ok',message:'Action confirmed'},
+   'uncertain.user':{status:'review',safe_no_click:false,message:'Click may have occurred'},
+   'last.untouched':{status:'pending',safe_no_click:false}},
+  recheck_results:{}};
+ ctx.window.igcAutoChoose('unfollow');
+ await ctx.window.igcAutoPoll();
+ assert.equal(elements.igcAutoReviewOnly.disabled,false);
+ const beforeReview=calls.filter(c=>c.type==='start').length;
+ await ctx.window.igcAutoInspectReviewProfiles();
+ const scan=calls.filter(c=>c.type==='recheck-batch').at(-1);
+ assert(scan&&scan.data.review_profiles_only===true);
+ assert.equal(scan.data.batch_id,'recovery-batch');
+ assert.equal(calls.filter(c=>c.type==='start').length,beforeReview,
+   'Review inspection may not start a relationship-changing job');
+ batchFixture.recheck_results={
+  'uncertain.user':{status:'still_following',observation_only:true,read_only:true,
+                    message:'Still Following - old click uncertain'},
+  'last.untouched':{status:'still_following',observation_only:true,read_only:true,
+                    message:'Still Following - no earlier click'}};
+ await ctx.window.igcAutoPoll();
+ ctx.window.igcAutoShowBatchReview();
+ assert(lastReviewDialog&&lastReviewDialog.open);
+ const table=lastReviewDialog.children.find(x=>x.tag==='div'&&x.children.some(c=>c.tag==='table')).children[0];
+ const reviewRows=table.children.find(x=>x.tag==='tbody').children;
+ assert.equal(reviewRows[0].className,'igc-result-ok','Confirmed OK must be green');
+ assert.equal(reviewRows[1].className,'igc-result-review','Uncertain must be yellow Review');
+ assert.equal(reviewRows[2].className,'igc-result-review','Following observation must remain Review');
+ lastReviewDialog.close();
+ const prevStart=calls.filter(c=>c.type==='start').length;
+ await ctx.window.igcAutoRetryReviewed();
+ const retryRequest=calls.filter(c=>c.type==='start');
+ assert.equal(retryRequest.length,prevStart+1);
+ assert.deepEqual(retryRequest.at(-1).data.review_retry_usernames,['last.untouched'],
+   'Only proven no-click targets can retry');
+ assert.equal(retryRequest.at(-1).data.review_retry_confirmation,
+   'review-retry:recovery-batch:last.untouched');
+ assert.equal(retryRequest.at(-1).data.targets.length,3,
+   'Keep original saved cohort scope');
+ assert(texts.some(t=>t.includes('FIRST PASS IS READ-ONLY')));
+ assert(texts.some(t=>t.includes('Uncertain clicks are never retried')));
+ assert.match(source,/id="igc-batch-review-result-colors"/);
+ console.log('Automations execution + Review-only recovery, green/yellow results and safe retry: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
