@@ -1,3 +1,9 @@
+## 2026-10-26 — GRANADA v120.63 FINAL publication candidate from two owner P0 screenshots
+
+- Ready source: merged [#241](https://github.com/michels-lab/IG-Cleaner-Pro/pull/241) prevents redundant own-profile navigation; merged [#242](https://github.com/michels-lab/IG-Cleaner-Pro/pull/242) decouples hidden batch-size vs hourly visit rate and explains waits, with seven new non-network pacing regression cases and owner cookie-bound proof cases.
+- Candidate v120.63 is **authorized only for governed official FINAL release** after exact-source installed public/Developer Windows Setup, Android production-signed public+Developer co-install, Android/Desktop rendered visual, complete 12-asset SHA-256 manifest and updater verification. Do not call v120.63 published until GitHub release has a verified signed/tagged receipt.
+- Published stable still **v120.62** in updater and docs. Old v120.62 request was consumed; new v120.63 request's previous-publication receipt matches final v120.62 publisher #40121318686. No credentials/cookies or local user state migrated. Actual Instagram Unfollow/Cancel Pending remains **unverified** on owner's Chrome.
+
 ## 2026-10-24 — GRANADA v120.62 FINAL officially published and reconciled
 
 - [Official v120.62 FINAL stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.62), 12 assets, exact tagged commit `9ad3719aa49378ee38bfb035bc4587ec1af7e7d4`; [governed publisher 40121318686](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40121318686) **SUCCESS**, including installed Windows public/Developer, production-signed Android public/Developer co-install, rendered UI, SHA-256 bundle and official GitHub feed.
