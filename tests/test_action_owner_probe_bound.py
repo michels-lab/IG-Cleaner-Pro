@@ -16,6 +16,7 @@ import profile_actions as actions
 class OwnerProofBoundTests(unittest.TestCase):
     def page(self):
         page = Mock()
+        page.url = "https://www.instagram.com/target.user/"
         page.locator.return_value.count.return_value = 0
         page.locator.return_value.is_visible.return_value = False
         return page
