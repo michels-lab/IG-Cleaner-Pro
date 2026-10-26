@@ -1,3 +1,10 @@
+## 2026-10-26 — GRANADA v120.64 FINAL published and verified
+
+- [Official v120.64 stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.64) published at `2026-10-26T21:39:35Z`, regular release `draft=false, prerelease=false`, **12 official SHA-256-digest-bearing assets**; exact tagged commit `593f9d4d0598ea6056bca2247c99e899970ffcb1`. [Governed publisher 40404587656](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40404587656) finished **SUCCESS** in all 5 jobs including installed Windows Setup public+Developer, rendered Desktop/Android Home/About and signed Android public+Developer co-install.
+- [PR #247](https://github.com/michels-lab/IG-Cleaner-Pro/pull/247) staged v120.64 and merged after **10/10 exact-head checks** (including recovered browser visual check and HTML title contract). Functional [#245](https://github.com/michels-lab/IG-Cleaner-Pro/pull/245) already merged the fix for observed Chrome A → B → A tab bouncing: default sequential one target at a time, explicit optional legacy ten-tab staging, original owner-proof/cadence/protection/journals/batches intact.
+- [Permanent receipt](docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md) lists exact GitHub digest fingerprints for all 12 assets and distinguishes offline/installed proof from **UNVERIFIED real-owner Instagram Unfollow/Cancel Pending** (#164/#172). No user Chrome data, protected cohorts, relationship state or history changed by release reconciliation.
+- Consume one-time v120.64 request (`authorized=false,status=published`), correct stable manifest `v120.64`, reserve `v120.65` **NOT authorized/published** and update README, sync, migration and release notes. No second release or mutable existing tag; owner tests only published normal installers.
+
 ## 2026-10-26 — GRANADA v120.64 FINAL packaging: sequential Chrome target navigation
 
 - **Published stable:** v120.63, exact tagged source `cb47df2eeda2f158df408e7a57dbda84600b622d`; successful publisher [40394937018](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40394937018) and 12 assets. Release receipt reconciled by [#246](https://github.com/michels-lab/IG-Cleaner-Pro/pull/246).
