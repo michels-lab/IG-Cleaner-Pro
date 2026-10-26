@@ -132,6 +132,10 @@ class ActionTabPoolTests(unittest.TestCase):
             {"username": "possibly.clicked", "status": "error"}])
 
 
+def _read_json_for_test(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 class ActionBatchHistoryTests(unittest.TestCase):
     def setUp(self):
         # These history-only tests deliberately replace threading.Thread with
@@ -872,6 +876,68 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 robot.start(self._request(["fresh.81"]))
                 self.assertEqual(robot.targets,["fresh.81"])
 
+    def test_new_cohort_never_reopens_any_previous_journal_target(self):
+        """Previously visited is different from successfully unfollowed."""
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            robot = self._action(Path(temporary))
+            scope = self._request(["fresh.one"], task="unfollow")
+            source = robot._base_for(scope["owner"], scope["account"], scope["task"])
+            original = {
+                "confirmed.unfollow": {"status": "ok",
+                                       "message": "Action confirmed: Follow."},
+                "already.gone": {"status": "already_not_following"},
+                "no.click": {"status": "review", "issue": "profile_load_timeout",
+                             "message": "No relationship control found. Waiting timed out: Following. No action clicked."},
+                "possibly.clicked": {"status": "review",
+                                     "message": "Final verification uncertain."},
+            }
+            _atomic_json(source, original)
+            history = robot.attempted_history(scope)
+            self.assertEqual(history["visited_usernames"], sorted(original))
+            self.assertNotIn("no.click", history["attempted_usernames"],
+                             "Old attempted-only filter caused repeat visits")
+            fresh = self._action(Path(temporary))
+            self.assertEqual(fresh.attempted_history(scope)["visited_usernames"], sorted(original))
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                for username in original:
+                    with self.subTest(username=username), self.assertRaisesRegex(
+                            ValueError, "previously opened/reviewed"):
+                        fresh.start(self._request([username], task="unfollow"))
+                self.assertFalse(worker.called, "No Chrome job must start for old targets")
+                self.assertEqual(_read_json_for_test(source), original)
+                fresh.start(scope)
+                self.assertEqual(fresh.targets, ["fresh.one"])
+
+    def test_new_cohort_blocks_crashed_navigation_without_false_unfollow(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = self._action(root)
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.task, robot.active_batch_id = "unfollow", "previous-cohort"
+            robot._reserve_target_visit("opened.but.not.actioned")
+            path = robot._target_visits_file_for(robot.owner, robot.account, robot.task)
+            marks = _read_json_for_test(path)
+            self.assertEqual(marks["opened.but.not.actioned"]["state"],
+                "target_navigation_reserved_not_action_confirmed")
+            self.assertFalse(robot._base().exists(),
+                             "Target visit must never impersonate a relationship result")
+            scope = self._request(["opened.but.not.actioned"], task="unfollow")
+            history = self._action(root).attempted_history(scope)
+            self.assertEqual(history["visited_usernames"], ["opened.but.not.actioned"])
+            self.assertEqual(history["attempted_usernames"], [])
+            with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                self._action(root).start(scope)
+            self.assertFalse(robot._base().exists())
+            # Malformed visit evidence fails closed instead of losing exclusions.
+            path.write_text("{not JSON", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Corrupted robot activity journal"):
+                self._action(root).attempted_history(scope)
+            with self.assertRaisesRegex(ValueError, "Corrupted robot activity journal"):
+                self._action(root).start(scope)
+
     def test_no_click_failure_is_retryable_but_uncertain_click_is_not(self):
         with TemporaryDirectory() as temporary:
             robot=self._action(Path(temporary))
@@ -890,7 +956,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 b=robot.batch_review(self._request(["pending.old"]))["batch"]
                 robot.approve_batch({**self._request(["pending.old"]), "batch_id":b["id"],
                                      "confirmation":"reviewed:"+b["id"]})
-                robot.start(self._request(["pending.old"]))
+                # New cohorts exclude old inspected profiles even when no click.
+                # The original saved cohort can still continue its exact approved
+                # set or use explicit read-only recheck.
+                with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                    robot.start(self._request(["pending.old"]))
                 with self.assertRaisesRegex(ValueError,"unapproved batch exists"):
                     robot.start(self._request(["pending.clicked"]))
 
