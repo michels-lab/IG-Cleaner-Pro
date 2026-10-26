@@ -25,6 +25,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_owner_proof_reuse.py'
+      - 'tests/test_action_tab_flow.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -80,6 +81,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_owner_proof_reuse.py'
+      - 'tests/test_action_tab_flow.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
@@ -171,6 +173,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA full-wave robot regression failed." }
+          python -m unittest discover -s tests -p 'test_action_tab_flow.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Sequential target tab navigation / opt-in legacy ten-tab regression failed.' }
           python -m unittest discover -s tests -p 'test_historical_recheck.py' -v
           if ($LASTEXITCODE -ne 0) { throw "Historical no-click re-audit safety contract failed." }
           python -m unittest discover -s tests -p 'test_action_batch_history.py' -v
