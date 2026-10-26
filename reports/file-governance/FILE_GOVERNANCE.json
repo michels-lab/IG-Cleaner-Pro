@@ -27,8 +27,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "fc792645ed4ee25937d2a818e915b648601630b4b3d7e27a05879ed6cdb3c618",
-  "evidence_fingerprint": "5fcfd8cc188ab26c30326f065ad3b7c7fdadc407fa97783e840199d6b9c25283",
+  "inventory_fingerprint": "db286cf4084e7c4b95ef6cdbad1e7d284a7d35c8c30671a9a4ad31b06b57fbf4",
+  "evidence_fingerprint": "2f40079ecfa37e8f4b327d4b3e1658e5e0df4c46316f0c91012521edc18af822",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "778ee46788f873cb5dd4aa9ede1d16289325a6df"
+      "blob": "509232f36afe7881753749772a7be228691e65fe"
     },
     {
       "path": "AGENTS.md",
@@ -245,28 +245,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "9b0b19b4ce8ccbce4172fd73302b1a3991b648ac"
+      "blob": "056b99098d4578f4689909334d77fcd3083f318f"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "228bce9ec278ebc1e910a0ca21a5a4b4fecdc7aa"
+      "blob": "c736dd9a8dd39c937b5dc87940fd101a109b7a8d"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "4f65a0c46f8eb2b2e017e02127b87110bd1a3a0c"
+      "blob": "073bc4e51d5797bcfd911b49048106597151696f"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "8f881a6248f5ff8959f443af05dbceff1952babb"
+      "blob": "f80ed12e6227af63a92c85378cd5be63000ba1ea"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "ac64be953fe7924d8bdf7350eab9d3885ebf4aa7"
+      "blob": "b2c918bc4483c7130153c88a7b337ad6c57b286a"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "37784f1bfe8ba678177a64e38742dc110174203b"
+      "blob": "5ca91662519bbc43ab2988e975db3bc5407a5e28"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1358,21 +1358,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "cb49669f32fa1746d76b76f37a3613e09ae00529"
+      "blob": "db7a7c92c83b7bdd62815958a4f59fff9eccf2c9"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "cb7a61eb4beb5547c3d499178ad933985a28c3e1"
+      "blob": "36a1bb8c10f0760158729ba0bab26b727b9c2a5f"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f0754064de6e2d7f34994b8ef9a66e448a3844c7"
+      "blob": "11c3a042b38b2d3774272aa7ccaa09b724d8c7c8"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2287,11 +2287,11 @@
   ],
   "findings": [
     {
-      "id": "d3f036355166b18d",
+      "id": "c561afe41176ea51",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, release/distribution-manifest.json",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
