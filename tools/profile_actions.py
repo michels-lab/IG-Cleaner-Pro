@@ -1480,7 +1480,8 @@ def perform_visible_followback_audit(page, username, expected_handle):
 
 def recheck_action_readonly(page, username, task, expected_handle, previous,
                             *, on_wait=None, preloaded=False,
-                            allow_unacted_observation=False):
+                            allow_unacted_observation=False,
+                            distinguish_observation=False):
     """Verify the previous automatic action without any relationship-changing click."""
     if task == "audit":
         result, _relation, details = perform_visible_followback_audit(
@@ -1519,7 +1520,12 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         return "review", (
             "Read-only recheck: prior non-followed state could not be confirmed; no click.")
     result, details = _verify_final_state(page, expected_handle, username, checks=3)
-    if allow_unacted_observation:
+    if allow_unacted_observation and not distinguish_observation:
+        # Preserve the historical read-only audit's original result contract.
+        return result, ("Current read-only relationship observation: " +
+                        details.replace("Action confirmed:", "Current visible state:") +
+                        " No relationship-changing click was made by this scan.")
+    if allow_unacted_observation and distinguish_observation:
         # Observing a current relationship is NOT evidence that an earlier
         # Unfollow succeeded. A positive Following/Requested reading permits
         # a later, separately authorized action only for proven zero-click rows.
@@ -3063,7 +3069,8 @@ class ActionRobot:
                                 preloaded=bool(prepared_item and
                                                prepared_item.get("status") == "prefetched"),
                                 allow_unacted_observation=(self.history_recheck_mode or
-                                                            self.review_profiles_only))
+                                                            self.review_profiles_only),
+                                distinguish_observation=self.review_profiles_only)
                         elif self.task == "audit" and live_snapshot:
                             if user.casefold() not in live_following:
                                 result, relation = "review", "unverified"
