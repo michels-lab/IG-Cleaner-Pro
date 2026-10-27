@@ -20,7 +20,7 @@ def sample_png(viewport):
 
 
 class PrivateAndroidEvidenceTests(unittest.TestCase):
-    def test_all_eight_private_files_are_required_and_staged_atomically(self):
+    def test_all_four_distinct_private_surface_files_are_required_and_staged_atomically(self):
         requested = []
         def pretend(command, **kwargs):
             requested.append(command)
@@ -31,7 +31,7 @@ class PrivateAndroidEvidenceTests(unittest.TestCase):
         ):
             output = Path(root) / "artifacts" / "igc-ui-capture"
             files = collect("adb", "com.michelslab.igcleaner.beta", output)
-            self.assertEqual(len(files), 8)
+            self.assertEqual(len(files), 4)
             self.assertEqual([f.name for f in files], list(EXPECTED))
             self.assertEqual(set(p.name for p in output.iterdir()), set(EXPECTED))
             self.assertFalse(list(output.parent.glob(".android-evidence-*")))
@@ -45,7 +45,7 @@ class PrivateAndroidEvidenceTests(unittest.TestCase):
         calls = []
         def pretend(command, **kwargs):
             calls.append(command)
-            if len(calls) == 6:
+            if len(calls) == 3:
                 return SimpleNamespace(returncode=1, stdout=b"", stderr=b"Permission denied")
             return SimpleNamespace(returncode=0, stdout=sample_png(command[-1].rsplit("/", 1)[-1].split("-")[1]), stderr=b"")
         with tempfile.TemporaryDirectory() as root, patch(
