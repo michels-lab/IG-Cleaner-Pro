@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 337,
-  "classified_files_total": 333,
-  "docs_content_inspected": 77,
+  "tracked_files_total": 342,
+  "classified_files_total": 338,
+  "docs_content_inspected": 78,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 72,
+    "document": 73,
     "index": 5,
     "installer_metadata": 1,
-    "source": 42,
-    "test": 81,
+    "source": 43,
+    "test": 84,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "cd353c5548789ae34cb7428fba00b8ed689994c085d5830863f73303e7975681",
+  "inventory_fingerprint": "978adc42d84b2fb60020d85ef115eca3795cd3e99e1a34b19447f3764f2ce1c1",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -98,14 +98,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "1eb3fcc9ef85950ed962632f7b867037f7b61964"
+      "blob": "862ebad6cfa84f92495ca5c99c0c8c881621a8c3"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "75b30f475cfe162b77444e8cc6fa41c3dfc3684f"
+      "blob": "d875782f8fda46d9b419b6ffba4acff1fe3a665f"
     },
     {
       "path": ".github/workflows/file-governance-audit.yml",
@@ -119,14 +119,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "df3e40333449814c2008216dad8cac8f5deee5aa"
+      "blob": "23cfc691bd27a60687a5443caf95818a9ba787c7"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "006c0faef01b66366a8f4a002ab127ec9413bb6b"
+      "blob": "9282c92790a546693c93e040837a1adb808cca42"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "3d90cb2c30127e97eb774ae884387d3d2f7e8fdc"
+      "blob": "be833b317690f86c0923a8d97fce6e7e40442d05"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "5b978e8ddc376b179a8626582942914aa9a54304"
+      "blob": "125e0be5bdfa4efba14f6eb29aa96adc637b4475"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1205,6 +1205,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
+    },
+    {
+      "path": "docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "86f7485e04eee471938056f92cf34758f36eafca"
     },
     {
       "path": "docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
@@ -1760,6 +1767,13 @@
       "blob": "441d8fee0965d08c4387f558b7ef23ec4e2dc68f"
     },
     {
+      "path": "tests/live-relationships-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "47c79b9fb105c61cb126e00f7d22fce40b4e4ceb"
+    },
+    {
       "path": "tests/multi-instagram-contract.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2005,6 +2019,20 @@
       "blob": "53c064f6ef6f5ed2c4ae1bf91d56690715622ff9"
     },
     {
+      "path": "tests/test_live_relationship_bridge.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "541b5db689626dd2971a52f83d14dc80dd1cadd7"
+    },
+    {
+      "path": "tests/test_live_relationship_snapshot.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "47f087f34df82377705cc720b568d6a46fe1b8da"
+    },
+    {
       "path": "tests/test_master_visual_manifest.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2079,7 +2107,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d9af4abf4803a95c3895ce4e3d4b184847a7b802"
+      "blob": "28f34513b2a273cecb8d968887762278df63d26d"
     },
     {
       "path": "tests/test_release_agent_contract.py",
@@ -2198,7 +2226,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3f3e63abe4c794f2888302abd36b24c7b770af2f"
+      "blob": "5cd84346160809ff337a2e0209e642e041d98478"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -2215,11 +2243,18 @@
       "blob": "1416902645cbeed09e89c4039eaed2727db6e594"
     },
     {
+      "path": "tools/live_relationship_snapshot.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "092081d292afc5b35e1f75716b524b6fea329e7f"
+    },
+    {
       "path": "tools/profile_actions.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ebfd29bf7223ec6f3e097628c892003862562d1f"
+      "blob": "87b5f5b9ffd1b9b994f1d35ed28905ea2dbdf705"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2233,7 +2268,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "869ac89d64f005c5c7df61e292d2cd8b059922b7"
+      "blob": "5c3fb52095c760ca59138656a5689dd1dc0d3f5a"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2261,7 +2296,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "612ec485e4e49c1fc9c33d67b6ae63a85ab022a9"
+      "blob": "7db9adc65f4673ebb527240176e1b388545ebeae"
     },
     {
       "path": "tools/repository_file_auditor.py",
