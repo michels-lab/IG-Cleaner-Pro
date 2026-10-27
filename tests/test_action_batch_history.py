@@ -1605,5 +1605,74 @@ class InstagramUnavailableProfileTests(unittest.TestCase):
             self.assertEqual(result["unresolved_usernames"], ["uncertain.user"])
             self.assertIn("click_intent", robot._journal()["uncertain.user"])
 
+
+class GranadaReviewApprovalWALBoundaryTests(unittest.TestCase):
+    """Read-only positive state never retroactively certifies an uncertain click."""
+
+    def _exercise(self, task, observation):
+        from profile_actions import _atomic_json, MISSING_RELATIONSHIP_CONTROL
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = ActionRobot(Collector(root/"counts", root/"chrome"),
+                                root/"actions", root/"chrome")
+            owner, account = "owner1", "ig_account_1"
+            names = ["confirmed.done", "uncertain.wal", "legacy.uncertain",
+                     "safe.preclick", "untouched.scan", "unavailable.scan"]
+            original = {
+                "confirmed.done": {"status": "ok", "message": "Confirmed post-click"},
+                "uncertain.wal": {
+                    "status": "review", "message": "Possible click; final state unknown",
+                    "click_intent": {"phase": "relationship_control",
+                                     "outcome_recorded": True,
+                                     "outcome_status": "review"}},
+                "legacy.uncertain": {
+                    "status": "review", "message": "Older unverified action"},
+                "safe.preclick": {
+                    "status": "review", "issue": "profile_load_timeout",
+                    "message": MISSING_RELATIONSHIP_CONTROL
+                               + " Waiting timed out: Following. No action clicked."},
+            }
+            observations = {name: {"status": observation, "read_only": True,
+                                   "observation_only": True}
+                            for name in names if name != "confirmed.done"}
+            observations["unavailable.scan"]["status"] = "profile_unavailable"
+            batch_id = "wal-approval-" + task
+            _atomic_json(robot._base_for(owner, account, task), original)
+            _atomic_json(robot._review_batches_file_for(owner, account, task), [{
+                "id": batch_id, "targets": names, "approved_at": None,
+                "recheck_results": observations,
+            }])
+            request = {"owner": owner, "account": account, "task": task}
+            before = robot._journal() if robot.owner else original.copy()
+            visible = robot.batch_review(request)["batch"]["action_results"]
+            self.assertEqual(visible["uncertain.wal"]["status"], "review")
+            self.assertTrue(visible["uncertain.wal"]["possible_click"])
+            approved = robot.approve_batch({
+                **request, "batch_id": batch_id,
+                "confirmation": "reviewed:" + batch_id,
+            })
+            self.assertEqual(approved["approved_usernames"],
+                             ["confirmed.done", "safe.preclick", "untouched.scan"])
+            self.assertEqual(approved["unavailable_usernames"], ["unavailable.scan"])
+            self.assertEqual(approved["unresolved_usernames"],
+                             ["uncertain.wal", "legacy.uncertain"])
+            self.assertEqual(robot._journal() if robot.owner else
+                             __import__("profile_actions")._read_json(
+                                 robot._base_for(owner, account, task), {}), before)
+            saved = robot._review_batches(owner, account, task)[0]
+            self.assertEqual(saved["unresolved_usernames"],
+                             ["uncertain.wal", "legacy.uncertain"])
+            self.assertIn("click_intent", original["uncertain.wal"])
+
+    def test_unfollow_follow_back_after_unknown_click_stays_review(self):
+        self._exercise("unfollow", "already_not_following")
+
+    def test_cancel_no_requested_after_unknown_click_stays_review(self):
+        self._exercise("cancel", "already_not_requested")
+
+    def test_readonly_ok_after_unknown_click_is_not_clicked_success(self):
+        self._exercise("unfollow", "ok")
+
+
 if __name__=="__main__":
     unittest.main()
