@@ -3241,6 +3241,17 @@ class ActionRobot:
                                 self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
+                    # A potentially sent Unfollow is PENDING until a positive
+                    # exact-target Follow/Follow Back was verified. Unexpected
+                    # post-click errors are likewise pending, not green OK.
+                    # Preserve original diagnostic text and durable click WAL.
+                    if (not self.review_only and self.task == "unfollow"
+                            and result in ("review", "error")
+                            and isinstance(journal.get(user), dict)
+                            and "click_intent" in journal[user]):
+                        result = "review"
+                        if not details.startswith("Pending verification:"):
+                            details = "Pending verification: " + details
                     # Persist the result BEFORE closing any confirmed tab.
                     # A browser close failure must never erase a clicked action
                     # from the account-scoped no-replay journal.
