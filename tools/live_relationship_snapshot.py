@@ -15,7 +15,7 @@ import time
 from profile_actions import _find_verified_owner_tab, _atomic_json, _read_json, PUBLIC_ROBOT_LOGIN_WAIT_SECONDS
 from profile_counts_instagram import challenge_detected, preserve_instagram_auth_page
 from profile_counts_robot import valid_username
-from profile_lists_live import read_live_friendship_list
+from profile_lists_live import read_live_friendship_list, LiveListsRateLimited
 from robot_interlock import ActionLease
 
 
@@ -30,10 +30,38 @@ class LiveRelationships:
         self.status, self.message = "idle", "No live Instagram verification has started."
         self.pages_completed = 0
         self.members_loaded = {"followers": 0, "following": 0}
+        self._session_cooldown_until = 0.0
 
     def _file_for(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("instagram-live-relationships-"+digest+".json")
+
+    def _cooldown_file(self, owner, account):
+        digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
+        return self.data_dir / ("instagram-live-scan-cooldown-"+digest+".json")
+
+    def _cooldown_remaining(self, owner, account):
+        if not owner or not account:
+            return 0
+        stored = _read_json(self._cooldown_file(owner, account), {})
+        deadline = (stored.get("until") if isinstance(stored, dict) and
+                    stored.get("schema") == "igc-bulk-read-cooldown-v1" else 0)
+        try:
+            when = float(deadline)
+        except (TypeError, ValueError, OverflowError):
+            when = 0
+        if (owner, account) == (self.owner, self.account):
+            when = max(when, self._session_cooldown_until)
+        return max(0, int(when - time.time() + 0.999))
+
+    def _record_cooldown(self, seconds, reason):
+        deadline = time.time() + seconds
+        self._session_cooldown_until = max(self._session_cooldown_until, deadline)
+        _atomic_json(self._cooldown_file(self.owner, self.account), {
+            "schema": "igc-bulk-read-cooldown-v1",
+            "until": deadline, "reason": reason,
+            "no_automatic_retry": True,
+        })
 
     def _scope(self, data):
         owner = str(data.get("owner") or "").strip()
@@ -49,6 +77,12 @@ class LiveRelationships:
             raise ValueError("Select an exact Instagram @username to verify.")
         if data.get("read_only_consent") is not True or data.get("confirmation") != "live-relationships:"+handle:
             raise ValueError("Confirm live read-only verification of the exact Instagram owner.")
+        remaining = self._cooldown_remaining(owner, account)
+        if remaining:
+            raise ValueError(
+                "Protective Instagram list-scan cooldown: " +
+                str((remaining + 59)//60) + " minutes remaining. " +
+                "Do not start another scan; existing complete snapshots are preserved.")
         lease = ActionLease(self.data_dir).acquire()
         started = False
         try:
@@ -77,7 +111,9 @@ class LiveRelationships:
                 "expected_handle":self.handle,
                 "running":bool(self.worker and self.worker.is_alive()),
                 "pages_completed":self.pages_completed,
-                "members_loaded":dict(self.members_loaded),"read_only":True,
+                "members_loaded":dict(self.members_loaded),
+                "cooldown_seconds_remaining":self._cooldown_remaining(self.owner,self.account),
+                "read_only":True,
                 "relationship_action":False}
 
     def pause(self, data):
@@ -188,16 +224,30 @@ class LiveRelationships:
                                         str(count) + " unique accounts loaded, " +
                                         str(self.pages_completed) + " JSON pages. " +
                                         "Not opening individual profiles.")
+                def on_rest(kind, index, milliseconds):
+                    with self.lock:
+                        self.status = "running"
+                        self.message = ("Instagram protection: " + str(milliseconds // 1000) +
+                                        "s rest after " + str(index) + " bulk " + kind +
+                                        " pages; Stop scan works during the pause. " +
+                                        "No profile-by-profile visits.")
+
+                def interruptible_wait(milliseconds):
+                    if self.stop_event.wait(milliseconds / 1000):
+                        raise ValueError("Owner stopped read-only Instagram scan during safety rest.")
+
                 # Bulk JSON pages return member IDs. Compare IDs (not renamable
                 # usernames) and only materialize the four visible name lists
                 # after BOTH entire streams have verified their terminal cursor.
                 # A failure in Following never replaces prior complete snapshots.
                 followers=read_live_friendship_list(
                     page,self.handle,"followers",on_page=on_page,
-                    on_progress=on_progress,identities=True)
+                    on_progress=on_progress,identities=True,
+                    on_rest=on_rest,wait_ms=interruptible_wait)
                 following=read_live_friendship_list(
                     page,self.handle,"following",on_page=on_page,
-                    on_progress=on_progress,identities=True)
+                    on_progress=on_progress,identities=True,
+                    on_rest=on_rest,wait_ms=interruptible_wait)
                 if self.stop_event.is_set():
                     return
                 verified,mismatch=_find_verified_owner_tab(
@@ -217,11 +267,27 @@ class LiveRelationships:
                     "matching_method":"stable_account_id_bulk_cursor",
                     "expected_handle":self.handle,"captured_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),
                     "lists":lists,"read_only":True})
+                # Even successful scans are deliberately not repeatable in a
+                # burst. The cooldown is local to this app-login/IG-workspace.
+                self._record_cooldown(15*60, "complete")
                 with self.lock:
                     self.status="complete"
                     self.message=("Verified BOTH complete Instagram bulk lists by account ID: "+
                         str(len(followers))+" followers, "+str(len(following))+
                         " following. This is an on-demand snapshot, not a continuous feed.")
+        except LiveListsRateLimited as exc:
+            try:
+                self._record_cooldown(exc.wait_seconds, exc.code)
+            except Exception:
+                # Keep at least the in-memory gate, and never claim a safe
+                # persistent cooldown if local storage is unavailable.
+                pass
+            with self.lock:
+                self.status="blocked"
+                self.message=("Instagram requested a safety cooldown: " +
+                    str((exc.wait_seconds+59)//60) + " minutes minimum. " +
+                    "No automatic retries. " + str(exc)[:160] +
+                    " Previous saved snapshots are historical only.")
         except Exception as exc:
             with self.lock:
                 self.status="paused" if self.stop_event.is_set() else "blocked"
