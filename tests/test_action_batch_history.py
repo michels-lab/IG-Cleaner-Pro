@@ -1568,7 +1568,8 @@ class InstagramUnavailableProfileTests(unittest.TestCase):
                 "ok.user": {"status": "ok", "message": "Verified Unfollow"},
                 "unavailable.user": {"status": "profile_unavailable",
                                      "message": "Exact Instagram unavailable notice"},
-                "uncertain.user": {"status": "review", "message": "Click could have occurred",
+                "uncertain.user": {"status": "review", "issue": "interrupted_action_uncertain",
+                                   "message": "Click could have occurred",
                                    "click_intent": {"phase": "relationship_control",
                                                     "batch_id": "batch-unavailable",
                                                     "task": "unfollow"}}
