@@ -1574,6 +1574,10 @@ class InstagramUnavailableProfileTests(unittest.TestCase):
                                                     "batch_id": "batch-unavailable",
                                                     "task": "unfollow"}}
             })
+            visible = robot.batch_review({"owner": "owner", "account": "workspace",
+                                          "task": "unfollow"})
+            self.assertTrue(visible["batch"] is None,
+                            "Cannot fabricate an owner-approved cohort before it is saved")
             snap = robot.snapshot()
             self.assertEqual(snap["successful"], 1)
             self.assertEqual(snap["profile_unavailable"], 1)
@@ -1587,6 +1591,11 @@ class InstagramUnavailableProfileTests(unittest.TestCase):
                     "status": "profile_unavailable", "read_only": True,
                     "observation_only": True}}
             }])
+            scoped = robot.batch_review({"owner": "owner", "account": "workspace",
+                                         "task": "unfollow"})["batch"]["action_results"]
+            self.assertTrue(scoped["uncertain.user"]["possible_click"],
+                            "A prior WAL cannot be hidden by later page-unavailable observation")
+            self.assertFalse(scoped["unavailable.user"]["possible_click"])
             result = robot.approve_batch({
                 "owner": "owner", "account": "workspace", "task": "unfollow",
                 "batch_id": "batch-unavailable",
