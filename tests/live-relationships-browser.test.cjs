@@ -73,7 +73,7 @@ const {chromium}=require('playwright');
   assert.equal(await page.locator('#igcRelLiveStatus').count(),1);
   assert.equal(await page.locator('#igcAutoLiveStatus').count(),1,
     'Existing action-robot status must not be replaced by new snapshot');
-  await page.getByRole('button',{name:/Verificar seguidores y seguidos ahora/}).click();
+  await page.getByRole('button',{name:/Verify live Followers and Following/}).click();
   await page.waitForFunction(()=>document.querySelectorAll('#igcAutoLiveRows li').length===2,
     null,{timeout:10000}).catch(async error=>{
     const state=await page.evaluate(()=>({
@@ -86,8 +86,8 @@ const {chromium}=require('playwright');
   });
   const negatives=await page.locator('#igcAutoLiveRows li').allTextContents();
   assert.deepEqual(negatives,['@carol','@dan']);
-  assert.match(await page.locator('#igcAutoLiveTotals').innerText(),/No me siguen de vuelta: 2/);
-  assert.match(await page.locator('#igcRelLiveStatus').innerText(),/Instantánea verificada/);
+  assert.match(await page.locator('#igcAutoLiveTotals').innerText(),/Not following me back: 2/);
+  assert.match(await page.locator('#igcRelLiveStatus').innerText(),/Complete snapshot verified/);
   await page.locator('#igcAutoLiveKind').selectOption('followers');
   await page.waitForFunction(()=>document.querySelectorAll('#igcAutoLiveRows li').length===3,
     null,{timeout:10000});
