@@ -8,7 +8,9 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.67 — officially published stable FINAL on October 27, 2026 (UTC).** [Release and all 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) · exact tagged commit `2e0aaaafbe2444f6ea07eea3edce176cea1cd303`. Windows public/Developer installers and production-signed Android public/Developer APKs, standalone Desktop and ZIP are bundled.
+**v120.67 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and all 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) · exact tagged commit `2e0aaaafbe2444f6ea07eea3edce176cea1cd303`. Windows public/Developer installers and production-signed Android public/Developer APKs, standalone Desktop and ZIP are bundled.
+
+**Current published stable: v120.67. Next reserved version: v120.68, not published.**
 
 **v120.68 is the next governed FINAL candidate, not published.** [Source PR #261](https://github.com/michels-lab/IG-Cleaner-Pro/pull/261), merged `8ee2f044`, corrects false successful Unfollows: only verified Follow/Follow Back becomes OK; still Following or uncertain click is Pending/yellow Review with durable no-replay WAL, then the next eligible profile can continue under a verified safe owner session. Read-only Review cannot promote uncertain click to OK. Exact published user-account Instagram acceptance remains unverified; no automatic second click, CAPTCHA bypass or Google Play claim.
 
