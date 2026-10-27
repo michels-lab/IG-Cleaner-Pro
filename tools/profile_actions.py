@@ -2570,7 +2570,7 @@ class ActionRobot:
                             "Use the saved-cohort Continue or an explicit read-only recheck.")
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
                 if not resume and not (task == "audit" and audit_source == "live_lists"):
-                    if all((record := previous.get(user, {})).get("status") in ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
+                    if all((record := previous.get(user, {})).get("status") in SAVED_ACTION_STATES
                            and not _preclick_no_action(record)
                            for user in targets):
                         raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
@@ -2765,8 +2765,8 @@ class ActionRobot:
             attempt_history = list(before.get("attempt_history", []))
         else:
             if (before.get("status") in ("ok", "already_not_following",
-                                         "already_not_requested", "review", "error",
-                                         "blocked")
+                                         "already_not_requested", "profile_unavailable",
+                                         "review", "error", "blocked")
                     and not _preclick_no_action(before)):
                 raise ValueError("Existing possible click must be reviewed; no replay.")
             phases = []
