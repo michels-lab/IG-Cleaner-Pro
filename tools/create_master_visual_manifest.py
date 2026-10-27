@@ -42,10 +42,15 @@ def create_manifest(platform: str, source: Path, artifact: Path, source_sha: str
     base = source.resolve().parent
     prefix = Path("android/igc-ui-capture") if platform == "android" else Path()
     screenshots = []
+    # Android instrumentation now captures precisely Home+complete About per size.
+    # Reject stale old eight-frame manifests rather than ignoring obsolete frames.
+    if platform == "android" and len(document.get("screenshots", [])) != 4:
+        raise ValueError("Expected exactly four distinct real Android Home/About screenshots")
+    seen_digests = set()
     for viewport in ("compact", "wide"):
         for surface, section in (
             ("home", "initial"),
-            ("about", "author" if platform == "android" else "initial"),
+            ("about", "complete" if platform == "android" else "initial"),
         ):
             matches = [
                 shot for shot in document.get("screenshots", [])
@@ -63,10 +68,16 @@ def create_manifest(platform: str, source: Path, artifact: Path, source_sha: str
             file = (base / rel).resolve()
             if not file.is_relative_to(base) or not file.is_file():
                 raise ValueError(f"Real screenshot file missing or escapes evidence root: {name}")
-            if digest(file) != shot.get("sha256"):
+            actual_digest = digest(file)
+            if actual_digest != shot.get("sha256"):
                 raise ValueError(f"Screenshot digest mismatch: {name}")
+            if actual_digest in seen_digests:
+                raise ValueError("Duplicate actual screenshots cannot satisfy distinct UI surfaces")
+            seen_digests.add(actual_digest)
             if shot.get("candidate_artifact_sha256", artifact_hash) != artifact_hash:
                 raise ValueError(f"Screenshot {name} refers to another build artifact")
+            if shot.get("platform") != platform:
+                raise ValueError("Screenshot platform mismatch")
             shots = dict(shot)
             shots["path"] = rel.as_posix()
             shots["candidate_artifact_sha256"] = artifact_hash

@@ -32,7 +32,7 @@ class MasterVisualAdapterTest(unittest.TestCase):
         root.mkdir(parents=True, exist_ok=True)
         for viewport in ("compact", "wide"):
             for surface, section in (("home", "initial"),
-                                     ("about", "author" if platform == "android" else "initial")):
+                                     ("about", "complete" if platform == "android" else "initial")):
                 name = f"{surface}-{viewport}-{section}.png"
                 bytes_ = f"real screenshot reference {platform}:{viewport}:{surface}".encode()
                 (root / name).write_bytes(bytes_)
@@ -68,6 +68,35 @@ class MasterVisualAdapterTest(unittest.TestCase):
                 self.assertEqual({x["surface"] for x in result["screenshots"]}, {"home", "about"})
                 self.assertEqual({x["viewport"] for x in result["screenshots"]}, {"compact", "wide"})
                 self.assertEqual(result["human_visual_review"]["decision"], "PENDING")
+
+    def test_android_four_frames_have_complete_about_section_only(self):
+        source, doc = self.fixture("android")
+        result = create_manifest("android", source, self.artifact, COMMIT)
+        self.assertEqual({shot["section"] for shot in result["screenshots"] if shot["surface"] == "about"}, {"complete"})
+        self.assertEqual(len(result["screenshots"]), 4)
+
+        # Old capture contracts cannot masquerade as real complete About frames.
+        doc["screenshots"][1]["section"] = "author"
+        source.write_text(json.dumps(doc), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Expected one real android/compact/about screenshot"):
+            create_manifest("android", source, self.artifact, COMMIT)
+
+    def test_extra_legacy_android_frame_is_rejected(self):
+        source, doc = self.fixture("android")
+        doc["screenshots"].append(dict(doc["screenshots"][1], section="socials"))
+        source.write_text(json.dumps(doc), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "exactly four"):
+            create_manifest("android", source, self.artifact, COMMIT)
+
+    def test_identical_pixels_under_different_android_names_fail_closed(self):
+        source, doc = self.fixture("android")
+        original = (self.root / "android/igc-ui-capture/home-compact-initial.png").read_bytes()
+        target = self.root / "android/igc-ui-capture/about-compact-complete.png"
+        target.write_bytes(original)
+        doc["screenshots"][1]["sha256"] = digest(original)
+        source.write_text(json.dumps(doc), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Duplicate actual screenshots"):
+            create_manifest("android", source, self.artifact, COMMIT)
 
     def test_foreign_candidate_artifact_fails_closed(self):
         source, _ = self.fixture("android")

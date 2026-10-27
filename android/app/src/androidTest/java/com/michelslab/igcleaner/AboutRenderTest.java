@@ -204,9 +204,11 @@ public class AboutRenderTest {
                 assertNotNull("Sync must remain in native chrome",
                         activity.findViewById(R.id.headerSyncButton));
             });
-            screenshot("about","author");
-            screenshot("about","studio");
-            screenshot("about","socials");
+            // All three About sections have already been proven visible on
+            // the same physical dialog. One real complete-dialog screenshot
+            // captures the honest UI state; three consecutive duplicate
+            // frames are not independent visual evidence.
+            screenshot("about","complete");
         }
     }
 }

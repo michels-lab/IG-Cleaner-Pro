@@ -17,7 +17,7 @@ EXPECTED = tuple(
     for viewport in ("compact", "wide")
     for surface, sections in (
         ("home", ("initial",)),
-        ("about", ("author", "studio", "socials")),
+        ("about", ("complete",)),
     )
     for section in sections
 )
@@ -26,7 +26,7 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 def collect(adb: str, package: str, output: Path) -> tuple[Path, ...]:
-    """Atomically publish exactly eight APK-backed screenshots, never partials."""
+    """Atomically publish exactly four DISTINCT surface/viewport APK-backed screenshots, never partials."""
     if output.exists():
         raise ValueError(f"Refusing stale Android screenshot output: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -57,8 +57,8 @@ def collect(adb: str, package: str, output: Path) -> tuple[Path, ...]:
                 raise ValueError(f"Wrong actual Android viewport for {filename}: {dims}")
             (staging / filename).write_bytes(data)
             transferred.append(filename)
-        if len(transferred) != 8:
-            raise RuntimeError("Expected eight installed APK Home/About screenshots")
+        if len(transferred) != len(EXPECTED):
+            raise RuntimeError("Expected four installed APK Home/About screenshots")
         os.replace(staging, output)
     finally:
         if staging.exists():
