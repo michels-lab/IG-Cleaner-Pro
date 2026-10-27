@@ -141,10 +141,16 @@ for token in ("getGlobalVisibleRect", "requireVisibleView(dialog.findViewById(R.
               "requireVisibleView(dialog.findViewById(res),id,140,66)",
               "R.id.headerAboutButton",
               "aboutInstagram", "aboutFacebook", "aboutLinkedin", "aboutGithub", "aboutEmail",
-              "screenshot(\"about\",\"author\")",
-              "screenshot(\"about\",\"studio\")",
-              "screenshot(\"about\",\"socials\")"):
+              "screenshot(\"about\",\"complete\")"):
     assert token in testcode, f"Missing actual About render test assertion: {token}"
+# Exact same-dialog author, studio and social content is one rendered UI state.
+# Never relabel identical About pixels as three independent screenshots.
+assert testcode.count('screenshot("about","complete")') == 1
+for redundant in ('screenshot("about","author")',
+                  'screenshot("about","studio")',
+                  'screenshot("about","socials")'):
+    assert redundant not in testcode, "Duplicate unchanged About screenshot regression"
+
 
 # Native Focus dates, history, Double Check and cycle must be runtime-testable.
 insights = (ROOT / "android/app/src/main/java/com/michelslab/igcleaner/FocusInsights.java").read_text(encoding="utf-8")
