@@ -3818,31 +3818,31 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button type="button" class="btn" onclick="igcAutoLivePoll()">Show last verified snapshot</button>
   </div>
   <details id="igcLiveSettingsPanel" style="margin:12px 0;border:1px solid var(--line,#405166);border-radius:12px;padding:12px" ontoggle="if(this.open)igcLiveConfigLoad()">
-  <summary style="cursor:pointer;font-weight:700">⚙ Ajustes de verificación · Recomendado (predeterminado)</summary>
-  <p class="note">Configura únicamente la lectura de listas en bloque. Estos intervalos son sugerencias conservadoras de InstaCleaner, <strong>no límites oficiales de Instagram</strong> ni garantía de evitar restricciones. No afectan Unfollow, Cancel, ZIP ni robots de perfiles.</p>
-  <label style="display:block;margin:8px 0">Perfil de seguridad
-    <select id="igcLiveSafetyPreset" onchange="igcLiveConfigPresetChange()" aria-label="Perfil recomendado de protección">
-      <option value="recommended" selected>Recomendado (predeterminado) · Equilibrado</option>
-      <option value="cautious">Más pausado · Menos solicitudes por ciclo</option>
-      <option value="custom">Personalizado · Con límites de seguridad</option>
+  <summary style="cursor:pointer;font-weight:700">⚙ Verification settings · Recommended (default)</summary>
+  <p class="note">Configure bulk list reading only. These intervals are conservative app suggestions, <strong>not official Instagram limits</strong> and cannot guarantee full account protection. The other automation modes are unchanged.</p>
+  <label style="display:block;margin:8px 0">Safety profile
+    <select id="igcLiveSafetyPreset" onchange="igcLiveConfigPresetChange()" aria-label="Perfil recomendado de proteccion">
+      <option value="recommended" selected>Recomendado (predeterminado) · Balanced</option>
+      <option value="cautious">More cautious · Slower pace</option>
+      <option value="custom">Custom · Validated limits</option>
     </select>
   </label>
   <div id="igcLiveSafetyGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;margin:12px 0">
-    <label>Cuentas solicitadas por página <input type="number" id="igcLiveCfgPageSize" min="25" max="200" step="1" value="200" disabled style="width:100%" /></label>
-    <label>Espera entre páginas (s) <input type="number" id="igcLiveCfgPageDelay" min="2.5" max="30" step="0.5" value="2.5" disabled style="width:100%" /></label>
-    <label>Descanso corto cada N páginas <input type="number" id="igcLiveCfgShortEvery" min="2" max="5" step="1" value="5" disabled style="width:100%" /></label>
-    <label>Duración descanso corto (s) <input type="number" id="igcLiveCfgShortRest" min="12" max="180" step="1" value="12" disabled style="width:100%" /></label>
-    <label>Descanso largo cada N páginas <input type="number" id="igcLiveCfgLongEvery" min="10" max="25" step="1" value="25" disabled style="width:100%" /></label>
-    <label>Duración descanso largo (s) <input type="number" id="igcLiveCfgLongRest" min="90" max="600" step="1" value="90" disabled style="width:100%" /></label>
-    <label>Espera después de un escaneo completo (min) <input type="number" id="igcLiveCfgRepeat" min="15" max="180" step="1" value="15" disabled style="width:100%" /></label>
+    <label>Accounts requested per page <input type="number" id="igcLiveCfgPageSize" min="25" max="200" step="1" value="200" disabled style="width:100%" /></label>
+    <label>Wait between pages (s) <input type="number" id="igcLiveCfgPageDelay" min="2.5" max="30" step="0.5" value="2.5" disabled style="width:100%" /></label>
+    <label>Short break every N pages <input type="number" id="igcLiveCfgShortEvery" min="2" max="5" step="1" value="5" disabled style="width:100%" /></label>
+    <label>Short break duration (s) <input type="number" id="igcLiveCfgShortRest" min="12" max="180" step="1" value="12" disabled style="width:100%" /></label>
+    <label>Long break every N pages <input type="number" id="igcLiveCfgLongEvery" min="10" max="25" step="1" value="25" disabled style="width:100%" /></label>
+    <label>Long break duration (s) <input type="number" id="igcLiveCfgLongRest" min="90" max="600" step="1" value="90" disabled style="width:100%" /></label>
+    <label>Wait after a complete scan (min) <input type="number" id="igcLiveCfgRepeat" min="15" max="180" step="1" value="15" disabled style="width:100%" /></label>
   </div>
-  <p id="igcLiveRiskAdvice" class="note" role="status">Predeterminado recomendado: 2.5 s por página, 12 s cada 5 páginas, 90 s cada 25; mínimo 15 min entre lecturas completas.</p>
+  <p id="igcLiveRiskAdvice" class="note" role="status">Recommended: 2.5s per page, 12s every 5 pages, 90s every 25; at least 15 min between completed reads.</p>
   <div class="btnrow">
-    <button type="button" class="btn primary" id="igcLiveSaveSettings" onclick="igcLiveConfigSave()">Guardar y aplicar</button>
-    <button type="button" class="btn" onclick="igcLiveConfigReset()">Restaurar recomendado</button>
-    <small id="igcLiveSettingsState" aria-live="polite">La configuración se guarda por cuenta y solo cambia futuros escaneos.</small>
+    <button type="button" class="btn primary" id="igcLiveSaveSettings" onclick="igcLiveConfigSave()">Save and apply</button>
+    <button type="button" class="btn" onclick="igcLiveConfigReset()">Restore recommended</button>
+    <small id="igcLiveSettingsState" aria-live="polite">Settings are saved per account and apply to the next scan.</small>
   </div>
-  <small>Bloqueo 429/403/503 o feedback_required: suspensión automática de peticiones y enfriamiento de al menos 30 minutos en el Chrome compartido. No se puede desactivar. Si Instagram indica más tiempo, se respeta.</small>
+  <small>A restricted response stops the reader and starts a minimum 30-minute shared-browser cooldown. This mandatory protection cannot be disabled.</small>
 </details>
 <p id="igcLiveScanProgress" class="note" aria-live="polite">No hay escaneo activo.</p>
 <p id="igcRelLiveStatus" class="note" role="status" aria-live="polite">No new live scan. A previous snapshot is not proof of the current account state.</p>
