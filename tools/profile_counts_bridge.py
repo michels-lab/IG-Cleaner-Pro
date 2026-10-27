@@ -947,6 +947,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # Native Windows launcher owns this server and pauses jobs before exit.
     server.actions = actions
     server.collector = collector
+    server.live_relationships = live_relationships
     # The native host must also stop/await the Developer-only browser worker
     # and action lease before closing the loopback server or app process.
     server.dev_action_tests = dev_action_tests
@@ -984,6 +985,7 @@ def main():
         server.serve_forever()
     except KeyboardInterrupt:
         collector.stop()
+        collector.live_relationships.stop_event.set()
         print("Robot stopped. Saved results remain available for resuming.")
     finally:
         server.server_close()
