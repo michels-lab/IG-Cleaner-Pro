@@ -216,6 +216,20 @@ class ActionTabPool:
         else:
             item["status"] = status
 
+    def defer_persisted_pending(self, username):
+        """Release an uncertain Unfollow tab ONLY after durable WAL/result save.
+
+        This is not success or permission to retry. A later explicit read-only
+        Review can reopen the exact target using the original action journal.
+        Never call on session challenge, wrong owner, or unsaved outcome.
+        """
+        item = self.tabs.get(username)
+        if item is None or item["status"] not in ("review", "error"):
+            raise ValueError("Only a persisted unverified target can be deferred.")
+        if not item["page"].is_closed():
+            item["page"].close()
+        self.tabs.pop(username, None)
+
     def close_unacted_prefetches(self):
         """Release staged no-click tabs after the worker exhausts its cohort.
 
@@ -974,9 +988,22 @@ def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
             return result, "Unfollow confirmed after a read-only profile refresh. " + message
         if result == "blocked":
             return result, message + " Unfollow may already have occurred; do not repeat it."
-        return "review", prefix + "No verified Follow state appeared. Do not repeat the click."
+        if (_exact_https_target_profile(page, username)
+                and _verified_action_owner(page, expected_handle)
+                and not challenge_detected(page)
+                and not page.locator('input[name="password"]').count()
+                and _profile_relationship_control(page, username, [r"Following", r"Siguiendo"])):
+            return "review", (
+                "Pending verification: exact target still displays Following after "
+                "the Unfollow attempt. No confirmed unfollow. Keep the write-ahead "
+                "action record and continue safely without a second click.")
+        return "review", (
+            "Pending verification: no stable Follow / Follow Back state appeared "
+            "after the Unfollow attempt. Never claim success or repeat the click.")
     except Exception:
-        return "review", prefix + "Instagram could not be checked safely. Do not repeat the click."
+        return "review", (
+            "Pending verification: Instagram could not be checked after the "
+            "Unfollow attempt. Keep the original click intent; no automatic retry.")
 
 
 def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
@@ -1149,6 +1176,8 @@ def _action_issue(task, result, message):
         return "pending_not_requested"
     if task == "cancel" and result == "review" and message.startswith("Pending cancellation unverified after read-only refresh:"):
         return "pending_cancel_unverified"
+    if task == "unfollow" and result == "review" and message.startswith("Pending verification:"):
+        return "unfollow_pending_verification"
     if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
         return "mutual_before_action"
     if (result == "review" and message.startswith(MISSING_RELATIONSHIP_CONTROL)
@@ -3245,20 +3274,54 @@ class ActionRobot:
                                             }} if previous_attempt.get("click_intent") else {})}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
+                    # A clicked Unfollow without a confirmed Follow/Follow Back
+                    # is PENDING, never OK. Advance to the next target only
+                    # when the original result and click intent are already
+                    # fsynced AND a live, uncontested owner session is confirmed.
+                    # If authentication is challenged or the owner changes,
+                    # retain the tab and stop the worker instead.
+                    defer_pending_unfollow = False
+                    if (action_tabs and not self.review_only
+                            and self.task == "unfollow"
+                            and result in ("review", "error")
+                            and isinstance(journal.get(user), dict)
+                            and "click_intent" in journal[user]
+                            and not self.stop_event.is_set()):
+                        try:
+                            live_pages = [tab for tab in browser.pages if not tab.is_closed()]
+                            unsafe = any(
+                                challenge_detected(tab) or
+                                tab.locator('input[name="password"]').count()
+                                for tab in live_pages
+                            )
+                            owner_page, different_owner = _find_verified_owner_tab(
+                                live_pages, self.handle)
+                            defer_pending_unfollow = bool(
+                                not unsafe and not different_owner and owner_page is not None)
+                        except Exception:
+                            defer_pending_unfollow = False
                     if action_tabs:
                         try:
-                            # Read-only inspections cannot change relationships:
-                            # release their tabs even when earlier history is
-                            # uncertain. Original action journals stay intact.
+                            # Release read-only and proven no-click tabs normally.
+                            # Post-click pending tabs require a separate verified
+                            # session check and durable original WAL above.
                             safely_unclicked = self.review_only or _preclick_no_action(journal.get(user, {}))
                             action_tabs.record(user, result, safe_no_click=safely_unclicked)
+                            if defer_pending_unfollow:
+                                action_tabs.defer_persisted_pending(user)
                         except Exception:
-                            # No relationship click is ever repeated to recover
-                            # from a tab closing problem.
-                            pass
+                            # Do not replay/continue if tab cleanup is uncertain.
+                            defer_pending_unfollow = False
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
+                        continue
+                    if defer_pending_unfollow:
+                        with self.lock:
+                            self.status = "running"
+                            self.message = ("@" + user +
+                                ": PENDING / unverified Unfollow recorded; no second "
+                                "click. Continuing to the next eligible profile.")
                         continue
                     if result not in ("ok", "already_not_following", "already_not_requested",
                                       "profile_unavailable"):
