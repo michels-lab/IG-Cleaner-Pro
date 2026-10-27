@@ -110,7 +110,8 @@ class OwnerReferenceChromiumE2E(unittest.TestCase):
             self.assertEqual(phase, "relationship_control")
         return perform_visible_action(
             self.page, self.target, "unfollow", self.owner,
-            can_act=lambda _:allowed, on_pre_click=on_pre_click or record)
+            can_act=lambda _:allowed, on_pre_click=on_pre_click or record,
+            use_reference_transport=True)
 
     def test_real_browser_owner_reference_one_mutation_verified(self):
         status, note = self.run_robot()
