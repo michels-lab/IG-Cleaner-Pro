@@ -1477,5 +1477,123 @@ class GranadaReviewRecoveryTests(unittest.TestCase):
                         robot.start(data)
                     worker.assert_not_called()
 
+
+class InstagramUnavailableProfileTests(unittest.TestCase):
+    """Instagram unavailable is a separate no-click status, not Unfollow success."""
+
+    def _page(self):
+        from unittest.mock import MagicMock
+        page = MagicMock()
+        page.url = "https://www.instagram.com/unavailable.user/"
+        page.locator.return_value.count.return_value = 0
+        page.get_by_text.return_value.first.is_visible.side_effect = [True, True]
+        return page
+
+    def test_spanish_english_exact_banner_is_read_only_and_auto_detected(self):
+        from profile_actions import _instagram_profile_unavailable
+        for phrase in ("Esta página no está disponible.",
+                       "Sorry, this page isn't available.",
+                       "This page isn't available."):
+            with self.subTest(phrase=phrase):
+                page = self._page()
+                with patch("profile_actions.challenge_detected", return_value=False), \
+                     patch("profile_actions._target_identity_visible", return_value=False):
+                    self.assertTrue(_instagram_profile_unavailable(page, "unavailable.user"))
+                self.assertTrue(page.get_by_text.call_args.args[0].fullmatch(phrase))
+                page.wait_for_timeout.assert_called_once_with(350)
+                page.locator.return_value.click.assert_not_called()
+
+    def test_redirect_login_hidden_and_transient_banner_do_not_classify(self):
+        from profile_actions import _instagram_profile_unavailable
+        page = self._page()
+        page.url = "https://www.instagram.com/another.account/"
+        self.assertFalse(_instagram_profile_unavailable(page, "unavailable.user"))
+        page.get_by_text.assert_not_called()
+        page = self._page()
+        page.get_by_text.return_value.first.is_visible.side_effect = [False]
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._target_identity_visible", return_value=False):
+            self.assertFalse(_instagram_profile_unavailable(page, "unavailable.user"))
+        page = self._page()
+        with patch("profile_actions.challenge_detected", return_value=True):
+            self.assertFalse(_instagram_profile_unavailable(page, "unavailable.user"))
+        page = self._page()
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._target_identity_visible", return_value=True):
+            self.assertFalse(_instagram_profile_unavailable(page, "unavailable.user"))
+        page = self._page()
+        page.get_by_text.return_value.first.is_visible.side_effect = [True, False]
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._target_identity_visible", return_value=False):
+            self.assertFalse(_instagram_profile_unavailable(page, "unavailable.user"),
+                             "One transient banner cannot prove inaccessibility")
+
+    def test_unfollow_and_readonly_scan_return_unavailable_before_any_click(self):
+        from profile_actions import perform_visible_action, recheck_action_readonly
+        page = self._page()
+        with patch("profile_actions._wait_for_target_profile_shell", return_value=False), \
+             patch("profile_actions._instagram_profile_unavailable", return_value=True), \
+             patch("profile_actions.challenge_detected", return_value=False):
+            armed = []
+            status, message = perform_visible_action(
+                page, "unavailable.user", "unfollow", "owner.test",
+                preloaded=True, on_pre_click=lambda phase: armed.append(phase))
+            self.assertEqual(status, "profile_unavailable")
+            self.assertIn("No relationship click", message)
+            self.assertEqual(armed, [])
+            checked, description = recheck_action_readonly(
+                page, "unavailable.user", "unfollow", "owner.test", {},
+                preloaded=True, allow_unacted_observation=True,
+                distinguish_observation=True)
+            self.assertEqual(checked, "profile_unavailable")
+            self.assertIn("no action", description)
+        page.locator.return_value.click.assert_not_called()
+
+    def test_auto_close_and_separate_batch_outcomes_preserve_possible_click_wal(self):
+        from profile_actions import ActionTabPool, _atomic_json
+        from types import SimpleNamespace
+        import threading
+        pool = ActionTabPool(FakeTabContext())
+        tab = pool.open("unavailable.user")
+        pool.record("unavailable.user", "profile_unavailable")
+        self.assertTrue(tab.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = ActionRobot(SimpleNamespace(browser_admission=threading.RLock(),
+                                                  worker=None), root, root / "chrome")
+            robot.owner, robot.account, robot.task = "owner", "workspace", "unfollow"
+            robot.targets = ["ok.user", "unavailable.user", "uncertain.user"]
+            _atomic_json(robot._base(), {
+                "ok.user": {"status": "ok", "message": "Verified Unfollow"},
+                "unavailable.user": {"status": "profile_unavailable",
+                                     "message": "Exact Instagram unavailable notice"},
+                "uncertain.user": {"status": "review", "message": "Click could have occurred",
+                                   "click_intent": {"phase": "relationship_control",
+                                                    "batch_id": "batch-unavailable",
+                                                    "task": "unfollow"}}
+            })
+            snap = robot.snapshot()
+            self.assertEqual(snap["successful"], 1)
+            self.assertEqual(snap["profile_unavailable"], 1)
+            self.assertEqual(snap["errors"], 1)
+            self.assertEqual(snap["remaining"], 0)
+            self.assertEqual([x["username"] for x in snap["issues"]], ["uncertain.user"])
+            _atomic_json(robot._review_batches_file_for("owner", "workspace", "unfollow"), [{
+                "id": "batch-unavailable", "targets": list(robot.targets),
+                "approved_at": None,
+                "recheck_results": {"uncertain.user": {
+                    "status": "profile_unavailable", "read_only": True,
+                    "observation_only": True}}
+            }])
+            result = robot.approve_batch({
+                "owner": "owner", "account": "workspace", "task": "unfollow",
+                "batch_id": "batch-unavailable",
+                "confirmation": "reviewed:batch-unavailable"})
+            self.assertEqual(result["approved_usernames"], ["ok.user"])
+            self.assertEqual(result["unavailable_usernames"], ["unavailable.user"])
+            self.assertEqual(result["unresolved_usernames"], ["uncertain.user"])
+            self.assertIn("click_intent", robot._journal()["uncertain.user"])
+
 if __name__=="__main__":
     unittest.main()
