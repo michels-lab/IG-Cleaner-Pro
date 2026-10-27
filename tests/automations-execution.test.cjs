@@ -367,8 +367,9 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
   approved_at:null,action_results:{
    'verified.user':{status:'ok',message:'Unfollow verified'},
    'unavailable.user':{status:'profile_unavailable',message:'Instagram page unavailable; no click'},
-   'uncertain.user':{status:'review',message:'Possible click remains uncertain'}},
-  recheck_results:{}};
+   'uncertain.user':{status:'review',possible_click:true,message:'Possible click remains uncertain'}},
+  recheck_results:{'uncertain.user':{status:'profile_unavailable',read_only:true,
+                      observation_only:true,message:'Now unavailable; prior click uncertain'}}};
  p.status='complete';p.running=false;p.owner=context.owner;p.account=context.active;
  p.task='unfollow';p.profile_unavailable=1;p.errors=1;p.successful=1;
  ctx.window.igcAutoChoose('unfollow');
@@ -383,6 +384,8 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert.equal(colored[1].className,'igc-result-unavailable','Unavailable must be neither green nor yellow Review');
  assert.match(colored[1].children[1].textContent,/Unavailable · no action/);
  assert.equal(colored[2].className,'igc-result-review','Possible click remains yellow');
+ assert.match(colored[2].children[1].textContent,/Previous relationship click remains uncertain/,
+   'Read-only unavailable scan MUST NOT conceal a previous potentially clicked Unfollow');
  assert(lastReviewDialog.children.some(c=>c.textContent?.includes('1 unavailable (no click)')),
    'Modal summary must count separate unavailable profile');
  lastReviewDialog.close();
