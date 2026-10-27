@@ -3817,14 +3817,15 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button type="button" class="btn" onclick="igcAutoLiveStop()">Stop scan</button>
     <button type="button" class="btn" onclick="igcAutoLivePoll()">Show last verified snapshot</button>
   </div>
-  <details id="igcLiveSettingsPanel" style="margin:12px 0;border:1px solid var(--line,#405166);border-radius:12px;padding:12px" ontoggle="if(this.open)igcLiveConfigLoad()">
-  <summary style="cursor:pointer;font-weight:700">⚙ Verification settings · Recommended (default)</summary>
-  <p class="note">Configure bulk list reading only. These intervals are conservative app suggestions, <strong>not official Instagram limits</strong> and cannot guarantee full account protection. The other automation modes are unchanged.</p>
+  <p id="igcLiveSafetySummary" class="note" role="status" aria-live="polite" style="margin:10px 0 3px">⚙ Scan safety profile: Recommended (default) · Loading account settings…</p>
+  <details id="igcLiveSettingsPanel" open style="margin:12px 0;border:1px solid var(--line,#405166);border-radius:12px;padding:12px" ontoggle="if(this.open)igcLiveConfigLoad()">
+  <summary style="cursor:pointer;font-weight:700">⚙ Configurable verification settings · Recommended (default)</summary>
+  <p class="note">Choose <strong>Recommended (default)</strong>, <strong>More cautious</strong>, or <strong>Custom</strong>. These values only control bulk list reads, <strong>not the Unfollow robot</strong>. They are app suggestions, not official Instagram quotas or a guarantee against restrictions.</p>
   <label style="display:block;margin:8px 0">Safety profile
     <select id="igcLiveSafetyPreset" onchange="igcLiveConfigPresetChange()" aria-label="Perfil recomendado de proteccion">
       <option value="recommended" selected>Recomendado (predeterminado) · Balanced</option>
       <option value="cautious">More cautious · Slower pace</option>
-      <option value="custom">Custom · Validated limits</option>
+      <option value="custom">Custom · Validated safeguards</option>
     </select>
   </label>
   <div id="igcLiveSafetyGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;margin:12px 0">
@@ -3840,6 +3841,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <div class="btnrow">
     <button type="button" class="btn primary" id="igcLiveSaveSettings" onclick="igcLiveConfigSave()">Save and apply</button>
     <button type="button" class="btn" onclick="igcLiveConfigReset()">Restore recommended</button>
+    <button type="button" class="btn" onclick="igcLiveConfigLoad()">Reload settings for this account</button>
     <small id="igcLiveSettingsState" aria-live="polite">Settings are saved per account and apply to the next scan.</small>
   </div>
   <small>A restricted response stops the reader and starts a minimum 30-minute shared-browser cooldown. This mandatory protection cannot be disabled.</small>
@@ -4896,6 +4898,13 @@ function showPage(id){
   if(id==='list'){updateSessionPanel();renderActionLog();renderRecentActivity();renderAdvancedDashboard();}
   applyColumnVisibility();
   renderActiveBatchDock();
+  // An initially-open <details> does not reliably fire its toggle event
+  // after login/profile state is hydrated. Navigation to Automations is the
+  // authoritative chance to load this exact owner/account's saved settings.
+  if(id==='automations' && document.getElementById('igcLiveSettingsPanel')?.open &&
+     typeof window.igcLiveConfigLoad==='function'){
+    void window.igcLiveConfigLoad();
+  }
 }
 
 function updateFileLabel(id,files){
@@ -15414,6 +15423,11 @@ function igcLiveConfigReadFields(){
  return value;
 }
 function igcLiveConfigRender(values,preset){
+ const summary=document.getElementById("igcLiveSafetySummary");
+ if(summary)summary.textContent="⚙ Perfil mostrado: "+
+  (preset==="recommended"?"Recomendado (predeterminado)":preset==="cautious"?"Más pausado":"Personalizado")+
+  " · Espera "+Number(values?.page_delay_ms/1000||0).toFixed(1)+" s/página"+
+  " · Guardar y aplicar antes de iniciar.";
  const chosen=document.getElementById("igcLiveSafetyPreset");
  if(chosen)chosen.value=preset;
  for(const [key,id,mul] of igcLiveConfigFields){
@@ -15452,6 +15466,9 @@ window.igcLiveConfigLoad=async function(){
   igcLiveConfigDirty=false;
   if(response.settings.preset==="custom")igcLiveLastCustom=response.settings.values;
   igcLiveConfigRender(response.settings.values,response.settings.preset);
+  const summary=document.getElementById("igcLiveSafetySummary");
+  if(summary)summary.textContent=summary.textContent.replace(
+    "Guardar y aplicar antes de iniciar.","Ajustes guardados y vigentes en esta cuenta.");
   igcLiveConfigLocked(response.editable===false);
   igcLiveSettingsMessage("Ajustes guardados para esta cuenta. "+(response.editable===false?
    "Escaneo activo: cambios bloqueados.":"Puedes elegir otro perfil y guardar."));
@@ -15492,6 +15509,9 @@ window.igcLiveConfigSave=async function(){
   igcLiveConfigDirty=false;
   if(value.settings.preset==="custom")igcLiveLastCustom=value.settings.values;
   igcLiveConfigRender(value.settings.values,value.settings.preset);
+  const summary=document.getElementById("igcLiveSafetySummary");
+  if(summary)summary.textContent=summary.textContent.replace(
+    "Guardar y aplicar antes de iniciar.","Ajustes guardados y vigentes en esta cuenta.");
   igcLiveSettingsMessage("Guardado. Se aplicará al próximo escaneo de esta cuenta.");
  }catch(e){igcLiveSettingsMessage("No se guardó: "+e.message)}
 };
@@ -15509,6 +15529,19 @@ window.igcAutoLiveVerify=async function(){
   return;
  }
  if(igcLiveConfigDirty){igcLiveMessage("Guarda primero los ajustes de lectura en bloque o restaura los recomendados.");return;}
+ // On owner/account changes, do not silently start with stale visible settings
+ // while the backend applies a different persisted profile.
+ if(igcLiveConfigLoading){
+  igcLiveMessage("Cargando ajustes de seguridad: finaliza antes de empezar.");
+  return;
+ }
+ if(!igcLiveConfigCache || igcLiveConfigScope!==igcLiveSettingsKey()){
+  await window.igcLiveConfigLoad();
+ }
+ if(!igcLiveConfigCache || igcLiveConfigScope!==igcLiveSettingsKey()){
+  igcLiveMessage("No se confirmaron los ajustes guardados para esta cuenta. Recarga el panel antes de escanear.");
+  return;
+ }
  if(!window.confirm("Read BOTH complete current Instagram Followers and Following lists for @"+
     selected.expected_handle+" in the robot's Chrome now? Read-only: no ZIP replacement, no changed reviews or relationships."))return;
  const gen=++igcLiveGeneration;
@@ -15542,6 +15575,10 @@ window.igcAutoLivePoll=async function(){
  if(igcLivePending)return;
  const selected=igcLiveScope();
  if(!selected.owner||!selected.account)return;
+ if(document.getElementById("igcLiveSettingsPanel")?.open &&
+     igcLiveConfigScope!==igcLiveSettingsKey() && !igcLiveConfigLoading){
+  void window.igcLiveConfigLoad();
+ }
  const gen=igcLiveGeneration;
  const kind=document.getElementById("igcAutoLiveKind")?.value||"not_following_back";
  igcLivePending=true;

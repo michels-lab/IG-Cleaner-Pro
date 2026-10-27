@@ -115,7 +115,8 @@ const {chromium}=require('playwright');
     'Existing action-robot status must not be replaced by new snapshot');
   const settings=page.locator('#igcLiveSettingsPanel');
   assert.equal(await settings.count(),1,'Visible live-scan settings panel missing');
-  await settings.locator('summary').click();
+  assert.equal(await settings.evaluate(el=>el.open),true,
+     'Safety settings must be visible by default, not hidden behind a disclosure');
   await page.waitForFunction(()=>document.querySelector('#igcLiveSettingsState')
     ?.textContent?.includes('Ajustes guardados'),null,{timeout:8000});
   assert.equal(await page.locator('#igcLiveSafetyPreset').inputValue(),'recommended');

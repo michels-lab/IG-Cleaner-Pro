@@ -98,6 +98,17 @@ class BulkSettingsTests(unittest.TestCase):
         self.assertIn('requestAction("live-settings"',html)
         self.assertIn("Recomendado (predeterminado)",html)
         self.assertIn("igcLiveConfigDirty",html)
+        # Settings must be discoverable rather than hidden behind a closed
+        # disclosure, and the user must never scan with another account's
+        # stale visible timing configuration.
+        self.assertIn('id="igcLiveSettingsPanel" open',html)
+        self.assertIn('id="igcLiveSafetySummary"',html)
+        self.assertIn("Reload settings for this account",html)
+        self.assertIn("igcLiveConfigScope!==igcLiveSettingsKey()",html)
+        self.assertIn("No se confirmaron los ajustes guardados para esta cuenta",html)
+        self.assertIn("Ajustes guardados y vigentes en esta cuenta",html)
+        self.assertIn("Navigation to Automations is the",html)
+        self.assertIn("void window.igcLiveConfigLoad();",html)
 
 
 if __name__=="__main__":
