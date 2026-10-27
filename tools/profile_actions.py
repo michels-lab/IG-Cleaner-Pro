@@ -536,9 +536,9 @@ def _notify_readiness(on_wait, phase, started_at, timeout_ms):
 
 
 _UNAVAILABLE_PROFILE_NOTICE = re.compile(
-    r"^\\s*(?:Esta página no está disponible\\.?|"
-    r"Sorry, this page isn't available\\.?|"
-    r"This page isn't available\\.?)\\s*$", re.I)
+    r"^\s*(?:Esta página no está disponible\.?|"
+    r"Sorry, this page isn't available\.?|"
+    r"This page isn't available\.?)\s*$", re.I)
 
 
 def _instagram_profile_unavailable(page, username):
