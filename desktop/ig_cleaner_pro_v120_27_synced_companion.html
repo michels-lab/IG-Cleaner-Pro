@@ -3838,6 +3838,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 #igcAutoReviewDialog tr.igc-result-ok{background:rgba(35,165,96,.16);border-left:4px solid #37bb76}
 #igcAutoReviewDialog tr.igc-result-review{background:rgba(245,187,58,.17);border-left:4px solid #ecb83f}
 #igcAutoReviewDialog tr.igc-result-untouched{border-left:4px solid #949ba6}
+#igcAutoReviewDialog tr.igc-result-unavailable{background:rgba(88,147,202,.12);border-left:4px solid #78abd7}
+#igcAutoReviewDialog .igc-status-unavailable{color:#93bfe5;font-weight:750}
 #igcAutoReviewDialog .igc-status-ok{color:#53dd91;font-weight:750}
 #igcAutoReviewDialog .igc-status-review{color:#f5c857;font-weight:750}
 #igcAutoReviewDialog .igc-status-untouched{font-weight:650}
@@ -15617,6 +15619,7 @@ window.igcAutoPoll=async function(){
        (state.task==="cancel"?(state.already_not_requested||0):(state.already_not_following||0)),
     "Remaining: "+state.remaining,
     "Errors / review: "+state.errors,
+    "Unavailable · no action: "+Number(state.profile_unavailable||0),
     "Skipped: "+(state.skipped||0),"Protected: "+state.protected,
     "Issues: "+(state.issue_count||0)];
    // Keep actual owner-profile fallback navigation distinct from target
@@ -15868,6 +15871,7 @@ window.igcAutoRender=function(){
      latest.audit_relation==="follows_you"?"✓ Follows you (verified)":
      latest.audit_relation==="not_following"?"✓ Not following you (verified)":
      latest.status==="ok"?"✓ Action confirmed by saved verification":
+      latest.status==="profile_unavailable"?"◌ Profile unavailable · no action (not a robot error)":
      ["review","error","blocked"].includes(latest.status)?"⚠ Review saved action · "+String(latest.message||"Inspect journal").slice(0,100):
      attempted.has(item.username)?"Previously opened · excluded from new automatic batches":
      latest.status&&latest.status!=="pending"?(latest.status+": "+(latest.message||"")):"Not reviewed";
@@ -15912,7 +15916,7 @@ window.igcAutoShowBatchReview=function(){
  const summary=document.createElement("p");summary.className="note";
  summary.textContent=batch.targets.length+" selected profiles · "+
    o.confirmed.length+" verified changed · "+o.already.length+
-   " already absent (no click) · "+o.issues.length+" unresolved · "+
+   " already absent (no click) · "+o.unavailable.length+" unavailable (no click) · "+o.issues.length+" unresolved · "+
    o.unchecked.length+" untouched. Check each actual result. No uncertain click will be repeated.";
  dialog.append(summary);
  const wrap=document.createElement("div");wrap.style.cssText="max-height:48vh;overflow:auto";
@@ -15932,10 +15936,11 @@ window.igcAutoShowBatchReview=function(){
   const result=String(row.status||"pending");
   const confirmed=["ok","already_not_following","already_not_requested"].includes(result)&&row.observation_only!==true;
   const untouched=result==="pending";
-  const visual=confirmed?"ok":untouched?"untouched":"review";
+  const inaccessible=result==="profile_unavailable";
+  const visual=confirmed?"ok":inaccessible?"unavailable":untouched?"untouched":"review";
   tr.className="igc-result-"+visual;
   status.className="igc-status-"+visual;
-  status.textContent=(confirmed?"✓ OK · ":untouched?"○ Not checked · ":"⚠ Review · ")+
+  status.textContent=(confirmed?"✓ OK · ":inaccessible?"◌ Unavailable · no action · ":untouched?"○ Not checked · ":"⚠ Review · ")+
       String(row.message||(untouched?"Chrome did not finish checking this profile.":"No verified action result.")).slice(0,140);
   const td=document.createElement("td");
   const date=new Date(row.at||recent.at||"");
@@ -15986,16 +15991,17 @@ function igcAutoReviewRetryUsers(){
  });
 }
 function igcAutoBatchOutcomes(){
- const b=actionBatchReview;if(!b)return {confirmed:[],already:[],issues:[],unchecked:[]};
- const confirmed=[],already=[],issues=[],unchecked=[];
+ const b=actionBatchReview;if(!b)return {confirmed:[],already:[],unavailable:[],issues:[],unchecked:[]};
+ const confirmed=[],already=[],unavailable=[],issues=[],unchecked=[];
  for(const username of b.targets||[]){
   const status=(b.recheck_results?.[username]||b.action_results?.[username]||{}).status||"pending";
   if(status==="ok")confirmed.push(username);
   else if(status==="already_not_following"||status==="already_not_requested")already.push(username);
+  else if(status==="profile_unavailable")unavailable.push(username);
   else if(status==="pending")unchecked.push(username);
   else issues.push(username);
  }
- return {confirmed,already,issues,unchecked};
+ return {confirmed,already,unavailable,issues,unchecked};
 }
 window.igcAutoRenderBatchApproval=function(){
  const panel=document.getElementById("igcAutoBatchApproval");
@@ -16023,8 +16029,9 @@ window.igcAutoRenderBatchApproval=function(){
     count+" in batch · "+outcome.confirmed.length+
     " verified actions · "+outcome.already.length+
      (mode==="cancel"?" verified no pending request (no click) · ":" already not following (no click) · ")+
+    outcome.unavailable.length+" unavailable (no action) · "+
     outcome.issues.length+" issues · "+
-    outcome.unchecked.length+" untouched. Opening a profile never marks it Reviewed."+
+    outcome.unchecked.length+" untouched. Unavailable does not prove the account was closed. Opening a profile never marks it Reviewed."+
     (blocked.length?" "+blocked.length+
       " are protected on this Windows device. Archive this cohort WITHOUT marking any profiles Reviewed, then select a new batch.":"");
   const choice=document.getElementById("igcAutoCohortChoice");
@@ -16317,7 +16324,7 @@ window.igcAutoApproveBatch=async function(){
  if(o.unchecked.length){setStatus(o.unchecked.length+" profiles are untouched. Choose Run to finish the batch before approval.");return}
  if(!window.confirm("Mark this "+b.targets.length+
    "-profile batch as Reviewed?\n\n"+(o.confirmed.length+o.already.length)+
-   " verified profiles ("+o.already.length+" already not following) will be marked Reviewed. "+(o.issues.length+o.unchecked.length)+
+   " verified profiles ("+o.already.length+" already not following) will be marked Reviewed. "+o.unavailable.length+" unavailable profiles require no individual manual review. "+(o.issues.length+o.unchecked.length)+
    " unresolved profiles remain in Issue Review and will NOT be marked Reviewed.\n\nApprove this batch?"))return;
  try{
   const result=await requestAction("approve-batch",{
@@ -16345,7 +16352,8 @@ window.igcAutoApproveBatch=async function(){
   }
   actionBatchReview=null;window.igcAutoRenderBatchApproval();
   setStatus("Batch approved: "+names.length+" verified profiles marked Reviewed; "+
-    (result.unresolved_usernames||[]).length+" unresolved profiles remain in Issue Review.");
+    (result.unavailable_usernames||[]).length+" unavailable profiles recorded without action; "+
+     (result.unresolved_usernames||[]).length+" unresolved profiles remain in Issue Review.");
   await window.igcAutoPoll();
  }catch(e){setStatus("Could not approve this batch: "+e.message)}
 };
