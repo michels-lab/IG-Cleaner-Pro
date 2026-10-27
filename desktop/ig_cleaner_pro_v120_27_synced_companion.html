@@ -15929,7 +15929,7 @@ window.igcAutoShowBatchReview=function(){
  const tbody=document.createElement("tbody"),hist=new Map(
     (igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
  for(const username of batch.targets){
-  const row=batch.recheck_results?.[username]||batch.action_results?.[username]||{};
+  const row=igcAutoDisplayBatchResult(batch,username);
   const recent=hist.get(norm(username))||{};
   const tr=document.createElement("tr");
   const profile=document.createElement("td");profile.textContent="@"+username;
@@ -15991,11 +15991,21 @@ function igcAutoReviewRetryUsers(){
       scan.status===expected&&!isProtected(mode,u)&&!skips[mode].has(u);
  });
 }
+function igcAutoDisplayBatchResult(batch,username){
+  const original=batch.action_results?.[username]||{};
+  const scan=batch.recheck_results?.[username];
+  // A read-only unavailable page cannot erase or verify an EARLIER
+  // possible action click; keep its yellow Review row and action journal.
+  if(scan?.status==="profile_unavailable"&&original.possible_click===true)
+   return {...original,status:"review",message:"Previous relationship click remains uncertain. "+
+    "Instagram is now unavailable in a read-only scan; no action was repeated."};
+  return scan||original;
+}
 function igcAutoBatchOutcomes(){
  const b=actionBatchReview;if(!b)return {confirmed:[],already:[],unavailable:[],issues:[],unchecked:[]};
  const confirmed=[],already=[],unavailable=[],issues=[],unchecked=[];
  for(const username of b.targets||[]){
-  const status=(b.recheck_results?.[username]||b.action_results?.[username]||{}).status||"pending";
+  const status=igcAutoDisplayBatchResult(b,username).status||"pending";
   if(status==="ok")confirmed.push(username);
   else if(status==="already_not_following"||status==="already_not_requested")already.push(username);
   else if(status==="profile_unavailable")unavailable.push(username);
