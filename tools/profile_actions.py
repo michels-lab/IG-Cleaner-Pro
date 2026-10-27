@@ -996,7 +996,7 @@ def _verify_unfollow_after_readonly_refresh(page, username, expected_handle):
             return "review", (
                 "Pending verification: exact target still displays Following after "
                 "the Unfollow attempt. No confirmed unfollow. Keep the write-ahead "
-                "action record and continue safely without a second click.")
+                "action record and continue safely. Do not repeat the click.")
         return "review", (
             "Pending verification: no stable Follow / Follow Back state appeared "
             "after the Unfollow attempt. Never claim success or repeat the click.")
