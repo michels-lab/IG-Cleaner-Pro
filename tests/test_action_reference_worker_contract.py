@@ -16,12 +16,12 @@ import profile_actions
 
 
 class ReferenceTransportRoutingTests(unittest.TestCase):
-    def test_safe_default_for_explicit_unfollow_callers(self):
+    def test_legacy_default_cannot_silently_override_worker_reference(self):
         default = inspect.signature(
             profile_actions.perform_visible_action
         ).parameters["use_reference_transport"].default
-        self.assertIs(default, True,
-            "Reference Unfollow default must not silently revert to visible clicks.")
+        self.assertIs(default, False,
+            "Legacy visible controls remain available; worker selection must be explicit.")
 
     def test_real_windows_worker_must_pass_transport_explicitly(self):
         source = ast.parse((ROOT / "tools" / "profile_actions.py").read_text(
