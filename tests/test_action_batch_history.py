@@ -570,7 +570,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                              "Unverified first target must be marked pending and allow next safe target")
             journal = robot._journal()
             self.assertEqual(journal["uncertain.first"]["status"], "review")
-            self.assertEqual(journal["uncertain.first"]["issue"], "missing_profile_info")
+            self.assertEqual(journal["uncertain.first"]["issue"], "unfollow_pending_verification")
+            self.assertIn("Pending verification:", journal["uncertain.first"]["message"])
             self.assertEqual(journal["uncertain.first"]["click_intent"]["phase"],
                              "relationship_control")
             self.assertEqual(journal["must.not.click"]["status"], "ok")
