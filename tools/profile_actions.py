@@ -205,7 +205,8 @@ class ActionTabPool:
         item = self.tabs.get(username)
         if item is None:
             return
-        if status in ("ok", "skipped", "already_not_following", "already_not_requested") or safe_no_click:
+        if status in ("ok", "skipped", "already_not_following", "already_not_requested",
+                      "profile_unavailable") or safe_no_click:
             # Verified outcomes, explicit skips and known pre-click failures
             # close safely; uncertain post-click results retain visible tabs.
             # An ambiguous action, including post-click session loss, cannot.
@@ -533,6 +534,37 @@ def _notify_readiness(on_wait, phase, started_at, timeout_ms):
                 max(1, int(timeout_ms / 1000)))
 
 
+
+_UNAVAILABLE_PROFILE_NOTICE = re.compile(
+    r"^\\s*(?:Esta página no está disponible\\.?|"
+    r"Sorry, this page isn't available\\.?|"
+    r"This page isn't available\\.?)\\s*$", re.I)
+
+
+def _instagram_profile_unavailable(page, username):
+    """Read the exact Instagram unavailable screen twice, never infer closure.
+
+    Does not consider a blank tab, HTTP error, redirect or a caption quoting
+    the banner. Original action/WAL records are never rewritten by this probe.
+    """
+    if not _exact_https_target_profile(page, username):
+        return False
+    try:
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return False
+        notice = page.get_by_text(_UNAVAILABLE_PROFILE_NOTICE).first
+        if notice.is_visible() is not True or _target_identity_visible(page, username):
+            return False
+        page.wait_for_timeout(350)
+        return (_exact_https_target_profile(page, username)
+                and not challenge_detected(page)
+                and not page.locator('input[name="password"]').count()
+                and notice.is_visible() is True
+                and not _target_identity_visible(page, username))
+    except Exception:
+        return False
+
+
 def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
                                    on_wait=None, can_act=None):
     """Wait for the target's *rendered* identity region, not DOMContentLoaded."""
@@ -547,6 +579,8 @@ def _wait_for_target_profile_shell(page, username, *, timeout_ms=None,
         current = urlparse(page.url)
         if (current.hostname not in ("www.instagram.com", "instagram.com")
                 or current.path.strip("/").casefold() != username.casefold()):
+            return False
+        if _instagram_profile_unavailable(page, username):
             return False
         header = page.locator("header").first
         if header.count() and header.is_visible() and header.inner_text(timeout=2000).strip():
@@ -983,7 +1017,7 @@ def _verify_cancel_after_readonly_refresh(page, username, expected_handle):
 
 
 SAVED_ACTION_STATES = {"ok", "already_not_following", "already_not_requested",
-                       "review", "error", "blocked"}
+                       "profile_unavailable", "review", "error", "blocked"}
 SAVED_CLICK_PHASES = {"relationship_control", "unfollow_menu",
                       "private_unfollow_confirmation", "cancel_request_confirmation"}
 
@@ -1005,7 +1039,8 @@ def _invalid_saved_action_record(record):
         return True
     # A terminal success cannot coexist with an unresolved write-ahead click.
     # The journal is suspicious even if its recorded status says "ok".
-    return (status in {"ok", "already_not_following", "already_not_requested"}
+    return (status in {"ok", "already_not_following", "already_not_requested",
+                       "profile_unavailable"}
             and intent.get("outcome_recorded") is not True)
 
 
@@ -1160,6 +1195,11 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             return "skipped", "Skipped or protected before a relationship click."
         if challenge_detected(page) or page.locator('input[name="password"]').count():
             return "blocked", "Instagram requested verification."
+        if _instagram_profile_unavailable(page, username):
+            return "profile_unavailable", (
+                "Instagram displays its exact page-unavailable notice. "
+                "No relationship click. Deletion, rename, deactivation, blocking "
+                "and temporary inaccessibility cannot be distinguished.")
         url = urlparse(page.url)
         if url.hostname not in ("www.instagram.com", "instagram.com") or url.path.strip("/").casefold() != username.casefold():
             return "blocked", "Instagram redirected to another profile."
@@ -1488,7 +1528,7 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
             page, username, expected_handle)
         return result, details
     saved_action_states = ("ok", "already_not_following", "already_not_requested",
-                           "review", "error", "blocked")
+                           "profile_unavailable", "review", "error", "blocked")
     # The targeted Review sweep must also inspect an untouched LAST profile.
     # Its absent journal entry is positive evidence that no click was armed;
     # never treat a malformed PRESENT journal entry as untouched.
@@ -1504,6 +1544,9 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
             or current.path.strip("/").casefold() != username.casefold()):
         page.goto(target, wait_until="domcontentloaded", timeout=45000)
     if not _wait_for_target_profile_shell(page, username, on_wait=on_wait):
+        if _instagram_profile_unavailable(page, username):
+            return "profile_unavailable", ("Read-only observation: exact Instagram page-unavailable notice; "
+                                            "no action performed or cause established.")
         return "review", "Profile did not load during automatic read-only recheck."
     if challenge_detected(page) or page.locator('input[name="password"]').count():
         return "blocked", "Instagram requires verification. No relationship click made."
@@ -2059,20 +2102,28 @@ class ActionRobot:
                     " do not mark this batch approved.")
             approved = []
             unresolved = []
+            unavailable = []
             for username in match["targets"]:
                 result = rechecked.get(username, {}).get("status")
                 if result is None:
                     result = journal.get(username, {}).get("status")
                 if result in ("ok", "already_not_following", "already_not_requested"):
                     approved.append(username)
+                elif (result == "profile_unavailable" and
+                      (username not in journal or (
+                          isinstance(journal[username], dict) and
+                          "click_intent" not in journal[username]))):
+                    unavailable.append(username)
                 else:
                     unresolved.append(username)
             match["approved_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             match["approved_usernames"] = approved
+            match["unavailable_usernames"] = unavailable
             match["unresolved_usernames"] = unresolved
             _atomic_json(self._review_batches_file_for(owner, account, task), entries)
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "approved_usernames": approved,
+                    "unavailable_usernames": unavailable,
                     "unresolved_usernames": unresolved, "approved_at": match["approved_at"]}
 
     def recheck_history(self, data):
@@ -2605,6 +2656,7 @@ class ActionRobot:
                                         for x in rows.values())
             already_not_requested = sum(x.get("status") == "already_not_requested"
                                         for x in rows.values())
+            unavailable = sum(x.get("status") == "profile_unavailable" for x in rows.values())
             reviewed = sum(x.get("status") in ("review", "error", "blocked") for x in rows.values())
             issues = [{"username": u, "status": rows[u].get("status", "pending"),
                        "issue": rows[u].get("issue", ""),
@@ -2615,7 +2667,8 @@ class ActionRobot:
                       for u in self.targets if rows[u].get("issue")]
             ignored = sum(u in protected for u in self.targets)
             skipped = sum(u in self.skipped for u in self.targets)
-            completed_states = ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
+            completed_states = ("ok", "already_not_following", "already_not_requested",
+                                "profile_unavailable", "review", "error", "blocked")
             processed = sum(rows[u].get("status") in completed_states
                             or u in protected or u in self.skipped for u in self.targets)
             pending = sum(u not in protected and u not in self.skipped and
@@ -2629,6 +2682,7 @@ class ActionRobot:
                     "pending": pending, "successful": successful,
                     "already_not_following": already_not_following,
                     "already_not_requested": already_not_requested,
+                    "profile_unavailable": unavailable,
                     "errors": reviewed, "protected": ignored, "skipped": skipped,
                     "issue_count": len(issues), "issues": issues,
                     "attempted_usernames": attempted_usernames,
@@ -3183,7 +3237,8 @@ class ActionRobot:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    if result not in ("ok", "already_not_following", "already_not_requested"):
+                    if result not in ("ok", "already_not_following", "already_not_requested",
+                                      "profile_unavailable"):
                         if self.review_only:
                             # Read-only automatic review should check the rest
                             # of the batch, not demand one-by-one manual work.
@@ -3218,7 +3273,8 @@ class ActionRobot:
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     (rechecked.get(u, {}).get("status") if self.review_only
                                      else journal.get(u, {}).get("status"))
-                                    not in ("ok", "already_not_following", "already_not_requested")
+                                    not in ("ok", "already_not_following", "already_not_requested",
+                                            "profile_unavailable")
                                     for u in self.targets)
                     if not stopped_for_review:
                         self.status = "partial" if remaining else "complete"
