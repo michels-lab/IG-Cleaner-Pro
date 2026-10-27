@@ -3233,7 +3233,8 @@ class ActionRobot:
                                                prepared_item.get("status") == "prefetched"),
                                 on_pre_click=lambda phase:
                                     self._persist_action_click_intent(
-                                        journal, path, user, phase))
+                                        journal, path, user, phase),
+                                use_reference_transport=(self.task == "unfollow"))
                     except Exception as exc:
                         if (self.cancel_requested and self.stop_event.is_set() and
                                 str(exc).startswith("Owner stopped the batch before the relationship click;")):
