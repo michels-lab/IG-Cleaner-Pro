@@ -20,6 +20,13 @@ Earlier branch CI provided independent compact/wide screenshots at other commits
 - `tools/run_android_about_ui.sh` now demands exactly four native Home/About PNGs after TWO emulator sizes and all 12 instrumentation tests each size, preserving real emulator + native UI proof.
 - `tests/test_android_visual_transfer.py` regression fails on the original three `screenshot("about", ...)` repeated captures, refuses missing/partial output, incorrect physical viewport, placeholder PNG and refuses to touch existing owner files.
 
+
+## Follow-up at CI head 6e8dc2c (2026-10-27)
+
+Second exact-head CI failure (Android About workflow 40444904289 on d3add152) exposed downstream adapter drift: tools/create_master_visual_manifest.py still selected the old about-compact-author.png even though actual Android capture and source manifest correctly produced about-compact-complete.png (and wide). Android native tests reported 12/12 each viewport with four real screenshot transfers; the manifest gate then correctly refused a mismatched section.
+
+The same active PR #259 now updates this adapter to require complete for Android while preserving desktop initial. It demands exactly four distinct screenshot bytes, rejects wrong platform and adds negative tests for legacy eight-frame manifests, obsolete author section, and duplicate image pixels under different labels. Exact-head CI must rerun. No past green check can certify this new SHA. No release is claimed.
+
 ## Required exact-source gates
 
 The root-cause repair is NOT done until this fix PR passes the actual Android visual workflow and its exact-commit Android manifest/digest gate, original no-click Android Developer/runtime, installed Windows public/Developer, Desktop UI and general RLS/tests. Only then merge and allow the ONE governed official FINAL v120.67 publisher to rerun independently on the new exact head. The failed original publisher may not be labeled success or bypassed.
