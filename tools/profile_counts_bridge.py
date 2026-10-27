@@ -21,6 +21,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot, ProtectedBatchCollision
+from live_relationship_snapshot import LiveRelationships
 from robot_interlock import ActionSessionBusy
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
@@ -68,6 +69,7 @@ class Collector:
         self.queue_source = ""
         self.current_profile = ""
         self.actions = None
+        self.live_relationships = None
         self.import_stage = None  # ephemeral, owner-scoped upload until commit
         self.audit_mode = "first_pass"
         self.audit_cycle = None
@@ -163,6 +165,8 @@ class Collector:
         with self.browser_admission, self.lock:
             if self.actions and self.actions.worker and self.actions.worker.is_alive():
                 raise ValueError("An Instagram action robot is running. Pause it before Profile Counts.")
+            if self.live_relationships and self.live_relationships.worker and self.live_relationships.worker.is_alive():
+                raise ValueError("Pause the live Followers/Following verification before Profile Counts.")
             if use_stage:
                 stage = self.import_stage
                 if (not stage or stage["owner"] != owner or stage["account"] != account or
@@ -264,6 +268,8 @@ class Collector:
         with self.browser_admission, self.lock:
             if self.actions and self.actions.worker and self.actions.worker.is_alive():
                 raise ValueError("Pause the active Instagram action robot before starting Profile Counts.")
+            if self.live_relationships and self.live_relationships.worker and self.live_relationships.worker.is_alive():
+                raise ValueError("Pause the live Followers/Following verification before Profile Counts.")
             if self.worker and self.worker.is_alive():
                 raise ValueError("A collection is already running. Stop it before starting another.")
             self.owner, self.account, self.usernames = owner, account, normalized
@@ -707,6 +713,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     developer_session_gate = threading.RLock()
     actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
     collector.actions = actions
+    live_relationships = LiveRelationships(collector, actions, collector.data_dir, collector.session_dir)
+    collector.live_relationships = live_relationships
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -773,7 +781,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -851,6 +859,12 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                         result = updater.install()
                     else:
                         raise ValueError("Unknown update action.")
+                elif self.path == "/api/actions/live-start":
+                    result = live_relationships.start(data)
+                elif self.path == "/api/actions/live-stop":
+                    result = live_relationships.pause(data)
+                elif self.path == "/api/actions/live-results":
+                    result = live_relationships.results(data)
                 elif self.path == "/api/actions/history":
                     result = actions.attempted_history(data)
                 elif self.path == "/api/actions/review-batch":
