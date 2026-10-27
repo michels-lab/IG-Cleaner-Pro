@@ -1,3 +1,12 @@
+## v120.68 — GRANADA Pending Unfollow must verify or continue safely (FINAL staged, 2026-10-27)
+
+- **Owner-visible contract:** When the signed-in owner still follows an exact Instagram target, Unfollow performs a single previously approved action and independently checks same-target Follow / Follow Back before showing green OK. A target that still renders Following or cannot be safely confirmed becomes **Pending / yellow Review** with an explicit diagnostic; it is never reported as a successful Unfollow.
+- **No stalled batches / no second click:** Original click-intent WAL and uncertain action results persist before the tab is deferred. The next **different** eligible profile can proceed if authenticated owner identity and every Chrome tab's security state are positively safe. Known pre-click no-action issues also free their tabs. An Instagram challenge, wrong owner or unsafe browser stops the worker; no action is repeated automatically.
+- **Review integrity:** A later read-only observation cannot promote an earlier possibly clicked Unfollow or Cancel Pending to approved OK; original journal and protected/import/history records remain unchanged.
+- **Provenance:** [Functional source PR #261](https://github.com/michels-lab/IG-Cleaner-Pro/pull/261) merged as `8ee2f044fca52f335a3128d22f354d9a2eda9d49` after seven exact-head checks including installed Windows public/Developer and offline real Chromium tests. Official stable at staging: [v120.67](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67), 12 assets, [publisher 40487321040](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) SUCCESS. New v120.68 **NOT YET PUBLISHED**: must pass independent source-commit installed public+Developer Windows, production-signed Android twin APK co-install, rendered Desktop/Android, 12 assets/checksums and update-feed gates in a **new normal FINAL** publisher. No RC, no Google Play claim, no physical Instagram owner proof inferred.
+
+---
+
 ## v120.67 — GRANADA unavailable Instagram profile classification (FINAL publication staged, October 26, 2026 local)
 
 - **Real owner screenshot:** During successful Windows Unfollow batches, Instagram occasionally shows **“Esta página no está disponible”** for a target. The old profile-header wait misclassified this as blocked/Review, kept Chrome open and asked the owner for manual verification. This may indicate deactivation, changed handle, deletion, blocking or temporary unavailability; it is **not proof of permanent closure**.
