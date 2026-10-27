@@ -47,6 +47,8 @@ const {chromium}=require('playwright');
   await second.waitForLoadState('domcontentloaded');
   assert.equal(await second.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_second_123456');
   assert.equal(await second.evaluate(()=>igcWindowPinned),true);
+  assert.equal(await second.evaluate(()=>Boolean(robot&&actionBridge)),true,
+    'Detached window must retain both token-protected Profile Counts and Action bridges');
   assert.equal(await first.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_first_1234567');
   // Changing the default global active profile must not change the detached tab.
   await first.evaluate(()=>{
