@@ -13,6 +13,11 @@ import re
 from urllib.parse import urlparse
 
 try:
+    from .live_scan_settings import effective_settings
+except ImportError:
+    from live_scan_settings import effective_settings
+
+try:
     from .profile_counts_robot import valid_username
     from .profile_counts_instagram import signed_in_handle, challenge_detected
 except ImportError:
@@ -73,7 +78,8 @@ def read_live_friendship_list(page, expected_handle, relation, *,
                               max_pages=DEFAULT_MAX_PAGES,
                               page_size=DEFAULT_PAGE_SIZE,
                               on_page=None, on_progress=None,
-                              identities=False, on_rest=None, wait_ms=None):
+                              identities=False, on_rest=None, wait_ms=None,
+                              settings=None):
     """Read an ENTIRE followers/following membership set using paginated GET.
 
     identities=True returns {stable_numeric_instagram_id: username} for reliable
@@ -82,6 +88,12 @@ def read_live_friendship_list(page, expected_handle, relation, *,
     No partial results escape this function: 429/challenge/owner mismatch,
     cursor errors, duplicate IDs, budget or empty-page stalls all fail closed.
     """
+    safe = effective_settings(settings)
+    values = safe["values"]
+    # Configured only for bulk GET, not the Unfollow robot. Direct override
+    # page_size is supported by legacy tests, but saved settings take priority.
+    if settings is not None:
+        page_size = values["page_size"]
     expected = valid_username(expected_handle)
     if not expected or expected != expected_handle or relation not in ("followers", "following"):
         raise ValueError("Select an exact Instagram owner and a valid read-only list.")
@@ -221,9 +233,9 @@ def read_live_friendship_list(page, expected_handle, relation, *,
         # A full list may span hundreds of pages. Slow down consistently and
         # give Instagram an extended rest every 5 and every 25 pages.
         # No 429 retries, no proxy rotation and no challenge bypass.
-        delay_ms = (LONG_REST_MS if page_number % LONG_REST_EVERY_PAGES == 0
-                    else SHORT_REST_MS if page_number % SHORT_REST_EVERY_PAGES == 0
-                    else BASE_PAGE_WAIT_MS)
+        delay_ms = (values["long_rest_ms"] if page_number % values["long_every"] == 0
+                    else values["short_rest_ms"] if page_number % values["short_every"] == 0
+                    else values["page_delay_ms"])
         if on_rest is not None:
             on_rest(relation, page_number, delay_ms)
         if wait_ms is not None:
