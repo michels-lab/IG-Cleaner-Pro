@@ -1,36 +1,26 @@
 {
-  "version": "120.67",
-  "tag": "v120.67",
+  "version": "120.68",
+  "tag": "v120.68",
   "authorized": true,
   "authorization_source": "Owner's standing Operacion Granada condition: publish ONLY a normal official FINAL stable release after exact-source installed public+Developer Windows, production-signed Android public+Developer co-install, rendered UI, SHA-256 and updater-feed gates all succeed; no RC, beta or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
   "status": "requested",
-  "previous_stable_release": "v120.66",
-  "owner_acceptance_note": "Owner screenshot Oct 26 2026: real Windows robot Unfollow target page says Esta página no está disponible and Automation Center enters REVIEW/manual validation. Merged source PR #256 classifies a stable exact localized Instagram page-unavailable notice under correct target as profile_unavailable NO ACTION; closes tab/continues, separate blue unavailable count vs green OK/yellow Review, avoids fake Unfollow and preserves WAL for possible-click records. Original invalid journals fail closed and historical recheck tracks observed_unavailable without re-scanning. Source six exact-head CI gates passed; live owner acceptance for v120.67 remains open, no CI Instagram mutation. Only normal FINAL after full publisher gates.",
-  "requested_at": "2026-10-26",
-  "candidate_main_sha": "46eaf4858a7a784cf20de90fa9a20c3adf10a2cb",
+  "previous_stable_release": "v120.67",
+  "owner_acceptance_note": "Owner Oct 27 2026: for exact Instagram target still Following, perform only one authorized Unfollow, verify fresh Follow/Follow Back before OK; otherwise mark Pending/yellow Review and safely continue next target if session remains authenticated and no challenge. Never re-click uncertain WAL; proof of no-click issues releases tab. Merged source PR #261 after seven exact-head checks; owner real installed Windows/Chrome approval still PENDING. Only one normal FINAL v120.68 after all exact-source signed Windows/Android/Developer UI, checksum/update-feed publisher gates pass.",
+  "requested_at": "2026-10-27",
+  "candidate_main_sha": "8ee2f044fca52f335a3128d22f354d9a2eda9d49",
   "integrated_source_merge_shas": [
-    "46eaf4858a7a784cf20de90fa9a20c3adf10a2cb"
+    "8ee2f044fca52f335a3128d22f354d9a2eda9d49"
   ],
   "previous_publication": {
-    "tag": "v120.66",
-    "run": 40423739934,
-    "commit": "af291cc6687f527a36fe1d64f31c08615fe216c0",
-    "published_at": "2026-10-27T00:16:00Z",
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66"
+    "tag": "v120.67",
+    "run": 40487321040,
+    "commit": "2e0aaaafbe2444f6ea07eea3edce176cea1cd303",
+    "published_at": "2026-10-27T10:32:15Z",
+    "asset_count": 12,
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67"
   },
-  "failed_attempt_recovery": {
-    "original_attempt_run": 40443259064,
-    "original_attempt_commit": "bed8b620466cae87608775fa09be2a0c75e05782",
-    "reason": "Strict Android visual screenshot gate rejected duplicated identical About captures. Source PR #259 fixes Android capture and exact master adapter contracts; do not reuse old failed evidence.",
-    "retry_policy": "One normal FINAL v120.67 only after all exact merge SHA Windows+Android+Developer installed UI, signing, artifact integrity and updater checks succeed; never RC/prerelease or rewrite v120.66.",
-    "live_instagram_owner_acceptance": "pending; unrelated to automated release gate",
-    "second_attempt_run": 40484849226,
-    "second_attempt_commit": "02336fb5360f19eb342612b93546b0b1db7ef511",
-    "second_attempt_error": "Rendered-ui-qa downloaded native four-frame Android evidence but old verify_android_visual_release_evidence.py required eight; no successful FINAL publish receipt.",
-    "repair_scope": "Only release artifact integrity verifier, negative tests, CI coverage and audit. Preserve four real independent screenshots, SHA/APK binding, strict master visual gate and all unchanged user data.",
-    "next_attempt_rule": "Trigger one normal FINAL from new exact integrated main after passing feature CI and all release installation/signing/visual/integrity gates; do not reuse failed run 40484849226."
-  }
+  "release_note": "Separate v120.68 user-authorized FINAL attempt; previous v120.67 tag/assets remain immutable; no prerelease/RC and no live Instagram session touched by CI."
 }
