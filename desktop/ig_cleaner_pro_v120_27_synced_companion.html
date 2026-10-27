@@ -3817,7 +3817,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button type="button" class="btn" onclick="igcAutoLiveStop()">Detener consulta</button>
     <button type="button" class="btn" onclick="igcAutoLivePoll()">Ver última instantánea</button>
   </div>
-  <p id="igcAutoLiveStatus" class="note" role="status" aria-live="polite">Sin consulta nueva. Una instantánea anterior no demuestra el estado actual.</p>
+  <p id="igcRelLiveStatus" class="note" role="status" aria-live="polite">Sin consulta nueva. Una instantánea anterior no demuestra el estado actual.</p>
   <div id="igcAutoLiveTotals" class="note"></div>
   <div class="btnrow">
     <label for="igcAutoLiveKind">Mostrar lista</label>
@@ -15307,7 +15307,7 @@ function igcLiveScope(){
  return {...pair,expected_handle:ownInstagramHandle()};
 }
 function igcLiveMessage(message){
- const el=document.getElementById("igcAutoLiveStatus");
+ const el=document.getElementById("igcRelLiveStatus");
  if(el)el.textContent=String(message||"");
 }
 window.igcAutoLiveVerify=async function(){
