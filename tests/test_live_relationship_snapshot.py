@@ -106,9 +106,9 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
         api.sync_playwright=lambda:cm
         pkg=ModuleType("playwright")
         pkg.sync_api=api
-        with patch.dict(sys.modules,{"playwright":pkg,"playwright.sync_api":api}), \\
-             patch("tools.live_relationship_snapshot.preserve_instagram_auth_page",return_value=True), \\
-             patch("tools.live_relationship_snapshot._find_verified_owner_tab",return_value=(tab,None)), \\
+        with patch.dict(sys.modules,{"playwright":pkg,"playwright.sync_api":api}), \
+             patch("tools.live_relationship_snapshot.preserve_instagram_auth_page",return_value=True), \
+             patch("tools.live_relationship_snapshot._find_verified_owner_tab",return_value=(tab,None)), \
              patch("tools.live_relationship_snapshot.read_live_friendship_list",side_effect=[first,second]) as read:
             self.robot._run()
         return read
