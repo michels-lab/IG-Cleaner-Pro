@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 try:
-    from tools.profile_lists_live import read_live_friendship_list, LiveListsUnavailable
+    from tools.profile_lists_live import read_live_friendship_list, LiveListsUnavailable, LiveListsRateLimited
 except ImportError:
     from profile_lists_live import read_live_friendship_list, LiveListsUnavailable
 
@@ -141,6 +141,63 @@ class LiveFriendshipListTests(unittest.TestCase):
         for packet in bad:
             with self.subTest(packet=packet),self.assertRaises(LiveListsUnavailable):
                 self.scan(self.page([packet]),identities=True)
+
+    def test_slow_paced_batches_and_long_rest_around_25_pages(self):
+        packets=[
+            {"members":[{"id":str(i+1),"username":"person"+str(i)}],
+             "next":("c"+str(i+1)) if i<25 else None,
+             "has_more":i<25}
+            for i in range(26)
+        ]
+        page=self.page(packets)
+        rests=[]
+        observed=self.scan(
+            page,identities=True,
+            on_rest=lambda kind,index,wait_ms: rests.append((kind,index,wait_ms)))
+        self.assertEqual(len(observed),26)
+        self.assertEqual(len(rests),25)
+        self.assertEqual(rests[0],("followers",1,2500))
+        self.assertEqual(rests[4],("followers",5,12000))
+        self.assertEqual(rests[24],("followers",25,90000))
+        self.assertEqual(page.wait_for_timeout.call_count,25)
+        self.assertEqual(page.wait_for_timeout.call_args_list[24].args,(90000,))
+        page.goto.assert_not_called()
+
+    def test_rate_limit_429_403_feedback_stops_immediately_and_honors_retry_after(self):
+        for reason in ("http_429","http_403","feedback_required","http_503"):
+            with self.subTest(reason=reason):
+                page=self.page([{"error":reason,"retry_after":"7200"}])
+                with self.assertRaises(LiveListsRateLimited) as caught:
+                    self.scan(page,identities=True)
+                self.assertEqual(caught.exception.code,reason)
+                self.assertEqual(caught.exception.wait_seconds,7200)
+                self.assertEqual(page.evaluate.call_count,1)
+                page.wait_for_timeout.assert_not_called()
+                page.goto.assert_not_called()
+
+    def test_429_cooldown_never_shorter_than_30_minutes(self):
+        page=self.page([{"error":"http_429","retry_after":"15"}])
+        with self.assertRaises(LiveListsRateLimited) as caught:
+            self.scan(page,identities=True)
+        self.assertEqual(caught.exception.wait_seconds,1800)
+
+    def test_rest_can_be_cancelled_without_requesting_next_page(self):
+        page=self.page([
+            {"members":[{"id":"100","username":"a"}],
+             "next":"newcursor","has_more":True},
+            {"members":[{"id":"200","username":"b"}],
+             "next":None,"has_more":False},
+        ])
+        rest=[]
+        def interrupt(wait_ms):
+            rest.append(wait_ms)
+            raise RuntimeError("owner stopped during safety pause")
+        with self.assertRaisesRegex(RuntimeError,"owner stopped"):
+            self.scan(page,identities=True,wait_ms=interrupt)
+        self.assertEqual(rest,[2500])
+        self.assertEqual(page.evaluate.call_count,1)
+        page.wait_for_timeout.assert_not_called()
+
 
 if __name__=="__main__":
     unittest.main()

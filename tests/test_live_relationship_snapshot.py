@@ -12,6 +12,7 @@ from types import ModuleType
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"tools"))
 from live_relationship_snapshot import LiveRelationships
+from profile_lists_live import LiveListsRateLimited
 from profile_actions import _atomic_json
 
 
@@ -160,6 +161,47 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
         self.assertFalse(prior["complete"])
         self.assertEqual(prior["captured_at"],"2026-10-27T11:00:00Z")
         self.assertIn("historical",self.robot.message.lower())
+
+    def test_instagram_429_sets_persistent_owner_specific_cooldown(self):
+        self.sample()
+        self._run_fake({"100":"mutual"},
+                       LiveListsRateLimited("http_429",7200))
+        self.assertEqual(self.robot.status,"blocked")
+        self.assertIn("No automatic retries",self.robot.message)
+        self.assertGreater(self.robot._cooldown_remaining(**self.scope),7100)
+        self.assertEqual(
+            self.robot.results({**self.scope,"list":"not_following_back"})["usernames"],
+            ["d","e"])
+        params={**self.scope,"expected_handle":"my.account",
+                "read_only_consent":True,
+                "confirmation":"live-relationships:my.account"}
+        with self.assertRaisesRegex(ValueError,"cooldown"):
+            self.robot.start(params)
+        # A fresh app process must respect the same saved cooldown file.
+        fresh=LiveRelationships(self.collector,self.actions,
+            self.root/"data",self.root/"session")
+        with self.assertRaisesRegex(ValueError,"cooldown"):
+            fresh.start(params)
+        self.assertGreater(fresh._cooldown_remaining("app-user","other-ig"),7100)
+        # Shared Chrome cannot be used to hop accounts and avoid a 429.
+        self.assertGreater(fresh._cooldown_remaining("other-app-user","another-ig"),7100)
+        global_record=json.loads(fresh._global_cooldown_file().read_text())
+        self.assertTrue(global_record["no_automatic_retry"])
+        self.assertEqual(global_record["reason"],"http_429")
+
+    def test_successful_scan_has_minimum_repeat_spacing_without_mutation(self):
+        self._run_fake({"100":"a"},{"100":"a"})
+        self.assertEqual(self.robot.status,"complete")
+        self.assertGreater(self.robot._cooldown_remaining(**self.scope),890)
+        result=self.robot.results({**self.scope,"list":"followers"})
+        self.assertEqual(result["usernames"],["a"])
+        self.assertTrue(result["complete"])
+        self.assertGreater(result["cooldown_seconds_remaining"],890)
+        params={**self.scope,"expected_handle":"my.account",
+                "read_only_consent":True,
+                "confirmation":"live-relationships:my.account"}
+        with self.assertRaisesRegex(ValueError,"cooldown"):
+            self.robot.start(params)
 
     def test_owner_pause_preserves_last_complete(self):
         self.sample()
