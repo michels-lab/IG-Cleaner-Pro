@@ -1,3 +1,8 @@
+## Current handoff — 2026-10-27, after #275 source merge
+
+- Official published stable: **[v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70)** with 12 assets, publisher run 40555013922 green 5/5. Manifest and one-time authorization reconciled here; the next reserved v120.71 is **not published or authorized yet**.
+- #274 and #275 configurable live-read safety panels are in merged **source**, not the v120.70 installer. Future v120.71 must pass exact source Windows installed public/Developer, Android signed public/Developer, visual, checksum and updater gates. No owner real Chrome live scan/Unfollow/Cancel acceptance claims. Tests on PR #275 were 6/6 SUCCESS.
+
 ## 2026-10-26 — GRANADA v120.67 publication BLOCKED by duplicate Android visual evidence (root cause fixed in source branch)
 
 - Official [publisher run 40443259064](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259064) started on exact merged `bed8b620466cae87608775fa09be2a0c75e05782`. Windows installed public/Developer and Android public+Developer installed gates passed, but exact-source [Android About workflow 40443259036](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259036) failed **`screenshot[1]: duplicate screenshot bytes`**. Gate remains required; NO v120.67 release is confirmed. Official published stable remains **v120.66**.
