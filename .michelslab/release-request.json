@@ -1,12 +1,12 @@
 {
   "version": "120.66",
   "tag": "v120.66",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Michel standing Operacion Granada authority: only an official FINAL stable release AFTER installed Windows public/Developer, production-signed Android twins, exact-head browser+UI, SHA-256 integrity, release-feed and user data safety all pass. No RC/beta.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.65",
   "owner_acceptance_note": "Owner reports v120.65 Windows Unfollow works but Chrome closed before checking last target. v120.66 stages merged PR #253 Review-only Chrome recheck of unresolved/untouched and independently confirmed, recent no-click retry for exact owner-approved subset; final modal highlights verified OK green, Review yellow, unchecked grey. Source offline and installed Windows CI passed on PR #253. Actual v120.66 owner signed-in Windows Chrome check and real Cancel Pending physical acceptance remain open, original click WAL/protected/history untouched. Normal FINAL only, no RC/beta.",
   "requested_at": "2026-10-26",
@@ -20,5 +20,11 @@
     "commit": "8570e12836afd3fde966eb8c590c7604aaf224a8",
     "published_at": "2026-10-26T23:09:53Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65"
-  }
+  },
+  "published_run": 40423739934,
+  "published_commit": "af291cc6687f527a36fe1d64f31c08615fe216c0",
+  "published_at": "2026-10-27T00:16:00Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66",
+  "publication_verified_assets": 12,
+  "publication_verification": "Official v120.66 FINAL governed publisher 40423739934 completed SUCCESS on exact af291cc source; all five jobs succeeded, 12 SHA256-digested assets. Installed Windows public/Developer, production-signed Android coexistence, rendered Desktop/Android and updater feed checked. Real owner last-profile and Cancel Pending acceptance still pending."
 }
