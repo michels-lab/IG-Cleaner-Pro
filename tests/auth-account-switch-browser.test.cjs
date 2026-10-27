@@ -53,6 +53,14 @@ const {chromium}=require("playwright");
       JSON.stringify(snapshot)+"; "+error.message);
   });
   assert(await modal.isVisible(),"Switch Account must open a chooser, not sign out");
+  // A legitimate startup synchronization can be in progress when the chooser
+  // is opened. The chooser is read-only; selecting an account is not permitted
+  // until both the action robot and account sync report safe admission.
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().ready===true,
+    null,{timeout:20000}).catch(async error=>{
+    const gate=await page.evaluate(()=>window.igcSyncSwitchState?.()||{code:"missing"});
+    throw new Error("Switch Account remained unsafe to select ("+gate.code+"): "+error.message);
+  });
   const options=modal.locator("button");
   assert((await options.count())>=4,"Two logins, add and cancel expected");
   await options.filter({hasText:"second@example.test"}).click();
@@ -80,7 +88,22 @@ const {chromium}=require("playwright");
   assert.equal(stored.review,'["review-stays-local"]');
   assert(!errors.some(x=>/igcSyncSwitchAccount|activateRemembered|SyntaxError/.test(x)),
       "No Switch Account script errors: "+JSON.stringify(errors));
-  console.log("PASS: real Chromium shows account chooser, selects second user, retains first login and reviews");
+  // Simulate a real action robot starting AFTER the chooser was displayed.
+  // The account button must not close it or change session mid-action.
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().ready===true,
+    null,{timeout:20000});
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const protectedChooser=page.locator("#igcLoginChooser");
+  await protectedChooser.waitFor({state:"visible",timeout:5000});
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>false});
+  assert.equal(await page.evaluate(()=>window.igcSyncSwitchState().code),"automation_active");
+  await protectedChooser.locator("button").filter({hasText:"first@example.test"}).click();
+  assert(await protectedChooser.isVisible(),"Robot action veto must preserve the chooser for later manual review");
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","Robot veto must not switch current saved owner");
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
+  await protectedChooser.getByText("Cancelar",{exact:true}).click();
+  console.log("PASS: real Chromium chooser supports startup sync, account change and late robot veto");
   await context.close();
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
