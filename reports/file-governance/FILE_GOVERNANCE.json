@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 334,
-  "classified_files_total": 330,
-  "docs_content_inspected": 75,
+  "tracked_files_total": 335,
+  "classified_files_total": 331,
+  "docs_content_inspected": 76,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 70,
+    "document": 71,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "287998fc26e6eaee7c0624b2fdd9a3b297df7161fec6661c7ebbd070f94a8d16",
+  "inventory_fingerprint": "5efa9f6ccf4a0ed8b5b04f27497eb03de117efd8699dd3b6df20d5001d0aa5ea",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "d06a519f4ff1cf7a5474f54b09ad6f97597d0f0c"
+      "blob": "c494b0f025fb17c6f28018ea9388db7afcf5eb27"
     },
     {
       "path": "README.md",
@@ -1277,6 +1277,13 @@
       "blob": "fb8b969846f66345393f3e393e472f594f4787e5"
     },
     {
+      "path": "docs/GRANADA_WINDOWS_UNFOLLOW_PENDING_CONTINUE_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "e435e9e6f72097211b5946577302b432562409a5"
+    },
+    {
       "path": "docs/INFRASTRUCTURE_AUDIT.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1841,7 +1848,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "407d8ea4887fd9f829e68faee59fb369fab7bad4"
+      "blob": "bb7d54aa8c474818f0f33b99830d32620a2bd009"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -2191,14 +2198,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7eea79d62635cf114d2d74a7b49d3ace4452075f"
+      "blob": "1416902645cbeed09e89c4039eaed2727db6e594"
     },
     {
       "path": "tools/profile_actions.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "97884b0974153d0e94a6fd7ec8fe9fdbbacb96c5"
+      "blob": "04b45980ed19264cfc8e4624670f70c84258e9c6"
     },
     {
       "path": "tools/profile_counts_audit.py",
