@@ -1,12 +1,15 @@
-"""Optional owner-approved, read-only Instagram relationship list snapshot.
+"""Read-only Instagram relationship lists from authenticated same-origin bulk pages.
 
-Based on the owner-provided same-origin friendships paging reference. This is
-not Profile Counts (individual people's numerical counts), does not mutate
-relationships, never exports cookies, and never infers a negative from partial
-or throttled results. Instagram may change or block this undocumented endpoint.
+Own implementation of the owner's supplied idea: download the two membership
+collections via sequential JSON cursor pages, compare stable numeric account IDs,
+not HTML profile visits. Do not copy third-party bundled code, take actions, send
+cookies elsewhere, or treat a partial result as complete.
+
+Instagram's private endpoints are undocumented and may refuse this read.
 """
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse
 
 try:
@@ -21,6 +24,16 @@ class LiveListsUnavailable(RuntimeError):
     """No complete, verifiable read-only list was acquired."""
 
 
+# A *page* is an API JSON response holding many members, not a user profile.
+# Instagram can return far fewer than the requested count; 250 pages cannot
+# safely be translated into "25,000 accounts". Bound both pages and records.
+DEFAULT_MAX_PAGES = 1500
+DEFAULT_PAGE_SIZE = 200
+MAX_UNIQUE_USERS = 100_000
+MAX_STALLED_PAGES = 8
+_NUMERIC_ID = re.compile(r"^[0-9]{1,30}$")
+
+
 def _verified_session(page, expected):
     uri = urlparse(getattr(page, "url", "") or "")
     if (uri.scheme != "https" or
@@ -32,34 +45,46 @@ def _verified_session(page, expected):
             "No live lists or account changes were performed.")
 
 
-def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
-                              on_page=None):
-    """Read a complete current followers/following list via owner's same-origin Chrome.
+def read_live_friendship_list(page, expected_handle, relation, *,
+                              max_pages=DEFAULT_MAX_PAGES,
+                              page_size=DEFAULT_PAGE_SIZE,
+                              on_page=None, on_progress=None,
+                              identities=False):
+    """Read an ENTIRE followers/following membership set using paginated GET.
 
-    Returns usernames only, never owner ID, session data, or raw network results.
-    'not in list' is only meaningful after every cursor page was validated.
-    This optional collector is independent of the existing rendered Profile
-    Counts robot and does not call any relationship mutation endpoint.
+    identities=True returns {stable_numeric_instagram_id: username} for reliable
+    cross-list membership comparison. The default returns a frozen set of names
+    for legacy read-only consumers. Never visits an individual target profile.
+    No partial results escape this function: 429/challenge/owner mismatch,
+    cursor errors, duplicate IDs, budget or empty-page stalls all fail closed.
     """
     expected = valid_username(expected_handle)
     if not expected or expected != expected_handle or relation not in ("followers", "following"):
         raise ValueError("Select an exact Instagram owner and a valid read-only list.")
-    if type(max_pages) is not int or max_pages < 1 or max_pages > 250:
-        raise ValueError("A read-only list is limited to 1–250 pages.")
+    if type(max_pages) is not int or not 1 <= max_pages <= DEFAULT_MAX_PAGES:
+        raise ValueError("Read-only bulk collection must have a 1–1500-page budget.")
+    if type(page_size) is not int or not 1 <= page_size <= DEFAULT_PAGE_SIZE:
+        raise ValueError("Read-only bulk collection uses 1–200 members per request.")
+    if type(identities) is not bool:
+        raise ValueError("Identity comparison must be explicitly enabled.")
+
     _verified_session(page, expected)
-    seen, cursor, usernames = set(), None, set()
+    seen_cursors, cursor = set(), None
+    names, id_to_name, name_to_id = set(), {}, {}
+    stalled = 0
     for page_number in range(1, max_pages + 1):
         if on_page is not None:
             on_page(relation, page_number)
         _verified_session(page, expected)
-        # Session-bound JS runs in the user's existing Instagram tab.
-        # It never returns ds_user_id, cookies, headers, or response body.
-        packet = page.evaluate("""async ({kind, cursor}) => {
-          const item=document.cookie.split('; ').find(x=>x.startsWith('ds_user_id='));
-          const id=item ? item.slice('ds_user_id='.length) : '';
-          if (!/^\\d{1,24}$/.test(id))return {error:'owner_id_not_available'};
-          const url=new URL('/api/v1/friendships/'+id+'/'+kind+'/',location.origin);
-          url.searchParams.set('count','100');
+        # ONLY one same-origin JSON request for a whole chunk of people.
+        # No GET to each person's profile; no POST / GraphQL mutations.
+        # Credentials remain in the owner's own Chrome context.
+        packet = page.evaluate("""async ({kind, cursor, pageSize}) => {
+          const cookie=document.cookie.split('; ').find(x=>x.startsWith('ds_user_id='));
+          const ownerId=cookie ? cookie.slice('ds_user_id='.length) : '';
+          if (!/^[0-9]{1,24}$/.test(ownerId))return {error:'owner_id_not_available'};
+          const url=new URL('/api/v1/friendships/'+ownerId+'/'+kind+'/',location.origin);
+          url.searchParams.set('count',String(pageSize));
           if(cursor)url.searchParams.set('max_id',cursor);
           try{
             const response=await fetch(url.toString(),{
@@ -72,46 +97,85 @@ def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
             const body=await response.json();
             if(!body||body.status!=='ok'||!Array.isArray(body.users))
               return {error:'unexpected_shape'};
-            return {usernames:body.users.map(u=>u?.username??null),
-                    next:body.next_max_id??null,has_more:body.has_more??null};
+            return {
+              members:body.users.map(u=>({
+                id:u?.pk??u?.id??u?.pk_id??null,
+                username:u?.username??null
+              })),
+              next:body.next_max_id==null?null:String(body.next_max_id),
+              has_more:body.has_more??null
+            };
           }catch{return {error:'read_failed'};}
-        }""", {"kind": relation, "cursor": cursor})
-        # Never let a hanging browser GET make Cancel appear permanently stuck.
-        # Each network page is bounded to 20 seconds in the existing Chrome tab.
+        }""", {"kind": relation, "cursor": cursor, "pageSize": page_size})
         if (not isinstance(packet, dict) or packet.get("error") or
                 packet.get("status") not in (None, "ok")):
             reason = packet.get("error") if isinstance(packet, dict) else "invalid_response"
             raise LiveListsUnavailable(
-                "Instagram live " + relation + " list unavailable (" + str(reason)[:40] +
-                "). List incomplete; no negative relationship conclusions.")
-        rows = packet.get("usernames")
-        if not isinstance(rows, list) or len(rows) > 100:
-            raise LiveListsUnavailable("Live list page was malformed; no conclusions.")
-        for item in rows:
-            user = valid_username(item)
-            if user is None or user != item:
-                raise LiveListsUnavailable("Invalid live list username; no conclusions.")
-            usernames.add(user.casefold())
-        next_cursor = packet.get("next")
-        # Only an explicit terminal pagination proof allows a NEGATIVE
-        # relationship inference. A missing has_more bit is not "false".
-        if packet.get("has_more") not in (True, False) or type(packet.get("has_more")) is not bool:
+                "Instagram's bulk " + relation + " request failed (" + str(reason)[:40] +
+                "). No incomplete/negative membership conclusions.")
+
+        members = packet.get("members")
+        # Support legacy read-only *test fixtures*, not incomplete live IDs:
+        # our actual Chrome JavaScript ALWAYS returns the members shape.
+        legacy = members is None and not identities
+        rows = packet.get("usernames") if legacy else members
+        if not isinstance(rows, list) or len(rows) > page_size:
+            raise LiveListsUnavailable("Malformed bulk list page; no conclusions.")
+        count_before = len(names)
+        for member in rows:
+            if legacy:
+                username, member_id = member, None
+            elif isinstance(member, dict):
+                username, member_id = member.get("username"), member.get("id")
+            else:
+                raise LiveListsUnavailable("Live list member is malformed.")
+            valid = valid_username(username)
+            if valid is None or valid != username:
+                raise LiveListsUnavailable("Invalid username in Instagram bulk page.")
+            name = valid.casefold()
+            if not legacy:
+                stable_id = str(member_id) if type(member_id) in (int, str) else ""
+                if not _NUMERIC_ID.fullmatch(stable_id):
+                    raise LiveListsUnavailable("Instagram did not supply stable member IDs.")
+                if stable_id in id_to_name and id_to_name[stable_id] != name:
+                    raise LiveListsUnavailable("Account identity changed during bulk scan.")
+                if name in name_to_id and name_to_id[name] != stable_id:
+                    raise LiveListsUnavailable("Conflicting account IDs during bulk scan.")
+                id_to_name[stable_id], name_to_id[name] = name, stable_id
+            names.add(name)
+
+        if len(names) > MAX_UNIQUE_USERS:
             raise LiveListsUnavailable(
-                "Instagram did not confirm pagination completeness; no negative conclusions.")
+                "Bulk list exceeded its 100,000-member memory safety budget. "
+                "No partial results are considered complete.")
+        if on_progress is not None:
+            on_progress(relation, len(names))
+        next_cursor = packet.get("next")
+        # Only an explicit terminal proof may support "not following back".
+        if type(packet.get("has_more")) is not bool:
+            raise LiveListsUnavailable(
+                "Instagram omitted pagination completeness; no negative conclusions.")
         if not next_cursor:
             if packet["has_more"] is True:
-                raise LiveListsUnavailable(
-                    "Instagram indicated more profiles without a cursor; list incomplete.")
+                raise LiveListsUnavailable("Instagram indicates more members but no cursor.")
             _verified_session(page, expected)
-            return frozenset(usernames)
+            return dict(id_to_name) if identities else frozenset(names)
         if packet["has_more"] is False:
-            raise LiveListsUnavailable("Instagram returned a cursor with has_more=false; list incomplete.")
+            raise LiveListsUnavailable("Instagram supplied cursor but has_more=false.")
         if not isinstance(next_cursor, str) or len(next_cursor) > 512:
-            raise LiveListsUnavailable("Invalid pagination cursor; list incomplete.")
-        if next_cursor in seen or next_cursor == cursor:
-            raise LiveListsUnavailable("Repeated live list cursor; list incomplete.")
-        seen.add(next_cursor)
+            raise LiveListsUnavailable("Invalid Instagram bulk pagination cursor.")
+        if next_cursor == cursor or next_cursor in seen_cursors:
+            raise LiveListsUnavailable("Repeating Instagram bulk cursor; scan incomplete.")
+        stalled = stalled + 1 if count_before == len(names) else 0
+        if stalled >= MAX_STALLED_PAGES:
+            raise LiveListsUnavailable(
+                "Instagram bulk pagination stopped yielding new accounts; "
+                "no false negative conclusions.")
+        seen_cursors.add(next_cursor)
         cursor = next_cursor
-        page.wait_for_timeout(800)  # no aggressive pagination / hammering
+        page.wait_for_timeout(800)  # conservative read-only pacing
     raise LiveListsUnavailable(
-        "Live list reached its 250-page safety limit. No negative conclusions.")
+        "Bulk " + relation + " pagination remained unfinished after " +
+        str(max_pages) + " pages (" + str(len(names)) +
+        " unique accounts received). This was NOT a per-profile scan. "
+        "No partial/negative conclusions.")
