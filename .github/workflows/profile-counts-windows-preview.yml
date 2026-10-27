@@ -54,6 +54,8 @@ on:
       - 'packaging/profile-counts/**'
       - 'packaging/chrome-extension/**'
       - 'packaging/windows-installer/**'
+      - 'tools/installer_process_guard.ps1'
+      - 'tests/test_installer_process_guard.ps1'
       - 'tools/build_windows_installer.ps1'
       - 'tools/test_windows_installer.ps1'
       - 'tests/windows-installer-contract.py'
@@ -114,6 +116,8 @@ on:
       - 'packaging/profile-counts/**'
       - 'packaging/chrome-extension/**'
       - 'packaging/windows-installer/**'
+      - 'tools/installer_process_guard.ps1'
+      - 'tests/test_installer_process_guard.ps1'
       - 'tools/build_windows_installer.ps1'
       - 'tools/test_windows_installer.ps1'
       - 'tests/windows-installer-contract.py'
@@ -152,6 +156,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup dependency install failed." }
           python tests/windows-installer-contract.py
           if ($LASTEXITCODE -ne 0) { throw "Installer/brand/EULA contract failed." }
+      - name: Verify bounded installer process guard (success, failure, hang)
+        shell: pwsh
+        run: |
+          ./tests/test_installer_process_guard.ps1
       - name: Verify Pending import, focus, third-batch and no-click replay protections
         shell: pwsh
         run: |
@@ -259,8 +267,8 @@ jobs:
           # A --windowed PyInstaller application is a GUI process; calling it
           # with & does not reliably wait or refresh PowerShell's LASTEXITCODE.
           $candidate = (Resolve-Path ".\dist\InstaCleanerPro.exe").Path
-          $result = Start-Process -FilePath $candidate -ArgumentList "--healthcheck" -Wait -PassThru
-          if ($result.ExitCode -ne 0) { throw "Integrated Windows executable healthcheck exited $($result.ExitCode)." }
+          . ./tools/installer_process_guard.ps1
+          Invoke-IgcBoundedProcess -Path $candidate -Arguments @("--healthcheck") -Label "Frozen PyInstaller healthcheck" -TimeoutSeconds 100
       - name: Bundle integrated one-click application and instructions
         shell: pwsh
         run: |
@@ -301,6 +309,16 @@ jobs:
           ./tools/build_windows_developer_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version -AllowCurrentStablePreview
           ./tools/test_windows_developer_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v$version.exe" -Version $version
           if ($LASTEXITCODE -ne 0) { throw "Independent Developer Windows Setup/install/launch/uninstall QA failed." }
+      - name: Retain Windows installer diagnostics even on failed QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ig-cleaner-installer-diagnostics-${{ github.sha }}
+          path: |
+            artifacts/IG-Cleaner-Pro-Installer-InstallLog.txt
+            artifacts/IG-Cleaner-Pro-Developer-Installer-InstallLog.txt
+          retention-days: 14
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: Insta-Cleaner-Windows-Integrated-PREVIEW-${{ github.sha }}

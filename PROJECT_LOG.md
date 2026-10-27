@@ -1,3 +1,7 @@
+## 2026-10-27 — GRANADA: bounded Windows installer QA rebased after FINAL v120.69 source merge
+
+- Exact original #267 head `c71b7b197fe612404977eb8063563f38b4f85b6a` passed six required CI jobs incl installed Windows, but it predates source v120.69. Merge this guarded process watchdog without rewriting app HTML, release-version metadata or owner-account history. Real Windows Setup `Start-Process -Wait` had no per-child deadline; the common watchdog enforces bounded 75–150s waits, PID/time reporting and process-tree kill. Source tests include a real sleeping child timeout and each Windows CI workflow retains logs on failure. Original v120.69 publisher run 40530976884 on tagged candidate 153fa2bd is independent and must not be altered by this source branch; exact new HEAD tests pending.
+
 ## 2026-10-27 — GRANADA user-requested v120.69 FINAL staging: independent live relationship verification
 
 - User requires **Verify live Followers and Following** immediately without ZIP in Windows Automations. Code source #266 merged with seven exact-head CI gates green; account chooser #265 merged with six. Last official v120.68 published with 12 assets via successful publisher 40499536879 at exact tagged SHA `2943e735`.
