@@ -360,5 +360,34 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert(texts.some(t=>t.includes('FIRST PASS IS READ-ONLY')));
  assert(texts.some(t=>t.includes('Uncertain clicks are never retried')));
  assert.match(source,/id="igc-batch-review-result-colors"/);
+
+ // Owner screenshot 2026-10-26: Instagram reports unavailable page, not
+ // a robot failure. Keep separate colors and do not invent an Unfollow.
+ batchFixture={id:'unavailable-display',targets:['verified.user','unavailable.user','uncertain.user'],
+  approved_at:null,action_results:{
+   'verified.user':{status:'ok',message:'Unfollow verified'},
+   'unavailable.user':{status:'profile_unavailable',message:'Instagram page unavailable; no click'},
+   'uncertain.user':{status:'review',message:'Possible click remains uncertain'}},
+  recheck_results:{}};
+ p.status='complete';p.running=false;p.owner=context.owner;p.account=context.active;
+ p.task='unfollow';p.profile_unavailable=1;p.errors=1;p.successful=1;
+ ctx.window.igcAutoChoose('unfollow');
+ await ctx.window.igcAutoPoll();
+ assert.match(elements.igcAutoBatchApprovalDetails.textContent,/1 unavailable \(no action\)/);
+ ctx.window.igcAutoShowBatchReview();
+ assert(lastReviewDialog?.open);
+ const unavailableTable=lastReviewDialog.children
+   .find(x=>x.tag==='div'&&x.children.some(c=>c.tag==='table')).children[0];
+ const colored=unavailableTable.children.find(x=>x.tag==='tbody').children;
+ assert.equal(colored[0].className,'igc-result-ok','Verified action must remain green');
+ assert.equal(colored[1].className,'igc-result-unavailable','Unavailable must be neither green nor yellow Review');
+ assert.match(colored[1].children[1].textContent,/Unavailable · no action/);
+ assert.equal(colored[2].className,'igc-result-review','Possible click remains yellow');
+ assert(lastReviewDialog.children.some(c=>c.textContent?.includes('1 unavailable (no click)')),
+   'Modal summary must count separate unavailable profile');
+ lastReviewDialog.close();
+ assert.equal(elements.igcAutoApproveBatch.disabled,false,
+   'Unavailable profile must not require individual manual Review before batch approval');
+
  console.log('Automations execution + Review-only recovery, green/yellow results and safe retry: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
