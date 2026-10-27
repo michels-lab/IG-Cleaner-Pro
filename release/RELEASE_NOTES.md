@@ -1,3 +1,8 @@
+## v120.71 — conditional NORMAL FINAL candidate (NOT YET PUBLISHED)
+
+- Merged #274/#275 configurable Windows read-only Instagram list-reader safety: expanded Settings, Recommended/More cautious/Custom presets, seven guarded per-account controls and saved exact-owner/workspace verification before scan. On-screen progress and Stop remain; 429/403/503/feedback-required cooldown cannot be disabled. App suggestions are not Meta-imposed quotas and cannot guarantee no account restrictions. No automatic action clicks from the list scan.
+- Align all platform versions and source artifacts for exact-SHA installation/signing/visual/checksum/updater gates. **Do not advertise as released until governed publisher succeeds**; v120.70 is still the official published FINAL. User's physical Instagram acceptance, complete Followers/Following counts and Unfollow/Cancel Pending success remain unverified.
+
 ## v120.70 — Published NORMAL FINAL (2026-10-27)
 
 - **Available now:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published 2026-10-27T18:05:15Z, `prerelease=false`, exact tag `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`, five-of-five mandatory [publisher gates](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) successful and twelve checksum-tracked public/Developer Windows and Android assets.

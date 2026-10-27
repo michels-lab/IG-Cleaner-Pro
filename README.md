@@ -8,14 +8,14 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**Note on pending source changes:** the recommended/cautious/custom configurable bulk-scan safety settings (#274 and #275) have been merged **after** v120.70 publication; they are **not** in v120.70's downloadable installer. They require a separately tested FINAL release. Full live account acceptance is pending.
+**Note on pending source changes:** the recommended/cautious/custom configurable bulk-scan safety settings (#274 and #275) have been merged **after** v120.70 publication; they are **not** in v120.70's downloadable installer. They are staged in the separately tested v120.71 FINAL candidate (not yet published). Full live account acceptance is pending.
 
 
 **v120.70 — official stable GitHub release, published October 27, 2026 (UTC).** [Download official v120.70 and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70) · [successful FINAL publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) · exact tagged commit `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`. Windows public/Developer Setup installers, signed Android public/Developer APKs and standalone Desktop HTML/ZIP are available.
 
 **Current published stable: v120.70. Next reserved version: v120.71, not published.**
 
-v120.71 is **not authorized** for publication. Only the next separately authorized normal FINAL may be released, after exact-source installed Windows/Android, visual, production-signing, checksum and updater-feed gates. No RC or beta.
+**v120.71 is an authorized NORMAL FINAL candidate, not yet published.** Publication is conditional on fresh exact-SHA installed Windows/Android public+Developer, visual QA, signing, checksums and updater gates. No RC or beta. Only the next separately authorized normal FINAL may be released, after exact-source installed Windows/Android, visual, production-signing, checksum and updater-feed gates. No RC or beta.
 
 **New in v120.70 (Windows):** **Automations → Verify live Followers and Following** reads both lists using bulk same-origin authenticated Instagram JSON pages, **not individual target profile visits**, without a ZIP. Compared account identities use numeric Instagram IDs to handle username renames. Corrects the **real user's v120.69 250-page failure** with up to 200 requested members per JSON page, a 1500-page/100k-member bound, and fail-closed incomplete results. No automatic Unfollow, no cookie export, and no overwriting prior complete historical snapshots.
 

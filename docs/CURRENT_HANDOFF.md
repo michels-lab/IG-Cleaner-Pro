@@ -1,3 +1,7 @@
+## 2026-10-27 — v120.71 gated FINAL staging after #275 merge
+
+- Current official stable remains [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70); next v120.71 is source candidate with owner-authorized conditional governance only. Validate current exact source Windows installed public/Developer, Android signed public/Developer, Desktop+Android visuals, checksum, updater and nonprerelease publisher before announcing anything downloadable. Configurable safe live reads source #274/#275 passed six PR tests but have no observed real-owner Instagram read or rate-limit guarantees. Preserve ZIP/histories/visited ledger/action WAL and user data.
+
 ## Current handoff — 2026-10-27, after #275 source merge
 
 - Official published stable: **[v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70)** with 12 assets, publisher run 40555013922 green 5/5. Manifest and one-time authorization reconciled here; the next reserved v120.71 is **not published or authorized yet**.

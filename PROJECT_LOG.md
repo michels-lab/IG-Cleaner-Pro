@@ -1,3 +1,7 @@
+## 2026-10-27 — GRANADA v120.71 normal FINAL candidate (NOT published)
+
+- Post-v120.70 source #274/#275: Recommended, cautious and bounded custom bulk-list read settings, owner/workspace-scoped and visible by default. Exact-head #275 CI 6/6 green; source-only behavior has not yet reached official Windows installer. Candidate aligns Desktop UI v120.71, Android public+Developer 12071, Windows public+Developer artifacts, checksum/updater source manifest and one-time governed request. Release v120.70 remains official published stable; **no v120.71 release claim until publisher gates green and GitHub normal FINAL tag exists**. Real Instagram lists, Unfollow and Cancel Pending owner acceptance are still open; never bypass challenge/rate-limit cooling or user history.
+
 ## 2026-10-27 — GRANADA verified official v120.70 and integrated scan control source
 
 - GitHub v120.70 **normal FINAL** was published with 12 SHA-256 tracked assets on tag `55a9f1d0865c4280d9ef0f9866b51476f8b8c786` after governed run `40555013922` passed 5/5. Corrected manifest and consumed the obsolete pending authorization to prevent republishing.
