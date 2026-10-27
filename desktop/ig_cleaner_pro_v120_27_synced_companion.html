@@ -14264,18 +14264,47 @@ function makeAccountButton(label,action,container){
  button.textContent=label;button.style.width='100%';button.style.textAlign='left';
  button.addEventListener('click',action);container.appendChild(button);return button;
 }
+// A busy cloud sync must not make the chooser silently disappear. Merely
+// viewing remembered accounts is read-only. Every actual account change is
+// admitted again at the click boundary, with the original safety guards.
+function accountSwitchAdmission(){
+ if(window.igcAutoSwitchGuard?.()===false)return {
+  code:'automation_active',message:'Pause the Instagram robot before switching accounts.'};
+ if(window.AndroidBridge)return {
+  code:'android_account_screen',message:'On Android, switch accounts from the Account screen.'};
+ if(S.busy)return {
+  code:'sync_busy',message:'Account sync is running. You can inspect saved accounts, but wait until sync finishes before switching.'};
+ return {code:'ready',message:''};
+}
+// Read-only diagnostic for the rendered UI contract. Never expose tokens or
+// account identities and never turn a denied operation into an automatic retry.
+window.igcSyncSwitchState=()=>{
+ const gate=accountSwitchAdmission();
+ return {ready:gate.code==='ready',code:gate.code};
+};
 window.igcSyncSwitchAccount=function(){
- if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización antes de cambiar de cuenta.','warn');return}
- if(window.AndroidBridge){status('En Android, cambia de cuenta desde la pantalla Cuenta.','warn');return}
- if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return}
+ const entry=accountSwitchAdmission();
+ if(entry.code==='automation_active'||entry.code==='android_account_screen'){
+  status(entry.message,'warn');return;
+ }
  document.getElementById('igcLoginChooser')?.remove();
  const dialog=document.createElement('dialog');
  dialog.id='igcLoginChooser';dialog.style.cssText='max-width:min(460px,calc(100vw - 28px));width:100%;border:1px solid var(--line,#425064);border-radius:16px;background:var(--panel,#171d2a);color:var(--text,#fff);padding:20px;box-shadow:0 24px 85px #000a';
  const title=document.createElement('h3');title.textContent='Cambiar cuenta de Insta Cleaner';
  dialog.appendChild(title);
  const note=document.createElement('p');note.className='note';
- note.textContent='Selecciona una sesión guardada. Tus listas, favoritos y revisiones se mantienen separadas por usuario.';
+ note.textContent=entry.code==='sync_busy'?entry.message:
+  'Selecciona una sesión guardada. Tus listas, favoritos y revisiones se mantienen separadas por usuario.';
  dialog.appendChild(note);
+ const admitChoice=(action)=>{
+  const gate=accountSwitchAdmission();
+  if(gate.code!=='ready'){
+   note.textContent=gate.message;
+   status(gate.message,'warn');
+   return;
+  }
+  dialog.close();dialog.remove();action();
+ };
  const list=document.createElement('div');list.style.cssText='display:grid;gap:9px;margin:14px 0';
  const active=sessionOwner(S.session);
  const remembered=readRemembered();
@@ -14283,14 +14312,11 @@ window.igcSyncSwitchAccount=function(){
  for(const owner of Object.keys(remembered).sort()){
   const isCurrent=active===owner;
   const b=makeAccountButton((isCurrent?'✓ ':'')+owner+(isCurrent?' · actual':''),()=>{
-   dialog.close();dialog.remove();
-   if(!isCurrent)activateRemembered(owner);
+   if(!isCurrent)admitChoice(()=>activateRemembered(owner));
   },list);
   b.disabled=isCurrent;
  }
- makeAccountButton('＋ Añadir otra cuenta',()=>{
-  dialog.close();dialog.remove();addAnotherLogin();
- },list);
+ makeAccountButton('＋ Añadir otra cuenta',()=>admitChoice(addAnotherLogin),list);
  dialog.appendChild(list);
  const close=makeAccountButton('Cancelar',()=>{dialog.close();dialog.remove()},dialog);
  close.style.textAlign='center';
