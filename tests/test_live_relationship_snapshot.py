@@ -182,7 +182,12 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
             self.root/"data",self.root/"session")
         with self.assertRaisesRegex(ValueError,"cooldown"):
             fresh.start(params)
-        self.assertEqual(fresh._cooldown_remaining("app-user","other-ig"),0)
+        self.assertGreater(fresh._cooldown_remaining("app-user","other-ig"),7100)
+        # Shared Chrome cannot be used to hop accounts and avoid a 429.
+        self.assertGreater(fresh._cooldown_remaining("other-app-user","another-ig"),7100)
+        global_record=json.loads(fresh._global_cooldown_file().read_text())
+        self.assertTrue(global_record["no_automatic_retry"])
+        self.assertEqual(global_record["reason"],"http_429")
 
     def test_successful_scan_has_minimum_repeat_spacing_without_mutation(self):
         self._run_fake({"100":"a"},{"100":"a"})
