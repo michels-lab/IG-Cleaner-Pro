@@ -62,6 +62,20 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
         self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
+    def test_persisted_pending_unfollow_can_be_deferred_only_after_review_result(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext())
+        first = pool.open("still.following")
+        with self.assertRaisesRegex(ValueError, "persisted unverified"):
+            pool.defer_persisted_pending("still.following")
+        pool.record("still.following", "review")
+        pool.defer_persisted_pending("still.following")
+        self.assertTrue(first.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNotNone(pool.open("next.eligible"))
+        with self.assertRaisesRegex(ValueError, "persisted unverified"):
+            pool.defer_persisted_pending("not.opened")
+
     def test_safe_no_click_closes_failed_profile_but_keeps_ambiguous_click(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
@@ -436,11 +450,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
-    def test_armed_click_with_familiar_missing_profile_issue_stops_wave(self):
-        """No second profile may receive an action after an uncertain first click.
+    def test_armed_click_with_missing_profile_info_is_pending_then_next_safe_target(self):
+        """After a durable uncertain click, continue with NEW targets, not the same.
 
-        Real worker control flow, local fake Chromium pages and durable journal;
-        this fixture never connects to Instagram.
+        Only a separately verified and unchanged signed-in session allows the
+        worker to close a pending tab and proceed. No live Instagram involved.
         """
         import types
         from unittest.mock import MagicMock
@@ -490,9 +504,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 robot.stop_event.set()
                 return "ok", "Action confirmed: Follow."
 
-            # The original worker intentionally holds ambiguous tabs open
-            # for owner review. End that final wait, without influencing the
-            # earlier decision whether to click a SECOND account.
+            # Owner proof remains live after the first unresolved action.
+            # The next target is independently verified, not a replay.
             real_close = ActionTabPool.close_unacted_prefetches
             def complete_fixture(pool):
                 real_close(pool)
@@ -516,15 +529,16 @@ class ActionBatchHistoryTests(unittest.TestCase):
                  patch("profile_actions.perform_visible_action",
                        side_effect=ambiguous_after_possible_click):
                 robot._run()
-            self.assertEqual(calls, ["uncertain.first"],
-                             "A durable possible-click must stop this ten-tab wave")
+            self.assertEqual(calls, ["uncertain.first", "must.not.click"],
+                             "Unverified first target must be marked pending and allow next safe target")
             journal = robot._journal()
             self.assertEqual(journal["uncertain.first"]["status"], "review")
             self.assertEqual(journal["uncertain.first"]["issue"], "missing_profile_info")
             self.assertEqual(journal["uncertain.first"]["click_intent"]["phase"],
                              "relationship_control")
-            self.assertFalse("must.not.click" in journal)
+            self.assertEqual(journal["must.not.click"]["status"], "ok")
             self.assertFalse("third.unacted" in journal)
+            self.assertTrue(journal["uncertain.first"]["click_intent"]["requires_manual_review"])
             self.assertTrue(all(tab.closed for tab in browser.pages))
 
     def test_forty_profiles_run_as_four_complete_ten_tab_waves(self):
