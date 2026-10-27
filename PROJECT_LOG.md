@@ -2597,3 +2597,10 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Si cualquier parte está ocupada por otra rama, requiere equipo físico, una cuenta de proveedor, resultados científicos que solo existen en el portátil o autorización del propietario, **aparcar con evidencia y pasar a otra subparte independiente**. Conservar identidad visual, datos, credenciales y estándares de publicación.
 - Registro obligatorio: A/B/C con estados separados, ruta/PR/sha, QA **ejecutado** (no simplemente escrito), bloqueos, recuperación, reentrada. Esta actualización de política **no significa ninguna funcionalidad del producto implementada, probada ni publicada**.
 - Repositorio: `michels-lab/IG-Cleaner-Pro`. En los siguientes bloques aplicar este alcance sin modificar los PR activos o trabajos no relacionados.
+
+
+## 2026-10-27 — Windows reference Unfollow transport routing repair (child of v120.68; not released)
+
+- Exact head d97eb522c1d2557605c7a537ed0674c79b7c2f29 of open release PR #262 failed 3/6 Windows-installed real Chromium local reference tests in run 40493835174: changed default to visible-menu Unfollow while ActionRobot never explicitly selected the reference transport. Root cause and CI reproducible without owner Instagram access.
+- Isolated child branch restores default and pins actual Windows worker routing Unfollow-only, never Cancel Pending; keeps WAL before any one-shot GraphQL POST and fresh read-only Follow confirmation for green OK. Added worker AST contract and accepted-POST/stale-Following Chromium negative fixture.
+- [Owning-repo audit](docs/GRANADA_WINDOWS_REFERENCE_TRANSPORT_ROUTING_2026-10-27.md). New exact-head CI and merge are pending. Published stable v120.67 unchanged; real user Windows Chrome acceptance and old saved cohort remain open (#164, #172).
