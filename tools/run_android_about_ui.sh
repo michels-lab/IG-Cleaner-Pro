@@ -36,5 +36,5 @@ python3 tools/collect_android_about_screenshots.py \
   --adb adb \
   --package com.michelslab.igcleaner.beta \
   --out artifacts/visual/android/igc-ui-capture
-test "$(find artifacts/visual/android/igc-ui-capture -maxdepth 1 -name '*.png' | wc -l)" -eq 8
-echo 'SUCCESS: eight instrumented Android Home and About screenshots captured and transferred'
+test "$(find artifacts/visual/android/igc-ui-capture -maxdepth 1 -name '*.png' | wc -l)" -eq 4
+echo 'SUCCESS: four DISTINCT installed Android Home and About screenshots (two actual sizes) captured and transferred'
