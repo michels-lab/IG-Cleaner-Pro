@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 342,
-  "classified_files_total": 338,
-  "docs_content_inspected": 78,
+  "tracked_files_total": 343,
+  "classified_files_total": 339,
+  "docs_content_inspected": 79,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 73,
+    "document": 74,
     "index": 5,
     "installer_metadata": 1,
     "source": 43,
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "978adc42d84b2fb60020d85ef115eca3795cd3e99e1a34b19447f3764f2ce1c1",
+  "inventory_fingerprint": "e63b3c689f383015dfb22ba47f50f70829e059cf56eefc8755181ac278cf2a93",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "be833b317690f86c0923a8d97fce6e7e40442d05"
+      "blob": "709fa47aba617a348399e31409805f250061410c"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "125e0be5bdfa4efba14f6eb29aa96adc637b4475"
+      "blob": "54009c2a85f1bb831995c589437f7b972ff38cb1"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1184,6 +1184,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "93f2df4451397b3460136c801e339841ca8ffd2b"
+    },
+    {
+      "path": "docs/GRANADA_ACCOUNT_CHOOSER_SAFE_ADMISSION_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "412ac5306db6ca77a0fbd07f43bb98ffc7ed006d"
     },
     {
       "path": "docs/GRANADA_ANDROID_VISUAL_DUPLICATE_FIX_2026-10-26.md",
@@ -1533,14 +1540,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "af9c52111de5b2d48346d37beba31fcb6d731bce"
+      "blob": "991fc1502e1bca0ee51afc7519bbec85de3844e1"
     },
     {
       "path": "tests/auth-account-switch.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bbcbfc7ba22605e08eab575c95d6e888783f09a9"
+      "blob": "cc9030f4318ab884fb7af87c7d32cb30b52f2f0c"
     },
     {
       "path": "tests/auth-email-templates-contract.py",
