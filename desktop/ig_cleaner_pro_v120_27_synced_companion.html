@@ -2911,7 +2911,7 @@ window.IGC_INSTAGRAM_PROFILES={
   if(opt.globalAccountData===true)return {path,opt};
   const m=/^([a-z_]+)(\?.*)?$/.exec(path),base=new Set(['audit_events','focus_batches','focus_batch_items','profile_state','list_snapshots','workspace_state']);
   if(this.active==='legacy'||!m||!base.has(m[1]))return {path,opt};
-  if(!this.verified)throw Error('El perfil de Instagram debe verificarse antes de sincronizar');
+  if(!this.verified)throw Error('The Instagram profile must be verified before syncing');
   let p='instagram_'+m[1]+(m[2]||'');
   p=p.replace(/on_conflict=([^&]+)/,(_,keys)=>{
    const parts=decodeURIComponent(keys).split(',').filter(Boolean);
@@ -4727,14 +4727,14 @@ function runStateDiagnosis(showMessage=true){
     </div>
     <div class="guided-session-box">
       <b>🎯 Guided 100-profile session</b>
-      <p class="muted">Arma una sesión balanceada: Pending antiguos/relevantes, Seguidores que sigo y Seguidos que no me siguen. Abre un bloque a la vez con confirmación segura. En v70 el orden usa historial automático para no repetir rápido perfiles que ya quedaron sin confirmar.</p>
+      <p class="muted">Build a balanced session: older or relevant pending requests, mutual followers, and accounts that do not follow back. Open one batch at a time with explicit confirmation. Recent history prevents immediately reopening unconfirmed profiles.</p>
       <button class="btn purple" onclick="startGuidedSession100()">Start / recalculate 100-profile session</button>
       <button class="btn" onclick="continueGuidedSession100()">Continue pending session</button>
       <button class="btn red" onclick="cancelGuidedSession100()">Cancel guided session</button>
       ${renderGuidedSessionMini()}
     </div>
     <div class="diag-list">
-      ${issues.length?issues.map(i=>`<div class="diag-issue ${i.level}"><h4>${esc(i.title)} <span class="badge ${i.level==='high'?'bred':i.level==='medium'?'borange':'bblue'}">${i.count}</span></h4><p>${esc(i.detail)}</p></div>`).join(''):'<div class="diag-issue low"><h4>Todo limpio</h4><p>No encontré inconsistencias importantes con el estado actual.</p></div>'}
+      ${issues.length?issues.map(i=>`<div class="diag-issue ${i.level}"><h4>${esc(i.title)} <span class="badge ${i.level==='high'?'bred':i.level==='medium'?'borange':'bblue'}">${i.count}</span></h4><p>${esc(i.detail)}</p></div>`).join(''):'<div class="diag-issue low"><h4>All clear</h4><p>No significant inconsistencies were found in the current state.</p></div>'}
     </div>`;
   if(showMessage)msg(`Diagnostics ready: ${issues.length} issues.`,issues.length?'w':'s');
 }
@@ -5947,7 +5947,7 @@ function renderStats(){
   document.getElementById('statsRow').innerHTML=`
     <div class="stat"><b>${total}</b><span>siguiendo</span></div>
     <div class="stat"><b style="color:var(--orange)">${rawBad}</b><span>no me siguen real</span></div>
-    <div class="stat"><b style="color:var(--blue)">${rawGood}</b><span>sí me siguen real</span></div>
+    <div class="stat"><b style="color:var(--blue)">${rawGood}</b><span>actually follow back</span></div>
     <div class="stat"><b style="color:var(--red)">${effectiveBadCount}</b><span>Pending non-followbacks</span></div>
     <div class="stat"><b>${done}</b><span>Currently reviewed</span></div>
     <div class="stat"><b style="color:var(--orange)">${recheck}</b><span>revisables de nuevo</span></div>
@@ -6004,7 +6004,7 @@ function renderTable(){
     return `<tr class="${prot?'protected':''} ${done?'done':''}">
       <td class="col-select"><input type="checkbox" ${sel?'checked':''} onchange="toggleSelect('${esc(r.username)}',this.checked)"></td>
       <td class="col-protected"><button class="btn" style="padding:4px 7px" onclick="toggleProtected('${esc(r.username)}')">${prot?'🛡 Sí':'○ No'}</button></td>
-      <td class="col-done"><input type="checkbox" ${done?'checked':''} onchange="toggleDone('${esc(r.username)}',this.checked)"> ${changed?'<span class="warncell" title="Relationship changed after your last review">⚠ cambió</span>':''}</td>
+      <td class="col-done"><input type="checkbox" ${done?'checked':''} onchange="toggleDone('${esc(r.username)}',this.checked)"> ${changed?'<span class="warncell" title="Relationship changed after your last review">⚠ changed</span>':''}</td>
       <td class="col-reviewedAt"><div class="review-date-cell ${revClass}">${revTs?esc(formatActionDate(revTs)):'—'}<br><span class="review-date-pill">${esc(revPill)}</span></div></td>
       <td class="col-reviewReason">${reasonVal?`<span class="review-reason-badge">${esc(reviewReasonLabel(reasonVal))}</span>`:'—'}</td>
       <td class="col-snooze">${snoozed?`<span class="snooze-badge">${esc(snoozeLabel(r))}</span>`:'—'}</td>
@@ -6337,10 +6337,10 @@ function updateSessionPanel(){
     <div class="session-card"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
     <div class="session-card"><b style="color:var(--red)">${p.selectedPendingBad}</b><span>${labels.pendingBad}</span></div>
     <div class="session-card"><b style="color:var(--green)">${p.selectedPendingGood}</b><span>${labels.pendingGood}</span></div>
-    <div class="session-card"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>verificados sesión</span></div>
-    <div class="session-card"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>malos sesión</span></div>
-    <div class="session-card"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resueltos sesión</span></div>
-    <div class="session-card"><b style="color:var(--purple)">${sessionStats.protected}</b><span>protegidos sesión</span></div>
+    <div class="session-card"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>reviewed this session</span></div>
+    <div class="session-card"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>unresolved this session</span></div>
+    <div class="session-card"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resolved this session</span></div>
+    <div class="session-card"><b style="color:var(--purple)">${sessionStats.protected}</b><span>protected this session</span></div>
     <div class="session-card"><b>${sessionStats.openBatches}</b><span>tandas abiertas</span></div>
     <div class="session-card"><b style="color:var(--orange)">${sessionStats.reopened||0}</b><span>perfiles reabiertos</span></div>
     <div class="session-card"><b>${p.totalReviewed}</b><span>verificados vigentes total</span></div>
@@ -6348,7 +6348,7 @@ function updateSessionPanel(){
     <div class="session-card"><b style="color:var(--green)">${p.totalReviewedGood}</b><span>total ${labels.goodShort}</span></div>
     <div class="session-card"><b>${p.visibleReviewed}</b><span>visibles verificados</span></div>
     <div class="session-card"><b style="color:var(--orange)">${p.visiblePending}</b><span>Visible pending</span></div>
-    <div class="session-card"><b style="color:var(--orange)">${p.changed}</b><span>cambiaron relación</span></div>
+    <div class="session-card"><b style="color:var(--orange)">${p.changed}</b><span>relationship changed</span></div>
     <div class="session-card"><b style="color:#cbd5e1">${probClosedTotal}</b><span>probablemente cerradas</span></div>
     <div class="session-card"><b style="color:var(--orange)">${refollowTotal}</b><span>posible re-follow</span></div>
     <div class="session-card"><b style="color:var(--yellow)">${p.hiddenSelected}</b><span>seleccionados fuera de vista</span></div>
@@ -6364,7 +6364,7 @@ function updateSessionPanel(){
     insight.innerHTML=`
       <b>En vivo:</b> sesión con ${sessionStats.opened} abiertos, ${sessionStats.reviewed} verificados/resueltos, ${sessionStats.openBatches} tandas abiertas y ${sessionStats.reopened||0} reabiertos.
       <br>
-      Verificados de sesión: <span style="color:var(--green)">${sessionStats.reviewedGood||0}</span> resueltos/buenos y <span style="color:var(--red)">${sessionStats.reviewedBad||0}</span> malos pendientes.
+      Session reviews: <span style="color:var(--green)">${sessionStats.reviewedGood||0}</span> resolved and <span style="color:var(--red)">${sessionStats.reviewedBad||0}</span> unresolved.
       <br>
       Selección visible actual: ${p.selectedTotal} seleccionados; ${p.selectedReviewed} verificados (${reviewedPct}%) y ${p.selectedPending} pendientes (${pendingPct}%).
       ${hiddenMsg}
@@ -6377,12 +6377,12 @@ function updateSessionPanel(){
   if(floatStats){
     floatStats.innerHTML=`
       <div class="live-mini"><b style="color:var(--blue)">${sessionStats.opened}</b><span>opened this session</span></div>
-      <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>verificados sesión</span></div>
+      <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewed}</b><span>reviewed this session</span></div>
       <div class="live-mini"><b style="color:var(--red)">${sessionStats.reviewedBad||0}</b><span>Pending non-followbacks</span></div>
-      <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resueltos sesión</span></div>
+      <div class="live-mini"><b style="color:var(--green)">${sessionStats.reviewedGood||0}</b><span>resolved this session</span></div>
       <div class="live-mini"><b>${sessionStats.openBatches}</b><span>tandas abiertas</span></div>
       <div class="live-mini"><b style="color:var(--orange)">${sessionStats.reopened||0}</b><span>reabiertos</span></div>
-      <div class="live-mini"><b style="color:var(--purple)">${sessionStats.protected}</b><span>protegidos sesión</span></div>
+      <div class="live-mini"><b style="color:var(--purple)">${sessionStats.protected}</b><span>protected this session</span></div>
       <div class="live-mini"><b>${p.selectedTotal}</b><span>seleccionados visibles</span></div>
       <div class="live-mini"><b style="color:var(--orange)">${p.selectedPending}</b><span>Visible pending</span></div>
       <div class="live-mini"><b style="color:#cbd5e1">${probClosedTotal}</b><span>prob. cerradas</span></div>
@@ -6395,7 +6395,7 @@ function updateSessionPanel(){
   if(floatInsight){
     floatInsight.innerHTML=`
       <b>Sesión actual:</b> ${sessionStats.opened} abiertos · ${sessionStats.reviewed} verificados/resueltos · ${sessionStats.openBatches} tandas · ${sessionStats.reopened||0} reabiertos.
-      <br><span style="color:var(--green)">${sessionStats.reviewedGood||0}</span> verificados resueltos; <span style="color:var(--red)">${sessionStats.reviewedBad||0}</span> malos pendientes.
+      <br><span style="color:var(--green)">${sessionStats.reviewedGood||0}</span> verificados resueltos; <span style="color:var(--red)">${sessionStats.reviewedBad||0}</span> unresolved.
       <br><b>Selección visible:</b> ${p.selectedTotal} seleccionados · ${p.selectedPending} pendientes. Si acabas de verificar una tanda, es normal que esto baje a 0 porque se quita de la selección.
       ${hiddenMsg}
       <div class="live-last-action"><b>Última acción:</b> ${esc(lastLiveAction)}</div>
@@ -6543,7 +6543,7 @@ function showVerifyPopup(rows){
   const labels=relationLabels();
 
   text.innerHTML=`Opened a batch of <b>${rows.length}</b> profiles. Of these, <b>${pending.length}</b> still need verification: <span style="color:var(--red)">${bad}</span> ${labels.bad} and <span style="color:var(--green)">${good}</span> ${labels.good}.<br><br>After reviewing them on Instagram, confirm here to save their verified results. If some tabs did not open, use Reopen profiles before confirming.`;
-  list.innerHTML=rows.slice(0,80).map(r=>`<div>@${esc(r.username)} · ${esc(r.relation)} · ${isDoneValid(r)?'ya verificado':'pending'}</div>`).join('') + (rows.length>80?`<div>... y ${rows.length-80} más</div>`:'');
+  list.innerHTML=rows.slice(0,80).map(r=>`<div>@${esc(r.username)} · ${esc(r.relation)} · ${isDoneValid(r)?'already reviewed':'pending'}</div>`).join('') + (rows.length>80?`<div>... and ${rows.length-80} more</div>`:'');
   backdrop.style.display='flex';
 }
 
@@ -6800,13 +6800,13 @@ function renderPacePanel(){
   let eta='—';
   if(rate>0&&remaining>0)eta=formatDuration((remaining/rate)*60*60*1000);
   else if(remaining===0)eta='terminado';
-  panel.innerHTML=`<div class="pace-kpi"><b>${hour}/h</b><span>revisadas última h</span></div>
+  panel.innerHTML=`<div class="pace-kpi"><b>${hour}/h</b><span>reviewed in last hour</span></div>
     <div class="pace-kpi"><b>${three}/h</b><span>revisadas 3 h</span></div>
-    <div class="pace-kpi"><b>${openHour}/h</b><span>abiertas última h</span></div>
+    <div class="pace-kpi"><b>${openHour}/h</b><span>opened in last hour</span></div>
     <div class="pace-kpi"><b>${openThree}/h</b><span>abiertas 3 h</span></div>
     <div class="pace-kpi"><b>${remaining}</b><span>Actually pending</span></div>
     <div class="pace-kpi"><b>${eta}</b><span>tiempo estimado</span></div>`;
-  if(note)note.textContent=rate>0?`Estimación usando el ritmo de ${three?'las últimas 3 horas':'la última hora'}.`:'Sin ritmo suficiente para estimar.';
+  if(note)note.textContent=rate>0?`Estimate based on the pace over ${three?'the last 3 hours':'the last hour'}.`:'Not enough activity to estimate.';
 }
 
 function renderSafetyPanel(){
@@ -6820,7 +6820,7 @@ function renderSafetyPanel(){
     <div class="safety-kpi"><b>${opened1h}</b><span>opened in 1h</span></div>
     <div class="safety-kpi"><b>${reviewed1h}</b><span>revisadas 1 h</span></div>
     <div class="safety-kpi"><b>${actionLog.filter(a=>a.ts>=startOfLastHoursTs(1)).length}</b><span>acciones 1 h</span></div>`;
-  if(note)note.textContent=level==='high'?'Ritmo alto: mejor haz pausa para no saturarte ni abrir demasiadas pestañas.':level==='medium'?'Ritmo medio: vas rápido, pero todavía controlable.':'Ritmo normal.';
+  if(note)note.textContent=level==='high'?'High pace: consider pausing to avoid opening too many tabs.':level==='medium'?'Moderate pace: moving quickly, but still manageable.':'Normal pace.';
 }
 
 function dailyKeyFromTs(ts){
@@ -7439,7 +7439,7 @@ function runLogicAudit(show=true){
   if(activeFocusBatch && Array.isArray(activeFocusBatch.rows) && activeFocusBatch.rows.length){
     const pending=typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch):activeFocusBatch.rows.filter(r=>!activeBatchRowResolved(r,activeFocusBatch.kind));
     if(!pending.length){
-      auditPush(issues,'error','Tandas','',`Tanda activa "${activeFocusBatch.label||''}" ya está resuelta pero sigue guardada`,'Borrar tanda activa atorada',{code:'stale_active_batch',count:activeFocusBatch.rows.length});
+      auditPush(issues,'error','Tandas','',`Tanda activa "${activeFocusBatch.label||''}" is already resolved but still saved`,'Clear stuck active batch',{code:'stale_active_batch',count:activeFocusBatch.rows.length});
     }else if(pending.length<activeFocusBatch.rows.length){
       auditPush(issues,'warn','Tandas','',`Tanda activa parcialmente resuelta: quedan ${pending.length} de ${activeFocusBatch.rows.length}`,'Reducir tanda a solo pendientes reales',{code:'partial_active_batch',count:pending.length});
     }
@@ -7511,14 +7511,14 @@ function renderLogicAudit(issues=lastLogicAuditRows){
     <div class="audit-kpi"><b>${mutual}</b><span>Mutual followers</span></div>
     <div class="audit-kpi ${issues.length?'warn':'ok'}"><b>${issues.length}</b><span>total</span></div>
   `;  if(!issues.length){
-    list.innerHTML='<div class="audit-item ok"><b>Sin huecos obvios.</b><br>No encontré estados basura ni casos fuera de foco por error.</div>';
+    list.innerHTML='<div class="audit-item ok"><b>No obvious gaps.</b><br>No invalid states or incorrectly included Focus profiles were found.</div>';
     return;
   }
   list.innerHTML=issues.slice(0,60).map(i=>`
     <div class="audit-item ${i.type==='error'?'hot':i.type==='warn'?'warn':''}">
       <b>${esc(i.module)}${i.username?' · @'+esc(i.username):''}</b><br>
       ${esc(i.problem)}<br>
-      <span style="color:var(--blue)">Acción: ${esc(i.action)}</span>
+      <span style="color:var(--blue)">Action: ${esc(i.action)}</span>
     </div>
   `).join('');
 }
@@ -7973,14 +7973,14 @@ function renderBackupStats(){
     <div class="stat"><b>${protectedSet.size}</b><span>protegidos</span></div>
     <div class="stat"><b>${doneSet.size}</b><span>Saved reviews</span></div>
     <div class="stat"><b>${Object.keys(reviewedMeta).length}</b><span>Verified reviews</span></div>
-    <div class="stat"><b>${Object.values(reviewedMeta).filter(m=>m&&m.reviewedAt).length}</b><span>con fecha revisión</span></div>
+    <div class="stat"><b>${Object.values(reviewedMeta).filter(m=>m&&m.reviewedAt).length}</b><span>with review date</span></div>
     <div class="stat"><b>${followingRaw.length}</b><span>following cargados</span></div>
     <div class="stat"><b>${followersRaw.length}</b><span>followers cargados</span></div>
     <div class="stat"><b>${internalSnapshot?1:0}</b><span>snapshot interno</span></div>
     <div class="stat"><b>${actionLog.length}</b><span>acciones guardadas</span></div>
     <div class="stat"><b>${Object.keys(snoozeMap||{}).filter(u=>isSnoozed(u)).length}</b><span>pausadas activas</span></div>
     <div class="stat"><b>${Object.keys(profileHistory||{}).length}</b><span>historial auto</span></div>
-    <div class="stat"><b>${guidedSession100?1:0}</b><span>sesión 100 activa</span></div>
+    <div class="stat"><b>${guidedSession100?1:0}</b><span>active 100-profile session</span></div>
     <div class="stat"><b>${dailyGoal||0}</b><span>meta diaria</span></div>
     <div class="stat"><b>${pendingRequestsRaw.length}</b><span>pending requests</span></div>
     <div class="stat"><b>${recentActivitySummary().reviewed1h}</b><span>revisadas 1 h</span></div>
@@ -8013,7 +8013,7 @@ ${d.examples.map(x=>'  - '+x).join('\n')||'  - ninguno'}`
   const hist=Object.values(profileHistory||{}).sort((a,b)=>(b.lastReviewed||b.lastOpened||0)-(a.lastReviewed||a.lastOpened||0)).slice(0,12);
   const histText=hist.length?'\n\n──────── HISTORIAL AUTOMÁTICO RECIENTE ────────\n\n'+hist.map(h=>`@${h.username}
   abierto: ${h.opened||0} · reabierto: ${h.reopened||0} · revisado: ${h.reviewed||0} · sin confirmar: ${h.unconfirmed||0} · pausado: ${h.snoozed||0}
-  última sección: ${h.lastSection||'—'} · última decisión: ${pendingDecisionLabel(h.lastDecision||'')}
+  last section: ${h.lastSection||'—'} · last decision: ${pendingDecisionLabel(h.lastDecision||'')}
   último abierto: ${formatMaybeDate(h.lastOpened)} · última revisión: ${formatMaybeDate(h.lastReviewed)}`).join('\n\n'):'\n\n──────── HISTORIAL AUTOMÁTICO ────────\n\nSin historial automático todavía.';
   box.textContent=fileText+histText;
 }
@@ -8271,13 +8271,13 @@ function analyzeProfileMetrics(followingRows,followerRows){
 function buildRecommendations(m){
   const rec=[];
   if(m.followingCount>=10000){
-    rec.push(`<strong>Tu following está muy saturado.</strong> Bajar de 10,000 mejora la percepción de selectividad y hace más manejable la limpieza.`);
+    rec.push(`<strong>Your following list is highly saturated.</strong> Bajar de 10,000 mejora la percepción de selectividad y hace más manejable la limpieza.`);
   }else if(m.followingCount>=7500){
     rec.push(`<strong>Estás cerca de zona saturada.</strong> Prioriza bajar primero cuentas que no te siguen y prioridad crítica/alta.`);
   }else if(m.followingCount>=5000){
-    rec.push(`<strong>Tu following está algo cargado.</strong> Todavía se ve manejable, pero conviene limpiar por bloques.`);
+    rec.push(`<strong>Your following list is somewhat crowded.</strong> Todavía se ve manejable, pero conviene limpiar por bloques.`);
   }else{
-    rec.push(`<strong>Tu following está en una zona más controlada.</strong> Puedes enfocarte más en calidad que en reducir por reducir.`);
+    rec.push(`<strong>Your following list is more manageable.</strong> Puedes enfocarte más en calidad que en reducir por reducir.`);
   }
 
   if(m.notFollowingBack>0){
@@ -8287,9 +8287,9 @@ function buildRecommendations(m){
   if(m.ratio>=1){
     rec.push(`<strong>Tu ratio followers/following es favorable.</strong> Te siguen igual o más de lo que tú sigues; eso ayuda a que el perfil se perciba más fuerte.`);
   }else if(m.ratio<0.6){
-    rec.push(`<strong>Tu ratio está débil.</strong> Sigues bastante más de lo que te siguen; limpiar following puede mejorar mucho la lectura del perfil.`);
+    rec.push(`<strong>Your follower-to-following ratio is weak.</strong> Sigues bastante más de lo que te siguen; limpiar following puede mejorar mucho la lectura del perfil.`);
   }else{
-    rec.push(`<strong>Tu ratio es aceptable pero mejorable.</strong> Bajar cuentas sin reciprocidad te puede mover rápido a una proporción más fuerte.`);
+    rec.push(`<strong>Your ratio is acceptable but can improve.</strong> Bajar cuentas sin reciprocidad te puede mover rápido a una proporción más fuerte.`);
   }
 
   if(m.riskFollowers.alto>0){
@@ -8305,9 +8305,9 @@ function buildRecommendations(m){
   }
 
   if(m.reviewedPct<25 && m.followingCount>0){
-    rec.push(`<strong>Tu avance de revisión todavía es bajo.</strong> Usa “+ Pendientes 50” y “Abrir seleccionados no revisados” para avanzar por bloques sin repetir cuentas.`);
+    rec.push(`<strong>Your review progress is still limited.</strong> Usa “+ Pendientes 50” y “Abrir seleccionados no revisados” para avanzar por bloques sin repetir cuentas.`);
   }else if(m.reviewedPct>=50){
-    rec.push(`<strong>Ya llevas buen avance de revisión.</strong> Sigue usando el botón de pendientes para no abrir cuentas ya revisadas.`);
+    rec.push(`<strong>You have made good review progress.</strong> Sigue usando el botón de pendientes para no abrir cuentas ya revisadas.`);
   }
 
   if(m.protectedFollowing>0){
@@ -8722,7 +8722,7 @@ function renderSnapshotInfo(){
     <div class="stat"><b>${followersRaw.length}</b><span>followers actuales</span></div>
     <div class="stat"><b style="color:var(--red)">${snapLostFollowers.length}</b><span>unfollowed you</span></div>
     <div class="stat"><b style="color:var(--green)">${snapGainedFollowers.length}</b><span>New followers</span></div>
-    <div class="stat"><b style="color:var(--orange)">${snapLostFollowers.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>te dejaron y tú los sigues</span></div>
+    <div class="stat"><b style="color:var(--orange)">${snapLostFollowers.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>stopped following you, but you still follow them</span></div>
     <div class="stat"><b>${snapNewFollowing.length}</b><span>nuevos following</span></div>
     <div class="stat"><b>${snapRemovedFollowing.length}</b><span>ya no sigues</span></div>
   `;
@@ -8752,7 +8752,7 @@ async function loadOldFollowersCompare(input){
   const files=input.files;
   if(!files || !files.length)return;
   oldFollowersRaw=await parseFiles(files,'old_followers');
-  document.getElementById('oldFollowersLabel').textContent=`${oldFollowersRaw.length} followers antiguos únicos cargados`;
+  document.getElementById('oldFollowersLabel').textContent=`${oldFollowersRaw.length} unique older followers loaded`;
   runFollowersComparison();
   input.value='';
 }
@@ -8798,7 +8798,7 @@ function renderCompare(){
     <div class="stat"><b style="color:var(--red)">${compareLost.length}</b><span>unfollowed you</span></div>
     <div class="stat"><b style="color:var(--green)">${compareGained.length}</b><span>New followers</span></div>
     <div class="stat"><b>${compareStayed.length}</b><span>se quedaron</span></div>
-    <div class="stat"><b style="color:var(--orange)">${compareLost.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>te dejaron y tú los sigues</span></div>
+    <div class="stat"><b style="color:var(--orange)">${compareLost.filter(u=>followingMap.has(u)&&!protectedSet.has(u)).length}</b><span>stopped following you, but you still follow them</span></div>
   `;
   document.getElementById('lostFollowersList').innerHTML=renderCompareList(compareLost,'lost');
   document.getElementById('gainedFollowersList').innerHTML=renderCompareList(compareGained,'gained');
@@ -8966,7 +8966,7 @@ function renderPendingSessionPanel(){
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
     <div class="tab-session-card"><b>${paused}</b><span>pausados</span></div>`;
   const last=lastActionForSource(['pending']);
-  const detected=pendingDetectedAcceptedRows().length; note.innerHTML=`<b>Última acción en Pending:</b> ${esc(formatLastActionText(last))}<br><b>Aceptados detectados:</b> ${detected} aparecen ya en tu following actual.`;
+  const detected=pendingDetectedAcceptedRows().length; note.innerHTML=`<b>Latest Pending action:</b> ${esc(formatLastActionText(last))}<br><b>Aceptados detectados:</b> ${detected} aparecen ya en tu following actual.`;
 }
 function renderMutualSessionPanel(){
   const panel=document.getElementById('mutualSessionPanel');
@@ -8986,7 +8986,7 @@ function renderMutualSessionPanel(){
     <div class="tab-session-card"><b>${active}</b><span>activos</span></div>
     <div class="tab-session-card"><b>${paused}</b><span>pausados</span></div>`;
   const last=lastActionForSource(['seguidores mutuos','followers_mutual']);
-  note.innerHTML=`<b>Última acción en Seguidores que sigo:</b> ${esc(formatLastActionText(last))}`;
+  note.innerHTML=`<b>Latest Mutuals action:</b> ${esc(formatLastActionText(last))}`;
 }
 
 function countInWindowByMs(values,windowMs){
@@ -9098,7 +9098,7 @@ function focusFunnelHTML(kind){
   return `
     <div class="focus-funnel">
       <div class="focus-funnel-title">🔎 Embudo de foco</div>
-      <div class="focus-funnel-row"><b>Total del módulo</b><strong>${f.total}</strong></div>
+      <div class="focus-funnel-row"><b>Module total</b><strong>${f.total}</strong></div>
       <div class="focus-funnel-row"><b>Mostrados tabla</b><strong>${f.shown}</strong></div>
       <div class="focus-funnel-row ok"><b>Eligible for Focus</b><strong>${f.available}</strong></div>
       <div class="focus-funnel-row ${f.notOpenable?'hot':''}"><b>No abribles</b><strong>${f.notOpenable}</strong></div>
@@ -9107,7 +9107,7 @@ function focusFunnelHTML(kind){
       <div class="focus-funnel-row"><b>Pausados</b><strong>${f.snoozed}</strong></div>
       ${middleRows}
       <div class="focus-funnel-row"><b>Riesgo abrible</b><strong>${f.riskAvailable}</strong></div>
-      <div class="focus-funnel-main"><b>Bloqueo principal:</b> ${esc(reason)} (${reasonCount}).<br><b>Siguiente acción:</b> ${esc(action)}</div>
+      <div class="focus-funnel-main"><b>Main blocker:</b> ${esc(reason)} (${reasonCount}).<br><b>Next action:</b> ${esc(action)}</div>
     </div>
   `;
 }
@@ -9466,7 +9466,7 @@ function nextActionLightHTML(kind='main'){
   const a=nextBestActionLight(kind);
   return `
     <div class="next-action-lite ${a.tone||''}">
-      <div class="next-action-lite-label">➡️ Siguiente acción</div>
+      <div class="next-action-lite-label">➡️ Next action</div>
       <div class="next-action-lite-text">${esc(a.text)}</div>
     </div>
   `;
@@ -9511,12 +9511,12 @@ function igcModuleActionEvents(kind,type,since=todayStartTsMs()){
 function igcModuleLabel(kind){return kind==='pending'?'Pending':kind==='mutual'?'Mutuals':kind==='review'?'Review':'Followers que no sigo'}
 function igcModuleHistoryHTML(kind,limit=18){
   const items=igcModuleActionItems(kind).slice(0,limit);
-  if(!items.length)return '<div class="igc-followers-history-empty">Sin acciones guardadas en esta sección.</div>';
+  if(!items.length)return '<div class="igc-followers-history-empty">No saved actions in this section.</div>';
   return items.map(item=>{
     const d=item.data||{};
     const count=d.count?` · ${d.count} cuentas`:'';
     const source=d.source?` · ${esc(d.source)}`:'';
-    return `<div class="action-log-item"><b><span class="action-log-type">${esc(actionTypeLabel(item.type))}</span>${esc(item.description||item.title||item.type||'Acción')}</b><small>${esc(formatActionDate(item.ts))}${count}${source}</small></div>`;
+    return `<div class="action-log-item"><b><span class="action-log-type">${esc(actionTypeLabel(item.type))}</span>${esc(item.description||item.title||item.type||'Action')}</b><small>${esc(formatActionDate(item.ts))}${count}${source}</small></div>`;
   }).join('');
 }function exportModuleActionLogCSV(kind){
   const items=igcModuleActionItems(kind);
@@ -9587,7 +9587,7 @@ function igcSidebarLastAction(last){
   const count=last&&Number(d.count||last.count||0)>0?` · ${Number(d.count||last.count)} perfiles`:'';
   const source=last&&d.source?` · ${esc(d.source)}`:'';
   const action=last?(last.description||last.title||last.type||'Acción'):'Sin acciones todavía';
-  return `<div class="last-action-clock"><div class="clock-label">${last?`ÚLTIMA ACCIÓN · ${esc(relative)}`:'ÚLTIMA ACCIÓN'}</div><div class="clock-main">${esc(action)}</div><div class="clock-sub">${last?`${esc(when)}${count}${source}`:'Cuando hagas una acción en este módulo aparecerá aquí qué se hizo y cuándo.'}</div></div>`;
+  return `<div class="last-action-clock"><div class="clock-label">${last?`LAST ACTION · ${esc(relative)}`:'LAST ACTION'}</div><div class="clock-main">${esc(action)}</div><div class="clock-sub">${last?`${esc(when)}${count}${source}`:'Actions in this module will appear here with their details and time.'}</div></div>`;
 }
 function igcSidebarStats(stats){
   return `<div class="live-mini-grid">${stats.map(x=>`<div class="live-mini ${x.cls||''}"><b>${x.value}</b><span>${esc(x.label)}</span></div>`).join('')}</div>`;
@@ -9619,16 +9619,16 @@ function igcStandardActivityTop(kind,label){
   return `<div class="igc-standard-activity">
     ${igcSidebarLastAction(last)}
     <div class="igc-open-panel">
-      <div class="igc-open-panel-head"><div><span>ACTIVIDAD PRIORITARIA</span><b>Perfiles abiertos</b><small>Misma métrica y orden en todos los workspaces.</small></div></div>
+      <div class="igc-open-panel-head"><div><span>PRIORITY ACTIVITY</span><b>Opened profiles</b><small>Same metric and ordering across workspaces.</small></div></div>
       <div class="igc-open-priority">
-        <div class="igc-open-kpi primary"><b>${m.session}</b><span>abiertas esta sesión</span></div>
+        <div class="igc-open-kpi primary"><b>${m.session}</b><span>opened this session</span></div>
         <div class="igc-open-kpi primary"><b>${m.today}</b><span>abiertas hoy</span></div>
-        <div class="igc-open-kpi primary"><b>${m.week}</b><span>abiertas últimos 7 días</span></div>
+        <div class="igc-open-kpi primary"><b>${m.week}</b><span>opened in last 7 days</span></div>
       </div>
       <div class="igc-open-windows">
-        <div class="igc-open-kpi"><b>${m.h1}</b><span>última 1 hora</span></div>
-        <div class="igc-open-kpi"><b>${m.h2}</b><span>últimas 2 horas</span></div>
-        <div class="igc-open-kpi"><b>${m.h3}</b><span>últimas 3 horas</span></div>
+        <div class="igc-open-kpi"><b>${m.h1}</b><span>last 1 hour</span></div>
+        <div class="igc-open-kpi"><b>${m.h2}</b><span>last 2 hours</span></div>
+        <div class="igc-open-kpi"><b>${m.h3}</b><span>last 3 hours</span></div>
       </div>
     </div>
     <div class="action-log-panel igc-sidebar-history igc-standard-history"><div class="action-log-head"><div class="action-log-title">🕓 Historial de acciones — ${esc(label)}</div></div><div class="action-log-list">${igcModuleHistoryHTML(kind,24)}</div><div class="action-log-buttons"><button class="btn" onclick="exportModuleActionLogCSV('${kind}')">Export</button><button class="btn red" onclick="clearModuleActionLog('${kind}')">Delete</button></div></div>
@@ -9651,7 +9651,7 @@ function renderReviewRealtimePanel(){
   const noFollow=rows.filter(r=>!r.followsBack&&!r.relationGood).length;
   const activeCount=activeFocusBatch?.kind==='main'?(typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch).length:(activeFocusBatch.rows?.length||0)):0;
   const available=typeof allMainFocusOpenableRows==='function'?allMainFocusOpenableRows().length:0;
-  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'pendientes'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:available,label:'abribles'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
+  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'pendientes'},{value:reviewed,label:'revisados'},{value:activeCount,label:'in active batch'},{value:protectedCount,label:'protegidos'},{value:available,label:'available to open'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
 }
 function renderPendingRealtimePanel(){
   const el=document.getElementById('pendingRealtimePanel');
@@ -9668,7 +9668,7 @@ function renderPendingRealtimePanel(){
   el.innerHTML=`
     ${igcStandardActivityTop('pending','Pending')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
-      {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'resueltos'},{value:activeCount,label:'en tanda activa'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:accepted,label:'aceptados detectados'},{value:riskHigh,label:'riesgo alto'},{value:old90,label:'+90 días'}
+      {value:pendingLive,label:'active pending'},{value:reviewed,label:'resolved'},{value:activeCount,label:'in active batch'},{value:paused,label:'paused'},{value:available,label:'available to open'},{value:accepted,label:'detected accepted'},{value:riskHigh,label:'high risk'},{value:old90,label:'90+ days'}
     ])}<div class="session-insight"><b>Pending:</b> ${pendingLive} requests still need review · ${available} can be opened now.</div></div>
     ${igcSidebarActiveBatch('pending')}
     <div class="side-control-center">
@@ -9691,7 +9691,7 @@ function renderMutualRealtimePanel(){
   const activeCount=activeFocusBatch?.kind==='mutual'?(typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch).length:(activeFocusBatch.rows?.length||0)):0;
   el.innerHTML=`${igcStandardActivityTop('mutual','Mutuals')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
-      {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'mutuos'}
+      {value:pendingLive,label:'active pending'},{value:reviewed,label:'revisados'},{value:activeCount,label:'in active batch'},{value:protectedCount,label:'protegidos'},{value:paused,label:'paused'},{value:available,label:'available to open'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'high risk'},{value:rows.length,label:'mutuos'}
     ])}<div class="session-insight"><b>Mutuals:</b> ${rows.length} profiles · ${pendingLive} pending · ${available} available to open now.</div></div>
     ${igcSidebarActiveBatch('mutual')}
     <div class="side-control-center"><div class="side-control-title">⚡ Focus mode</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(20)">💡 Focus 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(30)">💡 Focus 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersMutualFocusN(40)">💡 Focus 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('mutual',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="mutual"></div><div class="side-control-title">🎯 Prepare batch</div><div class="side-action-grid two"><button class="btn orange" onclick="followersMutualSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersMutualRiskN(30)">⚠ Risk 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="quickMutualView('active')">Activos</button><button class="btn green" onclick="quickMutualView('reviewed')">Reviewed</button><button class="btn purple" onclick="quickMutualView('protected')">Protected</button><button class="btn red" onclick="quickMutualView('risk_high')">High risk</button><button class="btn" onclick="viewAvailableFocus('mutual')">Abribles</button><button class="btn orange" onclick="viewBlockedFocus('mutual')">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('mutual')">Recover batch</button><button class="btn red" onclick="cancelSectionActiveBatch('mutual')">Cancelar activa</button><button class="btn" onclick="renderFollowersMutualTab()">Refresh</button><button class="btn" onclick="exportMutualDecisionsCSV()">Export decisions</button></div></div>`;
@@ -9709,7 +9709,7 @@ function renderFollowersRealtimePanel(){
   const activeCount=activeFocusBatch?.kind==='followers'?(typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch).length:(activeFocusBatch.rows?.length||0)):0;
   el.innerHTML=`${igcStandardActivityTop('followers','Followers que no sigo')}
     <div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([
-      {value:pendingLive,label:'pendientes vivos'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:paused,label:'pausados'},{value:available,label:'abribles'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'riesgo alto'},{value:rows.length,label:'followers'}
+      {value:pendingLive,label:'active pending'},{value:reviewed,label:'revisados'},{value:activeCount,label:'in active batch'},{value:protectedCount,label:'protegidos'},{value:paused,label:'paused'},{value:available,label:'available to open'},{value:probClosed,label:'prob. cerradas'},{value:riskHigh,label:'high risk'},{value:rows.length,label:'followers'}
     ])}<div class="session-insight"><b>Followers I don't follow:</b> ${rows.length} profiles · ${pendingLive} pending · ${available} available to open now.</div></div>
     ${igcSidebarActiveBatch('followers')}
     <div class="side-control-center"><div class="side-control-title">⚡ Focus mode</div><div class="side-action-grid focus-grid igc-focus-pair-grid"><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(20)">💡 Focus 20</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',20)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(30)">💡 Focus 30</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',30)">👁 View next</button></div><div class="igc-focus-pair"><button class="btn focus-btn small-focus" onclick="followersFocusN(40)">💡 Focus 40</button><button class="btn igc-preview-focus-btn" onclick="igcPreviewNextFocus('followers',40)">👁 View next</button></div></div><div class="igc-prepared-focus-status" data-igc-prepared-kind="followers"></div><div class="side-control-title">🎯 Prepare batch</div><div class="side-action-grid two"><button class="btn orange" onclick="followersSmartBatch(30)">🧠 Recomendada 30</button><button class="btn red" onclick="followersFocusRiskN(30)">⚠ Risk 30</button></div><div class="side-control-title">👁 Quick views</div><div class="side-action-grid two"><button class="btn" onclick="document.getElementById('followersAllFilter').value='all';renderFollowersAllWorkspace()">All</button><button class="btn red" onclick="document.getElementById('followersAllFilter').value='risk_high';renderFollowersAllWorkspace()">High risk</button><button class="btn green" onclick="document.getElementById('followersAllFilter').value='reviewed';renderFollowersAllWorkspace()">Reviewed</button><button class="btn purple" onclick="document.getElementById('followersAllFilter').value='protected';renderFollowersAllWorkspace()">Protected</button><button class="btn" onclick="viewFollowersAvailableFocus()">Abribles</button><button class="btn orange" onclick="viewFollowersBlockedFocus()">No abribles</button></div><div class="side-control-title">✅ Acciones</div><div class="side-action-grid two"><button class="btn" onclick="recoverSectionActiveBatch('followers')">Recover batch</button><button class="btn red" onclick="cancelSectionActiveBatch('followers')">Cancelar activa</button><button class="btn" onclick="renderFollowersAllWorkspace()">Refresh</button><button class="btn" onclick="exportModuleActionLogCSV('followers')">Exportar historial</button></div></div>`;
@@ -10006,7 +10006,7 @@ function renderFollowersSessionPanel(){
     const pending=activeFocusBatchPendingRows?activeFocusBatchPendingRows(activeFocusBatch):activeFocusBatch.rows;
     note.innerHTML=`<b>Active Followers batch:</b> ${esc(activeFocusBatch.label||'Followers')} · ${pending.length} awaiting confirmation. <button class="btn small-focus" onclick="recoverActiveFocusBatch()">Recover batch</button> <button class="btn" onclick="reopenActiveFocusBatch()">Reopen</button>`;
   }else{
-    note.innerHTML=`<b>Última acción en Followers:</b> ${esc(formatLastActionText(last))}`;
+    note.innerHTML=`<b>Latest Followers action:</b> ${esc(formatLastActionText(last))}`;
   }
 }
 
@@ -10190,7 +10190,7 @@ function renderFollowersAllWorkspace(){
     <div class="igc-followers-kpi"><b>${high}</b><span>high risk</span></div>
     <div class="igc-followers-kpi"><b>${unreviewed}</b><span>Unreviewed</span></div>
     <div class="igc-followers-kpi"><b>${reviewed}</b><span>reviewed</span></div>`;
-  if(!all.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No hay followers que tú no sigas con los exports cargados.</td></tr>';return;}
+  if(!all.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No followers you do not follow were found in the imported exports.</td></tr>';return;}
   const q=(document.getElementById('followersAllSearch')?.value||'').trim().toLowerCase();
   const filter=document.getElementById('followersAllFilter')?.value||'all';
   let rows=all.filter(r=>{
@@ -10211,7 +10211,7 @@ function renderFollowersAllWorkspace(){
     const status=isInActiveFocus(r,'followers')?'En tanda':(r.done?'Revisado':(r.protected?'Protegido':(isSnoozed(r)?'Pausado':'Sin revisar')));
     const riskCls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';
     const since=r.dateMain?formatDateFromTs(r.dateMain):'Sin fecha';
-    return `<tr><td><div class="username">@${esc(r.username)}</div><span class="igc-follower-context igc-focus-context">${focusContextHtml(r,'followers')}</span></td><td><span class="badge bpurple">Te sigue · tú no lo sigues</span></td><td><span class="date">${esc(since)}</span></td><td><span class="badge ${riskCls}">${esc(r.riskLevel)} · ${r.riskScore}</span></td><td>${esc(status)}${blockReason?`<span class="igc-follower-context">${esc(blockReason)}</span>`:''}</td><td><div class="igc-followers-actions"><a class="igc-mini-btn" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a><button class="igc-mini-btn" onclick="toggleFollowerProtection('${esc(r.username)}')">${r.protected?'Quitar protección':'Proteger'}</button></div></td></tr>`;
+    return `<tr><td><div class="username">@${esc(r.username)}</div><span class="igc-follower-context igc-focus-context">${focusContextHtml(r,'followers')}</span></td><td><span class="badge bpurple">Follows you · you do not follow</span></td><td><span class="date">${esc(since)}</span></td><td><span class="badge ${riskCls}">${esc(r.riskLevel)} · ${r.riskScore}</span></td><td>${esc(status)}${blockReason?`<span class="igc-follower-context">${esc(blockReason)}</span>`:''}</td><td><div class="igc-followers-actions"><a class="igc-mini-btn" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a><button class="igc-mini-btn" onclick="toggleFollowerProtection('${esc(r.username)}')">${r.protected?'Quitar protección':'Proteger'}</button></div></td></tr>`;
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No hay resultados con este filtro.</td></tr>';
 }
 function toggleFollowerProtection(username){toggleProtected(username);renderFollowersAllWorkspace?.();renderFollowersMutualTab?.();renderFollowersRealtimePanel?.();renderMutualRealtimePanel?.()}
@@ -10356,7 +10356,7 @@ function igcProfileHistoryText(row,kind='main'){
   const h=profileHistoryOf(row);
   if(!h){if(kind==='pending'&&pendingReviewedMeta?.[row.username])return `Historial · última decisión ${pendingDecisionLabel(pendingReviewedMeta[row.username].decision||'')}`;return 'Historial · nunca abierto/revisado en IG Cleaner';}
   const parts=[];
-  if(h.opened)parts.push(`abierto ${h.opened} ${h.opened===1?'vez':'veces'}`);if(h.reopened)parts.push(`reabierto ${h.reopened}`);if(h.reviewed)parts.push(`revisado ${h.reviewed}`);if(h.unconfirmed)parts.push(`sin confirmar ${h.unconfirmed}`);if(h.lastDecision)parts.push(`última decisión: ${pendingDecisionLabel(h.lastDecision)}`);if(h.lastReviewed){const p=igcContextDateParts(Math.floor(h.lastReviewed/1000));if(p)parts.push(`última revisión ${p.relative}`)}
+  if(h.opened)parts.push(`abierto ${h.opened} ${h.opened===1?'vez':'veces'}`);if(h.reopened)parts.push(`reabierto ${h.reopened}`);if(h.reviewed)parts.push(`revisado ${h.reviewed}`);if(h.unconfirmed)parts.push(`sin confirmar ${h.unconfirmed}`);if(h.lastDecision)parts.push(`last decision: ${pendingDecisionLabel(h.lastDecision)}`);if(h.lastReviewed){const p=igcContextDateParts(Math.floor(h.lastReviewed/1000));if(p)parts.push(`última revisión ${p.relative}`)}
   return `Historial · ${parts.join(' · ')||'sin eventos guardados'}`;
 }
 function igcWhyOpened(row,kind='main',label=''){
@@ -10398,7 +10398,7 @@ function igcPrecisionAuditData(){
 }
 function igcRenderPrecisionAudit(source='import'){
   const note=document.getElementById('igcZipNote')||document.querySelector('#page-upload .igc-page-head');if(!note)return;let box=document.getElementById('igcPrecisionAudit');if(!box){box=document.createElement('div');box.id='igcPrecisionAudit';box.className='igc-precision-audit';note.insertAdjacentElement('afterend',box)}const d=igcPrecisionAuditData();
-  box.innerHTML=`<h4>Auditoría de precisión</h4><p>Chequeo operativo después de ${esc(source)}. Te dice cuántas conclusiones son utilizables antes de abrir perfiles.</p><div class="igc-precision-grid"><div class="igc-precision-kpi"><b>${d.following}</b><span>following</span></div><div class="igc-precision-kpi"><b>${d.followers}</b><span>followers</span></div><div class="igc-precision-kpi good"><b>${d.noBack}</b><span>no follow-back verificables</span></div><div class="igc-precision-kpi ${d.unknown?'warn':'good'}"><b>${d.unknown}</b><span>relaciones no verificables</span></div><div class="igc-precision-kpi ${d.focusUnknown?'bad':'good'}"><b>${d.focusUnknown}</b><span>no verificables dentro de Focus</span></div><div class="igc-precision-kpi"><b>${d.newChanges}</b><span>cambios nuevos en Review</span></div><div class="igc-precision-kpi"><b>${d.pendingGone}</b><span>pending que desaparecieron</span></div><div class="igc-precision-kpi ${d.htmlGuard?'warn':'good'}"><b>${d.htmlGuard?'HTML':'JSON'}</b><span>evidencia followers</span></div></div>`;
+  box.innerHTML=`<h4>Evidence precision audit</h4><p>Chequeo operativo después de ${esc(source)}. Te dice cuántas conclusiones son utilizables antes de abrir perfiles.</p><div class="igc-precision-grid"><div class="igc-precision-kpi"><b>${d.following}</b><span>following</span></div><div class="igc-precision-kpi"><b>${d.followers}</b><span>followers</span></div><div class="igc-precision-kpi good"><b>${d.noBack}</b><span>no follow-back verificables</span></div><div class="igc-precision-kpi ${d.unknown?'warn':'good'}"><b>${d.unknown}</b><span>relaciones no verificables</span></div><div class="igc-precision-kpi ${d.focusUnknown?'bad':'good'}"><b>${d.focusUnknown}</b><span>no verificables dentro de Focus</span></div><div class="igc-precision-kpi"><b>${d.newChanges}</b><span>cambios nuevos en Review</span></div><div class="igc-precision-kpi"><b>${d.pendingGone}</b><span>pending que desaparecieron</span></div><div class="igc-precision-kpi ${d.htmlGuard?'warn':'good'}"><b>${d.htmlGuard?'HTML':'JSON'}</b><span>evidencia followers</span></div></div>`;
   const st=document.getElementById('igcNewChangesStatus');if(st)st.textContent=`Cambios disponibles · Review ${igcNewChangeRows('main').length} · Mutuals ${igcNewChangeRows('mutual').length} · Followers ${igcNewChangeRows('followers').length} · Pending nuevos ${igcNewChangeRows('pending').length}`;
 }
 window.igcRenderPrecisionAudit=igcRenderPrecisionAudit;
@@ -10425,8 +10425,8 @@ function showExtraFocusModal(kind,rows,label){
   activeExtraReviewBatch={kind,rows:[...(rows||[])],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
-  const title=kind==='pending'?'Revisión de pending requests':(kind==='mutual'?'Revisión de seguidores que sigo':'Revisión de seguidos que no me siguen');
-  const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`:`Se abrieron ${rows.length} seguidores que sigues. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`;
+  const title=kind==='pending'?'Pending requests review':(kind==='mutual'?'Mutual followers review':'Non-followback review');
+  const text=kind==='pending'?`Opened ${rows.length} pending requests. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`:`Se abrieron ${rows.length} seguidores que sigues. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`;
   const t=document.getElementById('extraFocusTitle');if(t)t.textContent=title;
   const p=document.getElementById('extraFocusText');if(p)p.innerHTML=text;
   const d=document.getElementById('extraFocusDecision');if(d)d.value=kind==='pending'?'still_pending':'reviewed';
@@ -11114,14 +11114,14 @@ function v96ShowRecheckConfirmPopup(rows,label){
   }
 
   if(title)title.textContent=label.includes('double')?'Double Check NO ME SIGUE':'Revisar de nuevo NO ME SIGUE';
-  if(text)text.textContent=`Se abrieron ${rows.length} perfiles. Revisa Instagram y regresa aquí para confirmar.`;
+  if(text)text.textContent=`Opened ${rows.length} profiles. Revisa Instagram y regresa aquí para confirmar.`;
   if(decision)decision.value='reviewed';
-  if(preview){const q=igcBatchQuality(rows,'main');preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
+  if(preview){const q=igcBatchQuality(rows,'main');preview.innerHTML=`<b>Batch quality:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   list.innerHTML=rows.map(r=>{const why=igcWhyOpened(r,'main',label),hist=igcProfileHistoryText(r,'main'),rev=igcReviewChangeInfo(r,'main'),stable=igcStableRelationInfo(r,'main');return `
     <div class="safe-focus-row">
       <div class="igc-focus-ident">
         <span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span>
-        <div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,'main')}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div>
+        <div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,'main')}</small>${why?`<small class="igc-focus-why"><b>Why opened:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div>
       </div>
       <a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a>
     </div>
@@ -11287,14 +11287,14 @@ function showSafeFocusPopup(kind,rows,label){
   activeExtraReviewBatch=activeFocusBatch||{kind,rows:[...unresolved],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
-  const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
+  const title=kind==='pending'?'Pending requests review':(kind==='followers'?'Followers review':(kind==='mutual'?'Mutuals review':'Following review'));
   const text=`Requested ${rows.length} profile tabs for ${kind}. Chrome may block repeated popups, especially after multiple batches. If any tab did not open, use the direct Open link beside that username below. Save the decision only after actually reviewing profiles.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
-  const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
+  const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Batch quality:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   const list=document.getElementById('safeFocusList');
-  if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
+  if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Why opened:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
 function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
@@ -11654,10 +11654,10 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     const reviewed=critical.filter(r=>isDoneValidForMode(r,'following'));
     badge.textContent=`${critical.length} críticas · ${high.length} alta+`;
     grid.innerHTML=critical.length?`
-      <div class="v113-critical-card hot"><b>${critical.length}</b><strong>Prioridad crítica real</strong><span>Cuentas que no te siguen y cumplen reglas críticas.</span></div>
+      <div class="v113-critical-card hot"><b>${critical.length}</b><strong>Critical priority</strong><span>Cuentas que no te siguen y cumplen reglas críticas.</span></div>
       <div class="v113-critical-card warn"><b>${risky.length}</b><strong>Medium/high risk</strong><span>Críticas con señales de riesgo.</span></div>
-      <div class="v113-critical-card info"><b>${reviewed.length}</b><strong>Ya revisadas</strong><span>Siguen apareciendo aunque ya tuvieron revisión.</span></div>
-    `:`<div class="v113-critical-card info"><b>0</b><strong>Sin prioridad crítica</strong><span>No hay cuentas críticas bajo las reglas actuales.</span></div>`;
+      <div class="v113-critical-card info"><b>${reviewed.length}</b><strong>Previously reviewed</strong><span>Siguen apareciendo aunque ya tuvieron revisión.</span></div>
+    `:`<div class="v113-critical-card info"><b>0</b><strong>No critical priority</strong><span>No hay cuentas críticas bajo las reglas actuales.</span></div>`;
     plan.innerHTML=critical.length?`<b>Plan recomendado:</b><ol><li>Empieza por prioridad crítica real.</li><li>Después usa Recheck o Double Check.</li><li>Luego sigue con prioridad alta+.</li></ol>`:`<b>Plan recomendado:</b><ol><li>No hay prioridad crítica real en este momento.</li><li>Sigue con prioridad alta+ o Double Check general.</li></ol>`;
   }
   window.v113RefreshAll=function(force=false){
@@ -11744,18 +11744,18 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     badge.textContent=`${critical.length} críticas · ${high.length} alta+`;
 
     if(!critical.length){
-      grid.innerHTML=`<div class="v113-critical-card info"><b>0</b><strong>Sin prioridad crítica</strong><span>No hay cuentas críticas bajo las mismas reglas del dashboard.</span></div>`;
+      grid.innerHTML=`<div class="v113-critical-card info"><b>0</b><strong>No critical priority</strong><span>No hay cuentas críticas bajo las mismas reglas del dashboard.</span></div>`;
       plan.innerHTML=`<b>Plan recomendado:</b><ol><li>No hay prioridad crítica real en este modo.</li><li>Sigue con prioridad alta+ o cambia de filtro.</li></ol>`;
       return;
     }
 
     grid.innerHTML=`
-      <div class="v113-critical-card hot"><b>${critical.length}</b><strong>Prioridad crítica del dashboard</strong><span>Este número ahora usa el mismo criterio que el KPI superior.</span></div>
-      <div class="v113-critical-card warn"><b>${c.risk.length}</b><strong>Con riesgo medio/alto</strong><span>Críticas que además tienen señales de riesgo.</span></div>
-      <div class="v113-critical-card info"><b>${c.reviewed.length}</b><strong>Ya revisadas</strong><span>Críticas que ya tenían una decisión o revisión previa.</span></div>
+      <div class="v113-critical-card hot"><b>${critical.length}</b><strong>Dashboard critical priority</strong><span>Este número ahora usa el mismo criterio que el KPI superior.</span></div>
+      <div class="v113-critical-card warn"><b>${c.risk.length}</b><strong>Medium/high risk</strong><span>Críticas que además tienen señales de riesgo.</span></div>
+      <div class="v113-critical-card info"><b>${c.reviewed.length}</b><strong>Previously reviewed</strong><span>Críticas que ya tenían una decisión o revisión previa.</span></div>
       <div class="v113-critical-card info"><b>${c.changed.length}</b><strong>Relationship changed</strong><span>Casos donde el historial/snapshot sugiere cambio de estado.</span></div>
-      <div class="v113-critical-card warn"><b>${c.closed.length}</b><strong>Prob. cerradas</strong><span>Críticas que podrían ser cerradas, inaccesibles o basura.</span></div>
-      <div class="v113-critical-card info"><b>${c.noFollow.length}</b><strong>No me siguen</strong><span>Dentro de las críticas, estas no te siguen actualmente.</span></div>
+      <div class="v113-critical-card warn"><b>${c.closed.length}</b><strong>Possibly closed</strong><span>Críticas que podrían ser cerradas, inaccesibles o basura.</span></div>
+      <div class="v113-critical-card info"><b>${c.noFollow.length}</b><strong>Do not follow back</strong><span>Dentro de las críticas, estas no te siguen actualmente.</span></div>
     `;
 
     plan.innerHTML=`<b>Plan recomendado:</b><ol>
@@ -12019,7 +12019,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     badge.textContent=`${critical.length} críticas · ${high.length} alta+`;
 
     if(!critical.length){
-      grid.innerHTML=`<div class="v113-critical-card info"><b>0</b><strong>Sin prioridad crítica</strong><span>No hay cuentas críticas bajo las reglas actuales.</span></div>`;
+      grid.innerHTML=`<div class="v113-critical-card info"><b>0</b><strong>No critical priority</strong><span>No hay cuentas críticas bajo las reglas actuales.</span></div>`;
       plan.innerHTML=`<b>Plan recomendado:</b><ol><li>No hay prioridad crítica real en este modo.</li><li>Sigue con prioridad alta+ o cambia de filtro.</li></ol>`;
       return;
     }
@@ -12297,7 +12297,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     let histText='';
     try{
       const hist=Object.values(profileHistory||{}).sort((a,b)=>(b.lastReviewed||b.lastOpened||0)-(a.lastReviewed||a.lastOpened||0)).slice(0,12);
-      histText=hist.length?'\n\n──────── HISTORIAL AUTOMÁTICO RECIENTE ────────\n\n'+hist.map(h=>`@${h.username}\n  abierto: ${h.opened||0} · reabierto: ${h.reopened||0} · revisado: ${h.reviewed||0} · sin confirmar: ${h.unconfirmed||0} · pausado: ${h.snoozed||0}\n  última sección: ${h.lastSection||'—'} · última decisión: ${pendingDecisionLabel(h.lastDecision||'')}\n  último abierto: ${formatMaybeDate(h.lastOpened)} · última revisión: ${formatMaybeDate(h.lastReviewed)}`).join('\n\n'):'\n\n──────── HISTORIAL AUTOMÁTICO ────────\n\nSin historial automático todavía.';
+      histText=hist.length?'\n\n──────── HISTORIAL AUTOMÁTICO RECIENTE ────────\n\n'+hist.map(h=>`@${h.username}\n  abierto: ${h.opened||0} · reabierto: ${h.reopened||0} · revisado: ${h.reviewed||0} · sin confirmar: ${h.unconfirmed||0} · pausado: ${h.snoozed||0}\n  last section: ${h.lastSection||'—'} · last decision: ${pendingDecisionLabel(h.lastDecision||'')}\n  último abierto: ${formatMaybeDate(h.lastOpened)} · última revisión: ${formatMaybeDate(h.lastReviewed)}`).join('\n\n'):'\n\n──────── HISTORIAL AUTOMÁTICO ────────\n\nSin historial automático todavía.';
     }catch{}
     box.textContent=fileText+histText;
   };

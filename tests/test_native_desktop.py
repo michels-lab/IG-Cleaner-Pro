@@ -60,7 +60,7 @@ class DesktopAppTests(unittest.TestCase):
             self.skipTest("Windows named mutex")
         handle = native.acquire_single_instance()
         try:
-            with self.assertRaisesRegex(RuntimeError, "ya está abierto"):
+            with self.assertRaisesRegex(RuntimeError, "already running"):
                 native.acquire_single_instance()
         finally:
             native.release_single_instance(handle)
