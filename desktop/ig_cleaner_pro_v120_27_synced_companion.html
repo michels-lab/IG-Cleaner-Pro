@@ -4898,6 +4898,13 @@ function showPage(id){
   if(id==='list'){updateSessionPanel();renderActionLog();renderRecentActivity();renderAdvancedDashboard();}
   applyColumnVisibility();
   renderActiveBatchDock();
+  // An initially-open <details> does not reliably fire its toggle event
+  // after login/profile state is hydrated. Navigation to Automations is the
+  // authoritative chance to load this exact owner/account's saved settings.
+  if(id==='automations' && document.getElementById('igcLiveSettingsPanel')?.open &&
+     typeof window.igcLiveConfigLoad==='function'){
+    void window.igcLiveConfigLoad();
+  }
 }
 
 function updateFileLabel(id,files){
