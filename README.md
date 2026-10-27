@@ -18,7 +18,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Current published stable: v120.66. Next reserved version: v120.67, not published.**
 
-The next reserved development version **v120.67 is not authorized** for publication. The owner tests only officially published installers; source tests cannot replace actual account acceptance. No RC/beta, silent installation or Google Play deployment.
+The internally staged **v120.67 is authorized ONLY for governed FINAL stable release after exact-source installed Windows public/Developer, signed Android coexistence, browser no-action regression, Home/About visual, SHA-256 and update-feed checks pass**; it is not published yet. No RC/beta. The owner tests only officially published installers; source tests cannot replace actual account acceptance. No RC/beta, silent installation or Google Play deployment.
 
 [Official v120.66 publication receipt](docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md). Historical receipts: [v120.65](docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md), [v120.64](docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md), [v120.59](docs/GRANADA_45_V12059_STABLE_RECEIPT_2026-10-23.md), [v120.60](docs/GRANADA_46_V12060_STABLE_RECEIPT_2026-10-23.md), [v120.62](docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md), [v120.63](docs/GRANADA_V12063_FINAL_RECEIPT_2026-10-26.md).
 
