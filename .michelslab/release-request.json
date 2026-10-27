@@ -1,12 +1,12 @@
 {
   "version": "120.69",
   "tag": "v120.69",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner's standing Operacion Granada condition: publish ONLY a normal official FINAL stable release after exact-source installed public+Developer Windows, production-signed Android public+Developer co-install, rendered UI, SHA-256 and updater-feed gates all succeed; no RC, beta or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.68",
   "owner_acceptance_note": "Owner explicitly needs live read-only Followers and Following without ZIP in installed Windows. v120.69 first official publisher run 40530976884 CANCELED at unbounded Windows Setup install/launch/uninstall; three other publisher jobs passed and NO release was published. Corrective watchdog source PR #267 merged as 79fca236d1eaaa17525498607649fcfc28862ae8 after six exact-head successful checks including installed public and Developer Windows; old Chrome/ZIP/protected/account/WAL data retained. OWNER AUTHORIZES a FRESH normal FINAL v120.69 publication only after new exact-source installed Windows+Developer, production-signed Android twins, rendered UI, SHA-256 and verified updater feed ALL pass; no RC, beta, bypass or release asset overwrite. Real owner Instagram list endpoint and live count remain unverified.",
   "requested_at": "2026-10-27",
@@ -33,5 +33,11 @@
     "release_created": false,
     "source_sha": "153fa2bd60487fe870b890f6dd52901a88e63652"
   },
-  "reauthorized_due_to": "Required native Windows process-watchdog PR #267 now integrated after full exact-head installed QA; create-only v120.69 publisher must independently revalidate all mandatory gates on the NEW main source SHA."
+  "reauthorized_due_to": "Required native Windows process-watchdog PR #267 now integrated after full exact-head installed QA; create-only v120.69 publisher must independently revalidate all mandatory gates on the NEW main source SHA.",
+  "published_run": 40539017886,
+  "published_commit": "3808c58fab35768fc769f1afef270897da014276",
+  "published_at": "2026-10-27T16:24:10Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.69",
+  "published_asset_count": 12,
+  "post_publication_note": "Verified official normal FINAL GitHub v120.69, publisher 40539017886 SUCCESS on all five gates, 12 assets with SHA-256 manifests; Android public/Developer production-signing and Windows public/Developer installed tests. HTML live-follower snapshot feature was in exact tagged source; actual owner Instagram private endpoint/session not tested. This authorization is consumed; no further automated release until a separate owner-authorized version."
 }
