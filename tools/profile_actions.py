@@ -3316,7 +3316,9 @@ class ActionRobot:
                             # Release read-only and proven no-click tabs normally.
                             # Post-click pending tabs require a separate verified
                             # session check and durable original WAL above.
-                            safely_unclicked = self.review_only or _preclick_no_action(journal.get(user, {}))
+                            safely_unclicked = (self.review_only
+                                or _preclick_no_action(journal.get(user, {}))
+                                or _benign_preclick_issue(issue, journal.get(user, {})))
                             action_tabs.record(user, result, safe_no_click=safely_unclicked)
                             if defer_pending_unfollow:
                                 action_tabs.defer_persisted_pending(user)
