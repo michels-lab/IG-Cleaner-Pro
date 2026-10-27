@@ -859,6 +859,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                         result = updater.install()
                     else:
                         raise ValueError("Unknown update action.")
+                elif self.path == "/api/actions/live-settings":
+                    result = live_relationships.configuration(data)
                 elif self.path == "/api/actions/live-start":
                     result = live_relationships.start(data)
                 elif self.path == "/api/actions/live-stop":

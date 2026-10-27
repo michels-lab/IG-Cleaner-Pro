@@ -3817,7 +3817,35 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button type="button" class="btn" onclick="igcAutoLiveStop()">Stop scan</button>
     <button type="button" class="btn" onclick="igcAutoLivePoll()">Show last verified snapshot</button>
   </div>
-  <p id="igcRelLiveStatus" class="note" role="status" aria-live="polite">No new live scan. A previous snapshot is not proof of the current account state.</p>
+  <details id="igcLiveSettingsPanel" style="margin:12px 0;border:1px solid var(--line,#405166);border-radius:12px;padding:12px" ontoggle="if(this.open)igcLiveConfigLoad()">
+  <summary style="cursor:pointer;font-weight:700">⚙ Verification settings · Recommended (default)</summary>
+  <p class="note">Configure bulk list reading only. These intervals are conservative app suggestions, <strong>not official Instagram limits</strong> and cannot guarantee full account protection. The other automation modes are unchanged.</p>
+  <label style="display:block;margin:8px 0">Safety profile
+    <select id="igcLiveSafetyPreset" onchange="igcLiveConfigPresetChange()" aria-label="Perfil recomendado de proteccion">
+      <option value="recommended" selected>Recomendado (predeterminado) · Balanced</option>
+      <option value="cautious">More cautious · Slower pace</option>
+      <option value="custom">Custom · Validated limits</option>
+    </select>
+  </label>
+  <div id="igcLiveSafetyGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;margin:12px 0">
+    <label>Accounts requested per page <input type="number" id="igcLiveCfgPageSize" min="25" max="200" step="1" value="200" disabled style="width:100%" /></label>
+    <label>Wait between pages (s) <input type="number" id="igcLiveCfgPageDelay" min="2.5" max="30" step="0.5" value="2.5" disabled style="width:100%" /></label>
+    <label>Short break every N pages <input type="number" id="igcLiveCfgShortEvery" min="2" max="5" step="1" value="5" disabled style="width:100%" /></label>
+    <label>Short break duration (s) <input type="number" id="igcLiveCfgShortRest" min="12" max="180" step="1" value="12" disabled style="width:100%" /></label>
+    <label>Long break every N pages <input type="number" id="igcLiveCfgLongEvery" min="10" max="25" step="1" value="25" disabled style="width:100%" /></label>
+    <label>Long break duration (s) <input type="number" id="igcLiveCfgLongRest" min="90" max="600" step="1" value="90" disabled style="width:100%" /></label>
+    <label>Wait after a complete scan (min) <input type="number" id="igcLiveCfgRepeat" min="15" max="180" step="1" value="15" disabled style="width:100%" /></label>
+  </div>
+  <p id="igcLiveRiskAdvice" class="note" role="status">Recommended: 2.5s per page, 12s every 5 pages, 90s every 25; at least 15 min between completed reads.</p>
+  <div class="btnrow">
+    <button type="button" class="btn primary" id="igcLiveSaveSettings" onclick="igcLiveConfigSave()">Save and apply</button>
+    <button type="button" class="btn" onclick="igcLiveConfigReset()">Restore recommended</button>
+    <small id="igcLiveSettingsState" aria-live="polite">Settings are saved per account and apply to the next scan.</small>
+  </div>
+  <small>A restricted response stops the reader and starts a minimum 30-minute shared-browser cooldown. This mandatory protection cannot be disabled.</small>
+</details>
+<p id="igcLiveScanProgress" class="note" aria-live="polite">No hay escaneo activo.</p>
+<p id="igcRelLiveStatus" class="note" role="status" aria-live="polite">No new live scan. A previous snapshot is not proof of the current account state.</p>
   <div id="igcAutoLiveTotals" class="note"></div>
   <div class="btnrow">
     <label for="igcAutoLiveKind">Show list</label>
@@ -15336,12 +15364,151 @@ function igcLiveMessage(message){
  const el=document.getElementById("igcRelLiveStatus");
  if(el)el.textContent=String(message||"");
 }
+// Explicit read-only bulk settings. Each saved configuration is validated by
+// the installed Python bridge and frozen for the full scan; UI never controls
+// the Unfollow robot or claims that these waits are official IG API limits.
+let igcLiveConfigCache=null,igcLiveConfigScope="",igcLiveConfigDirty=false;
+let igcLiveLastCustom=null,igcLiveConfigLoading=false,igcLiveSettingsLocked=false;
+const igcLiveConfigFields=[
+ ["page_size","igcLiveCfgPageSize",1],
+ ["page_delay_ms","igcLiveCfgPageDelay",1000],
+ ["short_every","igcLiveCfgShortEvery",1],
+ ["short_rest_ms","igcLiveCfgShortRest",1000],
+ ["long_every","igcLiveCfgLongEvery",1],
+ ["long_rest_ms","igcLiveCfgLongRest",1000],
+ ["repeat_minutes","igcLiveCfgRepeat",1]
+];
+function igcLiveSettingsMessage(value){
+ const element=document.getElementById("igcLiveSettingsState");
+ if(element)element.textContent=String(value);
+}
+function igcLiveSettingsKey(){
+ const s=igcLiveScope();
+ return s.owner+"::"+s.account;
+}
+function igcLiveConfigLocked(busy){
+ igcLiveSettingsLocked=Boolean(busy);
+ const preset=document.getElementById("igcLiveSafetyPreset");
+ if(preset)preset.disabled=igcLiveSettingsLocked;
+ const save=document.getElementById("igcLiveSaveSettings");
+ if(save)save.disabled=igcLiveSettingsLocked;
+ igcLiveConfigRenderInputLock();
+}
+function igcLiveConfigRenderInputLock(){
+ const preset=document.getElementById("igcLiveSafetyPreset")?.value;
+ for(const [,id] of igcLiveConfigFields){
+  const input=document.getElementById(id);
+  if(input)input.disabled=igcLiveSettingsLocked||preset!=="custom";
+ }
+}
+function igcLiveConfigReadFields(){
+ const value={};
+ for(const [key,id,mul] of igcLiveConfigFields){
+  const input=document.getElementById(id);
+  if(!input||!input.value.trim())throw Error("Completa todos los ajustes.");
+  const n=Number(input.value);
+  if(!Number.isFinite(n)||!Number.isInteger(n*mul))
+   throw Error("Valor inválido para "+key+".");
+  value[key]=Math.round(n*mul);
+ }
+ return value;
+}
+function igcLiveConfigRender(values,preset){
+ const chosen=document.getElementById("igcLiveSafetyPreset");
+ if(chosen)chosen.value=preset;
+ for(const [key,id,mul] of igcLiveConfigFields){
+  const input=document.getElementById(id);
+  if(input)input.value=String((values||{})[key]/mul);
+ }
+ igcLiveConfigRenderInputLock();
+ const risk=document.getElementById("igcLiveRiskAdvice");
+ if(risk){
+  const ms=values||{};
+  const base=" "+(ms.page_delay_ms/1000).toFixed(1)+" s/página, "+
+   (ms.short_rest_ms/1000).toFixed(0)+" s cada "+ms.short_every+
+   " páginas, "+(ms.long_rest_ms/1000).toFixed(0)+" s cada "+
+   ms.long_every+"; mínimo "+ms.repeat_minutes+" min para repetir.";
+  risk.textContent=(preset==="recommended"?"Recomendado (predeterminado).":
+   preset==="cautious"?"Más pausado.":"Personalizado validado.")+base+
+   " Es una recomendación, no una garantía contra restricciones.";
+ }
+}
+window.igcLiveConfigLoad=async function(){
+ if(igcLiveConfigLoading)return;
+ const scope=igcLiveScope(), key=igcLiveSettingsKey();
+ if(!scope.owner||!scope.account){
+  igcLiveSettingsMessage("Inicia sesión y selecciona la cuenta.");
+  return;
+ }
+ if(igcLiveConfigCache && igcLiveConfigScope===key && igcLiveConfigDirty)return;
+ igcLiveConfigLoading=true;
+ try{
+  const response=await requestAction("live-settings",scope);
+  if(key!==igcLiveSettingsKey())return;
+  if(response.owner!==scope.owner||response.account!==scope.account||
+     response.relationship_action!==false)throw Error("No coincide la cuenta.");
+  igcLiveConfigCache=response;
+  igcLiveConfigScope=key;
+  igcLiveConfigDirty=false;
+  if(response.settings.preset==="custom")igcLiveLastCustom=response.settings.values;
+  igcLiveConfigRender(response.settings.values,response.settings.preset);
+  igcLiveConfigLocked(response.editable===false);
+  igcLiveSettingsMessage("Ajustes guardados para esta cuenta. "+(response.editable===false?
+   "Escaneo activo: cambios bloqueados.":"Puedes elegir otro perfil y guardar."));
+ }catch(e){igcLiveSettingsMessage("No se pudieron cargar los ajustes: "+e.message)}
+ finally{igcLiveConfigLoading=false}
+};
+window.igcLiveConfigPresetChange=function(){
+ if(igcLiveSettingsLocked)return;
+ const preset=document.getElementById("igcLiveSafetyPreset")?.value;
+ if(!["recommended","cautious","custom"].includes(preset))return;
+ if(!igcLiveConfigCache)return igcLiveSettingsMessage("Carga los ajustes antes de cambiarlos.");
+ const values=preset==="custom"?
+ (igcLiveLastCustom||igcLiveConfigCache.settings.values):
+ igcLiveConfigCache.presets[preset];
+ igcLiveConfigRender(values,preset);
+ igcLiveConfigDirty=true;
+ igcLiveSettingsMessage("Cambios sin guardar: pulsa Guardar y aplicar.");
+};
+window.igcLiveConfigReset=function(){
+ if(igcLiveSettingsLocked)return;
+ if(!igcLiveConfigCache)return window.igcLiveConfigLoad();
+ igcLiveConfigRender(igcLiveConfigCache.presets.recommended,"recommended");
+ igcLiveConfigDirty=true;
+ igcLiveSettingsMessage("Predeterminado seleccionado: pulsa Guardar y aplicar.");
+};
+window.igcLiveConfigSave=async function(){
+ if(igcLiveSettingsLocked)return igcLiveSettingsMessage("Detén el escaneo antes de guardar cambios.");
+ if(!igcLiveConfigCache)return window.igcLiveConfigLoad();
+ const scope=igcLiveScope(),key=igcLiveSettingsKey();
+ if(key!==igcLiveConfigScope)return igcLiveSettingsMessage("La cuenta cambió: vuelve a cargar los ajustes.");
+ const preset=document.getElementById("igcLiveSafetyPreset")?.value;
+ try {
+  const selection={preset};
+  if(preset==="custom")selection.values=igcLiveConfigReadFields();
+  const value=await requestAction("live-settings",{...scope,save:true,settings:selection});
+  if(key!==igcLiveSettingsKey())return;
+  igcLiveConfigCache=value;
+  igcLiveConfigDirty=false;
+  if(value.settings.preset==="custom")igcLiveLastCustom=value.settings.values;
+  igcLiveConfigRender(value.settings.values,value.settings.preset);
+  igcLiveSettingsMessage("Guardado. Se aplicará al próximo escaneo de esta cuenta.");
+ }catch(e){igcLiveSettingsMessage("No se guardó: "+e.message)}
+};
+for(const [,id] of igcLiveConfigFields){
+ document.getElementById(id)?.addEventListener("input",()=>{
+  if(igcLiveSettingsLocked)return;
+  igcLiveConfigDirty=true;
+  igcLiveSettingsMessage("Valores modificados, todavía sin guardar.");
+ });
+}
 window.igcAutoLiveVerify=async function(){
  const selected=igcLiveScope();
  if(!selected.owner||!selected.account||!selected.expected_handle){
   igcLiveMessage("Sign in to InstaCleaner and select the exact Instagram profile first.");
   return;
  }
+ if(igcLiveConfigDirty){igcLiveMessage("Guarda primero los ajustes de lectura en bloque o restaura los recomendados.");return;}
  if(!window.confirm("Read BOTH complete current Instagram Followers and Following lists for @"+
     selected.expected_handle+" in the robot's Chrome now? Read-only: no ZIP replacement, no changed reviews or relationships."))return;
  const gen=++igcLiveGeneration;
@@ -15392,6 +15559,14 @@ window.igcAutoLivePoll=async function(){
                    "No complete snapshot for this Instagram profile";
   igcLiveMessage((answer.message||"")+
     " · "+source+(verified&&answer.captured_at?" · "+answer.captured_at:""));
+  const progress=document.getElementById("igcLiveScanProgress");
+  if(progress)progress.textContent="Páginas JSON: "+Number(answer.pages_completed||0)+
+    " · Seguidores leídos: "+Number(answer.members_loaded?.followers||0)+
+    " · Seguidos leídos: "+Number(answer.members_loaded?.following||0)+
+    (answer.cooldown_seconds_remaining?(" · Enfriamiento: "+
+      Math.ceil(answer.cooldown_seconds_remaining/60)+" min"):"")+
+    " · Solo lectura, sin visitar perfiles individuales.";
+  igcLiveConfigLocked(answer.running===true);
   const totals=document.getElementById("igcAutoLiveTotals");
   if(totals)totals.textContent=verified?
    "Followers: "+answer.totals.followers+" · Following: "+answer.totals.following+

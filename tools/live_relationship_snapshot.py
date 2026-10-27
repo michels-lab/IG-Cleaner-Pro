@@ -16,6 +16,7 @@ from profile_actions import _find_verified_owner_tab, _atomic_json, _read_json, 
 from profile_counts_instagram import challenge_detected, preserve_instagram_auth_page
 from profile_counts_robot import valid_username
 from profile_lists_live import read_live_friendship_list, LiveListsRateLimited
+from live_scan_settings import effective_settings, validate_settings, PRESETS, LIMITS
 from robot_interlock import ActionLease
 
 
@@ -31,10 +32,37 @@ class LiveRelationships:
         self.pages_completed = 0
         self.members_loaded = {"followers": 0, "following": 0}
         self._session_cooldown_until = 0.0
+        self.active_settings = effective_settings(None)
 
     def _file_for(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("instagram-live-relationships-"+digest+".json")
+
+    def _settings_file(self, owner, account):
+        digest = hashlib.sha256((owner+chr(0)+account).encode("utf-8")).hexdigest()[:32]
+        return self.data_dir / ("instagram-live-bulk-settings-"+digest+".json")
+
+    def configuration(self, data):
+        owner, account = self._scope(data)
+        with self.lock:
+            if data.get("save") is True:
+                if self.worker and self.worker.is_alive():
+                    raise ValueError("Stop the running scan before editing timing settings.")
+                validated = validate_settings(data.get("settings"))
+                _atomic_json(self._settings_file(owner,account), validated)
+            elif data.get("save") not in (None, False):
+                raise ValueError("Explicit Save required for settings.")
+            current = effective_settings(_read_json(self._settings_file(owner,account), {}))
+            return {
+                "owner":owner,"account":account,
+                "settings":current,
+                "defaults":dict(PRESETS["recommended"]),
+                "presets":{name:dict(values) for name,values in PRESETS.items()},
+                "limits":{name:list(bounds) for name,bounds in LIMITS.items()},
+                "editable":not bool(self.worker and self.worker.is_alive()),
+                "read_only":True,"relationship_action":False,
+                "risk_notice":"Conservative app delays, not Instagram quotas; account restrictions remain possible.",
+            }
 
     def _cooldown_file(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
@@ -95,6 +123,8 @@ class LiveRelationships:
                 "Protective Instagram list-scan cooldown: " +
                 str((remaining + 59)//60) + " minutes remaining. " +
                 "Do not start another scan; existing complete snapshots are preserved.")
+        selected_settings = effective_settings(_read_json(
+            self._settings_file(owner,account), {}))
         lease = ActionLease(self.data_dir).acquire()
         started = False
         try:
@@ -105,6 +135,7 @@ class LiveRelationships:
                         (self.collector.worker and self.collector.worker.is_alive())):
                     raise ValueError("Pause all other Instagram Chrome robots before verifying live lists.")
                 self.owner,self.account,self.handle=owner,account,handle
+                self.active_settings=selected_settings
                 self.pages_completed=0
                 self.members_loaded = {"followers": 0, "following": 0}
                 self.stop_event.clear()
@@ -125,6 +156,7 @@ class LiveRelationships:
                 "pages_completed":self.pages_completed,
                 "members_loaded":dict(self.members_loaded),
                 "cooldown_seconds_remaining":self._cooldown_remaining(self.owner,self.account),
+                "active_settings":dict(self.active_settings),
                 "read_only":True,
                 "relationship_action":False}
 
@@ -239,7 +271,7 @@ class LiveRelationships:
                 def on_rest(kind, index, milliseconds):
                     with self.lock:
                         self.status = "running"
-                        self.message = ("Instagram protection: " + str(milliseconds // 1000) +
+                        self.message = ("Instagram protection: " + format(milliseconds / 1000, ".1f") +
                                         "s rest after " + str(index) + " bulk " + kind +
                                         " pages; Stop scan works during the pause. " +
                                         "No profile-by-profile visits.")
@@ -255,11 +287,13 @@ class LiveRelationships:
                 followers=read_live_friendship_list(
                     page,self.handle,"followers",on_page=on_page,
                     on_progress=on_progress,identities=True,
-                    on_rest=on_rest,wait_ms=interruptible_wait)
+                    on_rest=on_rest,wait_ms=interruptible_wait,
+                    settings=self.active_settings)
                 following=read_live_friendship_list(
                     page,self.handle,"following",on_page=on_page,
                     on_progress=on_progress,identities=True,
-                    on_rest=on_rest,wait_ms=interruptible_wait)
+                    on_rest=on_rest,wait_ms=interruptible_wait,
+                    settings=self.active_settings)
                 if self.stop_event.is_set():
                     return
                 verified,mismatch=_find_verified_owner_tab(
@@ -281,7 +315,7 @@ class LiveRelationships:
                     "lists":lists,"read_only":True})
                 # Even successful scans are deliberately not repeatable in a
                 # burst. The cooldown is local to this app-login/IG-workspace.
-                self._record_cooldown(15*60, "complete")
+                self._record_cooldown(self.active_settings["values"]["repeat_minutes"]*60, "complete")
                 with self.lock:
                     self.status="complete"
                     self.message=("Verified BOTH complete Instagram bulk lists by account ID: "+

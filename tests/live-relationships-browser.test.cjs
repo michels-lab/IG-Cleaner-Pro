@@ -12,7 +12,8 @@ const {chromium}=require('playwright');
  try{
   const context=await browser.newContext({viewport:{width:1250,height:900}});
   const page=await context.newPage(),seen=[];
-  let appOwner='';
+  let appOwner='', liveSettings={schema:'igc-live-bulk-settings-v1',
+    preset:'recommended',values:{"page_size":200,"page_delay_ms":2500,"short_every":5,"short_rest_ms":12000,"long_every":25,"long_rest_ms":90000,"repeat_minutes":15}};
   const accepted={status:'starting',owner:'fixture-owner-placeholder',account:'ig_abc12345678',
       expected_handle:'my.account',relationship_action:false,
       message:'Read-only browser scan accepted'};
@@ -38,7 +39,23 @@ const {chromium}=require('playwright');
    }
    const endpoint=url.split('/').pop(),payload=JSON.parse(req.postData()||'{}');
    seen.push({endpoint,payload});
-   if(endpoint==='live-start'){
+   if(endpoint==='live-settings'){
+     assert.equal(payload.owner,appOwner);
+     assert.equal(payload.account,'ig_abc12345678');
+     if(payload.save===true){
+       const incoming=payload.settings;
+       assert(['recommended','cautious','custom'].includes(incoming.preset));
+       liveSettings={schema:'igc-live-bulk-settings-v1',
+          preset:incoming.preset,values:incoming.preset==='recommended'?
+            {"page_size":200,"page_delay_ms":2500,"short_every":5,"short_rest_ms":12000,"long_every":25,"long_rest_ms":90000,"repeat_minutes":15}:incoming.preset==='cautious'?
+            {"page_size":100,"page_delay_ms":5000,"short_every":5,"short_rest_ms":25000,"long_every":20,"long_rest_ms":180000,"repeat_minutes":30}:incoming.values};
+     }
+     await route.fulfill({status:200,headers,contentType:'application/json',
+       body:JSON.stringify({owner:appOwner,account:'ig_abc12345678',
+          settings:liveSettings,defaults:{"page_size":200,"page_delay_ms":2500,"short_every":5,"short_rest_ms":12000,"long_every":25,"long_rest_ms":90000,"repeat_minutes":15},
+          presets:{recommended:{"page_size":200,"page_delay_ms":2500,"short_every":5,"short_rest_ms":12000,"long_every":25,"long_rest_ms":90000,"repeat_minutes":15},cautious:{"page_size":100,"page_delay_ms":5000,"short_every":5,"short_rest_ms":25000,"long_every":20,"long_rest_ms":180000,"repeat_minutes":30}},
+          limits:{},editable:true,read_only:true,relationship_action:false})});
+   }else if(endpoint==='live-start'){
      assert.equal(payload.confirmation,'live-relationships:my.account');
      assert.equal(payload.read_only_consent,true);
      assert.equal(payload.expected_handle,'my.account');
@@ -96,6 +113,34 @@ const {chromium}=require('playwright');
   assert.equal(await page.locator('#igcRelLiveStatus').count(),1);
   assert.equal(await page.locator('#igcAutoLiveStatus').count(),1,
     'Existing action-robot status must not be replaced by new snapshot');
+  const settings=page.locator('#igcLiveSettingsPanel');
+  assert.equal(await settings.count(),1,'Visible live-scan settings panel missing');
+  await settings.locator('summary').click();
+  await page.waitForFunction(()=>document.querySelector('#igcLiveSettingsState')
+    ?.textContent?.includes('Ajustes guardados'),null,{timeout:8000});
+  assert.equal(await page.locator('#igcLiveSafetyPreset').inputValue(),'recommended');
+  assert.equal(await page.locator('#igcLiveCfgPageDelay').inputValue(),'2.5');
+  assert.equal(await page.locator('#igcLiveCfgPageDelay').isDisabled(),true);
+  await page.locator('#igcLiveSafetyPreset').selectOption('cautious');
+  assert.equal(await page.locator('#igcLiveCfgPageDelay').inputValue(),'5');
+  await page.locator('#igcLiveSaveSettings').click();
+  await page.waitForFunction(()=>document.querySelector('#igcLiveSettingsState')
+    ?.textContent?.includes('Guardado.'),null,{timeout:8000});
+  assert.equal(liveSettings.preset,'cautious');
+  await page.locator('#igcLiveSafetyPreset').selectOption('custom');
+  assert.equal(await page.locator('#igcLiveCfgPageDelay').isDisabled(),false);
+  await page.locator('#igcLiveCfgPageDelay').fill('7');
+  await page.locator('#igcLiveCfgRepeat').fill('45');
+  await page.locator('#igcLiveSaveSettings').click();
+  await page.waitForFunction(()=>document.querySelector('#igcLiveSettingsState')
+    ?.textContent?.includes('Guardado.'),null,{timeout:8000});
+  assert.equal(liveSettings.preset,'custom');
+  assert.equal(liveSettings.values.page_delay_ms,7000);
+  assert.equal(liveSettings.values.repeat_minutes,45);
+  assert(seen.filter(x=>x.endpoint==='live-settings'&&x.payload.save===true)
+    .every(x=>x.payload.account==='ig_abc12345678'));
+  // No bulk-settings operation may trigger target-profile robot actions.
+  assert.equal(seen.filter(x=>x.endpoint==='live-start').length,0);
   await page.getByRole('button',{name:/Verify live Followers and Following/}).click();
   await page.waitForFunction(()=>document.querySelectorAll('#igcAutoLiveRows li').length===2,
     null,{timeout:10000}).catch(async error=>{
