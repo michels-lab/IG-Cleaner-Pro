@@ -8,12 +8,13 @@
   "android_stable_artifact": "signed-production-keystore",
   "status": "requested",
   "previous_stable_release": "v120.68",
-  "owner_acceptance_note": "Owner explicitly requests independent real-time Followers and Following without ZIP in integrated Windows now. Source #266 and safe chooser #265 integrated after all exact-head CI. Publish ONLY normal FINAL v120.69 after exact merged source installed Windows public/Developer, signed Android public/Developer co-install, rendered visual, SHA-256 and updater-feed checks. No real Instagram account or private list endpoint verification from CI.",
+  "owner_acceptance_note": "Owner explicitly needs live read-only Followers and Following without ZIP in installed Windows. v120.69 first official publisher run 40530976884 CANCELED at unbounded Windows Setup install/launch/uninstall; three other publisher jobs passed and NO release was published. Corrective watchdog source PR #267 merged as 79fca236d1eaaa17525498607649fcfc28862ae8 after six exact-head successful checks including installed public and Developer Windows; old Chrome/ZIP/protected/account/WAL data retained. OWNER AUTHORIZES a FRESH normal FINAL v120.69 publication only after new exact-source installed Windows+Developer, production-signed Android twins, rendered UI, SHA-256 and verified updater feed ALL pass; no RC, beta, bypass or release asset overwrite. Real owner Instagram list endpoint and live count remain unverified.",
   "requested_at": "2026-10-27",
-  "candidate_main_sha": "8031da38f47d50fe0b526571f65a8fceb235e187",
+  "candidate_main_sha": "79fca236d1eaaa17525498607649fcfc28862ae8",
   "integrated_source_merge_shas": [
     "8db910e9721093926fb234d1f152a2047066a3ef",
-    "d17d433f50615180765c137d8bcc970fcf5a0a84"
+    "d17d433f50615180765c137d8bcc970fcf5a0a84",
+    "79fca236d1eaaa17525498607649fcfc28862ae8"
   ],
   "previous_publication": {
     "tag": "v120.68",
@@ -23,5 +24,14 @@
     "asset_count": 12,
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.68"
   },
-  "release_note": "Independent explicit owner-approved read-only Windows live Followers/Following scan without ZIP, four categorized lists and per-account complete snapshots; safe account selector. Private Instagram endpoint availability remains unverified, Windows only, no auto-Unfollow, no prerelease."
+  "release_note": "GRANADA v120.69 independent read-only owner-approved Followers+Following snapshot without ZIP from Windows Automations, no-followback/Fans, complete owner-scoped results, and safe sync account chooser; installer process watchdog and failure diagnostics PR #267 on new source. Previous v120.69 publisher canceled Windows; trigger new exact-source FINAL only.",
+  "previous_failed_publication_attempt": {
+    "tag": "v120.69",
+    "run": 40530976884,
+    "conclusion": "cancelled",
+    "blocked_job": "Windows Setup native install/launch/uninstall",
+    "release_created": false,
+    "source_sha": "153fa2bd60487fe870b890f6dd52901a88e63652"
+  },
+  "reauthorized_due_to": "Required native Windows process-watchdog PR #267 now integrated after full exact-head installed QA; create-only v120.69 publisher must independently revalidate all mandatory gates on the NEW main source SHA."
 }
