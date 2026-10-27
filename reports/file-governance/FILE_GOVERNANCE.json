@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 335,
-  "classified_files_total": 331,
-  "docs_content_inspected": 76,
+  "tracked_files_total": 337,
+  "classified_files_total": 333,
+  "docs_content_inspected": 77,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 71,
+    "document": 72,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 80,
+    "test": 81,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "5efa9f6ccf4a0ed8b5b04f27497eb03de117efd8699dd3b6df20d5001d0aa5ea",
+  "inventory_fingerprint": "cd353c5548789ae34cb7428fba00b8ed689994c085d5830863f73303e7975681",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "3ebcaf8992923b2510bc842099b76263e86eb976"
+      "blob": "1eb3fcc9ef85950ed962632f7b867037f7b61964"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -119,7 +119,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "bec792c1bfddc8ce25975367240f355260b999cb"
+      "blob": "df3e40333449814c2008216dad8cac8f5deee5aa"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "93d988a7a2e2c35a7dfacaaf0fb99d5dfa3a33c3"
+      "blob": "e53259b5fa5cddc149833df7dc2d760a8da841da"
     },
     {
       "path": "AGENTS.md",
@@ -245,28 +245,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "c494b0f025fb17c6f28018ea9388db7afcf5eb27"
+      "blob": "3d90cb2c30127e97eb774ae884387d3d2f7e8fdc"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "8c6d51bcb0c9b58813956ba3257d2aa8d750ce71"
+      "blob": "0f70a5baadef4f272cf824bc7708a6431beb1a07"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "1a7565d6ec0d3400fc302eede467b3a7d66396e1"
+      "blob": "57c0d819ba8a24cb0ec644becb432d7bb0b03d13"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "5c2e291efaa9ece1735851004c5e12140f6c51e4"
+      "blob": "196a0d154faad519efc5f4377387c4423b8fd50e"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "32ad4999a9d70c1e589d8c9a66e50d6bdae02297"
+      "blob": "5b978e8ddc376b179a8626582942914aa9a54304"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1277,6 +1277,13 @@
       "blob": "fb8b969846f66345393f3e393e472f594f4787e5"
     },
     {
+      "path": "docs/GRANADA_WINDOWS_REFERENCE_TRANSPORT_ROUTING_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "4be982308f5840b90dacf0c0b0ec0d79acc5a41f"
+    },
+    {
       "path": "docs/GRANADA_WINDOWS_UNFOLLOW_PENDING_CONTINUE_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1323,7 +1330,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "aaaa8047dd868c2697db51e6ec45a7a069cfa749"
+      "blob": "248d8ce2d236574b498567307f9907caf31cda27"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1414,21 +1421,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "415d5b24f276eb14d769b6790f38f1d5617ad023"
+      "blob": "faf779ce74173cd36dbbcfe955dbc56a58408794"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "c12c9bce34fc863943cd6e8858bdef305387134c"
+      "blob": "36d4df0c1a904416584c977b7db3d4747e4ccb8f"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "fd1a6d41654f0107f1cf6d2d7aa8d01d542acb5d"
+      "blob": "b8d7dfb9ae52dd6613e850bfdb0ad5fd58637d93"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -1848,7 +1855,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bb7d54aa8c474818f0f33b99830d32620a2bd009"
+      "blob": "d24df0454beda870147aa45c2d72db147232c303"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -1870,6 +1877,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "21e0972dee34293ad57b71722d0e6f01b76a4fce"
+    },
+    {
+      "path": "tests/test_action_reference_worker_contract.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a3e5f77a149569d03133c34182a77899ee75910b"
     },
     {
       "path": "tests/test_action_tab_flow.py",
@@ -1981,7 +1995,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0cca73afc6b752203be2f822de89437233bcfd21"
+      "blob": "da6f1fe5dd38bd79bb557b8c7ec35fd0c318feca"
     },
     {
       "path": "tests/test_instagram_unfollow_reference.py",
@@ -2009,7 +2023,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d66d35fe00944069a50faa33c438215704950e19"
+      "blob": "a32e977e9e6ed9a093d7821fd5dc5ba7a4401608"
     },
     {
       "path": "tests/test_profile_counts_actions.py",
@@ -2205,7 +2219,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "04b45980ed19264cfc8e4624670f70c84258e9c6"
+      "blob": "ebfd29bf7223ec6f3e097628c892003862562d1f"
     },
     {
       "path": "tools/profile_counts_audit.py",
