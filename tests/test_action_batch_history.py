@@ -62,6 +62,43 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
         self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
+    def test_following_after_single_post_never_becomes_verified_unfollow(self):
+        """Read-only refresh still sees Following; save Pending, not success."""
+        from profile_actions import _verify_unfollow_after_readonly_refresh
+        from unittest.mock import Mock
+        page = Mock()
+        page.locator.return_value.count.return_value = 0
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("review", "Unverified")), \
+             patch("profile_actions._exact_https_target_profile", return_value=True), \
+             patch("profile_actions._verified_action_owner", return_value=True), \
+             patch("profile_actions._profile_relationship_control", return_value=object()):
+            status, message = _verify_unfollow_after_readonly_refresh(
+                page, "still.following", "owner.name")
+        self.assertEqual(status, "review")
+        self.assertIn("still displays Following", message)
+        self.assertIn("Pending verification", message)
+        self.assertIn("no confirmed unfollow", message.casefold())
+        self.assertEqual(page.goto.call_count, 1)
+
+    def test_unknown_relationship_after_post_remains_pending(self):
+        from profile_actions import _verify_unfollow_after_readonly_refresh
+        from unittest.mock import Mock
+        page = Mock()
+        page.locator.return_value.count.return_value = 0
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("review", "No stable controls")), \
+             patch("profile_actions._exact_https_target_profile", return_value=True), \
+             patch("profile_actions._verified_action_owner", return_value=True), \
+             patch("profile_actions._profile_relationship_control", return_value=None):
+            state, note = _verify_unfollow_after_readonly_refresh(
+                page, "some.user", "owner.name")
+        self.assertEqual(state, "review")
+        self.assertIn("Pending verification", note)
+        self.assertNotIn("Action confirmed", note)
+
     def test_persisted_pending_unfollow_can_be_deferred_only_after_review_result(self):
         from profile_actions import ActionTabPool
         pool = ActionTabPool(FakeTabContext())
