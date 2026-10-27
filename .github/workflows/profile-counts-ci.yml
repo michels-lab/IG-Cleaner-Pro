@@ -9,6 +9,7 @@ on:
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
+      - 'tests/test_action_reference_worker_contract.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
@@ -45,6 +46,7 @@ on:
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
+      - 'tests/test_action_reference_worker_contract.py'
       - 'tests/owner-unfollow-transport.test.cjs'
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
@@ -88,6 +90,7 @@ jobs:
       - name: GRANADA owner-supplied Unfollow transport one-shot consent and negative evidence
         run: |
           python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          python -m unittest discover -s tests -p 'test_action_reference_worker_contract.py' -v
           node tests/owner-unfollow-transport.test.cjs
       - name: GRANADA worker admission blocks malformed persisted action evidence
         run: python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
