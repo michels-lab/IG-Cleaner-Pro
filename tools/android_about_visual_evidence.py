@@ -22,7 +22,7 @@ def create_manifest(folder: Path, apk: Path, sha: str):
     shots = []
     seen = {}
     for viewport in ('compact', 'wide'):
-        for part in ('author', 'studio', 'socials'):
+        for part in ('complete',):
             path = folder / f'about-{viewport}-{part}.png'
             assert path.is_file(), f'P0: rendered Android About screenshot missing: {path}'
             assert path.stat().st_size > 3000, f'P0: tiny screenshot: {path}'
@@ -36,11 +36,10 @@ def create_manifest(folder: Path, apk: Path, sha: str):
             expected = (720,1280) if viewport == 'compact' else (1080,1920)
             assert (w,h) == expected, f'{viewport} screenshot must use actual {expected} viewport; got {w,h}'
             hsh = digest(path)
-            # Different labeled sections may already appear in the same
-            # viewport; only cross-viewport screenshot reuse is forbidden.
-            assert hsh not in seen or seen[hsh] == viewport, (
-                f'Screenshot reused across viewport sizes: {path}'
-            )
+            # One full About dialog per viewport is sufficient because native
+            # UI assertions already prove author/studio/socials simultaneously
+            # visible. Duplicate bytes are not independent screenshots.
+            assert hsh not in seen, f'Duplicate Android About screenshot: {path}'
             seen[hsh] = viewport
             shots.append(dict(
                 platform='android', surface='about',
@@ -60,7 +59,7 @@ def create_manifest(folder: Path, apk: Path, sha: str):
             assert (w,h) == expected, f'Invalid Home viewport {w}x{h}'
             assert max(ImageStat.Stat(im.convert('RGB').resize((64,64))).stddev) >= 9, 'Blank Home screenshot'
         hsh = digest(path)
-        assert hsh not in seen or seen[hsh] == viewport, 'Home screenshot reused across viewport sizes'
+        assert hsh not in seen, 'Home screenshot duplicates a previous rendered surface'
         seen[hsh] = viewport
         shots.append(dict(
             platform='android', surface='home', viewport=viewport, section='initial',
@@ -68,13 +67,13 @@ def create_manifest(folder: Path, apk: Path, sha: str):
             capture_method='installed-android-emulator',
             candidate_artifact_sha256=digest(apk)
         ))
-    assert len(shots)==8
+    assert len(shots)==4
     return dict(
         schema='michelslab-rendered-ui-v1',
         source_commit=sha,
         artifact_sha256={'android': digest(apk)},
         screenshots=shots,
-        automated_ui_assertions='About author/studio measured bounds; full scrollability; buttons and image drawables',
+        automated_ui_assertions='About author, studio and all five social links verified simultaneously by native visible-rectangle assertions; one full About capture per viewport',
         human_visual_review={'decision':'PENDING','reviewer':None},
         device_acceptance='UNVERIFIED'
     )
@@ -90,5 +89,5 @@ if __name__ == '__main__':
     doc=create_manifest(a.screenshots,a.apk,a.sha)
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(doc,indent=2)+'\n',encoding='utf-8')
-    print('PASS: 8 real Home+About screenshots, compact+wide, nonblank and APK-hash bound')
+    print('PASS: 4 distinct real Home+About screenshots, compact+wide, nonblank and APK-hash bound')
     print('Human review and physical Samsung verification remain PENDING.')
