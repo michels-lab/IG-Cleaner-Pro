@@ -117,14 +117,23 @@ def read_live_friendship_list(page, expected_handle, relation, *,
                        'X-Requested-With':'XMLHttpRequest',Accept:'application/json'},
               cache:'no-store',signal:AbortSignal.timeout(20000)
             });
-            if(!response.ok)return {
-              error:'http_'+response.status,
-              retry_after:response.headers.get('Retry-After')
-            };
+            if(!response.ok){
+              const retryValue=response.headers.get('Retry-After');
+              const retrySeconds=/^[0-9]+$/.test(retryValue||'')
+                ? Number(retryValue)
+                : retryValue ? Math.ceil((Date.parse(retryValue)-Date.now())/1000) : 0;
+              return {
+                error:'http_'+response.status,
+                retry_after:Number.isFinite(retrySeconds)?Math.max(0,retrySeconds):0
+              };
+            }
             const body=await response.json();
-            if(body && (String(body.message||'').includes('feedback_required') ||
-                        body.error_type==='feedback_required' ||
-                        body.message==='Please wait a few minutes before you try again.'))
+            const message=String(body?.message??'').toLowerCase();
+            const kind=String(body?.error_type??'').toLowerCase();
+            if(body && (message.includes('feedback_required') ||
+                        message.includes('please wait a few minutes') ||
+                        kind.includes('feedback_required') ||
+                        message.includes('rate limit')))
               return {error:'feedback_required'};
             if(!body||body.status!=='ok'||!Array.isArray(body.users))
               return {error:'unexpected_shape'};
