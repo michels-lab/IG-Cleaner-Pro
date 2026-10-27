@@ -3351,6 +3351,15 @@ class ActionRobot:
                         continue
                     if result not in ("ok", "already_not_following", "already_not_requested",
                                       "profile_unavailable"):
+                        # A blocked relationship action may signal Instagram
+                        # rate-limit, login, account switch or security challenge.
+                        # Even with proven zero-click, NEVER advance into more
+                        # owner-authorized mutations under a blocked session.
+                        if not self.review_only and self.task in ("unfollow", "cancel") and result == "blocked":
+                            with self.lock:
+                                self.status, self.message = "blocked", "@" + user + ": " + details
+                            stopped_for_review = True
+                            break
                         if self.review_only:
                             # Read-only automatic review should check the rest
                             # of the batch, not demand one-by-one manual work.
