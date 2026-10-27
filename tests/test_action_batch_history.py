@@ -141,6 +141,24 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertIsNone(pool.prepared("already.loading"))
         self.assertTrue(prepared.is_closed())
 
+    def test_benign_preclick_review_tab_closes_and_next_target_opens(self):
+        from profile_actions import ActionTabPool, _benign_preclick_issue
+        pool = ActionTabPool(FakeTabContext())
+        previous = pool.open("safe.no.click")
+        record = {"status": "review", "message": "No relationship change attempted.",
+                  "issue": "missing_profile_info"}
+        self.assertTrue(_benign_preclick_issue(record["issue"], record))
+        pool.record("safe.no.click", "review",
+                    safe_no_click=_benign_preclick_issue(record["issue"], record))
+        self.assertTrue(previous.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNotNone(pool.open("next.eligible"))
+        uncertain = {"status": "review", "message": "Ambiguous click",
+                     "issue": "missing_profile_info",
+                     "click_intent": {"phase": "relationship_control"}}
+        self.assertFalse(_benign_preclick_issue(uncertain["issue"], uncertain),
+                         "An innocent-looking issue code never overrides a WAL.")
+
     def test_finished_cohort_releases_unused_prefetched_tabs_not_uncertain_actions(self):
         from profile_actions import ActionTabPool
         pool=ActionTabPool(FakeTabContext())
