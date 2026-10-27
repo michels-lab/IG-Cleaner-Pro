@@ -1,3 +1,7 @@
+## 2026-10-27 — GRANADA v120.71 docs-contract failure reproduced and corrected
+
+- PR #277 initial exact-head lightweight docs test failed because README_SYNC used an unrecognized authorized-candidate wording and retained a contradictory late-page «not authorized» assertion while the release request was conditional `authorized=true`. The document was corrected to the canonical explicit **authorized for governed FINAL publication only after exact-source gates pass**, and the outdated contradictory release rule removed. No test or safety gate was weakened; re-run on replacement commit required before merge.
+
 ## 2026-10-27 — GRANADA v120.71 normal FINAL candidate (NOT published)
 
 - Post-v120.70 source #274/#275: Recommended, cautious and bounded custom bulk-list read settings, owner/workspace-scoped and visible by default. Exact-head #275 CI 6/6 green; source-only behavior has not yet reached official Windows installer. Candidate aligns Desktop UI v120.71, Android public+Developer 12071, Windows public+Developer artifacts, checksum/updater source manifest and one-time governed request. Release v120.70 remains official published stable; **no v120.71 release claim until publisher gates green and GitHub normal FINAL tag exists**. Real Instagram lists, Unfollow and Cancel Pending owner acceptance are still open; never bypass challenge/rate-limit cooling or user history.
