@@ -447,3 +447,10 @@ Automatic evidence deltas, pending human triage. No deletion authority.
 - NEW — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 0e4b57a9618c4cbe).
 - NEW — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID 8c488cfbef924634).
 - NO_LONGER_DETECTED — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID c546976859b509bb).
+
+## 2026-10-27 02:47 UTC
+
+- All tracked 331; findings 5; inventory 77c5cb1b7bb5; evidence 09cbd4faf110. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
+- Finding changes: 1 NEW; 1 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 1 new paths, 0 removed paths, 0 reclassified paths.
+- NEW — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 90d3ae715cce769a).
+- NO_LONGER_DETECTED — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID 8c488cfbef924634).

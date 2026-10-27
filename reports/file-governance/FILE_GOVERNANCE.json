@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 330,
-  "classified_files_total": 326,
-  "docs_content_inspected": 72,
+  "tracked_files_total": 331,
+  "classified_files_total": 327,
+  "docs_content_inspected": 73,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 67,
+    "document": 68,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 4,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 5
   },
   "finding_total": 5,
-  "inventory_fingerprint": "210e878c63e6fd80c56bfec4b8ad7aacb1fde1a6125af6b26f6c26335da70a17",
-  "evidence_fingerprint": "a13e66f7d7c9c30e6c7c12402acfe2c2e17bee4aba5a0b702838c069f0d39405",
+  "inventory_fingerprint": "77c5cb1b7bb5dc6d31ee4cf108b47603b01169292de6e25a85775fbeb5743fee",
+  "evidence_fingerprint": "09cbd4faf11044dba96bb2affe293fcbd9c4b3bcc5e4ad6c7d4d33ce1e8b6a33",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "3fa29e8a21e1737143e410acaaed3f6999cb656f"
+      "blob": "db22a153aa7bb03641bc761e57d6343c9492c35d"
     },
     {
       "path": "AGENTS.md",
@@ -246,21 +245,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "1fdc8dccb39027d1420894f24fc6c885d30faf4c"
+      "blob": "1a9f66720905b0fba884608a81b0c126e8c0c242"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "9107d867cd39a3610c559a708c37e9c47a867884"
+      "blob": "9ef7631f0f78c13ee965394790e8b4757b4d31f4"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "2cac978438a3363a3404df4b2decd84aeae8b52b"
+      "blob": "7f8d1654921c1c147461a5c844424130be2b0d6c"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -883,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "7678debdc573ab24a84b7487ad922ad4cb16530c"
+      "blob": "c3466b5b601b9aa2394b5d9784e34521dce3eddb"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1257,6 +1256,13 @@
       "blob": "b7dda01aa346096e8aa674c6eb060b2e9b4f031c"
     },
     {
+      "path": "docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "fb8b969846f66345393f3e393e472f594f4787e5"
+    },
+    {
       "path": "docs/INFRASTRUCTURE_AUDIT.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1296,7 +1302,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "060bff80cf1846e3ddc8950afe5abdf12f1accfd"
+      "blob": "aaaa8047dd868c2697db51e6ec45a7a069cfa749"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1387,7 +1393,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "e84e1b64be5cc9febfd587995dd752a482f6dcfd"
+      "blob": "e2e59f30513b779b8bf655cc01ab71cd2047273e"
     },
     {
       "path": "release/android-signing.json",
@@ -1401,7 +1407,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "dcbf007b7210e07ceb5743600f9615e189c0c23a"
+      "blob": "29d2f4fd69d46100127b9c82a898e8033af6af23"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2316,6 +2322,15 @@
   ],
   "findings": [
     {
+      "id": "90d3ae715cce769a",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
       "id": "0e4b57a9618c4cbe",
       "code": "BROKEN_RELATIVE_LINK",
       "severity": "confirmed",
@@ -2349,15 +2364,6 @@
       "path": "docs/CURRENT_HANDOFF.md",
       "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "8c488cfbef924634",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: tests/test_action_batch_history.py, tools/profile_actions.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],

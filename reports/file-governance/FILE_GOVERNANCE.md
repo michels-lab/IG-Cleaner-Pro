@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 330; classified: 326; readable documents: 72; above read cap: 1; findings: 5.
+Tracked: 331; classified: 327; readable documents: 73; above read cap: 1; findings: 5.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 330; classified: 326; readable documents: 72; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 67 |
+| document | 68 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 42 |
@@ -29,11 +29,11 @@ Tracked: 330; classified: 326; readable documents: 72; above read cap: 1; findin
 
 ## Findings (human review required)
 
+- **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 90d3ae715cce769a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_REVIEW_RECOVERY_AND_COLORS_2026-10-26.md. Next: Fix link or restore target (ID 0e4b57a9618c4cbe)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 8032832fed0ae6fc)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: tests/test_action_batch_history.py, tools/profile_actions.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 8c488cfbef924634)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
