@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA user-requested v120.69 FINAL staging: independent live relationship verification
+
+- User requires **Verify live Followers and Following** immediately without ZIP in Windows Automations. Code source #266 merged with seven exact-head CI gates green; account chooser #265 merged with six. Last official v120.68 published with 12 assets via successful publisher 40499536879 at exact tagged SHA `2943e735`.
+- v120.69 staged for installed Windows public/Developer and Android public/Developer with persistent signer, standalone Desktop HTML, checksums and updater. The authorized one-time NORMAL FINAL request is conditional on all exact-source rendered and installed tests; does not publish merely from source commit or PR review. No RC, prerelease or changes to original Chrome/WAL/protected accounts.
+- User's real Instagram live endpoint access **not verified**; incomplete or >25k list fails closed, no wrong negative relationship conclusion. Actual physical Windows owner acceptance still required. v120.68 remains official until release v120.69 is independently confirmed.
+
 ## 2026-10-27 — GRANADA account chooser rebased onto full live lists integration
 
 - PR #265 conflict resolved by joining current main's #266 read-only Followers/Following live snapshots and the original account-chooser safety fix without replacing the full Desktop file with an older source. Git merge commit has two parents; account switch stays guarded during sync/active robot. All exact new-head checks must rerun. Normal FINAL v120.68 already published separately; feature remains source-only pending a later distinct release.
