@@ -27,6 +27,12 @@ Second exact-head CI failure (Android About workflow 40444904289 on d3add152) ex
 
 The same active PR #259 now updates this adapter to require complete for Android while preserving desktop initial. It demands exactly four distinct screenshot bytes, rejects wrong platform and adds negative tests for legacy eight-frame manifests, obsolete author section, and duplicate image pixels under different labels. Exact-head CI must rerun. No past green check can certify this new SHA. No release is claimed.
 
+## Follow-up: official FINAL publisher artifact validator drift (2026-10-27)
+
+- On exact integrated main SHA `02336fb5360f19eb342612b93546b0b1db7ef511`, the installed Android UI run **PASSED** with 4 genuinely distinct screenshot bytes, compact/wide Home+complete About. The official FINAL [publisher 40484849226](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40484849226) then **FAILED** rendered-ui-qa job `122124513956`: `verify_android_visual_release_evidence.py:31 AssertionError: Missing Home/6 About screenshots`. A **third downstream copy** of the obsolete eight-image contract, not a failed native render.
+- This new isolated repair updates the **downloaded artifact verifier**, uses the extractor's canonical four expected filenames and real viewport dimensions, binds every screenshot to exact downloaded APK SHA-256 and commit, forbids any duplicated bytes, wrong provenance, wrong platform, stale/extra PNG, path changes, malformed or blank images, and leaves the final master `visual_release_gate.py` **unchanged**. Offline negative tests are explicitly wired into installed Android and publisher CI. No fake visuals, no relaxed release criteria.
+- The branch must pass exact-HEAD source/CI first. Only then integrate and trigger a **new** governed normal FINAL publisher on its unique new main commit. The failed `40484849226` is never upgraded to success or reused as evidence. Published stable remains v120.66 unless independently verified in the GitHub Releases API. Physical Windows Instagram Unfollow/Cancel and phone-owner QA remain pending.
+
 ## Required exact-source gates
 
 The root-cause repair is NOT done until this fix PR passes the actual Android visual workflow and its exact-commit Android manifest/digest gate, original no-click Android Developer/runtime, installed Windows public/Developer, Desktop UI and general RLS/tests. Only then merge and allow the ONE governed official FINAL v120.67 publisher to rerun independently on the new exact head. The failed original publisher may not be labeled success or bypassed.
