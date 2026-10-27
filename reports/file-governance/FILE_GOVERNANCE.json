@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 352,
-  "classified_files_total": 348,
-  "docs_content_inspected": 84,
+  "tracked_files_total": 353,
+  "classified_files_total": 349,
+  "docs_content_inspected": 85,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 79,
+    "document": 80,
     "index": 5,
     "installer_metadata": 1,
     "source": 45,
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "01bd8d8fc6ac5e8ba855dcfd4d9974eb5ae7c2e2f5e8c06c9d79cb4a7c233a5a",
+  "inventory_fingerprint": "2a2f72c73def63adb33a8b61b922e0f8347ea18c1a65cb142fa6287293e81cfd",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "13a4f82b5e176861f6330ab877de3cdb18086036"
+      "blob": "ddd4ed7d42a00b9dd80608da848d610e7c82c5b0"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "4aa2d5fc9860b7b2f7730b1eabfc9f906dd606e5"
+      "blob": "89b7d01297456d3cab6f95f1d369c53ed7f7ce07"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1240,6 +1240,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "df62a65c884b65347c9855dd743b69d827d6e155"
+    },
+    {
+      "path": "docs/GRANADA_ORIGINAL_REFERENCE_DEEP_AUDIT_AND_VISIBLE_SETTINGS_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "ecb4336d4384e137050e31c6a4ebd187f920de13"
     },
     {
       "path": "docs/GRANADA_P0_CANCEL_POSITIVE_EVIDENCE_2026-10-20.md",
@@ -1813,7 +1820,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "108732c1872ad6df7be874139968959103f46103"
+      "blob": "f752ca07a3f794d15626832a8bd2e12b6562a914"
     },
     {
       "path": "tests/multi-instagram-contract.test.cjs",
@@ -2086,7 +2093,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bba68406eeb87f95c363d676edbb9c505119134e"
+      "blob": "d1a639fdc71193e59429f6b47f4348c1f15b0d49"
     },
     {
       "path": "tests/test_master_visual_manifest.py",
