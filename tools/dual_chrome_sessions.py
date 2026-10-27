@@ -83,7 +83,7 @@ class DualChromeSessions:
             try:
                 self.launcher(args(right))
             except Exception as exc:
-                raise ValueError("Window A was requested, but B did not launch. No "
+                raise ValueError("Chrome window B did not launch after window A. No 
                                  "Instagram action was performed.") from exc
         return {"status": "launched", "windows_requested": 2, "owner": owner,
                 "accounts": [primary[0], secondary[0]], "handles": [primary[1], secondary[1]],
