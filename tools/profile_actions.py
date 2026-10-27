@@ -2109,15 +2109,29 @@ class ActionRobot:
             unresolved = []
             unavailable = []
             for username in match["targets"]:
-                result = rechecked.get(username, {}).get("status")
+                original = journal.get(username)
+                observed = rechecked.get(username, {})
+                result = observed.get("status") if isinstance(observed, dict) else None
                 if result is None:
-                    result = journal.get(username, {}).get("status")
+                    result = original.get("status") if isinstance(original, dict) else None
+                # An updated Instagram state is only a READ-ONLY observation.
+                # It cannot prove whether an earlier uncertain Unfollow/Cancel
+                # actually clicked. Preserve every possible click and any
+                # legacy ambiguous outcome as unresolved, even when a later
+                # exact-target scan sees Follow/Follow Back or no Requested.
+                # Only a recorded terminal result or positively proven
+                # pre-click/no-action outcome may become approved.
+                if (isinstance(original, dict)
+                        and original.get("status") in ("review", "error", "blocked")
+                        and not _preclick_no_action(original)):
+                    unresolved.append(username)
+                    continue
                 if result in ("ok", "already_not_following", "already_not_requested"):
                     approved.append(username)
                 elif (result == "profile_unavailable" and
                       (username not in journal or (
-                          isinstance(journal[username], dict) and
-                          "click_intent" not in journal[username]))):
+                          isinstance(original, dict) and
+                          "click_intent" not in original))):
                     unavailable.append(username)
                 else:
                     unresolved.append(username)
