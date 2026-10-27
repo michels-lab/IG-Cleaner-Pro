@@ -1,3 +1,8 @@
+## 2026-10-27 — GRANADA verified official v120.70 and integrated scan control source
+
+- GitHub v120.70 **normal FINAL** was published with 12 SHA-256 tracked assets on tag `55a9f1d0865c4280d9ef0f9866b51476f8b8c786` after governed run `40555013922` passed 5/5. Corrected manifest and consumed the obsolete pending authorization to prevent republishing.
+- Source-only PRs #274 and #275 now merged into main: visible configurable bulk read settings by verified owner/workspace, no-click identity guard, test suite 6/6 green at #275 exact PR SHA. **These settings are NOT yet in published v120.70** and the actual owner Instagram live full lists are not validated. Next v120.71 must pass fresh gates before FINAL release. Historic source actions, original journals, protected and ZIP data preserved.
+
 ## 2026-10-27 — GRANADA original Instagram bundle deep audit + settings discoverability
 
 - Recovered the previously uploaded user's complete `Pasted text(3).txt` (~149 KB Webpack/React bundle) from Project Files, no resend needed. Inspected real constant defaults (50 users/request, 1s baseline, nominal 10s extended rest every 15 search cycles) and five persisted `iu_timings` controls, randomized pauses, 250-page cutoff and sometimes a 30s stepped error retry. These are reference observations, not proof of official Instagram quotas; in InstaCleaner no 429/challenge retries are adopted.
