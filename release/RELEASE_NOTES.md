@@ -1,3 +1,5 @@
+**Cuenta protegida antes de obtener listas en vivo:** como medida conservadora propia de la app (no límites oficiales de Meta), cada página JSON se separa al menos 2.5 s; cada cinco páginas se descansa 12 s y cada 25 páginas 90 s. Si Instagram indica HTTP 429/403/503 o `feedback_required`, detener, respetar `Retry-After` y exigir mínimo 30 min de enfriamiento local por cuenta sin reintentos automáticos. Tras terminar una lectura completa, espaciar nuevas solicitudes al menos 15 min. Botón Stop interrumpe pausas, no persiste listas parciales, preserva últimos snapshots.
+
 ## v120.70 — GRANADA real-owner fix for 250-page Followers/Following failure (FINAL candidate, 2026-10-27)
 
 - **User-reported v120.69 regression:** real Windows Automations read-only list verification failed with `Live list reached its 250-pages safety limit`, without a complete snapshot. The old 250 ceiling limited **JSON response pages**, not Instagram user profiles, and requesting 100 did not prove 100 arrived. No negative membership claims were ever accepted.
