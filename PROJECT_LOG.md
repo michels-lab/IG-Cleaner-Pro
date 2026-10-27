@@ -1,3 +1,7 @@
+## 2026-10-27 — GRANADA Windows PR #267: exact-head CI found and fixed workflow PowerShell parse error
+
+- Real Windows preview run [40523468721](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40523468721) passed the new watchdog success/nonzero/sleep-timeout test plus robot/Chromium checks, then failed at frozen EXE healthcheck script **before executing the executable**: a stray `}` remained after replacing an original `if`. Both final and preview workflows now remove that token; static source contract rejects its recurrence. No reason to claim the actual process hung or that v120.68 needs changes. Rerun all exact-head checks before merge.
+
 ## 2026-10-27 — GRANADA: bounded Windows process QA (isolated branch)
 
 - Audited v120.68 cancelled FINAL attempt 1: Windows installation step cancelled, exact hang cause not proven. Both public and Developer `RunBounded` testers and frozen EXE healthchecks lacked per-child timeout.

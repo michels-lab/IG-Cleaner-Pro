@@ -249,7 +249,7 @@ jobs:
           # with & does not reliably wait or refresh PowerShell's LASTEXITCODE.
           $candidate = (Resolve-Path ".\dist\InstaCleanerPro.exe").Path
           . ./tools/installer_process_guard.ps1
-          Invoke-IgcBoundedProcess -Path $candidate -Arguments @("--healthcheck") -Label "Frozen PyInstaller healthcheck" -TimeoutSeconds 100 }
+          Invoke-IgcBoundedProcess -Path $candidate -Arguments @("--healthcheck") -Label "Frozen PyInstaller healthcheck" -TimeoutSeconds 100
       - name: Bundle integrated one-click application and instructions
         shell: pwsh
         run: |

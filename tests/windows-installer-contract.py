@@ -109,5 +109,6 @@ for workflow in (".github/workflows/release.yml", ".github/workflows/profile-cou
     assert "tests/test_installer_process_guard.ps1" in body
     assert 'Invoke-IgcBoundedProcess -Path $candidate' in body
     assert "Retain Windows installer diagnostics even on failed QA" in body
+    assert '-TimeoutSeconds 100 }' not in body, "Stray PowerShell brace in frozen EXE step"
 
 print("Windows installer source, branding, license, persistence and release routing: PASS")
