@@ -4,13 +4,13 @@
 
 - Candidate: [v120.68 PR #262](https://github.com/michels-lab/IG-Cleaner-Pro/pull/262). Official stable remains v120.67.
 - [Windows integrated CI run 40493835174](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40493835174) failed 3/6 offline Chromium reference Unfollow scenarios on exact parent SHA d97eb522c1d2557605c7a537ed0674c79b7c2f29.
-- PR #262 changed perform_visible_action(use_reference_transport=True) to False. The real ActionRobot._run() did not pass the flag, silently selecting the legacy visible Following/menu click route instead of the owner-approved exact-following-ID lookup and one-shot GraphQL Unfollow.
+- PR #262 changed perform_visible_action default from True to False. The real ActionRobot._run() did not pass the flag, silently selecting the legacy visible Following/menu path instead of the owner-approved exact-following-ID lookup and one-shot GraphQL Unfollow. Restoring True globally failed two legitimate legacy visible-action Chromium tests: both call sites require explicit mode selection, not a global default change.
 - Test gap: isolated reference-function tests proved the transport itself but did not pin the production Windows worker routing; the Chromium fixture caught the divergence without touching Instagram.
 
 ## Source repair in isolated child branch
 
-1. Restore default reference transport for WAL-backed Unfollow call sites; explicitly pass use_reference_transport=(self.task == 'unfollow') in the actual worker. Cancel Pending retains visible Requested control, not invented GraphQL cancel.
-2. Add AST-backed tests validating the real worker routing, same exact transport safety gate and durable pre-click WAL. Existing real Chromium E2E keeps expecting the single reference lookup/POST, not weakened to the legacy path.
+1. Keep the existing visible-control default for explicitly legacy/browser-only callers, but force the actual Windows worker to pass use_reference_transport=(self.task == 'unfollow'). Cancel Pending remains the visible Requested control path; the worker's owner-approved reference path cannot drift with the default.
+2. Add AST-backed tests that pin explicit worker routing and a safe legacy default, and retain durable pre-click WAL. The owner-reference Chromium test explicitly chooses the reference route; the separately valid legacy visible-button Chromium tests keep their default. Neither test is weakened.
 3. Add local intercepted Chromium negative fixture: accepted mutation response but still-Following on fresh exact-target page must yield pending Review, never OK, with just one POST and one WAL. No automatic second mutation.
 
 ## Validation and limitations
