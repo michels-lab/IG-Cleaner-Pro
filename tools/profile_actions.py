@@ -1756,7 +1756,7 @@ class ActionRobot:
             rows = saved.get("results", {}) if isinstance(saved, dict) else {}
             if not isinstance(rows, dict): rows = {}
             counts = {"observed_not_following": 0, "observed_not_requested": 0,
-                      "still_unresolved": 0, "total": 0}
+                      "observed_unavailable": 0, "still_unresolved": 0, "total": 0}
             for record in rows.values():
                 if not isinstance(record, dict): continue
                 state = record.get("observation")
@@ -2165,7 +2165,9 @@ class ActionRobot:
             # but never approved as a historical Unfollow action.
             to_revisit = [name for name in targets
                           if not (isinstance(results.get(name), dict)
-                                  and results[name].get("observation") == "observed_not_following")]
+                                  and results[name].get("observation") in (
+                                      "observed_not_following", "observed_not_requested",
+                                      "observed_unavailable"))]
             if not to_revisit:
                 raise ValueError("All historical failed actions already have a read-only current-state observation.")
             to_revisit.sort(key=lambda name: (
@@ -2268,6 +2270,8 @@ class ActionRobot:
                            if self.task == "cancel" and result == "already_not_requested"
                            else "observed_not_following"
                            if result in ("ok", "already_not_following", "already_not_requested")
+                           else "observed_unavailable"
+                           if result == "profile_unavailable"
                            else "still_unresolved")
             record = {"observation": observation, "verification_status": result,
                       "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
