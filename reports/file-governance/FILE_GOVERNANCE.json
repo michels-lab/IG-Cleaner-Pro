@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "e63b3c689f383015dfb22ba47f50f70829e059cf56eefc8755181ac278cf2a93",
+  "inventory_fingerprint": "508de4c169afab15bf5256205acfbbfb566b0700c8778900debc94ff4aef3125",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "e53259b5fa5cddc149833df7dc2d760a8da841da"
+      "blob": "104244ac4cabb41a16e4d2d5063fa24f5dcc74d2"
     },
     {
       "path": "AGENTS.md",
@@ -245,28 +245,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "709fa47aba617a348399e31409805f250061410c"
+      "blob": "8374e643c8d501dcc8c32f9de244dc2469f7d689"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "0f70a5baadef4f272cf824bc7708a6431beb1a07"
+      "blob": "7931326e2bfcc38b0e718ecd57874eedc6cda796"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "57c0d819ba8a24cb0ec644becb432d7bb0b03d13"
+      "blob": "bb39497b681787f7c36d4cf9ca73d6996565e229"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "196a0d154faad519efc5f4377387c4423b8fd50e"
+      "blob": "12b3771b77f5150f9097c7f374ed9edfaa8fec5c"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "54009c2a85f1bb831995c589437f7b972ff38cb1"
+      "blob": "c796116858623655631827b03fa35feed0317133"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1344,7 +1344,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "248d8ce2d236574b498567307f9907caf31cda27"
+      "blob": "ad560331a156d6c08c48abcb1a3d276025654394"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1435,21 +1435,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "faf779ce74173cd36dbbcfe955dbc56a58408794"
+      "blob": "8bb8152b4890b3e1d4c11f7562caf986c7a65e41"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "36d4df0c1a904416584c977b7db3d4747e4ccb8f"
+      "blob": "957775f65015e2b45fe5098c86c34c459b18ae2d"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b8d7dfb9ae52dd6613e850bfdb0ad5fd58637d93"
+      "blob": "d1591620e3928a81fc76c5955e424f468b19b718"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
