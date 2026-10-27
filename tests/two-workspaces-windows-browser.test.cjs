@@ -58,7 +58,7 @@ const {chromium}=require('playwright');
     }
     return original(url,options);
    };
-   try{await requestAction('live-settings',{owner:'test',account:'test'});}
+   try{await window.igcLiveConfigLoad();}
    catch(error){return {seen,error:String(error.message)}}
    finally{window.fetch=original}
    return {seen};
