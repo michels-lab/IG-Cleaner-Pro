@@ -1206,7 +1206,7 @@ def _action_issue(task, result, message):
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
                            on_wait=None, *, preloaded=False, on_pre_click=None,
-                           use_reference_transport=False):
+                           use_reference_transport=True):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -3233,7 +3233,8 @@ class ActionRobot:
                                                prepared_item.get("status") == "prefetched"),
                                 on_pre_click=lambda phase:
                                     self._persist_action_click_intent(
-                                        journal, path, user, phase))
+                                        journal, path, user, phase),
+                                use_reference_transport=(self.task == "unfollow"))
                     except Exception as exc:
                         if (self.cancel_requested and self.stop_event.is_set() and
                                 str(exc).startswith("Owner stopped the batch before the relationship click;")):
