@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Signup can send a `localhost:3000` confirmation link while the app asks for a six-digit OTP. Hosted Supabase Auth templates and Brevo sender configuration need separate server-side verification; [setup notes](docs/AUTH_EMAIL_SETUP.md). Current official stable is v120.66; release success does not prove production mail is configured.
 
-Current published stable: **v120.66**, [official GitHub stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66), [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40423739934), exact tagged source `af291cc6687f527a36fe1d64f31c08615fe216c0`, 12 SHA-256-verified assets. The next reserved development version **v120.67 is conditionally authorized for normal FINAL publication after every installed/signing/visual/integrity gate**; it has NOT been published, and no RC/beta is allowed. v120.66 adds green verified OK/yellow Review/grey unchecked end-of-batch rows; **Open Review profiles** automatically performs a read-only Chrome check of unresolved and untouched targets. A separate explicitly authorized retry may act only on verifiably never-clicked profiles with fresh Following/Requested evidence. Protected list, uncertainty WAL, account isolation, earlier batch history and manual approval remain. The owner confirmed earlier v120.65 Unfollow worked but reported the last profile unchecked; real v120.66 Windows recovery, Cancel Pending and Samsung cross-device acceptance remain unverified.
+Current published stable: **v120.66**, [official GitHub stable](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66), [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40423739934), exact tagged source `af291cc6687f527a36fe1d64f31c08615fe216c0`, 12 SHA-256-verified assets. The next reserved development version **v120.67 is authorized for governed FINAL publication** only after exact-source installed Windows, production-signed Android public/Developer, rendered Desktop/Android UI, SHA-256 and updater-feed checks all pass; it has NOT been published, and no RC/beta is allowed. v120.66 adds green verified OK/yellow Review/grey unchecked end-of-batch rows; **Open Review profiles** automatically performs a read-only Chrome check of unresolved and untouched targets. A separate explicitly authorized retry may act only on verifiably never-clicked profiles with fresh Following/Requested evidence. Protected list, uncertainty WAL, account isolation, earlier batch history and manual approval remain. The owner confirmed earlier v120.65 Unfollow worked but reported the last profile unchecked; real v120.66 Windows recovery, Cancel Pending and Samsung cross-device acceptance remain unverified.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.63 (not authorized)**. Any future GitHub publication must use `prerelease: false`, advance its build version and satisfy every installed, signed and distribution gate.
+The current next reserved release target is **v120.67**, conditionally authorized for official FINAL publication only after all governed checks pass; it is not yet published. Any future GitHub publication must use `prerelease: false`, advance its build version and satisfy every installed, signed and distribution gate.
 
 Authority: `release/distribution-manifest.json`.
 
