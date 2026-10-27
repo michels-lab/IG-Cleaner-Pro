@@ -106,6 +106,15 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
         api.sync_playwright=lambda:cm
         pkg=ModuleType("playwright")
         pkg.sync_api=api
+        # The bulk collector now supplies stable Instagram ID→username maps.
+        # Keep historic fixture names mapped to the same ID in both lists.
+        allnames=sorted(set(first if isinstance(first,frozenset) else ()) |
+                        set(second if isinstance(second,frozenset) else ()))
+        ids={name:str(100000+i) for i,name in enumerate(allnames)}
+        if isinstance(first,frozenset):
+            first={ids[name]:name for name in first}
+        if isinstance(second,frozenset):
+            second={ids[name]:name for name in second}
         with patch.dict(sys.modules,{"playwright":pkg,"playwright.sync_api":api}), \
              patch("live_relationship_snapshot.preserve_instagram_auth_page",return_value=True), \
              patch("live_relationship_snapshot._find_verified_owner_tab",return_value=(tab,None)), \
@@ -127,6 +136,20 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
         self.assertTrue(result["complete"])
         self.assertEqual(json.loads(record.read_text())["x"]["status"],"review")
         self.assertTrue(json.loads(record.read_text())["x"]["click_intent"])
+
+    def test_renamed_account_matches_by_stable_id_without_false_nonfollowback(self):
+        read=self._run_fake(
+            {"100":"alice.old","200":"mutual.friend"},
+            {"100":"alice.new","200":"mutual.friend","300":"new.friend"})
+        self.assertEqual(read.call_count,2)
+        self.assertTrue(all(c.kwargs.get("identities") is True for c in read.call_args_list))
+        negatives=self.robot.results({**self.scope,"list":"not_following_back"})
+        self.assertEqual(negatives["usernames"],["new.friend"])
+        self.assertEqual(negatives["totals"]["fans"],0)
+        self.assertEqual(negatives["totals"]["followers"],2)
+        self.assertEqual(negatives["totals"]["following"],3)
+        saved=json.loads(self.robot._file_for(**self.scope).read_text())
+        self.assertEqual(saved["matching_method"],"stable_account_id_bulk_cursor")
 
     def test_failure_in_following_keeps_last_complete_historical_without_false_new_result(self):
         self.sample()
