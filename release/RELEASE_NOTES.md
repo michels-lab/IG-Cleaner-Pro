@@ -1,3 +1,12 @@
+## v120.69 — GRANADA on-demand live Followers & Following in Windows (FINAL candidate, 2026-10-27)
+
+- **Windows Automations:** **Verify live Followers and Following** works independently of Instagram ZIP imports. Four complete relationship lists: Followers, Following, Not following me back and Followers I do not follow (Fans). Owner-scoped saved snapshots, capture timestamp, pagination and explicit read-only consent. The scan never performs Unfollow and is never run in the background.
+- **Safety:** exact signed-in owner verification, paginated read-only local Chrome GET, fail-closed on missing cursor/429/challenge/login mismatch, never overwrite a prior complete snapshot with partial data or infer a negative membership from an incomplete list. Instagram's undocumented private friendships endpoints may reject the scan on real accounts; physical owner acceptance remains OPEN. Safety cap 250 pages of 100 (~25k per list) fails closed on larger lists.
+- **Account chooser:** read-only chooser visible while background sync runs, but an actual switch is blocked until both sync and robot are inactive; recent click is required after safety checks. Merged [PR #266](https://github.com/michels-lab/IG-Cleaner-Pro/pull/266) after seven exact-head checks and [PR #265](https://github.com/michels-lab/IG-Cleaner-Pro/pull/265) after six.
+- **Governance:** previous official stable [v120.68](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.68) published with 12 SHA-256 assets by [publisher 40499536879](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40499536879), exact tagged source `2943e735`. v120.69 is only a candidate until all exact-source installed Windows public/Developer, production-signed Android twin co-install, Desktop/Android visual, checksum and update feed tests pass, followed by an independent normal FINAL publisher. Never RC, beta, live-action QA claim or Google Play claim.
+
+---
+
 ## v120.68 — GRANADA Pending Unfollow must verify or continue safely (FINAL staged, 2026-10-27)
 
 - **Owner-visible contract:** When the signed-in owner still follows an exact Instagram target, Unfollow performs a single previously approved action and independently checks same-target Follow / Follow Back before showing green OK. A target that still renders Following or cannot be safely confirmed becomes **Pending / yellow Review** with an explicit diagnostic; it is never reported as a successful Unfollow.
