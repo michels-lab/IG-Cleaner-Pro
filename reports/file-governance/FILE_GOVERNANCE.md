@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 353; classified: 349; readable documents: 85; above read cap: 1; findings: 7.
+Tracked: 355; classified: 351; readable documents: 87; above read cap: 1; findings: 8.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 353; classified: 349; readable documents: 85; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 80 |
+| document | 82 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 45 |
@@ -36,6 +36,7 @@ Tracked: 353; classified: 349; readable documents: 85; above read cap: 1; findin
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 8032832fed0ae6fc)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
+- **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
