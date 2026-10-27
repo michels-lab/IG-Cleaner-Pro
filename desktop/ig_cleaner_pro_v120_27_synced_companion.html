@@ -2800,8 +2800,32 @@ function igcOwnerFingerprint(){
 var IGC_INSTAGRAM_OWNER=igcOwnerFingerprint();
 var IGC_INSTAGRAM_PROFILE_KEY='igc_multi_profile_active_'+IGC_INSTAGRAM_OWNER;
 var IGC_INSTAGRAM_REGISTRY_KEY='igc_multi_profile_registry_cache_'+IGC_INSTAGRAM_OWNER;
+// Chrome tabs share localStorage: a detached InstaCleaner window MUST pin its
+// workspace in tab-specific sessionStorage. Legacy storage remains untouched.
+var IGC_WINDOW_PROFILE_KEY='igc_detachable_workspace_v1';
+var igcWindowStorage=null,igcWindowPinned=false;
+try{igcWindowStorage=window.sessionStorage}catch(_){}
 var igcActiveInstagramProfile=igcRawProfileStorage.getItem(IGC_INSTAGRAM_PROFILE_KEY)||'legacy';
 if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(igcActiveInstagramProfile))igcActiveInstagramProfile='legacy';
+try{
+ const params=new URLSearchParams(String(location.hash||'').replace(/^#/,''));
+ const requested=params.get('igc-window-profile');
+ const known=key=>key==='legacy'||JSON.parse(igcRawProfileStorage.getItem(IGC_INSTAGRAM_REGISTRY_KEY)||'[]')
+  .some(a=>a.account_key===key);
+ if(requested && /^(legacy|ig_[a-z0-9_-]{8,64})$/.test(requested) &&
+    IGC_INSTAGRAM_OWNER!=='signed_out' && known(requested) && igcWindowStorage){
+   igcWindowStorage.setItem(IGC_WINDOW_PROFILE_KEY,
+    JSON.stringify({owner:IGC_INSTAGRAM_OWNER,account:requested}));
+ }
+ const pinned=JSON.parse(igcWindowStorage?.getItem(IGC_WINDOW_PROFILE_KEY)||'null');
+ if(pinned?.owner===IGC_INSTAGRAM_OWNER && IGC_INSTAGRAM_OWNER!=='signed_out' &&
+    /^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(pinned.account)) && known(pinned.account)){
+  igcActiveInstagramProfile=pinned.account;
+  igcWindowPinned=true;
+ }else if(pinned&&igcWindowStorage){
+  igcWindowStorage.removeItem(IGC_WINDOW_PROFILE_KEY);
+ }
+}catch(_){}
 try {
  const nativeKey=window.AndroidBridge&&typeof window.AndroidBridge.getInstagramProfile==='function'?window.AndroidBridge.getInstagramProfile():null;
  if(nativeKey&&/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(String(nativeKey))){
@@ -2861,6 +2885,17 @@ window.IGC_INSTAGRAM_PROFILES={
   const current=document.getElementById('igcInstagramActiveFullName');
   if(current){current.textContent=this.displayName(selected);current.title=this.displayName(selected)}
   picker.title='Cambiar desde '+this.displayName(selected)+' ('+profiles.length+' perfil(es) conocidos)';
+  const secondary=document.getElementById('igcDualSecondary');
+  if(secondary){
+   const previous=secondary.value;
+   secondary.replaceChildren(...profiles.filter(a=>a.account_key!==this.active).map(a=>{
+    const opt=document.createElement('option');opt.value=a.account_key;
+    opt.textContent=this.displayName(a);return opt;
+   }));
+   if([...secondary.options].some(o=>o.value===previous))secondary.value=previous;
+  }
+  const mode=document.getElementById('igcWindowProfileMode');
+  if(mode)mode.textContent=igcWindowPinned?'WORKSPACE FIXED TO THIS WINDOW':'CURRENT WORKSPACE';
   const info=document.getElementById('igcInstagramIdentitySummary');
   if(info){
    const metrics=selected&&'following_count' in selected
@@ -2903,8 +2938,14 @@ window.IGC_INSTAGRAM_PROFILES={
    alert('An automation is active or its status is unknown. Pause it and confirm it has stopped before switching Instagram profiles.');
    this.render();return;
   }
-  igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
-  try{const account=this.accounts.find(a=>a.account_key===key);window.AndroidBridge?.selectInstagramProfile?.(key,account?.username?'@'+account.username:'Datos anteriores')}catch(_){}
+  if(igcWindowPinned && igcWindowStorage){
+   igcWindowStorage.setItem(IGC_WINDOW_PROFILE_KEY,JSON.stringify({
+    owner:IGC_INSTAGRAM_OWNER,account:key
+   }));
+  }else{
+   igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
+   try{const account=this.accounts.find(a=>a.account_key===key);window.AndroidBridge?.selectInstagramProfile?.(key,account?.username?'@'+account.username:'Datos anteriores')}catch(_){}
+  }
   location.reload();
  },
  scopeRest(path,opt={}){
