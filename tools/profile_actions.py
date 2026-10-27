@@ -1099,6 +1099,11 @@ def _preclick_no_action(entry):
         return False
     if _preclick_identity_blocked(entry):
         return True
+    if (entry.get("status") == "review" and
+            entry.get("issue") == "target_preclick_unavailable" and
+            str(entry.get("message") or "").startswith(
+                "Pending verification: target identity or layout not verifiable. No action clicked.")):
+        return True
     # The owner-supplied GraphQL transport can refuse before its FIRST POST.
     # Such rows may be revisited only under a fresh owner-approved cohort.
     # An armed WAL always wins and can NEVER be replayed.
@@ -1176,6 +1181,8 @@ def _action_issue(task, result, message):
         return "pending_not_requested"
     if task == "cancel" and result == "review" and message.startswith("Pending cancellation unverified after read-only refresh:"):
         return "pending_cancel_unverified"
+    if task == "unfollow" and result == "review" and message.startswith("Pending verification: target identity or layout not verifiable. No action clicked."):
+        return "target_preclick_unavailable"
     if task == "unfollow" and result == "review" and message.startswith("Pending verification:"):
         return "unfollow_pending_verification"
     if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
@@ -3247,6 +3254,30 @@ class ActionRobot:
                                 self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
+                    # An isolated target's unreadable/missing profile hero is
+                    # NOT proof of successful Unfollow or a session-wide ban.
+                    # After fresh owner verification, classify it as a safe
+                    # zero-click Pending and proceed to the next *different*
+                    # authorized target. Never bypass a login, challenge,
+                    # mismatched owner, rate-limit or possible-click WAL.
+                    if (not self.review_only and self.task == "unfollow"
+                            and result == "blocked"
+                            and details.startswith((
+                                "The target profile heading or exact username could not be verified.",
+                                "The target profile area could not be found."))
+                            and user not in journal):
+                        try:
+                            if (_exact_https_target_profile(work_page, user)
+                                    and not challenge_detected(work_page)
+                                    and not work_page.locator('input[name="password"]').count()
+                                    and _verified_action_owner(work_page, self.handle)):
+                                result = "review"
+                                details = ("Pending verification: target identity or layout not verifiable. "
+                                           "No action clicked. " + details)
+                        except Exception:
+                            # Without positive same-session proof a blocked
+                            # target remains blocked: never silently continue.
+                            pass
                     # A potentially sent Unfollow is PENDING until a positive
                     # exact-target Follow/Follow Back was verified. Unexpected
                     # post-click errors are likewise pending, not green OK.
