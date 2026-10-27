@@ -2560,6 +2560,10 @@ class ActionRobot:
                     raise ValueError("An Instagram action robot is already running.")
                 if self.collector.worker and self.collector.worker.is_alive():
                     raise ValueError("Finish or pause Profile Counts before starting an action robot.")
+                if (getattr(self.collector, "live_relationships", None)
+                        and self.collector.live_relationships.worker
+                        and self.collector.live_relationships.worker.is_alive()):
+                    raise ValueError("Pause live Followers/Following verification before an action robot.")
                 if resume and (owner, account, task) != (self.owner, self.account, self.task):
                     raise ValueError("Cannot resume a different task or account.")
                 if resume and self.status not in ("paused", "error", "review", "blocked"):

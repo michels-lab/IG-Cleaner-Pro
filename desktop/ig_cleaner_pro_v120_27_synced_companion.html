@@ -3809,6 +3809,33 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
  </select>
  <small style="display:block;margin-top:6px">Alternative uses read-only, same-origin list pages from your authenticated Instagram Chrome session. Full pagination is required; unavailable, restricted or incomplete lists never count as non-followback. Does not change Profile Counts or open ten target tabs.</small>
 </div>
+<section id="igcAutoLivePanel" class="panel" style="margin-top:12px;border:1px solid var(--line,#405166);border-radius:14px;padding:14px" aria-label="Verify current Instagram relationships">
+  <strong>Current Followers and Following · Instagram</strong>
+  <p class="note">Alternative to importing a ZIP: read your complete current lists in the robot's signed-in Chrome. Read-only: no follow or unfollow, no change to past imports or reviews.</p>
+  <div class="btnrow">
+    <button type="button" class="btn primary" onclick="igcAutoLiveVerify()">↻ Verify live Followers and Following</button>
+    <button type="button" class="btn" onclick="igcAutoLiveStop()">Stop scan</button>
+    <button type="button" class="btn" onclick="igcAutoLivePoll()">Show last verified snapshot</button>
+  </div>
+  <p id="igcRelLiveStatus" class="note" role="status" aria-live="polite">No new live scan. A previous snapshot is not proof of the current account state.</p>
+  <div id="igcAutoLiveTotals" class="note"></div>
+  <div class="btnrow">
+    <label for="igcAutoLiveKind">Show list</label>
+    <select id="igcAutoLiveKind" onchange="igcAutoLivePick()" aria-label="Verified relationship category">
+      <option value="not_following_back">Not following me back</option>
+      <option value="followers">Followers</option>
+      <option value="following">Following</option>
+      <option value="fans">Followers I do not follow</option>
+    </select>
+  </div>
+  <ul id="igcAutoLiveRows" aria-label="Verified scan results" style="max-height:280px;overflow:auto;padding-left:24px"></ul>
+  <div class="btnrow">
+    <button type="button" class="btn" id="igcAutoLivePrev" onclick="igcAutoLivePage(-1)">Previous</button>
+    <small id="igcAutoLivePageInfo">No verified complete snapshot</small>
+    <button type="button" class="btn" id="igcAutoLiveNext" onclick="igcAutoLivePage(1)">Next</button>
+  </div>
+  <small>Instagram may restrict or change these unofficial read-only endpoints. Incomplete pages or account mismatches never produce a new snapshot or negative relationship findings.</small>
+</section>
 <div class="btnrow" id="igcAutoTiming">
 <label>Batch size <input id="igcAutoBatch" type="number" min="1" max="1000" value="30" style="width:86px"></label>
 <label>Rest between batches (min) <input id="igcAutoRest" type="number" min="0" max="1440" value="5" style="width:78px"></label>
@@ -15272,6 +15299,97 @@ function actionOwner(){
  const p=window.IGC_INSTAGRAM_PROFILES||{};
  return {owner:String(p.owner||""),account:String(p.active||"")};
 }
+// Owner-authorized on-demand LIVE relationship snapshot. Separate from
+// imported ZIP, Profile Counts, Followback Audit and any mutation robot.
+let igcLiveOffset=0,igcLivePollId=0,igcLivePending=false,igcLiveGeneration=0;
+function igcLiveScope(){
+ const pair=actionOwner();
+ return {...pair,expected_handle:ownInstagramHandle()};
+}
+function igcLiveMessage(message){
+ const el=document.getElementById("igcRelLiveStatus");
+ if(el)el.textContent=String(message||"");
+}
+window.igcAutoLiveVerify=async function(){
+ const selected=igcLiveScope();
+ if(!selected.owner||!selected.account||!selected.expected_handle){
+  igcLiveMessage("Sign in to InstaCleaner and select the exact Instagram profile first.");
+  return;
+ }
+ if(!window.confirm("Read BOTH complete current Instagram Followers and Following lists for @"+
+    selected.expected_handle+" in the robot's Chrome now? Read-only: no ZIP replacement, no changed reviews or relationships."))return;
+ const gen=++igcLiveGeneration;
+ clearTimeout(igcLivePollId);
+ igcLiveOffset=0;
+ igcLiveMessage("Opening Chrome to verify the owner and both live lists…");
+ try {
+  const accepted=await requestAction("live-start",{...selected,
+    read_only_consent:true,confirmation:"live-relationships:"+selected.expected_handle});
+  if(gen!==igcLiveGeneration)return;
+  if(accepted.owner!==selected.owner||accepted.account!==selected.account||
+       accepted.relationship_action!==false)throw Error("Live verification changed owner or advertised a relationship action.");
+  igcLiveMessage(accepted.message||"Live scan started.");
+  window.igcAutoLivePoll();
+ }catch(e){if(gen===igcLiveGeneration)igcLiveMessage("Live scan not started: "+e.message)}
+};
+window.igcAutoLiveStop=async function(){
+ const selected=igcLiveScope(),gen=++igcLiveGeneration;
+ clearTimeout(igcLivePollId);
+ try{
+  const state=await requestAction("live-stop",selected);
+  if(gen===igcLiveGeneration)igcLiveMessage(state.message||"Read-only stop requested.");
+ }catch(e){if(gen===igcLiveGeneration)igcLiveMessage("Could not stop read-only scan: "+e.message)}
+};
+window.igcAutoLivePick=function(){igcLiveOffset=0;window.igcAutoLivePoll()};
+window.igcAutoLivePage=function(delta){
+ igcLiveOffset=Math.max(0,igcLiveOffset+(delta<0?-100:100));
+ window.igcAutoLivePoll();
+};
+window.igcAutoLivePoll=async function(){
+ if(igcLivePending)return;
+ const selected=igcLiveScope();
+ if(!selected.owner||!selected.account)return;
+ const gen=igcLiveGeneration;
+ const kind=document.getElementById("igcAutoLiveKind")?.value||"not_following_back";
+ igcLivePending=true;
+ try{
+  const answer=await requestAction("live-results",{owner:selected.owner,
+    account:selected.account,list:kind,offset:igcLiveOffset,limit:100});
+  if(gen!==igcLiveGeneration||igcLiveScope().owner!==selected.owner||
+     igcLiveScope().account!==selected.account||
+     igcLiveScope().expected_handle!==selected.expected_handle||
+     document.getElementById("igcAutoLiveKind")?.value!==kind)return;
+  const own=answer.verified_handle===selected.expected_handle;
+  const verified=own&&answer.last_verified===true;
+  const source=verified?(answer.complete?"Complete snapshot verified in this scan":
+                   "Previously saved snapshot; NOT necessarily the current Instagram state"):
+                   "No complete snapshot for this Instagram profile";
+  igcLiveMessage((answer.message||"")+
+    " · "+source+(verified&&answer.captured_at?" · "+answer.captured_at:""));
+  const totals=document.getElementById("igcAutoLiveTotals");
+  if(totals)totals.textContent=verified?
+   "Followers: "+answer.totals.followers+" · Following: "+answer.totals.following+
+   " · Not following me back: "+answer.totals.not_following_back+
+   " · Fans: "+answer.totals.fans : "";
+  const list=document.getElementById("igcAutoLiveRows");
+  if(list){
+   list.replaceChildren();
+   for(const user of (verified&&Array.isArray(answer.usernames)?answer.usernames:[])){
+    const li=document.createElement("li");li.textContent="@"+user;list.appendChild(li);
+   }
+  }
+  const size=verified?Number(answer.totals[kind]||0):0;
+  const page=document.getElementById("igcAutoLivePageInfo");
+  if(page)page.textContent=verified?("Showing "+(size?igcLiveOffset+1:0)+"–"+
+    Math.min(size,igcLiveOffset+100)+" of "+size):"No complete list verified";
+  const prev=document.getElementById("igcAutoLivePrev"),next=document.getElementById("igcAutoLiveNext");
+  if(prev)prev.disabled=!verified||igcLiveOffset===0;
+  if(next)next.disabled=!verified||!answer.has_next;
+  if(answer.running===true)igcLivePollId=setTimeout(()=>window.igcAutoLivePoll(),2500);
+ }catch(e){
+  if(gen===igcLiveGeneration)igcLiveMessage("Could not read local robot: "+e.message);
+ }finally{igcLivePending=false}
+};
 window.igcAutoOpenProfile=async function(username,task=mode){
  const user=norm(username);
  if(!user||!["unfollow","cancel","audit"].includes(task))return;
