@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA: repair Android visual adapter drift on active PR #259
+
+- [Android About CI 40444904289](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40444904289) executed native tests and captured four actual Home/complete About frames (compact+wide), but failed afterward: master adapter still expected obsolete Android section author instead of complete. Do not report the failed exact-head job as passed.
+- Patched the same PR #259: adapter now requires four Android frames, exact complete section, unique screenshot digest and correct screenshot platform, keeping Desktop initial unchanged. Added negative tests against legacy eight-frame evidence, obsolete author and duplicate bytes. Universal strict visual gate remains unaltered.
+- Latest FINAL published remains v120.66; v120.67 is held until all new exact-head installed UI, signed distribution, Windows public+Developer and publisher gates succeed. Real owner Instagram Unfollow/Cancel acceptance remains open (#164/#172/#230); no user account, cookies or saved journals touched.
+
 ## 2026-10-26 — GRANADA v120.67 publication BLOCKED by duplicate Android visual evidence (root cause fixed in source branch)
 
 - Official [publisher run 40443259064](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259064) started on exact merged `bed8b620466cae87608775fa09be2a0c75e05782`. Windows installed public/Developer and Android public+Developer installed gates passed, but exact-source [Android About workflow 40443259036](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259036) failed **`screenshot[1]: duplicate screenshot bytes`**. Gate remains required; NO v120.67 release is confirmed. Official published stable remains **v120.66**.
