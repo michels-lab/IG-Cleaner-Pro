@@ -103,7 +103,7 @@ class BulkSettingsTests(unittest.TestCase):
         # stale visible timing configuration.
         self.assertIn('id="igcLiveSettingsPanel" open',html)
         self.assertIn('id="igcLiveSafetySummary"',html)
-        self.assertIn("Recargar ajustes de esta cuenta",html)
+        self.assertIn("Reload settings for this account",html)
         self.assertIn("igcLiveConfigScope!==igcLiveSettingsKey()",html)
         self.assertIn("No se confirmaron los ajustes guardados para esta cuenta",html)
         self.assertIn("Ajustes guardados y vigentes en esta cuenta",html)
