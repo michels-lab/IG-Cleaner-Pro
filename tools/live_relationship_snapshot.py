@@ -16,6 +16,7 @@ from profile_actions import _find_verified_owner_tab, _atomic_json, _read_json, 
 from profile_counts_instagram import challenge_detected, preserve_instagram_auth_page
 from profile_counts_robot import valid_username
 from profile_lists_live import read_live_friendship_list, LiveListsRateLimited
+from live_scan_settings import effective_settings, validate_settings, PRESETS, LIMITS
 from robot_interlock import ActionLease
 
 
@@ -31,10 +32,37 @@ class LiveRelationships:
         self.pages_completed = 0
         self.members_loaded = {"followers": 0, "following": 0}
         self._session_cooldown_until = 0.0
+        self.active_settings = effective_settings(None)
 
     def _file_for(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("instagram-live-relationships-"+digest+".json")
+
+    def _settings_file(self, owner, account):
+        digest = hashlib.sha256((owner+chr(0)+account).encode("utf-8")).hexdigest()[:32]
+        return self.data_dir / ("instagram-live-bulk-settings-"+digest+".json")
+
+    def configuration(self, data):
+        owner, account = self._scope(data)
+        with self.lock:
+            if data.get("save") is True:
+                if self.worker and self.worker.is_alive():
+                    raise ValueError("Stop the running scan before editing timing settings.")
+                validated = validate_settings(data.get("settings"))
+                _atomic_json(self._settings_file(owner,account), validated)
+            elif data.get("save") not in (None, False):
+                raise ValueError("Explicit Save required for settings.")
+            current = effective_settings(_read_json(self._settings_file(owner,account), {}))
+            return {
+                "owner":owner,"account":account,
+                "settings":current,
+                "defaults":dict(PRESETS["recommended"]),
+                "presets":{name:dict(values) for name,values in PRESETS.items()},
+                "limits":{name:list(bounds) for name,bounds in LIMITS.items()},
+                "editable":not bool(self.worker and self.worker.is_alive()),
+                "read_only":True,"relationship_action":False,
+                "risk_notice":"Conservative app delays, not Instagram quotas; account restrictions remain possible.",
+            }
 
     def _cooldown_file(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
