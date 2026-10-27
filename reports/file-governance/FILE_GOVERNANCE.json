@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 332,
-  "classified_files_total": 328,
-  "docs_content_inspected": 74,
+  "tracked_files_total": 333,
+  "classified_files_total": 329,
+  "docs_content_inspected": 75,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 69,
+    "document": 70,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 6,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "41b7e93b278aa34023075323287f0d1d29c34633a34311f29fba8fa0554f1c15",
-  "evidence_fingerprint": "50545402f39f3491d2bbbd6fbb255ff5bf850c8d09af41c8011a372302ff4ccb",
+  "inventory_fingerprint": "c8fdd382af1f5a437fa11ea704f6a0b349616b1eebf68e612d49f33fc030aa14",
+  "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "2b1ec9f6fa1b71b8567ca5d1f580f4000e8e66f9"
+      "blob": "b0eefe5e2f1c2a8d79ac84260c399c6decb1b5ef"
     },
     {
       "path": "AGENTS.md",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "683c69c4c3e0936e02ae61e3b9837697356b5a65"
+      "blob": "096da98cb23b765a6507ff67708c1291b0be2ab9"
     },
     {
       "path": "README.md",
@@ -274,7 +273,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "af42594b10a4623bc561dbeaef3bd0db8715f48a"
+      "blob": "cf15e8872706a61db5999f4b41c3dcdc279c492e"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/DeveloperEditionTest.java",
@@ -883,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "6ec10e663e16946f7e6e6fdfcff0635591445bd9"
+      "blob": "a530b235a309960743e6833f2b3f154804398e08"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1187,6 +1186,13 @@
       "blob": "93f2df4451397b3460136c801e339841ca8ffd2b"
     },
     {
+      "path": "docs/GRANADA_ANDROID_VISUAL_DUPLICATE_FIX_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "3e085db035a34554d12d21285255e0d528c17a9e"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1485,7 +1491,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7781950615bf13c478c3e36870db7cf354214205"
+      "blob": "a6094e5c82c07f54f215512a4cf4591e2fd25f6d"
     },
     {
       "path": "tests/android-native-english-contract.py",
@@ -1898,7 +1904,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "da98c7842c1dc2b55799d9b6a653be7517ea2351"
+      "blob": "3fda4920737f28770d72e6bfcc15cb03101edeef"
     },
     {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
@@ -1975,7 +1981,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1e4a88c6ff9b943781c88564534c994f5341553a"
+      "blob": "3da87e697c101de1689f3ffa5b96e3aed61422aa"
     },
     {
       "path": "tests/test_native_desktop.py",
@@ -2101,7 +2107,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9841283b039668cfab3d6b802b5d57ad66d996e8"
+      "blob": "14bdfc847fcf43873266b3d4ae2e488acd903a74"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -2129,7 +2135,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "419d59b1e01ca2c84c86baa7896d1efbc62d4da2"
+      "blob": "7274f677a7ba3f942a7eea0316de8cc2d2742a97"
     },
     {
       "path": "tools/configure_auth_email_templates.py",
@@ -2143,7 +2149,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "53d12e7088f8ced8d893d23b64a288aa81270340"
+      "blob": "d1392a220e6882e02dd67fd5879aa5369d7d0c25"
     },
     {
       "path": "tools/developer_audit.py",
@@ -2255,7 +2261,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b3082c681b5f5c4cde9822f9a5c58ff2a56aa3fc"
+      "blob": "3a709ec47b4efa0926d7d92d3492bbf926b12501"
     },
     {
       "path": "tools/run_android_developer_ui.sh",
@@ -2330,6 +2336,15 @@
   ],
   "findings": [
     {
+      "id": "1d69634be3d31378",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/GRANADA_ANDROID_VISUAL_DUPLICATE_FIX_2026-10-26.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
       "id": "00254bef602c0fb9",
       "code": "BROKEN_RELATIVE_LINK",
       "severity": "confirmed",
@@ -2381,15 +2396,6 @@
       "path": "docs/CURRENT_HANDOFF.md",
       "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "8a301c1b755796fc",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/test_action_batch_history.py, tests/test_historical_recheck.py, tools/profile_actions.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
