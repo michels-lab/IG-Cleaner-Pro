@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 333,
-  "classified_files_total": 329,
+  "tracked_files_total": 334,
+  "classified_files_total": 330,
   "docs_content_inspected": 75,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
-    "test": 79,
+    "test": 80,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "c8fdd382af1f5a437fa11ea704f6a0b349616b1eebf68e612d49f33fc030aa14",
+  "inventory_fingerprint": "287998fc26e6eaee7c0624b2fdd9a3b297df7161fec6661c7ebbd070f94a8d16",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -70,7 +70,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "814f5be5520ad9265ac52e4494435c9f71742942"
+      "blob": "864d93b7d5c2fa01cb256e1191334155431b22e8"
     },
     {
       "path": ".github/workflows/android-companion.yml",
@@ -147,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f4d079bf0742826b2cb104128e9da122cda558d2"
+      "blob": "0290efa540276acd75cb84171bd032a193f4c318"
     },
     {
       "path": ".gitignore",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b0eefe5e2f1c2a8d79ac84260c399c6decb1b5ef"
+      "blob": "93d988a7a2e2c35a7dfacaaf0fb99d5dfa3a33c3"
     },
     {
       "path": "AGENTS.md",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "096da98cb23b765a6507ff67708c1291b0be2ab9"
+      "blob": "d06a519f4ff1cf7a5474f54b09ad6f97597d0f0c"
     },
     {
       "path": "README.md",
@@ -1190,7 +1190,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "3e085db035a34554d12d21285255e0d528c17a9e"
+      "blob": "c7d364c6fab20f2e4a9ff1d702d4bb0bc5ea2238"
     },
     {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
@@ -1893,6 +1893,13 @@
       "blob": "7ed61640a5a1ae905e6319f7e99b8d8f444c27c6"
     },
     {
+      "path": "tests/test_android_release_visual_evidence.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4a73840e27e083a393cbf0322d0501fa4eeada46"
+    },
+    {
       "path": "tests/test_android_signed_coinstall_runtime.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2303,7 +2310,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d965b0d308f7062ee3e6ad43e04d29c0b1e2e780"
+      "blob": "6ee5ed1baa5dd919a970f2d56edc4a08afc5a68f"
     },
     {
       "path": "tools/verify_desktop_visual_release_evidence.py",
