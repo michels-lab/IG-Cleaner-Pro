@@ -8,6 +8,14 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
+**v120.67 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and all 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) · exact tagged commit `2e0aaaafbe2444f6ea07eea3edce176cea1cd303`. Windows public/Developer installers and production-signed Android public/Developer APKs, standalone Desktop and ZIP are bundled.
+
+**Current published stable: v120.67. Next reserved version: v120.68, not published.**
+
+**v120.68 is the next governed FINAL candidate, not published.** [Source PR #261](https://github.com/michels-lab/IG-Cleaner-Pro/pull/261), merged `8ee2f044`, corrects false successful Unfollows: only verified Follow/Follow Back becomes OK; still Following or uncertain click is Pending/yellow Review with durable no-replay WAL, then the next eligible profile can continue under a verified safe owner session. Read-only Review cannot promote uncertain click to OK. Exact published user-account Instagram acceptance remains unverified; no automatic second click, CAPTCHA bypass or Google Play claim.
+
+### Historical v120.66 publication and source notes
+
 **v120.66 — official stable GitHub release, published October 26, 2026 (local; October 27 UTC).** [Governed FINAL publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40423739934) finished **SUCCESS** on exact tagged commit `af291cc6687f527a36fe1d64f31c08615fe216c0` with 12 SHA-256-verified assets, installed Windows public/Developer, production-signed Android public/Developer co-install, rendered Desktop/Android Home/About and verified official update feed.
 
 [**Download v120.66**](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66) · Windows Setup `IG-Cleaner-Pro-Windows-Setup-v120.66.exe` · Android `IG-Cleaner-Pro-Android-v120.66.apk` · Desktop `IG-Cleaner-Pro-Desktop-v120.66.html`. Independent Windows/Android Developer editions and ZIPs are included in the same normal stable release.
@@ -16,7 +24,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Publication does not prove live Instagram Unfollow or Cancel Pending succeeded on the owner's account.** Real installed v120.65 Unfollow was reported working, but the owner saw the final target left unchecked when Chrome closed. Owner-installed v120.66 Review recovery and actual Cancel Pending need physical validation; see [#164](https://github.com/michels-lab/IG-Cleaner-Pro/issues/164), [#172](https://github.com/michels-lab/IG-Cleaner-Pro/issues/172) and [#230](https://github.com/michels-lab/IG-Cleaner-Pro/issues/230). No live relationship action or Instagram account login occurred in CI. Windows Setup has SHA-256 integrity but no Authenticode signature.
 
-**Current published stable: v120.66. Next reserved version: v120.67, not published.**
+**Historical status at the time of the v120.66 receipt (superseded by the current release above).**
 
 The next reserved development version **v120.67 is authorized ONLY for normal FINAL publication after exact-source installed Windows, production-signed Android public/Developer, rendered visual, SHA-256 and updater-feed gates pass**; it is NOT published yet. The owner tests only officially published installers; source tests cannot replace actual account acceptance. No RC/beta, silent installation or Google Play deployment.
 

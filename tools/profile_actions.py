@@ -1099,6 +1099,11 @@ def _preclick_no_action(entry):
         return False
     if _preclick_identity_blocked(entry):
         return True
+    if (entry.get("status") == "review" and
+            entry.get("issue") == "target_preclick_unavailable" and
+            str(entry.get("message") or "").startswith(
+                "Pending verification: target identity or layout not verifiable. No action clicked.")):
+        return True
     # The owner-supplied GraphQL transport can refuse before its FIRST POST.
     # Such rows may be revisited only under a fresh owner-approved cohort.
     # An armed WAL always wins and can NEVER be replayed.
@@ -1176,6 +1181,8 @@ def _action_issue(task, result, message):
         return "pending_not_requested"
     if task == "cancel" and result == "review" and message.startswith("Pending cancellation unverified after read-only refresh:"):
         return "pending_cancel_unverified"
+    if task == "unfollow" and result == "review" and message.startswith("Pending verification: target identity or layout not verifiable. No action clicked."):
+        return "target_preclick_unavailable"
     if task == "unfollow" and result == "review" and message.startswith("Pending verification:"):
         return "unfollow_pending_verification"
     if result == "review" and message.startswith(("This account follows you", "El perfil indica que ya te sigue")):
@@ -1199,7 +1206,7 @@ def _action_issue(task, result, message):
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
                            on_wait=None, *, preloaded=False, on_pre_click=None,
-                           use_reference_transport=True):
+                           use_reference_transport=False):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -1262,17 +1269,23 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                                "No action was performed.")
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
-        # An account may follow the owner without the owner following it.
-        # Preserve the mutual guard unless Follow Back is definitely visible.
-        if _follow_state(page, username):
+        # "Follows you" reports THEIR relationship to the owner, not whether
+        # the owner follows THEM. A mutual follower selected in the saved
+        # cohort is still eligible for its one approved Unfollow.
+        # Only a stable Follow / Follow Back without Following proves that
+        # the owner already stopped following this exact target.
+        following = _profile_relationship_control(
+            page, username, [r"Following", r"Siguiendo"])
+        if following is None and _follow_state(page, username):
             page.wait_for_timeout(500)
             if (_follow_state(page, username) and
-                    _profile_relationship_control(page, username,
-                                                  [r"Following", r"Siguiendo"]) is None):
+                    _profile_relationship_control(
+                        page, username, [r"Following", r"Siguiendo"]) is None):
                 return "already_not_following", (
                     "Already not following: verified Follow / Follow Back on this target. "
                     "No relationship-changing click; continuing to next profile.")
-        return "review", "This account follows you; review required."
+        # Otherwise fall through to an actual Following/Siguiendo control.
+        # Never turn the "Follows you" badge into a reason to silently skip.
     if task == "unfollow" and on_pre_click is not None and use_reference_transport:
         # The owner-supplied Pasted text(3).txt uses an authenticated
         # exact-ID following lookup and usePolarisUnfollowMutation. Do not
@@ -3220,7 +3233,8 @@ class ActionRobot:
                                                prepared_item.get("status") == "prefetched"),
                                 on_pre_click=lambda phase:
                                     self._persist_action_click_intent(
-                                        journal, path, user, phase))
+                                        journal, path, user, phase),
+                                use_reference_transport=(self.task == "unfollow"))
                     except Exception as exc:
                         if (self.cancel_requested and self.stop_event.is_set() and
                                 str(exc).startswith("Owner stopped the batch before the relationship click;")):
@@ -3241,6 +3255,30 @@ class ActionRobot:
                                 self.rest_minutes)
                     with self.lock:
                         self.current_wait = None
+                    # An isolated target's unreadable/missing profile hero is
+                    # NOT proof of successful Unfollow or a session-wide ban.
+                    # After fresh owner verification, classify it as a safe
+                    # zero-click Pending and proceed to the next *different*
+                    # authorized target. Never bypass a login, challenge,
+                    # mismatched owner, rate-limit or possible-click WAL.
+                    if (not self.review_only and self.task == "unfollow"
+                            and result == "blocked"
+                            and details.startswith((
+                                "The target profile heading or exact username could not be verified.",
+                                "The target profile area could not be found."))
+                            and user not in journal):
+                        try:
+                            if (_exact_https_target_profile(work_page, user)
+                                    and not challenge_detected(work_page)
+                                    and not work_page.locator('input[name="password"]').count()
+                                    and _verified_action_owner(work_page, self.handle)):
+                                result = "review"
+                                details = ("Pending verification: target identity or layout not verifiable. "
+                                           "No action clicked. " + details)
+                        except Exception:
+                            # Without positive same-session proof a blocked
+                            # target remains blocked: never silently continue.
+                            pass
                     # A potentially sent Unfollow is PENDING until a positive
                     # exact-target Follow/Follow Back was verified. Unexpected
                     # post-click errors are likewise pending, not green OK.
@@ -3307,8 +3345,15 @@ class ActionRobot:
                             )
                             owner_page, different_owner = _find_verified_owner_tab(
                                 live_pages, self.handle)
-                            defer_pending_unfollow = bool(
-                                not unsafe and not different_owner and owner_page is not None)
+                            # The owner often hides the Profile sidebar while
+                            # visiting someone else's page. Reuse the existing
+                            # SAME-CONTEXT, cookie-bound owner verifier instead
+                            # of requiring a separate visible owner tab.
+                            # A conflicting visible owner still vetoes it.
+                            fresh_owner = bool(
+                                not unsafe and not different_owner and
+                                _verified_action_owner(work_page, self.handle))
+                            defer_pending_unfollow = fresh_owner
                         except Exception:
                             defer_pending_unfollow = False
                     if action_tabs:
@@ -3338,6 +3383,15 @@ class ActionRobot:
                         continue
                     if result not in ("ok", "already_not_following", "already_not_requested",
                                       "profile_unavailable"):
+                        # A blocked relationship action may signal Instagram
+                        # rate-limit, login, account switch or security challenge.
+                        # Even with proven zero-click, NEVER advance into more
+                        # owner-authorized mutations under a blocked session.
+                        if not self.review_only and self.task in ("unfollow", "cancel") and result == "blocked":
+                            with self.lock:
+                                self.status, self.message = "blocked", "@" + user + ": " + details
+                            stopped_for_review = True
+                            break
                         if self.review_only:
                             # Read-only automatic review should check the rest
                             # of the batch, not demand one-by-one manual work.

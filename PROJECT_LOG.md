@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA v120.68 normal FINAL staged after source-integrated Pending Unfollow
+
+- Verified previous independent normal FINAL [v120.67](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) public with 12 digest-bearing assets at 2026-10-27T10:32:15Z; [governed publisher 40487321040](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) finished SUCCESS with all five jobs. Previous tag remains immutable.
+- New [functional source PR #261](https://github.com/michels-lab/IG-Cleaner-Pro/pull/261) merged as `8ee2f044fca52f335a3128d22f354d9a2eda9d49` only AFTER seven exact-head checks passed, including installed Windows public+Developer and offline real Chromium. Implements Pending/yellow Review for unverified Unfollow, verified safe next-target continuation, and never reclassifies uncertain action as OK from later read-only scans.
+- Synchronize Android public+Developer `versionCode=12068`, Windows/Android/Desktop/Developer asset names, manifest next v120.68/current v120.67, signed Android cert provenance unchanged, docs/updater and one-time normal FINAL request. The v120.68 request is conditional on independent exact-source signed installed Windows/Android public+Developer, screenshots, integrity and updater-feed gates; no RC/beta, no false live Instagram acceptance. User-protected records, Chrome session, original saved batch WAL, account data and previous releases untouched. **v120.68 NOT YET PUBLISHED.**
+
 ## 2026-10-27 — GRANADA: pending Unfollow verification safely advances to next target (SOURCE PR)
 
 - Owner requirement: if still Following or final relationship unverified, **never mark OK**. Record as Pending/yellow Review and advance to a new profile if authentication is still valid, without repeating a possibly completed click.
@@ -2591,3 +2597,10 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Si cualquier parte está ocupada por otra rama, requiere equipo físico, una cuenta de proveedor, resultados científicos que solo existen en el portátil o autorización del propietario, **aparcar con evidencia y pasar a otra subparte independiente**. Conservar identidad visual, datos, credenciales y estándares de publicación.
 - Registro obligatorio: A/B/C con estados separados, ruta/PR/sha, QA **ejecutado** (no simplemente escrito), bloqueos, recuperación, reentrada. Esta actualización de política **no significa ninguna funcionalidad del producto implementada, probada ni publicada**.
 - Repositorio: `michels-lab/IG-Cleaner-Pro`. En los siguientes bloques aplicar este alcance sin modificar los PR activos o trabajos no relacionados.
+
+
+## 2026-10-27 — Windows reference Unfollow transport routing repair (child of v120.68; not released)
+
+- Exact head d97eb522c1d2557605c7a537ed0674c79b7c2f29 of open release PR #262 failed 3/6 Windows-installed real Chromium local reference tests in run 40493835174: changed default to visible-menu Unfollow while ActionRobot never explicitly selected the reference transport. Root cause and CI reproducible without owner Instagram access.
+- Isolated child branch keeps legacy visible default but explicitly routes real Windows worker Unfollow to owner reference, never Cancel Pending; WAL before one-shot GraphQL POST and fresh read-only Follow confirmation for green OK. Owner-reference Chromium fixture now explicitly selects that transport, preserving separate visible-action tests. Added worker AST contract and accepted-POST/stale-Following negative fixture. An initial global default restore failed two valid visible-action tests; reverted to keep both flows isolated.
+- [Owning-repo audit](docs/GRANADA_WINDOWS_REFERENCE_TRANSPORT_ROUTING_2026-10-27.md). New exact-head CI and merge are pending. Published stable v120.67 unchanged; real user Windows Chrome acceptance and old saved cohort remain open (#164, #172).
