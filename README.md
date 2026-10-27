@@ -8,11 +8,15 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.68 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.68) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40499536879) · exact tagged commit `2943e735db885e5949bd10f37d277c4ae6919504`. Windows public/Developer installers, signed Android public/Developer APKs, standalone Desktop HTML and ZIP included.
+**v120.69 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.69) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40539017886) · exact tagged commit `3808c58fab35768fc769f1afef270897da014276`. Windows public/Developer installers, Android public/Developer signed APKs, standalone Desktop HTML and ZIP are available.
 
-**Current published stable: v120.68. Next reserved version: v120.69, not published.**
+**Current published stable: v120.69. Next reserved version: v120.70, not published.**
 
-**v120.69 is the next governed FINAL candidate, not yet published.** The Windows **Automations → Verify live Followers and Following** button checks both Instagram lists *on demand* using authenticated Chrome, without imported ZIP. It displays Followers, Following, Not following me back and Fans with per-owner complete snapshots, timestamps and no automatic Unfollow. Source PR [#266](https://github.com/michels-lab/IG-Cleaner-Pro/pull/266) merged after seven green checks, and safe sync account chooser [#265](https://github.com/michels-lab/IG-Cleaner-Pro/pull/265) after six. Actual Instagram private endpoint may be unavailable; ~25k per-list paging ceiling fails closed. Physical signed-in account results were not verified. Publication does not prove live Instagram Unfollow or Cancel Pending succeeded on the owner's account.
+v120.70 has **no authorized publication request**. No RC or prerelease.
+
+**New in v120.69 (Windows):** Go to **Automations → Verify live Followers and Following** for an explicit, read-only, on-demand Instagram Followers and Following check that does **not require a ZIP import**. Four complete-snapshot views: Followers, Following, Not following me back and Fans. Results are saved per verified account with timestamps and do **not** trigger automatic Unfollow. [Feature PR #266](https://github.com/michels-lab/IG-Cleaner-Pro/pull/266), safe account chooser [#265](https://github.com/michels-lab/IG-Cleaner-Pro/pull/265), bounded installer/test watchdog [#267](https://github.com/michels-lab/IG-Cleaner-Pro/pull/267). Physical Instagram endpoint/access is still unverified and can fail or rate-limit; complete-list safety cap is approximately 25k usernames per list, and an incomplete scan fails closed. **Publication does not prove live Instagram Unfollow or Cancel Pending succeeded on the owner's account.**
+
+[Official v120.69 publication receipt](docs/GRANADA_V12069_FINAL_RECEIPT_2026-10-27.md).
 
 ### Historical v120.66 publication and source notes
 
