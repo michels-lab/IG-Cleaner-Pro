@@ -135,12 +135,17 @@ def stop_safely(server) -> None:
     actions.stop_event.set()
     developer_actions = getattr(server, "dev_action_tests", None)
     developer_probe = getattr(server, "live_probe", None)
+    live_relationships = getattr(server, "live_relationships", None)
+    if live_relationships is not None:
+        live_relationships.stop_event.set()
     if developer_actions is not None:
         developer_actions.stop_event.set()
     if developer_probe is not None:
         developer_probe.stop()
     server.collector.stop()
     jobs = [actions.worker, server.collector.worker]
+    if live_relationships is not None:
+        jobs.append(live_relationships.worker)
     if developer_actions is not None:
         jobs.append(developer_actions.worker)
     if developer_probe is not None:

@@ -93,12 +93,19 @@ def read_live_friendship_list(page, expected_handle, relation, *, max_pages=250,
                 raise LiveListsUnavailable("Invalid live list username; no conclusions.")
             usernames.add(user.casefold())
         next_cursor = packet.get("next")
+        # Only an explicit terminal pagination proof allows a NEGATIVE
+        # relationship inference. A missing has_more bit is not "false".
+        if packet.get("has_more") not in (True, False) or type(packet.get("has_more")) is not bool:
+            raise LiveListsUnavailable(
+                "Instagram did not confirm pagination completeness; no negative conclusions.")
         if not next_cursor:
-            if packet.get("has_more") is True:
+            if packet["has_more"] is True:
                 raise LiveListsUnavailable(
                     "Instagram indicated more profiles without a cursor; list incomplete.")
             _verified_session(page, expected)
             return frozenset(usernames)
+        if packet["has_more"] is False:
+            raise LiveListsUnavailable("Instagram returned a cursor with has_more=false; list incomplete.")
         if not isinstance(next_cursor, str) or len(next_cursor) > 512:
             raise LiveListsUnavailable("Invalid pagination cursor; list incomplete.")
         if next_cursor in seen or next_cursor == cursor:

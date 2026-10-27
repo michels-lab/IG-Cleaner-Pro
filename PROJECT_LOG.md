@@ -1,3 +1,7 @@
+## 2026-10-27 — GRANADA account chooser rebased onto full live lists integration
+
+- PR #265 conflict resolved by joining current main's #266 read-only Followers/Following live snapshots and the original account-chooser safety fix without replacing the full Desktop file with an older source. Git merge commit has two parents; account switch stays guarded during sync/active robot. All exact new-head checks must rerun. Normal FINAL v120.68 already published separately; feature remains source-only pending a later distinct release.
+
 ## 2026-10-27 — GRANADA v120.68 normal FINAL staged after source-integrated Pending Unfollow
 
 - Verified previous independent normal FINAL [v120.67](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) public with 12 digest-bearing assets at 2026-10-27T10:32:15Z; [governed publisher 40487321040](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) finished SUCCESS with all five jobs. Previous tag remains immutable.
@@ -2611,3 +2615,11 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Parent stable publisher v120.68 is still independent at Actions run `40499536879`; no release claim is made by this block. Issue #264 records first-attempt Desktop Chromium `Switch Account` chooser not visible and later same-SHA retry pass. Code review found a real early `S.busy` return that can hide the chooser during startup sync; intermittent trigger not conclusively reproduced on the owner device.
 - New isolated branch permits opening only the **read-only** chooser during sync, checks action/sync admission afresh for every chosen account and prevents closing/switching on veto, reports an explicit safe reason code without exposing credentials, and preserves local reviews/saved accounts. Browser + Node VM negative tests cover busy sync, robot starting after opening, no delayed replay, successful later separate click.
 - [Owning audit](docs/GRANADA_ACCOUNT_CHOOSER_SAFE_ADMISSION_2026-10-27.md). Merge/release/installed physical acceptance pending exact-HEAD QA; never alter current v120.68 publisher or its signed assets for this P1 follow-up.
+
+
+## 2026-10-27 — GRANADA: independent live Followers + Following lists without ZIP (staged, not released)
+
+- Owner clarified that current account Followers/Following must be retrievable directly from their authenticated Instagram Chrome, **as an alternative** to the historic ZIP, not merely the existing Followback Audit over imported batches. Previous `profile_lists_live.py` lacked a standalone user entrypoint, whole-list comparison, saved snapshot and direct list browser.
+- Added guarded local read-only worker + token-protected loopback API + UI `Verificar seguidores y seguidos ahora` + complete per-owner saved snapshots with full Followers, Following, non-followbacks and fans, timestamp, paginated results, consent, cancellation, strict owner/session proof, no mutation and no old journal/click replay. Source is isolated from ongoing v120.68 governed publisher.
+- Hardened `has_more` terminal proof; absent/contradictory pagination stays unavailable, never a false negative. Added offline tests, real Chromium local-fixture contract, general/Profile Counts/Windows/desktop CI entrypoints and integration audit at [docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md](docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md).
+- Status separates source-submitted, exact-SHA QA, merged, release and physical owner acceptance. No real Instagram credentials or following/follower counts were fetched here. Human Chrome acceptance remains pending.

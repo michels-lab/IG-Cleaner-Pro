@@ -15,6 +15,6 @@
 
 ## Evidence gates and reentry
 
-- Branch is **independent of the in-flight v120.68 publisher** ([run 40499536879](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40499536879)). No merge to `main`, no v120.68 tag/asset overwrite or new release while that publisher runs. Publishing v120.68 and this P1 improvement are separate operations.
+- Branch remained **independent of the v120.68 publisher, which subsequently succeeded** ([run 40499536879](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40499536879)). Merge with current main's live list feature was resolved in PR #265; v120.68 tag/assets remain immutable and a separate later release will be needed. Publishing v120.68 and this P1 improvement are separate operations.
 - Exact PR-head Node VM, packaged standalone HTML in real Chromium, Desktop rendered UI, Windows installed app, Android isolated authentication/Developer and RLS checks must pass before merge. This file **does not** establish a physical owner Chrome login acceptance; #264 remains open until live confirmation.
 - Next Granada should distinguish `source functional`, `CI verified`, `merged`, `published`, and `owner accepted`. Any CI or packaging failure stays BLOCKED; do not mask it with a timeout increase or deleting negative tests.
