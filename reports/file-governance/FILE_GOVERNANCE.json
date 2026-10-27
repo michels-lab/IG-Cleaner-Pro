@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 343,
-  "classified_files_total": 339,
-  "docs_content_inspected": 79,
+  "tracked_files_total": 346,
+  "classified_files_total": 342,
+  "docs_content_inspected": 80,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 74,
+    "document": 75,
     "index": 5,
     "installer_metadata": 1,
-    "source": 43,
-    "test": 84,
+    "source": 44,
+    "test": 85,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 7
   },
   "finding_total": 7,
-  "inventory_fingerprint": "508de4c169afab15bf5256205acfbbfb566b0700c8778900debc94ff4aef3125",
+  "inventory_fingerprint": "2dc6b6657dc2cea28aea449241b003cddb92b7618f92835f05786f18513d3ab1",
   "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "9282c92790a546693c93e040837a1adb808cca42"
+      "blob": "6981f0298ceaed3a4aac56b1c329c1f6c033b25c"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -147,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0290efa540276acd75cb84171bd032a193f4c318"
+      "blob": "b8a0e29b7d667976bd244edb08a6f26c7649c2df"
     },
     {
       "path": ".gitignore",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "8374e643c8d501dcc8c32f9de244dc2469f7d689"
+      "blob": "a7f3f37338fbb851dfcd062723f8c3c5dd94f5b6"
     },
     {
       "path": "README.md",
@@ -1291,6 +1291,13 @@
       "blob": "fb8b969846f66345393f3e393e472f594f4787e5"
     },
     {
+      "path": "docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "4965513373e15c8e6d02426cd50887ecfe6f7146"
+    },
+    {
       "path": "docs/GRANADA_WINDOWS_REFERENCE_TRANSPORT_ROUTING_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2026,6 +2033,13 @@
       "blob": "53c064f6ef6f5ed2c4ae1bf91d56690715622ff9"
     },
     {
+      "path": "tests/test_installer_process_guard.ps1",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "52bee2f5c88413deef898958100cad358c329e30"
+    },
+    {
       "path": "tests/test_live_relationship_bridge.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2156,7 +2170,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a3600268579927272a37f64fbcbd3ab9f23c955c"
+      "blob": "d193f8b69ec1a903e8ecba85545b31e26ba45d14"
     },
     {
       "path": "tests/windows-updater-ui.test.cjs",
@@ -2248,6 +2262,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "1416902645cbeed09e89c4039eaed2727db6e594"
+    },
+    {
+      "path": "tools/installer_process_guard.ps1",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4cc9da95f994f78d09ba5c28672a47e226a9f3af"
     },
     {
       "path": "tools/live_relationship_snapshot.py",
@@ -2352,14 +2373,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fcbdb2d5347d5d9473a64ef65c3ff1395d167812"
+      "blob": "e71bba0c773e2613fe0f23de983d31527f72033b"
     },
     {
       "path": "tools/test_windows_installer.ps1",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6931068e8aede19db282d80f09a7e434b9a9d1ca"
+      "blob": "803a25c8212b7858fe6de9b957eb3d17303971ba"
     },
     {
       "path": "tools/test_windows_installer_wizard.ps1",
