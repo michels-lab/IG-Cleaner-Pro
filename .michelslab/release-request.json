@@ -26,6 +26,11 @@
     "original_attempt_commit": "bed8b620466cae87608775fa09be2a0c75e05782",
     "reason": "Strict Android visual screenshot gate rejected duplicated identical About captures. Source PR #259 fixes Android capture and exact master adapter contracts; do not reuse old failed evidence.",
     "retry_policy": "One normal FINAL v120.67 only after all exact merge SHA Windows+Android+Developer installed UI, signing, artifact integrity and updater checks succeed; never RC/prerelease or rewrite v120.66.",
-    "live_instagram_owner_acceptance": "pending; unrelated to automated release gate"
+    "live_instagram_owner_acceptance": "pending; unrelated to automated release gate",
+    "second_attempt_run": 40484849226,
+    "second_attempt_commit": "02336fb5360f19eb342612b93546b0b1db7ef511",
+    "second_attempt_error": "Rendered-ui-qa downloaded native four-frame Android evidence but old verify_android_visual_release_evidence.py required eight; no successful FINAL publish receipt.",
+    "repair_scope": "Only release artifact integrity verifier, negative tests, CI coverage and audit. Preserve four real independent screenshots, SHA/APK binding, strict master visual gate and all unchanged user data.",
+    "next_attempt_rule": "Trigger one normal FINAL from new exact integrated main after passing feature CI and all release installation/signing/visual/integrity gates; do not reuse failed run 40484849226."
   }
 }
