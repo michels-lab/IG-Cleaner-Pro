@@ -20,5 +20,12 @@
     "commit": "af291cc6687f527a36fe1d64f31c08615fe216c0",
     "published_at": "2026-10-27T00:16:00Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66"
+  },
+  "failed_attempt_recovery": {
+    "original_attempt_run": 40443259064,
+    "original_attempt_commit": "bed8b620466cae87608775fa09be2a0c75e05782",
+    "reason": "Strict Android visual screenshot gate rejected duplicated identical About captures. Source PR #259 fixes Android capture and exact master adapter contracts; do not reuse old failed evidence.",
+    "retry_policy": "One normal FINAL v120.67 only after all exact merge SHA Windows+Android+Developer installed UI, signing, artifact integrity and updater checks succeed; never RC/prerelease or rewrite v120.66.",
+    "live_instagram_owner_acceptance": "pending; unrelated to automated release gate"
   }
 }
