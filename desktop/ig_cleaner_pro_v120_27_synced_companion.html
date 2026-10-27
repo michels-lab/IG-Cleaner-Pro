@@ -13620,7 +13620,7 @@ function renderStats(){const el=document.getElementById('igcSyncKpis');if(!el)re
 function cfgFromUi(){S.cfg.email=String(document.getElementById('igcSyncEmail')?.value||S.cfg.email).trim();S.cfg.auto=true;saveCfg();return S.cfg}
 function headers(auth=true,extra={}){const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...extra};if(auth&&S.session?.access_token)h.Authorization=`Bearer ${S.session.access_token}`;return h}
 function igcDeveloperReadOnly(){
- if(new URLSearchParams(String(window.location?.hash||"").replace(/^#/,"")).get("igc-developer")==="1")return true;
+ if(/(?:^|&)igc-developer=1(?:&|$)/.test(String(window.location?.hash||"").replace(/^#/,"")))return true;
  try{return window.AndroidBridge?.isDeveloperMode?.()===true}catch{return false}
 }
 async function jfetch(path,opt={}){
@@ -14797,8 +14797,8 @@ window.igcCountsRender=function(){const body=document.getElementById('igcCountsR
 
 // Optional desktop control bridge. Only local host (127.0.0.1) and a temporary
 // launcher-provided random token; credentials and Instagram cookies never enter JS.
-const bridgeParts=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));
-const bridgeMatch=/^(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec(bridgeParts.get('igc-robot')||'');
+const bridgeHash=String(window.location.hash||'').replace(/^#/,'');
+const bridgeMatch=/(?:^|&)igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&|$)/.exec(bridgeHash);
 const robot=bridgeMatch?{port:Number(bridgeMatch[1]),token:bridgeMatch[2]}:null;
 let robotBusy=false;
 async function bridgeRequest(endpoint,body){
@@ -15384,8 +15384,8 @@ window.igcAutoSaveTiming=function(){
  }catch(e){setStatus(e.message)}
 };
 // Local-only action connector: same capability token used by the Profile Counts robot.
-const actionParts=new URLSearchParams(String(window.location?.hash||"").replace(/^#/,""));
-const robotMatch=/^(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec(actionParts.get("igc-robot")||"");
+const actionHash=String(window.location?.hash||"").replace(/^#/,"");
+const robotMatch=/(?:^|&)igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&|$)/.exec(actionHash);
 const actionBridge=robotMatch?{port:Number(robotMatch[1]),token:robotMatch[2]}:null;
 let actionState=null,actionBusy=false,actionBatchReview=null;
 const igcAutoHistoryCache=new Map();
@@ -17241,9 +17241,9 @@ setInterval(()=>{if(opened&&!document.hidden)status()},1700);
 <script id="igc-developer-edition">
 (function(){
  "use strict";
- const devParts=new URLSearchParams(String(location.hash||"").replace(/^#/,""));
- const match=devParts.get("igc-developer")==="1"?
-  /^(\d{2,5})\.([A-Za-z0-9_-]{20,})$/.exec(devParts.get("igc-robot")||""):null;
+ const devHash=String(location.hash||"").replace(/^#/,"");
+ const match=/(?:^|&)igc-developer=1(?:&|$)/.test(devHash)?
+  /(?:^|&)igc-robot=(\d{2,5})\.([A-Za-z0-9_-]{20,})(?:&|$)/.exec(devHash):null;
  let androidDeveloper=false;
  try{androidDeveloper=window.AndroidBridge?.isDeveloperMode?.()===true}catch{}
  if(!match&&!androidDeveloper)return;
