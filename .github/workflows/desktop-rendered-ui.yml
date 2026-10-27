@@ -53,6 +53,8 @@ jobs:
         run: node tests/automation-center-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Read-only LIVE Followers/Following snapshot in real browser
         run: node tests/live-relationships-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
+      - name: Detach two Instagram workspaces into separate owner-bound Chromium windows
+        run: node tests/two-workspaces-windows-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Click Switch Accounts and restore a separate saved login in Chromium
         run: node tests/auth-account-switch-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Capture real compact and wide Desktop visual tests from built artifact
