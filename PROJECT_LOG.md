@@ -1,12 +1,16 @@
-## 2026-10-27 — GRANADA Windows PR #267: exact-head CI found and fixed workflow PowerShell parse error
+## 2026-10-27 — GRANADA: bounded Windows installer QA rebased after FINAL v120.69 source merge
 
-- Real Windows preview run [40523468721](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40523468721) passed the new watchdog success/nonzero/sleep-timeout test plus robot/Chromium checks, then failed at frozen EXE healthcheck script **before executing the executable**: a stray `}` remained after replacing an original `if`. Both final and preview workflows now remove that token; static source contract rejects its recurrence. No reason to claim the actual process hung or that v120.68 needs changes. Rerun all exact-head checks before merge.
+- Exact original #267 head `c71b7b197fe612404977eb8063563f38b4f85b6a` passed six required CI jobs incl installed Windows, but it predates source v120.69. Merge this guarded process watchdog without rewriting app HTML, release-version metadata or owner-account history. Real Windows Setup `Start-Process -Wait` had no per-child deadline; the common watchdog enforces bounded 75–150s waits, PID/time reporting and process-tree kill. Source tests include a real sleeping child timeout and each Windows CI workflow retains logs on failure. Original v120.69 publisher run 40530976884 on tagged candidate 153fa2bd is independent and must not be altered by this source branch; exact new HEAD tests pending.
 
-## 2026-10-27 — GRANADA: bounded Windows process QA (isolated branch)
+## 2026-10-27 — GRANADA user-requested v120.69 FINAL staging: independent live relationship verification
 
-- Audited v120.68 cancelled FINAL attempt 1: Windows installation step cancelled, exact hang cause not proven. Both public and Developer `RunBounded` testers and frozen EXE healthchecks lacked per-child timeout.
-- Added common process-tree watchdog, explicit deadlines, separate failure diagnostics artifact, real Windows success/nonzero/hang acceptance and static CI contracts on isolated branch. Details: [docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md](docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md).
-- Source proposal only pending exact-head Windows CI. Never modified the in-flight v120.68 publisher, owner Chrome sessions, app state, protected profiles or old journals.
+- User requires **Verify live Followers and Following** immediately without ZIP in Windows Automations. Code source #266 merged with seven exact-head CI gates green; account chooser #265 merged with six. Last official v120.68 published with 12 assets via successful publisher 40499536879 at exact tagged SHA `2943e735`.
+- v120.69 staged for installed Windows public/Developer and Android public/Developer with persistent signer, standalone Desktop HTML, checksums and updater. The authorized one-time NORMAL FINAL request is conditional on all exact-source rendered and installed tests; does not publish merely from source commit or PR review. No RC, prerelease or changes to original Chrome/WAL/protected accounts.
+- User's real Instagram live endpoint access **not verified**; incomplete or >25k list fails closed, no wrong negative relationship conclusion. Actual physical Windows owner acceptance still required. v120.68 remains official until release v120.69 is independently confirmed.
+
+## 2026-10-27 — GRANADA account chooser rebased onto full live lists integration
+
+- PR #265 conflict resolved by joining current main's #266 read-only Followers/Following live snapshots and the original account-chooser safety fix without replacing the full Desktop file with an older source. Git merge commit has two parents; account switch stays guarded during sync/active robot. All exact new-head checks must rerun. Normal FINAL v120.68 already published separately; feature remains source-only pending a later distinct release.
 
 ## 2026-10-27 — GRANADA v120.68 normal FINAL staged after source-integrated Pending Unfollow
 
@@ -2614,3 +2618,18 @@ Synchronized only the managed blocks in AGENTS.md and .github/copilot-instructio
 - Exact head d97eb522c1d2557605c7a537ed0674c79b7c2f29 of open release PR #262 failed 3/6 Windows-installed real Chromium local reference tests in run 40493835174: changed default to visible-menu Unfollow while ActionRobot never explicitly selected the reference transport. Root cause and CI reproducible without owner Instagram access.
 - Isolated child branch keeps legacy visible default but explicitly routes real Windows worker Unfollow to owner reference, never Cancel Pending; WAL before one-shot GraphQL POST and fresh read-only Follow confirmation for green OK. Owner-reference Chromium fixture now explicitly selects that transport, preserving separate visible-action tests. Added worker AST contract and accepted-POST/stale-Following negative fixture. An initial global default restore failed two valid visible-action tests; reverted to keep both flows isolated.
 - [Owning-repo audit](docs/GRANADA_WINDOWS_REFERENCE_TRANSPORT_ROUTING_2026-10-27.md). New exact-head CI and merge are pending. Published stable v120.67 unchanged; real user Windows Chrome acceptance and old saved cohort remain open (#164, #172).
+
+
+## 2026-10-27 — Separate GRANADA P1: Desktop account chooser read-only while sync busy (source staged)
+
+- Parent stable publisher v120.68 is still independent at Actions run `40499536879`; no release claim is made by this block. Issue #264 records first-attempt Desktop Chromium `Switch Account` chooser not visible and later same-SHA retry pass. Code review found a real early `S.busy` return that can hide the chooser during startup sync; intermittent trigger not conclusively reproduced on the owner device.
+- New isolated branch permits opening only the **read-only** chooser during sync, checks action/sync admission afresh for every chosen account and prevents closing/switching on veto, reports an explicit safe reason code without exposing credentials, and preserves local reviews/saved accounts. Browser + Node VM negative tests cover busy sync, robot starting after opening, no delayed replay, successful later separate click.
+- [Owning audit](docs/GRANADA_ACCOUNT_CHOOSER_SAFE_ADMISSION_2026-10-27.md). Merge/release/installed physical acceptance pending exact-HEAD QA; never alter current v120.68 publisher or its signed assets for this P1 follow-up.
+
+
+## 2026-10-27 — GRANADA: independent live Followers + Following lists without ZIP (staged, not released)
+
+- Owner clarified that current account Followers/Following must be retrievable directly from their authenticated Instagram Chrome, **as an alternative** to the historic ZIP, not merely the existing Followback Audit over imported batches. Previous `profile_lists_live.py` lacked a standalone user entrypoint, whole-list comparison, saved snapshot and direct list browser.
+- Added guarded local read-only worker + token-protected loopback API + UI `Verificar seguidores y seguidos ahora` + complete per-owner saved snapshots with full Followers, Following, non-followbacks and fans, timestamp, paginated results, consent, cancellation, strict owner/session proof, no mutation and no old journal/click replay. Source is isolated from ongoing v120.68 governed publisher.
+- Hardened `has_more` terminal proof; absent/contradictory pagination stays unavailable, never a false negative. Added offline tests, real Chromium local-fixture contract, general/Profile Counts/Windows/desktop CI entrypoints and integration audit at [docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md](docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md).
+- Status separates source-submitted, exact-SHA QA, merged, release and physical owner acceptance. No real Instagram credentials or following/follower counts were fetched here. Human Chrome acceptance remains pending.

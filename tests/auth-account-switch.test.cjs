@@ -75,5 +75,36 @@ function harness(){
  await x.test.activateRemembered('third@example.test');
  assert.equal(x.test.S.session,null);
  assert.equal(x.reloads.length,4,'Failed switch must not reload');
+ // A background cloud sync must allow inspection, but cannot commit an
+ // owner change. The same chooser stays open after an unsafe selection, and
+ // never replays it once the state later becomes safe.
+ const busy=harness();
+ busy.test.saveRemembered(account('second@example.test','second'));
+ busy.test.S.busy=true;
+ assert.equal(busy.window.igcSyncSwitchState().code,'sync_busy');
+ busy.window.igcSyncSwitchAccount();
+ const pending=busy.created.find(node=>node.tag==='dialog');
+ assert(pending&&pending.opened,'Read-only chooser stays accessible during active sync');
+ const pendingList=pending.children.find(node=>node.tag==='div');
+ const candidate=pendingList.children.find(node=>node.textContent.includes('second@example.test'));
+ candidate.click();
+ assert(!pending.closed,'Blocked busy selection must not close chooser');
+ assert.equal(busy.test.S.session.user.email,'first@example.test');
+ assert.equal(busy.reloads.length,0,'No delayed automatic account switch during busy state');
+ assert.equal(busy.entries.get('ig_v13_done'),'["original-review-must-remain"]');
+ busy.test.S.busy=false;
+ busy.window.igcAutoSwitchGuard=()=>false;
+ assert.equal(busy.window.igcSyncSwitchState().code,'automation_active');
+ candidate.click();
+ assert(!pending.closed,'Robot switch veto must keep read-only chooser');
+ assert.equal(busy.reloads.length,0,'Active robot cannot switch auth account');
+ busy.window.igcAutoSwitchGuard=()=>true;
+ assert.equal(busy.window.igcSyncSwitchState().code,'ready');
+ candidate.click();
+ await Promise.resolve();await Promise.resolve();
+ assert.equal(busy.test.S.session.user.email,'second@example.test');
+ assert.equal(busy.reloads.length,1,'Only the new manually approved click may switch owner');
+ assert.equal(busy.entries.get('ig_v13_done'),'["original-review-must-remain"]');
+ console.log('PASS: busy/robot vetoes preserve read-only chooser and cannot silently rebind owner');
  console.log('PASS: Desktop chooser, two remembered logins, owner reload, add, sign out and mismatch isolation');
 })().catch(e=>{console.error(e);process.exitCode=1});

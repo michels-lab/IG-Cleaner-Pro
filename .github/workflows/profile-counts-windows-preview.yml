@@ -18,6 +18,10 @@ on:
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
       - 'tools/profile_lists_live.py'
+      - 'tools/live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_bridge.py'
+      - 'tests/live-relationships-browser.test.cjs'
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
@@ -76,6 +80,10 @@ on:
       - 'tests/windows-updater-ui.test.cjs'
       - 'tools/profile_actions.py'
       - 'tools/profile_lists_live.py'
+      - 'tools/live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_bridge.py'
+      - 'tests/live-relationships-browser.test.cjs'
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
@@ -191,6 +199,8 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
+          python -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
+          python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
       - name: Bounded owner-navigation and wrong-session regression (offline)
         shell: pwsh
@@ -245,6 +255,7 @@ jobs:
           node tests/profile-counts-indexeddb-browser.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "Rendered Windows Analysis/Action command center acceptance failed." }
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh

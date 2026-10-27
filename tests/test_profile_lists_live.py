@@ -36,7 +36,7 @@ class LiveFriendshipListTests(unittest.TestCase):
         self.assertEqual(page.evaluate.call_args_list[1].args[1]["cursor"],"cursor-2")
 
     def test_following_list_is_independent_from_profile_counts(self):
-        page = self.page([{"usernames":["target.user"],"next":None}])
+        page = self.page([{"usernames":["target.user"],"next":None,"has_more":False}])
         self.assertEqual(self.scan(page,"following"),frozenset(("target.user",)))
         self.assertEqual(page.evaluate.call_args.args[1]["kind"],"following")
 
@@ -49,6 +49,8 @@ class LiveFriendshipListTests(unittest.TestCase):
             [{"usernames":["a"],"next":"next"}],
             [{"usernames":[None],"next":None}],
             [{"usernames":["a"],"next":None,"has_more":False,"status":"unexpected"}],
+            [{"usernames":["a"],"next":None}],
+            [{"usernames":["a"],"next":"x","has_more":False}],
         ]
         for packets in cases:
             with self.subTest(packets=packets):

@@ -8,11 +8,11 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.67 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and all 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) · exact tagged commit `2e0aaaafbe2444f6ea07eea3edce176cea1cd303`. Windows public/Developer installers and production-signed Android public/Developer APKs, standalone Desktop and ZIP are bundled.
+**v120.68 — official stable GitHub release, published October 27, 2026 (UTC).** [Release and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.68) · [successful governed publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40499536879) · exact tagged commit `2943e735db885e5949bd10f37d277c4ae6919504`. Windows public/Developer installers, signed Android public/Developer APKs, standalone Desktop HTML and ZIP included.
 
-**Current published stable: v120.67. Next reserved version: v120.68, not published.**
+**Current published stable: v120.68. Next reserved version: v120.69, not published.**
 
-**v120.68 is the next governed FINAL candidate, not published.** [Source PR #261](https://github.com/michels-lab/IG-Cleaner-Pro/pull/261), merged `8ee2f044`, corrects false successful Unfollows: only verified Follow/Follow Back becomes OK; still Following or uncertain click is Pending/yellow Review with durable no-replay WAL, then the next eligible profile can continue under a verified safe owner session. Read-only Review cannot promote uncertain click to OK. Exact published user-account Instagram acceptance remains unverified; no automatic second click, CAPTCHA bypass or Google Play claim.
+**v120.69 is the next governed FINAL candidate, not yet published.** The Windows **Automations → Verify live Followers and Following** button checks both Instagram lists *on demand* using authenticated Chrome, without imported ZIP. It displays Followers, Following, Not following me back and Fans with per-owner complete snapshots, timestamps and no automatic Unfollow. Source PR [#266](https://github.com/michels-lab/IG-Cleaner-Pro/pull/266) merged after seven green checks, and safe sync account chooser [#265](https://github.com/michels-lab/IG-Cleaner-Pro/pull/265) after six. Actual Instagram private endpoint may be unavailable; ~25k per-list paging ceiling fails closed. Physical signed-in account results were not verified. Publication does not prove live Instagram Unfollow or Cancel Pending succeeded on the owner's account.
 
 ### Historical v120.66 publication and source notes
 

@@ -96,6 +96,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_developer_live_probe.py' -v
           python3 -m unittest discover -s tests -p 'test_ig_structured_probe.py' -v
           python3 -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          python3 -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
+          python3 -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
           python3 -m unittest discover -s tests -p 'test_action_reference_worker_contract.py' -v
           node tests/owner-unfollow-transport.test.cjs
           node tests/pending-focus-reimport.test.cjs
