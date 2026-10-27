@@ -40,16 +40,24 @@ class LiveRelationships:
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
         return self.data_dir / ("instagram-live-scan-cooldown-"+digest+".json")
 
+    def _global_cooldown_file(self):
+        # The same persistent robot Chrome can serve multiple app workspaces.
+        # A 429 in one workspace MUST NOT be bypassable by changing account.
+        return self.data_dir / "instagram-live-global-cooldown.json"
+
     def _cooldown_remaining(self, owner, account):
         if not owner or not account:
             return 0
-        stored = _read_json(self._cooldown_file(owner, account), {})
-        deadline = (stored.get("until") if isinstance(stored, dict) and
-                    stored.get("schema") == "igc-bulk-read-cooldown-v1" else 0)
-        try:
-            when = float(deadline)
-        except (TypeError, ValueError, OverflowError):
-            when = 0
+        account_data = _read_json(self._cooldown_file(owner, account), {})
+        chrome_data = _read_json(self._global_cooldown_file(), {})
+        dates = []
+        for item in (account_data, chrome_data):
+            if isinstance(item, dict) and item.get("schema") == "igc-bulk-read-cooldown-v1":
+                try:
+                    dates.append(float(item.get("until",0)))
+                except (TypeError, ValueError, OverflowError):
+                    continue
+        when = max(dates, default=0)
         if (owner, account) == (self.owner, self.account):
             when = max(when, self._session_cooldown_until)
         return max(0, int(when - time.time() + 0.999))
@@ -57,11 +65,15 @@ class LiveRelationships:
     def _record_cooldown(self, seconds, reason):
         deadline = time.time() + seconds
         self._session_cooldown_until = max(self._session_cooldown_until, deadline)
-        _atomic_json(self._cooldown_file(self.owner, self.account), {
+        record={
             "schema": "igc-bulk-read-cooldown-v1",
             "until": deadline, "reason": reason,
             "no_automatic_retry": True,
-        })
+        }
+        _atomic_json(self._cooldown_file(self.owner, self.account), record)
+        # Also stop switching Instagram workspaces to evade a restriction:
+        # account and Chrome-wide guardrails both need to expire.
+        _atomic_json(self._global_cooldown_file(), record)
 
     def _scope(self, data):
         owner = str(data.get("owner") or "").strip()
