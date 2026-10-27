@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.69**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.69), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40539017886), 12 integrity-tracked assets. The next reserved development version **v120.70 is authorized for governed FINAL publication** only after exact-source gates pass, including installed and signed public/Developer Windows and Android QA; it is not yet published, and no RC or beta is allowed. Windows Automations now provides independent read-only on-demand Followers and Following verification without ZIP, with not-following-back and Fans, complete per-account saved snapshots and safe account switching. Actual Instagram private-list endpoint and owner Chrome session acceptance remain unverified; no automatic Unfollow.
+Current published stable: **v120.70**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), [all-five-gates publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922), with 12 integrity-tracked assets. The next reserved development version **v120.71 is not authorized** for publication, has not been published and must pass a new owner-approved normal FINAL-only request and all installed QA checks. Windows Automations v120.70 reads Followers/Following in authenticated same-origin **bulk JSON list pages** without opening targets individually, compares numeric account IDs and protects against restrictions using pacing, 5/25-page rests, immediate 429/403/503/feedback stop and persisted Chrome-wide cooldown. The user's actual Instagram private endpoint and current counts are not verified; no automatic Unfollow.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.70**, conditionally owner-authorized for a separate governed normal FINAL, but not yet published. Any future GitHub publication must use `prerelease: false`, advance its build version, receive a distinct owner-authorized FINAL request and satisfy every installed, signed and distribution gate.
+The next reserved release target is **v120.71**, not authorized or published. v120.70 is the previously published immutable official FINAL; its release authorization is consumed. Any future GitHub publication must use `prerelease: false`, advance its build version, receive a distinct owner-authorized FINAL request and satisfy every installed, signed and distribution gate.
 
 Authority: `release/distribution-manifest.json`.
 
