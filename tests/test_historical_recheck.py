@@ -110,6 +110,27 @@ class HistoricalActionAuditTests(unittest.TestCase):
             page.get_by_role.assert_not_called()
             page.locator.return_value.click.assert_not_called()
 
+    def test_historical_page_unavailable_is_not_a_manual_error_or_repeated_scan(self):
+        with TemporaryDirectory() as tmp:
+            robot = self.scoped(Path(tmp))
+            _atomic_json(robot._base_for("owner_test", "account_1", "unfollow"), {
+                "gone.profile": {"status": "review", "message": "Old unknown layout"}
+            })
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.recheck_history(self.data())
+                self.assertEqual(robot.targets, ["gone.profile"])
+                robot._save_recheck_result("gone.profile", "profile_unavailable",
+                                           "Exact Instagram unavailable template; no click")
+                state = robot.historical_recheck_status(self.data())
+                self.assertEqual(state["counts"]["observed_unavailable"], 1)
+                self.assertEqual(state["counts"]["still_unresolved"], 0)
+                self.assertEqual(state["counts"]["observed_not_following"], 0)
+                self.assertEqual(robot._journal()["gone.profile"]["status"], "review",
+                                 "Original historical action evidence must not be overwritten")
+                with self.assertRaisesRegex(ValueError, "already have a read-only"):
+                    robot.recheck_history(self.data())
+
     def test_confirmed_owner_task_required_and_protections_honored(self):
         with TemporaryDirectory() as tmp:
             robot = self.scoped(Path(tmp))
