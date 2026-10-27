@@ -1,26 +1,27 @@
 {
-  "version": "120.68",
-  "tag": "v120.68",
+  "version": "120.69",
+  "tag": "v120.69",
   "authorized": true,
   "authorization_source": "Owner's standing Operacion Granada condition: publish ONLY a normal official FINAL stable release after exact-source installed public+Developer Windows, production-signed Android public+Developer co-install, rendered UI, SHA-256 and updater-feed gates all succeed; no RC, beta or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
   "status": "requested",
-  "previous_stable_release": "v120.67",
-  "owner_acceptance_note": "Owner Oct 27 2026: for exact Instagram target still Following, perform only one authorized Unfollow, verify fresh Follow/Follow Back before OK; otherwise mark Pending/yellow Review and safely continue next target if session remains authenticated and no challenge. Never re-click uncertain WAL; proof of no-click issues releases tab. Merged source PR #261 after seven exact-head checks; owner real installed Windows/Chrome approval still PENDING. Only one normal FINAL v120.68 after all exact-source signed Windows/Android/Developer UI, checksum/update-feed publisher gates pass.",
+  "previous_stable_release": "v120.68",
+  "owner_acceptance_note": "Owner explicitly requests independent real-time Followers and Following without ZIP in integrated Windows now. Source #266 and safe chooser #265 integrated after all exact-head CI. Publish ONLY normal FINAL v120.69 after exact merged source installed Windows public/Developer, signed Android public/Developer co-install, rendered visual, SHA-256 and updater-feed checks. No real Instagram account or private list endpoint verification from CI.",
   "requested_at": "2026-10-27",
-  "candidate_main_sha": "8ee2f044fca52f335a3128d22f354d9a2eda9d49",
+  "candidate_main_sha": "8031da38f47d50fe0b526571f65a8fceb235e187",
   "integrated_source_merge_shas": [
-    "8ee2f044fca52f335a3128d22f354d9a2eda9d49"
+    "8db910e9721093926fb234d1f152a2047066a3ef",
+    "d17d433f50615180765c137d8bcc970fcf5a0a84"
   ],
   "previous_publication": {
-    "tag": "v120.67",
-    "run": 40487321040,
-    "commit": "2e0aaaafbe2444f6ea07eea3edce176cea1cd303",
-    "published_at": "2026-10-27T10:32:15Z",
+    "tag": "v120.68",
+    "run": 40499536879,
+    "commit": "2943e735db885e5949bd10f37d277c4ae6919504",
+    "published_at": "2026-10-27T14:38:29Z",
     "asset_count": 12,
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67"
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.68"
   },
-  "release_note": "Separate v120.68 user-authorized FINAL attempt; previous v120.67 tag/assets remain immutable; no prerelease/RC and no live Instagram session touched by CI."
+  "release_note": "Independent explicit owner-approved read-only Windows live Followers/Following scan without ZIP, four categorized lists and per-account complete snapshots; safe account selector. Private Instagram endpoint availability remains unverified, Windows only, no auto-Unfollow, no prerelease."
 }
