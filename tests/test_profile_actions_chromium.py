@@ -954,6 +954,47 @@ class RealBrowserSelectorTests(unittest.TestCase):
         self.assertEqual(status, "already_not_following", message)
         self.assertEqual(self.page.evaluate("window.__steps"), [])
 
+    def test_selected_mutual_following_executes_visible_unfollow_with_wal(self):
+        """Follows you does not imply already not-following or justify skipping."""
+        from unittest.mock import patch
+        html = fake_profile(result="followback")
+        html = html.replace("<h1>target.user</h1>",
+                            "<h1>target.user</h1><span>Follows you</span>", 1)
+        persisted = html.replace(">Following</button>", ">Follow Back</button>", 1)
+        visits, phases, events = [], [], []
+        self.page.on("console", lambda msg: events.append(msg.text.split("IGC_STEP:", 1)[1])
+                     if msg.text.startswith("IGC_STEP:") else None)
+        def serve(route):
+            visits.append(route.request.url)
+            route.fulfill(status=200, content_type="text/html",
+                          body=html if len(visits) == 1 else persisted)
+        self.page.route("https://www.instagram.com/**", serve)
+        with patch("instagram_unfollow_reference.reference_unfollow",
+                   side_effect=AssertionError("Unreliable GraphQL must not be default")):
+            status, message = perform_visible_action(
+                self.page, "target.user", "unfollow", "my.profile",
+                lambda _: True, on_pre_click=phases.append)
+        self.assertEqual(status, "ok", message)
+        self.assertIn("Follow Back", message)
+        self.assertEqual(phases, ["relationship_control", "unfollow_menu"])
+        self.assertEqual(events, ["open", "unfollow", "confirmed"])
+        self.assertEqual(len(visits), 2)
+
+    def test_selected_mutual_following_not_removed_stays_review_not_green(self):
+        html = fake_profile(result="follow", persist=False)
+        html = html.replace("<h1>target.user</h1>",
+                            "<h1>target.user</h1><span>Follows you</span>", 1)
+        phases = []
+        self.page.route("https://www.instagram.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body=html))
+        status, note = perform_visible_action(
+            self.page, "target.user", "unfollow", "my.profile",
+            lambda _: True, on_pre_click=phases.append)
+        self.assertEqual(status, "review", note)
+        self.assertIn("Pending verification:", note)
+        self.assertIn("Do not repeat", note)
+        self.assertEqual(phases, ["relationship_control", "unfollow_menu"])
+
     def test_public_english_popup(self):
         status, message, events = self.attempt()
         self.assertEqual(status, "ok", message)
