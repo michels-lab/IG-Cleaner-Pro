@@ -24,12 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 5,
+    "BROKEN_RELATIVE_LINK": 6,
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 6,
-  "inventory_fingerprint": "6a854635556fc304c4e554984bef2f1d748515fc38c417de6d872d5ac6f8a97f",
-  "evidence_fingerprint": "695581a44796156b9eef5a418e7c2d7240c437610247a1c1c34347bbcc06d747",
+  "finding_total": 7,
+  "inventory_fingerprint": "41b7e93b278aa34023075323287f0d1d29c34633a34311f29fba8fa0554f1c15",
+  "evidence_fingerprint": "50545402f39f3491d2bbbd6fbb255ff5bf850c8d09af41c8011a372302ff4ccb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "db22a153aa7bb03641bc761e57d6343c9492c35d"
+      "blob": "2b1ec9f6fa1b71b8567ca5d1f580f4000e8e66f9"
     },
     {
       "path": "AGENTS.md",
@@ -246,28 +246,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "1a9f66720905b0fba884608a81b0c126e8c0c242"
+      "blob": "683c69c4c3e0936e02ae61e3b9837697356b5a65"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "9ef7631f0f78c13ee965394790e8b4757b4d31f4"
+      "blob": "8c6d51bcb0c9b58813956ba3257d2aa8d750ce71"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "7f8d1654921c1c147461a5c844424130be2b0d6c"
+      "blob": "1a7565d6ec0d3400fc302eede467b3a7d66396e1"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "6bb3f835357a3e630c2895867304b7b4761cc47a"
+      "blob": "5c2e291efaa9ece1735851004c5e12140f6c51e4"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "a4ae6dec3368fa50ff68ff20c512f5d9e660f5a1"
+      "blob": "32ad4999a9d70c1e589d8c9a66e50d6bdae02297"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "c3466b5b601b9aa2394b5d9784e34521dce3eddb"
+      "blob": "6ec10e663e16946f7e6e6fdfcff0635591445bd9"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1401,21 +1401,21 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "e2e59f30513b779b8bf655cc01ab71cd2047273e"
+      "blob": "415d5b24f276eb14d769b6790f38f1d5617ad023"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f6ca5fcaa855bb7ef8f827788263bcf0595bbc32"
+      "blob": "c12c9bce34fc863943cd6e8858bdef305387134c"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "29d2f4fd69d46100127b9c82a898e8033af6af23"
+      "blob": "fd1a6d41654f0107f1cf6d2d7aa8d01d542acb5d"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2329,6 +2329,15 @@
     }
   ],
   "findings": [
+    {
+      "id": "00254bef602c0fb9",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/CURRENT_HANDOFF.md",
+      "observation": "Missing: docs/docs/GRANADA_UNAVAILABLE_PROFILE_2026-10-26.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
     {
       "id": "90d3ae715cce769a",
       "code": "BROKEN_RELATIVE_LINK",

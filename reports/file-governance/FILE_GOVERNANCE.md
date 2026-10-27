@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 332; classified: 328; readable documents: 74; above read cap: 1; findings: 6.
+Tracked: 332; classified: 328; readable documents: 74; above read cap: 1; findings: 7.
 
 ## File roles
 
@@ -29,6 +29,7 @@ Tracked: 332; classified: 328; readable documents: 74; above read cap: 1; findin
 
 ## Findings (human review required)
 
+- **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_UNAVAILABLE_PROFILE_2026-10-26.md. Next: Fix link or restore target (ID 00254bef602c0fb9)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 90d3ae715cce769a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_REVIEW_RECOVERY_AND_COLORS_2026-10-26.md. Next: Fix link or restore target (ID 0e4b57a9618c4cbe)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 8032832fed0ae6fc)
