@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 331,
-  "classified_files_total": 327,
-  "docs_content_inspected": 73,
+  "tracked_files_total": 332,
+  "classified_files_total": 328,
+  "docs_content_inspected": 74,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 68,
+    "document": 69,
     "index": 5,
     "installer_metadata": 1,
     "source": 42,
@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 5
+    "BROKEN_RELATIVE_LINK": 5,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 5,
-  "inventory_fingerprint": "77c5cb1b7bb5dc6d31ee4cf108b47603b01169292de6e25a85775fbeb5743fee",
-  "evidence_fingerprint": "09cbd4faf11044dba96bb2affe293fcbd9c4b3bcc5e4ad6c7d4d33ce1e8b6a33",
+  "finding_total": 6,
+  "inventory_fingerprint": "6a854635556fc304c4e554984bef2f1d748515fc38c417de6d872d5ac6f8a97f",
+  "evidence_fingerprint": "695581a44796156b9eef5a418e7c2d7240c437610247a1c1c34347bbcc06d747",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -854,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "5b7330a97891b102428a289b9cd6ea059d756899"
+      "blob": "a4ae6dec3368fa50ff68ff20c512f5d9e660f5a1"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1228,6 +1229,13 @@
       "blob": "6c6c74e307988d9aa151c1f48376713469e205bd"
     },
     {
+      "path": "docs/GRANADA_UNAVAILABLE_PROFILE_2026-10-26.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "423973c54072f43409500670309158c6a099df98"
+    },
+    {
       "path": "docs/GRANADA_V12062_FINAL_RECEIPT_2026-10-24.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1540,7 +1548,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "35f42bcfe33b4e8581bdfa2b3603d9c1949aa236"
+      "blob": "50783c92ec8bbda41d978427e1cd952717b07ee7"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -1827,7 +1835,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7d5bea5a0420eaa7a86ba7c40c919579f0c0b411"
+      "blob": "407d8ea4887fd9f829e68faee59fb369fab7bad4"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -1939,7 +1947,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a6e0d107112a2d7ba673a6c39400f8d91dce0f7a"
+      "blob": "4343056875e14f50aa7c7a7bfbb74c15199b4631"
     },
     {
       "path": "tests/test_ig_structured_probe.py",
@@ -2177,7 +2185,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3e8e4b61880305572021684e3687cc286c31bcda"
+      "blob": "97884b0974153d0e94a6fd7ec8fe9fdbbacb96c5"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2364,6 +2372,15 @@
       "path": "docs/CURRENT_HANDOFF.md",
       "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "8a301c1b755796fc",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/test_action_batch_history.py, tests/test_historical_recheck.py, tools/profile_actions.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
