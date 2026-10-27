@@ -505,6 +505,87 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
+    def test_first_two_unreadable_targets_are_pending_and_third_proceeds(self):
+        """Owner report: 2/40 cannot terminate for two safe zero-click target failures."""
+        import types
+        from unittest.mock import MagicMock
+
+        class Tab:
+            def __init__(self, url="about:blank"):
+                self.url, self.closed = url, False
+            def goto(self, url, **kwargs):
+                self.url = url
+            def bring_to_front(self):
+                pass
+            def locator(self, *_):
+                return types.SimpleNamespace(count=lambda: 0)
+            def is_closed(self):
+                return self.closed
+            def close(self):
+                self.closed = True
+
+        class Browser:
+            def __init__(self):
+                self.pages = [Tab("https://www.instagram.com/")]
+            def new_page(self):
+                t = Tab()
+                self.pages.append(t)
+                return t
+            def close(self):
+                for t in self.pages:
+                    t.close()
+
+        with TemporaryDirectory() as tmp:
+            robot = self._action(Path(tmp))
+            robot.owner, robot.account = "owner1", "ig_account_1"
+            robot.handle, robot.task = "owner.name", "unfollow"
+            robot.targets = ["still.following1", "still.following2", "next.eligible"]
+            robot.active_batch_id = "unreadable-40-owner-cohort"
+            robot.min_delay_seconds, robot.rest_minutes = 0, 0
+            browser = Browser()
+            calls = []
+            def actions(page, username, *args, **kwargs):
+                calls.append(username)
+                if username != "next.eligible":
+                    return "blocked", "The target profile area could not be found."
+                robot.stop_event.set()
+                return "ok", "Action confirmed: Follow."
+            fake_pw = types.SimpleNamespace(chromium=types.SimpleNamespace(
+                launch_persistent_context=lambda **kwargs: browser))
+            ctx = MagicMock()
+            ctx.__enter__.return_value = fake_pw
+            with patch.dict(sys.modules, {
+                    "playwright": types.ModuleType("playwright"),
+                    "playwright.sync_api": types.SimpleNamespace(
+                        sync_playwright=lambda: ctx)}), \\
+                 patch("profile_actions.preserve_instagram_auth_page", return_value=True), \\
+                 patch("profile_actions.challenge_detected", return_value=False), \\
+                 patch("profile_actions.signed_in_handle", return_value="owner.name"), \\
+                 patch("profile_actions._verified_action_owner", return_value=True), \\
+                 patch("profile_actions.wait_required", return_value=0), \\
+                 patch("profile_actions.batch_wait", return_value=0), \\
+                 patch("profile_actions.perform_visible_action", side_effect=actions):
+                robot._run()
+            self.assertEqual(calls, robot.targets)
+            journal = robot._journal()
+            for user in robot.targets[:2]:
+                self.assertEqual(journal[user]["status"], "review")
+                self.assertEqual(journal[user]["issue"], "target_preclick_unavailable")
+                self.assertIn("No action clicked.", journal[user]["message"])
+                self.assertNotIn("click_intent", journal[user])
+            self.assertEqual(journal["next.eligible"]["status"], "ok")
+            self.assertTrue(all(t.closed for t in browser.pages))
+
+    def test_target_zero_click_proof_never_overrides_prior_wal(self):
+        from profile_actions import _preclick_no_action
+        valid = {"status": "review", "issue": "target_preclick_unavailable",
+                 "message": "Pending verification: target identity or layout not verifiable. No action clicked."}
+        self.assertTrue(_preclick_no_action(valid))
+        self.assertFalse(_preclick_no_action({
+            **valid, "click_intent": {"phase": "relationship_control"}}))
+        self.assertFalse(_preclick_no_action({
+            **valid, "message": "The target might have been clicked."}))
+
     def test_armed_click_with_missing_profile_info_is_pending_then_next_safe_target(self):
         """After a durable uncertain click, continue with NEW targets, not the same.
 
