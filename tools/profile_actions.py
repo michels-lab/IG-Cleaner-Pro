@@ -1837,7 +1837,8 @@ class ActionRobot:
                             "message": public.get("message", ""),
                             # Current unavailable screen must not hide a PRIOR
                             # ambiguous click or malformed action journal in UI.
-                            "possible_click": ("click_intent" in source or
+                            "possible_click": (not isinstance(source, dict) or
+                                               "click_intent" in source or
                                                _invalid_saved_action_record(source)),
                             "safe_no_click": (
                                 not _invalid_saved_action_record(source) and
