@@ -29,6 +29,7 @@ class LiveRelationships:
         self.owner = self.account = self.handle = ""
         self.status, self.message = "idle", "No live Instagram verification has started."
         self.pages_completed = 0
+        self.members_loaded = {"followers": 0, "following": 0}
 
     def _file_for(self, owner, account):
         digest = hashlib.sha256((owner+"\0"+account).encode("utf-8")).hexdigest()[:32]
@@ -59,6 +60,7 @@ class LiveRelationships:
                     raise ValueError("Pause all other Instagram Chrome robots before verifying live lists.")
                 self.owner,self.account,self.handle=owner,account,handle
                 self.pages_completed=0
+                self.members_loaded = {"followers": 0, "following": 0}
                 self.stop_event.clear()
                 self.status, self.message = "starting", "Opening existing robot Chrome for read-only verification."
                 self.worker = threading.Thread(target=self._run_with_lease,args=(lease,),daemon=True)
@@ -74,7 +76,8 @@ class LiveRelationships:
                 "owner":self.owner,"account":self.account,
                 "expected_handle":self.handle,
                 "running":bool(self.worker and self.worker.is_alive()),
-                "pages_completed":self.pages_completed,"read_only":True,
+                "pages_completed":self.pages_completed,
+                "members_loaded":dict(self.members_loaded),"read_only":True,
                 "relationship_action":False}
 
     def pause(self, data):
@@ -176,10 +179,25 @@ class LiveRelationships:
                         self.pages_completed+=1
                         self.status="running"
                         self.message="Reading current "+kind+" · page "+str(index)+"; no relationship actions."
-                # No partial snapshot is saved, even if Followers succeeded and
-                # Following is rejected or the browser login changes mid-scan.
-                followers=read_live_friendship_list(page,self.handle,"followers",on_page=on_page)
-                following=read_live_friendship_list(page,self.handle,"following",on_page=on_page)
+                def on_progress(kind, count):
+                    if self.stop_event.is_set():
+                        raise ValueError("Owner stopped the read-only bulk list download.")
+                    with self.lock:
+                        self.members_loaded[kind] = count
+                        self.message = ("Downloading " + kind + " via Instagram list pages: " +
+                                        str(count) + " unique accounts loaded, " +
+                                        str(self.pages_completed) + " JSON pages. " +
+                                        "Not opening individual profiles.")
+                # Bulk JSON pages return member IDs. Compare IDs (not renamable
+                # usernames) and only materialize the four visible name lists
+                # after BOTH entire streams have verified their terminal cursor.
+                # A failure in Following never replaces prior complete snapshots.
+                followers=read_live_friendship_list(
+                    page,self.handle,"followers",on_page=on_page,
+                    on_progress=on_progress,identities=True)
+                following=read_live_friendship_list(
+                    page,self.handle,"following",on_page=on_page,
+                    on_progress=on_progress,identities=True)
                 if self.stop_event.is_set():
                     return
                 verified,mismatch=_find_verified_owner_tab(
@@ -187,18 +205,21 @@ class LiveRelationships:
                 if mismatch or verified is None:
                     raise ValueError("Instagram account changed after paging. Snapshot not saved.")
                 lists={
-                    "followers":sorted(followers),
-                    "following":sorted(following),
-                    "not_following_back":sorted(following-followers),
-                    "fans":sorted(followers-following),
+                    "followers":sorted(followers.values()),
+                    "following":sorted(following.values()),
+                    "not_following_back":sorted(
+                        following[account_id] for account_id in following.keys()-followers.keys()),
+                    "fans":sorted(
+                        followers[account_id] for account_id in followers.keys()-following.keys()),
                 }
                 _atomic_json(self._file_for(self.owner,self.account),{
                     "schema":"igc-live-relationships-v1","complete":True,
+                    "matching_method":"stable_account_id_bulk_cursor",
                     "expected_handle":self.handle,"captured_at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime()),
                     "lists":lists,"read_only":True})
                 with self.lock:
                     self.status="complete"
-                    self.message=("Verified both complete Instagram lists: "+
+                    self.message=("Verified BOTH complete Instagram bulk lists by account ID: "+
                         str(len(followers))+" followers, "+str(len(following))+
                         " following. This is an on-demand snapshot, not a continuous feed.")
         except Exception as exc:
