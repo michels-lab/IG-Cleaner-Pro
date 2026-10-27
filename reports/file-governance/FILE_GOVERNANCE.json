@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 7
+    "BROKEN_RELATIVE_LINK": 7,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 7,
-  "inventory_fingerprint": "2dc6b6657dc2cea28aea449241b003cddb92b7618f92835f05786f18513d3ab1",
-  "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
+  "finding_total": 8,
+  "inventory_fingerprint": "fc0f05160b5ff416b9b3792920bdc02ad4ec10655d6094063fdc195644e43844",
+  "evidence_fingerprint": "4b1c409e4cd985b41b56ec220130747b2a394ffe3eb51dbcbaea3dbceecf447e",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "104244ac4cabb41a16e4d2d5063fa24f5dcc74d2"
+      "blob": "0f47e62f707abf513f6bd20b02b77e865078f47a"
     },
     {
       "path": "AGENTS.md",
@@ -2487,6 +2488,15 @@
       "path": "docs/CURRENT_HANDOFF.md",
       "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "e5e2f65c1d72250f",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
