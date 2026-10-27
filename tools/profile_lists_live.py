@@ -24,6 +24,22 @@ class LiveListsUnavailable(RuntimeError):
     """No complete, verifiable read-only list was acquired."""
 
 
+class LiveListsRateLimited(LiveListsUnavailable):
+    """Instagram asked us to stop; no immediate automatic retry is allowed."""
+
+    def __init__(self, code, wait_seconds=1800):
+        self.code = str(code)
+        # Honor longer server Retry-After; never retry faster than 30 min.
+        self.wait_seconds = max(1800, min(30 * 86400, int(wait_seconds)))
+        super().__init__(
+            "Instagram temporarily restricted bulk list access (" + self.code +
+            "). No retries or further Instagram requests. "
+            "Protective cooldown: " + str(self.wait_seconds // 60) +
+            " minutes minimum. No partial/negative results.")
+
+
+
+
 # A *page* is an API JSON response holding many members, not a user profile.
 # Instagram can return far fewer than the requested count; 250 pages cannot
 # safely be translated into "25,000 accounts". Bound both pages and records.
@@ -31,6 +47,14 @@ DEFAULT_MAX_PAGES = 1500
 DEFAULT_PAGE_SIZE = 200
 MAX_UNIQUE_USERS = 100_000
 MAX_STALLED_PAGES = 8
+# These are OUR conservative safety settings, not published Instagram quotas.
+# Five JSON pages form one cycle; periodic rests discourage bursts. A 429,
+# feedback_required or access-denied response stops this run immediately.
+BASE_PAGE_WAIT_MS = 2500
+SHORT_REST_EVERY_PAGES = 5
+SHORT_REST_MS = 12000
+LONG_REST_EVERY_PAGES = 25
+LONG_REST_MS = 90000
 _NUMERIC_ID = re.compile(r"^[0-9]{1,30}$")
 
 
@@ -49,7 +73,7 @@ def read_live_friendship_list(page, expected_handle, relation, *,
                               max_pages=DEFAULT_MAX_PAGES,
                               page_size=DEFAULT_PAGE_SIZE,
                               on_page=None, on_progress=None,
-                              identities=False):
+                              identities=False, on_rest=None, wait_ms=None):
     """Read an ENTIRE followers/following membership set using paginated GET.
 
     identities=True returns {stable_numeric_instagram_id: username} for reliable
@@ -93,8 +117,15 @@ def read_live_friendship_list(page, expected_handle, relation, *,
                        'X-Requested-With':'XMLHttpRequest',Accept:'application/json'},
               cache:'no-store',signal:AbortSignal.timeout(20000)
             });
-            if(!response.ok)return {error:'http_'+response.status};
+            if(!response.ok)return {
+              error:'http_'+response.status,
+              retry_after:response.headers.get('Retry-After')
+            };
             const body=await response.json();
+            if(body && (String(body.message||'').includes('feedback_required') ||
+                        body.error_type==='feedback_required' ||
+                        body.message==='Please wait a few minutes before you try again.'))
+              return {error:'feedback_required'};
             if(!body||body.status!=='ok'||!Array.isArray(body.users))
               return {error:'unexpected_shape'};
             return {
@@ -110,6 +141,11 @@ def read_live_friendship_list(page, expected_handle, relation, *,
         if (not isinstance(packet, dict) or packet.get("error") or
                 packet.get("status") not in (None, "ok")):
             reason = packet.get("error") if isinstance(packet, dict) else "invalid_response"
+            if reason in ("http_429", "http_403", "feedback_required", "http_503"):
+                raw_retry = packet.get("retry_after")
+                retry = int(raw_retry) if (type(raw_retry) in (int, str) and
+                      str(raw_retry).isdigit() and len(str(raw_retry)) <= 8) else 0
+                raise LiveListsRateLimited(reason, max(1800, retry))
             raise LiveListsUnavailable(
                 "Instagram's bulk " + relation + " request failed (" + str(reason)[:40] +
                 "). No incomplete/negative membership conclusions.")
@@ -173,7 +209,18 @@ def read_live_friendship_list(page, expected_handle, relation, *,
                 "no false negative conclusions.")
         seen_cursors.add(next_cursor)
         cursor = next_cursor
-        page.wait_for_timeout(800)  # conservative read-only pacing
+        # A full list may span hundreds of pages. Slow down consistently and
+        # give Instagram an extended rest every 5 and every 25 pages.
+        # No 429 retries, no proxy rotation and no challenge bypass.
+        delay_ms = (LONG_REST_MS if page_number % LONG_REST_EVERY_PAGES == 0
+                    else SHORT_REST_MS if page_number % SHORT_REST_EVERY_PAGES == 0
+                    else BASE_PAGE_WAIT_MS)
+        if on_rest is not None:
+            on_rest(relation, page_number, delay_ms)
+        if wait_ms is not None:
+            wait_ms(delay_ms)
+        else:
+            page.wait_for_timeout(delay_ms)
     raise LiveListsUnavailable(
         "Bulk " + relation + " pagination remained unfinished after " +
         str(max_pages) + " pages (" + str(len(names)) +
