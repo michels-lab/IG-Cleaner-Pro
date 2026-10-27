@@ -107,6 +107,8 @@ class BulkSettingsTests(unittest.TestCase):
         self.assertIn("igcLiveConfigScope!==igcLiveSettingsKey()",html)
         self.assertIn("No se confirmaron los ajustes guardados para esta cuenta",html)
         self.assertIn("Ajustes guardados y vigentes en esta cuenta",html)
+        self.assertIn("Navigation to Automations is the",html)
+        self.assertIn("void window.igcLiveConfigLoad();",html)
 
 
 if __name__=="__main__":
