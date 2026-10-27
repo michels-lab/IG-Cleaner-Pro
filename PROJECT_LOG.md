@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA v120.70 FINAL staging after real owner's 250-page live list failure
+
+- User's v120.69 installed screenshot showed 250 JSON page cutoff with no complete snapshot. User insisted on their originally supplied code's **principle**, independent same-origin authenticated JSON list requests, **no profile-per-profile browser visit**, and not a literal script copy. [P0 #270](https://github.com/michels-lab/IG-Cleaner-Pro/pull/270) implements 200 requested members, guarded 1500-page budget, 100k unique-member budget, explicit 429/challenge/owner/cursor fail closed and stable-ID set comparison, with progress loaded counts, and passed five exact source CI checks after a flaky Android screenshot rerun. Tests use no real Instagram session.
+- Stage v120.70 Windows/Developer and Android/Developer twins plus standalone Desktop, preserving actual official [v120.69](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.69) and its 12 assets unchanged. Authorize a distinct NORMAL FINAL only after exact-source installed Windows/Developer, signed Android public/Developer coexistence, Home/About visuals, SHA256 and official updater-feed checks.
+- **Physical real Instagram acceptance is still open**: user's existing failure is real, new API route availability and complete list counts unknown. Do not mark solved or publish any RC; no changes to Unfollow, Cancel Pending, profiles protected, old history, ZIP or action journals.
+
 ## 2026-10-27 — GRANADA real-user v120.69 live list 250-page failure: redesign with bulk IDs
 
 - Owner provided a Windows screenshot: `Live list verification unavailable: Live list reached its 250-pages safety limit`; zero complete snapshot. Their explicit requirement: use the principle of the previously supplied JavaScript scanner (authenticated same-origin bulk Followers and Following JSON list pages), NOT copy the source literally and NEVER traverse one profile at a time for this feature.
