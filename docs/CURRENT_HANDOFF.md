@@ -1,3 +1,11 @@
+## Current handoff — 2026-10-27: InstaCleaner v120.70 FINAL downloadable
+
+Official [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70) published **normal FINAL** with 12 assets and all five [publisher gates](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) successful, exact tagged SHA `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`. The Windows live scan now uses bulk paginated authenticated Instagram list pages and stable account IDs without target-profile browsing; adds conservative 2.5s/12s/90s pacing, 429/403/503 and feedback stop, `Retry-After` with minimum persistent Chrome-wide 30m cooldown and 15m between successes. Account restrictions are still possible.
+
+**Owner acceptance next:** install official v120.70 Windows Setup using existing Windows app/profile, then Automations → Verify live Followers and Following, explicitly select/signed-in correct Instagram account, perform one read-only attempt and share success counts/date or exact error text (no credentials/cookies). If blocked, respect cooldown. No real Instagram access or complete relationship result proven in GitHub CI.
+
+Repo metadata corrected: `currentStableRelease=v120.70`, `nextRelease=v120.71`, `release-request v120.70: published/authorized=false`. Docs-only receipt must not reissue release or edit binary. [Owner quickstart](docs/INSTACLEANER_V12070_LIVE_SCAN_QUICKSTART.md) · [receipt](docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md).
+
 ## 2026-10-26 — GRANADA v120.67 publication BLOCKED by duplicate Android visual evidence (root cause fixed in source branch)
 
 - Official [publisher run 40443259064](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259064) started on exact merged `bed8b620466cae87608775fa09be2a0c75e05782`. Windows installed public/Developer and Android public+Developer installed gates passed, but exact-source [Android About workflow 40443259036](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40443259036) failed **`screenshot[1]: duplicate screenshot bytes`**. Gate remains required; NO v120.67 release is confirmed. Official published stable remains **v120.66**.

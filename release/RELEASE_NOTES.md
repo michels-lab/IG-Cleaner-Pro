@@ -1,3 +1,13 @@
+## v120.70 — Published NORMAL FINAL (2026-10-27)
+
+- **Available now:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published 2026-10-27T18:05:15Z, `prerelease=false`, exact tag `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`, five-of-five mandatory [publisher gates](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) successful and twelve checksum-tracked public/Developer Windows and Android assets.
+- **250-page failure fixed:** bulk Instagram same-origin authenticated JSON cursor collection is separate from Unfollow, avoids individual profile visits and ZIP imports, uses up to 200 requested members per page, 1500 pages/100k unique accounts per list and numeric ID-based no-followback comparisons. No partial results accepted.
+- **Safer requests:** 2.5 s spacing, rest 12 s every five and 90 s every 25 JSON pages. 429/403/503/feedback stops immediately with persistent account/Chrome-wide at least 30 min no-retry cooldown, honors longer `Retry-After`; successful scans spaced 15 min, Stop interrupts sleeps. These application pacing values are not official Instagram API limits.
+- **Owner acceptance remains open:** private Instagram relationship endpoints may block/fail and were never queried with user's real signed-in account in CI. No assumption of successful follower totals or real actions; keep P0 #164 open. See [official receipt](docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md).
+- Previous v120.70 release request is consumed; v120.71 reserved and not authorized. Do not republish same tag or overwrite assets.
+
+---
+
 **Cuenta protegida antes de obtener listas en vivo:** como medida conservadora propia de la app (no límites oficiales de Meta), cada página JSON se separa al menos 2.5 s; cada cinco páginas se descansa 12 s y cada 25 páginas 90 s. Si Instagram indica HTTP 429/403/503 o `feedback_required`, detener, respetar `Retry-After` y exigir mínimo 30 min de enfriamiento local por cuenta sin reintentos automáticos. Tras terminar una lectura completa, espaciar nuevas solicitudes al menos 15 min. Botón Stop interrumpe pausas, no persiste listas parciales, preserva últimos snapshots.
 
 ## v120.70 — GRANADA real-owner fix for 250-page Followers/Following failure (FINAL candidate, 2026-10-27)
