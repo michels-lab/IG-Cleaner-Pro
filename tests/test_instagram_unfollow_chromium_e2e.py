@@ -42,7 +42,8 @@ class OwnerReferenceChromiumE2E(unittest.TestCase):
         self.page = self.ctx.new_page()
         self.steps = []
         self.state = {"unfollowed": False, "post_count": 0, "block_post": False,
-                      "lookup_empty": False, "wrong_header": False}
+                      "lookup_empty": False, "wrong_header": False,
+                      "stale_following": False}
         self.ctx.route("https://www.instagram.com/**", self._intercept)
         # Independent owner evidence in authenticated site nav; no patch to
         # production owner verification or exact target identity selectors.
@@ -54,7 +55,8 @@ class OwnerReferenceChromiumE2E(unittest.TestCase):
 
     def _html(self):
         heading = "wrong.user" if self.state["wrong_header"] else self.target
-        relation = "Follow" if self.state["unfollowed"] else "Following"
+        relation = ("Following" if self.state["stale_following"] else
+                    ("Follow" if self.state["unfollowed"] else "Following"))
         return ("""<!doctype html><html><body>
           <nav><a href="/owner.user/" aria-label="Profile">Profile</a></nav>
           <header><h1>""" + heading + """</h1>
@@ -119,6 +121,16 @@ class OwnerReferenceChromiumE2E(unittest.TestCase):
         self.assertEqual(self.steps.count("post"), 1)
         self.assertGreaterEqual(self.steps.count("profile"), 2,
             "Fresh profile GET must verify final Follow state")
+
+    def test_accepted_post_with_stale_following_is_pending_not_false_ok(self):
+        self.state["stale_following"] = True
+        status, note = self.run_robot()
+        self.assertEqual(status, "review", note)
+        self.assertIn("Pending verification:", note)
+        self.assertEqual(self.state["post_count"], 1,
+            "A pending result must never lead to a second mutation.")
+        self.assertEqual(self.steps.count("wal"), 1)
+        self.assertLess(self.steps.index("wal"), self.steps.index("post"))
 
     def test_protected_target_is_never_sent(self):
         status, note = self.run_robot(allowed=False)
