@@ -57,7 +57,7 @@ def collect(adb: str, package: str, output: Path) -> tuple[Path, ...]:
                 raise ValueError(f"Wrong actual Android viewport for {filename}: {dims}")
             (staging / filename).write_bytes(data)
             transferred.append(filename)
-        if len(transferred) != 8:
+        if len(transferred) != len(EXPECTED):
             raise RuntimeError("Expected four installed APK Home/About screenshots")
         os.replace(staging, output)
     finally:
