@@ -47,8 +47,26 @@ const {chromium}=require('playwright');
   await second.waitForLoadState('domcontentloaded');
   assert.equal(await second.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_second_123456');
   assert.equal(await second.evaluate(()=>igcWindowPinned),true);
-  assert.equal(await second.evaluate(()=>Boolean(robot&&actionBridge)),true,
-    'Detached window must retain both token-protected Profile Counts and Action bridges');
+  // Real UI controller path: a detached window must still send its session
+  // capability to the local Windows bridge (rather than treating it as offline).
+  const bridgeAttempt=await second.evaluate(async()=>{
+   const original=window.fetch,seen=[];
+   window.fetch=async(url,options)=>{
+    if(String(url).includes('/api/actions/live-settings')){
+     seen.push({url:String(url),token:options?.headers?.['X-IGC-Bridge-Token']||''});
+     return {ok:true,json:async()=>({})};
+    }
+    return original(url,options);
+   };
+   try{await requestAction('live-settings',{owner:'test',account:'test'});}
+   catch(error){return {seen,error:String(error.message)}}
+   finally{window.fetch=original}
+   return {seen};
+  });
+  assert.equal(bridgeAttempt.seen.length,1,
+    'Detached window must reach the native Windows Action bridge');
+  assert.equal(bridgeAttempt.seen[0].token,'a'.repeat(32),
+    'Detached window must retain the exact capability token');
   assert.equal(await first.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_first_1234567');
   // Changing the default global active profile must not change the detached tab.
   await first.evaluate(()=>{
