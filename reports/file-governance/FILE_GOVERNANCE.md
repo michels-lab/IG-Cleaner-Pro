@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 346; classified: 342; readable documents: 80; above read cap: 1; findings: 8.
+Tracked: 348; classified: 344; readable documents: 82; above read cap: 1; findings: 7.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 346; classified: 342; readable documents: 80; above read cap: 1; findin
 | config | 69 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 75 |
+| document | 77 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 44 |
@@ -36,7 +36,6 @@ Tracked: 346; classified: 342; readable documents: 80; above read cap: 1; findin
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID 8032832fed0ae6fc)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID e5e2f65c1d72250f)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

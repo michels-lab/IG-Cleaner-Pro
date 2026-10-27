@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 346,
-  "classified_files_total": 342,
-  "docs_content_inspected": 80,
+  "tracked_files_total": 348,
+  "classified_files_total": 344,
+  "docs_content_inspected": 82,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 69,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 75,
+    "document": 77,
     "index": 5,
     "installer_metadata": 1,
     "source": 44,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 7,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 7
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "fc0f05160b5ff416b9b3792920bdc02ad4ec10655d6094063fdc195644e43844",
-  "evidence_fingerprint": "4b1c409e4cd985b41b56ec220130747b2a394ffe3eb51dbcbaea3dbceecf447e",
+  "finding_total": 7,
+  "inventory_fingerprint": "317a866a935a55926a038c5a5dc1ea0e804c53af206d144dbb11125870080cce",
+  "evidence_fingerprint": "18989b2106f989ece5010bb2a5b7cbaef5c1b471151f83ff188354a93071e4a3",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "0f47e62f707abf513f6bd20b02b77e865078f47a"
+      "blob": "47772448813f6beefd6aedca5c9bc1c230dbac5e"
     },
     {
       "path": "AGENTS.md",
@@ -246,21 +245,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a7f3f37338fbb851dfcd062723f8c3c5dd94f5b6"
+      "blob": "3edeef5c162a35256198be1579417567e92ec678"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "7931326e2bfcc38b0e718ecd57874eedc6cda796"
+      "blob": "d48ae6e5cf2328fbaf3bb789bf7730f028d5bd69"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "bb39497b681787f7c36d4cf9ca73d6996565e229"
+      "blob": "558a38b55a46f7c7fd928cade45c5b7901b59418"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -1292,6 +1291,13 @@
       "blob": "fb8b969846f66345393f3e393e472f594f4787e5"
     },
     {
+      "path": "docs/GRANADA_V12069_FINAL_RECEIPT_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "6ae46dfcce89a39ee0194fd90d21c5db39f06c2e"
+    },
+    {
       "path": "docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1318,6 +1324,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "fd65f31126155af46bede8a316938618f5802729"
+    },
+    {
+      "path": "docs/LIVE_FOLLOWERS_WINDOWS_QUICKSTART.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "167c8c9172125cf48539b9001495a73bb15b361d"
     },
     {
       "path": "docs/MULTI_INSTAGRAM_WORKSPACES.md",
@@ -1352,7 +1365,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ad560331a156d6c08c48abcb1a3d276025654394"
+      "blob": "b23f80f4f1b9ad526d0c903c93ea03b0f6c53a2f"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1443,7 +1456,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "8bb8152b4890b3e1d4c11f7562caf986c7a65e41"
+      "blob": "eb199276fedd6ad3a2685950f33db6b42ed32715"
     },
     {
       "path": "release/android-signing.json",
@@ -1457,7 +1470,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "d1591620e3928a81fc76c5955e424f468b19b718"
+      "blob": "a1c68c22903a5acbb343de33c4276edf204f2851"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2488,15 +2501,6 @@
       "path": "docs/CURRENT_HANDOFF.md",
       "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "e5e2f65c1d72250f",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
