@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.70**, not authorized or published. Any future GitHub publication must use `prerelease: false`, advance its build version, receive a distinct owner-authorized FINAL request and satisfy every installed, signed and distribution gate.
+The next reserved release target is **v120.70**, conditionally owner-authorized for a separate governed normal FINAL, but not yet published. Any future GitHub publication must use `prerelease: false`, advance its build version, receive a distinct owner-authorized FINAL request and satisfy every installed, signed and distribution gate.
 
 Authority: `release/distribution-manifest.json`.
 
