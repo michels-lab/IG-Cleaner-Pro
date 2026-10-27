@@ -16,9 +16,9 @@ $marker = Join-Path $state "installer-test-user-data-do-not-delete.txt"
 "must-survive-installer-and-uninstall" | Set-Content -Path $marker -Encoding utf8
 $legacy = Join-Path $env:USERPROFILE ".ig-cleaner-pro"
 $legacyWasPresent = Test-Path $legacy
-function RunBounded($path, [string[]]$arguments, $label) {
-  $p = Start-Process -FilePath $path -ArgumentList $arguments -Wait -PassThru
-  if ($p.ExitCode -ne 0) { throw "$label exited $($p.ExitCode)" }
+. (Join-Path $PSScriptRoot "installer_process_guard.ps1")
+function RunBounded($path, [string[]]$arguments, $label, [int]$timeout = 150) {
+  Invoke-IgcBoundedProcess -Path $path -Arguments $arguments -Label $label -TimeoutSeconds $timeout
 }
 try {
   RunBounded $setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/DIR="'+$prefix+'"'),('/LOG="'+$log+'"')) 'Setup'
@@ -36,9 +36,9 @@ try {
   $devShortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($devMenu)
   if ($devShortcut.Arguments -ne '--developer') { throw "Developer shortcut must launch --developer." }
   # Real installed binary, not a copied portable EXE.
-  RunBounded $exe @('--healthcheck') 'Installed app binary'
-  RunBounded $exe @('--smoke-startup') 'Installed app startup path'
-  RunBounded $exe @('--smoke-startup','--developer') 'Installed Developer Edition startup path'
+  RunBounded $exe @('--healthcheck') 'Installed app binary' 75
+  RunBounded $exe @('--smoke-startup') 'Installed app startup path' 100
+  RunBounded $exe @('--smoke-startup','--developer') 'Installed Developer Edition startup path' 100
   $devState = Join-Path $state "developer-edition"
   if (!(Test-Path (Join-Path $devState "IG-Cleaner-Pro.html"))) {
     throw "Developer Edition did not create isolated HTML origin."
@@ -52,7 +52,7 @@ try {
   if (!(Test-Path $exe) -or !(Test-Path $marker) -or !(Test-Path $ui)) {
     throw "In-place setup replaced or lost the persisted workspace"
   }
-  RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Uninstall'
+  RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Uninstall' 120
   if (Test-Path $exe) { throw "Installed executable remained after uninstall" }
   if (!(Test-Path $marker)) { throw "Uninstall deleted local review/import data" }
   if ($legacyWasPresent -and !(Test-Path $legacy)) { throw "Uninstall deleted legacy robot data" }

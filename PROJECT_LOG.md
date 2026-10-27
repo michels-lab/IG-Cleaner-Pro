@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA: bounded Windows process QA (isolated branch)
+
+- Audited v120.68 cancelled FINAL attempt 1: Windows installation step cancelled, exact hang cause not proven. Both public and Developer `RunBounded` testers and frozen EXE healthchecks lacked per-child timeout.
+- Added common process-tree watchdog, explicit deadlines, separate failure diagnostics artifact, real Windows success/nonzero/hang acceptance and static CI contracts on isolated branch. Details: [docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md](docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md).
+- Source proposal only pending exact-head Windows CI. Never modified the in-flight v120.68 publisher, owner Chrome sessions, app state, protected profiles or old journals.
+
 ## 2026-10-27 — GRANADA v120.68 normal FINAL staged after source-integrated Pending Unfollow
 
 - Verified previous independent normal FINAL [v120.67](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.67) public with 12 digest-bearing assets at 2026-10-27T10:32:15Z; [governed publisher 40487321040](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40487321040) finished SUCCESS with all five jobs. Previous tag remains immutable.

@@ -11,9 +11,9 @@ $publicDir = Join-Path $env:LOCALAPPDATA "Michels Lab\Insta Cleaner Pro"
 $publicMarker = Join-Path $publicDir "developer-isolation-sentinel.txt"
 New-Item -ItemType Directory -Force $prefix,$publicDir | Out-Null
 "keep-public-data" | Set-Content $publicMarker -Encoding UTF8
-function RunBounded($path, [string[]]$arguments, $label) {
-  $p = Start-Process -FilePath $path -ArgumentList $arguments -Wait -PassThru
-  if ($p.ExitCode -ne 0) { throw "$label exit $($p.ExitCode)" }
+. (Join-Path $PSScriptRoot "installer_process_guard.ps1")
+function RunBounded($path, [string[]]$arguments, $label, [int]$timeout = 150) {
+  Invoke-IgcBoundedProcess -Path $path -Arguments $arguments -Label $label -TimeoutSeconds $timeout
 }
 try {
   RunBounded $setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/DIR="'+$prefix+'"'),('/LOG="'+$log+'"')) 'Developer Setup'
@@ -26,14 +26,14 @@ try {
   if (!(Test-Path $menu)) { throw "Independent Developer Start shortcut missing" }
   $link=(New-Object -ComObject WScript.Shell).CreateShortcut($menu)
   if ($link.Arguments -ne "--developer") { throw "Developer shortcut must always use --developer" }
-  RunBounded $exe @('--healthcheck') 'Developer installed healthcheck'
-  RunBounded $exe @('--smoke-startup','--developer') 'Developer installed startup'
+  RunBounded $exe @('--healthcheck') 'Developer installed healthcheck' 75
+  RunBounded $exe @('--smoke-startup','--developer') 'Developer installed startup' 100
   $devWorkspace=Join-Path $publicDir "developer-edition"
   if (!(Test-Path (Join-Path $devWorkspace "IG-Cleaner-Pro.html"))) {
     throw "Developer did not create its own UI origin"
   }
   if (!(Test-Path $publicMarker)) { throw "Developer damaged public app storage" }
-  RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Developer uninstall'
+  RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Developer uninstall' 120
   if (Test-Path $exe) { throw "Developer executable remains after uninstall" }
   if (!(Test-Path $publicMarker)) { throw "Developer uninstall deleted public user data" }
   Write-Host "PASS: independent Developer install, --developer launcher, smoke, isolated UI, uninstall, public-data preservation"

@@ -92,4 +92,22 @@ for token in ("--healthcheck", "--smoke-startup", "unins000.exe",
         assert "$legacy" in smoke
     else:
         assert token in smoke, f"Windows install test missing: {token}"
+
+# Enforce real bounded subprocesses rather than misleading RunBounded -Wait.
+guard = (ROOT / "tools/installer_process_guard.ps1").read_text(encoding="utf-8")
+guard_tests = (ROOT / "tests/test_installer_process_guard.ps1").read_text(encoding="utf-8")
+assert "WaitForExit(" in guard and "Kill($true)" in guard
+assert "TimeoutSeconds" in guard and "ExitCode -ne 0" in guard
+assert "Start-Sleep -Seconds 25" in guard_tests and "timed out" in guard_tests
+for tester in ("tools/test_windows_installer.ps1", "tools/test_windows_developer_installer.ps1"):
+    body = (ROOT / tester).read_text(encoding="utf-8")
+    assert "installer_process_guard.ps1" in body
+    assert "Invoke-IgcBoundedProcess" in body
+    assert "Start-Process -FilePath $path -ArgumentList $arguments -Wait -PassThru" not in body
+for workflow in (".github/workflows/release.yml", ".github/workflows/profile-counts-windows-preview.yml"):
+    body = (ROOT / workflow).read_text(encoding="utf-8")
+    assert "tests/test_installer_process_guard.ps1" in body
+    assert 'Invoke-IgcBoundedProcess -Path $candidate' in body
+    assert "Retain Windows installer diagnostics even on failed QA" in body
+
 print("Windows installer source, branding, license, persistence and release routing: PASS")
