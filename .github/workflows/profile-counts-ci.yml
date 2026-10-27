@@ -6,6 +6,9 @@ on:
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
       - 'tools/profile_lists_live.py'
+      - 'tools/live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_bridge.py'
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
@@ -43,6 +46,9 @@ on:
       - 'tools/profile_counts_bridge.py'
       - 'tools/profile_actions.py'
       - 'tools/profile_lists_live.py'
+      - 'tools/live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_snapshot.py'
+      - 'tests/test_live_relationship_bridge.py'
       - 'tests/test_profile_lists_live.py'
       - 'tools/instagram_unfollow_reference.py'
       - 'tests/test_instagram_unfollow_reference.py'
@@ -81,6 +87,10 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_profile_counts_*.py' -v
       - name: Optional live Followers and Following lists fail-closed pagination
         run: python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
+      - name: GRANADA independent live Followers/Following snapshots, partial pages and local bridge
+        run: |
+          python -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
+          python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
       - name: GRANADA cross-process public/Developer action guard and crash recovery
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
       - name: Bound owner-profile visits with final re-verification and cross-account fail-closed tests
