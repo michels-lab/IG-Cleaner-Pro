@@ -219,7 +219,7 @@ def reference_unfollow(page, username, expected_handle, *,
                            "(action block/403/429); click status uncertain. "
                            "The saved intent must not be replayed.")
     if code=="SESSION_TOKENS_UNAVAILABLE":
-        return "review", ("Instagram session tokens were unavailable; mutation was "
+        return "review", ("Pending verification: Instagram session tokens were unavailable; mutation was "
                           "not submitted, but the original durable click intent is "
                           "preserved conservatively. No automatic retry.")
     # A successful Unfollow may have committed even when GraphQL's response is
@@ -232,7 +232,7 @@ def reference_unfollow(page, username, expected_handle, *,
     if verified=="blocked":
         return "blocked", note
     if code!="MUTATION_ACCEPTED":
-        return "review", ("User-reference GraphQL Unfollow did not positively confirm "
+        return "review", ("Pending verification: user-reference GraphQL Unfollow did not positively confirm "
                           "a response and read-only verification remained uncertain. "
                           "Never send it again automatically.")
     return verified, note

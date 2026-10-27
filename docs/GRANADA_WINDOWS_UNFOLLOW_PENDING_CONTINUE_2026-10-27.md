@@ -1,0 +1,14 @@
+# GRANADA — pending Unfollow verification, next profile without false OK (2026-10-27)
+
+## Owner's explicit behavior
+If robot opens an exact Instagram target and the owner still follows it, it must attempt **only the one explicitly approved Unfollow** with original safeguards, then independently verify that **Follow / Follow Back** appears. A failed or ambiguous verification is **Pending / yellow Review**, never OK or silently skipped. If another profile is eligible, the worker should continue instead of hanging on that pending result, *but only while the original journal/WAL was durably saved, exact signed-in owner remains verified and there is no login/challenge/rate-limit safety stop*. No implicit second click at all.
+
+## Implemented in isolated Windows branch
+- The existing owner-approved Unfollow backend already does a single GraphQL action and one bounded read-only reload; it returns **OK only** on fresh exact-target Follow/Follow Back confirmation. The changed verifier now records a concrete `Pending verification: exact target still displays Following` message (or uncertain no stable state), not a forged OK.
+- After the original action result and click intent are saved on disk, the robot checks *all live Chrome pages* for login/challenge and visibly mismatched Instagram owners and requires a positively verified same-owner page. Only then can a pending Unfollow tab be closed as **deferred**, allowing next target to proceed; it is **not** an action success and the original possible-click intent remains permanently non-retryable by automation.
+- If security state/owner evidence is not safe, the current stop/review policy still applies. Cancel Pending has not been made freely parallel; uncertain cancel-click and wrong-owner/challenge gates remain fail-closed.
+- Batch approval no longer promotes an original ambiguous action to approved merely because a later read-only Review screen observes a Follow/Follow Back state; it remains unresolved, separated from confirmed actions. Original protected profiles, imported batches, saved WAL and timestamps survive unchanged.
+- Offline tests now check a positive still-Following after mutation is Review/Pending, a missing final state is Pending, safe pending-tab release and next-target progress without action replay, and no retroactive approval for Unfollow or Cancel Pending uncertain outcomes.
+
+## Validation, packaging and handoff
+Official GitHub normal FINAL **v120.67** was independently verified published 2026-10-27 with 12 assets; this NEW behavior is not in that release. No Instagram user session or protected profile was accessed by these fixtures. Require exact branch CI (including Windows installed + Chromium), merge into latest main only after all checks pass, then separate governed next normal FINAL publisher under existing release rules; owner Chrome acceptance remains open. Never claim simulated verification proves the physical account was actually unfollowed.

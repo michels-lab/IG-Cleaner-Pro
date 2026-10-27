@@ -62,6 +62,57 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual(pool.tabs["profile.2"]["status"], "blocked")
         self.assertEqual(pool.tabs["profile.3"]["status"], "error")
 
+    def test_following_after_single_post_never_becomes_verified_unfollow(self):
+        """Read-only refresh still sees Following; save Pending, not success."""
+        from profile_actions import _verify_unfollow_after_readonly_refresh
+        from unittest.mock import Mock
+        page = Mock()
+        page.locator.return_value.count.return_value = 0
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("review", "Unverified")), \
+             patch("profile_actions._exact_https_target_profile", return_value=True), \
+             patch("profile_actions._verified_action_owner", return_value=True), \
+             patch("profile_actions._profile_relationship_control", return_value=object()):
+            status, message = _verify_unfollow_after_readonly_refresh(
+                page, "still.following", "owner.name")
+        self.assertEqual(status, "review")
+        self.assertIn("still displays Following", message)
+        self.assertIn("Pending verification", message)
+        self.assertIn("no confirmed unfollow", message.casefold())
+        self.assertEqual(page.goto.call_count, 1)
+
+    def test_unknown_relationship_after_post_remains_pending(self):
+        from profile_actions import _verify_unfollow_after_readonly_refresh
+        from unittest.mock import Mock
+        page = Mock()
+        page.locator.return_value.count.return_value = 0
+        with patch("profile_actions.challenge_detected", return_value=False), \
+             patch("profile_actions._verify_final_state",
+                   return_value=("review", "No stable controls")), \
+             patch("profile_actions._exact_https_target_profile", return_value=True), \
+             patch("profile_actions._verified_action_owner", return_value=True), \
+             patch("profile_actions._profile_relationship_control", return_value=None):
+            state, note = _verify_unfollow_after_readonly_refresh(
+                page, "some.user", "owner.name")
+        self.assertEqual(state, "review")
+        self.assertIn("Pending verification", note)
+        self.assertNotIn("Action confirmed", note)
+
+    def test_persisted_pending_unfollow_can_be_deferred_only_after_review_result(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext())
+        first = pool.open("still.following")
+        with self.assertRaisesRegex(ValueError, "persisted unverified"):
+            pool.defer_persisted_pending("still.following")
+        pool.record("still.following", "review")
+        pool.defer_persisted_pending("still.following")
+        self.assertTrue(first.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNotNone(pool.open("next.eligible"))
+        with self.assertRaisesRegex(ValueError, "persisted unverified"):
+            pool.defer_persisted_pending("not.opened")
+
     def test_safe_no_click_closes_failed_profile_but_keeps_ambiguous_click(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
@@ -89,6 +140,24 @@ class ActionTabPoolTests(unittest.TestCase):
         pool.record("already.loading", "ok")
         self.assertIsNone(pool.prepared("already.loading"))
         self.assertTrue(prepared.is_closed())
+
+    def test_benign_preclick_review_tab_closes_and_next_target_opens(self):
+        from profile_actions import ActionTabPool, _benign_preclick_issue
+        pool = ActionTabPool(FakeTabContext())
+        previous = pool.open("safe.no.click")
+        record = {"status": "review", "message": "No relationship change attempted.",
+                  "issue": "missing_profile_info"}
+        self.assertTrue(_benign_preclick_issue(record["issue"], record))
+        pool.record("safe.no.click", "review",
+                    safe_no_click=_benign_preclick_issue(record["issue"], record))
+        self.assertTrue(previous.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNotNone(pool.open("next.eligible"))
+        uncertain = {"status": "review", "message": "Ambiguous click",
+                     "issue": "missing_profile_info",
+                     "click_intent": {"phase": "relationship_control"}}
+        self.assertFalse(_benign_preclick_issue(uncertain["issue"], uncertain),
+                         "An innocent-looking issue code never overrides a WAL.")
 
     def test_finished_cohort_releases_unused_prefetched_tabs_not_uncertain_actions(self):
         from profile_actions import ActionTabPool
@@ -436,11 +505,11 @@ class ActionBatchHistoryTests(unittest.TestCase):
             self.assertNotIn("test.1", robot._journal())
             self.assertTrue(all(page.closed for page in browser.pages))
 
-    def test_armed_click_with_familiar_missing_profile_issue_stops_wave(self):
-        """No second profile may receive an action after an uncertain first click.
+    def test_armed_click_with_missing_profile_info_is_pending_then_next_safe_target(self):
+        """After a durable uncertain click, continue with NEW targets, not the same.
 
-        Real worker control flow, local fake Chromium pages and durable journal;
-        this fixture never connects to Instagram.
+        Only a separately verified and unchanged signed-in session allows the
+        worker to close a pending tab and proceed. No live Instagram involved.
         """
         import types
         from unittest.mock import MagicMock
@@ -490,9 +559,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 robot.stop_event.set()
                 return "ok", "Action confirmed: Follow."
 
-            # The original worker intentionally holds ambiguous tabs open
-            # for owner review. End that final wait, without influencing the
-            # earlier decision whether to click a SECOND account.
+            # Owner proof remains live after the first unresolved action.
+            # The next target is independently verified, not a replay.
             real_close = ActionTabPool.close_unacted_prefetches
             def complete_fixture(pool):
                 real_close(pool)
@@ -516,15 +584,17 @@ class ActionBatchHistoryTests(unittest.TestCase):
                  patch("profile_actions.perform_visible_action",
                        side_effect=ambiguous_after_possible_click):
                 robot._run()
-            self.assertEqual(calls, ["uncertain.first"],
-                             "A durable possible-click must stop this ten-tab wave")
+            self.assertEqual(calls, ["uncertain.first", "must.not.click"],
+                             "Unverified first target must be marked pending and allow next safe target")
             journal = robot._journal()
             self.assertEqual(journal["uncertain.first"]["status"], "review")
-            self.assertEqual(journal["uncertain.first"]["issue"], "missing_profile_info")
+            self.assertEqual(journal["uncertain.first"]["issue"], "unfollow_pending_verification")
+            self.assertIn("Pending verification:", journal["uncertain.first"]["message"])
             self.assertEqual(journal["uncertain.first"]["click_intent"]["phase"],
                              "relationship_control")
-            self.assertFalse("must.not.click" in journal)
+            self.assertEqual(journal["must.not.click"]["status"], "ok")
             self.assertFalse("third.unacted" in journal)
+            self.assertTrue(journal["uncertain.first"]["click_intent"]["requires_manual_review"])
             self.assertTrue(all(tab.closed for tab in browser.pages))
 
     def test_forty_profiles_run_as_four_complete_ten_tab_waves(self):
@@ -1604,6 +1674,73 @@ class InstagramUnavailableProfileTests(unittest.TestCase):
             self.assertEqual(result["unavailable_usernames"], ["unavailable.user"])
             self.assertEqual(result["unresolved_usernames"], ["uncertain.user"])
             self.assertIn("click_intent", robot._journal()["uncertain.user"])
+
+
+class GranadaReviewApprovalWALBoundaryTests(unittest.TestCase):
+    """Read-only positive state never retroactively certifies an uncertain click."""
+
+    def _exercise(self, task, observation):
+        from profile_actions import _atomic_json, _read_json, MISSING_RELATIONSHIP_CONTROL
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = ActionRobot(Collector(root/"counts", root/"chrome"),
+                                root/"actions", root/"chrome")
+            owner, account = "owner1", "ig_account_1"
+            names = ["confirmed.done", "uncertain.wal", "legacy.uncertain",
+                     "safe.preclick", "untouched.scan", "unavailable.scan"]
+            original = {
+                "confirmed.done": {"status": "ok", "message": "Confirmed post-click"},
+                "uncertain.wal": {
+                    "status": "review", "message": "Possible click; final state unknown",
+                    "click_intent": {"phase": "relationship_control",
+                                     "outcome_recorded": True,
+                                     "outcome_status": "review"}},
+                "legacy.uncertain": {
+                    "status": "review", "message": "Older unverified action"},
+                "safe.preclick": {
+                    "status": "review", "issue": "profile_load_timeout",
+                    "message": MISSING_RELATIONSHIP_CONTROL
+                               + " Waiting timed out: Following. No action clicked."},
+            }
+            observations = {name: {"status": observation, "read_only": True,
+                                   "observation_only": True}
+                            for name in names if name != "confirmed.done"}
+            observations["unavailable.scan"]["status"] = "profile_unavailable"
+            batch_id = "wal-approval-" + task
+            _atomic_json(robot._base_for(owner, account, task), original)
+            _atomic_json(robot._review_batches_file_for(owner, account, task), [{
+                "id": batch_id, "targets": names, "approved_at": None,
+                "recheck_results": observations,
+            }])
+            request = {"owner": owner, "account": account, "task": task}
+            before = _read_json(robot._base_for(owner, account, task), {})
+            visible = robot.batch_review(request)["batch"]["action_results"]
+            self.assertEqual(visible["uncertain.wal"]["status"], "review")
+            self.assertTrue(visible["uncertain.wal"]["possible_click"])
+            approved = robot.approve_batch({
+                **request, "batch_id": batch_id,
+                "confirmation": "reviewed:" + batch_id,
+            })
+            self.assertEqual(approved["approved_usernames"],
+                             ["confirmed.done", "safe.preclick", "untouched.scan"])
+            self.assertEqual(approved["unavailable_usernames"], ["unavailable.scan"])
+            self.assertEqual(approved["unresolved_usernames"],
+                             ["uncertain.wal", "legacy.uncertain"])
+            self.assertEqual(_read_json(robot._base_for(owner, account, task), {}), before)
+            saved = robot._review_batches(owner, account, task)[0]
+            self.assertEqual(saved["unresolved_usernames"],
+                             ["uncertain.wal", "legacy.uncertain"])
+            self.assertIn("click_intent", original["uncertain.wal"])
+
+    def test_unfollow_follow_back_after_unknown_click_stays_review(self):
+        self._exercise("unfollow", "already_not_following")
+
+    def test_cancel_no_requested_after_unknown_click_stays_review(self):
+        self._exercise("cancel", "already_not_requested")
+
+    def test_readonly_ok_after_unknown_click_is_not_clicked_success(self):
+        self._exercise("unfollow", "ok")
+
 
 if __name__=="__main__":
     unittest.main()
