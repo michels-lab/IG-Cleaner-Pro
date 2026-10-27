@@ -1,30 +1,24 @@
 {
-  "version": "120.66",
-  "tag": "v120.66",
-  "authorized": false,
-  "authorization_source": "Michel standing Operacion Granada authority: only an official FINAL stable release AFTER installed Windows public/Developer, production-signed Android twins, exact-head browser+UI, SHA-256 integrity, release-feed and user data safety all pass. No RC/beta.",
+  "version": "120.67",
+  "tag": "v120.67",
+  "authorized": true,
+  "authorization_source": "Michel's standing Op Granada instruction authorizes ONLY official final stable after exact-head installed Windows public+Developer, Android production-signed public+Developer, real Chromium/offline no-click action QA, rendered visual QA, SHA-256 release artifacts/updater feed, documented user data preservation; no beta/RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.65",
-  "owner_acceptance_note": "Owner reports v120.65 Windows Unfollow works but Chrome closed before checking last target. v120.66 stages merged PR #253 Review-only Chrome recheck of unresolved/untouched and independently confirmed, recent no-click retry for exact owner-approved subset; final modal highlights verified OK green, Review yellow, unchecked grey. Source offline and installed Windows CI passed on PR #253. Actual v120.66 owner signed-in Windows Chrome check and real Cancel Pending physical acceptance remain open, original click WAL/protected/history untouched. Normal FINAL only, no RC/beta.",
+  "status": "requested",
+  "previous_stable_release": "v120.66",
+  "owner_acceptance_note": "Owner 2026-10-26 real signed-in Chrome screenshot of @josefksayer: 'Esta página no está disponible' was incorrectly kept as manual Review/error during Unfollow. Merged source PR #256 positively detects exact Spanish/English Instagram unavailable banner, stable two observations, preserves original possible-click WAL; no action click, separate unavailable status/count and no false Unfollow confirmation. This does not establish why account is inaccessible, nor prove on owner's device. Owner real v120.67 installed Chrome acceptance, existing Review recovery, Cancel Pending and self-profile visits remain open. No unattended relationship action.",
   "requested_at": "2026-10-26",
-  "candidate_main_sha": "9f0b582e6a3730bc352c98366b09b27110f54f79",
+  "candidate_main_sha": "d1f32057219b2dd2493ca2f131e9b8120a4778f6",
   "integrated_source_merge_shas": [
-    "7998564be573ff39eb7e6530336d4832ea6deb86"
+    "46eaf4858a7a784cf20de90fa9a20c3adf10a2cb"
   ],
   "previous_publication": {
-    "tag": "v120.65",
-    "run": 40416690593,
-    "commit": "8570e12836afd3fde966eb8c590c7604aaf224a8",
-    "published_at": "2026-10-26T23:09:53Z",
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65"
-  },
-  "published_run": 40423739934,
-  "published_commit": "af291cc6687f527a36fe1d64f31c08615fe216c0",
-  "published_at": "2026-10-27T00:16:00Z",
-  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66",
-  "publication_verified_assets": 12,
-  "publication_verification": "Official v120.66 FINAL governed publisher 40423739934 completed SUCCESS on exact af291cc source; all five jobs succeeded, 12 SHA256-digested assets. Installed Windows public/Developer, production-signed Android coexistence, rendered Desktop/Android and updater feed checked. Real owner last-profile and Cancel Pending acceptance still pending."
+    "tag": "v120.66",
+    "run": 40423739934,
+    "commit": "af291cc6687f527a36fe1d64f31c08615fe216c0",
+    "published_at": "2026-10-27T00:16:00Z",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.66"
+  }
 }
