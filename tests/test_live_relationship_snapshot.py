@@ -10,9 +10,9 @@ import unittest
 from unittest.mock import MagicMock, patch, call
 from types import ModuleType
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from tools.live_relationship_snapshot import LiveRelationships
-from tools.profile_actions import _atomic_json
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"tools"))
+from live_relationship_snapshot import LiveRelationships
+from profile_actions import _atomic_json
 
 
 class LiveRelationshipSnapshotTests(unittest.TestCase):
@@ -74,7 +74,7 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
             self.robot.start({**params,"read_only_consent":False})
         with self.assertRaises(ValueError):
             self.robot.start({**params,"confirmation":"audit:1"})
-        with patch("tools.live_relationship_snapshot.ActionLease") as lease:
+        with patch("live_relationship_snapshot.ActionLease") as lease:
             lease.return_value.acquire.return_value=MagicMock()
             self.actions.worker=MagicMock()
             self.actions.worker.is_alive.return_value=True
@@ -86,7 +86,7 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.robot.start(params)
             self.collector.worker=None
-            with patch("tools.live_relationship_snapshot.threading.Thread") as thread:
+            with patch("live_relationship_snapshot.threading.Thread") as thread:
                 resp=self.robot.start(params)
                 self.assertEqual(resp["status"],"starting")
                 self.assertFalse(resp["relationship_action"])
@@ -107,9 +107,9 @@ class LiveRelationshipSnapshotTests(unittest.TestCase):
         pkg=ModuleType("playwright")
         pkg.sync_api=api
         with patch.dict(sys.modules,{"playwright":pkg,"playwright.sync_api":api}), \
-             patch("tools.live_relationship_snapshot.preserve_instagram_auth_page",return_value=True), \
-             patch("tools.live_relationship_snapshot._find_verified_owner_tab",return_value=(tab,None)), \
-             patch("tools.live_relationship_snapshot.read_live_friendship_list",side_effect=[first,second]) as read:
+             patch("live_relationship_snapshot.preserve_instagram_auth_page",return_value=True), \
+             patch("live_relationship_snapshot._find_verified_owner_tab",return_value=(tab,None)), \
+             patch("live_relationship_snapshot.read_live_friendship_list",side_effect=[first,second]) as read:
             self.robot._run()
         return read
 
