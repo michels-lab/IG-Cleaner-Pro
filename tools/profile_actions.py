@@ -1487,8 +1487,14 @@ def recheck_action_readonly(page, username, task, expected_handle, previous,
         result, _relation, details = perform_visible_followback_audit(
             page, username, expected_handle)
         return result, details
-    if (not isinstance(previous, dict) or previous.get("status") not in
-            ("ok", "already_not_following", "already_not_requested", "review", "error", "blocked")
+    saved_action_states = ("ok", "already_not_following", "already_not_requested",
+                           "review", "error", "blocked")
+    # The targeted Review sweep must also inspect an untouched LAST profile.
+    # Its absent journal entry is positive evidence that no click was armed;
+    # never treat a malformed PRESENT journal entry as untouched.
+    if (not isinstance(previous, dict)
+            or (previous.get("status") not in saved_action_states
+                and not (distinguish_observation and previous == {}))
             or (_preclick_no_action(previous) and not allow_unacted_observation)):
         return "review", ("No completed Instagram action exists for this profile. "
                           "Automatic read-only recheck did not click anything.")

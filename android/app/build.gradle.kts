@@ -37,8 +37,8 @@ android {
     // Keep ordinary visual QA on debug; developer emulator QA opts into its
     // isolated package through -PigcAndroidTestBuildType=developer.
     testBuildType = providers.gradleProperty("igcAndroidTestBuildType").orNull ?: "debug"
-        versionCode = 12065
-        versionName = "120.65"
+        versionCode = 12066
+        versionName = "120.66"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

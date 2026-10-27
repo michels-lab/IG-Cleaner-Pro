@@ -1,30 +1,24 @@
 {
-  "version": "120.65",
-  "tag": "v120.65",
-  "authorized": false,
-  "authorization_source": "Michel standing instruction: Operacion Granada may publish only official FINAL stable releases after exact-source installed Windows, production-signed Android public/Developer co-install, visual, SHA-256 and update-feed gates pass. No RC/beta.",
+  "version": "120.66",
+  "tag": "v120.66",
+  "authorized": true,
+  "authorization_source": "Michel standing Operacion Granada authority: only an official FINAL stable release AFTER installed Windows public/Developer, production-signed Android twins, exact-head browser+UI, SHA-256 integrity, release-feed and user data safety all pass. No RC/beta.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "published",
-  "previous_stable_release": "v120.64",
-  "owner_acceptance_note": "Owner confirmed Instagram Unfollow actually changes relationships in installed Windows v120.64, but NEW batches unnecessarily reopen previously inspected profiles. v120.65 fixes source #249: an owner/account/task-scoped durable visited profile ledger and write-ahead URL reservations, plus authoritative UI selection and independent backend new-cohort admission excludes ALL previously opened profiles, including no-click/review. Exact old batch Continue, protected profiles, action WAL, original histories, user-data persistence and separate read-only recheck remain. Per-profile and Cancel Pending physical acceptance still needs owner confirmation; source tests are not account mutation proof. Release only normal FINAL stable after installed Windows public+Developer, production signed Android public+Developer co-install, Desktop/Android rendered UI, SHA-256 + update feed. No RC or beta.",
+  "status": "requested",
+  "previous_stable_release": "v120.65",
+  "owner_acceptance_note": "Owner reports v120.65 Windows Unfollow works but Chrome closed before checking last target. v120.66 stages merged PR #253 Review-only Chrome recheck of unresolved/untouched and independently confirmed, recent no-click retry for exact owner-approved subset; final modal highlights verified OK green, Review yellow, unchecked grey. Source offline and installed Windows CI passed on PR #253. Actual v120.66 owner signed-in Windows Chrome check and real Cancel Pending physical acceptance remain open, original click WAL/protected/history untouched. Normal FINAL only, no RC/beta.",
   "requested_at": "2026-10-26",
-  "candidate_main_sha": "5b2dc5722926e224a80f2bad2df8f5a645c806ea",
+  "candidate_main_sha": "9f0b582e6a3730bc352c98366b09b27110f54f79",
   "integrated_source_merge_shas": [
-    "ef60e6710fa2e0bf0c390a7c26edd819c8355ef3"
+    "7998564be573ff39eb7e6530336d4832ea6deb86"
   ],
   "previous_publication": {
-    "tag": "v120.64",
-    "run": 40404587656,
-    "commit": "593f9d4d0598ea6056bca2247c99e899970ffcb1",
-    "published_at": "2026-10-26T21:39:35Z",
-    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.64"
-  },
-  "published_run": 40416690593,
-  "published_commit": "8570e12836afd3fde966eb8c590c7604aaf224a8",
-  "published_at": "2026-10-26T23:09:53Z",
-  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65",
-  "publication_verified_assets": 12,
-  "publication_verification": "Governed FINAL publisher 40416690593 completed SUCCESS on exact commit 8570e128, 12 SHA-256-verified normal stable assets. Installed Windows public/Developer, production-signed Android public/Developer coexistence, screenshot Desktop/Android Home/About, update feed. Owner reports real Unfollow success on earlier v120.64; exact new-cohort no-repeat behavior on owner's device remains to be checked."
+    "tag": "v120.65",
+    "run": 40416690593,
+    "commit": "8570e12836afd3fde966eb8c590c7604aaf224a8",
+    "published_at": "2026-10-26T23:09:53Z",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.65"
+  }
 }
