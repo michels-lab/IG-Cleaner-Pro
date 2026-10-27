@@ -15597,7 +15597,8 @@ window.igcAutoPoll=async function(){
        " profiles · "+(mode==="cancel"?
           ((count.observed_not_requested||0)+" now verified no active request"):
           ((count.observed_not_following||0)+" now observed not following"))+
-       " · "+(count.still_unresolved||0)+
+       " · "+(count.observed_unavailable||0)+" unavailable (no action)"+
+        " · "+(count.still_unresolved||0)+
        " still unresolved. No Unfollow/Cancel was repeated. No auto-Reviewed.")
      :"No historical read-only re-audit results for this account yet.";
    }catch{historyText.textContent="Historical re-audit status unavailable."}
