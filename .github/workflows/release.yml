@@ -59,6 +59,7 @@ jobs:
       - name: Verify real About screenshots match candidate commit and APK
         run: |
           python3 -m pip install Pillow==11.3.0
+          python3 -m unittest discover -s tests -p 'test_android_release_visual_evidence.py' -v
           python3 tools/verify_android_visual_release_evidence.py --artifact visual-evidence --sha "$GITHUB_SHA"
           python3 tools/visual_release_gate.py \
             --manifest visual-evidence/michelslab-manifest.json \

@@ -1,3 +1,9 @@
+## 2026-10-27 — GRANADA: second v120.67 FINAL publisher held by legacy screenshot artifact verifier
+
+- Official [publisher 40484849226](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40484849226) ran on integrated main SHA `02336fb5360f19eb342612b93546b0b1db7ef511`; the installed native Android workflow passed with exactly four distinct Home/complete About images, but publisher rendered-ui-qa job `122124513956` failed: `verify_android_visual_release_evidence.py:31 Missing Home/6 About screenshots`. The downloaded-artifact verifier still demanded eight legacy images; existing strict upstream and master gates correctly rejected fake/duplicate frames. **v120.67 NOT published on this evidence.**
+- Isolated Granada correction repairs the actual production release validator to share the collector's canonical four-file contract, check actual binary digest, source SHA, unique PNG contents, exact dimensions/sections/provenance and blank/corrupt/extra negative cases. Wires tests into native Android visual and final release CI, preserves the strict master gate, adds stable retry audit.
+- Exact branch head tests, merge and **new official publisher** on a different SHA remain required. Current official stable v120.66 remains untouched; real owner Windows Instagram and Samsung physical acceptance still pending. Existing Chrome, journaling, protected accounts, old cohorts, App HTML and Android runtime assets are unchanged.
+
 ## 2026-10-27 — GRANADA: repair Android visual adapter drift on active PR #259
 
 - [Android About CI 40444904289](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40444904289) executed native tests and captured four actual Home/complete About frames (compact+wide), but failed afterward: master adapter still expected obsolete Android section author instead of complete. Do not report the failed exact-head job as passed.
