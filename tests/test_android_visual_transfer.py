@@ -41,6 +41,25 @@ class PrivateAndroidEvidenceTests(unittest.TestCase):
                 self.assertEqual(cmd[4], "cat")
                 self.assertTrue(cmd[5].startswith("files/igc-ui-capture/"))
 
+    def test_native_about_proof_has_one_meaningful_dialog_frame_per_viewport(self):
+        """The former three back-to-back About PNGs were byte-identical.
+
+        Native assertions still check every author, studio, portrait and
+        social-link rectangle before taking the SINGLE complete About frame.
+        Release visual gate continues to reject any duplicate actual bytes.
+        """
+        source = (ROOT / "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java").read_text(encoding="utf-8")
+        self.assertEqual(source.count('screenshot("home","initial")'), 1)
+        self.assertEqual(source.count('screenshot("about","complete")'), 1)
+        for stale in ('screenshot("about","author")',
+                      'screenshot("about","studio")',
+                      'screenshot("about","socials")'):
+            self.assertNotIn(stale, source)
+        self.assertEqual(EXPECTED, (
+            "home-compact-initial.png", "about-compact-complete.png",
+            "home-wide-initial.png", "about-wide-complete.png"
+        ))
+
     def test_missing_private_screenshot_must_not_publish_partial_results(self):
         calls = []
         def pretend(command, **kwargs):
