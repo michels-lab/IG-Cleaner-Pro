@@ -1610,7 +1610,7 @@ class GranadaReviewApprovalWALBoundaryTests(unittest.TestCase):
     """Read-only positive state never retroactively certifies an uncertain click."""
 
     def _exercise(self, task, observation):
-        from profile_actions import _atomic_json, MISSING_RELATIONSHIP_CONTROL
+        from profile_actions import _atomic_json, _read_json, MISSING_RELATIONSHIP_CONTROL
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             robot = ActionRobot(Collector(root/"counts", root/"chrome"),
@@ -1643,7 +1643,7 @@ class GranadaReviewApprovalWALBoundaryTests(unittest.TestCase):
                 "recheck_results": observations,
             }])
             request = {"owner": owner, "account": account, "task": task}
-            before = robot._journal() if robot.owner else original.copy()
+            before = _read_json(robot._base_for(owner, account, task), {})
             visible = robot.batch_review(request)["batch"]["action_results"]
             self.assertEqual(visible["uncertain.wal"]["status"], "review")
             self.assertTrue(visible["uncertain.wal"]["possible_click"])
@@ -1656,9 +1656,7 @@ class GranadaReviewApprovalWALBoundaryTests(unittest.TestCase):
             self.assertEqual(approved["unavailable_usernames"], ["unavailable.scan"])
             self.assertEqual(approved["unresolved_usernames"],
                              ["uncertain.wal", "legacy.uncertain"])
-            self.assertEqual(robot._journal() if robot.owner else
-                             __import__("profile_actions")._read_json(
-                                 robot._base_for(owner, account, task), {}), before)
+            self.assertEqual(_read_json(robot._base_for(owner, account, task), {}), before)
             saved = robot._review_batches(owner, account, task)[0]
             self.assertEqual(saved["unresolved_usernames"],
                              ["uncertain.wal", "legacy.uncertain"])
