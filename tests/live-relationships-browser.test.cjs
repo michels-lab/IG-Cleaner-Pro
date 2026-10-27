@@ -27,6 +27,14 @@ const {chromium}=require('playwright');
    if(!url.startsWith('http://127.0.0.1:37777/api/actions/')){
      await route.abort('blockedbyclient');return;
    }
+   const headers={'Access-Control-Allow-Origin':'null',
+     'Access-Control-Allow-Headers':'X-IGC-Bridge-Token, Content-Type',
+     'Access-Control-Allow-Methods':'POST, OPTIONS',
+     'Access-Control-Allow-Private-Network':'true'};
+   if(req.method()==='OPTIONS'){
+     await route.fulfill({status:204,headers,body:''});
+     return;
+   }
    const endpoint=url.split('/').pop(),payload=JSON.parse(req.postData()||'{}');
    seen.push({endpoint,payload});
    if(endpoint==='live-start'){
@@ -34,22 +42,22 @@ const {chromium}=require('playwright');
      assert.equal(payload.read_only_consent,true);
      assert.equal(payload.expected_handle,'my.account');
      assert.equal(payload.owner,'app-owner');
-     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(accepted)});
+     await route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(accepted)});
    }else if(endpoint==='live-results'){
      const rows={
        followers:['alice','mutual','someone'],
        following:['carol','dan','mutual','someone'],
        not_following_back:['carol','dan'],
        fans:['alice']};
-     await route.fulfill({status:200,contentType:'application/json',
+     await route.fulfill({status:200,headers,contentType:'application/json',
        body:JSON.stringify({...good,list:payload.list,offset:payload.offset,
           usernames:rows[payload.list]?.slice(payload.offset,payload.offset+100)||[],
           has_next:false})});
    }else if(endpoint==='live-stop'){
-     await route.fulfill({status:200,contentType:'application/json',
+     await route.fulfill({status:200,headers,contentType:'application/json',
        body:JSON.stringify({status:'paused',message:'Paused read-only'})});
    }else{
-     await route.fulfill({status:404,contentType:'application/json',body:'{"error":"unknown"}'});
+     await route.fulfill({status:404,headers,contentType:'application/json',body:'{"error":"unknown"}'});
    }
   });
   page.on('dialog',dialog=>dialog.accept());
@@ -67,7 +75,15 @@ const {chromium}=require('playwright');
     'Existing action-robot status must not be replaced by new snapshot');
   await page.getByRole('button',{name:/Verificar seguidores y seguidos ahora/}).click();
   await page.waitForFunction(()=>document.querySelectorAll('#igcAutoLiveRows li').length===2,
-    null,{timeout:10000});
+    null,{timeout:10000}).catch(async error=>{
+    const state=await page.evaluate(()=>({
+      status:document.querySelector('#igcRelLiveStatus')?.textContent,
+      scope:window.IGC_INSTAGRAM_PROFILES?.active,
+      count:document.querySelectorAll('#igcAutoLiveRows li').length
+    }));
+    throw new Error('Live read-only UI did not display its complete results: '+
+      JSON.stringify({state,requests:seen.map(x=>x.endpoint)})+'; '+error.message);
+  });
   const negatives=await page.locator('#igcAutoLiveRows li').allTextContents();
   assert.deepEqual(negatives,['@carol','@dan']);
   assert.match(await page.locator('#igcAutoLiveTotals').innerText(),/No me siguen de vuelta: 2/);
