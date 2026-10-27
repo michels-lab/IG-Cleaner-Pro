@@ -3817,15 +3817,15 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
     <button type="button" class="btn" onclick="igcAutoLiveStop()">Stop scan</button>
     <button type="button" class="btn" onclick="igcAutoLivePoll()">Show last verified snapshot</button>
   </div>
-  <p id="igcLiveSafetySummary" class="note" role="status" aria-live="polite" style="margin:10px 0 3px">⚙ Perfil de lectura: Recomendado (predeterminado) · Cargando ajustes guardados por cuenta…</p>
+  <p id="igcLiveSafetySummary" class="note" role="status" aria-live="polite" style="margin:10px 0 3px">⚙ Scan safety profile: Recommended (default) · Loading account settings…</p>
   <details id="igcLiveSettingsPanel" open style="margin:12px 0;border:1px solid var(--line,#405166);border-radius:12px;padding:12px" ontoggle="if(this.open)igcLiveConfigLoad()">
-  <summary style="cursor:pointer;font-weight:700">⚙ Ajustes configurables del escaneo · Recomendado (predeterminado)</summary>
-  <p class="note">Elige <strong>Recomendado (predeterminado)</strong>, <strong>Más pausado</strong> o <strong>Personalizado</strong>. Estos valores solo controlan la lectura masiva de listas, <strong>no el robot de Unfollow</strong>. Son descansos sugeridos por la app, no límites oficiales ni garantía contra restricciones de Instagram.</p>
+  <summary style="cursor:pointer;font-weight:700">⚙ Configurable verification settings · Recommended (default)</summary>
+  <p class="note">Choose <strong>Recommended (default)</strong>, <strong>More cautious</strong>, or <strong>Custom</strong>. These values only control bulk list reads, <strong>not the Unfollow robot</strong>. They are app suggestions, not official Instagram quotas or a guarantee against restrictions.</p>
   <label style="display:block;margin:8px 0">Safety profile
     <select id="igcLiveSafetyPreset" onchange="igcLiveConfigPresetChange()" aria-label="Perfil recomendado de proteccion">
       <option value="recommended" selected>Recomendado (predeterminado) · Balanced</option>
-      <option value="cautious">Más pausado · Menor frecuencia</option>
-      <option value="custom">Personalizado · Límites de seguridad validados</option>
+      <option value="cautious">More cautious · Slower pace</option>
+      <option value="custom">Custom · Validated safeguards</option>
     </select>
   </label>
   <div id="igcLiveSafetyGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;margin:12px 0">
@@ -3840,8 +3840,8 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
   <p id="igcLiveRiskAdvice" class="note" role="status">Recommended: 2.5s per page, 12s every 5 pages, 90s every 25; at least 15 min between completed reads.</p>
   <div class="btnrow">
     <button type="button" class="btn primary" id="igcLiveSaveSettings" onclick="igcLiveConfigSave()">Save and apply</button>
-    <button type="button" class="btn" onclick="igcLiveConfigReset()">Restaurar recomendado</button>
-    <button type="button" class="btn" onclick="igcLiveConfigLoad()">Recargar ajustes de esta cuenta</button>
+    <button type="button" class="btn" onclick="igcLiveConfigReset()">Restore recommended</button>
+    <button type="button" class="btn" onclick="igcLiveConfigLoad()">Reload settings for this account</button>
     <small id="igcLiveSettingsState" aria-live="polite">Settings are saved per account and apply to the next scan.</small>
   </div>
   <small>A restricted response stops the reader and starts a minimum 30-minute shared-browser cooldown. This mandatory protection cannot be disabled.</small>
