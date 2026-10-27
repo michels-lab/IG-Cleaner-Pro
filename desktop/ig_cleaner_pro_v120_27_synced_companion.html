@@ -14242,17 +14242,19 @@ function makeAccountButton(label,action,container){
 // admitted again at the click boundary, with the original safety guards.
 function accountSwitchAdmission(){
  if(window.igcAutoSwitchGuard?.()===false)return {
-  code:'automation_active',message:'Pausa primero la automatización antes de cambiar de cuenta.'};
+  code:'automation_active',message:'Pause the Instagram robot before switching accounts.'};
  if(window.AndroidBridge)return {
-  code:'android_account_screen',message:'En Android, cambia de cuenta desde la pantalla Cuenta.'};
+  code:'android_account_screen',message:'On Android, switch accounts from the Account screen.'};
  if(S.busy)return {
-  code:'sync_busy',message:'Sincronización en curso. Espera a que termine para seleccionar otra cuenta.'};
+  code:'sync_busy',message:'Account sync is running. You can inspect saved accounts, but wait until sync finishes before switching.'};
  return {code:'ready',message:''};
 }
 // Read-only diagnostic for the rendered UI contract. Never expose tokens or
 // account identities and never turn a denied operation into an automatic retry.
-window.igcSyncSwitchState=()=>({ready:accountSwitchAdmission().code==='ready',
- code:accountSwitchAdmission().code});
+window.igcSyncSwitchState=()=>{
+ const gate=accountSwitchAdmission();
+ return {ready:gate.code==='ready',code:gate.code};
+};
 window.igcSyncSwitchAccount=function(){
  const entry=accountSwitchAdmission();
  if(entry.code==='automation_active'||entry.code==='android_account_screen'){
