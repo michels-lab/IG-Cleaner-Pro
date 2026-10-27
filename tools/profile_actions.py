@@ -1199,7 +1199,7 @@ def _action_issue(task, result, message):
 
 def perform_visible_action(page, username, task, expected_handle, can_act=None,
                            on_wait=None, *, preloaded=False, on_pre_click=None,
-                           use_reference_transport=True):
+                           use_reference_transport=False):
     """Execute real visible public-menu/private-confirmation flows conservatively.
 
     A public profile commonly needs Following -> menu Unfollow -> Follow.
@@ -1262,17 +1262,23 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
                                "No action was performed.")
     if task == "unfollow" and header.count() and header.is_visible() and re.search(r"\b(follows you|te sigue)\b",
                                           header.inner_text(timeout=4000), re.I):
-        # An account may follow the owner without the owner following it.
-        # Preserve the mutual guard unless Follow Back is definitely visible.
-        if _follow_state(page, username):
+        # "Follows you" reports THEIR relationship to the owner, not whether
+        # the owner follows THEM. A mutual follower selected in the saved
+        # cohort is still eligible for its one approved Unfollow.
+        # Only a stable Follow / Follow Back without Following proves that
+        # the owner already stopped following this exact target.
+        following = _profile_relationship_control(
+            page, username, [r"Following", r"Siguiendo"])
+        if following is None and _follow_state(page, username):
             page.wait_for_timeout(500)
             if (_follow_state(page, username) and
-                    _profile_relationship_control(page, username,
-                                                  [r"Following", r"Siguiendo"]) is None):
+                    _profile_relationship_control(
+                        page, username, [r"Following", r"Siguiendo"]) is None):
                 return "already_not_following", (
                     "Already not following: verified Follow / Follow Back on this target. "
                     "No relationship-changing click; continuing to next profile.")
-        return "review", "This account follows you; review required."
+        # Otherwise fall through to an actual Following/Siguiendo control.
+        # Never turn the "Follows you" badge into a reason to silently skip.
     if task == "unfollow" and on_pre_click is not None and use_reference_transport:
         # The owner-supplied Pasted text(3).txt uses an authenticated
         # exact-ID following lookup and usePolarisUnfollowMutation. Do not
@@ -3307,8 +3313,15 @@ class ActionRobot:
                             )
                             owner_page, different_owner = _find_verified_owner_tab(
                                 live_pages, self.handle)
-                            defer_pending_unfollow = bool(
-                                not unsafe and not different_owner and owner_page is not None)
+                            # The owner often hides the Profile sidebar while
+                            # visiting someone else's page. Reuse the existing
+                            # SAME-CONTEXT, cookie-bound owner verifier instead
+                            # of requiring a separate visible owner tab.
+                            # A conflicting visible owner still vetoes it.
+                            fresh_owner = bool(
+                                not unsafe and not different_owner and
+                                _verified_action_owner(work_page, self.handle))
+                            defer_pending_unfollow = fresh_owner
                         except Exception:
                             defer_pending_unfollow = False
                     if action_tabs:
