@@ -10,17 +10,17 @@ Este bloque permite inspeccionar **dos tandas de acciones para dos workspaces di
 
 ## Capacidades implementadas
 
-- Nuevo `tools/dual_action_preflight.py`: toma dos cuentas e identifica la tarea y los usernames exactamente seleccionados; valida owner autenticado en la app, dos workspaces diferentes y confirmación **específica de inspección**. Nunca acepta `audit` como mutación ni convierte esta confirmación en autorización para Unfollow.
+- Nuevo `tools/dual_action_preflight.py`: toma dos cuentas e identifica la tarea y los usernames exactamente seleccionados; valida el identificador de owner suministrado por la app y dos workspaces diferentes (el token del puente local autoriza la consulta, pero no sustituye una prueba fresca de login Instagram) y confirmación **específica de inspección**. Nunca acepta `audit` como mutación ni convierte esta confirmación en autorización para Unfollow.
 - Consulta los archivos canónicos `instagram-actions-<scope>.json`, `-target-visits.json`, `-batch-reviews.json` y `action-protected-<scope>.json` del **mismo motor** actual. No crea otro historial donde una acción incierta pudiera desaparecer.
 - Clasifica cada objetivo por prioridad: **protegido**, **acción con click incierto**, **previamente visitado/revisado**, **tanda sin aprobar**, o **sin evidencia de visita previa**. No reintroduce automáticamente los que fueron abiertos anteriormente aunque el clic no se confirmara. Una misma @cuenta en dos workspaces se mantiene segregada.
 - Un journal malformado, evidencia desconocida o un robot de acción activo bloquean la inspección en lugar de calcular falsos elegibles. No se modifica ningún archivo histórico.
-- Nuevo endpoint local autenticado `POST /api/actions/dual-robots/preflight`. La respuesta está marcada `read_only_snapshot` con `actions_enabled=false` y `can_launch_parallel_unfollow=false`; cada lane lista las verificaciones aún ausentes (sesión exacta, relación actual, consentimiento de acción y WAL paralelo segregado).
+- Nuevo endpoint local protegido por token `POST /api/actions/dual-robots/preflight`. La respuesta está marcada `read_only_snapshot` con `actions_enabled=false` y `can_launch_parallel_unfollow=false`; cada lane lista las verificaciones aún ausentes (sesión exacta, relación actual, consentimiento de acción y WAL paralelo segregado).
 - Pruebas offline `tests/test_dual_action_preflight.py` de aislamiento, protegidos, visita previa, intención de clic, tandas pendientes, historial corrupto, autenticación loopback y **cero escrituras**.
 - CI Python y Windows integrado obligatorias para este módulo, incluso cuando solo cambien nuevos archivos del bloque.
 
 ## Estado y riesgos
 
-**Implementado en rama de trabajo; no significa aceptado o fusionado.** El informe de elegibilidad es una fotografía local y NO garantiza que una relación de Instagram siga igual o que los dos logins Chrome sean correctos. No incluye UI nueva, no habilita dos mutaciones simultáneas. La sesión real y la consistencia entre dos escritores requieren aceptar un journal/WAL por owner/account, bloqueo multi-proceso compatible con el robot heredado y pruebas de recuperación de clic desconocido antes de habilitarlo.
+**Implementado en rama de trabajo; no significa aceptado o fusionado.** El informe de elegibilidad es una fotografía local y NO garantiza que una relación de Instagram siga igual o que los dos logins Chrome sean correctos. No incluye UI nueva, no habilita dos mutaciones simultáneas. El endpoint se rechaza explícitamente en Developer Edition para no contaminar su aislamiento. La sesión real y la consistencia entre dos escritores requieren aceptar un journal/WAL por owner/account, bloqueo multi-proceso compatible con el robot heredado y pruebas de recuperación de clic desconocido antes de habilitarlo.
 
 ## Continuación obligatoria
 
