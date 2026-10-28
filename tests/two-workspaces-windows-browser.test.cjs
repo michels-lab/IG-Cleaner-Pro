@@ -145,7 +145,32 @@ const {chromium}=require('playwright');
          'UI must distinguish exact account states instead of claiming both verified');
   assert.equal(dualReadOnly.calls[2].body.confirmation,
     'dual-robots-stop:'+owner);
+  // Regression: the original manual "two Chrome windows" button used an
+  // unexported requestAction binding and silently failed before this fix.
+  const manualDual=await first.evaluate(async()=>{
+   const originalFetch=window.fetch,originalConfirm=window.confirm,seen=[];
+   window.confirm=()=>true;
+   window.fetch=async(url,options)=>{
+    if(String(url).includes('/api/actions/open-dual-chrome')){
+     const body=JSON.parse(options.body);
+     seen.push({body,token:options.headers['X-IGC-Bridge-Token']});
+     return {ok:true,json:async()=>({
+      owner:body.owner,accounts:[body.primary.account,body.secondary.account],
+      distinct_chrome_profiles:true,actions_enabled:false
+     })};
+    }
+    return originalFetch(url,options);
+   };
+   try{await window.IGC_INSTAGRAM_PROFILES.openTwoChromeSessions();return seen}
+   finally{window.fetch=originalFetch;window.confirm=originalConfirm}
+  });
+  assert.equal(manualDual.length,1,
+    'Manual separate Chrome windows must actually reach the authenticated Windows bridge');
+  assert.equal(manualDual[0].token,'a'.repeat(32));
+  assert.equal(manualDual[0].body.confirmation,
+    'dual-chrome:ig_first_1234567:ig_second_123456');
+  assert.equal(manualDual[0].body.read_only_consent,true);
   // Neither browser page should have initiated real Instagram or mutation requests.
-  console.log('PASS: two identity-only Chrome robots have account-exact authenticated commands, visible status, stop, and independent app windows');
+  console.log('PASS: independent app windows, two supervised read-only robots, manual dual-Chrome bridge, account-bound consent and status');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
