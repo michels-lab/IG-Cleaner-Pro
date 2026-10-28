@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 359,
-  "classified_files_total": 355,
+  "tracked_files_total": 362,
+  "classified_files_total": 358,
   "docs_content_inspected": 88,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -11,14 +11,14 @@
     "asset": 20,
     "bitacora": 1,
     "build_script": 6,
-    "config": 69,
+    "config": 70,
     "database_migration": 5,
     "database_schema": 1,
     "document": 83,
     "index": 5,
     "installer_metadata": 1,
-    "source": 46,
-    "test": 88,
+    "source": 47,
+    "test": 89,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "8756582b4c2bbeb32bb5cc7a1f366671a0e44575e9a57da7a8178970dd85992a",
+  "inventory_fingerprint": "4d61d8f7432011626b3c87a77c4ae5ce4f36dff1963ce37bd3d01a118a9fe001",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a27b7c98b98977f54a4cbed6110c14c414708570"
+      "blob": "141daf1db0ebd4727c9f59275dbbf31fcce59537"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -147,7 +147,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b8a0e29b7d667976bd244edb08a6f26c7649c2df"
+      "blob": "3ec42c30b9506ba3777f43c1378ff3f25f346072"
     },
     {
       "path": ".gitignore",
@@ -245,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "db6bd43e3d9d9fb0782a7c0681771317e09cc87e"
+      "blob": "5ee35fd3f4e9dc09e2c2d591cbbe5548209e0b9b"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "196dee42465f17e463253e687c8b565eddae25cb"
+      "blob": "5ffe6e02b5651ec6485eae6ecb88240428fb810a"
     },
     {
       "path": "README_SYNC.md",
@@ -1515,6 +1515,13 @@
       "blob": "645ea5ad48e1ffccbc7578cfab376f5c48619d3f"
     },
     {
+      "path": "release/release-readiness.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "3afc3d8346c49078af5b4af3054bdf42d5b10f94"
+    },
+    {
       "path": "supabase/email-templates/confirmation.html",
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
@@ -2208,6 +2215,13 @@
       "blob": "5376062230b2c4049b9b60b902b98dceaa6e859f"
     },
     {
+      "path": "tests/test_release_readiness_gate.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "3035b03bf693d355c63309c03bdaf7023103d6ac"
+    },
+    {
       "path": "tests/test_robot_interlock.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2416,6 +2430,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "9025ac0c7aa78f28361cded3161a6450452113a4"
+    },
+    {
+      "path": "tools/release_readiness_gate.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "58de405fc612413c2c603797b9ca034452a4b7b2"
     },
     {
       "path": "tools/repository_file_auditor.py",
