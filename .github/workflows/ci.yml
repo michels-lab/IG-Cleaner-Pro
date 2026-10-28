@@ -114,6 +114,8 @@ jobs:
         run: python3 tests/windows-automations-owner-contract.py
       - name: Validate Android production-signing contract
         run: python tests/android-signing-contract.py
+      - name: Verify owner P0 completion release hold cannot be bypassed by CI
+        run: python3 -m unittest discover -s tests -p 'test_release_readiness_gate.py' -v
       - name: Validate generic release publisher and fail-closed Android co-install fixture
         run: |
           python tests/release-publisher-contract.py

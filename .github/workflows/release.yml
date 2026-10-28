@@ -11,6 +11,7 @@ permissions:
   contents: write
   actions: read
   deployments: read
+  issues: read
 
 jobs:
   release-request-gate:
@@ -21,12 +22,17 @@ jobs:
       - uses: actions/checkout@v4
       - name: Ignore already-published release requests
         id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
           import json, os
           with open(".michelslab/release-request.json", encoding="utf-8") as f:
               request = json.load(f)
           enabled = request.get("authorized") is True and request.get("status") in ("requested", "authorized")
+          if enabled:
+              import subprocess
+              subprocess.run(["python3", "tools/release_readiness_gate.py", "--tag", str(request.get("tag", "")), "--live"], check=True)
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("publish=" + ("true" if enabled else "false") + "\n")
           print("Release authorization active:", enabled)
@@ -659,6 +665,9 @@ jobs:
           fi
           # If the existence check fails due to a provider/network error, the
           # create-only API still rejects an existing tag instead of clobbering it.
+          # Owner explicitly prohibited publishing while unfinished. Recheck
+          # immediately before creating any release (including manual dispatch).
+          python3 tools/release_readiness_gate.py --tag "$TAG" --live
           gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
 
       - name: Verify published release

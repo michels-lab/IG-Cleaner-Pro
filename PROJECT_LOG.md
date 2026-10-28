@@ -1,3 +1,9 @@
+## 2026-10-27 — OWNER RELEASE FREEZE: previous v120.71 was premature
+
+- Owner explicitly rejected publishing releases before the requested features and actual-app verification are complete. V120.71 is an already-published historical fact, **not product-complete signoff**. Stop generating versions, GitHub release tags, RCs, download/update prompts as a substitute for finishing the tasks.
+- Current P0 app blockers include #164, #172, #173, #176 plus further account/session, batch, installed app and email deliverability acceptance tasks. In particular TWO Chrome browser windows for manual separate logins is not two independently controlled automated action robots, and the private Instagram real-account verification is untested.
+- Introduced mandatory `release/release-readiness.json` with `release_hold=true`, acceptance flags false and named required GitHub issues, `tools/release_readiness_gate.py` fail-closed live issue checks, publisher early and last-moment checks, and CI negative tests. Do NOT authorize v120.72 until owner says product is genuinely complete and has verified real app behavior. Preserve signed v120.71 as historical artifact; do not overwrite.
+
 ## 2026-10-28 — GRANADA v120.71 NORMAL FINAL published; authorization consumed
 
 - Confirmed official [v120.71 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71): normal non-prerelease, no draft, 12 assets and published UTC 2026-10-28T00:32:34Z from exact merged commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`. Governed publisher [run 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) completed all five jobs SUCCESS including installed Windows public+Developer, signed Android public+Developer co-install, real Desktop/Android rendered Home+About, integrity and updater gating.

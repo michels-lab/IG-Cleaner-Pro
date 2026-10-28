@@ -1,0 +1,36 @@
+{
+  "schema": "ig-cleaner-release-readiness-v1",
+  "release_hold": true,
+  "reason": "Owner explicitly rejected publishing while InstaCleaner product-critical work and real Instagram acceptance remain incomplete. CI green alone is NOT a complete product.",
+  "owner_final_acceptance": {
+    "approved": false,
+    "release_tag": null,
+    "evidence": "",
+    "source": "requires explicit owner approval AFTER physical installed Windows and actual two-Instagram-account validation"
+  },
+  "critical_acceptance": {
+    "two_actual_chrome_sessions_identified_by_instagram_handle": false,
+    "simultaneous_two_account_automation_isolated_and_safely_verified": false,
+    "real_owner_followers_following_complete_without_profile_by_profile": false,
+    "real_owner_unfollow_exact_target_verified_and_journaled": false,
+    "real_owner_cancel_pending_exact_target_verified_and_journaled": false,
+    "batches_protected_history_and_no_repeat_regressions_verified": false,
+    "physical_windows_public_developer_update_backup_acceptance": false,
+    "android_public_developer_acceptance": false
+  },
+  "required_closed_issues": [
+    73,
+    77,
+    83,
+    107,
+    110,
+    114,
+    133,
+    164,
+    172,
+    173,
+    176
+  ],
+  "next_version": "v120.72",
+  "notes": "This is a hard hold. Do NOT bypass it with standard Operacion Granada, CI checks, automated GitHub workflow_dispatch, or a generic standing publication authorization. Only an explicit later user instruction after all blocking requirements are complete may change it."
+}
