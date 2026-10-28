@@ -1,3 +1,8 @@
+## 2026-10-27 — GRANADA combined official FINAL candidate v120.71 after #278
+
+- Reconciled stale #277 release-version branch against post-#278 current source without overwriting its detachable per-owner/per-workspace windows or permanent history. The v120.71 candidate includes both saved owner-scoped Instagram live-list controls (#274/#275) and separate manual Chrome session windows (#278), not parallel autonomous action workers. Bumped visible Windows HTML, Android public+Developer version 12071, manifest artifact basenames and one-time governed release request; stable remains v120.70 until real publisher success.
+- Safety: two manual Chrome user-data profiles, no cookies copied, no false claim of two independent Unfollow/Cancel robots; preserve action WAL, protected, snapshots and backups. Existing exact-source candidate CI and release publisher complete gates required; physical Instagram account identity verification still pending.
+
 ## 2026-10-27 — GRANADA two detachable Instagram workspaces and two isolated Chrome windows
 
 - **Root cause:** multi-account app data was scoped by `account_key`, but active identity was held in a single shared localStorage selector. A second Chrome app tab could pick the wrong account after reload. The old automated browser session is one shared Playwright `user-data-dir`, so enabling two parallel action robots without redesign would risk a wrong-owner click or WAL replay.
