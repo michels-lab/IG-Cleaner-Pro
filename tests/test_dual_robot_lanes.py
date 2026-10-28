@@ -7,6 +7,10 @@ import tempfile
 import threading
 import time
 import unittest
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -170,6 +174,69 @@ class DualRobotLaneTests(unittest.TestCase):
                 self.assertFalse(supervisor.snapshot(OWNER)["actions_enabled"])
             finally:
                 supervisor.shutdown()
+
+    def test_local_bridge_routes_exact_token_owner_and_individual_lane_commands(self):
+        from profile_counts_bridge import Collector, build_server
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            server = build_server(Collector(base / "data", base / "browser"),
+                                  "test-token", 0)
+            server.dual_robot_lanes.runner = lambda account, handle, folder, stopped: stopped.wait(3)
+            listener = threading.Thread(target=server.serve_forever, daemon=True)
+            listener.start()
+            origin = "http://127.0.0.1:" + str(server.server_port)
+            def call(path, data=None, token="test-token"):
+                payload = json.dumps(data).encode("utf-8") if data is not None else None
+                req = urllib.request.Request(
+                    origin + path, data=payload,
+                    headers={"X-IGC-Bridge-Token": token,
+                             "Origin": "null", "Content-Type": "application/json"},
+                    method="POST" if data is not None else "GET")
+                with urllib.request.urlopen(req, timeout=3) as resp:
+                    return json.load(resp)
+            try:
+                with self.assertRaises(urllib.error.HTTPError) as rejected:
+                    call("/api/actions/dual-robots/status?owner=" + OWNER, token="wrong")
+                self.assertEqual(rejected.exception.code, 403)
+                initial = call("/api/actions/dual-robots/start", PAIR)
+                self.assertFalse(initial["actions_enabled"])
+                self.assertEqual(len(initial["lanes"]), 2)
+                lookup = call("/api/actions/dual-robots/status?owner=" + OWNER)
+                self.assertEqual(lookup["owner"], OWNER)
+                self.assertEqual({x["account"] for x in lookup["lanes"]},
+                                 {PAIR["primary"]["account"], PAIR["secondary"]["account"]})
+                with self.assertRaises(urllib.error.HTTPError) as foreign:
+                    call("/api/actions/dual-robots/status?owner=u_other_42")
+                self.assertEqual(foreign.exception.code, 400)
+                first = PAIR["primary"]["account"]
+                stopped = call("/api/actions/dual-robots/stop-one", {
+                    "owner": OWNER, "account": first,
+                    "confirmation": "dual-robot-stop:" + OWNER + ":" + first,
+                })
+                self.assertFalse(stopped["actions_enabled"])
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    status = call("/api/actions/dual-robots/status?owner=" + OWNER)
+                    rows = {x["account"]: x for x in status["lanes"]}
+                    if not rows[first]["running"]:
+                        break
+                    time.sleep(0.01)
+                self.assertFalse(rows[first]["running"])
+                restarted = call("/api/actions/dual-robots/restart-one", {
+                    "owner": OWNER, "account": first,
+                    "confirmation": "dual-robot-restart:" + OWNER + ":" + first,
+                })
+                self.assertFalse(restarted["actions_enabled"])
+                self.assertTrue(any(x["running"] for x in restarted["lanes"]))
+                call("/api/actions/dual-robots/stop", {
+                    "owner": OWNER,
+                    "confirmation": "dual-robots-stop:" + OWNER,
+                })
+            finally:
+                server.dual_robot_lanes.shutdown()
+                server.shutdown()
+                server.server_close()
+                listener.join(timeout=4)
 
     def test_stop_requires_exact_owner_consent_and_is_independent_of_mutation(self):
         with tempfile.TemporaryDirectory() as temp:
