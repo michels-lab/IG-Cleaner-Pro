@@ -27,6 +27,9 @@ jobs:
           with open(".michelslab/release-request.json", encoding="utf-8") as f:
               request = json.load(f)
           enabled = request.get("authorized") is True and request.get("status") in ("requested", "authorized")
+          if enabled:
+              import subprocess
+              subprocess.run(["python3", "tools/release_readiness_gate.py", "--tag", str(request.get("tag", "")), "--live"], check=True)
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("publish=" + ("true" if enabled else "false") + "\n")
           print("Release authorization active:", enabled)
