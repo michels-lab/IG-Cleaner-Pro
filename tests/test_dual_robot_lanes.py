@@ -175,6 +175,121 @@ class DualRobotLaneTests(unittest.TestCase):
             finally:
                 supervisor.shutdown()
 
+    def test_cross_supervisor_same_chrome_profile_is_denied_without_double_start(self):
+        # Two independent app controller instances must not attach to one
+        # persistent Chrome profile, even in distinct OS worker threads.
+        with tempfile.TemporaryDirectory() as temp:
+            running = threading.Event()
+            active = set()
+            lock = threading.Lock()
+            entered_second = []
+            def first_runner(account, handle, folder, stopped):
+                with lock:
+                    active.add(account)
+                    if len(active) == 2:
+                        running.set()
+                stopped.wait(3)
+            first = DualRobotLanes(DualChromeSessions(Path(temp)), runner=first_runner)
+            second = DualRobotLanes(
+                DualChromeSessions(Path(temp)),
+                runner=lambda *args: entered_second.append(args))
+            try:
+                first.start_pair(dict(PAIR))
+                self.assertTrue(running.wait(3), "First supervisor owns both contexts.")
+                second.start_pair(dict(PAIR))
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    lanes = second.snapshot(OWNER)["lanes"]
+                    if {lane["state"] for lane in lanes} == {"blocked"}:
+                        break
+                    time.sleep(0.01)
+                self.assertEqual({lane["state"] for lane in lanes}, {"blocked"})
+                self.assertEqual(entered_second, [], "No second Chrome attach on a busy profile.")
+                self.assertTrue(all(not x["verified"] for x in lanes))
+                self.assertTrue(all(x["running"] for x in first.snapshot(OWNER)["lanes"]))
+            finally:
+                second.shutdown()
+                first.shutdown()
+
+    def test_lease_released_on_stop_allows_explicit_new_run(self):
+        with tempfile.TemporaryDirectory() as temp:
+            started = threading.Event()
+            first = DualRobotLanes(
+                DualChromeSessions(Path(temp)),
+                runner=lambda _a, _h, _p, stop: (started.set(), stop.wait(3)))
+            second_seen = threading.Event()
+            second = DualRobotLanes(
+                DualChromeSessions(Path(temp)),
+                runner=lambda _a, _h, _p, stop: (second_seen.set(), stop.wait(3)))
+            try:
+                first.start_pair(dict(PAIR))
+                self.assertTrue(started.wait(3))
+                first.shutdown()  # Does not delete the persistent login.
+                self.assertFalse(any(x["running"] for x in first.snapshot(OWNER)["lanes"]))
+                second.start_pair(dict(PAIR))
+                self.assertTrue(second_seen.wait(3), "Stopped worker released its Chrome lease.")
+                self.assertFalse(second.snapshot(OWNER)["actions_enabled"])
+            finally:
+                first.shutdown()
+                second.shutdown()
+
+    def test_stop_one_revokes_verified_immediately_and_ignores_late_browser_status(self):
+        with tempfile.TemporaryDirectory() as temp:
+            first_handle = PAIR["primary"]["account"]
+            ready, release = threading.Event(), threading.Event()
+            def runner(account, handle, folder, stopped):
+                if account == first_handle:
+                    supervisor._report(account, "verified", "Correct owner", verified=True)
+                    ready.set()
+                    release.wait(3)  # Emulate a slow browser shutdown callback.
+                    supervisor._report(account, "verified", "Late browser result", verified=True)
+                else:
+                    stopped.wait(3)
+            supervisor = DualRobotLanes(DualChromeSessions(Path(temp)), runner=runner)
+            try:
+                supervisor.start_pair(dict(PAIR))
+                self.assertTrue(ready.wait(3))
+                supervisor.stop_one({
+                    "owner": OWNER, "account": first_handle,
+                    "confirmation": "dual-robot-stop:" + OWNER + ":" + first_handle,
+                })
+                before = {x["account"]: x for x in supervisor.snapshot(OWNER)["lanes"]}
+                self.assertEqual(before[first_handle]["state"], "stopping")
+                self.assertFalse(before[first_handle]["verified"])
+                release.set()
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline and any(
+                        x["account"] == first_handle and x["running"]
+                        for x in supervisor.snapshot(OWNER)["lanes"]):
+                    time.sleep(0.01)
+                after = {x["account"]: x for x in supervisor.snapshot(OWNER)["lanes"]}
+                self.assertEqual(after[first_handle]["state"], "stopped")
+                self.assertFalse(after[first_handle]["verified"])
+                self.assertTrue(after[PAIR["secondary"]["account"]]["running"])
+            finally:
+                release.set()
+                supervisor.shutdown()
+
+    def test_playwright_error_details_cannot_leak_session_tokens_to_ui(self):
+        with tempfile.TemporaryDirectory() as temp:
+            leaked = "private_browser_path_token_sample"
+            def runner(*_):
+                raise RuntimeError(leaked)
+            supervisor = DualRobotLanes(DualChromeSessions(Path(temp)), runner=runner)
+            try:
+                supervisor.start_pair(dict(PAIR))
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    lanes = supervisor.snapshot(OWNER)["lanes"]
+                    if {x["state"] for x in lanes} == {"blocked"}:
+                        break
+                    time.sleep(0.01)
+                self.assertEqual({x["state"] for x in lanes}, {"blocked"})
+                self.assertTrue(all(leaked not in x["message"] for x in lanes))
+                self.assertTrue(all(not x["verified"] for x in lanes))
+            finally:
+                supervisor.shutdown()
+
     def test_local_bridge_routes_exact_token_owner_and_individual_lane_commands(self):
         from profile_counts_bridge import Collector, build_server
         with tempfile.TemporaryDirectory() as temp:
