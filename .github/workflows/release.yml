@@ -665,6 +665,9 @@ jobs:
           fi
           # If the existence check fails due to a provider/network error, the
           # create-only API still rejects an existing tag instead of clobbering it.
+          # Owner explicitly prohibited publishing while unfinished. Recheck
+          # immediately before creating any release (including manual dispatch).
+          python3 tools/release_readiness_gate.py --tag "$TAG" --live
           gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TITLE" --notes-file release-notes.md --latest
 
       - name: Verify published release
