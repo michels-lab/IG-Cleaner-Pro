@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 366,
-  "classified_files_total": 362,
-  "docs_content_inspected": 89,
+  "tracked_files_total": 369,
+  "classified_files_total": 365,
+  "docs_content_inspected": 90,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 84,
+    "document": 85,
     "index": 5,
     "installer_metadata": 1,
-    "source": 49,
-    "test": 90,
+    "source": 50,
+    "test": 91,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "746b8806ac010f7ac748a1e596c94345a61a6462f88f31d9ff4d62765f14d57c",
-  "evidence_fingerprint": "fcf9a50ed938381c2e87735104bf5270b87c2607b041e696e18fcb76a1a0d190",
+  "inventory_fingerprint": "eaaa457ec84b7f968c3f9f7f43fdf18ab7a0ab2bbbbcabb9f74afe0879310abf",
+  "evidence_fingerprint": "d56c437b6988669e2eb82256783ad5c7527f834f250e091828750f4454d64e15",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "18326b9137c1e71a76493248e9e65fa43bee817a"
+      "blob": "a5ed140fe5c16b84818b455cd4d6223de2cd4433"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "15420f60e14801421a15994006eb91c0678c246a"
+      "blob": "ac049f45713452f392c3137219cd9022ad1576e8"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1222,6 +1222,13 @@
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
     },
     {
+      "path": "docs/GRANADA_DUAL_ACTION_OFFLINE_PREFLIGHT_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "761bb23b894f96f8f4ce67203eea11878a0a9114"
+    },
+    {
       "path": "docs/GRANADA_DUAL_CHROME_LEASE_STOP_RACE_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2055,6 +2062,13 @@
       "blob": "56b0927b4a33f58c340734a833c1c84e83066655"
     },
     {
+      "path": "tests/test_dual_action_preflight.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "378f3d6d6ed26ad43c6302869bd82be29539aa43"
+    },
+    {
       "path": "tests/test_dual_chrome_sessions.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2356,6 +2370,13 @@
       "blob": "8e4230f19e014ae8661368a5fb2d806881ad47f0"
     },
     {
+      "path": "tools/dual_action_preflight.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0207bf1990a267329cbdccbceb3631cf53f8db22"
+    },
+    {
       "path": "tools/dual_chrome_sessions.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2430,7 +2451,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6edcd896e9ec0939cef96ce1daac91dd972af008"
+      "blob": "4d55307cf29b0730a7e437c007cc01fcb80ef825"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2640,11 +2661,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "aeff7afbaef97215",
+      "id": "a5a9e9fc914d4ab1",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "3 implementation/config paths changed since this log's last commit; examples: tests/test_dual_robot_lanes.py, tools/chrome_lane_interlock.py, tools/dual_robot_lanes.py",
+      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_dual_action_preflight.py, tests/test_dual_robot_lanes.py, tools/chrome_lane_interlock.py, tools/dual_action_preflight.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
