@@ -716,7 +716,9 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     collector.actions = actions
     live_relationships = LiveRelationships(collector, actions, collector.data_dir, collector.session_dir)
     collector.live_relationships = live_relationships
-    dual_chrome_sessions = DualChromeSessions(collector.data_dir)
+    # Chrome login cookies MUST live outside exportable counts/journal data.
+    # Keep them next to the legacy browser session, never inside data_dir.
+    dual_chrome_sessions = DualChromeSessions(collector.session_dir.parent / "account-browser-profiles")
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -954,6 +956,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     server.actions = actions
     server.collector = collector
     server.live_relationships = live_relationships
+    server.dual_chrome_sessions = dual_chrome_sessions
     # The native host must also stop/await the Developer-only browser worker
     # and action lease before closing the loopback server or app process.
     server.dev_action_tests = dev_action_tests
