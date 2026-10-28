@@ -20,7 +20,7 @@ class ActionLease:
         self.root = Path(root).resolve()
         # Only internal, known-safe lock basenames may be used. No paths or usernames.
         if (not isinstance(lock_name, str) or not lock_name.startswith(".instagram-action-")
-                or not lock_name.endswith(".lock") or "/" in lock_name or "\\\\" in lock_name
+                or not lock_name.endswith(".lock") or "/" in lock_name or chr(92) in lock_name
                 or ".." in lock_name):
             raise ValueError("Invalid Instagram action lease name.")
         self.lock_name = lock_name
@@ -99,7 +99,7 @@ class ScopedActionLease:
                 or not isinstance(account, str) or not 1 <= len(account) <= 120):
             raise ValueError("An exact InstaCleaner owner and workspace are required.")
         name_digest = hashlib.sha256(
-            (owner + "\\0" + account).encode("utf-8")).hexdigest()[:32]
+            (owner + chr(0) + account).encode("utf-8")).hexdigest()[:32]
         self.global_lease = ActionLease(root)
         self.workspace_lease = ActionLease(
             root, lock_name=".instagram-action-" + name_digest + ".lock")
