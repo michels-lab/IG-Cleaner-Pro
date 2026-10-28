@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 364,
-  "classified_files_total": 360,
-  "docs_content_inspected": 88,
+  "tracked_files_total": 366,
+  "classified_files_total": 362,
+  "docs_content_inspected": 89,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,21 +14,22 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 83,
+    "document": 84,
     "index": 5,
     "installer_metadata": 1,
-    "source": 48,
+    "source": 49,
     "test": 90,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "42b8f5dba9034c2cdcaf2d4369fc625cb3a5a24d2fc97c244571f9c600558e8a",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "746b8806ac010f7ac748a1e596c94345a61a6462f88f31d9ff4d62765f14d57c",
+  "evidence_fingerprint": "fcf9a50ed938381c2e87735104bf5270b87c2607b041e696e18fcb76a1a0d190",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1221,6 +1222,13 @@
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
     },
     {
+      "path": "docs/GRANADA_DUAL_CHROME_LEASE_STOP_RACE_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "ab9650a84a64cd7b39bc2d207debcb88186de951"
+    },
+    {
       "path": "docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2058,7 +2066,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fa19b29629a9dbd6c904a9f42ea19032a4dd4295"
+      "blob": "ad6cb1800b697a7b7e691c1ca898fff6fc1548be"
     },
     {
       "path": "tests/test_granada_csv_recovery.py",
@@ -2306,6 +2314,13 @@
       "blob": "f7dfcfd3f1467f7977bea7d14b1eeb8a9044f7c4"
     },
     {
+      "path": "tools/chrome_lane_interlock.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9685318a968717dfdec244eef82de035cd4b4d57"
+    },
+    {
       "path": "tools/collect_android_about_screenshots.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2352,7 +2367,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "58307a4c774d4bab209b6c65503f073c8e3c7679"
+      "blob": "c013a3b41c8decfeeef4a6c1e5737e06b7aed223"
     },
     {
       "path": "tools/ig_cleaner_desktop.py",
@@ -2622,6 +2637,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "aeff7afbaef97215",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: tests/test_dual_robot_lanes.py, tools/chrome_lane_interlock.py, tools/dual_robot_lanes.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
