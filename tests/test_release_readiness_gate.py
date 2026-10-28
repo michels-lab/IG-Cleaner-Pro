@@ -78,6 +78,19 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         with self.assertRaises(ReleaseBlocked):
             check_readiness(candidate, "v120.72", self.closed)
 
+    def test_official_publisher_requires_live_completion_twice(self):
+        workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        cmd = "tools/release_readiness_gate.py"
+        self.assertGreaterEqual(workflow.count(cmd), 2,
+                                "Require owner approval before build AND immediately before gh release create.")
+        gate = workflow.index("if enabled:")
+        publish = workflow.index('gh release create "$TAG"')
+        final_check = workflow.rfind(cmd, 0, publish)
+        self.assertGreater(final_check, gate)
+        self.assertGreater(publish, final_check)
+        self.assertIn("issues: read", workflow)
+        self.assertIn("GH_TOKEN:", workflow)
+
     def test_release_needs_all_three_separate_proofs(self):
         # Positive test is explicitly isolated; never flips real repo hold.
         check_readiness(self.valid, "v120.72", self.closed)
