@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 from dual_chrome_sessions import DualChromeSessions, APP_OWNER
+from chrome_lane_interlock import ChromeLaneBusy, ChromeLaneLease
 from profile_counts_instagram import (
     challenge_detected, preserve_instagram_auth_page, signed_in_handle,
 )
@@ -50,15 +51,21 @@ class DualRobotLanes:
             lane = self.lanes.get(account)
             if lane is None:
                 return
-            lane["state"] = state
-            lane["message"] = message
-            lane["verified"] = bool(verified)
+            # A late browser callback must never revive a stopped or stopping lane.
+            if lane["stop"].is_set():
+                lane["state"] = "stopping"
+                lane["message"] = "Stopping this Chrome session; no actions performed."
+                lane["verified"] = False
+            else:
+                lane["state"] = state
+                lane["message"] = message
+                lane["verified"] = bool(verified)
             lane["updated_at"] = time.time()
 
     def start_pair(self, data):
         owner, first, second = self._validate_pair(data)
         with self.lock:
-            if any(lane["thread"].is_alive() for lane in self.lanes.values()):
+            if any(lane["thread"] is not None and lane["thread"].is_alive() for lane in self.lanes.values()):
                 raise ValueError("Stop the previous supervised Chrome robot lanes first.")
             if self.owner is not None and self.owner != owner:
                 raise ValueError("Another app owner has an existing supervised session; restart InstaCleaner.")
@@ -97,12 +104,23 @@ class DualRobotLanes:
             lane = self.lanes[account]
             folder, handle, stop = lane["session_dir"], lane["expected_handle"], lane["stop"]
         try:
-            self.runner(account, handle, folder, stop)
-        except Exception as exc:
+            # Cross-process admission: only one Playwright worker may own THIS
+            # owner/workspace Chrome folder. The sibling account has its own lease.
+            with ChromeLaneLease(folder):
+                if not stop.is_set():
+                    self.runner(account, handle, folder, stop)
+        except ChromeLaneBusy:
             self._report(account, "blocked",
-                         "This Chrome lane did not verify its Instagram identity. "
-                         "Close its other Chrome windows if the profile is in use. "
-                         "No actions were performed: " + str(exc)[:110])
+                         "This Chrome profile already has a supervised robot or "
+                         "could not be exclusively reserved. Stop the other lane "
+                         "before restarting; no actions performed.")
+        except Exception as exc:
+            # Playwright errors may contain private browser URLs or filesystem
+            # paths. Do not reflect their raw exception strings in UI/status.
+            self._report(account, "blocked",
+                         "Chrome lane could not verify this Instagram identity "
+                         "(" + type(exc).__name__ + "). Close other Chrome windows "
+                         "using this profile and retry manually. No actions performed.")
         finally:
             with self.lock:
                 lane = self.lanes.get(account)
@@ -210,6 +228,10 @@ class DualRobotLanes:
                 raise ValueError("Cannot stop another user's Chrome robot lanes.")
             for lane in self.lanes.values():
                 lane["stop"].set()
+                lane["state"] = "stopping"
+                lane["verified"] = False
+                lane["message"] = "Stop requested; awaiting Chrome close."
+                lane["updated_at"] = time.time()
             return self._snapshot_locked()
 
     def stop_one(self, data):
@@ -224,7 +246,12 @@ class DualRobotLanes:
         with self.lock:
             if owner != self.owner or account not in self.lanes:
                 raise ValueError("Cannot stop another user's or unknown Instagram robot lane.")
-            self.lanes[account]["stop"].set()
+            lane = self.lanes[account]
+            lane["stop"].set()
+            lane["state"] = "stopping"
+            lane["verified"] = False
+            lane["message"] = "Stop requested; awaiting this Chrome window's close."
+            lane["updated_at"] = time.time()
             return self._snapshot_locked()
 
     def restart_one(self, data):
@@ -259,6 +286,10 @@ class DualRobotLanes:
             lanes = list(self.lanes.values())
             for lane in lanes:
                 lane["stop"].set()
+                lane["verified"] = False
+                lane["state"] = "stopping"
+                lane["message"] = "InstaCleaner closing; Chrome shutdown requested."
+                lane["updated_at"] = time.time()
         for lane in lanes:
             thread = lane["thread"]
             if thread is not None and thread.is_alive():
