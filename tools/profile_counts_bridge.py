@@ -24,6 +24,7 @@ from profile_actions import ActionRobot, ProtectedBatchCollision
 from live_relationship_snapshot import LiveRelationships
 from robot_interlock import ActionSessionBusy
 from dual_chrome_sessions import DualChromeSessions
+from dual_robot_lanes import DualRobotLanes
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -719,6 +720,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # Chrome login cookies MUST live outside exportable counts/journal data.
     # Keep them next to the legacy browser session, never inside data_dir.
     dual_chrome_sessions = DualChromeSessions(collector.session_dir.parent / "account-browser-profiles")
+    dual_robot_lanes = (DualRobotLanes(dual_chrome_sessions) if not developer_mode else None)
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -772,6 +774,14 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                 self._send(200, collector.following())
             elif self.path == "/api/actions/status":
                 self._send(200, actions.snapshot())
+            elif self.path.startswith("/api/actions/dual-robots/status?") and not developer_mode:
+                from urllib.parse import urlsplit, parse_qs
+                params = parse_qs(urlsplit(self.path).query)
+                owner = params.get("owner", [""])[0]
+                try:
+                    self._send(200, dual_robot_lanes.snapshot(owner))
+                except ValueError as exc:
+                    self._send(400, {"error": str(exc)})
             elif self.path == "/api/developer/live-status" and developer_mode:
                 self._send(200, live_probe.snapshot())
             elif self.path == "/api/developer/action-status" and developer_mode:
@@ -785,7 +795,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/dual-robots/start", "/api/actions/dual-robots/stop", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -865,6 +875,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                         raise ValueError("Unknown update action.")
                 elif self.path == "/api/actions/open-dual-chrome":
                     result = dual_chrome_sessions.open_pair(data)
+                elif self.path == "/api/actions/dual-robots/start":
+                    result = dual_robot_lanes.start_pair(data)
+                elif self.path == "/api/actions/dual-robots/stop":
+                    result = dual_robot_lanes.stop_pair(data)
                 elif self.path == "/api/actions/live-settings":
                     result = live_relationships.configuration(data)
                 elif self.path == "/api/actions/live-start":
@@ -957,6 +971,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     server.collector = collector
     server.live_relationships = live_relationships
     server.dual_chrome_sessions = dual_chrome_sessions
+    server.dual_robot_lanes = dual_robot_lanes
     # The native host must also stop/await the Developer-only browser worker
     # and action lease before closing the loopback server or app process.
     server.dev_action_tests = dev_action_tests
