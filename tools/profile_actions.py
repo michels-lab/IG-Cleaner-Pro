@@ -1658,7 +1658,7 @@ class ProtectedBatchCollision(ValueError):
         )
 
 
-from robot_interlock import ActionLease
+from robot_interlock import ActionLease, ScopedActionLease
 
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
@@ -2552,7 +2552,9 @@ class ActionRobot:
                 raise ValueError("Review retry must be a subset of the exact saved cohort.")
             if data.get("review_retry_confirmation") != "review-retry:" + str(data.get("batch_id") or "") + ":" + ",".join(retry_selection):
                 raise ValueError("Review retry requires separate exact-target consent.")
-        lease = ActionLease(self.data_dir).acquire()
+        # Preserve the legacy global WAL barrier while adding the exact
+        # per-owner/workspace lock. No parallel relationship clicks yet.
+        lease = ScopedActionLease(self.data_dir, owner, account).acquire()
         started = False
         try:
             with self.collector.browser_admission, self.lock:
@@ -2637,21 +2639,19 @@ class ActionRobot:
                             ", @".join(reused[:5]) +
                             ". They are excluded from automatic new batches. "
                             "Use the saved-cohort Continue or an explicit read-only recheck.")
-                self.owner, self.account, self.handle, self.task = owner, account, expected, task
                 if not resume and not (task == "audit" and audit_source == "live_lists"):
                     if all((record := previous.get(user, {})).get("status") in SAVED_ACTION_STATES
                            and not _preclick_no_action(record)
                            for user in targets):
                         raise ValueError("No untouched profiles remain. Do not replay actions with uncertain outcomes.")
-                self.targets = list(retry_selection) if retry_selection is not None else targets
-                self.audit_source = audit_source
-                self.review_only = False
-                self.review_profiles_only = False
-                self.history_recheck_mode = False
+                # Resolve every journal and protection path by the incoming
+                # exact scope BEFORE rebinding the currently selected robot.
+                # A rejected batch must not silently switch the UI to a
+                # different Instagram account or claim its old job disappeared.
+                next_batch_id = self.active_batch_id
                 if not resume:
-                    self.continuing_batch = pending_entry is not None
                     if pending_entry:
-                        self.active_batch_id = pending_entry["id"]
+                        next_batch_id = pending_entry["id"]
                     else:
                         entries = self._review_batches(owner, account, task)
                         batch_id = hashlib.sha256((str(time.time_ns()) + "\\0" +
@@ -2660,16 +2660,7 @@ class ActionRobot:
                                         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                                         "approved_at": None, "recheck_results": {}})
                         _atomic_json(self._review_batches_file_for(owner, account, task), entries)
-                        self.active_batch_id = batch_id
-                self.open_review_tabs = []
-                self.current_wait = None
-                self.owner_profile_visits = 0
-                if not resume:
-                    self.skipped.clear()
-                self.batch_size = count
-                self.tab_flow = tab_flow
-                self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
-                self.rest_minutes = rest
+                        next_batch_id = batch_id
                 # A newly authorized batch uses the owner's current visible
                 # favorites. During an active run protection may only be added.
                 # The UI's visible favorites list can be stale or incomplete after
@@ -2678,9 +2669,30 @@ class ActionRobot:
                 # Both Unfollow and Cancel consult this owner/account-scoped guard
                 # immediately before any click. Explicit removal requires its own
                 # separate, owner-confirmed operation outside active jobs.
-                saved_protected = self._protected()
+                protection_path = self._protection_file_for(owner, account)
+                saved_protected = set(_read_json(protection_path, []))
                 saved_protected.update(_users(data.get("protected", [])))
-                _atomic_json(self._protection_file(), sorted(saved_protected))
+                _atomic_json(protection_path, sorted(saved_protected))
+                # All possible explicit admission failures and canonical
+                # journal reads have now completed. Commit in-memory state
+                # only after writes succeeded, never on a denied start.
+                self.owner, self.account, self.handle, self.task = owner, account, expected, task
+                self.targets = list(retry_selection) if retry_selection is not None else targets
+                self.audit_source = audit_source
+                self.review_only = False
+                self.review_profiles_only = False
+                self.history_recheck_mode = False
+                if not resume:
+                    self.continuing_batch = pending_entry is not None
+                    self.skipped.clear()
+                self.active_batch_id = next_batch_id
+                self.open_review_tabs = []
+                self.current_wait = None
+                self.owner_profile_visits = 0
+                self.batch_size = count
+                self.tab_flow = tab_flow
+                self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
+                self.rest_minutes = rest
                 self.stop_event.clear()
                 self.cancel_requested = False
                 self.cancel_batch_id = ""
