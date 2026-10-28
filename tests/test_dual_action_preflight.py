@@ -163,6 +163,32 @@ class DualActionBridgeContractTests(unittest.TestCase):
                 server.server_close()
                 listener.join(timeout=5)
 
+    def test_developer_edition_explicitly_rejects_dual_preflight(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            server = build_server(
+                Collector(base / "developer-data", base / "developer-browser"),
+                "dev-token", 0, developer_mode=True, audit_root=base / "audits")
+            listener = threading.Thread(target=server.serve_forever, daemon=True)
+            listener.start()
+            try:
+                body = json.dumps(request()).encode("utf-8")
+                req = urllib.request.Request(
+                    "http://127.0.0.1:" + str(server.server_port)
+                    + "/api/actions/dual-robots/preflight",
+                    data=body,
+                    headers={"Origin": "null", "X-IGC-Bridge-Token": "dev-token",
+                             "Content-Type": "application/json"},
+                    method="POST")
+                with self.assertRaises(urllib.error.HTTPError) as failure:
+                    urllib.request.urlopen(req, timeout=5)
+                self.assertEqual(failure.exception.code, 400)
+                self.assertFalse(list((base / "developer-data").glob("instagram-actions-*.json")))
+            finally:
+                server.shutdown()
+                server.server_close()
+                listener.join(timeout=5)
+
 
 if __name__ == "__main__":
     unittest.main()
