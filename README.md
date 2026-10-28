@@ -8,7 +8,9 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**Note on pending source changes:** the recommended/cautious/custom configurable bulk-scan safety settings (#274 and #275) have been merged **after** v120.70 publication; they are **not** in v120.70's downloadable installer. They require a separately tested FINAL release. Full live account acceptance is pending.
+**v120.71 planned changes (source candidate only):** merged visible per-Instagram-account live scan settings and **two detachable InstaCleaner workspaces/windows for different Instagram accounts**, plus two independently persisted Chrome login windows. The two **automated** Unfollow/Cancel robots deliberately remain serialized; physical live-account identity tests have not yet passed. Official published stable remains v120.70.
+
+**Note on pending source changes:** the recommended/cautious/custom configurable bulk-scan safety settings (#274 and #275) have been merged **after** v120.70 publication; they are **not** in v120.70's downloadable installer. They are staged in the separately tested, conditional v120.71 FINAL candidate (NOT yet published). Full live account acceptance is pending.
 
 
 **v120.70 — official stable GitHub release, published October 27, 2026 (UTC).** [Download official v120.70 and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70) · [successful FINAL publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) · exact tagged commit `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`. Windows public/Developer Setup installers, signed Android public/Developer APKs and standalone Desktop HTML/ZIP are available.

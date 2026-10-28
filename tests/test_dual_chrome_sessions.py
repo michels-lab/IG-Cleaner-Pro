@@ -72,6 +72,24 @@ class DualChromeSessionTests(unittest.TestCase):
                     duo.open_pair(request)
             self.assertEqual(calls,[], "Invalid requests must never launch Chrome.")
 
+    def test_cookie_profiles_are_outside_exportable_robot_data_dir(self):
+        from profile_counts_bridge import Collector, build_server
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            counts = root / "profile-counts-exportable"
+            session = root / "persistent-robot-session"
+            server = build_server(Collector(counts, session), "test-only-token", 0)
+            try:
+                profiles = server.dual_chrome_sessions.root
+                self.assertFalse(profiles.is_relative_to(counts),
+                    "Manual Chrome cookies must not enter exported counters or activity logs.")
+                self.assertEqual(profiles.parent.parent, session.parent,
+                    "Chrome logins must be managed under the browser-session parent.")
+                self.assertNotEqual(profiles, session,
+                    "Separate manual accounts must never use legacy robot cookies.")
+            finally:
+                server.server_close()
+
     def test_failed_second_window_is_not_claimed_as_both_launched(self):
         with TemporaryDirectory() as temp:
             calls=[]

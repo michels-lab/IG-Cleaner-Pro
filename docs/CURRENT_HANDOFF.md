@@ -1,3 +1,9 @@
+## 2026-10-27 — combined dual-workspace + safe settings v120.71 FINAL candidate
+
+- Current published official normal FINAL: [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70); candidate v120.71 is conditionally authorized but NOT published. Rebased on source after safely merging #278 at `2ce50a6`; #274/#275 configurable bulk-reader settings and per-window detachable dual-workspace UI BOTH included. PR #277 was obsolete/conflicting, and must be superseded, never force-merged.
+- Manual two Chrome windows can use separate persistent login directories; **not two simultaneous automated action robots**. Account scope is per app window and backend serial action lease preserved; real Instagram Chrome login and complete list collection require physical acceptance after actual official installer.
+- Exact new SHA Windows installed public/Developer, Android signed public/Developer, Desktop/Android visual UI, SHA256/update gate and non-prerelease publisher must pass BEFORE calling v120.71 released. Do not mutate previous history/ZIP/WAL/protected lists.
+
 ## Current handoff — 2026-10-27, after #275 source merge
 
 - Official published stable: **[v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70)** with 12 assets, publisher run 40555013922 green 5/5. Manifest and one-time authorization reconciled here; the next reserved v120.71 is **not published or authorized yet**.

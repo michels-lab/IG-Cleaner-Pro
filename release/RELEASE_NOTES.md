@@ -1,3 +1,10 @@
+## v120.71 — NORMAL FINAL candidate ONLY (NOT published)
+
+- **Two independent app workspaces:** active Instagram profile stays pinned per detachable Chrome tab/window (owner-bound sessionStorage, shared localStorage history still account_key scoped); use Open as tab / Detach to window. Chromium two-window identity/isolation and bridge token retention passed PR #278; real-owner validation remains outstanding.
+- **Two separate Chrome logins:** local Windows bridge requests two persistent Chrome --new-window instances with independent per-owner/account `--user-data-dir` directories. Manual Instagram login and visible verification are required in both. No session cookie transfer, no credential handling, no use of legacy single action-robot browser state. **Do not mistake this for parallel automatic Unfollow/Cancel workers**: action bots remain serialized and their histories/WAL untouched.
+- **Conservative live-list reader:** account-scoped Recommended/Cautious/Custom editable timings and page sizes, hard 429/challenge cooldown stop, no 250-page false limit, never overwrite complete snapshots with incomplete results.
+- **Release governance:** candidate only until independent fresh exact-commit Windows public+Developer installed QA, Android public+Developer native/signing checks, real Desktop/Android rendered screenshots, SHA-256 publication assets and updater checks succeed; no RC/beta. Public stable remains v120.70 and the owner's real Instagram session acceptance is unverified.
+
 ## v120.70 — Published NORMAL FINAL (2026-10-27)
 
 - **Available now:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published 2026-10-27T18:05:15Z, `prerelease=false`, exact tag `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`, five-of-five mandatory [publisher gates](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) successful and twelve checksum-tracked public/Developer Windows and Android assets.

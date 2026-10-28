@@ -68,13 +68,22 @@ const {chromium}=require('playwright');
   assert.equal(bridgeAttempt.seen[0].token,'a'.repeat(32),
     'Detached window must retain the exact capability token');
   assert.equal(await first.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_first_1234567');
-  // Changing the default global active profile must not change the detached tab.
+  assert.equal(await first.evaluate(()=>igcWindowPinned),true,
+    'Opening a second app workspace must pin the ORIGINAL one too.');
+  // Changing the default global active profile must not change either window.
   await first.evaluate(()=>{
    const p=window.IGC_INSTAGRAM_PROFILES;
    window.localStorage.setItem('igc_multi_profile_active_'+p.owner,'ig_first_1234567');
   });
   await second.reload({waitUntil:'domcontentloaded'});
   assert.equal(await second.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_second_123456');
+  await first.evaluate(()=>{
+   const p=window.IGC_INSTAGRAM_PROFILES;
+   window.localStorage.setItem('igc_multi_profile_active_'+p.owner,'ig_second_123456');
+  });
+  await first.reload({waitUntil:'domcontentloaded'});
+  assert.equal(await first.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),'ig_first_1234567',
+    'Window A must remain first even if B became the global selected workspace.');
   // Every window writes to its *own* prefixed backing storage.
   await first.evaluate(()=>localStorage.setItem('ig_v13_done','["alpha"]'));
   await second.evaluate(()=>localStorage.setItem('ig_v13_done','["beta"]'));
