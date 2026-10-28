@@ -105,7 +105,7 @@
     "checksumsRequired": true,
     "deviceValidationRequiredForAndroidProduction": true,
     "stableGithubReleaseIncludesLatestValidatedAndroidApk": true,
-    "nextRelease": "v120.71",
+    "nextRelease": "v120.72",
     "githubPrerelease": false,
     "minimumPreviousNormalRelease": "v120.29",
     "retiredAutomaticOrVersionSpecificTargets": [
@@ -117,13 +117,13 @@
       "v120.32",
       "v120.33"
     ],
-    "currentStableRelease": "v120.70",
-    "lastPublishedRun": 40555013922,
-    "lastPublishedCommit": "55a9f1d0865c4280d9ef0f9866b51476f8b8c786",
+    "currentStableRelease": "v120.71",
+    "lastPublishedRun": 40608318126,
+    "lastPublishedCommit": "74a91104dd2f2f29c88b8abadbff76a6f3bfd466",
     "genericPublisher": ".github/workflows/release.yml",
     "exactCanonicalLogoSha256": "f913686282731c0a076ec6167989ca05c60c25cea18d51e964343f444284d7a8",
-    "lastPublishedAt": "2026-10-27T18:05:15Z",
-    "lastPublishedReleaseUrl": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70",
+    "lastPublishedAt": "2026-10-28T00:32:34Z",
+    "lastPublishedReleaseUrl": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71",
     "requireDeveloperTwinAssets": true,
     "requireDeveloperAndroidProductionSigning": true,
     "requireDeveloperWindowsIndependentInstallTest": true

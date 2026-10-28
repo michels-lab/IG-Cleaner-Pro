@@ -1,18 +1,18 @@
 # IG Cleaner Pro — Update, Distribution & State Migration Contract
 
-**Published stable: [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70). Next reserved version: v120.71 (not published).** The built-in Windows updater checks the published GitHub stable channel without installing anything automatically; downloading and launching the verified Setup both require explicit owner action. This document reports the published channel, not the candidate asset names in the distribution manifest.
+**Published stable: [v120.71](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71). Next reserved version: v120.72 (not published).** The built-in Windows updater checks the published GitHub stable channel without installing anything automatically; downloading and launching the verified Setup both require explicit owner action. This document reports the published channel, not the candidate asset names in the distribution manifest.
 
 This document defines the safe update path for Desktop/local-Web and Android. It is an engineering contract, not a claim that every delivery channel is already production-ready.
 
 ## Distribution
 
 ### Desktop / local-Web
-The **primary Desktop release artifact is the standalone HTML** declared in `release/distribution-manifest.json`: `IG-Cleaner-Pro-Desktop-v{version}.html` (currently v120.70 in official published releases; v120.71 reserved for a future owner-authorized FINAL publication). Download and open it directly: the original application icon, author portrait and Michel's Lab logo are embedded as data URIs, so no extraction or additional assets folder is needed. The ZIP (`IG-Cleaner-Pro-Desktop-v{version}.zip`) remains an **optional full package** containing the HTML entrypoint and original independent assets. Both belong on the same GitHub release beside the signed Android APK and must be listed in `SHA256SUMS.txt`. A Desktop update must never require uploading the user's Instagram export or browser state.
+The **primary Desktop release artifact is the standalone HTML** declared in `release/distribution-manifest.json`: `IG-Cleaner-Pro-Desktop-v{version}.html` (currently v120.71 in official published releases; v120.72 reserved for a future owner-authorized FINAL publication). Download and open it directly: the original application icon, author portrait and Michel's Lab logo are embedded as data URIs, so no extraction or additional assets folder is needed. The ZIP (`IG-Cleaner-Pro-Desktop-v{version}.zip`) remains an **optional full package** containing the HTML entrypoint and original independent assets. Both belong on the same GitHub release beside the signed Android APK and must be listed in `SHA256SUMS.txt`. A Desktop update must never require uploading the user's Instagram export or browser state.
 
 Before any update that changes persistent state, the user must be able to export a full backup from Vault. Replacing the HTML file must preserve the browser origin when state continuity is expected; opening the app from a different origin, path, or browser profile can create a separate local-storage context.
 
 ### Android
-GitHub Releases distribute the signed stable Android APK directly; read the current stable version from `release/distribution-manifest.json` (currently v120.70 in official published releases; v120.71 reserved for a future owner-authorized FINAL publication). Google Play distribution is separate and requires target-device/update-path validation; publication on GitHub is not Google Play publication.
+GitHub Releases distribute the signed stable Android APK directly; read the current stable version from `release/distribution-manifest.json` (currently v120.71 in official published releases; v120.72 reserved for a future owner-authorized FINAL publication). Google Play distribution is separate and requires target-device/update-path validation; publication on GitHub is not Google Play publication.
 
 Publishing is explicit. CI/build success by itself does not authorize a release. Michel validates the official installed published release rather than branch or Actions preview artifacts. A branch merge alone is not a publication.
 

@@ -1,9 +1,10 @@
-## v120.71 — NORMAL FINAL candidate ONLY (NOT published)
+## v120.71 — Published NORMAL FINAL (2026-10-28 UTC)
 
-- **Two independent app workspaces:** active Instagram profile stays pinned per detachable Chrome tab/window (owner-bound sessionStorage, shared localStorage history still account_key scoped); use Open as tab / Detach to window. Chromium two-window identity/isolation and bridge token retention passed PR #278; real-owner validation remains outstanding.
-- **Two separate Chrome logins:** local Windows bridge requests two persistent Chrome --new-window instances with independent per-owner/account `--user-data-dir` directories. Manual Instagram login and visible verification are required in both. No session cookie transfer, no credential handling, no use of legacy single action-robot browser state. **Do not mistake this for parallel automatic Unfollow/Cancel workers**: action bots remain serialized and their histories/WAL untouched.
-- **Conservative live-list reader:** account-scoped Recommended/Cautious/Custom editable timings and page sizes, hard 429/challenge cooldown stop, no 250-page false limit, never overwrite complete snapshots with incomplete results.
-- **Release governance:** candidate only until independent fresh exact-commit Windows public+Developer installed QA, Android public+Developer native/signing checks, real Desktop/Android rendered screenshots, SHA-256 publication assets and updater checks succeed; no RC/beta. Public stable remains v120.70 and the owner's real Instagram session acceptance is unverified.
+- **Official release:** [v120.71](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71) published at 2026-10-28T00:32:34Z, `prerelease=false`, tag commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`; publisher [run 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) completed all five mandatory gates, delivering 12 SHA-256-tracked assets (Windows public/Developer, Android public/Developer, Desktop standalone HTML/ZIP, updater/metadata).
+- **Two separable Windows/Desktop profiles:** the app supports Open as tab and Detach to window for two different owner-bound Instagram workspaces, both pinned independently across reload. The bridge supports two separate manual Chrome logins with separate persistent account-specific user-data directories, not mixed with exportable robot data.
+- **Bulk read-only controls:** visible Recommended/Cautious/Custom owner-scoped settings for Followers/Following paging and timing, protective pacing floors, challenge/rate-limit stop, and complete-only snapshots. No guarantee of avoiding Meta rate restrictions.
+- **No unverified robot claims:** manual Chrome windows are not two simultaneous relationship-changing robot workers. Unfollow/Cancel remain serialized, WAL/no-replay and protected profiles unchanged. Owner must still validate real dual login, full Instagram lists, and live action results with officially published installer.
+- **Authorization consumed:** `v120.72` reserved only and not authorized or published. No RC or beta.
 
 ## v120.70 — Published NORMAL FINAL (2026-10-27)
 

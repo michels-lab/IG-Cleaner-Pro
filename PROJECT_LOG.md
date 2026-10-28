@@ -1,3 +1,9 @@
+## 2026-10-28 — GRANADA v120.71 NORMAL FINAL published; authorization consumed
+
+- Confirmed official [v120.71 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71): normal non-prerelease, no draft, 12 assets and published UTC 2026-10-28T00:32:34Z from exact merged commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`. Governed publisher [run 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) completed all five jobs SUCCESS including installed Windows public+Developer, signed Android public+Developer co-install, real Desktop/Android rendered Home+About, integrity and updater gating.
+- Features: two detachable owner/workspace-pinned InstaCleaner windows and two persistent **manual** Chrome sessions with separate account-specific browser directories (#278/#279). Seven account-safe bulk relationship scan controls (#274/#275) released. No parallel automatic Unfollow/Cancel, and no claim that the owner's live Instagram logins/counts/actions completed. Prior ZIP, protected, historical snapshots and action WAL untouched.
+- Reconciled manifest current stable v120.71, reserved v120.72 NOT authorized, and consumed v120.71 one-time release request to prevent duplicate publication. Quickstart/receipt recorded and current documents corrected without changing published binaries.
+
 ## 2026-10-27 — GRANADA combined official FINAL candidate v120.71 after #278
 
 - Reconciled stale #277 release-version branch against post-#278 current source without overwriting its detachable per-owner/per-workspace windows or permanent history. The v120.71 candidate includes both saved owner-scoped Instagram live-list controls (#274/#275) and separate manual Chrome session windows (#278), not parallel autonomous action workers. Bumped visible Windows HTML, Android public+Developer version 12071, manifest artifact basenames and one-time governed release request; stable remains v120.70 until real publisher success.
