@@ -128,7 +128,7 @@ const {chromium}=require('playwright');
    }finally{window.fetch=original}
   });
   assert.equal(dualReadOnly.calls.length,4,
-   'Start, identity status, STOP, final status are all explicit local operations');
+   'Start, identity status, STOP, final status are all explicit local operations: '+JSON.stringify(dualReadOnly));
   assert(dualReadOnly.calls.every(c=>c.token==='a'.repeat(32)));
   assert.equal(dualReadOnly.calls[0].body.confirmation,
     'dual-robots:ig_first_1234567:ig_second_123456');
