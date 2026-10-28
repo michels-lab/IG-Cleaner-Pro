@@ -25,6 +25,7 @@ from live_relationship_snapshot import LiveRelationships
 from robot_interlock import ActionSessionBusy
 from dual_chrome_sessions import DualChromeSessions
 from dual_robot_lanes import DualRobotLanes
+from dual_action_preflight import DualActionPreflight
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -721,6 +722,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     # Keep them next to the legacy browser session, never inside data_dir.
     dual_chrome_sessions = DualChromeSessions(collector.session_dir.parent / "account-browser-profiles")
     dual_robot_lanes = (DualRobotLanes(dual_chrome_sessions) if not developer_mode else None)
+    dual_action_preflight = (DualActionPreflight(dual_chrome_sessions, actions)
+                             if not developer_mode else None)
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -795,7 +798,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/dual-robots/start", "/api/actions/dual-robots/stop", "/api/actions/dual-robots/stop-one", "/api/actions/dual-robots/restart-one", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/dual-robots/start", "/api/actions/dual-robots/stop", "/api/actions/dual-robots/stop-one", "/api/actions/dual-robots/restart-one", "/api/actions/dual-robots/preflight", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -883,6 +886,10 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     result = dual_robot_lanes.stop_one(data)
                 elif self.path == "/api/actions/dual-robots/restart-one":
                     result = dual_robot_lanes.restart_one(data)
+                elif self.path == "/api/actions/dual-robots/preflight":
+                    if dual_action_preflight is None:
+                        raise ValueError("Dual account action inspection is not available in Developer Edition.")
+                    result = dual_action_preflight.inspect(data)
                 elif self.path == "/api/actions/live-settings":
                     result = live_relationships.configuration(data)
                 elif self.path == "/api/actions/live-start":
@@ -976,6 +983,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     server.live_relationships = live_relationships
     server.dual_chrome_sessions = dual_chrome_sessions
     server.dual_robot_lanes = dual_robot_lanes
+    server.dual_action_preflight = dual_action_preflight
     # The native host must also stop/await the Developer-only browser worker
     # and action lease before closing the loopback server or app process.
     server.dev_action_tests = dev_action_tests
