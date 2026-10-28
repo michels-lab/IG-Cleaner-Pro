@@ -2963,6 +2963,10 @@ window.IGC_INSTAGRAM_PROFILES={
   if(!key||key===this.active||!this.accounts.some(a=>a.account_key===key)){
    alert('Choose a different registered Instagram profile.');return;
   }
+  if(!igcWindowStorage){
+   alert('Chrome sessionStorage is unavailable. Cannot safely separate two account windows.');
+   return;
+  }
   const hash=new URLSearchParams(String(location.hash||'').replace(/^#/,''));
   hash.set('igc-window-profile',key);
   // The controller token remains in the local FILE fragment, never an IG URL.
@@ -2970,6 +2974,14 @@ window.IGC_INSTAGRAM_PROFILES={
   const features=asWindow?'popup=yes,width=1240,height=880,left=120,top=80':'';
   const opened=window.open(url,'_blank',features);
   if(!opened){alert('Chrome blocked the new tab/window. Allow pop-ups for this local app.');return}
+  // Pin this ORIGINAL window as well. Neither tab may read the shared active
+  // account selector after the other one switches/reloads.
+  igcWindowStorage.setItem(IGC_WINDOW_PROFILE_KEY,JSON.stringify({
+   owner:IGC_INSTAGRAM_OWNER,account:this.active
+  }));
+  igcWindowPinned=true;
+  const mode=document.getElementById('igcWindowProfileMode');
+  if(mode)mode.textContent='WORKSPACE FIXED TO THIS WINDOW';
   try{opened.opener=null}catch(_){}
   const info=document.getElementById('igcDualStatus');
   const item=this.accounts.find(a=>a.account_key===key);
