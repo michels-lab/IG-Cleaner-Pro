@@ -99,8 +99,13 @@ const {chromium}=require('playwright');
   assert.equal(await second.locator('#igcDualSecondary').count(),1);
   // The new two-robot supervisor must send BOTH exact account identities to
   // the local Windows bridge, never falsely enable Unfollow or Cancel.
+  await first.bringToFront();
+  await first.locator('#igcDualSecondary').selectOption('ig_second_123456');
   const dualReadOnly=await first.evaluate(async()=>{
-   const calls=[],original=window.fetch;
+   const calls=[],original=window.fetch,originalConfirm=window.confirm;
+   // Playwright executes this contract inside evaluate; browser modal prompts
+   // are accepted here rather than auto-dismissed as a background tab.
+   window.confirm=()=>true;
    const owner=window.IGC_INSTAGRAM_PROFILES.owner;
    window.fetch=async(url,options)=>{
     const u=String(url);
@@ -125,7 +130,7 @@ const {chromium}=require('playwright');
     const showed=document.getElementById('igcDualRobotStatus')?.textContent||'';
     await window.IGC_INSTAGRAM_PROFILES.stopDualReadOnlyRobotLanes();
     return {calls,showed};
-   }finally{window.fetch=original}
+   }finally{window.fetch=original;window.confirm=originalConfirm}
   });
   assert.equal(dualReadOnly.calls.length,4,
    'Start, identity status, STOP, final status are all explicit local operations: '+JSON.stringify(dualReadOnly));
