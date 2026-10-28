@@ -49,7 +49,12 @@ class DualRobotLaneTests(unittest.TestCase):
                 self.assertTrue(result["two_lanes"])
                 self.assertFalse(result["actions_enabled"], "No Instagram changes in identity-only mode.")
                 self.assertTrue(both.wait(3))
-                state = supervisor.snapshot(OWNER)
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    state = supervisor.snapshot(OWNER)
+                    if {x["state"] for x in state["lanes"]} == {"verified"}:
+                        break
+                    time.sleep(0.01)
                 self.assertEqual({x["state"] for x in state["lanes"]}, {"verified"})
                 self.assertEqual({x["expected_handle"] for x in state["lanes"]},
                                  {"first_person", "second_person"})
