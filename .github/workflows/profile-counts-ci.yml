@@ -93,6 +93,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
       - name: GRANADA cross-process public/Developer action guard and crash recovery
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
+      - name: Owner-scoped action lease and legacy-global compatibility
+        run: python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Bound owner-profile visits with final re-verification and cross-account fail-closed tests
         run: python -m unittest discover -s tests -p 'test_action_owner_probe_bound.py' -v
       - name: GRANADA durable write-ahead click intent and no-replay on power loss
