@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 355,
-  "classified_files_total": 351,
+  "tracked_files_total": 358,
+  "classified_files_total": 354,
   "docs_content_inspected": 87,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -17,8 +17,8 @@
     "document": 82,
     "index": 5,
     "installer_metadata": 1,
-    "source": 45,
-    "test": 86,
+    "source": 46,
+    "test": 88,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "d74e8bfc9f21bc5c7883c9eac9b347e32213714d9d3447015ed47d1904500a49",
+  "inventory_fingerprint": "85ca5726d4f01615e046f488080fd9a0e0871449acef3de5d46c561be7020f57",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,14 +98,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "862ebad6cfa84f92495ca5c99c0c8c881621a8c3"
+      "blob": "a27b7c98b98977f54a4cbed6110c14c414708570"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "d875782f8fda46d9b419b6ffba4acff1fe3a665f"
+      "blob": "98d6055e04ab3dfd573ff385a06ebb5737bb0ac5"
     },
     {
       "path": ".github/workflows/file-governance-audit.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "1a355142982778bf858ec7def06a5b07d4cb139a"
+      "blob": "0997fe351a4b266a635cd09e52c23584430d46d4"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "89b7d01297456d3cab6f95f1d369c53ed7f7ce07"
+      "blob": "5cc23d614c831b2580f219928b8e2c2d87a582ea"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2033,6 +2033,13 @@
       "blob": "56b0927b4a33f58c340734a833c1c84e83066655"
     },
     {
+      "path": "tests/test_dual_chrome_sessions.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "dd7ff5e81c26b10eadd43b562b77f6da3a9b4996"
+    },
+    {
       "path": "tests/test_granada_csv_recovery.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2215,6 +2222,13 @@
       "blob": "31cdf70827b442c3cd9b0107d03af748b6aeae90"
     },
     {
+      "path": "tests/two-workspaces-windows-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "5633d7349827c79dd0970ceb5bf902b56510985e"
+    },
+    {
       "path": "tests/windows-automations-owner-contract.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2299,6 +2313,13 @@
       "blob": "8e4230f19e014ae8661368a5fb2d806881ad47f0"
     },
     {
+      "path": "tools/dual_chrome_sessions.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "485adad518240b38f27cc4bf867f0e8f05824570"
+    },
+    {
       "path": "tools/ig_cleaner_desktop.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2359,7 +2380,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6166c740cb33a995d6d75495f0f84ee87255b979"
+      "blob": "995a792d3cb1e52fc974e915a4fb78b493125f74"
     },
     {
       "path": "tools/profile_counts_instagram.py",

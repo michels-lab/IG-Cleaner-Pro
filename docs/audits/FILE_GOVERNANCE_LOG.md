@@ -546,3 +546,8 @@ Automatic evidence deltas, pending human triage. No deletion authority.
 - All tracked 355; findings 8; inventory d74e8bfc9f21; evidence 187980a041d8. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
 - Finding changes: 1 NEW; 0 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 2 new paths, 0 removed paths, 0 reclassified paths.
 - NEW — BROKEN_RELATIVE_LINK at `release/RELEASE_NOTES.md` (ID 5c362704fd56e07f).
+
+## 2026-10-28 00:04 UTC
+
+- All tracked 358; findings 8; inventory 85ca5726d4f0; evidence 187980a041d8. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
+- Finding changes: 0 NEW; 0 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 3 new paths, 0 removed paths, 0 reclassified paths.
