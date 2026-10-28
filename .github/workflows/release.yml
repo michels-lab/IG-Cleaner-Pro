@@ -11,6 +11,7 @@ permissions:
   contents: write
   actions: read
   deployments: read
+  issues: read
 
 jobs:
   release-request-gate:
