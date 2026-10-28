@@ -40,7 +40,7 @@ class ChromeLaneLease:
             if sys.platform == "win32":
                 import msvcrt
                 if not os.fstat(fd).st_size:
-                    os.write(fd, b"\\0")
+                    os.write(fd, b"\0")
                 os.lseek(fd, 0, os.SEEK_SET)
                 msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
             else:
