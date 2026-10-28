@@ -1,5 +1,14 @@
 # Instagram Cleaner Pro
 
+## Release freeze — owner directive (2026-10-27)
+
+**NO NEW OFFICIAL RELEASES while InstaCleaner remains unfinished, even when CI turns green.** The owner explicitly rejected the premature v120.71 FINAL release with unresolved real-account and dual-worker requirements. The existing v120.71 downloadable assets are historical; **v120.72 is reserved, NOT authorized**. Do not reinterpret the standing "Operación Granada" as permission to publish. Keep developing, testing and reviewing code, but **do not create a release, tag, RC, beta, or app update** before the owner confirms the complete product and explicitly authorizes a new release.
+
+A fail-closed two-stage publisher gate now reads `release/release-readiness.json` and refuses publication unless the hold is explicitly lifted, the mandatory real-world acceptance checks are completed, all listed GitHub blocking issues are CLOSED and can be verified live, and an explicit owner release-tag-specific approval and evidence are recorded. Enforced in `.github/workflows/release.yml` before build and before `gh release create`. See `tests/test_release_readiness_gate.py`.
+
+Open P0 work includes #164 (real Windows Unfollow/Cancel and owner Instagram acceptance), #172 (stale batches, Cancel/Unfollow regressions), #176 (genuine independently operated dual robot lanes) and #173 (Developer twins / owner validation), plus the named non-P0 acceptance issues listed in the gate. Do not mark these complete solely on mocked CI results.
+
+
 ## Operación Granada — auditoría de aplicación y plugins (2026-10-21)
 
 [Ver auditoría y bitácora propias de este producto](docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md): evidencia de GitHub Actions, conectores ChatGPT aplicables, servicios existentes, costo cero adicional por defecto, pendientes reales y separación estricta de los demás productos. La documentación no prueba QA físico ni publica una versión.
