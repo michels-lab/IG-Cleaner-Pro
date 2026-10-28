@@ -3001,7 +3001,7 @@ window.IGC_INSTAGRAM_PROFILES={
    '? You must log into the correct Instagram account in EACH browser. No Unfollow or Cancel Pending robot will run in these windows.'))return;
   const notice=document.getElementById('igcDualStatus');
   try{
-   const result=await requestAction('open-dual-chrome',{
+   const result=await window.igcLocalActionRequest('open-dual-chrome',{
     owner:IGC_INSTAGRAM_OWNER,
     primary:{account:this.active,expected_handle:first.username.toLowerCase()},
     secondary:{account:key,expected_handle:second.username.toLowerCase()},
@@ -3028,7 +3028,7 @@ window.IGC_INSTAGRAM_PROFILES={
      ' and @'+b.username+'? These robots VERIFY login only; they NEVER Unfollow or Cancel. '+
      'Close any other manually opened Chrome windows for these profiles first.'))return;
   try{
-   const result=await requestAction('dual-robots/start',{
+   const result=await window.igcLocalActionRequest('dual-robots/start',{
     owner:IGC_INSTAGRAM_OWNER,
     primary:{account:this.active,expected_handle:a.username.toLowerCase()},
     secondary:{account:key,expected_handle:b.username.toLowerCase()},
@@ -3048,7 +3048,7 @@ window.IGC_INSTAGRAM_PROFILES={
   const info=document.getElementById('igcDualRobotStatus');
   if(!info||!IGC_INSTAGRAM_OWNER||IGC_INSTAGRAM_OWNER==='signed_out')return;
   try{
-   const result=await requestAction('dual-robots/status?owner='+encodeURIComponent(IGC_INSTAGRAM_OWNER));
+   const result=await window.igcLocalActionRequest('dual-robots/status?owner='+encodeURIComponent(IGC_INSTAGRAM_OWNER));
    if(result?.owner!==IGC_INSTAGRAM_OWNER||result?.actions_enabled!==false||
       !Array.isArray(result?.lanes))throw Error('The robot lane status is not owner-verified.');
    info.textContent=result.lanes.length
@@ -3064,7 +3064,7 @@ window.IGC_INSTAGRAM_PROFILES={
   if(IGC_INSTAGRAM_OWNER==='signed_out')return;
   const info=document.getElementById('igcDualRobotStatus');
   try{
-   const result=await requestAction('dual-robots/stop',{
+   const result=await window.igcLocalActionRequest('dual-robots/stop',{
     owner:IGC_INSTAGRAM_OWNER,
     confirmation:'dual-robots-stop:'+IGC_INSTAGRAM_OWNER
    });
@@ -15528,6 +15528,9 @@ async function requestAction(endpoint,body){
  }
  return value;
 }
+// The account switcher is a separate script module. Expose only this existing
+// token-scoped local action transport; localhost validates its capability.
+window.igcLocalActionRequest=requestAction;
 function actionOwner(){
  const p=window.IGC_INSTAGRAM_PROFILES||{};
  return {owner:String(p.owner||""),account:String(p.active||"")};
