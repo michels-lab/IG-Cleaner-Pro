@@ -887,6 +887,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                 elif self.path == "/api/actions/dual-robots/restart-one":
                     result = dual_robot_lanes.restart_one(data)
                 elif self.path == "/api/actions/dual-robots/preflight":
+                    if dual_action_preflight is None:
+                        raise ValueError("Dual account action inspection is not available in Developer Edition.")
                     result = dual_action_preflight.inspect(data)
                 elif self.path == "/api/actions/live-settings":
                     result = live_relationships.configuration(data)
