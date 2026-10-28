@@ -212,6 +212,48 @@ class DualRobotLanes:
                 lane["stop"].set()
             return self._snapshot_locked()
 
+    def stop_one(self, data):
+        """Stop one account lane without interrupting the other account."""
+        if not isinstance(data, dict):
+            raise ValueError("Invalid Chrome lane stop request.")
+        owner, account = data.get("owner"), data.get("account")
+        if (not isinstance(owner, str) or not APP_OWNER.fullmatch(owner)
+                or not isinstance(account, str)
+                or data.get("confirmation") != "dual-robot-stop:" + owner + ":" + account):
+            raise ValueError("Confirm the exact owner and Instagram workspace to stop.")
+        with self.lock:
+            if owner != self.owner or account not in self.lanes:
+                raise ValueError("Cannot stop another user's or unknown Instagram robot lane.")
+            self.lanes[account]["stop"].set()
+            return self._snapshot_locked()
+
+    def restart_one(self, data):
+        """Explicitly restart a single stopped lane; never retry challenges automatically."""
+        if not isinstance(data, dict):
+            raise ValueError("Invalid Chrome lane restart request.")
+        owner, account = data.get("owner"), data.get("account")
+        if (not isinstance(owner, str) or not APP_OWNER.fullmatch(owner)
+                or not isinstance(account, str)
+                or data.get("confirmation") != "dual-robot-restart:" + owner + ":" + account):
+            raise ValueError("Confirm the exact owner and workspace before restarting.")
+        with self.lock:
+            if owner != self.owner or account not in self.lanes:
+                raise ValueError("Cannot restart another user's or unknown Instagram robot lane.")
+            lane = self.lanes[account]
+            if lane["thread"] and lane["thread"].is_alive():
+                raise ValueError("The named Chrome lane is still running; stop it first.")
+            lane["stop"] = threading.Event()
+            lane["verified"] = False
+            lane["state"] = "starting"
+            lane["message"] = "Owner requested a new read-only identity check."
+            lane["updated_at"] = time.time()
+            thread = threading.Thread(
+                target=self._run_guarded, args=(account,), daemon=True,
+                name="igc-readonly-robot-" + account[:20])
+            lane["thread"] = thread
+            thread.start()
+            return self._snapshot_locked()
+
     def shutdown(self):
         with self.lock:
             lanes = list(self.lanes.values())
