@@ -16,6 +16,8 @@ on:
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
+      - 'tools/dual_action_preflight.py'
+      - 'tests/test_dual_action_preflight.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -82,6 +84,8 @@ on:
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
+      - 'tools/dual_action_preflight.py'
+      - 'tests/test_dual_action_preflight.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -210,6 +214,11 @@ jobs:
           python -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
           python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
+      - name: Exact two-account action preflight uses canonical journals without clicks
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_dual_action_preflight.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Two-account action preflight safety failed; refuse Windows Setup.' }
       - name: Bounded owner-navigation and wrong-session regression (offline)
         shell: pwsh
         run: |
