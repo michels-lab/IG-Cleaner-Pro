@@ -125,6 +125,52 @@ class DualRobotLaneTests(unittest.TestCase):
             finally:
                 supervisor.shutdown()
 
+    def test_stop_one_then_restart_one_does_not_interrupt_other_lane(self):
+        with tempfile.TemporaryDirectory() as temp:
+            times = {}
+            second_running = threading.Event()
+            def runner(account, handle, folder, stopped):
+                times[account] = times.get(account, 0) + 1
+                if account == PAIR["secondary"]["account"]:
+                    second_running.set()
+                stopped.wait(3)
+            supervisor = DualRobotLanes(DualChromeSessions(Path(temp)), runner=runner)
+            first, second = PAIR["primary"]["account"], PAIR["secondary"]["account"]
+            try:
+                supervisor.start_pair(dict(PAIR))
+                self.assertTrue(second_running.wait(3))
+                with self.assertRaisesRegex(ValueError, "Confirm the exact"):
+                    supervisor.stop_one({"owner": OWNER, "account": first})
+                with self.assertRaisesRegex(ValueError, "another user's"):
+                    supervisor.stop_one({"owner": "u_other_42", "account": first,
+                                         "confirmation": "dual-robot-stop:u_other_42:" + first})
+                supervisor.stop_one({"owner": OWNER, "account": first,
+                                     "confirmation": "dual-robot-stop:" + OWNER + ":" + first})
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    lanes = {x["account"]: x for x in supervisor.snapshot(OWNER)["lanes"]}
+                    if not lanes[first]["running"]:
+                        break
+                    time.sleep(0.01)
+                self.assertFalse(lanes[first]["running"])
+                self.assertTrue(lanes[second]["running"],
+                                "Stopping first must not interrupt second.")
+                with self.assertRaisesRegex(ValueError, "Confirm the exact"):
+                    supervisor.restart_one({"owner": OWNER, "account": first})
+                supervisor.restart_one({"owner": OWNER, "account": first,
+                                        "confirmation": "dual-robot-restart:" + OWNER + ":" + first})
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline and times.get(first, 0) < 2:
+                    time.sleep(0.01)
+                self.assertEqual(times.get(first), 2)
+                self.assertEqual(times.get(second), 1,
+                                 "Never restart or duplicate other-account worker.")
+                lanes = {x["account"]: x for x in supervisor.snapshot(OWNER)["lanes"]}
+                self.assertTrue(lanes[second]["running"])
+                self.assertFalse(supervisor.snapshot(OWNER)["actions_enabled"])
+            finally:
+                supervisor.shutdown()
+
     def test_stop_requires_exact_owner_consent_and_is_independent_of_mutation(self):
         with tempfile.TemporaryDirectory() as temp:
             supervisor = DualRobotLanes(DualChromeSessions(Path(temp)),
