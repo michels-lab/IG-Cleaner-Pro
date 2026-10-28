@@ -8,16 +8,15 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.71 planned changes (source candidate only):** merged visible per-Instagram-account live scan settings and **two detachable InstaCleaner workspaces/windows for different Instagram accounts**, plus two independently persisted Chrome login windows. The two **automated** Unfollow/Cancel robots deliberately remain serialized; physical live-account identity tests have not yet passed. Official published stable remains v120.70.
+**v120.71 — official stable GitHub release, published October 28, 2026 (UTC).** [Download official v120.71 and 12 SHA-256-tracked assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71) · [successful FINAL publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) · exact tagged commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`. Installed Windows public/Developer Setups and production-signed Android public/Developer APKs passed required official release gates.
 
-**Note on pending source changes:** the recommended/cautious/custom configurable bulk-scan safety settings (#274 and #275) have been merged **after** v120.70 publication; they are **not** in v120.70's downloadable installer. They are staged in the separately tested, conditional v120.71 FINAL candidate (NOT yet published). Full live account acceptance is pending.
+**New in v120.71:** Windows/Desktop has **two independently pinned InstaCleaner account tabs/windows** (open in tab / detach to window) and can request **two isolated persistent Chrome windows** for manual login to different Instagram accounts. Each owner/account Chrome login uses a different user-data folder, separate from exported robot data. The read-only Followers/Following bulk scanner offers owner-bound Recomendado/Más pausado/Personalizado safety controls and mandatory cooldown. **This is NOT two concurrent automated Unfollow/Cancel robots**: relationship-changing workers remain serial, and complete results with the owner's actual Instagram logins still need physical acceptance.
 
+**Current published stable: v120.71. Next reserved version: v120.72, not published.**
 
-**v120.70 — official stable GitHub release, published October 27, 2026 (UTC).** [Download official v120.70 and 12 SHA-256 assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70) · [successful FINAL publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40555013922) · exact tagged commit `55a9f1d0865c4280d9ef0f9866b51476f8b8c786`. Windows public/Developer Setup installers, signed Android public/Developer APKs and standalone Desktop HTML/ZIP are available.
+v120.72 is **not authorized** for publication. Only a newly gated normal FINAL may be released after exact-source Windows/Android install, production signing, visual, SHA-256 and updater checks. No RC or beta.
 
-**Current published stable: v120.70. Next reserved version: v120.71, not published.**
-
-v120.71 is **not authorized** for publication. Only the next separately authorized normal FINAL may be released, after exact-source installed Windows/Android, visual, production-signing, checksum and updater-feed gates. No RC or beta.
+**Previous official release:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published October 27, 2026 (UTC), official publisher 40555013922.
 
 **New in v120.70 (Windows):** **Automations → Verify live Followers and Following** reads both lists using bulk same-origin authenticated Instagram JSON pages, **not individual target profile visits**, without a ZIP. Compared account identities use numeric Instagram IDs to handle username renames. Corrects the **real user's v120.69 250-page failure** with up to 200 requested members per JSON page, a 1500-page/100k-member bound, and fail-closed incomplete results. No automatic Unfollow, no cookie export, and no overwriting prior complete historical snapshots.
 

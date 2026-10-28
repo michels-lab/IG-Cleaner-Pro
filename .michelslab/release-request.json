@@ -1,12 +1,12 @@
 {
   "version": "120.71",
   "tag": "v120.71",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner's standing Operacion Granada condition: publish ONLY a normal official FINAL stable release after exact-source installed public+Developer Windows, production-signed Android public+Developer co-install, rendered UI, SHA-256 and updater-feed gates all succeed; no RC, beta or prerelease.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.70",
   "owner_acceptance_note": "Operación Granada NORMAL FINAL v120.71 candidate: the merged #274/#275 visible account-scoped Instagram Followers/Following bulk-read timing/paging controls and #278 two detachable InstaCleaner tabs/windows with per-window owner/workspace pinning and two separate persistent manual Chrome logins. All 6 exact-head PR #278 CI workflows succeeded including Chromium two-window isolation and installed Windows source QA. This is NOT two concurrent relationship-changing Chrome robots: Unfollow/Cancel action WAL and cross-process leases remain serialized and fail-closed. Physical owner's two real Instagram signed-in sessions and complete full-list endpoint acceptance are NOT validated. Publish ONLY after new exact-commit production-signed Android public+Developer, Windows public+Developer installs, real rendered Desktop+Android screens, SHA256 assets and updater gates pass. Do not claim no Instagram restriction risk; maintain protective cooldown and preserves owner history.",
   "requested_at": "2026-10-27",
@@ -24,5 +24,11 @@
     "asset_count": 12,
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70"
   },
-  "release_note": "GRANADA v120.71: owner-configurable Recommended/Cautious/Custom safe read-only Instagram bulk Followers/Following list scan settings, with owner/workspace validation and conservative safety floors; two simultaneous detachable Windows/Desktop workspaces for different accounts with owner-bound sessionStorage identity and two separate Chrome windows using durable independent user-data-dir, manually signed into each. Existing Unfollow/Cancel Chrome action bots remain SERIAL for security; verified dual-account independent robot actions not enabled. Preserve histories, protected lists, WAL, imported ZIP, last snapshots, published update paths; pass all mandatory FINAL gates; real owner Instagram acceptance pending."
+  "release_note": "GRANADA v120.71: owner-configurable Recommended/Cautious/Custom safe read-only Instagram bulk Followers/Following list scan settings, with owner/workspace validation and conservative safety floors; two simultaneous detachable Windows/Desktop workspaces for different accounts with owner-bound sessionStorage identity and two separate Chrome windows using durable independent user-data-dir, manually signed into each. Existing Unfollow/Cancel Chrome action bots remain SERIAL for security; verified dual-account independent robot actions not enabled. Preserve histories, protected lists, WAL, imported ZIP, last snapshots, published update paths; pass all mandatory FINAL gates; real owner Instagram acceptance pending.",
+  "published_run": 40608318126,
+  "published_commit": "74a91104dd2f2f29c88b8abadbff76a6f3bfd466",
+  "published_at": "2026-10-28T00:32:34Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71",
+  "published_asset_count": 12,
+  "post_publication_note": "v120.71 normal FINAL successfully published after official publisher 5/5 gates and 12 assets. Dual detachable InstaCleaner workspaces and isolated manual Chrome login windows ship in Windows app. Two simultaneous automatic relationship-changing robots are intentionally NOT enabled; owner real Instagram two-login and complete list scan acceptance remain unverified. Previous authorization consumed; v120.72 NOT authorized."
 }

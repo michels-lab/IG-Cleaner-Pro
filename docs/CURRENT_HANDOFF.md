@@ -1,3 +1,9 @@
+## 2026-10-28 — v120.71 official FINAL, verified and current
+
+- Published release: [v120.71](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71) (12 assets, `prerelease=false`, exact tagged commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`). [Governed publisher 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) passed 5/5 required jobs. `v120.72` is reserved only, NOT authorized for publication.
+- New: visible configurable safe bulk Followers/Following settings, two independently pinned InstaCleaner Chrome tabs/windows, two separately persisted manual Chrome login windows under distinct per-owner/account directories outside exportable robot history. **Still NOT two simultaneous autonomous Unfollow/Cancel robots**; manual Chrome identity is not verified by backend and physical-owner Instagram acceptance remains open. No actual owner Instagram secrets accessed in CI.
+- Records updated in release manifest, release request, README, sync README, release notes, migration guide and permanent PROJECT_LOG. Older sections below are chronological historical context.
+
 ## 2026-10-27 — combined dual-workspace + safe settings v120.71 FINAL candidate
 
 - Current published official normal FINAL: [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70); candidate v120.71 is conditionally authorized but NOT published. Rebased on source after safely merging #278 at `2ce50a6`; #274/#275 configurable bulk-reader settings and per-window detachable dual-workspace UI BOTH included. PR #277 was obsolete/conflicting, and must be superseded, never force-merged.
