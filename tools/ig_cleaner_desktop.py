@@ -142,6 +142,11 @@ def stop_safely(server) -> None:
         developer_actions.stop_event.set()
     if developer_probe is not None:
         developer_probe.stop()
+    # Stop/close both independently supervised Chrome contexts before exiting.
+    # An identity-only robot cannot leave an untracked background browser.
+    dual_lanes = getattr(server, "dual_robot_lanes", None)
+    if dual_lanes is not None:
+        dual_lanes.shutdown()
     server.collector.stop()
     jobs = [actions.worker, server.collector.worker]
     if live_relationships is not None:
