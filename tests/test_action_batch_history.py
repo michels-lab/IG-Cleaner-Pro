@@ -211,7 +211,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
         # a mock whose start() NEVER invokes the worker's finally block.
         # Mock the OS admission lease here; actual Windows/Linux process
         # locking and release are validated in test_robot_interlock.py.
-        lease_patcher = patch("profile_actions.ActionLease")
+        lease_patcher = patch("profile_actions.ScopedActionLease")
         lease_patcher.start()
         self.addCleanup(lease_patcher.stop)
 
