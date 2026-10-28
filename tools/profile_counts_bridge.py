@@ -23,6 +23,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
 from profile_actions import ActionRobot, ProtectedBatchCollision
 from live_relationship_snapshot import LiveRelationships
 from robot_interlock import ActionSessionBusy
+from dual_chrome_sessions import DualChromeSessions
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -715,6 +716,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     collector.actions = actions
     live_relationships = LiveRelationships(collector, actions, collector.data_dir, collector.session_dir)
     collector.live_relationships = live_relationships
+    dual_chrome_sessions = DualChromeSessions(collector.data_dir)
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -781,7 +783,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -859,6 +861,8 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                         result = updater.install()
                     else:
                         raise ValueError("Unknown update action.")
+                elif self.path == "/api/actions/open-dual-chrome":
+                    result = dual_chrome_sessions.open_pair(data)
                 elif self.path == "/api/actions/live-settings":
                     result = live_relationships.configuration(data)
                 elif self.path == "/api/actions/live-start":
