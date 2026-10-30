@@ -95,6 +95,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
       - name: Verify native two-account panel injects only into Windows and never auto-clicks
         run: python3 -m unittest discover -s tests -p 'test_dual_action_windows_ui.py' -v
+      - name: Verify crash-safe two-scope coordinator keeps legacy global lock reserved
+        run: python3 -m unittest discover -s tests -p 'test_dual_action_coordinator.py' -v
       - name: Verify owner-scoped action leases and rejected-start account integrity
         run: python3 -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Verify native Windows Setup update feed, SHA-256, cancellation, backups and loopback owner consent
