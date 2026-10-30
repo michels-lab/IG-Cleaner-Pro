@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "5aa6ed0ebea42723a0cfa7c4c1599c04a631ab0edc99f169df91d1ff68f6aafe",
+  "inventory_fingerprint": "7e09b85e7a6c60ca56d9dbb1c6d4a991b84b33ff263d3feb2c7988656561277b",
   "evidence_fingerprint": "0f77454a2636e02103c43131e4d64486e068117b0ce53e57f8d5e7ff8bd7d660",
   "files": [
     {
@@ -1366,7 +1366,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "371675fe87951e8f7c04d54067afc0b4b6239cc9"
+      "blob": "3bf0b93a97318f10eab9197f7a2fe755b26729d1"
     },
     {
       "path": "docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md",
@@ -1765,7 +1765,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "5ebf69ef93eb7b2d01e5950da1b916d8843a944e"
+      "blob": "3c15abc3c56daf3e4dc2e585ad5617f13c38498a"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2108,14 +2108,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bc419c9a0d1b1a1d53605650f706a8026cf00f14"
+      "blob": "fec1902143f867ea1a73ae300d19f8d66d3306d0"
     },
     {
       "path": "tests/test_dual_action_workspaces.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6ea8e1fed26a7829ee039aaa2cae72f971788800"
+      "blob": "65b339046ebcdc51c40681dd6cdea3f79afc34ee"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2430,14 +2430,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6b907e92e0cc7b422e131a561fc7494f2d3bb9ea"
+      "blob": "dd766a26de0af04b4c333e734b2f8c37558b01e7"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8baaa49c7171c5f65c3e9c4072802d080a4b7df4"
+      "blob": "b059701e090037ee8d58b281bf53688d72ea86ed"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -2500,7 +2500,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c4a39cd866dbac84f4103a3c23a3b5f4e7a53241"
+      "blob": "509e7cc256591b904c06d4f67622dba2565b5425"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2514,7 +2514,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "17766f7429c64a300d453bbdce053ad5a9bd0fdb"
+      "blob": "a444f884c247377747917cc7ea15224c8431b03c"
     },
     {
       "path": "tools/profile_counts_instagram.py",
