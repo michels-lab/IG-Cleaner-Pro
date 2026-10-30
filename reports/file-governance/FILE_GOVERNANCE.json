@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 371,
-  "classified_files_total": 367,
-  "docs_content_inspected": 91,
+  "tracked_files_total": 374,
+  "classified_files_total": 370,
+  "docs_content_inspected": 92,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 86,
+    "document": 87,
     "index": 5,
     "installer_metadata": 1,
-    "source": 50,
-    "test": 92,
+    "source": 51,
+    "test": 93,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9aa48fdf7a66606d6b2e01ba3143f51207e998b29dd295f0febec71d123357e0",
-  "evidence_fingerprint": "ee33d5dbabc635639528c952888bc785c87093903d5deb82a1b2f8f935746ad6",
+  "inventory_fingerprint": "086ed027c154b74af9ebe1502483f4840ab069b1c648079b9981b501c70152e5",
+  "evidence_fingerprint": "90a4d383746ea58e853846ff8d7d5a8acbccd287277ff603d4c274eadef2bbc1",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "38053a95a122483d3f63a902b9950e7f7414a8b8"
+      "blob": "e2fc38612080f119e75788d961f6745718411555"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -120,14 +120,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a43ea4ff0138ddeca3bef060cb84072aea4afecc"
+      "blob": "512fc1f7a487b62565b409a9bfac33bb52592190"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "d29153870d96cad774f21290b8239c3d6eb156b5"
+      "blob": "8c1700769734d004879756cc05b07a7f71335a74"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1229,6 +1229,13 @@
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
     },
     {
+      "path": "docs/GRANADA_DUAL_ACTION_CHROME_WORKSPACES_2026-10-30.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "b99b9184e915919c2dec40ea41f9a0a116b2ecd1"
+    },
+    {
       "path": "docs/GRANADA_DUAL_ACTION_OFFLINE_PREFLIGHT_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2083,6 +2090,13 @@
       "blob": "378f3d6d6ed26ad43c6302869bd82be29539aa43"
     },
     {
+      "path": "tests/test_dual_action_workspaces.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6ea8e1fed26a7829ee039aaa2cae72f971788800"
+    },
+    {
       "path": "tests/test_dual_chrome_sessions.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2391,6 +2405,13 @@
       "blob": "0207bf1990a267329cbdccbceb3631cf53f8db22"
     },
     {
+      "path": "tools/dual_action_workspaces.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "8baaa49c7171c5f65c3e9c4072802d080a4b7df4"
+    },
+    {
       "path": "tools/dual_chrome_sessions.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2409,7 +2430,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "81d5c05bef6373123714845caf5996468a12f591"
+      "blob": "251db512f5a1eb8a81e8713ca1259a32ac17d59c"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -2451,7 +2472,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9fb580945a572568aac0b7bd8b0c8f36773b6e49"
+      "blob": "c4a39cd866dbac84f4103a3c23a3b5f4e7a53241"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2465,7 +2486,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4d55307cf29b0730a7e437c007cc01fcb80ef825"
+      "blob": "17766f7429c64a300d453bbdce053ad5a9bd0fdb"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2675,11 +2696,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "d1507d0403233976",
+      "id": "cadecb61ed3b8f4c",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py",
+      "observation": "16 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
