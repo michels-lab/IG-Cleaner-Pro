@@ -19,7 +19,7 @@ class DualActionWindowsPanelTests(unittest.TestCase):
             result = native.read_bytes()
             self.assertIn(b"igcDualActionWorkspacePanel", result)
             self.assertIn(b"igcDawConfigure", result)
-            self.assertEqual(result.count(b"igcDualActionWorkspacePanel"), 3)
+            self.assertEqual(result.count(b"window.__igcDualActionPanelLoaded=true"), 1)
             self.assertTrue(result.endswith(b"</body></html>"))
             self.assertEqual(source.read_bytes(), original)
             modified = native.stat().st_mtime_ns
