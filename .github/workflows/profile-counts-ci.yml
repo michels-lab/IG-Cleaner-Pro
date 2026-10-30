@@ -95,6 +95,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
       - name: Two independent Chrome action workspaces and no concurrent relationship actions
         run: python -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
+      - name: Two scoped action lease coordinator holds canonical global lock across both workers
+        run: python -m unittest discover -s tests -p 'test_dual_action_coordinator.py' -v
       - name: Owner-scoped action lease and legacy-global compatibility
         run: python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Bound owner-profile visits with final re-verification and cross-account fail-closed tests
