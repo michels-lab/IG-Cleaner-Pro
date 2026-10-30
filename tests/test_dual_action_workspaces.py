@@ -218,8 +218,12 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                 "confirmation": "action-workspace-review:" + OWNER + ":" + A + ":old.target"})
             self.assertEqual(value["relationship_action"], False)
             args = opened.call_args.args[0]
-            self.assertIn("--user-data-dir=" + str(self.sessions.directory(OWNER, A)), args)
-            self.assertNotIn("--user-data-dir=" + str(self.sessions.directory(OWNER, B)), args)
+            # Windows can expand an 8.3 temp path (RUNNER~1) when the
+            # robot resolves its Chrome directory. Compare canonical paths.
+            chosen = next(a.split("=", 1)[1] for a in args
+                          if a.startswith("--user-data-dir="))
+            self.assertEqual(Path(chosen).resolve(), self.sessions.directory(OWNER, A).resolve())
+            self.assertNotEqual(Path(chosen).resolve(), self.sessions.directory(OWNER, B).resolve())
             self.assertIn("https://www.instagram.com/old.target/", args)
             opened.assert_called_once()
 
