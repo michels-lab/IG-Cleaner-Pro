@@ -1662,7 +1662,15 @@ from robot_interlock import ActionLease, ScopedActionLease
 from chrome_lane_interlock import ChromeLaneLease, ChromeLaneBusy
 
 class ActionRobot:
-    def __init__(self, collector, data_dir: Path, session_dir: Path):
+    def __init__(self, collector, data_dir: Path, session_dir: Path, *,
+                 lease_factory=None):
+        # Default keeps the exact legacy GLOBAL + scoped OS admission contract.
+        # A non-default factory is internal-only; production callers must NOT
+        # activate concurrent relationship changes until the complete
+        # owner/WAL/Chrome cross-worker acceptance contract is proven.
+        if lease_factory is not None and not callable(lease_factory):
+            raise TypeError("Action lease factory must be a callable.")
+        self._lease_factory = lease_factory or ScopedActionLease
         self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
@@ -2572,7 +2580,7 @@ class ActionRobot:
                 raise ValueError("Review retry requires separate exact-target consent.")
         # Preserve the legacy global WAL barrier while adding the exact
         # per-owner/workspace lock. No parallel relationship clicks yet.
-        lease = ScopedActionLease(self.data_dir, owner, account).acquire()
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
         started = False
         try:
             with self.collector.browser_admission, self.lock:
