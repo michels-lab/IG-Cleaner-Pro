@@ -26,6 +26,7 @@ from robot_interlock import ActionSessionBusy
 from dual_chrome_sessions import DualChromeSessions
 from dual_robot_lanes import DualRobotLanes
 from dual_action_preflight import DualActionPreflight
+from dual_action_workspaces import DualActionWorkspaces
 
 from profile_counts_robot import collect_visible_counts, iso_now, read_results, save_results, valid_username, valid_saved_measurement
 from profile_counts_audit import (audit_cycle_path, dated_history_path, new_cycle,
@@ -724,6 +725,9 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     dual_robot_lanes = (DualRobotLanes(dual_chrome_sessions) if not developer_mode else None)
     dual_action_preflight = (DualActionPreflight(dual_chrome_sessions, actions)
                              if not developer_mode else None)
+    dual_action_workspaces = (DualActionWorkspaces(
+        dual_chrome_sessions, collector, collector.data_dir, actions)
+        if not developer_mode else None)
     class Handler(BaseHTTPRequestHandler):
         def _header(self, code, content_type="application/json"):
             self.send_response(code)
@@ -785,6 +789,13 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     self._send(200, dual_robot_lanes.snapshot(owner))
                 except ValueError as exc:
                     self._send(400, {"error": str(exc)})
+            elif self.path.startswith("/api/actions/dual-action-workspaces/status?") and not developer_mode:
+                from urllib.parse import urlsplit, parse_qs
+                owner = parse_qs(urlsplit(self.path).query).get("owner", [""])[0]
+                try:
+                    self._send(200, dual_action_workspaces.status(owner))
+                except ValueError as exc:
+                    self._send(400, {"error": str(exc)})
             elif self.path == "/api/developer/live-status" and developer_mode:
                 self._send(200, live_probe.snapshot())
             elif self.path == "/api/developer/action-status" and developer_mode:
@@ -798,7 +809,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         def do_POST(self):
             if not self._authorized():
                 return
-            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/dual-robots/start", "/api/actions/dual-robots/stop", "/api/actions/dual-robots/stop-one", "/api/actions/dual-robots/restart-one", "/api/actions/dual-robots/preflight", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
+            if self.path not in ("/api/start", "/api/load", "/api/stop", "/api/resume", "/api/auto", "/api/queue/init", "/api/queue/append", "/api/continue", "/api/config", "/api/actions/start", "/api/actions/history", "/api/actions/pause", "/api/actions/cancel-batch", "/api/actions/continue", "/api/actions/protect", "/api/actions/skip", "/api/actions/review-batch", "/api/actions/approve-batch", "/api/actions/defer-protected-batch", "/api/actions/replan-batch", "/api/actions/new-batch", "/api/actions/deferred-batches", "/api/actions/recheck-batch", "/api/actions/recheck-history", "/api/actions/history-recheck-status", "/api/actions/open-profile", "/api/actions/open-dual-chrome", "/api/actions/dual-robots/start", "/api/actions/dual-robots/stop", "/api/actions/dual-robots/stop-one", "/api/actions/dual-robots/restart-one", "/api/actions/dual-robots/preflight", "/api/actions/dual-action-workspaces/configure", "/api/actions/dual-action-workspaces/start-one", "/api/actions/dual-action-workspaces/pause-one", "/api/actions/live-start", "/api/actions/live-stop", "/api/actions/live-results", "/api/developer/audit", "/api/developer/live-start", "/api/developer/live-stop", "/api/developer/action-start", "/api/developer/action-stop", "/api/update/check", "/api/update/download", "/api/update/cancel", "/api/update/install"):
                 self._send(404, {"error": "Ruta desconocida."})
                 return
             try:
@@ -890,6 +901,18 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
                     if dual_action_preflight is None:
                         raise ValueError("Dual account action inspection is not available in Developer Edition.")
                     result = dual_action_preflight.inspect(data)
+                elif self.path == "/api/actions/dual-action-workspaces/configure":
+                    if dual_action_workspaces is None:
+                        raise ValueError("Dual action workspaces are disabled in Developer Edition.")
+                    result = dual_action_workspaces.configure(data)
+                elif self.path == "/api/actions/dual-action-workspaces/start-one":
+                    if dual_action_workspaces is None:
+                        raise ValueError("Dual action workspaces are disabled in Developer Edition.")
+                    result = dual_action_workspaces.start_one(data)
+                elif self.path == "/api/actions/dual-action-workspaces/pause-one":
+                    if dual_action_workspaces is None:
+                        raise ValueError("Dual action workspaces are disabled in Developer Edition.")
+                    result = dual_action_workspaces.pause_one(data)
                 elif self.path == "/api/actions/live-settings":
                     result = live_relationships.configuration(data)
                 elif self.path == "/api/actions/live-start":
@@ -984,6 +1007,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     server.dual_chrome_sessions = dual_chrome_sessions
     server.dual_robot_lanes = dual_robot_lanes
     server.dual_action_preflight = dual_action_preflight
+    server.dual_action_workspaces = dual_action_workspaces
     # The native host must also stop/await the Developer-only browser worker
     # and action lease before closing the loopback server or app process.
     server.dev_action_tests = dev_action_tests
