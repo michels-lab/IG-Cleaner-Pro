@@ -50,14 +50,19 @@ class SharedGlobalActionCohortTests(unittest.TestCase):
                 cohort.lease(root, "ownerA", "account1").acquire()
             with self.assertRaises(ActionSessionBusy):
                 first.acquire()
-            second = cohort.lease(root, "ownerB", "account1").acquire()
+            with self.assertRaisesRegex(ActionSessionBusy, "same app owner"):
+                cohort.lease(root, "ownerB", "account1").acquire()
+            second = cohort.lease(root, "ownerA", "account2").acquire()
             with self.assertRaises(ActionSessionBusy):
-                cohort.lease(root, "ownerC", "account1").acquire()
+                cohort.lease(root, "ownerA", "account3").acquire()
             self.assertEqual(cohort.status()["active_scopes"], 2)
             second.release()
             first.release()
             first.release()
             self.assertEqual(cohort.status()["active_scopes"], 0)
+            # A different owner can claim the coordinator AFTER both jobs stop.
+            later = cohort.lease(root, "ownerB", "account1").acquire()
+            later.release()
             ActionLease(root).acquire().release()
 
     def test_second_scope_collision_never_releases_first_global_lease(self):
