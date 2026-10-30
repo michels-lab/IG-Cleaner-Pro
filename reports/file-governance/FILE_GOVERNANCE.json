@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 374,
-  "classified_files_total": 370,
-  "docs_content_inspected": 92,
+  "tracked_files_total": 378,
+  "classified_files_total": 374,
+  "docs_content_inspected": 93,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 87,
+    "document": 88,
     "index": 5,
     "installer_metadata": 1,
-    "source": 51,
-    "test": 93,
+    "source": 52,
+    "test": 95,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "086ed027c154b74af9ebe1502483f4840ab069b1c648079b9981b501c70152e5",
-  "evidence_fingerprint": "90a4d383746ea58e853846ff8d7d5a8acbccd287277ff603d4c274eadef2bbc1",
+  "inventory_fingerprint": "5aa6ed0ebea42723a0cfa7c4c1599c04a631ab0edc99f169df91d1ff68f6aafe",
+  "evidence_fingerprint": "0f77454a2636e02103c43131e4d64486e068117b0ce53e57f8d5e7ff8bd7d660",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "e2fc38612080f119e75788d961f6745718411555"
+      "blob": "141c5446117d29749e7206f2b318a70c1bbc1ae6"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "8c1700769734d004879756cc05b07a7f71335a74"
+      "blob": "6a6cad6a0eaecb8bcb8c4c7923c2c82a028d8fa6"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1362,6 +1362,13 @@
       "blob": "0b2d263fb92a154e5330f9f35f2784d587bcf388"
     },
     {
+      "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "371675fe87951e8f7c04d54067afc0b4b6239cc9"
+    },
+    {
       "path": "docs/GRANADA_WINDOWS_INSTALLER_PROCESS_WATCHDOG_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1754,6 +1761,13 @@
       "blob": "4bbbb830aca135598df7a0a0f7038195a7883ead"
     },
     {
+      "path": "tests/dual-action-windows-panel-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "5ebf69ef93eb7b2d01e5950da1b916d8843a944e"
+    },
+    {
       "path": "tests/english-ui-contract.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2090,6 +2104,13 @@
       "blob": "378f3d6d6ed26ad43c6302869bd82be29539aa43"
     },
     {
+      "path": "tests/test_dual_action_windows_ui.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "bc419c9a0d1b1a1d53605650f706a8026cf00f14"
+    },
+    {
       "path": "tests/test_dual_action_workspaces.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2199,7 +2220,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "caa14aa419ef9ce777d24c7b5111952e6d9db1f5"
+      "blob": "ebf055899d4284256aa44200d2c14b36df3941b7"
     },
     {
       "path": "tests/test_profile_actions_chromium.py",
@@ -2405,6 +2426,13 @@
       "blob": "0207bf1990a267329cbdccbceb3631cf53f8db22"
     },
     {
+      "path": "tools/dual_action_windows_ui.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "6b907e92e0cc7b422e131a561fc7494f2d3bb9ea"
+    },
+    {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2430,7 +2458,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "251db512f5a1eb8a81e8713ca1259a32ac17d59c"
+      "blob": "8de46bf9e6673bc57f1f24760762d44af2401755"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -2696,11 +2724,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "cadecb61ed3b8f4c",
+      "id": "3090d5f74c5457ab",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "16 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py",
+      "observation": "20 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

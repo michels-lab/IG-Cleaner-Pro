@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 374; classified: 370; readable documents: 92; above read cap: 1; findings: 9.
+Tracked: 378; classified: 374; readable documents: 93; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 374; classified: 370; readable documents: 92; above read cap: 1; findin
 | config | 70 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 87 |
+| document | 88 |
 | index | 5 |
 | installer_metadata | 1 |
-| source | 51 |
-| test | 93 |
+| source | 52 |
+| test | 95 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -37,7 +37,7 @@ Tracked: 374; classified: 370; readable documents: 92; above read cap: 1; findin
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 16 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID cadecb61ed3b8f4c)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 20 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 3090d5f74c5457ab)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
