@@ -227,6 +227,128 @@ class IsolatedWorkspaceTests(unittest.TestCase):
             self.assertIn("https://www.instagram.com/old.target/", args)
             opened.assert_called_once()
 
+    def test_approve_exact_account_archives_only_checked_and_preserves_uncertain(self):
+        self.manager.configure(config())
+        robot = self.manager.workspaces[A]["robot"]
+        entry = {"id": "wave-exact", "targets": ["confirmed.one", "uncertain.two"],
+                 "approved_at": None, "recheck_results": {}}
+        _atomic_json(robot._review_batches_file_for(OWNER, A, "cancel"), [entry])
+        records = {
+            "confirmed.one": {"status": "ok", "at": "2026-10-30T14:00:00Z",
+                              "message": "Confirmed no active Requested."},
+        }
+        journal = robot._base_for(OWNER, A, "cancel")
+        _atomic_json(journal, records)
+        data = {
+            "owner": OWNER, "account": A, "task": "cancel",
+            "batch_id": "wave-exact",
+            "confirmation": "action-workspace-approve:" + OWNER + ":" + A +
+                            ":cancel:wave-exact",
+        }
+        with self.assertRaisesRegex(ValueError, "untouched"):
+            self.manager.approve_one(data)
+        with self.assertRaisesRegex(ValueError, "Confirm the exact"):
+            self.manager.approve_one({**data, "confirmation": "wrong"})
+        with self.assertRaisesRegex(ValueError, "pending batch changed"):
+            self.manager.approve_one({**data, "account": B,
+                "confirmation": "action-workspace-approve:" + OWNER + ":" + B +
+                                 ":cancel:wave-exact"})
+        self.assertIsNone(robot._pending_review(OWNER, A, "cancel").get("approved_at"))
+        records["uncertain.two"] = {
+            "status": "review", "issue": "interrupted_action_uncertain",
+            "at": "2026-10-30T14:01:00Z", "message": "Click may have occurred",
+            "click_intent": {"task": "cancel", "batch_id": "wave-exact",
+                             "phase": "cancel_request_confirmation",
+                             "written_at": "2026-10-30T14:00:59Z",
+                             "requires_manual_review": True},
+        }
+        _atomic_json(journal, records)
+        before = journal.read_bytes()
+        outcome = self.manager.approve_one(data)
+        self.assertEqual(outcome["approved_usernames"], ["confirmed.one"])
+        self.assertEqual(outcome["unresolved_usernames"], ["uncertain.two"])
+        self.assertIsNone(robot._pending_review(OWNER, A, "cancel"))
+        self.assertEqual(journal.read_bytes(), before,
+                         "Review approval must NEVER rewrite or erase action evidence.")
+        self.assertIsNone(self.manager.workspaces[B]["robot"].worker)
+
+    def test_review_reports_only_saved_timestamp_without_promoting_uncertain_click(self):
+        self.manager.configure(config())
+        robot = self.manager.workspaces[A]["robot"]
+        _atomic_json(robot._base_for(OWNER, A, "cancel"), {
+            "confirmed.profile": {
+                "status": "ok", "at": "2026-10-30T10:00:00Z",
+                "message": "Confirmed no request"},
+            "uncertain.profile": {
+                "status": "review", "issue": "interrupted_action_uncertain",
+                "at": "2026-10-30T10:01:00Z",
+                "message": "Uncertain result", "click_intent": {
+                    "batch_id": "wave-review", "task": "cancel",
+                    "phase": "cancel_request_confirmation", "written_at": "2026-10-30T10:00:59Z",
+                    "requires_manual_review": True},
+            },
+        })
+        _atomic_json(robot._review_batches_file_for(OWNER, A, "cancel"), [{
+            "id": "wave-review",
+            "targets": ["confirmed.profile", "uncertain.profile", "untouched.profile"],
+            "approved_at": None, "recheck_results": {},
+        }])
+        first = robot._base_for(OWNER, A, "cancel").read_bytes()
+        data = self.manager.review_one({"owner": OWNER, "account": A, "task": "cancel"})
+        rows = data["batch"]["action_results"]
+        self.assertEqual(rows["confirmed.profile"]["status"], "ok")
+        self.assertEqual(rows["confirmed.profile"]["at"], "2026-10-30T10:00:00Z")
+        self.assertEqual(rows["uncertain.profile"]["status"], "review")
+        self.assertEqual(rows["uncertain.profile"]["at"], "2026-10-30T10:01:00Z")
+        self.assertTrue(rows["uncertain.profile"]["possible_click"])
+        self.assertEqual(rows["untouched.profile"]["status"], "pending")
+        self.assertEqual(rows["untouched.profile"]["at"], "")
+        self.assertEqual(robot._base_for(OWNER, A, "cancel").read_bytes(), first)
+        self.assertIsNone(self.manager.workspaces[B]["robot"].worker)
+
+    def test_continue_saved_cohort_requires_exact_batch_and_preserves_wal(self):
+        self.manager.configure(config())
+        robot = self.manager.workspaces[A]["robot"]
+        original_targets = ["possibly.clicked", "still.untouched"]
+        saved = {
+            "possibly.clicked": {
+                "status": "review", "issue": "interrupted_action_uncertain",
+                "message": "Relationship click outcome unknown.",
+                "click_intent": {"phase": "cancel_request_confirmation", "batch_id": "saved-wave",
+                                 "task": "cancel", "written_at": "2026-10-30T15:00:00Z",
+                                 "requires_manual_review": True},
+            }
+        }
+        _atomic_json(robot._base_for(OWNER, A, "cancel"), saved)
+        _atomic_json(robot._review_batches_file_for(OWNER, A, "cancel"), [{
+            "id": "saved-wave", "targets": original_targets,
+            "approved_at": None, "recheck_results": {},
+        }])
+        before = robot._base_for(OWNER, A, "cancel").read_bytes()
+        command_base = command(A, "first.person", task="cancel", target="possibly.clicked")
+        cohort = {**command_base["action"], "targets": original_targets,
+                  "batch_size": len(original_targets),
+                  "confirmation": "cancel:2", "batch_id": "saved-wave"}
+        with self.assertRaisesRegex(ValueError, "An unapproved batch exists"):
+            self.manager.start_one({**command_base, "action": {
+                **cohort, "targets": ["still.untouched"], "batch_size": 1,
+                "confirmation": "cancel:1"}})
+        with self.assertRaisesRegex(ValueError, "An unapproved batch exists"):
+            self.manager.start_one({**command_base, "action": {
+                **cohort, "batch_id": "wrong"}})
+        self.assertEqual(robot._base_for(OWNER, A, "cancel").read_bytes(), before)
+        self.assertFalse(robot.worker)
+        called = []
+        robot._run = lambda: called.append("would only inspect the saved cohort")
+        result = self.manager.start_one({**command_base, "action": cohort})
+        self.assertEqual(result["account"], A)
+        robot.worker.join(5)
+        self.assertEqual(called, ["would only inspect the saved cohort"])
+        self.assertEqual(robot.targets, original_targets)
+        self.assertEqual(robot.active_batch_id, "saved-wave")
+        self.assertEqual(robot._base_for(OWNER, A, "cancel").read_bytes(), before)
+        self.assertIsNone(self.manager.workspaces[B]["robot"].worker)
+
     def test_shutdown_joins_only_actual_action_workers(self):
         self.manager.configure(config())
         entered = threading.Event()

@@ -44,7 +44,13 @@ class DualActionWindowsPanelTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(), b"KEEP")
 
     def test_panel_must_never_start_auto_unfollow_or_reuse_wrong_account(self):
-        self.assertNotIn("start-one", DUAL_ACTION_PANEL)
+        self.assertIn("continueSaved.addEventListener('click'", DUAL_ACTION_PANEL)
+        self.assertIn("api('start-one'", DUAL_ACTION_PANEL)
+        self.assertIn("record.targets", DUAL_ACTION_PANEL)
+        self.assertIn("new Set(targets).size", DUAL_ACTION_PANEL)
+        self.assertIn("batch_id:record.id", DUAL_ACTION_PANEL)
+        self.assertIn("followers_evidence:task.value==='unfollow'", DUAL_ACTION_PANEL)
+        self.assertIn("se conservarán los clics inciertos".lower()[0:7], DUAL_ACTION_PANEL.lower())
         self.assertIn("action-workspace-review:", DUAL_ACTION_PANEL)
         self.assertIn("action-workspace-pause:", DUAL_ACTION_PANEL)
         self.assertIn("acknowledge_serial_actions:true", DUAL_ACTION_PANEL)

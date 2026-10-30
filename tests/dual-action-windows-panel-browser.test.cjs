@@ -67,9 +67,18 @@ const {chromium}=require('playwright');
          {owner:p.owner,two_workspaces:true,parallel_mutations_enabled:false,lanes:[]}:
        operation==='review-one'?{
          owner:p.owner,account:data.account,task:data.task,
-         batch:{id:'saved-wave',action_results:{'review.target':{status:'review'}}}
+         batch:{id:'saved-wave',targets:['review.target','untouched.one','done.profile'],
+           action_results:{
+             'review.target':{status:'review',possible_click:true,at:'2026-10-30T15:43:00Z'},
+             'done.profile':{status:'ok',at:'2026-10-30T15:40:00Z',message:'Confirmed'},
+             ...(window.__dawReviewCompleted?{'untouched.one':{
+               status:'already_not_following',at:'2026-10-30T15:45:00Z',message:'Observed'}}:{})
+           }}
        }:operation==='open-review-one'?{status:'opening',relationship_action:false}:
-       operation==='pause-one'?{status:'paused'}:{
+       operation==='pause-one'?{status:'paused'}:
+       operation==='approve-one'?{approved_usernames:['done.profile','untouched.one'],
+         unresolved_usernames:['review.target']}:
+       operation==='start-one'?{status:'starting',account:data.account,task:data.action.task}:{
          owner:p.owner,parallel_mutations_enabled:false,lanes:[
            {account:'ig_first_1234567',status:'idle',state:'idle',running:false,
             task:'',processed:0,issues:1},
@@ -92,6 +101,14 @@ const {chromium}=require('playwright');
   assert.equal(linked[1].operation,'status');
   await page.locator('#igcDawReview0').click();
   await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
+  const unresolved=page.locator('#igcDawReviewList0 .igc-daw-unresolved');
+  const confirmed=page.locator('#igcDawReviewList0 .igc-daw-reviewed');
+  assert.equal(await unresolved.count(),2);
+  assert.equal(await confirmed.count(),1);
+  assert.match(await confirmed.first().innerText(),/done.profile.*OK/s);
+  assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
+  assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
+    'Never re-open green confirmed profiles as new Review targets');
   await page.locator('#igcDawOpen0').click();
   await page.locator('#igcDawStop0').click();
   const calls=await page.evaluate(()=>window.__dawRequests);
@@ -103,10 +120,40 @@ const {chromium}=require('playwright');
     'action-workspace-review:'+owner+':ig_first_1234567:review.target');
   assert.equal(calls[4].operation,'pause-one');
   assert.equal(calls[4].data.account,'ig_first_1234567');
-  assert(!calls.some(x=>x.operation==='start-one'),'Never execute relationship clicks from the review UI');
-  assert(calls.every(x=>x.token==='a'.repeat(32)));
+  assert(!calls.some(x=>x.operation==='start-one'),'No implicit relationship actions during Review/Pause');
+  await page.locator('#igcDawApprove0').click();
+  const beforeActualApproval=await page.evaluate(()=>window.__dawRequests);
+  assert(!beforeActualApproval.some(x=>x.operation==='approve-one'),
+    'Cannot mark an untouched saved target reviewed.');
+  await page.locator('#igcDawContinue0').click();
+  const afterContinue=await page.evaluate(()=>window.__dawRequests);
+  const starts=afterContinue.filter(x=>x.operation==='start-one');
+  assert.equal(starts.length,1,'The user explicitly approved one saved cohort');
+  assert.equal(starts[0].data.account,'ig_first_1234567');
+  assert.equal(starts[0].data.action.expected_handle,'alpha.one');
+  assert.equal(starts[0].data.action.batch_id,'saved-wave');
+  assert.deepEqual(starts[0].data.action.targets,['review.target','untouched.one','done.profile'],
+    'Never silently trim the original saved cohort.');
+  assert.equal(starts[0].data.action.confirmation,'unfollow:3');
+  assert.equal(starts[0].data.action.followers_evidence,true,
+    'Only after a separate owner confirmation of complete Followers evidence.');
+  assert.equal(starts[0].data.confirmation,
+    'action-workspace-start:'+owner+':ig_first_1234567:unfollow');
+  assert(afterContinue.every(x=>x.token==='a'.repeat(32)));
+  await page.evaluate(()=>window.__dawReviewCompleted=true);
+  await page.locator('#igcDawReview0').click();
+  await page.locator('#igcDawApprove0').click();
+  const afterApproval=await page.evaluate(()=>window.__dawRequests);
+  const approvals=afterApproval.filter(x=>x.operation==='approve-one');
+  assert.equal(approvals.length,1);
+  assert.equal(approvals[0].data.account,'ig_first_1234567');
+  assert.equal(approvals[0].data.task,'unfollow');
+  assert.equal(approvals[0].data.batch_id,'saved-wave');
+  assert.equal(approvals[0].data.confirmation,
+    'action-workspace-approve:'+owner+':ig_first_1234567:unfollow:saved-wave');
+  assert(afterApproval.every(x=>x.token==='a'.repeat(32)));
   const status=await page.locator('#igcDualActionWorkspaceFeedback').innerText();
-  assert.match(status,/SERIALIZADAS/);
+  assert.match(status,/permanecen sin confirmación/);
   // Regression: user opens Automations after the old 7.5 s startup window.
   // The panel must mount even when Command Center is created much later.
   const html=fs.readFileSync(native,'utf8');
@@ -125,7 +172,7 @@ const {chromium}=require('playwright');
   assert.equal(await late.locator('#igcDualActionWorkspacePanel').count(),1);
   await late.close();
   await context.close();
-  console.log('PASS: native Windows dual action cards; exact owner/session, Pending/Review, late navigation, no parallel mutation');
+  console.log('PASS: native Windows renders dual action cards; exact owner/session, Pending/Review, no parallel mutation, token and Chrome isolation UI');
  }finally{
   await browser.close();
   fs.rmSync(tmp,{recursive:true,force:true});
