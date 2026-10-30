@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.request
 
@@ -183,6 +184,44 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
         self.assertFalse(first.worker)
         self.assertFalse(second.worker)
+
+    def test_manual_review_opens_only_prior_target_in_exact_account_chrome(self):
+        self.manager.configure(config())
+        one = self.manager.workspaces[A]["robot"]
+        saved = one._base_for(OWNER, A, "unfollow")
+        _atomic_json(saved, {"old.target": {"status": "review", "message": "Outcome unverified"}})
+        _atomic_json(one._review_batches_file_for(OWNER, A, "unfollow"),
+                     [{"id": "saved-wave", "targets": ["old.target"],
+                       "approved_at": None, "recheck_results": {}}])
+        result = self.manager.review_one(
+            {"owner": OWNER, "account": A, "task": "unfollow"})
+        self.assertEqual(result["batch"]["id"], "saved-wave")
+        with self.assertRaisesRegex(ValueError, "never inspected"):
+            self.manager.open_review_one({
+                "owner": OWNER, "account": A, "task": "unfollow",
+                "username": "fresh.target",
+                "confirmation": "action-workspace-review:" + OWNER + ":" + A + ":fresh.target"})
+        with self.assertRaisesRegex(ValueError, "never inspected"):
+            self.manager.open_review_one({
+                "owner": OWNER, "account": B, "task": "unfollow",
+                "username": "old.target",
+                "confirmation": "action-workspace-review:" + OWNER + ":" + B + ":old.target"})
+        with self.assertRaisesRegex(ValueError, "Confirm the exact"):
+            self.manager.open_review_one({
+                "owner": OWNER, "account": A, "task": "unfollow",
+                "username": "old.target", "confirmation": "wrong"})
+        with patch("profile_actions.shutil.which", return_value=sys.executable), \
+             patch("profile_actions.subprocess.Popen") as opened:
+            value = self.manager.open_review_one({
+                "owner": OWNER, "account": A, "task": "unfollow",
+                "username": "old.target",
+                "confirmation": "action-workspace-review:" + OWNER + ":" + A + ":old.target"})
+            self.assertEqual(value["relationship_action"], False)
+            args = opened.call_args.args[0]
+            self.assertIn("--user-data-dir=" + str(self.sessions.directory(OWNER, A)), args)
+            self.assertNotIn("--user-data-dir=" + str(self.sessions.directory(OWNER, B)), args)
+            self.assertIn("https://www.instagram.com/old.target/", args)
+            opened.assert_called_once()
 
     def test_shutdown_joins_only_actual_action_workers(self):
         self.manager.configure(config())
