@@ -27,6 +27,7 @@ class SharedGlobalActionCohort:
         self.lock = threading.RLock()
         self.global_lease = None
         self.scopes = {}
+        self.active_owner = None
         self.maximum_workers = maximum_workers
 
     def lease(self, root, owner, account):
@@ -39,6 +40,8 @@ class SharedGlobalActionCohort:
         with self.lock:
             if key in self.scopes:
                 raise ActionSessionBusy("This Instagram owner/account action scope is already active.")
+            if self.active_owner is not None and self.active_owner != key[0]:
+                raise ActionSessionBusy("Both concurrent Instagram workspaces must belong to the same app owner.")
             if len(self.scopes) >= self.maximum_workers:
                 raise ActionSessionBusy("No more than two Instagram action scopes may run.")
             created_global = False
@@ -59,6 +62,7 @@ class SharedGlobalActionCohort:
                     self.global_lease = None
                 raise
             self.scopes[key] = scope
+            self.active_owner = key[0]
 
     def _release(self, key, scope):
         with self.lock:
@@ -75,6 +79,7 @@ class SharedGlobalActionCohort:
                         self.global_lease.release()
                     finally:
                         self.global_lease = None
+                        self.active_owner = None
 
     def status(self):
         with self.lock:
