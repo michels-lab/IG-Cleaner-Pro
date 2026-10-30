@@ -122,6 +122,29 @@ class DualActionWorkspaces:
             return lane["robot"].batch_review(
                 {"owner": owner, "account": account, "task": task})
 
+    def approve_one(self, data):
+        """Owner-confirmed exact-scope batch approval; never promotes Review to OK."""
+        owner = self._owner(data)
+        account, task, batch_id = (data.get("account"), data.get("task"),
+                                   data.get("batch_id"))
+        if (not isinstance(account, str) or task not in ("unfollow", "cancel")
+                or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                or data.get("confirmation") != (
+                    "action-workspace-approve:" + owner + ":" + account + ":" + task + ":" + batch_id)):
+            raise ValueError("Confirm the exact account, task and original saved batch before approval.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            if self._alive(self.legacy_actions) or any(
+                    self._alive(item["robot"]) for item in self.workspaces.values()):
+                raise ValueError("Pause all relationship action workers before approving a saved batch.")
+            # The canonical ActionRobot already refuses any untouched target,
+            # corrupt WAL, stale cohort and unconfirmed click. It explicitly
+            # keeps uncertain actions unresolved, even after read-only scans.
+            return lane["robot"].approve_batch({
+                "owner": owner, "account": account, "task": task,
+                "batch_id": batch_id, "confirmation": "reviewed:" + batch_id,
+            })
+
     def open_review_one(self, data):
         """Manually open a previously inspected target in its own Chrome profile."""
         owner = self._owner(data)

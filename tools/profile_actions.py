@@ -1872,12 +1872,15 @@ class ActionRobot:
                 details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
                 def _safe_batch_result(username):
                     if username not in journal:
-                        return {"status": "pending", "message": "",
-                                "safe_no_click": False}
+                        return {"status": "pending", "message": "", "at": "",
+                                "possible_click": False, "safe_no_click": False}
                     source = journal[username]
                     public = _public_action_record(source)
                     return {"status": public.get("status", "review"),
                             "message": public.get("message", ""),
+                            # Expose only the saved action timestamp; do not
+                            # imply a Pending/Review profile was successfully changed.
+                            "at": public.get("at", ""),
                             # Current unavailable screen must not hide a PRIOR
                             # ambiguous click or malformed action journal in UI.
                             "possible_click": (not isinstance(source, dict) or
