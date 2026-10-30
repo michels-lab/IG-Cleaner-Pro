@@ -91,7 +91,7 @@ const {chromium}=require('playwright');
   assert.equal(linked[0].token,'a'.repeat(32));
   assert.equal(linked[1].operation,'status');
   await page.locator('#igcDawReview0').click();
-  await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor();
+  await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
   await page.locator('#igcDawOpen0').click();
   await page.locator('#igcDawStop0').click();
   const calls=await page.evaluate(()=>window.__dawRequests);
