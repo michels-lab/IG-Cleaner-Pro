@@ -107,8 +107,25 @@ const {chromium}=require('playwright');
   assert(calls.every(x=>x.token==='a'.repeat(32)));
   const status=await page.locator('#igcDualActionWorkspaceFeedback').innerText();
   assert.match(status,/SERIALIZADAS/);
+  // Regression: user opens Automations after the old 7.5 s startup window.
+  // The panel must mount even when Command Center is created much later.
+  const html=fs.readFileSync(native,'utf8');
+  const fragmentStart=html.indexOf('<style>\\n#igcDualActionWorkspacePanel');
+  const fragmentEnd=html.indexOf('</script>',fragmentStart)+9;
+  assert(fragmentStart>0&&fragmentEnd>fragmentStart,'Native panel script missing.');
+  const late=await context.newPage();
+  await late.setContent('<html><body>'+html.slice(fragmentStart,fragmentEnd)+'</body></html>');
+  await late.waitForTimeout(8300);
+  await late.evaluate(()=>{
+    const command=document.createElement('div');
+    command.id='igcAutomationCommandCenter';
+    document.body.appendChild(command);
+  });
+  await late.locator('#igcDualActionWorkspacePanel').waitFor({state:'attached',timeout:3000});
+  assert.equal(await late.locator('#igcDualActionWorkspacePanel').count(),1);
+  await late.close();
   await context.close();
-  console.log('PASS: native Windows renders dual action cards; exact owner/session, Pending/Review, no parallel mutation, token and Chrome isolation UI');
+  console.log('PASS: native Windows dual action cards; exact owner/session, Pending/Review, late navigation, no parallel mutation');
  }finally{
   await browser.close();
   fs.rmSync(tmp,{recursive:true,force:true});
