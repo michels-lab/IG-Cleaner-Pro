@@ -132,9 +132,11 @@ class DualRobotLaneTests(unittest.TestCase):
     def test_stop_one_then_restart_one_does_not_interrupt_other_lane(self):
         with tempfile.TemporaryDirectory() as temp:
             times = {}
-            second_running = threading.Event()
+            first_running, second_running = threading.Event(), threading.Event()
             def runner(account, handle, folder, stopped):
                 times[account] = times.get(account, 0) + 1
+                if account == PAIR["primary"]["account"]:
+                    first_running.set()
                 if account == PAIR["secondary"]["account"]:
                     second_running.set()
                 stopped.wait(3)
@@ -143,6 +145,7 @@ class DualRobotLaneTests(unittest.TestCase):
             try:
                 supervisor.start_pair(dict(PAIR))
                 self.assertTrue(second_running.wait(3))
+                self.assertTrue(first_running.wait(3), "Wait for both real lane callbacks before testing restart.")
                 with self.assertRaisesRegex(ValueError, "Confirm the exact"):
                     supervisor.stop_one({"owner": OWNER, "account": first})
                 with self.assertRaisesRegex(ValueError, "another user's"):

@@ -39,6 +39,7 @@ on:
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
+      - 'tests/test_action_scoped_admission.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -107,6 +108,7 @@ on:
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
+      - 'tests/test_action_scoped_admission.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -188,6 +190,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_profile_counts_actions.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Exact Instagram target identity and action safety regressions failed; refuse publication.' }
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
+          python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
           node tests/automations-next-batch.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Automations next batch failed." }
