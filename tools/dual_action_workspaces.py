@@ -111,6 +111,45 @@ class DualActionWorkspaces:
             lane = self._lane(owner, account)
             return lane["robot"].pause({"owner": owner, "account": account})
 
+    def review_one(self, data):
+        """Read the unresolved cohort from the EXACT owner/account/task WAL."""
+        owner = self._owner(data)
+        account, task = data.get("account"), data.get("task")
+        if task not in ("unfollow", "cancel"):
+            raise ValueError("Choose Unfollow or Cancel Pending for this workspace review.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            return lane["robot"].batch_review(
+                {"owner": owner, "account": account, "task": task})
+
+    def open_review_one(self, data):
+        """Manually open a previously inspected target in its own Chrome profile."""
+        owner = self._owner(data)
+        account, task, username = data.get("account"), data.get("task"), data.get("username")
+        if task not in ("unfollow", "cancel"):
+            raise ValueError("Choose Unfollow or Cancel Pending review.")
+        from profile_counts_robot import valid_username
+        if (not isinstance(account, str) or not isinstance(username, str)
+                or username != valid_username(username)
+                or data.get("confirmation") != (
+                    "action-workspace-review:" + owner + ":" + account + ":" + username)):
+            raise ValueError("Confirm the exact account and saved profile for manual review.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            robot = lane["robot"]
+            if self._alive(robot):
+                raise ValueError("Pause this action worker before manually reopening its profiles.")
+            with robot.lock:
+                # Independently read exact scoped evidence even on app restart.
+                from profile_actions import _read_json
+                saved = _read_json(robot._base_for(owner, account, task), {})
+                visited = _read_json(robot._target_visits_file_for(owner, account, task), {})
+                if username not in saved and username not in visited:
+                    raise ValueError("This target was never inspected in this account's saved history.")
+            # Opens the bound hashed Chrome directory; no relationship click.
+            return robot.open_profile(
+                {"owner": owner, "account": account, "task": task, "username": username})
+
     def status(self, owner):
         if not isinstance(owner, str) or not APP_OWNER.fullmatch(owner):
             raise ValueError("Invalid InstaCleaner owner.")
