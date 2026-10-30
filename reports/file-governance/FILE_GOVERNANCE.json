@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 378,
-  "classified_files_total": 374,
-  "docs_content_inspected": 93,
+  "tracked_files_total": 381,
+  "classified_files_total": 377,
+  "docs_content_inspected": 94,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 88,
+    "document": 89,
     "index": 5,
     "installer_metadata": 1,
-    "source": 52,
-    "test": 95,
+    "source": 53,
+    "test": 96,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "7e09b85e7a6c60ca56d9dbb1c6d4a991b84b33ff263d3feb2c7988656561277b",
-  "evidence_fingerprint": "0f77454a2636e02103c43131e4d64486e068117b0ce53e57f8d5e7ff8bd7d660",
+  "inventory_fingerprint": "c94bd400ca6d4d0cf073645a149a24f57ca7fc56e4a80e430a0090359d91617e",
+  "evidence_fingerprint": "a295db533f9adbb9ae223858d614a1df52bc4558921c393e2843cf3c12636608",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "141c5446117d29749e7206f2b318a70c1bbc1ae6"
+      "blob": "629cd82de7f10a156a78fdfcb6364cbcb3b20475"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -120,14 +120,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "512fc1f7a487b62565b409a9bfac33bb52592190"
+      "blob": "76992a2c04e54aa42dab42bdc37a6b7463fe747b"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "6a6cad6a0eaecb8bcb8c4c7923c2c82a028d8fa6"
+      "blob": "31867e6ac26bbb58f2b49d7eaaf2bfddb5331d86"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1250,6 +1250,13 @@
       "blob": "ab9650a84a64cd7b39bc2d207debcb88186de951"
     },
     {
+      "path": "docs/GRANADA_DUAL_SCOPE_GLOBAL_WAL_CONTRACT_2026-10-30.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a9be18bf46168667a4a4130bbb57ddf9ad7481ce"
+    },
+    {
       "path": "docs/GRANADA_FULL_LIVE_INSTAGRAM_RELATIONSHIPS_2026-10-27.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2097,6 +2104,13 @@
       "blob": "56b0927b4a33f58c340734a833c1c84e83066655"
     },
     {
+      "path": "tests/test_dual_action_coordinator.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "b9639adedd64508d7e8a70dc0f76d8687a2d4cfc"
+    },
+    {
       "path": "tests/test_dual_action_preflight.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2419,6 +2433,13 @@
       "blob": "8e4230f19e014ae8661368a5fb2d806881ad47f0"
     },
     {
+      "path": "tools/dual_action_coordinator.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "b55cfd54cc31352b0df56f50390fe1530ccea57b"
+    },
+    {
       "path": "tools/dual_action_preflight.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2724,11 +2745,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "3090d5f74c5457ab",
+      "id": "204cbb7377fc5a9f",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "20 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py",
+      "observation": "22 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
