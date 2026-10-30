@@ -194,7 +194,14 @@ function mount(){
   draw(null);return true;
 }
 function setup(){
-  if(!mount()){let tries=0;const check=setInterval(()=>{if(mount()||++tries>25)clearInterval(check)},300)}
+  if(mount())return;
+  // Automation Center may be created long after the native Home screen
+  // opens. A short startup timer silently hid this feature from real users.
+  // Watch only DOM insertions; disconnect immediately once it is mounted.
+  const watcher=new MutationObserver(()=>{
+    if(mount())watcher.disconnect();
+  });
+  watcher.observe(document.documentElement,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
 })();
