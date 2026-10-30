@@ -47,6 +47,9 @@ on:
       - 'tools/build_windows_developer_installer.ps1'
       - 'tools/test_windows_developer_installer.ps1'
       - 'tools/ig_cleaner_desktop.py'
+      - 'tools/dual_action_windows_ui.py'
+      - 'tests/test_dual_action_windows_ui.py'
+      - 'tests/dual-action-windows-panel-browser.test.cjs'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
       - 'tests/test_developer_audit.py'
@@ -118,6 +121,9 @@ on:
       - 'tools/build_windows_developer_installer.ps1'
       - 'tools/test_windows_developer_installer.ps1'
       - 'tools/ig_cleaner_desktop.py'
+      - 'tools/dual_action_windows_ui.py'
+      - 'tests/test_dual_action_windows_ui.py'
+      - 'tests/dual-action-windows-panel-browser.test.cjs'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
       - 'tests/test_developer_audit.py'
@@ -270,6 +276,8 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_native_desktop.py' -v
+          python -m unittest discover -s tests -p 'test_dual_action_windows_ui.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Dual-account native Windows UI injection/consent failed.' }
           if ($LASTEXITCODE -ne 0) { throw "Integrated desktop tests failed." }
       - name: Create self-contained Desktop app HTML
         shell: pwsh
@@ -282,6 +290,8 @@ jobs:
           node tests/profile-counts-indexeddb-browser.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "Rendered Windows Analysis/Action command center acceptance failed." }
       - name: Build Windows executable with embedded Playwright driver

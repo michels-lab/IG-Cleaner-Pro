@@ -139,7 +139,7 @@ class DesktopAppTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             ui = root / "ui.html"
-            ui.write_bytes(b"<html>" + b"A"*100_001 + b"</html>")
+            ui.write_bytes(b"<html><body>" + b"A"*100_001 + b"</body></html>")
             chrome = root / "chrome.exe"
             chrome.write_bytes(b"stub")
             class FakeProcess:

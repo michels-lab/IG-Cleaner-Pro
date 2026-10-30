@@ -22,6 +22,7 @@ import secrets
 
 from profile_counts_bridge import Collector, build_server
 from windows_updater import WindowsUpdater, numeric_version
+from dual_action_windows_ui import DUAL_ACTION_PANEL
 
 
 APP_NAME = "Insta Cleaner Pro"
@@ -51,13 +52,20 @@ def bundled_html() -> Path:
     return base / "ui" / BUNDLED_HTML
 
 
-def prepare_html(source: Path, destination: Path) -> Path:
-    """Copy only on content change, atomically, without touching workspace data."""
+def prepare_html(source: Path, destination: Path, *, dual_action_panel=False) -> Path:
+    """Copy on content change, adding a native-only panel without touching saved data."""
     if not source.is_file():
         raise FileNotFoundError("El ejecutable no incluye la interfaz de Insta Cleaner.")
     incoming = source.read_bytes()
     if len(incoming) < 100_000:
         raise ValueError("La interfaz incluida está incompleta.")
+    if dual_action_panel:
+        # Inject only into the Windows LOCAL copy, not the Android/web source.
+        marker = b"</body>"
+        position = incoming.rfind(marker)
+        if position < 0 or b"igcDualActionWorkspacePanel" in incoming:
+            raise ValueError("La interfaz no permite agregar los robots dobles con seguridad.")
+        incoming = incoming[:position] + DUAL_ACTION_PANEL.encode("utf-8") + incoming[position:]
     if destination.is_file() and hashlib.sha256(destination.read_bytes()).digest() == hashlib.sha256(incoming).digest():
         return destination
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -180,7 +188,7 @@ def main(argv=None) -> int:
             # startup path. No sign-in, network calls, browser automation, or
             # destructive workspace resets. Used by silent Setup acceptance.
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML)
+            page = prepare_html(source, home / BUNDLED_HTML, dual_action_panel=not args.developer)
             if page.stat().st_size < 100_000:
                 raise RuntimeError("The installed interface is incomplete.")
             browser = chrome_path()
@@ -221,7 +229,7 @@ def main(argv=None) -> int:
         mutex = acquire_single_instance(developer=args.developer)
         try:
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML)
+            page = prepare_html(source, home / BUNDLED_HTML, dual_action_panel=not args.developer)
             browser = chrome_path()
             chrome_workspace = home / "workspace-browser"
             chrome_workspace.mkdir(parents=True, exist_ok=True)
