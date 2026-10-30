@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 369,
-  "classified_files_total": 365,
-  "docs_content_inspected": 90,
+  "tracked_files_total": 371,
+  "classified_files_total": 367,
+  "docs_content_inspected": 91,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 85,
+    "document": 86,
     "index": 5,
     "installer_metadata": 1,
     "source": 50,
-    "test": 91,
+    "test": 92,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "eaaa457ec84b7f968c3f9f7f43fdf18ab7a0ab2bbbbcabb9f74afe0879310abf",
-  "evidence_fingerprint": "d56c437b6988669e2eb82256783ad5c7527f834f250e091828750f4454d64e15",
+  "inventory_fingerprint": "9aa48fdf7a66606d6b2e01ba3143f51207e998b29dd295f0febec71d123357e0",
+  "evidence_fingerprint": "ee33d5dbabc635639528c952888bc785c87093903d5deb82a1b2f8f935746ad6",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a5ed140fe5c16b84818b455cd4d6223de2cd4433"
+      "blob": "38053a95a122483d3f63a902b9950e7f7414a8b8"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -120,14 +120,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "23cfc691bd27a60687a5443caf95818a9ba787c7"
+      "blob": "a43ea4ff0138ddeca3bef060cb84072aea4afecc"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "ac049f45713452f392c3137219cd9022ad1576e8"
+      "blob": "d29153870d96cad774f21290b8239c3d6eb156b5"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1194,6 +1194,13 @@
       "blob": "412ac5306db6ca77a0fbd07f43bb98ffc7ed006d"
     },
     {
+      "path": "docs/GRANADA_ACTION_SCOPE_LEASE_AND_REJECTED_START_2026-10-27.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "1cda41d19dd3dbb7d5194300a39608bcc74f6b04"
+    },
+    {
       "path": "docs/GRANADA_ANDROID_VISUAL_DUPLICATE_FIX_2026-10-26.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1961,7 +1968,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d24df0454beda870147aa45c2d72db147232c303"
+      "blob": "0762f3dba7096e0c31c71b6d2a3f04c1e02055e6"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -1990,6 +1997,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "a3e5f77a149569d03133c34182a77899ee75910b"
+    },
+    {
+      "path": "tests/test_action_scoped_admission.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fa3d95545408a3e6e6696de057c1c3598e5bcc52"
     },
     {
       "path": "tests/test_action_tab_flow.py",
@@ -2080,7 +2094,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ad6cb1800b697a7b7e691c1ca898fff6fc1548be"
+      "blob": "b0c6c2c589ca28420379fdfdabb6304d075541a4"
     },
     {
       "path": "tests/test_granada_csv_recovery.py",
@@ -2437,7 +2451,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "87b5f5b9ffd1b9b994f1d35ed28905ea2dbdf705"
+      "blob": "9fb580945a572568aac0b7bd8b0c8f36773b6e49"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2507,7 +2521,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4e51eaf2ec6376b4acba21dc84ed3cb3a095cc4e"
+      "blob": "60c2add5927ec8bc180b59db474e0ac9d35c22ac"
     },
     {
       "path": "tools/run_android_about_ui.sh",
@@ -2661,11 +2675,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "a5a9e9fc914d4ab1",
+      "id": "d1507d0403233976",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_dual_action_preflight.py, tests/test_dual_robot_lanes.py, tools/chrome_lane_interlock.py, tools/dual_action_preflight.py",
+      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

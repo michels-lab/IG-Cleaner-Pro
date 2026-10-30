@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 369; classified: 365; readable documents: 90; above read cap: 1; findings: 9.
+Tracked: 371; classified: 367; readable documents: 91; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 369; classified: 365; readable documents: 90; above read cap: 1; findin
 | config | 70 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 85 |
+| document | 86 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 50 |
-| test | 91 |
+| test | 92 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -37,7 +37,7 @@ Tracked: 369; classified: 365; readable documents: 90; above read cap: 1; findin
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_dual_action_preflight.py, tests/test_dual_robot_lanes.py, tools/chrome_lane_interlock.py, tools/dual_action_preflight.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID a5a9e9fc914d4ab1)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 13 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_history.py, tests/test_action_scoped_admission.py, tests/test_dual_action_preflight.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID d1507d0403233976)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
