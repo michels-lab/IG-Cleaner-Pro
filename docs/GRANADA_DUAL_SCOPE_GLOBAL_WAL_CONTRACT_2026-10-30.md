@@ -18,8 +18,10 @@ de kernel al cerrar los handles.
 
 ## Garantías automatizadas
 
-- Sólo dos owners/workspaces distintos admitidos por un coordinador; un mismo
-  scope duplicado falla sin perder la primera reserva.
+- Exactamente un propietario de InstaCleaner por cohorte, con hasta dos
+  workspaces de Instagram diferentes. Un segundo propietario se rechaza,
+  aunque tenga otro account ID; la identidad se libera tras terminar ambos
+  workers. Un scope duplicado tampoco puede reutilizar la primera reserva.
 - Error de reserva del segundo scope nunca libera el global si el primero vive.
   Error de primera reserva sí deshace el global (ninguna reserva zombie).
 - El mutex global sigue en BUSY incluso desde **otro proceso** mientras vive
