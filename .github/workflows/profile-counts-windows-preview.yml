@@ -18,6 +18,8 @@ on:
       - 'tests/test_dual_robot_lanes.py'
       - 'tools/dual_action_preflight.py'
       - 'tests/test_dual_action_preflight.py'
+      - 'tools/dual_action_workspaces.py'
+      - 'tests/test_dual_action_workspaces.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -87,6 +89,8 @@ on:
       - 'tests/test_dual_robot_lanes.py'
       - 'tools/dual_action_preflight.py'
       - 'tests/test_dual_action_preflight.py'
+      - 'tools/dual_action_workspaces.py'
+      - 'tests/test_dual_action_workspaces.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -191,6 +195,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Exact Instagram target identity and action safety regressions failed; refuse publication.' }
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
           python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
+          python -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Separate Instagram action Chrome profiles or serial WAL contract failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
           node tests/automations-next-batch.test.cjs
