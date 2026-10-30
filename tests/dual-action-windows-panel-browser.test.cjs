@@ -110,7 +110,7 @@ const {chromium}=require('playwright');
   // Regression: user opens Automations after the old 7.5 s startup window.
   // The panel must mount even when Command Center is created much later.
   const html=fs.readFileSync(native,'utf8');
-  const fragmentStart=html.indexOf('<style>\\n#igcDualActionWorkspacePanel');
+  const fragmentStart=html.indexOf('<style>\n#igcDualActionWorkspacePanel');
   const fragmentEnd=html.indexOf('</script>',fragmentStart)+9;
   assert(fragmentStart>0&&fragmentEnd>fragmentStart,'Native panel script missing.');
   const late=await context.newPage();
