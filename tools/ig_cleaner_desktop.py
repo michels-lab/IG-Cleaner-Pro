@@ -147,6 +147,9 @@ def stop_safely(server) -> None:
     dual_lanes = getattr(server, "dual_robot_lanes", None)
     if dual_lanes is not None:
         dual_lanes.shutdown()
+    dual_action_workspaces = getattr(server, "dual_action_workspaces", None)
+    if dual_action_workspaces is not None:
+        dual_action_workspaces.shutdown()
     server.collector.stop()
     jobs = [actions.worker, server.collector.worker]
     if live_relationships is not None:

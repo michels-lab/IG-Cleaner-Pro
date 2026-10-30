@@ -1659,6 +1659,7 @@ class ProtectedBatchCollision(ValueError):
 
 
 from robot_interlock import ActionLease, ScopedActionLease
+from chrome_lane_interlock import ChromeLaneLease, ChromeLaneBusy
 
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path):
@@ -2506,10 +2507,24 @@ class ActionRobot:
             return self.snapshot()
 
     def _run_with_lease(self, lease):
-        # The worker, not the HTTP request thread, owns the full action lease.
-        # Always free it on login failure, exception, pause, or final review.
+        # The worker owns the canonical action WAL lease AND its exact Chrome
+        # profile. A read-only identity robot using this directory must never
+        # silently become an action browser or share its authenticated tabs.
+        # Chrome lease acquisition is inside the worker: legacy test fixtures
+        # may replace Thread.start with a no-op while exercising journal flow.
         try:
-            self._run()
+            try:
+                with ChromeLaneLease(self.session_dir):
+                    if not self.stop_event.is_set():
+                        self._run()
+            except ChromeLaneBusy:
+                with self.lock:
+                    self.status = "paused" if self.stop_event.is_set() else "blocked"
+                    self.message = (
+                        "This Instagram Chrome workspace is already owned by "
+                        "another supervised robot. Stop that account's Chrome "
+                        "identity lane first, then explicitly resume this "
+                        "same saved cohort. No relationship click was sent.")
         finally:
             lease.release()
 
