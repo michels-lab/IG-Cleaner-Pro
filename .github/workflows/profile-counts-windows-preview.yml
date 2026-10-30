@@ -42,6 +42,8 @@ on:
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tests/test_action_scoped_admission.py'
+      - 'tools/dual_action_coordinator.py'
+      - 'tests/test_dual_action_coordinator.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -116,6 +118,8 @@ on:
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tests/test_action_scoped_admission.py'
+      - 'tools/dual_action_coordinator.py'
+      - 'tests/test_dual_action_coordinator.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -202,6 +206,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
           python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
           python -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
+          python -m unittest discover -s tests -p 'test_dual_action_coordinator.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Legacy-compatible dual scope global WAL reservation failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Separate Instagram action Chrome profiles or serial WAL contract failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
