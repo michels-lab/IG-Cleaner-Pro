@@ -15,4 +15,6 @@ En la app nativa Windows, el panel de dos acciones ahora consulta periódicament
 ### Criterios de aceptación
 Prueba Chromium del HTML real de Windows con un puente falso offline: ambas cuentas arrancan por separado, A completa mientras B sigue activo, el modal lee WAL sin aprobar ni reejecutar, A no dispara avisos duplicados, B entra en Review y luego Paused sin repetir el popup; el botón Revisar lista completa llama al control de lectura original. Pruebas estáticas de la inyección nativa y gate obligatorio del instalador Windows.
 
+**Base de integración:** este PR se reconstruyó como un único cambio sobre `main` tras fusionar el modo concurrente #293. No incluye modificaciones a los archivos del auditor File Steward ni altera el control de versiones. La verificación del nuevo commit debe repetir Windows y los checks obligatorios antes del merge.
+
 **No hay release**, pruebas sobre perfiles reales ni aceptación física todavía. Issues #164/#176 continúan abiertos.
