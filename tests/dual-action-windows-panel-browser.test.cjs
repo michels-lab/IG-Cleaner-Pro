@@ -67,7 +67,7 @@ const {chromium}=require('playwright');
          {owner:p.owner,two_workspaces:true,parallel_mutations_enabled:false,lanes:[]}:
        operation==='review-one'?{
          owner:p.owner,account:data.account,task:data.task,
-         batch:{id:'saved-wave',targets:['review.target','untouched.one','done.profile'],
+         batch:{id:'saved-wave',targets:['done.profile','untouched.one','review.target'],
            action_results:{
              'review.target':{status:'review',possible_click:true,at:'2026-10-30T15:43:00Z'},
              'done.profile':{status:'ok',at:'2026-10-30T15:40:00Z',message:'Confirmed'},
@@ -106,6 +106,12 @@ const {chromium}=require('playwright');
   assert.equal(await unresolved.count(),2);
   assert.equal(await confirmed.count(),1);
   assert.match(await confirmed.first().innerText(),/done.profile.*OK/s);
+  // Stored cohort intentionally begins with a green OK. Visible Review
+  // rows must move above it without modifying start-one cohort ordering.
+  assert.deepEqual(await page.locator('#igcDawReviewList0 .igc-daw-review-row')
+    .evaluateAll(rows=>rows.map(x=>x.querySelector('span')?.textContent)),[
+    '@review.target','@untouched.one','@done.profile']);
+  assert.match(await page.locator('#igcDawReviewList0').innerText(),/Review primero/);
   assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
   assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
     'Never re-open green confirmed profiles as new Review targets');
@@ -132,7 +138,7 @@ const {chromium}=require('playwright');
   assert.equal(starts[0].data.account,'ig_first_1234567');
   assert.equal(starts[0].data.action.expected_handle,'alpha.one');
   assert.equal(starts[0].data.action.batch_id,'saved-wave');
-  assert.deepEqual(starts[0].data.action.targets,['review.target','untouched.one','done.profile'],
+  assert.deepEqual(starts[0].data.action.targets,['done.profile','untouched.one','review.target'],
     'Never silently trim the original saved cohort.');
   assert.equal(starts[0].data.action.confirmation,'unfollow:3');
   assert.equal(starts[0].data.action.followers_evidence,true,
