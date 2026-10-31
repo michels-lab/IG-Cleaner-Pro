@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "16e391aebaa3dcf804bbee835dc20662f03262572d6716e60363a87012b293b7",
+  "inventory_fingerprint": "0b6da50046e0c455c8a3ea18ff1750a7cf8751ce11a9a74264537743897940aa",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -2199,7 +2199,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "46bb167e14e72aa0b7d1cf3b0bf63d78a5a19406"
+      "blob": "79e9f531bd68e6d7b0510cadf10aace49a12c979"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
