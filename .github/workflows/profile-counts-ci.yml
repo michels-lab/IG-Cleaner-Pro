@@ -17,6 +17,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
+      - 'tests/test_cancel_warning_continues_batch.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -57,6 +58,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_worker_journal_gate.py'
+      - 'tests/test_cancel_warning_continues_batch.py'
       - 'tools/robot_interlock.py'
       - 'tests/test_robot_interlock.py'
       - 'tools/profile_counts_pacing.py'
@@ -118,6 +120,8 @@ jobs:
           node tests/owner-unfollow-transport.test.cjs
       - name: GRANADA worker admission blocks malformed persisted action evidence
         run: python -m unittest discover -s tests -p 'test_action_worker_journal_gate.py' -v
+      - name: Isolated Cancel Pending warning cannot block healthy next target or replay WAL
+        run: python -m unittest discover -s tests -p 'test_cancel_warning_continues_batch.py' -v
       - name: GRANADA ten-tab waves with verified-close safety
         run: python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
       - name: GRANADA verify persisted visit and rest journal integrity

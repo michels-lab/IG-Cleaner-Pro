@@ -217,11 +217,13 @@ class ActionTabPool:
             item["status"] = status
 
     def defer_persisted_pending(self, username):
-        """Release an uncertain Unfollow tab ONLY after durable WAL/result save.
+        """Release an isolated profile Warning after durable WAL/result save.
 
-        This is not success or permission to retry. A later explicit read-only
-        Review can reopen the exact target using the original action journal.
-        Never call on session challenge, wrong owner, or unsaved outcome.
+        Covers uncertain Cancel Pending AND Unfollow outcomes. A separate
+        verified healthy owner session is mandatory in the worker BEFORE
+        invoking this method. The profile's original journal stays REVIEW,
+        even after closing its tab, and can be reopened read-only from history.
+        No second relationship click, implicit approval or replay is allowed.
         """
         item = self.tabs.get(username)
         if item is None or item["status"] not in ("review", "error"):
@@ -3343,7 +3345,7 @@ class ActionRobot:
                     # zero-click Pending and proceed to the next *different*
                     # authorized target. Never bypass a login, challenge,
                     # mismatched owner, rate-limit or possible-click WAL.
-                    if (not self.review_only and self.task == "unfollow"
+                    if (not self.review_only and self.task in ("unfollow", "cancel")
                             and result == "blocked"
                             and details.startswith((
                                 "The target profile heading or exact username could not be verified.",
@@ -3355,8 +3357,11 @@ class ActionRobot:
                                     and not work_page.locator('input[name="password"]').count()
                                     and _verified_action_owner(work_page, self.handle)):
                                 result = "review"
-                                details = ("Pending verification: target identity or layout not verifiable. "
-                                           "No action clicked. " + details)
+                                details = (
+                                    ("Pending verification: " if self.task == "unfollow"
+                                     else "Cancel Pending warning: ") +
+                                    "target identity or layout not verifiable. "
+                                    "No action clicked. " + details)
                         except Exception:
                             # Without positive same-session proof a blocked
                             # target remains blocked: never silently continue.
@@ -3405,19 +3410,28 @@ class ActionRobot:
                                             }} if previous_attempt.get("click_intent") else {})}
                         _atomic_json(path, journal)
                         self._discard_stale_recheck(user)
-                    # A clicked Unfollow without a confirmed Follow/Follow Back
-                    # is PENDING, never OK. Advance to the next target only
-                    # when the original result and click intent are already
-                    # fsynced AND a live, uncontested owner session is confirmed.
-                    # If authentication is challenged or the owner changes,
-                    # retain the tab and stop the worker instead.
-                    defer_pending_unfollow = False
-                    if (action_tabs and not self.review_only
-                            and self.task == "unfollow"
-                            and result in ("review", "error")
-                            and isinstance(journal.get(user), dict)
-                            and "click_intent" in journal[user]
-                            and not self.stop_event.is_set()):
+                    # A PROFILE-scoped anomaly must not derail every later
+                    # unrelated target. The result and any first-click intent
+                    # are persisted BEFORE the tab is closed, and REVIEW remains
+                    # blocked forever from automatic replay. For Cancel Pending
+                    # this includes an unexpected normal Unfollow dialog.
+                    #
+                    # Do NOT continue if Instagram identity, challenge or
+                    # active session is in doubt: those affect ALL targets.
+                    defer_profile_warning = False
+                    recorded = journal.get(user, {})
+                    isolated_warning = (
+                        action_tabs is not None and not self.review_only
+                        and not self.stop_event.is_set()
+                        and isinstance(recorded, dict)
+                        and not _invalid_saved_action_record(recorded)
+                        and recorded.get("status") == result
+                        and ((self.task == "cancel" and result == "review")
+                             or (self.task == "unfollow"
+                                 and result in ("review", "error")
+                                 and "click_intent" in recorded))
+                    )
+                    if isolated_warning:
                         try:
                             live_pages = [tab for tab in browser.pages if not tab.is_closed()]
                             unsafe = any(
@@ -3425,19 +3439,16 @@ class ActionRobot:
                                 tab.locator('input[name="password"]').count()
                                 for tab in live_pages
                             )
-                            owner_page, different_owner = _find_verified_owner_tab(
+                            _owner_page, different_owner = _find_verified_owner_tab(
                                 live_pages, self.handle)
-                            # The owner often hides the Profile sidebar while
-                            # visiting someone else's page. Reuse the existing
-                            # SAME-CONTEXT, cookie-bound owner verifier instead
-                            # of requiring a separate visible owner tab.
-                            # A conflicting visible owner still vetoes it.
-                            fresh_owner = bool(
+                            # Never infer owner identity from the target's
+                            # profile name. A separately verified owner
+                            # session is mandatory before moving on.
+                            defer_profile_warning = bool(
                                 not unsafe and not different_owner and
                                 _verified_action_owner(work_page, self.handle))
-                            defer_pending_unfollow = fresh_owner
                         except Exception:
-                            defer_pending_unfollow = False
+                            defer_profile_warning = False
                     if action_tabs:
                         try:
                             # Release read-only and proven no-click tabs normally.
@@ -3447,21 +3458,27 @@ class ActionRobot:
                                 or _preclick_no_action(journal.get(user, {}))
                                 or _benign_preclick_issue(issue, journal.get(user, {})))
                             action_tabs.record(user, result, safe_no_click=safely_unclicked)
-                            if defer_pending_unfollow:
+                            if defer_profile_warning:
+                                # Closing this tab is safe only after the
+                                # original per-profile WAL has been fsynced,
+                                # the result is still REVIEW and owner identity
+                                # was reverified. Never turn Review into OK.
                                 action_tabs.defer_persisted_pending(user)
                         except Exception:
-                            # Do not replay/continue if tab cleanup is uncertain.
-                            defer_pending_unfollow = False
+                            # Keep the unresolved tab and STOP if browser
+                            # cleanup is uncertain. No silent replay.
+                            defer_profile_warning = False
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
                     if result == "skipped":
                         continue
-                    if defer_pending_unfollow:
+                    if defer_profile_warning:
                         with self.lock:
                             self.status = "running"
                             self.message = ("@" + user +
-                                ": PENDING / unverified Unfollow recorded; no second "
-                                "click. Continuing to the next eligible profile.")
+                                ": WARNING / REVIEW saved with original click "
+                                "evidence. No retry or automatic approval. "
+                                "Continuing with the next different profile.")
                         continue
                     if result not in ("ok", "already_not_following", "already_not_requested",
                                       "profile_unavailable"):

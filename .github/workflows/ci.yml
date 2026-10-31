@@ -105,6 +105,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_dual_new_batch_preflight.py' -v
       - name: Verify explicit parallel owner authorization, two actual action threads and legacy-global lock
         run: python3 -m unittest discover -s tests -p 'test_explicit_parallel_action_workspaces.py' -v
+      - name: Continue cancel cohort after one isolated persisted Review warning (fake Chrome)
+        run: python3 -m unittest discover -s tests -p 'test_cancel_warning_continues_batch.py' -v
       - name: Verify owner-scoped action leases and rejected-start account integrity
         run: python3 -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Verify native Windows Setup update feed, SHA-256, cancellation, backups and loopback owner consent
