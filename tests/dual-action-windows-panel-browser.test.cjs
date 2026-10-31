@@ -120,7 +120,8 @@ const {chromium}=require('playwright');
    await page.locator('#igcActRefresh').click();
    await page.waitForFunction(()=>
      document.querySelector('#igcActCount_h24')?.textContent==='2');
-   assert.equal(await page.locator('#igcActCount_h1').innerText(),'1');
+   assert(['1','2'].includes(await page.locator('#igcActCount_h1').innerText()),
+     'Just-before-midnight completion may fall inside the rolling last hour');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
