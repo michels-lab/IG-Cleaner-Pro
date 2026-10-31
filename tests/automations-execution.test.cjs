@@ -343,9 +343,12 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  assert(lastReviewDialog&&lastReviewDialog.open);
  const table=lastReviewDialog.children.find(x=>x.tag==='div'&&x.children.some(c=>c.tag==='table')).children[0];
  const reviewRows=table.children.find(x=>x.tag==='tbody').children;
- assert.equal(reviewRows[0].className,'igc-result-ok','Confirmed OK must be green');
- assert.equal(reviewRows[1].className,'igc-result-review','Uncertain must be yellow Review');
- assert.equal(reviewRows[2].className,'igc-result-review','Following observation must remain Review');
+ assert.equal(reviewRows[0].className,'igc-result-review','Uncertain Review must appear FIRST');
+ assert.equal(reviewRows[0].children[0].textContent,'@uncertain.user');
+ assert.equal(reviewRows[1].className,'igc-result-review','Read-only observation must remain Review');
+ assert.equal(reviewRows[1].children[0].textContent,'@last.untouched');
+ assert.equal(reviewRows[2].className,'igc-result-ok','Confirmed OK must be LAST');
+ assert.equal(reviewRows[2].children[0].textContent,'@ok.user');
  lastReviewDialog.close();
  const prevStart=calls.filter(c=>c.type==='start').length;
  await ctx.window.igcAutoRetryReviewed();
@@ -380,17 +383,60 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  const unavailableTable=lastReviewDialog.children
    .find(x=>x.tag==='div'&&x.children.some(c=>c.tag==='table')).children[0];
  const colored=unavailableTable.children.find(x=>x.tag==='tbody').children;
- assert.equal(colored[0].className,'igc-result-ok','Verified action must remain green');
+ assert.equal(colored[0].className,'igc-result-review','Possible click must be first, yellow');
+ assert.equal(colored[0].children[0].textContent,'@uncertain.user');
+ assert.match(colored[0].children[1].textContent,/Previous relationship click remains uncertain/,
+   'Read-only unavailable scan MUST NOT conceal a previous potentially clicked Unfollow');
  assert.equal(colored[1].className,'igc-result-unavailable','Unavailable must be neither green nor yellow Review');
  assert.match(colored[1].children[1].textContent,/Unavailable · no action/);
- assert.equal(colored[2].className,'igc-result-review','Possible click remains yellow');
- assert.match(colored[2].children[1].textContent,/Previous relationship click remains uncertain/,
+ assert.equal(colored[2].className,'igc-result-ok','Verified action must come after the Review and Unavailable');
+ assert.equal(colored[2].children[0].textContent,'@verified.user');
+ // Keep this assertion below to prove earlier possible click is not green.
+ assert.match(colored[0].children[1].textContent,/Previous relationship click remains uncertain/,
    'Read-only unavailable scan MUST NOT conceal a previous potentially clicked Unfollow');
  assert(lastReviewDialog.children.some(c=>c.textContent?.includes('1 unavailable (no click)')),
    'Modal summary must count separate unavailable profile');
  lastReviewDialog.close();
  assert.equal(elements.igcAutoApproveBatch.disabled,false,
    'Unavailable profile must not require individual manual Review before batch approval');
+
+ // Another batch: two yellow, two untouched, one unavailable and three
+ // green mixed in chronological order. VISUAL ordering only; exact original
+ // cohort, WAL and targets must stay unmodified for approval and replays.
+ const mixedTargets=['ok.first','warn.first','pending.first','unavailable.first',
+  'warn.second','ok.second','pending.second','absent.confirmed'];
+ batchFixture={id:'mixed-priority',targets:mixedTargets.slice(),approved_at:null,
+  action_results:{
+   'ok.first':{status:'ok',message:'Verified'},
+   'warn.first':{status:'review',message:'Uncertain click',possible_click:true},
+   'pending.first':{status:'pending'},
+   'unavailable.first':{status:'profile_unavailable',message:'No profile'},
+   'warn.second':{status:'error',message:'Owner may need to inspect'},
+   'ok.second':{status:'ok',message:'Verified'},
+   'pending.second':{status:'pending'},
+   'absent.confirmed':{status:'already_not_following',message:'No click needed'},
+  },recheck_results:{}};
+ const savedExact=JSON.stringify(batchFixture);
+ p.status='partial';p.running=false;p.task='unfollow';
+ await ctx.window.igcAutoPoll();
+ ctx.window.igcAutoShowBatchReview();
+ const priorityRows=lastReviewDialog.children.find(x=>x.tag==='div'&&
+    x.children.some(z=>z.tag==='table')).children[0].children
+   .find(x=>x.tag==='tbody').children;
+ assert.deepEqual(priorityRows.map(x=>x.children[0].textContent),[
+   '@warn.first','@warn.second','@pending.first','@pending.second',
+   '@unavailable.first','@ok.first','@ok.second','@absent.confirmed']);
+ assert.deepEqual(priorityRows.map(x=>x.className),[
+   'igc-result-review','igc-result-review','igc-result-untouched',
+   'igc-result-untouched','igc-result-unavailable','igc-result-ok',
+   'igc-result-ok','igc-result-ok']);
+ assert.equal(JSON.stringify(batchFixture),savedExact,
+  'Sorting must never change canonical owner-approved targets or saved results');
+ assert(lastReviewDialog.children.some(x=>x.textContent?.includes('Review first')),
+  'The batch dialog must explain its verification-first ordering');
+ assert.equal(elements.igcAutoApproveBatch.disabled,true,
+  'Visual sorting does not approve or act on pending profiles');
+ lastReviewDialog.close();
 
  console.log('Automations execution + Review-only recovery, green/yellow results and safe retry: PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});

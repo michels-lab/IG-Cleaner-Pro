@@ -109,6 +109,20 @@ function parseTargets(text){
     throw Error('Hay usuarios duplicados; no se eliminarán silenciosamente. Corrige la lista.');
   return names;
 }
+// Only reorder VIEW rows. Keep batch.targets and WAL in their original
+// owner-approved order, especially when resuming a partial cohort.
+function prioritizedSavedReviewTargets(batch){
+ const results=batch?.action_results||{};
+ return (Array.isArray(batch?.targets)?batch.targets:[])
+  .map((username,index)=>{
+   const status=String(results[username]?.status||'pending');
+   const good=['ok','already_not_following','already_not_requested'].includes(status);
+   const priority=!good&&status!=='pending'&&status!=='profile_unavailable'?0:
+     status==='pending'?1:status==='profile_unavailable'?2:3;
+   return {username,index,priority};
+  }).sort((a,b)=>a.priority-b.priority||a.index-b.index)
+  .map(x=>x.username);
+}
 function card(account,i){
   const outer=el('section','igc-daw-card');
   outer.dataset.lane=String(i);
@@ -135,7 +149,8 @@ function card(account,i){
     const targets=batch&&batch.action_results||{};
     const select=$('igcDawTarget'+i),list=$('igcDawReviewList'+i);
     select.replaceChildren();list.replaceChildren();
-    for(const username of (batch&&Array.isArray(batch.targets)?batch.targets:[])){
+    list.append(el('div','igc-daw-note','⚠ Review primero · ○ Sin comprobar · ◌ No disponibles · ✓ OK al final'));
+    for(const username of prioritizedSavedReviewTargets(batch)){
       if(!HANDLE.test(username))continue;
       const outcome=targets[username]||{status:'pending'},status=String(outcome.status||'pending');
       const reviewed=['ok','already_not_following','already_not_requested'].includes(status);
