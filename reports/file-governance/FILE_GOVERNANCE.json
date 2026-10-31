@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "39c7c008fbe0c76728eab5e62a09955c411abe905cd688a8570c7316b4684f1d",
+  "inventory_fingerprint": "16e391aebaa3dcf804bbee835dc20662f03262572d6716e60363a87012b293b7",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -1835,7 +1835,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "14d6b084083210e84e5fbba39a20b898af979e50"
+      "blob": "0ffb3d6b49e3a11c00ac79a0d20cd186835ef5fb"
     },
     {
       "path": "tests/english-ui-contract.py",
