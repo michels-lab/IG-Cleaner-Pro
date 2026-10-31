@@ -40,6 +40,15 @@ border-radius:7px;width:58px;font:inherit;font-size:12px;padding:6px}
 font-size:12px;color:#b5c8dc;padding:10px 12px;border:1px solid #41546c;border-radius:10px}
 #igcDualActionWorkspacePanel .igc-daw-mode input{accent-color:#87b6eb;width:16px;height:16px}
 #igcDualActionWorkspacePanel .igc-daw-mode small{display:block;flex-basis:100%;color:#9eb1c5;line-height:1.45}
+#igcDawCompletionModal[hidden]{display:none}
+#igcDawCompletionModal{position:fixed;inset:0;background:rgba(0,0,0,.76);
+z-index:2147483635;display:flex;justify-content:center;align-items:center;padding:16px}
+#igcDawCompletionModal .igc-daw-modal-card{width:min(570px,94vw);max-height:83vh;
+overflow-y:auto;background:#142236;border:1px solid #4a6582;box-shadow:0 16px 55px #000b;
+border-radius:15px;padding:20px;color:#ecf4ff}
+#igcDawCompletionModal .igc-daw-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+#igcDawCompletionModal h3{font-size:16px;margin:0}
+#igcDawCompletionModal .igc-daw-review-list{max-height:220px}
 #igcDualActionWorkspacePanel .igc-daw-review-list{display:grid;gap:5px;margin-top:12px;max-height:260px;overflow:auto}
 #igcDualActionWorkspacePanel .igc-daw-review-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;
 padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;font-size:12px;overflow-wrap:anywhere}
@@ -61,6 +70,8 @@ const PROFILE=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
+let laneSnapshots={}, completionAcknowledged={}, completionQueue=[], completionShowing=false;
+let statusPolling=false;
 const $=(id)=>document.getElementById(id);
 function el(tag,className,text){
   const x=document.createElement(tag);if(className)x.className=className;
@@ -108,6 +119,77 @@ function parseTargets(text){
   if(new Set(names).size!==names.length)
     throw Error('Hay usuarios duplicados; no se eliminarán silenciosamente. Corrige la lista.');
   return names;
+}
+function markStarted(account,task){
+  if(!linked||!account)return;
+  completionAcknowledged[account]=false;
+  laneSnapshots[account]={running:true,state:'starting',task};
+}
+function enqueueCompletion(item){
+  if(completionAcknowledged[item.account])return;
+  completionAcknowledged[item.account]=true;
+  completionQueue.push(item);
+  displayNextCompletion();
+}
+function dismissCompletion(){
+  const modal=$('igcDawCompletionModal');if(modal)modal.hidden=true;
+  completionShowing=false;
+  displayNextCompletion();
+}
+function displayNextCompletion(){
+  const modal=$('igcDawCompletionModal');
+  if(!modal||completionShowing||!completionQueue.length)return;
+  const done=completionQueue.shift();completionShowing=true;
+  const content=el('div','igc-daw-modal-card');
+  const head=el('div','igc-daw-modal-head');
+  head.append(el('h3',null,'Tanda detenida o finalizada · @'+done.handle));
+  const close=el('button',null,'Cerrar');close.type='button';
+  close.addEventListener('click',dismissCompletion);head.append(close);
+  content.append(head);
+  content.append(el('p','igc-daw-sub',
+    'Cuenta '+done.account+' · '+done.task+' · '+done.state.toUpperCase()+
+    ' · '+done.processed+' revisados · '+done.pending+' pendientes · '+
+    done.issues+' requieren atención. No se aprobó ni repitió ningún clic.'));
+  const list=el('div','igc-daw-review-list');list.setAttribute('aria-label',
+    'Resultados originales de la tanda de esta cuenta');
+  list.append(el('div','igc-daw-note','Consultando el historial local, sin tocar Instagram…'));
+  content.append(list);
+  const actions=el('div','igc-daw-controls');
+  const inspect=el('button',null,'Revisar lista completa');
+  inspect.type='button';inspect.addEventListener('click',()=>{
+    const index=done.i;dismissCompletion();
+    const button=$('igcDawReview'+index);if(button)button.click();
+  });
+  actions.append(inspect);content.append(actions);modal.replaceChildren(content);modal.hidden=false;
+  // Read-only saved WAL; never use a live relationship or mutation endpoint
+  // to populate the modal. A missing original cohort remains unresolved.
+  if(!['unfollow','cancel'].includes(done.task))return;
+  api('review-one',{owner:done.owner,account:done.account,task:done.task})
+    .then(value=>{
+      if(!completionShowing||modal.hidden||!content.isConnected)return;
+      list.replaceChildren();
+      const batch=value.batch;
+      if(!batch){list.append(el('div','igc-daw-note',
+        'No hay una tanda pendiente en el historial local. Revisa el registro de acciones.'));return}
+      const names=Array.isArray(batch.targets)?batch.targets:[];
+      const results=batch.action_results||{};
+      for(const username of names.slice(0,50)){
+        const result=results[username]||{},state=String(result.status||'pending');
+        const ok=['ok','already_not_following','already_not_requested'].includes(state);
+        const row=el('div','igc-daw-review-row '+(ok?'igc-daw-reviewed':
+          state==='profile_unavailable'?'igc-daw-unavailable':'igc-daw-unresolved'));
+        row.append(el('span',null,'@'+String(username)),
+          el('span',null,ok?'OK':state==='profile_unavailable'?'NO DISPONIBLE':'REVIEW'));
+        row.append(el('small',null,String(result.at||'sin fecha')+' · '+state));
+        list.append(row);
+      }
+      if(names.length>50)list.append(el('div','igc-daw-note',
+        'Mostrando 50 de '+names.length+'. Ver lista completa para los demás.'));
+      if(!names.length)list.append(el('div','igc-daw-note','Sin objetivos guardados.'));
+    })
+    .catch(()=>{if(content.isConnected){list.replaceChildren();
+      list.append(el('div','igc-daw-note',
+      'No se pudo leer el historial. Abre Revisar pendientes manualmente.'));}});
 }
 function card(account,i){
   const outer=el('section','igc-daw-card');
@@ -203,6 +285,7 @@ function card(account,i){
     if(linked.parallel)command.parallel_action_confirmation=
       'parallel-action-workspace-start:'+linked.owner+':'+account+':'+task.value;
     const result=await api('start-one',command);
+    markStarted(account,task.value);
     notice('Tanda original autorizada para @'+handle+'. Estado: '+
       String(result.status||'starting')+'. Modo: '+(linked.parallel?'paralelo explícito':'serial')+'.');
     await statusUpdate();
@@ -358,6 +441,7 @@ function card(account,i){
     if(linked.parallel)command.parallel_action_confirmation=
       'parallel-action-workspace-start:'+p.owner+':'+account+':'+p.task;
     const result=await api('start-one',command);
+    markStarted(account,p.task);
     notice('Tanda nueva de @'+handle+' enviada a su Chrome exclusivo. Estado: '+
       String(result.status||'starting')+'. Modo: '+(linked.parallel?'paralelo explícito':'serial')+'.');
   }));
@@ -375,7 +459,9 @@ function draw(p){
   const target=$('igcDawGrid');if(!target)return;
   target.replaceChildren();
   if(p){linked={0:p.primary,1:p.secondary,owner:p.owner,
-    parallel:p.parallel===true};savedReviews={};preparedNew={}}
+    parallel:p.parallel===true};savedReviews={};preparedNew={};
+    laneSnapshots={};completionAcknowledged={};completionQueue=[];completionShowing=false;
+    if($('igcDawCompletionModal'))$('igcDawCompletionModal').hidden=true;}
   for(let i=0;i<2;i++)target.append(card(linked?linked[i]:{},i));
 }
 async function perform(fn){
@@ -386,23 +472,46 @@ async function perform(fn){
   try{await fn()}catch(e){notice('No se ejecutó ninguna nueva acción: '+String(e.message||e).slice(0,190))}
   finally{activeBusy=false;for(const b of buttons)b.disabled=false}
 }
-async function statusUpdate(){
+async function statusUpdate(silent=false){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
   const x=await api('status?owner='+encodeURIComponent(linked.owner));
   for(let i=0;i<2;i++){
-    const info=(x.lanes||[]).find(y=>y.account===linked[i].account);
+    const scope=linked[i],info=(x.lanes||[]).find(y=>y.account===scope.account);
     const label=$('igcDawStatus'+i);
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' revisados · '+
        String(info.issues||0)+' pendientes de revisión'):'Sin estado para esta cuenta.';
+    if(!info)continue;
+    const state=String(info.state||'idle'),running=info.running===true;
+    const prev=laneSnapshots[scope.account],task=String(info.task||'');
+    if(running&&(!prev||!prev.running))completionAcknowledged[scope.account]=false;
+    const terminal=['complete','partial','review','blocked','error','paused'];
+    if(prev&&prev.task===task&&!completionAcknowledged[scope.account]&&
+       ((prev.running&&!running)||(terminal.includes(state)&&
+         !terminal.includes(prev.state)))){
+      enqueueCompletion({owner:linked.owner,account:scope.account,
+        handle:scope.expected_handle,i,task,state,
+        processed:Number(info.processed)||0,pending:Number(info.pending)||0,
+        issues:Number(info.issues)||0});
+    }
+    laneSnapshots[scope.account]={running,state,task};
   }
   // Never infer the active server mode from a stale checkbox.
   linked.parallel=x.parallel_mutations_enabled===true;
-  notice(linked.parallel?
-    'MODO PARALELO ACTIVADO: cada cuenta tiene ventana Chrome, jornal y pausa propios. '+
+  if(!silent)notice(linked.parallel?
+    'MODO PARALELO ACTIVADO: cada cuenta tiene ventana Chrome, historial y pausa propios. '+
     'El bloqueo global sigue protegiendo frente a otras instalaciones. No evita límites de Instagram.':
     'Sesiones independientes. Las acciones siguen SERIALIZADAS; no hay dos unfollows paralelos.');
+  return x;
+}
+async function pollStatus(){
+  if(!linked||activeBusy||statusPolling||document.hidden)return;
+  // Poll only after an explicit start or when a worker was observed running.
+  if(!Object.values(laneSnapshots).some(x=>x.running))return;
+  statusPolling=true;
+  try{await statusUpdate(true)}catch(_){/* Keep saved WAL intact on bridge errors. */}
+  finally{statusPolling=false}
 }
 function mount(){
   const center=$('igcAutomationCommandCenter');if(!center||$('igcDualActionWorkspacePanel'))return false;
@@ -448,7 +557,11 @@ function mount(){
   const feedback=el('div','igc-daw-note',
     'Puedes preparar tandas nuevas por cada cuenta con revisión local obligatoria, continuar tandas guardadas, ver resultados y pausar individualmente. Ninguna lista se ejecuta sin confirmación.');
   feedback.id='igcDualActionWorkspaceFeedback';feedback.setAttribute('role','status');
-  panel.append(feedback);center.insertAdjacentElement('afterend',panel);
+  panel.append(feedback);
+  const modal=el('section');modal.id='igcDawCompletionModal';modal.hidden=true;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-label','Revisión de tanda de Instagram');
+  panel.append(modal);center.insertAdjacentElement('afterend',panel);
   draw(null);return true;
 }
 function setup(){
@@ -461,6 +574,8 @@ function setup(){
   watcher.observe(document.documentElement,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
+// Only polls saved owner-scoped status; never launches or authorizes actions.
+setInterval(pollStatus,4000);
 })();
 </script>
 """
