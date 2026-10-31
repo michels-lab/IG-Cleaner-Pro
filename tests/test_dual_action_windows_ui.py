@@ -53,7 +53,17 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("se conservarán los clics inciertos".lower()[0:7], DUAL_ACTION_PANEL.lower())
         self.assertIn("action-workspace-review:", DUAL_ACTION_PANEL)
         self.assertIn("action-workspace-pause:", DUAL_ACTION_PANEL)
-        self.assertIn("acknowledge_serial_actions:true", DUAL_ACTION_PANEL)
+        # Default is serial. Parallel is a separate explicit opt-in, never an
+        # implicit consequence of merely linking two Chrome accounts.
+        self.assertIn("opt.type='checkbox'", DUAL_ACTION_PANEL)
+        self.assertIn("opt.id='igcDawParallelOptIn'", DUAL_ACTION_PANEL)
+        self.assertIn("acknowledge_serial_actions:!parallel", DUAL_ACTION_PANEL)
+        self.assertIn("acknowledge_parallel_actions:parallel", DUAL_ACTION_PANEL)
+        self.assertIn("parallel_actions_consent:parallel", DUAL_ACTION_PANEL)
+        self.assertIn("dual-action-workspaces-parallel:", DUAL_ACTION_PANEL)
+        self.assertIn("parallel_action_confirmation", DUAL_ACTION_PANEL)
+        self.assertIn("parallel-action-workspace-start:", DUAL_ACTION_PANEL)
+        self.assertIn("response.parallel_mutations_enabled!==parallel", DUAL_ACTION_PANEL)
         self.assertIn("read_only_consent:true", DUAL_ACTION_PANEL)
         self.assertIn("IGC_INSTAGRAM_PROFILES", DUAL_ACTION_PANEL)
         self.assertNotIn("eval(", DUAL_ACTION_PANEL)
