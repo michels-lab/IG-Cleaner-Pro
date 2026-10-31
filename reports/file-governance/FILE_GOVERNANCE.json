@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "73989611b6db8521ca03ff0397ab592b44ad769bc2ae526db697b6c78ef7e0c0",
+  "inventory_fingerprint": "7cfc627a1b5ae2e227ce902447e3a0183e0f382d5e197e11fa5bfe99ef8a3422",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -2479,7 +2479,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "52cddbd9e8a8a999bb279daa11b9e59e0bba6bba"
+      "blob": "8c07993b97511444d0655636b0fb6cef83d9c22b"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
