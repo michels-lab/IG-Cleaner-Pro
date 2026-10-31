@@ -58,7 +58,6 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("now.getTime()-24*3600000", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("if(state==='ok')return 'verified'", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("already_not_following", AUTOMATION_ACTIVITY_PANEL)
-        self.assertIn("status==='review'", AUTOMATION_ACTIVITY_PANEL) if False else None
         self.assertNotIn("api('start-one'", AUTOMATION_ACTIVITY_PANEL)
         self.assertNotIn("localStorage.setItem", AUTOMATION_ACTIVITY_PANEL)
         self.assertNotIn("window.open(", AUTOMATION_ACTIVITY_PANEL)
