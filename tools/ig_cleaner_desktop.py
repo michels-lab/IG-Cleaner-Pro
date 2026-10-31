@@ -23,6 +23,7 @@ import secrets
 from profile_counts_bridge import Collector, build_server
 from windows_updater import WindowsUpdater, numeric_version
 from dual_action_windows_ui import DUAL_ACTION_PANEL
+from automation_activity_ui import AUTOMATION_ACTIVITY_PANEL
 
 
 APP_NAME = "Insta Cleaner Pro"
@@ -65,7 +66,7 @@ def prepare_html(source: Path, destination: Path, *, dual_action_panel=False) ->
         position = incoming.rfind(marker)
         if position < 0 or b"igcDualActionWorkspacePanel" in incoming:
             raise ValueError("La interfaz no permite agregar los robots dobles con seguridad.")
-        incoming = incoming[:position] + DUAL_ACTION_PANEL.encode("utf-8") + incoming[position:]
+        incoming = incoming[:position] + (DUAL_ACTION_PANEL + AUTOMATION_ACTIVITY_PANEL).encode("utf-8") + incoming[position:]
     if destination.is_file() and hashlib.sha256(destination.read_bytes()).digest() == hashlib.sha256(incoming).digest():
         return destination
     destination.parent.mkdir(parents=True, exist_ok=True)
