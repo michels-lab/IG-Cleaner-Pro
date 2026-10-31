@@ -155,6 +155,13 @@ const {chromium}=require('playwright');
     await page.locator('#igcDawTask1').selectOption('cancel');
     await page.locator('#igcDawNewTargets1').fill('@pending.friend');
     await page.locator('#igcDawNewVerify1').click();
+    await page.locator('#igcDawTask1').selectOption('unfollow');
+    await page.locator('#igcDawNewStart1').click();
+    let taskChangedCalls=await requests();
+    assert.equal(taskChangedCalls.filter(x=>x.operation==='start-one').length,1,
+      'A per-account task change invalidates prior preflight and cannot change Cancel to Unfollow.');
+    await page.locator('#igcDawTask1').selectOption('cancel');
+    await page.locator('#igcDawNewVerify1').click();
     await page.locator('#igcDawNewStart1').click();
     calls=await requests();starts=calls.filter(x=>x.operation==='start-one');
     assert.equal(starts.length,2);
