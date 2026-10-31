@@ -52,7 +52,8 @@ const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const ACCOUNT=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 const TOKEN=/^[A-Za-z0-9_-]{20,256}$/;
-const PERIODS=[['h1','Última hora'],['h3','Últimas 3 horas'],['today','Hoy'],
+const sessionStart=Date.now(); // This native app page session; reset on reload.
+const PERIODS=[['session','Esta sesión'],['h1','Última hora'],['h3','Últimas 3 horas'],['today','Hoy'],
  ['h24','Últimas 24 horas'],['d7','Últimos 7 días'],['week','Esta semana'],
  ['month','Este mes'],['all','Histórico']];
 let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='';
@@ -93,6 +94,7 @@ function startOfWeek(d){
  return new Date(d.getFullYear(),d.getMonth(),d.getDate()-weekday).getTime();
 }
 function cutoff(id,now){
+ if(id==='session')return sessionStart;
  if(id==='h1')return now.getTime()-3600000;
  if(id==='h3')return now.getTime()-3*3600000;
  if(id==='h24')return now.getTime()-24*3600000;
