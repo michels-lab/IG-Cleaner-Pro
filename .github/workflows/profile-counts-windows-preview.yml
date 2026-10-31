@@ -46,6 +46,8 @@ on:
       - 'tests/test_dual_action_coordinator.py'
       - 'tests/test_dual_action_worker_lease_adapter.py'
       - 'tests/test_dual_manager_offline_integration.py'
+      - 'tests/test_explicit_parallel_action_workspaces.py'
+      - 'tests/dual-action-parallel-windows-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -126,6 +128,8 @@ on:
       - 'tests/test_dual_action_coordinator.py'
       - 'tests/test_dual_action_worker_lease_adapter.py'
       - 'tests/test_dual_manager_offline_integration.py'
+      - 'tests/test_explicit_parallel_action_workspaces.py'
+      - 'tests/dual-action-parallel-windows-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -222,6 +226,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Two-account offline supervisor pause, original WAL lock or production serial mode failed.' }
           python -m unittest discover -s tests -p 'test_dual_new_batch_preflight.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'New batch read-only owner/WAL/visited/protected preflight failed.' }
+          python -m unittest discover -s tests -p 'test_explicit_parallel_action_workspaces.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Explicit two-account live action consent, separate worker WAL or legacy global lease failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Separate Instagram action Chrome profiles or serial WAL contract failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
@@ -312,6 +318,8 @@ jobs:
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           node tests/dual-action-new-batch-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          node tests/dual-action-parallel-windows-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "Native Windows parallel opt-in and distinct-account action approvals failed." }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows new-batch consent and per-account preflight failed." }
           if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
