@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "419aea25811cbad5e745625d8a6da539e08cc73af56c30856a4b5d009443327a",
+  "inventory_fingerprint": "73989611b6db8521ca03ff0397ab592b44ad769bc2ae526db697b6c78ef7e0c0",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -1835,7 +1835,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0ffb3d6b49e3a11c00ac79a0d20cd186835ef5fb"
+      "blob": "b5643f5151206c4e0c91addf265a60db4e07f522"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2479,7 +2479,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f151d836afba943ca14d00497ca21903dfa328bd"
+      "blob": "52cddbd9e8a8a999bb279daa11b9e59e0bba6bba"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
