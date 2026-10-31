@@ -58,6 +58,27 @@ const {chromium}=require('playwright');
    const original=window.fetch;
    window.fetch=async(url,opts)=>{
      const target=String(url);
+     if(target.includes('/api/actions/history')){
+       const data=opts?.body?JSON.parse(opts.body):{};
+       const now=new Date().toISOString();
+       const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),
+         today.getDate()-1,23,59,0).toISOString();
+       const first=data.account==='ig_first_1234567';
+       const history_rows=first?
+         (data.task==='unfollow'?[
+           {username:'done.recent',status:'ok',at:now},
+           {username:'already.done',status:'already_not_following',at:now},
+           {username:'warn.now',status:'review',at:now},
+           {username:'done.recent',status:'ok',at:now}
+         ]:[
+           {username:'cancel.yesterday',status:'ok',at:yesterday},
+           {username:'warn.pending',status:'blocked',at:now},
+           {username:'cancel.unknown',status:'ok',at:'bad-timestamp'}
+         ]):
+         (data.task==='cancel'?[{username:'other.person',status:'ok',at:now}]:[]);
+       return {ok:true,json:async()=>({owner:data.owner,account:data.account,
+         task:data.task,history_rows})};
+     }
      if(target.includes('/api/actions/dual-action-workspaces/')){
        const operation=target.split('/dual-action-workspaces/')[1].split('?')[0];
        const data=opts?.body?JSON.parse(opts.body):null;
@@ -91,7 +112,29 @@ const {chromium}=require('playwright');
      return original(url,opts);
    };
   });
-  await page.locator('#igcDawConfigure').click();
+  // The Automations statistics sidebar reads the original canonical WAL.
+   // No Instagram requests or relationship-changing calls are needed.
+   const activity=page.locator('#igcAutomationActivityPanel');
+   await activity.waitFor({state:'visible',timeout:12000});
+   assert.equal(await page.locator('#igcAutomationActivityLayout').count(),1);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActCount_h24')?.textContent==='2');
+   assert.equal(await page.locator('#igcActCount_h1').innerText(),'1');
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
+   assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
+   assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
+   assert.equal(await page.locator('#igcActMetric_warning').innerText(),'2');
+   assert.equal(await page.locator('#igcActMetric_no_action').innerText(),'1');
+   await page.locator('#igcActBreakdownPeriod').selectOption('h24');
+   assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
+   await page.locator('#igcActAccount').selectOption('ig_second_123456');
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActCount_h24')?.textContent==='1');
+   assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
+   assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
+   await page.locator('#igcActAccount').selectOption('ig_first_1234567');
+   await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
   const linked=await page.evaluate(()=>window.__dawRequests);
   assert.equal(linked[0].operation,'configure');
