@@ -16477,6 +16477,24 @@ function igcAutoMaybePromptBatchReview(state){
  try{sessionStorage.setItem(key,"shown");}catch{}
  window.igcAutoShowBatchReview();
 }
+// Display order only. NEVER reorder the original owner-approved batch.targets
+// or saved journal; no replay, approval or worker action follows this sort.
+function igcAutoPrioritizedReviewTargets(batch){
+ const rows=(batch?.targets||[]).map((username,index)=>{
+  const observed=igcAutoDisplayBatchResult(batch,username);
+  const status=String(observed?.status||"pending");
+  const confirmed=["ok","already_not_following","already_not_requested"].includes(status)&&
+   observed?.observation_only!==true;
+  // 0 = yellow verification, 1 = untouched, 2 = unavailable, 3 = green verified.
+  // An uncertain click seen as unavailable in a read-only scan still sorts as
+  // Review because igcAutoDisplayBatchResult preserves its possible-click WAL.
+  const priority=!confirmed&&status!=="pending"&&status!=="profile_unavailable"?0:
+    status==="pending"?1:status==="profile_unavailable"?2:3;
+  return {username,index,priority};
+ });
+ rows.sort((a,b)=>a.priority-b.priority||a.index-b.index);
+ return rows.map(row=>row.username);
+}
 window.igcAutoShowBatchReview=function(){
  const batch=actionBatchReview;
  if(!batch||actionState?.running)return;
@@ -16492,6 +16510,10 @@ window.igcAutoShowBatchReview=function(){
    " already absent (no click) · "+o.unavailable.length+" unavailable (no click) · "+o.issues.length+" unresolved · "+
    o.unchecked.length+" untouched. Check each actual result. No uncertain click will be repeated.";
  dialog.append(summary);
+ const ordering=document.createElement("p");ordering.className="note";
+ ordering.textContent="Priority: ⚠ Review first · ○ Not checked · ◌ Unavailable · ✓ OK last. "+
+   "Order changes only on screen; the original saved cohort is unchanged.";
+ dialog.append(ordering);
  const wrap=document.createElement("div");wrap.style.cssText="max-height:48vh;overflow:auto";
  const table=document.createElement("table"),thead=document.createElement("thead"),head=document.createElement("tr");
  for(const title of ["Profile","Saved result","Recorded (local)","Inspect"]){
@@ -16500,7 +16522,7 @@ window.igcAutoShowBatchReview=function(){
  thead.append(head);table.append(thead);
  const tbody=document.createElement("tbody"),hist=new Map(
     (igcAutoHistoryCache.get(scope()+"__"+mode)||[]).map(r=>[norm(r.username),r]));
- for(const username of batch.targets){
+ for(const username of igcAutoPrioritizedReviewTargets(batch)){
   const row=igcAutoDisplayBatchResult(batch,username);
   const recent=hist.get(norm(username))||{};
   const tr=document.createElement("tr");
