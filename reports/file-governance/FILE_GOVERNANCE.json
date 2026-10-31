@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "d4c8a0a9255edc221854da56a2138020bea2af5bc5819761f00049ea1c02c5a4",
+  "inventory_fingerprint": "39c7c008fbe0c76728eab5e62a09955c411abe905cd688a8570c7316b4684f1d",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -2591,7 +2591,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8de46bf9e6673bc57f1f24760762d44af2401755"
+      "blob": "ddb70fe0109c782a9d32a956248f8a9186f5ac9b"
     },
     {
       "path": "tools/ig_structured_probe.py",
