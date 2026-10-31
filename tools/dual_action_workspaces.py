@@ -12,15 +12,27 @@ from pathlib import Path
 
 from dual_chrome_sessions import APP_OWNER, DualChromeSessions
 from profile_actions import ActionRobot
+from dual_action_coordinator import SharedGlobalActionCohort
 
 
 class DualActionWorkspaces:
     def __init__(self, sessions: DualChromeSessions, collector, journal_root: Path,
-                 legacy_actions: ActionRobot):
+                 legacy_actions: ActionRobot, *, offline_test_runner=None):
+        # Internal OFFLINE test hook. Real Windows bridge never passes this
+        # parameter: normal app workers remain globally SERIALIZED. When a
+        # callback is supplied, it replaces the entire Instagram Playwright
+        # _run() body. This is not a production concurrent-Unfollow switch.
+        if offline_test_runner is not None and not callable(offline_test_runner):
+            raise TypeError("Offline robot test runner must be a callable.")
         self.sessions = sessions
         self.collector = collector
         self.journal_root = Path(journal_root)
         self.legacy_actions = legacy_actions
+        self._offline_test_runner = offline_test_runner
+        self._offline_cohort = (
+            SharedGlobalActionCohort(self.journal_root)
+            if offline_test_runner is not None else None
+        )
         self.lock = threading.RLock()
         self.owner = None
         self.workspaces = {}
@@ -63,9 +75,20 @@ class DualActionWorkspaces:
             # for existing WAL, protections and batch history.
             workspaces = {}
             for (account, handle), folder in zip((first, second), folders):
+                robot = ActionRobot(
+                    self.collector, self.journal_root, folder,
+                    lease_factory=(self._offline_cohort.lease
+                                   if self._offline_cohort is not None else None),
+                )
+                if self._offline_test_runner is not None:
+                    # Completely replaces network-bound Playwright/click code,
+                    # not just the final click. Only unit tests inject runner.
+                    robot._run = (
+                        lambda a=account, ev=robot.stop_event:
+                        self._offline_test_runner(a, ev)
+                    )
                 workspaces[account] = {
-                    "handle": handle, "chrome": folder,
-                    "robot": ActionRobot(self.collector, self.journal_root, folder),
+                    "handle": handle, "chrome": folder, "robot": robot,
                 }
             self.owner, self.workspaces = owner, workspaces
             return self._snapshot_locked()
@@ -94,8 +117,13 @@ class DualActionWorkspaces:
                 raise ValueError("Action owner, workspace and expected Instagram login must match.")
             if self._alive(self.legacy_actions):
                 raise ValueError("The legacy Instagram action worker is active; no parallel actions.")
-            if any(self._alive(row["robot"]) for row in self.workspaces.values()):
+            if (self._offline_cohort is None
+                    and any(self._alive(row["robot"]) for row in self.workspaces.values())):
                 raise ValueError("Only one relationship-changing action worker can run at a time.")
+            # The offline test harness may exercise both workers, but because
+            # their _run bodies are replaced no Instagram mutation can occur.
+            # The coordinator still holds the legacy global kernel lease
+            # while either worker lives. Production never enters this branch.
             # ActionRobot performs its COMPLETE existing batch-size, protected
             # list, fresh-cohort, WAL and exact-target approval gates here.
             # This supervisor never invents/forwards a consent flag.
@@ -199,7 +227,9 @@ class DualActionWorkspaces:
         return {
             "owner": self.owner, "two_workspaces": len(lanes) == 2,
             "distinct_action_chrome_profiles": len(lanes) == 2,
-            "mode": "independent_chrome_sessions_serialized_actions",
+            "mode": ("offline_two_worker_integration_test_no_instagram"
+                     if self._offline_cohort is not None else
+                     "independent_chrome_sessions_serialized_actions"),
             "parallel_mutations_enabled": False,
             "requires_separate_batch_confirmation": True,
             "lanes": lanes,

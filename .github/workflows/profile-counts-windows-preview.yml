@@ -45,6 +45,7 @@ on:
       - 'tools/dual_action_coordinator.py'
       - 'tests/test_dual_action_coordinator.py'
       - 'tests/test_dual_action_worker_lease_adapter.py'
+      - 'tests/test_dual_manager_offline_integration.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -122,6 +123,7 @@ on:
       - 'tools/dual_action_coordinator.py'
       - 'tests/test_dual_action_coordinator.py'
       - 'tests/test_dual_action_worker_lease_adapter.py'
+      - 'tests/test_dual_manager_offline_integration.py'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -212,6 +214,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Legacy-compatible dual scope global WAL reservation failed.' }
           python -m unittest discover -s tests -p 'test_dual_action_worker_lease_adapter.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Two real ActionRobot instances must preserve the legacy global lock across both independent account workers.' }
+          python -m unittest discover -s tests -p 'test_dual_manager_offline_integration.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Two-account offline supervisor pause, original WAL lock or production serial mode failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Separate Instagram action Chrome profiles or serial WAL contract failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
