@@ -48,6 +48,7 @@ on:
       - 'tests/test_dual_manager_offline_integration.py'
       - 'tests/test_explicit_parallel_action_workspaces.py'
       - 'tests/dual-action-parallel-windows-browser.test.cjs'
+      - 'tests/dual-action-batch-completion-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -130,6 +131,7 @@ on:
       - 'tests/test_dual_manager_offline_integration.py'
       - 'tests/test_explicit_parallel_action_workspaces.py'
       - 'tests/dual-action-parallel-windows-browser.test.cjs'
+      - 'tests/dual-action-batch-completion-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
@@ -319,6 +321,8 @@ jobs:
           node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           node tests/dual-action-new-batch-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           node tests/dual-action-parallel-windows-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          node tests/dual-action-batch-completion-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "Native Windows account-scoped completion Review modal or WAL no-auto-approval failed." }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows parallel opt-in and distinct-account action approvals failed." }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows new-batch consent and per-account preflight failed." }
           if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
