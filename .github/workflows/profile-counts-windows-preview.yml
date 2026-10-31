@@ -63,6 +63,7 @@ on:
       - 'tests/test_developer_audit.py'
       - 'tests/developer-annotations-contract.test.cjs'
       - 'tests/test_profile_actions_chromium.py'
+      - 'tests/test_cancel_request_unfollow_dialog_safety.py'
       - 'tests/test_action_batch_history.py'
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
@@ -145,6 +146,7 @@ on:
       - 'tests/test_developer_audit.py'
       - 'tests/developer-annotations-contract.test.cjs'
       - 'tests/test_profile_actions_chromium.py'
+      - 'tests/test_cancel_request_unfollow_dialog_safety.py'
       - 'tests/test_action_batch_history.py'
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
@@ -272,6 +274,8 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
+          python -m unittest discover -s tests -p 'test_cancel_request_unfollow_dialog_safety.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Cancel Pending must never confirm an ordinary Unfollow dialog or replay an uncertain outgoing request.' }
           if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
       - name: Reject Instagram reCAPTCHA login loops without navigation or bypass
         shell: pwsh
