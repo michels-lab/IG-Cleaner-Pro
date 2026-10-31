@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 391,
-  "classified_files_total": 387,
-  "docs_content_inspected": 98,
+  "tracked_files_total": 393,
+  "classified_files_total": 389,
+  "docs_content_inspected": 99,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 93,
+    "document": 94,
     "index": 5,
     "installer_metadata": 1,
     "source": 53,
-    "test": 102,
+    "test": 103,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "978376313a06075177a731e09ba5b812864b20d616a825ba01a96d301ae225a8",
-  "evidence_fingerprint": "1eb8d1878cb29a6648e67bbe76a8642cc2659c44bb18f732ba4289d6c186e7a7",
+  "inventory_fingerprint": "bac41a0ac9c783c4c244209390ac7df9bbf8999081201d315ee9add6086c601c",
+  "evidence_fingerprint": "5271c5ca8dd2faf2d58deff8f107cd8d6f6d7752eb93815acd18fd75b9b8b600",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "2d6703bfb73d86f9fe9d70f4ce3c19d877ffad01"
+      "blob": "5440d8f8df27b99144c2c9b1f57b054990caea58"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1229,6 +1229,13 @@
       "blob": "e42cfd4f8f219afdda02ac8604a6e7c2e374a911"
     },
     {
+      "path": "docs/GRANADA_CANCEL_REQUEST_UNFOLLOW_DIALOG_2026-10-30.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "5995f8cbe183eade6ea36fc08a4fa8f7243be822"
+    },
+    {
       "path": "docs/GRANADA_DEVELOPER_CHAT_REAL_ACTION_TEST_2026-10-20.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2125,6 +2132,13 @@
       "blob": "3fda4920737f28770d72e6bfcc15cb03101edeef"
     },
     {
+      "path": "tests/test_cancel_request_unfollow_dialog_safety.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "64af709c31b9b6e62eddc05ad85a03394cd8ecd0"
+    },
+    {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2591,7 +2605,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f24aa2c927e9dab2151a3dcb0bb59bcf8d12a425"
+      "blob": "8cf3359bff78e17b960af084cbd6b9698865ad5e"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2815,11 +2829,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "df3015d57d8bb54e",
+      "id": "535b8e5a9a887e0d",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "28 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-new-batch-browser.test.cjs, tests/dual-action-parallel-windows-browser.test.cjs, tests/dual-action-windows-panel-browser.test.cjs",
+      "observation": "29 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-new-batch-browser.test.cjs, tests/dual-action-parallel-windows-browser.test.cjs, tests/dual-action-windows-panel-browser.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
