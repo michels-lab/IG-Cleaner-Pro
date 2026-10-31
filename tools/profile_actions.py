@@ -1179,6 +1179,8 @@ def _action_issue(task, result, message):
         return "pending_already_following"
     if task == "cancel" and result == "review" and message.startswith(("The request no longer appears", "La solicitud ya no aparece")):
         return "pending_not_requested"
+    if task == "cancel" and result == "review" and message.startswith("Cancel pending safety stop:"):
+        return "pending_wrong_relationship_dialog"
     if task == "cancel" and result == "review" and message.startswith("Pending cancellation unverified after read-only refresh:"):
         return "pending_cancel_unverified"
     if task == "unfollow" and result == "review" and message.startswith("Pending verification: target identity or layout not verifiable. No action clicked."):
@@ -1390,6 +1392,30 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
             _target_identity_visible(page, username)):
         return "review", ("The exact target profile changed before the first click. "
                           "No relationship action clicked; review manually.")
+    if task == "cancel":
+        # Instagram can ACCEPT a previously pending follow request while this
+        # profile is loading, turning Requested into Following. NEVER click
+        # the cached Requested element without re-reading the exact visible
+        # relationship: it could now open a normal UNFOLLOW confirmation.
+        page.wait_for_timeout(250)
+        if challenge_detected(page) or page.locator('input[name="password"]').count():
+            return "blocked", "Instagram asked for verification before canceling a pending request. No click."
+        if not _verified_action_owner(page, expected_handle):
+            return "blocked", "Instagram owner changed before canceling a pending request. No click."
+        if not (_exact_https_target_profile(page, username)
+                and _target_identity_visible(page, username)):
+            return "review", ("The exact pending-request target changed before clicking. "
+                              "No relationship action clicked.")
+        if _profile_relationship_control(page, username, [r"Following", r"Siguiendo"]) is not None:
+            return "review", (
+                "Outdated pending request: Instagram now shows Following immediately "
+                "before the click. No Cancel Request or Unfollow action clicked.")
+        active = _profile_relationship_control(
+            page, username, [r"Requested", r"Solicitado", r"Solicitada"])
+        if active is None:
+            return "review", (
+                "The request no longer appears as Requested immediately before "
+                "the click. No relationship action clicked; inspect the target.")
     # Durable write-ahead intent MUST be fsynced and atomically renamed
     # before Playwright may initiate even a menu-opening relationship click.
     # Failure to persist intent prevents the click entirely.
@@ -1454,7 +1480,21 @@ def perform_visible_action(page, username, task, expected_handle, can_act=None,
     if dialog is not None:
         choice = _request_cancel_confirmation(dialog, username)
         if choice is None:
-            return "review", "The dialog does not clearly identify this pending request. No click was performed."
+            # The first Requested click is already covered by a durable WAL
+            # intent. A normal Instagram Unfollow prompt can mean Instagram
+            # accepted the request mid-flight. Never click the red Unfollow
+            # button to "cancel" an outgoing follow request.
+            if _visible_named_control(dialog, [r"Unfollow", r"Dejar de seguir"],
+                                      text_fallback=True) is not None:
+                return "review", (
+                    "Cancel pending safety stop: Instagram displayed a normal "
+                    "Unfollow / Dejar de seguir confirmation, not a verified "
+                    "outgoing-request cancellation. No final Unfollow clicked. "
+                    "The target stays REVIEW with its original possible-click "
+                    "journal; inspect it manually, do not replay.")
+            return "review", (
+                "The dialog does not clearly identify this pending request. "
+                "No final confirmation clicked; original intent remains REVIEW.")
         if can_act and not can_act(username):
             return "review", "Protection changed before canceling the request."
         if not _verified_action_owner(page, expected_handle):
@@ -3492,10 +3532,17 @@ class ActionRobot:
                     with self.lock:
                         self.status = "review"
                         self.open_review_tabs = action_tabs.overview()
+                        previous_reason = self.message
                         self.message = (
                             "Unverified Instagram tabs remain open for manual review. "
                             "Inspect them before selecting Pause; Pause closes Chrome. "
-                            "No relationship click will be repeated.")
+                            "No relationship click will be repeated." +
+                            (" Cancel Pending was stopped because Instagram displayed "
+                             "an unexpected Unfollow confirmation; its outcome is "
+                             "NOT verified. Do not press Dejar de seguir."
+                             if self.task == "cancel" and
+                                "Cancel pending safety stop:" in previous_reason
+                             else ""))
                     while not self.stop_event.is_set() and action_tabs.has_open_tabs():
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
