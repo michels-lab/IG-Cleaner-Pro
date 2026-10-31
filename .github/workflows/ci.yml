@@ -101,6 +101,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_dual_action_worker_lease_adapter.py' -v
       - name: Validate two account manager starts, pause isolation and production serial guard (offline)
         run: python3 -m unittest discover -s tests -p 'test_dual_manager_offline_integration.py' -v
+      - name: Read-only per-account new batch preflight rejects history, protections and wrong owner
+        run: python3 -m unittest discover -s tests -p 'test_dual_new_batch_preflight.py' -v
       - name: Verify owner-scoped action leases and rejected-start account integrity
         run: python3 -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Verify native Windows Setup update feed, SHA-256, cancellation, backups and loopback owner consent

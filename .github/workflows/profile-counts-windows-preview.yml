@@ -54,6 +54,8 @@ on:
       - 'tools/dual_action_windows_ui.py'
       - 'tests/test_dual_action_windows_ui.py'
       - 'tests/dual-action-windows-panel-browser.test.cjs'
+      - 'tests/dual-action-new-batch-browser.test.cjs'
+      - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
       - 'tests/test_developer_audit.py'
@@ -132,6 +134,8 @@ on:
       - 'tools/dual_action_windows_ui.py'
       - 'tests/test_dual_action_windows_ui.py'
       - 'tests/dual-action-windows-panel-browser.test.cjs'
+      - 'tests/dual-action-new-batch-browser.test.cjs'
+      - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
       - 'tests/test_developer_audit.py'
@@ -216,6 +220,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Two real ActionRobot instances must preserve the legacy global lock across both independent account workers.' }
           python -m unittest discover -s tests -p 'test_dual_manager_offline_integration.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Two-account offline supervisor pause, original WAL lock or production serial mode failed.' }
+          python -m unittest discover -s tests -p 'test_dual_new_batch_preflight.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'New batch read-only owner/WAL/visited/protected preflight failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Separate Instagram action Chrome profiles or serial WAL contract failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'Owner-scoped action lease or rejected-start state corruption; refuse Windows Setup.' }
           if ($LASTEXITCODE -ne 0) { throw 'Public/Developer cross-process action interlock failed.' }
@@ -305,6 +311,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          node tests/dual-action-new-batch-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw "Native Windows new-batch consent and per-account preflight failed." }
           if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "Rendered Windows Analysis/Action command center acceptance failed." }
