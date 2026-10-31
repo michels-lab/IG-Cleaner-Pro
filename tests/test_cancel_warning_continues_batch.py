@@ -198,6 +198,33 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertNotIn("third.person", journal)
             self.assertTrue(_saved_journal_blocks_action(journal, "first.person"))
 
+    def test_security_challenge_after_warning_blocks_rest_of_batch(self):
+        import threading
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            issue_seen = threading.Event()
+            called = []
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                called.append(username)
+                on_pre_click("relationship_control")
+                issue_seen.set()
+                return ("review", "Cancel pending safety stop: normal Unfollow popup.")
+            def challenge(_page):
+                if issue_seen.is_set():
+                    # Emulate the operator pausing after the system-wide
+                    # security challenge is identified; no more action clicks.
+                    robot.stop_event.set()
+                    return True
+                return False
+            self.run_offline(robot, action, challenge=challenge)
+            self.assertEqual(called, ["first.person"])
+            journal = _read_json(robot._base(), {})
+            self.assertEqual(journal["first.person"]["status"], "review")
+            self.assertNotIn("second.person", journal)
+            self.assertTrue(_saved_journal_blocks_action(journal, "first.person"))
+
     def test_cancel_warning_does_not_turn_into_success_or_auto_replay(self):
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
