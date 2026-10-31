@@ -103,6 +103,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_dual_manager_offline_integration.py' -v
       - name: Account-specific new cohort WAL preflight is read-only and rejects prior visits
         run: python -m unittest discover -s tests -p 'test_dual_new_batch_preflight.py' -v
+      - name: Explicit owner-approved concurrent ActionRobots remain independently scoped
+        run: python -m unittest discover -s tests -p 'test_explicit_parallel_action_workspaces.py' -v
       - name: Owner-scoped action lease and legacy-global compatibility
         run: python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
       - name: Bound owner-profile visits with final re-verification and cross-account fail-closed tests

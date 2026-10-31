@@ -36,6 +36,10 @@ border:1px solid #466077;border-radius:8px;color:#f0f6ff;font:inherit;font-size:
 #igcDualActionWorkspacePanel .igc-daw-pace input{background:#142638;border:1px solid #466077;color:#e9f0f8;
 border-radius:7px;width:58px;font:inherit;font-size:12px;padding:6px}
 #igcDualActionWorkspacePanel .igc-daw-new-note{font-size:12px;color:#a9bfd2;margin-top:8px}
+#igcDualActionWorkspacePanel .igc-daw-mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+font-size:12px;color:#b5c8dc;padding:10px 12px;border:1px solid #41546c;border-radius:10px}
+#igcDualActionWorkspacePanel .igc-daw-mode input{accent-color:#87b6eb;width:16px;height:16px}
+#igcDualActionWorkspacePanel .igc-daw-mode small{display:block;flex-basis:100%;color:#9eb1c5;line-height:1.45}
 #igcDualActionWorkspacePanel .igc-daw-review-list{display:grid;gap:5px;margin-top:12px;max-height:260px;overflow:auto}
 #igcDualActionWorkspacePanel .igc-daw-review-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;
 padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;font-size:12px;overflow-wrap:anywhere}
@@ -176,7 +180,8 @@ function card(account,i){
     if(!pending)throw Error('La tanda no tiene perfiles vírgenes; revisa los amarillos manualmente.');
     if(!confirm('Cuenta @'+handle+' · '+task.value+' · '+targets.length+
       ' objetivos originales, de los cuales '+pending+' no tienen resultado. '+
-      'Se conservarán los clics inciertos sin repetirlos. ¿Continuar ESTA tanda guardada?'))return;
+      'Modo '+(linked.parallel?'PARALELO':'serial')+
+      '. Se conservarán los clics inciertos sin repetirlos. ¿Continuar ESTA tanda guardada?'))return;
     // This is an explicit owner attestation, not an independent live check.
     // Followback audit must have been completed before authorizing Unfollow.
     if(task.value==='unfollow'&&!confirm('¿Confirmas que ya verificaste la lista COMPLETA '+
@@ -193,10 +198,13 @@ function card(account,i){
       batch_size:batchSize,gap_seconds:gapSeconds,rest_minutes:restMinutes,
       protected:[],tab_flow:'sequential',followers_evidence:task.value==='unfollow',
       confirmation:task.value+':'+targets.length};
-    const result=await api('start-one',{owner:linked.owner,account,action,
-      confirmation:'action-workspace-start:'+linked.owner+':'+account+':'+task.value});
+    const command={owner:linked.owner,account,action,
+      confirmation:'action-workspace-start:'+linked.owner+':'+account+':'+task.value};
+    if(linked.parallel)command.parallel_action_confirmation=
+      'parallel-action-workspace-start:'+linked.owner+':'+account+':'+task.value;
+    const result=await api('start-one',command);
     notice('Tanda original autorizada para @'+handle+'. Estado: '+
-      String(result.status||'starting')+'. No hay dos robots de acciones simultáneos.');
+      String(result.status||'starting')+'. Modo: '+(linked.parallel?'paralelo explícito':'serial')+'.');
     await statusUpdate();
   }));
   controls.append(continueSaved);
@@ -334,7 +342,9 @@ function card(account,i){
        ||fresh.unresolved_saved_cohort)
       throw Error('La lista ya no está intacta. Hay historial o una tanda pendiente.');
     if(!confirm('NUEVA tanda · @'+handle+' · '+p.task+' · '+exact.length+
-       ' perfiles NUEVOS, de '+batchSize+' por tanda. ¿Autorizar esta cuenta?'))return;
+       ' perfiles NUEVOS, de '+batchSize+' por tanda. Modo '+
+       (linked.parallel?'PARALELO con la otra cuenta':'serial')+
+       '. ¿Autorizar ESTA cuenta?'))return;
     if(p.task==='unfollow'&&!confirm('¿Verificaste la lista COMPLETA y actual '+
        'de seguidores de @'+handle+'? La prevalidación local no lo demuestra.'))return;
     preparedNew[i]=null;
@@ -343,10 +353,13 @@ function card(account,i){
       rest_minutes:restMinutes,protected:[],tab_flow:'sequential',
       followers_evidence:p.task==='unfollow',
       confirmation:p.task+':'+exact.length};
-    const result=await api('start-one',{owner:p.owner,account,action,
-      confirmation:'action-workspace-start:'+p.owner+':'+account+':'+p.task});
+    const command={owner:p.owner,account,action,
+      confirmation:'action-workspace-start:'+p.owner+':'+account+':'+p.task};
+    if(linked.parallel)command.parallel_action_confirmation=
+      'parallel-action-workspace-start:'+p.owner+':'+account+':'+p.task;
+    const result=await api('start-one',command);
     notice('Tanda nueva de @'+handle+' enviada a su Chrome exclusivo. Estado: '+
-      String(result.status||'starting')+'. No hay mutaciones paralelas.');
+      String(result.status||'starting')+'. Modo: '+(linked.parallel?'paralelo explícito':'serial')+'.');
   }));
   newControls.append(start);newBox.append(newControls);
   const newList=el('div','igc-daw-review-list');newList.id='igcDawNewList'+i;
@@ -361,7 +374,8 @@ function card(account,i){
 function draw(p){
   const target=$('igcDawGrid');if(!target)return;
   target.replaceChildren();
-  if(p){linked={0:p.primary,1:p.secondary,owner:p.owner};savedReviews={};preparedNew={}}
+  if(p){linked={0:p.primary,1:p.secondary,owner:p.owner,
+    parallel:p.parallel===true};savedReviews={};preparedNew={}}
   for(let i=0;i<2;i++)target.append(card(linked?linked[i]:{},i));
 }
 async function perform(fn){
@@ -383,7 +397,12 @@ async function statusUpdate(){
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' revisados · '+
        String(info.issues||0)+' pendientes de revisión'):'Sin estado para esta cuenta.';
   }
-  notice('Sesiones independientes. Las acciones siguen SERIALIZADAS; no hay dos unfollows paralelos.');
+  // Never infer the active server mode from a stale checkbox.
+  linked.parallel=x.parallel_mutations_enabled===true;
+  notice(linked.parallel?
+    'MODO PARALELO ACTIVADO: cada cuenta tiene ventana Chrome, jornal y pausa propios. '+
+    'El bloqueo global sigue protegiendo frente a otras instalaciones. No evita límites de Instagram.':
+    'Sesiones independientes. Las acciones siguen SERIALIZADAS; no hay dos unfollows paralelos.');
 }
 function mount(){
   const center=$('igcAutomationCommandCenter');if(!center||$('igcDualActionWorkspacePanel'))return false;
@@ -394,15 +413,32 @@ function mount(){
     'Chrome separado por cuenta · historial original · sin acciones simultáneas'));
   header.append(heading);
   const actions=el('div','igc-daw-actions');
+  const mode=el('label','igc-daw-mode');
+  const opt=el('input');opt.type='checkbox';opt.id='igcDawParallelOptIn';
+  mode.append(opt,el('span',null,'Activar dos robots de acciones simultáneos (opcional)'));
+  mode.append(el('small',null,
+    'Predeterminado: serial. En paralelo, cada @cuenta utiliza su propia ventana Chrome, '+
+    'tanda, historial y pausa. Cada acción requiere aprobación; Instagram puede aplicar límites.'));
+  actions.append(mode);
   const configure=el('button',null,'Vincular dos cuentas');
   configure.type='button';configure.id='igcDawConfigure';
   configure.addEventListener('click',()=>perform(async()=>{
-    const p=pair();
+    const p=pair(),parallel=opt.checked===true;
     if(!confirm('Vincular @'+p.primary.expected_handle+' y @'+p.secondary.expected_handle+
-      ' a dos sesiones Chrome separadas. Los unfollows permanecerán uno por uno.'))return;
-    await api('configure',{...p,read_only_consent:true,acknowledge_serial_actions:true,
-      confirmation:'dual-action-workspaces:'+p.primary.account+':'+p.secondary.account});
-    draw(p);await statusUpdate();
+      ' a dos sesiones Chrome separadas. '+(parallel?
+      'MODO PARALELO: ambos robots podrán ejecutar acciones de relación a la vez '+
+      'en distintas cuentas, con confirmación por cada tanda. ¿Lo autorizas?':
+      'Modo serial: solo un robot de acciones a la vez. ¿Continuar?')))return;
+    const data={...p,read_only_consent:true,
+      parallel_actions_consent:parallel,
+      acknowledge_parallel_actions:parallel,
+      acknowledge_serial_actions:!parallel,
+      confirmation:(parallel?'dual-action-workspaces-parallel:':'dual-action-workspaces:')+
+        p.primary.account+':'+p.secondary.account};
+    const response=await api('configure',data);
+    if(response.parallel_mutations_enabled!==parallel)
+      throw Error('El modo confirmado no coincide con el servidor. No se inició ninguna tarea.');
+    draw({...p,parallel:response.parallel_mutations_enabled});await statusUpdate();
   }));
   actions.append(configure);
   const refresh=el('button',null,'Actualizar estado');refresh.type='button';

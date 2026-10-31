@@ -1,9 +1,10 @@
-"""Two exact Instagram action workspaces with separate Chrome sessions.
+"""Two exact Instagram action workspaces with separate persistent Chrome sessions.
 
-Action workers are deliberately SERIALIZED by the canonical global action
-WAL/OS lease. This is NOT a two-concurrent-unfollows feature. Each workspace
-has its own persistent browser identity and ActionRobot state, while all
-relationship evidence stays in the original canonical owner/account journals.
+Serial by DEFAULT. Two concurrent action workers are possible ONLY after
+an exact owner-initiated configuration and additional owner/account/task
+confirmation per batch. Both workers share one legacy GLOBAL OS lease for
+the entire cohort and take distinct scoped Chrome/WAL locks. Existing public
+and Developer installations cannot bypass the global file admission.
 """
 from __future__ import annotations
 
@@ -33,6 +34,8 @@ class DualActionWorkspaces:
             SharedGlobalActionCohort(self.journal_root)
             if offline_test_runner is not None else None
         )
+        self._live_cohort = None
+        self._parallel_enabled = False
         self.lock = threading.RLock()
         self.owner = None
         self.workspaces = {}
@@ -56,11 +59,25 @@ class DualActionWorkspaces:
         second = self.sessions._workspace(data.get("secondary"))
         if first[0] == second[0] or first[1] == second[1]:
             raise ValueError("Two action workspaces must have different accounts and handles.")
-        if (data.get("read_only_consent") is not True
-                or data.get("acknowledge_serial_actions") is not True
-                or data.get("confirmation") != "dual-action-workspaces:" + first[0] + ":" + second[0]):
+        parallel = data.get("parallel_actions_consent") is True
+        if data.get("parallel_actions_consent") not in (None, False, True):
+            raise ValueError("Choose a valid explicit concurrent-action mode.")
+        if data.get("read_only_consent") is not True:
+            raise ValueError("Confirm both exact accounts before configuring Chrome.")
+        if parallel:
+            if (data.get("acknowledge_parallel_actions") is not True
+                    or data.get("acknowledge_serial_actions") is True
+                    or data.get("confirmation") !=
+                    "dual-action-workspaces-parallel:" + first[0] + ":" + second[0]):
+                raise ValueError(
+                    "Confirm TWO concurrent action robots for these exact accounts. "
+                    "Each batch also needs separate explicit owner approval.")
+        elif (data.get("acknowledge_serial_actions") is not True
+                or data.get("acknowledge_parallel_actions") is True
+                or data.get("confirmation") !=
+                "dual-action-workspaces:" + first[0] + ":" + second[0]):
             raise ValueError(
-                "Confirm both exact accounts and that relationship actions remain serialized.")
+                "Confirm both exact accounts and the default serialized action mode.")
         with self.lock:
             if self.owner is not None and self.owner != owner:
                 raise ValueError("Another InstaCleaner owner already configured action workspaces.")
@@ -73,12 +90,18 @@ class DualActionWorkspaces:
             # Never share ActionRobot's mutable owner/target/stop/worker state
             # across these accounts. Reuse only the canonical data directory
             # for existing WAL, protections and batch history.
+            # The production coordinator exists ONLY for explicit parallel
+            # consent. The offline-only coordinator never has browser/click
+            # code. The serial default continues using ScopedActionLease.
+            live_cohort = (
+                SharedGlobalActionCohort(self.journal_root) if parallel else None
+            )
+            cohort = self._offline_cohort or live_cohort
             workspaces = {}
             for (account, handle), folder in zip((first, second), folders):
                 robot = ActionRobot(
                     self.collector, self.journal_root, folder,
-                    lease_factory=(self._offline_cohort.lease
-                                   if self._offline_cohort is not None else None),
+                    lease_factory=(cohort.lease if cohort is not None else None),
                 )
                 if self._offline_test_runner is not None:
                     # Completely replaces network-bound Playwright/click code,
@@ -90,6 +113,8 @@ class DualActionWorkspaces:
                 workspaces[account] = {
                     "handle": handle, "chrome": folder, "robot": robot,
                 }
+            self._live_cohort = live_cohort
+            self._parallel_enabled = parallel
             self.owner, self.workspaces = owner, workspaces
             return self._snapshot_locked()
 
@@ -121,8 +146,10 @@ class DualActionWorkspaces:
             lane = self._lane(owner, account)
             if data.get("expected_handle") != lane["handle"]:
                 raise ValueError("The selected Instagram account handle changed. No targets were inspected.")
-            if self._alive(self.legacy_actions) or any(
-                    self._alive(row["robot"]) for row in self.workspaces.values()):
+            if (self._alive(self.legacy_actions)
+                    or self._alive(lane["robot"])
+                    or (not self._parallel_enabled and self._offline_cohort is None
+                        and any(self._alive(row["robot"]) for row in self.workspaces.values()))):
                 raise ValueError("Pause the existing action robot before checking a new cohort.")
             inspection = DualActionPreflight(self.sessions, self.legacy_actions)
             # Classifies one cohort using the same journal/protection/visit
@@ -156,13 +183,19 @@ class DualActionWorkspaces:
                 raise ValueError("Action owner, workspace and expected Instagram login must match.")
             if self._alive(self.legacy_actions):
                 raise ValueError("The legacy Instagram action worker is active; no parallel actions.")
-            if (self._offline_cohort is None
+            if self._parallel_enabled and self._offline_cohort is None:
+                if data.get("parallel_action_confirmation") != (
+                        "parallel-action-workspace-start:" + owner + ":" + account + ":" + task):
+                    raise ValueError(
+                        "Confirm concurrent-action permission for this exact account and task.")
+            if (not self._parallel_enabled and self._offline_cohort is None
                     and any(self._alive(row["robot"]) for row in self.workspaces.values())):
                 raise ValueError("Only one relationship-changing action worker can run at a time.")
-            # The offline test harness may exercise both workers, but because
-            # their _run bodies are replaced no Instagram mutation can occur.
-            # The coordinator still holds the legacy global kernel lease
-            # while either worker lives. Production never enters this branch.
+            # A parallel configuration still uses independent ActionRobot
+            # instances and the original per-account WAL. A single cohort
+            # holds the LEGACY GLOBAL kernel lock until the LAST active worker
+            # exits. The worker itself performs ALL existing protected,
+            # target identity, Click-WAL, rate and login checks.
             # ActionRobot performs its COMPLETE existing batch-size, protected
             # list, fresh-cohort, WAL and exact-target approval gates here.
             # This supervisor never invents/forwards a consent flag.
@@ -268,8 +301,14 @@ class DualActionWorkspaces:
             "distinct_action_chrome_profiles": len(lanes) == 2,
             "mode": ("offline_two_worker_integration_test_no_instagram"
                      if self._offline_cohort is not None else
+                     "explicit_owner_authorized_two_account_actions"
+                     if self._parallel_enabled else
                      "independent_chrome_sessions_serialized_actions"),
-            "parallel_mutations_enabled": False,
+            "parallel_mutations_enabled": self._parallel_enabled,
+            "legacy_global_lease_held": (
+                self._live_cohort.status()["legacy_global_lease_held"]
+                if self._live_cohort is not None else False
+            ),
             "requires_separate_batch_confirmation": True,
             "lanes": lanes,
         }
