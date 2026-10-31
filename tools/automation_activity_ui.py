@@ -143,6 +143,12 @@ async function readHistory(account,task){
  }));
 }
 function setStatus(message){const e=$('igcActStatus');if(e)e.textContent=message}
+function clearValues(){
+ for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
+ for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
+   const el=$('igcActMetric_'+key);if(el)el.textContent='—';
+ }
+}
 function render(records){
  if(!dataReady)return;
  const now=new Date();
@@ -161,7 +167,8 @@ async function refresh(){
  if(loading){refreshAgain=true;return;}
  const ctx=context(),selector=$('igcActAccount');
  if(!selector)return;
- if(!ctx.owner){latest=[];owner='';dataReady=false;setStatus('Inicia sesión para consultar estadísticas guardadas.');return}
+ if(!ctx.owner){latest=[];owner='';lastKey='';dataReady=false;clearValues();
+   selector.replaceChildren();setStatus('Inicia sesión para consultar estadísticas guardadas.');return}
  const signature=ctx.owner+'|'+ctx.accounts.map(a=>a.account+':'+a.handle).join('|');
  if(signature!==lastKey){
    const selected=selector.value;
@@ -173,10 +180,10 @@ async function refresh(){
    else if(ctx.accounts.some(x=>x.account===window.IGC_INSTAGRAM_PROFILES.active))
      selector.value=window.IGC_INSTAGRAM_PROFILES.active;
    owner=ctx.owner;registry=ctx.accounts;lastKey=signature;
-   latest=[];dataReady=false;for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
+   latest=[];dataReady=false;clearValues()
  }
  if(!registry.length||!ACCOUNT.test(selector.value)){
-   setStatus('No hay cuentas registradas para consultar.');return;
+   dataReady=false;clearValues();setStatus('No hay cuentas registradas para consultar.');return;
  }
  loading=true;
  const button=$('igcActRefresh');if(button)button.disabled=true;
@@ -190,11 +197,7 @@ async function refresh(){
    setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
      ' · datos del historial local verificado. No incluye lecturas sin clic.');
  }catch(e){
-   latest=[];dataReady=false;
-   for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
-   for(const k of ['verified','unfollow','cancel','warning','no_action','unavailable']){
-     const el=$('igcActMetric_'+k);if(el)el.textContent='—';
-   }
+   latest=[];dataReady=false;clearValues();
    setStatus('Sin datos verificables: '+String(e.message||e).slice(0,120));
  }finally{
    loading=false;if(button)button.disabled=false;
@@ -215,7 +218,7 @@ function mount(){
  panel.append(node('p','igc-act-muted','Actividad confirmada por cuenta · misma lógica de periodos diarios y móviles.'));
  const label=node('label',null,'Cuenta de Instagram');label.htmlFor='igcActAccount';panel.append(label);
  const select=node('select');select.id='igcActAccount';
- select.addEventListener('change',()=>{latest=[];dataReady=false;refresh()});panel.append(select);
+ select.addEventListener('change',()=>{latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
  const grid=node('div','igc-act-windows');
  for(const [key,name] of PERIODS){
    const item=node('div','igc-act-window'),caption=node('span',null,name);
