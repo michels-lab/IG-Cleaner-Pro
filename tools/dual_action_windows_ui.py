@@ -27,6 +27,15 @@ padding:8px 10px;background:#111b28;border-radius:7px;min-height:24px;overflow-w
 #igcDualActionWorkspacePanel .igc-daw-controls{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;align-items:center}
 #igcDualActionWorkspacePanel select{max-width:100%;min-height:34px;background:#192b3c;border:1px solid #466077;
 border-radius:8px;color:#f0f6ff;font:inherit;font-size:12px;padding:5px 7px}
+#igcDualActionWorkspacePanel .igc-daw-new{margin-top:14px;border-top:1px solid #33465a;padding-top:12px}
+#igcDualActionWorkspacePanel .igc-daw-new h4{font-size:13px;margin:0 0 5px;color:#e9f0f8}
+#igcDualActionWorkspacePanel .igc-daw-new textarea{box-sizing:border-box;width:100%;min-height:74px;resize:vertical;background:#142638;
+border:1px solid #466077;border-radius:8px;color:#f0f6ff;font:inherit;font-size:12px;padding:9px}
+#igcDualActionWorkspacePanel .igc-daw-pace{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}
+#igcDualActionWorkspacePanel .igc-daw-pace label{display:flex;align-items:center;gap:5px;font-size:12px;color:#a9bfd2}
+#igcDualActionWorkspacePanel .igc-daw-pace input{background:#142638;border:1px solid #466077;color:#e9f0f8;
+border-radius:7px;width:58px;font:inherit;font-size:12px;padding:6px}
+#igcDualActionWorkspacePanel .igc-daw-new-note{font-size:12px;color:#a9bfd2;margin-top:8px}
 #igcDualActionWorkspacePanel .igc-daw-review-list{display:grid;gap:5px;margin-top:12px;max-height:260px;overflow:auto}
 #igcDualActionWorkspacePanel .igc-daw-review-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;
 padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;font-size:12px;overflow-wrap:anywhere}
@@ -47,7 +56,7 @@ const PREFIX='/api/actions/dual-action-workspaces/';
 const PROFILE=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
-let linked=null, activeBusy=false, savedReviews={};
+let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
 const $=(id)=>document.getElementById(id);
 function el(tag,className,text){
   const x=document.createElement(tag);if(className)x.className=className;
@@ -87,6 +96,15 @@ async function api(path,body){
   if(!res.ok)throw Error(String(value.error||'Error de sesión del robot').slice(0,200));
   return value;
 }
+function parseTargets(text){
+  const parts=String(text||'').split(/[\s,;]+/).filter(Boolean);
+  if(!parts.length||parts.length>1000)throw Error('Escribe entre 1 y 1000 @usuarios exactos.');
+  const names=parts.map(x=>x.replace(/^@/,'').toLowerCase());
+  if(names.some(x=>!HANDLE.test(x)))throw Error('Hay un @usuario inválido; corrige la lista antes de revisar.');
+  if(new Set(names).size!==names.length)
+    throw Error('Hay usuarios duplicados; no se eliminarán silenciosamente. Corrige la lista.');
+  return names;
+}
 function card(account,i){
   const outer=el('section','igc-daw-card');
   outer.dataset.lane=String(i);
@@ -100,6 +118,11 @@ function card(account,i){
     const o=el('option',null,name);o.value=val;task.append(o);
   }
   controls.append(task);
+  task.addEventListener('change',()=>{
+    savedReviews[i]=null;preparedNew[i]=null;
+    const old=$('igcDawReviewList'+i),fresh=$('igcDawNewList'+i);
+    if(old)old.replaceChildren();if(fresh)fresh.replaceChildren();
+  });
   const review=el('button',null,'Revisar pendientes');review.type='button';
   review.id='igcDawReview'+i;review.addEventListener('click',()=>perform(async()=>{
     if(!linked)throw Error('Primero vincula las dos cuentas de Chrome.');
@@ -230,12 +253,115 @@ function card(account,i){
   const history=el('div','igc-daw-review-list');history.id='igcDawReviewList'+i;
   history.setAttribute('aria-label','Resultados de la tanda de esta cuenta');
   outer.append(history);
+  const newBox=el('section','igc-daw-new');
+  newBox.append(el('h4',null,'Nueva tanda · sólo esta cuenta'));
+  const caption=el('label','igc-daw-sub','@usuarios exactos, separados por saltos de línea, coma o espacio.');
+  caption.setAttribute('for','igcDawNewTargets'+i);newBox.append(caption);
+  const newInput=el('textarea');newInput.id='igcDawNewTargets'+i;
+  newInput.rows=4;newInput.maxLength=42000;newInput.spellcheck=false;
+  newInput.placeholder='@ejemplo.uno\n@ejemplo.dos';
+  newInput.addEventListener('input',()=>{preparedNew[i]=null;
+    const list=$('igcDawNewList'+i);if(list)list.replaceChildren();});
+  newBox.append(newInput);
+  const pace=el('div','igc-daw-pace');
+  function setting(id,name,initial,min,max){
+    const label=el('label',null,name);
+    const field=el('input');field.id=id+i;field.type='number';
+    field.min=String(min);field.max=String(max);field.step='1';
+    field.value=String(initial);
+    field.addEventListener('input',()=>{preparedNew[i]=null;});
+    label.append(field);pace.append(label);
+    return field;
+  }
+  const batchField=setting('igcDawNewBatch','Por tanda',20,1,1000);
+  const gapField=setting('igcDawNewGap','Segundos entre perfiles',15,1,600);
+  const restField=setting('igcDawNewRest','Descanso (min)',10,0,240);
+  newBox.append(pace);
+  const newControls=el('div','igc-daw-controls');
+  const verify=el('button',null,'Verificar lista sin clics');
+  verify.type='button';verify.id='igcDawNewVerify'+i;
+  verify.addEventListener('click',()=>perform(async()=>{
+    if(!linked)throw Error('Vincula primero ambas cuentas.');
+    const targets=parseTargets(newInput.value),account=linked[i].account,
+      handle=linked[i].expected_handle;
+    const p=await api('preflight-new-one',{owner:linked.owner,account,
+      expected_handle:handle,task:task.value,targets,
+      confirmation:'action-workspace-preflight:'+linked.owner+':'+account+':'+task.value});
+    const list=$('igcDawNewList'+i);list.replaceChildren();
+    for(const result of p.targets||[]){
+      const good=result.offline_evidence==='untouched';
+      const row=el('div','igc-daw-review-row '+(good?'igc-daw-reviewed':'igc-daw-unresolved'));
+      row.append(el('span',null,'@'+result.username),
+        el('span',null,good?'NUEVO':'BLOQUEADO · '+result.offline_evidence));
+      list.append(row);
+    }
+    const counts=p.evidence_counts||{};
+    if(!p.read_only||p.actions_enabled!==false)
+      throw Error('La verificación no es de sólo lectura. Se canceló la preparación.');
+    preparedNew[i]={
+      owner:linked.owner,account,handle,task:task.value,targets:targets.slice(),
+      allowed:p.offline_untouched_only===true&&!p.unresolved_saved_cohort,
+    };
+    notice('Revisión guardada para @'+handle+': '+targets.length+' objetivos, '+
+      (counts.untouched||0)+' nuevos, '+(targets.length-(counts.untouched||0))+
+      ' bloqueados. Esta revisión NO hizo clics en Instagram.');
+  }));
+  newControls.append(verify);
+  const start=el('button',null,'Iniciar tanda nueva');
+  start.type='button';start.id='igcDawNewStart'+i;
+  start.addEventListener('click',()=>perform(async()=>{
+    if(!linked)throw Error('Vincula primero ambas cuentas.');
+    const exact=parseTargets(newInput.value),p=preparedNew[i];
+    if(!p||!p.allowed||p.owner!==linked.owner||p.account!==linked[i].account
+       ||p.handle!==linked[i].expected_handle||p.task!==task.value
+       ||JSON.stringify(p.targets)!==JSON.stringify(exact))
+      throw Error('La lista cambió, contiene bloqueados o no fue verificada. Repite la comprobación.');
+    function number(field,min,max){
+      const v=Number(field.value);
+      if(!Number.isInteger(v)||v<min||v>max)
+        throw Error('Corrige los valores de tanda, segundos y descanso antes de iniciar.');
+      return v;
+    }
+    const batchSize=number(batchField,1,1000),
+      gapSeconds=number(gapField,1,600),restMinutes=number(restField,0,240);
+    const account=p.account,handle=p.handle;
+    // The disk snapshot may have changed. Recheck the ORIGINAL exact list
+    // before user confirmation, then ActionRobot.start rechecks under WAL.
+    const fresh=await api('preflight-new-one',{owner:p.owner,account,
+      expected_handle:handle,task:p.task,targets:exact,
+      confirmation:'action-workspace-preflight:'+p.owner+':'+account+':'+p.task});
+    if(!fresh.read_only||fresh.actions_enabled!==false||!fresh.offline_untouched_only
+       ||fresh.unresolved_saved_cohort)
+      throw Error('La lista ya no está intacta. Hay historial o una tanda pendiente.');
+    if(!confirm('NUEVA tanda · @'+handle+' · '+p.task+' · '+exact.length+
+       ' perfiles NUEVOS, de '+batchSize+' por tanda. ¿Autorizar esta cuenta?'))return;
+    if(p.task==='unfollow'&&!confirm('¿Verificaste la lista COMPLETA y actual '+
+       'de seguidores de @'+handle+'? La prevalidación local no lo demuestra.'))return;
+    preparedNew[i]=null;
+    const action={owner:p.owner,account,expected_handle:handle,
+      task:p.task,targets:exact,batch_size:batchSize,gap_seconds:gapSeconds,
+      rest_minutes:restMinutes,protected:[],tab_flow:'sequential',
+      followers_evidence:p.task==='unfollow',
+      confirmation:p.task+':'+exact.length};
+    const result=await api('start-one',{owner:p.owner,account,action,
+      confirmation:'action-workspace-start:'+p.owner+':'+account+':'+p.task});
+    notice('Tanda nueva de @'+handle+' enviada a su Chrome exclusivo. Estado: '+
+      String(result.status||'starting')+'. No hay mutaciones paralelas.');
+  }));
+  newControls.append(start);newBox.append(newControls);
+  const newList=el('div','igc-daw-review-list');newList.id='igcDawNewList'+i;
+  newList.setAttribute('aria-label','Prevalidación local de los objetivos de esta cuenta');
+  newBox.append(newList);
+  newBox.append(el('div','igc-daw-new-note',
+    'Esta comprobación usa el historial local, NO verifica Follow en tiempo real. '+
+    'El robot comprobará identidad, relación y protecciones antes de cualquier clic.'));
+  outer.append(newBox);
   return outer;
 }
 function draw(p){
   const target=$('igcDawGrid');if(!target)return;
   target.replaceChildren();
-  if(p){linked={0:p.primary,1:p.secondary,owner:p.owner};savedReviews={}}
+  if(p){linked={0:p.primary,1:p.secondary,owner:p.owner};savedReviews={};preparedNew={}}
   for(let i=0;i<2;i++)target.append(card(linked?linked[i]:{},i));
 }
 async function perform(fn){
@@ -284,7 +410,7 @@ function mount(){
   actions.append(refresh);header.append(actions);panel.append(header);
   const grid=el('div','igc-daw-grid');grid.id='igcDawGrid';panel.append(grid);
   const feedback=el('div','igc-daw-note',
-    'Las tandas se autorizan desde los controles de automatización existentes. Aquí se separan cuentas, se inspeccionan las revisiones y se puede pausar cada sesión.');
+    'Puedes preparar tandas nuevas por cada cuenta con revisión local obligatoria, continuar tandas guardadas, ver resultados y pausar individualmente. Ninguna lista se ejecuta sin confirmación.');
   feedback.id='igcDualActionWorkspaceFeedback';feedback.setAttribute('role','status');
   panel.append(feedback);center.insertAdjacentElement('afterend',panel);
   draw(null);return true;

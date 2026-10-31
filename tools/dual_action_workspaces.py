@@ -98,6 +98,45 @@ class DualActionWorkspaces:
             raise ValueError("The selected Instagram action workspace belongs to another owner.")
         return self.workspaces[account]
 
+    def preflight_new_one(self, data):
+        """Read-only exact-account new-cohort eligibility from canonical WAL.
+
+        Never converts observed historical state into current Instagram
+        relationship evidence or owner permission. The start path independently
+        revalidates everything under its exclusive OS lease.
+        """
+        owner = self._owner(data)
+        account, task, targets = (data.get("account"), data.get("task"),
+                                  data.get("targets"))
+        from profile_counts_robot import valid_username
+        from dual_action_preflight import DualActionPreflight
+        if (not isinstance(account, str) or task not in ("unfollow", "cancel")
+                or data.get("confirmation") != (
+                    "action-workspace-preflight:" + owner + ":" + account + ":" + task)
+                or not isinstance(targets, list) or not 1 <= len(targets) <= 1000
+                or any(not isinstance(name, str) or valid_username(name) != name
+                       for name in targets) or len(set(targets)) != len(targets)):
+            raise ValueError("Read-only preflight requires exact owner, task and 1-1000 unique usernames.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            if data.get("expected_handle") != lane["handle"]:
+                raise ValueError("The selected Instagram account handle changed. No targets were inspected.")
+            if self._alive(self.legacy_actions) or any(
+                    self._alive(row["robot"]) for row in self.workspaces.values()):
+                raise ValueError("Pause the existing action robot before checking a new cohort.")
+            inspection = DualActionPreflight(self.sessions, self.legacy_actions)
+            # Classifies one cohort using the same journal/protection/visit
+            # evidence and precise scope already proven by the dual preflight.
+            result = inspection._inspect_one(
+                owner, (account, lane["handle"]),
+                {"task": task, "targets": targets})
+            return {
+                **result, "owner": owner, "read_only": True,
+                "actions_enabled": False, "can_launch_parallel_unfollow": False,
+                "warning": "Local saved-history check only. Current Instagram "
+                           "relationship and login must be verified separately.",
+            }
+
     def start_one(self, data):
         owner = self._owner(data)
         account = data.get("account")
