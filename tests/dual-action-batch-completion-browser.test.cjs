@@ -89,16 +89,14 @@ const {chromium}=require('playwright');
         account:data.account,task:data.task,
         batch:{id:first?'first-wave':'second-wave',
           targets:first?[
-            'first.person','previous.follow','old.pending','no.click',
-            'possible.click','missing.profile']:['pending.friend'],
+            'first.person','previous.follow','no.click',
+            'possible.click','missing.profile']:['pending.friend','old.pending'],
           action_results:first?{
            'first.person':{status:'ok',possible_click:true,
              message:'Verified Unfollow after refresh',
              at:'2026-10-30T18:00:00Z'},
            'previous.follow':{status:'already_not_following',
              possible_click:false,message:'No Unfollow clicked: already not following.'},
-           'old.pending':{status:'already_not_requested',
-             possible_click:false,message:'No Cancel Request clicked: no active request.'},
            'no.click':{status:'error',possible_click:false,safe_no_click:true,
              message:'Exact target was unavailable before any click.'},
            'possible.click':{status:'review',possible_click:true,
@@ -106,7 +104,11 @@ const {chromium}=require('playwright');
              at:'2026-10-30T18:01:00Z'},
            'missing.profile':{status:'profile_unavailable',possible_click:false,
              message:'Exact page-unavailable notice; no action clicked.'}
-          }:{'pending.friend':{status:'review',at:'2026-10-30T18:03:00Z'}}
+          }:{
+            'pending.friend':{status:'review',at:'2026-10-30T18:03:00Z'},
+            'old.pending':{status:'already_not_requested',possible_click:false,
+              message:'No Cancel Request clicked: no active request.'}
+          }
         }};
     }else payload={status:'idle'};
     return {ok:true,json:async()=>payload};
@@ -127,14 +129,13 @@ const {chromium}=require('playwright');
   assert.deepEqual(await savedModal.locator('.igc-daw-review-row').evaluateAll(
     rows=>rows.map(r=>r.querySelector('span')?.textContent)),
     ['@possible.click','@no.click','@missing.profile',
-     '@previous.follow','@old.pending','@first.person']);
+     '@previous.follow','@first.person']);
   const aRows=savedModal.locator('.igc-daw-review-row');
   assert.match(await aRows.nth(0).innerText(),/REVIEW · CLIC INCIERTO/);
   assert.match(await aRows.nth(0).innerText(),/Durable relationship click phase/);
   assert.match(await aRows.nth(1).innerText(),/REVIEW · SIN CLIC/);
   assert.match(await aRows.nth(3).innerText(),/SIN ACCIÓN · YA NO SIGUES/);
-  assert.match(await aRows.nth(4).innerText(),/SIN ACCIÓN · SIN SOLICITUD/);
-  assert.match(await aRows.nth(5).innerText(),/OK · ACCIÓN CONFIRMADA/);
+  assert.match(await aRows.nth(4).innerText(),/OK · ACCIÓN CONFIRMADA/);
   assert.match(await aRows.nth(0).getAttribute('class'),/igc-daw-uncertain/);
   assert.match(await aRows.nth(3).getAttribute('class'),/igc-daw-no-change/);
   assert.doesNotMatch(await aRows.nth(3).getAttribute('class'),/igc-daw-reviewed/);
@@ -154,6 +155,10 @@ const {chromium}=require('playwright');
   await savedModal.waitFor({state:'visible',timeout:5000});
   assert.match(await savedModal.innerText(),/Revisión guardada.*@beta.two/);
   await savedModal.getByText('@pending.friend').waitFor({state:'visible',timeout:5000});
+  assert.match(await savedModal.locator('.igc-daw-review-row').nth(1).innerText(),
+    /SIN ACCIÓN · SIN SOLICITUD/);
+  assert.match(await savedModal.locator('.igc-daw-review-row').nth(1).getAttribute('class'),
+    /igc-daw-no-change/);
   await savedModal.getByRole('button',{name:'Cerrar'}).click();
   // Malformed/wrong-owner local bridge response cannot leak other account
   // records into the visible summary, or authorize any action.
