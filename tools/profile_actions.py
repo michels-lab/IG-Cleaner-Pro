@@ -201,9 +201,17 @@ class ActionTabPool:
         item = self.tabs.get(username)
         return item["page"] if item is not None else None
 
-    def record(self, username, status, *, safe_no_click=False):
+    def record(self, username, status, *, safe_no_click=False,
+               possible_click=False):
         item = self.tabs.get(username)
         if item is None:
+            return
+        # A currently unavailable profile is NOT a verified outcome when
+        # an earlier relationship click was armed. Preserve the live target
+        # tab until a separately verified healthy owner session explicitly
+        # defers that Review; never silently close it as harmless.
+        if possible_click and status == "profile_unavailable":
+            item["status"] = "review"
             return
         if status in ("ok", "skipped", "already_not_following", "already_not_requested",
                       "profile_unavailable") or safe_no_click:
@@ -3366,6 +3374,24 @@ class ActionRobot:
                             # Without positive same-session proof a blocked
                             # target remains blocked: never silently continue.
                             pass
+                    # A profile can disappear or be deactivated AFTER a
+                    # relationship click was durably armed. 'Unavailable'
+                    # describes a read-only observation, NOT proof that the
+                    # prior Unfollow/Cancel succeeded (or was never clicked).
+                    # Preserve the initial WAL and classify as Review before
+                    # saving the terminal outcome or closing its Chrome tab.
+                    if (not self.review_only and self.task in ("unfollow", "cancel")
+                            and result == "profile_unavailable"
+                            and isinstance(journal.get(user), dict)
+                            and "click_intent" in journal[user]):
+                        result = "review"
+                        prefix = ("Pending verification: "
+                                  if self.task == "unfollow" else
+                                  "Pending cancellation unverified after read-only refresh: ")
+                        details = (prefix +
+                            "Target became unavailable after a prepared relationship "
+                            "click. Outcome unknown; do not repeat the click. " +
+                            details)
                     # A potentially sent Unfollow is PENDING until a positive
                     # exact-target Follow/Follow Back was verified. Unexpected
                     # post-click errors are likewise pending, not green OK.
@@ -3475,7 +3501,10 @@ class ActionRobot:
                             safely_unclicked = (self.review_only
                                 or _preclick_no_action(journal.get(user, {}))
                                 or _benign_preclick_issue(issue, journal.get(user, {})))
-                            action_tabs.record(user, result, safe_no_click=safely_unclicked)
+                            action_tabs.record(
+                                user, result, safe_no_click=safely_unclicked,
+                                possible_click=(isinstance(recorded, dict)
+                                                and "click_intent" in recorded))
                             if defer_profile_warning:
                                 # Closing this tab is safe only after the
                                 # original per-profile WAL has been fsynced,
