@@ -3429,7 +3429,25 @@ class ActionRobot:
                         and ((self.task == "cancel" and result == "review")
                              or (self.task == "unfollow"
                                  and result in ("review", "error")
-                                 and "click_intent" in recorded))
+                                 and "click_intent" in recorded)
+                             # Cancel Pending can also encounter a Playwright
+                             # exception AFTER a durable click intent was saved.
+                             # Its outcome is UNKNOWN: retain ERROR + WAL,
+                             # never retry this target, but a freshly verified
+                             # healthy owner may proceed to a DIFFERENT target.
+                             or (self.task == "cancel" and result == "error"
+                                 and "click_intent" in recorded
+                                 and _exact_https_target_profile(
+                                     work_page, user))
+                             # An exception BEFORE the durable click barrier
+                             # is an isolated no-click error, not proof of a
+                             # relationship mutation. Preserve ERROR in WAL,
+                             # verify exact target and owner, then continue
+                             # with the next DIFFERENT approved profile.
+                             or (result == "error"
+                                 and "click_intent" not in recorded
+                                 and _exact_https_target_profile(
+                                     work_page, user)))
                     )
                     if isolated_warning:
                         try:
@@ -3476,8 +3494,9 @@ class ActionRobot:
                         with self.lock:
                             self.status = "running"
                             self.message = ("@" + user +
-                                ": WARNING / REVIEW saved with original click "
-                                "evidence. No retry or automatic approval. "
+                                ": WARNING / REVIEW saved with click evidence "
+                                "or a verified no-click exception. No retry "
+                                "or automatic approval. "
                                 "Continuing with the next different profile.")
                         continue
                     if result not in ("ok", "already_not_following", "already_not_requested",

@@ -250,5 +250,143 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertEqual(robot._base().read_bytes(), before)
 
 
+
+    def test_no_click_exception_stops_if_owner_cannot_be_reverified(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            tried = []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                tried.append(username)
+                raise RuntimeError("Read-only target error before WAL click barrier")
+
+            def owner(page, handle):
+                # The target exception cannot authorize the next mutation
+                # when owner identity is missing or has switched.
+                robot.stop_event.set()
+                return False
+
+            self.run_offline(robot, action, owner=owner)
+            self.assertEqual(tried, ["first.person"])
+            journal = _read_json(robot._base(), {})
+            self.assertEqual(journal["first.person"]["status"], "error")
+            self.assertNotIn("click_intent", journal["first.person"])
+            self.assertNotIn("second.person", journal)
+            self.assertNotIn("third.person", journal)
+            self.assertTrue(_saved_journal_blocks_action(journal, "first.person"))
+
+    def test_unfollow_no_click_exception_is_reviewable_and_next_target_runs(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.task = "unfollow"
+            called = []
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                self.assertTrue(use_reference_transport)
+                called.append(username)
+                if username == "second.person":
+                    raise RuntimeError("Read-only lookup failed before durable click")
+                on_pre_click("relationship_control")
+                return "ok", "Unfollow confirmed"
+            self.run_offline(robot, action)
+            self.assertEqual(called, robot.targets)
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(saved["second.person"]["status"], "error")
+            self.assertNotIn("click_intent", saved["second.person"])
+            self.assertTrue(_saved_journal_blocks_action(saved, "second.person"))
+            self.assertEqual(saved["third.person"]["status"], "ok")
+            self.assertEqual(robot.status, "partial")
+
+
+    def test_forty_profile_ten_tab_waves_continue_past_isolated_no_click_errors(self):
+        """Errors at wave boundaries and the last profile never silently end a cohort."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            targets = [f"candidate.{number:03}" for number in range(1, 41)]
+            robot.targets = targets
+            robot.batch_size = 10
+            robot.tab_flow = "ten_tabs"
+            # Exercise failures inside waves, at wave boundaries, and as
+            # the very last target, where Chrome previously closed early.
+            failures = {targets[i] for i in (3, 14, 29, 39)}
+            uncertain = targets[17]  # Durable first click, no verified outcome.
+            observed = []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                self.assertEqual(task, "cancel")
+                observed.append(username)
+                if username in failures:
+                    # The durable on_pre_click callback was NEVER invoked.
+                    # The original error must stay yellow, never turn green.
+                    raise TimeoutError("Exact target menu failed before any click")
+                on_pre_click("relationship_control")
+                if username == uncertain:
+                    # Playwright may time out after the actual relationship
+                    # control click. Outcome is unknown and must never replay.
+                    raise RuntimeError("Click outcome uncertain after first armed phase")
+                on_pre_click("cancel_request_confirmation")
+                return "ok", "Cancel Request verified after refresh"
+
+            chrome = self.run_offline(robot, action)
+            self.assertEqual(observed, targets)
+            self.assertEqual(len(chrome.targets), 40)
+            self.assertEqual(robot.status, "partial")
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(set(saved), set(targets))
+            for username in targets:
+                if username in failures:
+                    self.assertEqual(saved[username]["status"], "error")
+                    self.assertNotIn("click_intent", saved[username])
+                    self.assertTrue(_saved_journal_blocks_action(saved, username))
+                elif username == uncertain:
+                    self.assertEqual(saved[username]["status"], "error")
+                    intent = saved[username]["click_intent"]
+                    self.assertEqual(intent["phases"], ["relationship_control"])
+                    self.assertTrue(intent["outcome_recorded"])
+                    self.assertTrue(intent["requires_manual_review"])
+                    self.assertTrue(_saved_journal_blocks_action(saved, username))
+                else:
+                    self.assertEqual(saved[username]["status"], "ok")
+                    self.assertTrue(saved[username]["click_intent"]["outcome_recorded"])
+            summary = robot.snapshot()
+            self.assertEqual(summary["successful"], 35)
+            self.assertEqual(summary["errors"], 5)
+            self.assertEqual(summary["processed"], 40)
+            self.assertEqual(summary["pending"], 0)
+
+            # A later explicitly launched cohort with 40 old + five fresh
+            # candidates must never reopen or reclick any earlier profile.
+            next_robot = self.new_robot(folder)
+            extra = [f"new.person.{i}" for i in range(1, 6)]
+            next_robot.targets = targets + extra
+            next_robot.batch_size = 10
+            next_robot.tab_flow = "ten_tabs"
+            later = []
+
+            def second_action(page, username, task, expected, can_act=None,
+                              on_wait=None, preloaded=False, on_pre_click=None,
+                              use_reference_transport=False):
+                later.append(username)
+                on_pre_click("relationship_control")
+                on_pre_click("cancel_request_confirmation")
+                return "ok", "Verified fresh batch"
+
+            next_chrome = self.run_offline(next_robot, second_action)
+            self.assertEqual(later, extra,
+                             "Saved 40 must not replay, including no-click and uncertain-click ERROR rows.")
+            self.assertEqual(len(next_chrome.targets), 5)
+            next_saved = _read_json(robot._base(), {})
+            self.assertEqual(set(next_saved), set(targets + extra))
+            blocked = failures | {uncertain}
+            self.assertEqual({u for u in blocked
+                              if next_saved[u]["status"] == "error"}, blocked)
+
+
+
 if __name__ == "__main__":
     unittest.main()
