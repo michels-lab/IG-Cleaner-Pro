@@ -3430,6 +3430,15 @@ class ActionRobot:
                              or (self.task == "unfollow"
                                  and result in ("review", "error")
                                  and "click_intent" in recorded)
+                             # Cancel Pending can also encounter a Playwright
+                             # exception AFTER a durable click intent was saved.
+                             # Its outcome is UNKNOWN: retain ERROR + WAL,
+                             # never retry this target, but a freshly verified
+                             # healthy owner may proceed to a DIFFERENT target.
+                             or (self.task == "cancel" and result == "error"
+                                 and "click_intent" in recorded
+                                 and _exact_https_target_profile(
+                                     work_page, user))
                              # An exception BEFORE the durable click barrier
                              # is an isolated no-click error, not proof of a
                              # relationship mutation. Preserve ERROR in WAL,
