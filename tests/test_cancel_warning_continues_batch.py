@@ -388,5 +388,121 @@ class CancelWarningContinuesBatch(unittest.TestCase):
 
 
 
+    def test_sixty_profiles_across_six_waves_with_disappearance_after_click(self):
+        """Closed-after-click is Review, not green unavailable or dropped wave."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            targets = [f"candidate.{index:03}" for index in range(1, 61)]
+            uncertain = {targets[index] for index in (4, 29, 59)}
+            unavailable_before_click = {targets[index] for index in (14, 39)}
+            robot.targets = targets
+            robot.batch_size = 10
+            robot.tab_flow = "ten_tabs"
+            seen = []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                seen.append(username)
+                if username in unavailable_before_click:
+                    return ("profile_unavailable",
+                            "Exact profile unavailable before any relationship click.")
+                on_pre_click("relationship_control")
+                if username in uncertain:
+                    # DOM or network says 'not available' AFTER an armed click:
+                    # the original WAL must take precedence over appearance.
+                    return ("profile_unavailable",
+                            "Instagram now shows profile unavailable.")
+                on_pre_click("cancel_request_confirmation")
+                return ("ok", "Cancelled Request verified after refresh.")
+
+            chrome = self.run_offline(robot, action)
+            self.assertEqual(seen, targets,
+                             "The last user and all 6 ten-profile waves must execute.")
+            self.assertEqual(len(chrome.targets), 60)
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(set(saved), set(targets))
+            for username in targets:
+                record = saved[username]
+                if username in uncertain:
+                    self.assertEqual(record["status"], "review")
+                    self.assertIn("Target became unavailable", record["message"])
+                    self.assertIn("Outcome unknown", record["message"])
+                    self.assertEqual(record["click_intent"]["phases"],
+                                     ["relationship_control"])
+                    self.assertTrue(record["click_intent"]["outcome_recorded"])
+                    self.assertTrue(record["click_intent"]["requires_manual_review"])
+                    self.assertTrue(_saved_journal_blocks_action(saved, username))
+                elif username in unavailable_before_click:
+                    self.assertEqual(record["status"], "profile_unavailable")
+                    self.assertNotIn("click_intent", record)
+                    self.assertTrue(_saved_journal_blocks_action(saved, username))
+                else:
+                    self.assertEqual(record["status"], "ok")
+            self.assertEqual(robot.status, "partial")
+            snapshot = robot.snapshot()
+            self.assertEqual(snapshot["total"], 60)
+            self.assertEqual(snapshot["processed"], 60)
+            self.assertEqual(snapshot["successful"], 55)
+            self.assertEqual(snapshot["profile_unavailable"], 2)
+            self.assertEqual(snapshot["errors"], 3)
+            self.assertEqual(snapshot["pending"], 0)
+            self.assertFalse(snapshot["open_review_tabs"])
+
+            # New user-authorized cohort with 60 old + 5 genuinely fresh
+            # targets must not re-visit any old username, INCLUDING the last
+            # profile whose disappearance followed a possible click.
+            additional = [f"brand.new.{index}" for index in range(1, 6)]
+            next_robot = self.new_robot(folder)
+            next_robot.targets = targets + additional
+            next_robot.batch_size = 10
+            next_robot.tab_flow = "ten_tabs"
+            newly_visited = []
+            def next_action(page, username, task, expected, can_act=None,
+                            on_wait=None, preloaded=False, on_pre_click=None,
+                            use_reference_transport=False):
+                newly_visited.append(username)
+                on_pre_click("relationship_control")
+                on_pre_click("cancel_request_confirmation")
+                return "ok", "New target verified."
+
+            next_chrome = self.run_offline(next_robot, next_action)
+            self.assertEqual(newly_visited, additional)
+            self.assertEqual(len(next_chrome.targets), 5)
+            final = _read_json(robot._base(), {})
+            self.assertEqual(set(final), set(targets + additional))
+            self.assertTrue(all(final[u]["status"] == "review" for u in uncertain))
+
+    def test_disappearance_after_click_with_wrong_owner_stops_later_targets(self):
+        """Never continue behind an uncertain click when owner proof fails."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            visited = []
+            owner_changed = {"value": False}
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                visited.append(username)
+                on_pre_click("relationship_control")
+                owner_changed["value"] = True
+                return "profile_unavailable", "Target disappeared after click intent."
+
+            def owner(page, handle):
+                if owner_changed["value"]:
+                    robot.stop_event.set()
+                    return False
+                return True
+
+            self.run_offline(robot, action, owner=owner)
+            self.assertEqual(visited, ["first.person"])
+            record = _read_json(robot._base(), {})
+            self.assertEqual(record["first.person"]["status"], "review")
+            self.assertTrue(record["first.person"]["click_intent"]["requires_manual_review"])
+            self.assertNotIn("second.person", record)
+            self.assertNotIn("third.person", record)
+
+
+
 if __name__ == "__main__":
     unittest.main()
