@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9d3222b712772249bbc7169126217f0395ba14a73695929597d0a2174a2d8186",
-  "evidence_fingerprint": "0f6a6108ff78553c89636e94c3addd6bb1f9fa4fd12ab7a2306dd431f3e70ac7",
+  "inventory_fingerprint": "8b36f34bdb6c98f37bf2346d9318bb71af3345838d6efc8143b6f85496c650fe",
+  "evidence_fingerprint": "2d240520ac86d0fecf594be88777d50e17c61d4ffbf6957038e445cc857bd058",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2101,7 +2101,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "21e0972dee34293ad57b71722d0e6f01b76a4fce"
+      "blob": "43cb5a1f4b9840e736d1b18fffa54ad50d32c712"
     },
     {
       "path": "tests/test_action_reference_worker_contract.py",
@@ -2654,7 +2654,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6c0a87ce855b734cbc5aff8c0c45656e397de63b"
+      "blob": "bcfad0e0aeb1fd28a9c4e4cf229dc16de47a6ab5"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2878,11 +2878,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "8ee24f50abf091fe",
+      "id": "a5cc24c927f1e13b",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "34 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-batch-completion-browser.test.cjs",
+      "observation": "35 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-batch-completion-browser.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
