@@ -3503,7 +3503,12 @@ class ActionRobot:
                                 or _benign_preclick_issue(issue, journal.get(user, {})))
                             action_tabs.record(
                                 user, result, safe_no_click=safely_unclicked,
-                                possible_click=(isinstance(recorded, dict)
+                                # A separate READ-ONLY recheck never sends
+                                # another relationship click. Its temporary tab
+                                # is safe to close; the older uncertain WAL is
+                                # retained regardless of current availability.
+                                possible_click=(not self.review_only
+                                                and isinstance(recorded, dict)
                                                 and "click_intent" in recorded))
                             if defer_profile_warning:
                                 # Closing this tab is safe only after the
