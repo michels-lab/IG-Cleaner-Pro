@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 400,
-  "classified_files_total": 396,
+  "tracked_files_total": 402,
+  "classified_files_total": 398,
   "docs_content_inspected": 103,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -17,8 +17,8 @@
     "document": 98,
     "index": 5,
     "installer_metadata": 1,
-    "source": 54,
-    "test": 105,
+    "source": 55,
+    "test": 106,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "928bab00b9ad4ded669670a25e20714c453e48ed64432ee5ef7e69db712ba11f",
-  "evidence_fingerprint": "d92285d393e352dc133a4d12f9d98d3326b9a74350fa4e28a0c80c74982ffa07",
+  "inventory_fingerprint": "c54896c6dc605331ad218f96e2ac24cdffd6c2d491de12af46ea01e80c28a3dd",
+  "evidence_fingerprint": "85649dc995ef675fd2b29525ce6452d1a794988e03b292812dc9df0ad0f4004b",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "306292943cab56defff3f334710c40dd84096080"
+      "blob": "d304f207f26bd9cd45ba350544ad975506fd73ca"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -120,14 +120,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "9cbe7033ac642e42b8db6707fb12538398070a72"
+      "blob": "4c92ad5732f6e2ccf5e5a5b77161d691ccb45326"
     },
     {
       "path": ".github/workflows/profile-counts-windows-preview.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "90b2a46081badd393976028b928ec94c8fdfdf3e"
+      "blob": "b6fb13f2170b846c07d6fd900a355f31779ac316"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -2083,6 +2083,13 @@
       "blob": "0b1f425dd4c3f7b687c3a2ab4584e126cd144e6e"
     },
     {
+      "path": "tests/test_action_chrome_profiles.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e3d0de67ffd3b74fbe5b0c2633b7ee31ffd82b35"
+    },
+    {
       "path": "tests/test_action_click_wal.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2489,6 +2496,13 @@
       "blob": "8a1ffa92968bfa725a564095f046c59f6d5030c3"
     },
     {
+      "path": "tools/action_chrome_profiles.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "bd9eccf80d82c89b1047386bfb02a9d07d379176"
+    },
+    {
       "path": "tools/android_about_visual_evidence.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2654,7 +2668,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bcfad0e0aeb1fd28a9c4e4cf229dc16de47a6ab5"
+      "blob": "fe90b0fb3e995198441fc68ae84b61814a751f7a"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2668,7 +2682,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0fbc47ebd79d9f0d69290fb9c977fe296df24cad"
+      "blob": "062a0aeb73e26813498ee99e43ace60754a4c134"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2878,11 +2892,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "77549a5bef6855c4",
+      "id": "2b25f23cc81fb478",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "37 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/auth-account-switch.test.cjs",
+      "observation": "39 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/auth-account-switch.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
