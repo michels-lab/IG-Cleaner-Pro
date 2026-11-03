@@ -89,6 +89,18 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("parallel-action-workspace-start:", DUAL_ACTION_PANEL)
         self.assertIn("response.parallel_mutations_enabled!==parallel", DUAL_ACTION_PANEL)
         self.assertIn("id='igcDawCompletionModal'", DUAL_ACTION_PANEL)
+        self.assertIn("savedSummary.id='igcDawSavedSummary'+i", DUAL_ACTION_PANEL)
+        self.assertIn("source:'saved',savedBatch:answer.batch", DUAL_ACTION_PANEL)
+        self.assertIn("if(linked!==bound||task.value!==selectedTask)return;", DUAL_ACTION_PANEL)
+        self.assertIn("answer?.owner!==bound.owner||answer?.account!==account", DUAL_ACTION_PANEL)
+        self.assertIn("value?.owner!==done.owner||value?.account!==done.account", DUAL_ACTION_PANEL)
+        summary_source = DUAL_ACTION_PANEL.split("const savedSummary=el('button'")[1].split(
+            "const continueSaved=el('button'")[0]
+        self.assertIn("api('review-one'", summary_source)
+        self.assertNotIn("api('start-one'", summary_source)
+        self.assertNotIn("api('approve-one'", summary_source)
+        self.assertNotIn("window.open(", summary_source)
+
         self.assertIn("setInterval(pollStatus,4000)", DUAL_ACTION_PANEL)
         self.assertIn("api('review-one'", DUAL_ACTION_PANEL)
         self.assertIn("completionAcknowledged", DUAL_ACTION_PANEL)
