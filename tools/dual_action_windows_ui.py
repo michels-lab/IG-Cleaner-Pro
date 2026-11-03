@@ -54,6 +54,8 @@ border-radius:15px;padding:20px;color:#ecf4ff}
 padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;font-size:12px;overflow-wrap:anywhere}
 #igcDualActionWorkspacePanel .igc-daw-review-row small{grid-column:1/-1;color:#98b0c7}
 #igcDualActionWorkspacePanel .igc-daw-reviewed{border-left:3px solid #40ad75}
+#igcDualActionWorkspacePanel .igc-daw-no-change{border-left:3px solid #6ea9d9}
+#igcDualActionWorkspacePanel .igc-daw-uncertain{border-left:4px solid #e28a57;background:#2c231f}
 #igcDualActionWorkspacePanel .igc-daw-unresolved{border-left:3px solid #d9a43c}
 #igcDualActionWorkspacePanel .igc-daw-unavailable{border-left:3px solid #8797a9}
 #igcDualActionWorkspacePanel .igc-daw-note{font-size:12px;margin:12px 0 0;color:#a9bed2;
@@ -187,12 +189,11 @@ function displayNextCompletion(){
       const results=batch.action_results||{};
       for(const username of names.slice(0,50)){
         const result=results[username]||{},state=String(result.status||'pending');
-        const ok=['ok','already_not_following','already_not_requested'].includes(state);
-        const row=el('div','igc-daw-review-row '+(ok?'igc-daw-reviewed':
-          state==='profile_unavailable'?'igc-daw-unavailable':'igc-daw-unresolved'));
+        const row=el('div','igc-daw-review-row '+savedActionClass(result));
         row.append(el('span',null,'@'+String(username)),
-          el('span',null,ok?'OK':state==='profile_unavailable'?'NO DISPONIBLE':'REVIEW'));
-        row.append(el('small',null,String(result.at||'sin fecha')+' · '+state));
+          el('span',null,savedActionLabel(result)));
+        row.append(el('small',null,String(result.at||'sin fecha')+' · '+
+          state+' · '+String(result.message||'Sin diagnóstico guardado').slice(0,200)));
         list.append(row);
       }
       if(names.length>50)list.append(el('div','igc-daw-note',
@@ -203,16 +204,43 @@ function displayNextCompletion(){
       list.append(el('div','igc-daw-note',
       'No se pudo leer el historial. Abre Revisar pendientes manualmente.'));}});
 }
-// Only reorder VIEW rows. Keep batch.targets and WAL in their original
-// owner-approved order, especially when resuming a partial cohort.
+// Saved WAL distinguishes a CONFIRMED relationship action from a profile
+// already in the requested state (where the robot did NOT click). A pending
+// possible-click is never shown as green or auto-approved.
+function savedActionLabel(result){
+ const status=String(result?.status||'pending');
+ if(result?.possible_click===true&&status!=='ok')
+   return 'REVIEW · CLIC INCIERTO';
+ if(status==='ok')return 'OK · ACCIÓN CONFIRMADA';
+ if(status==='already_not_following')return 'SIN ACCIÓN · YA NO SIGUES';
+ if(status==='already_not_requested')return 'SIN ACCIÓN · SIN SOLICITUD';
+ if(status==='profile_unavailable')return 'PERFIL NO DISPONIBLE';
+ if(status==='pending')return 'PENDIENTE · NO PROCESADO';
+ if(result?.safe_no_click===true)return 'REVIEW · SIN CLIC';
+ return 'REVIEW · '+status.toUpperCase();
+}
+function savedActionClass(result){
+ const status=String(result?.status||'pending');
+ if(result?.possible_click===true&&status!=='ok')return 'igc-daw-uncertain';
+ if(status==='ok')return 'igc-daw-reviewed';
+ if(['already_not_following','already_not_requested'].includes(status))
+   return 'igc-daw-no-change';
+ if(status==='profile_unavailable')return 'igc-daw-unavailable';
+ return 'igc-daw-unresolved';
+}
+// Reorder the VIEW only; preserve owner-approved batch.targets and WAL.
+// Uncertain post-click rows are the most urgent manual review; proven
+// no-click anomalies follow; untouched rows precede the blue no-action and
+// green confirmed outcomes. Within a class preserve original cohort order.
 function prioritizedSavedReviewTargets(batch){
  const results=batch?.action_results||{};
  return (Array.isArray(batch?.targets)?batch.targets:[])
   .map((username,index)=>{
-   const status=String(results[username]?.status||'pending');
-   const good=['ok','already_not_following','already_not_requested'].includes(status);
-   const priority=!good&&status!=='pending'&&status!=='profile_unavailable'?0:
-     status==='pending'?1:status==='profile_unavailable'?2:3;
+   const entry=results[username]||{},status=String(entry.status||'pending');
+   const priority=entry.possible_click===true&&status!=='ok'?0:
+     ['ok','already_not_following','already_not_requested'].includes(status)?
+       (status==='ok'?5:4):
+     status==='profile_unavailable'?3:status==='pending'?2:1;
    return {username,index,priority};
   }).sort((a,b)=>a.priority-b.priority||a.index-b.index)
   .map(x=>x.username);
@@ -249,21 +277,21 @@ function card(account,i){
     const targets=batch&&batch.action_results||{};
     const select=$('igcDawTarget'+i),list=$('igcDawReviewList'+i);
     select.replaceChildren();list.replaceChildren();
-    list.append(el('div','igc-daw-note','⚠ Review primero · ○ Sin comprobar · ◌ No disponibles · ✓ OK al final'));
+    list.append(el('div','igc-daw-note',
+      '⚠ Clic incierto primero · ⚠ Sin clic · ○ Pendiente · ◌ No disponible · '+
+      '◇ Sin acción · ✓ Acción confirmada al final'));
     for(const username of prioritizedSavedReviewTargets(batch)){
       if(!HANDLE.test(username))continue;
       const outcome=targets[username]||{status:'pending'},status=String(outcome.status||'pending');
       const reviewed=['ok','already_not_following','already_not_requested'].includes(status);
-      const unavailable=status==='profile_unavailable';
-      const row=el('div','igc-daw-review-row '+(reviewed?'igc-daw-reviewed':
-        unavailable?'igc-daw-unavailable':'igc-daw-unresolved'));
-      row.append(el('span',null,'@'+username),el('span',null,
-        reviewed?'OK':unavailable?'NO DISPONIBLE':'REVIEW · '+status.toUpperCase()));
+      const unavailable=status==='profile_unavailable'&&outcome.possible_click!==true;
+      const row=el('div','igc-daw-review-row '+savedActionClass(outcome));
+      row.append(el('span',null,'@'+username),el('span',null,savedActionLabel(outcome)));
       row.append(el('small',null,'Acción: '+String(outcome.at||'sin fecha registrada')+
         ' · '+String(outcome.message||'sin confirmación').slice(0,140)));
       list.append(row);
       // Completed green rows are historical evidence, NOT replay candidates.
-      if(!reviewed&&!unavailable){
+      if((!reviewed||outcome.possible_click===true)&&!unavailable){
         const o=el('option',null,'@'+username+' · '+status);
         o.value=username;select.append(o);
       }
