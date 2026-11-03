@@ -123,7 +123,10 @@ function parseTargets(text){
 function markStarted(account,task){
   if(!linked||!account)return;
   completionAcknowledged[account]=false;
-  laneSnapshots[account]={running:true,state:'starting',task};
+  // A start-one acknowledgement proves only authorization, NOT that the
+  // background worker actually ran. Never present an idle status as completion.
+  laneSnapshots[account]={running:false,observedRunning:false,awaitingStart:true,
+    startedAt:Date.now(),state:'starting',task};
 }
 function enqueueCompletion(item){
   if(completionAcknowledged[item.account])return;
@@ -171,7 +174,8 @@ function displayNextCompletion(){
       const batch=value.batch;
       if(!batch){list.append(el('div','igc-daw-note',
         'No hay una tanda pendiente en el historial local. Revisa el registro de acciones.'));return}
-      const names=Array.isArray(batch.targets)?batch.targets:[];
+      // Reuse the original Review-first presentation; never reorder batch.targets.
+      const names=prioritizedSavedReviewTargets(batch);
       const results=batch.action_results||{};
       for(const username of names.slice(0,50)){
         const result=results[username]||{},state=String(result.status||'pending');
@@ -489,7 +493,12 @@ async function perform(fn){
 }
 async function statusUpdate(silent=false){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
-  const x=await api('status?owner='+encodeURIComponent(linked.owner));
+  const current=linked;
+  const x=await api('status?owner='+encodeURIComponent(current.owner));
+  // If the owner reconfigured accounts during the request, do not associate
+  // a stale account's state with a new pair of Instagram sessions.
+  if(linked!==current)return x;
+  if(x.owner&&x.owner!==current.owner)throw Error('Estado de otra cuenta bloqueado.');
   for(let i=0;i<2;i++){
     const scope=linked[i],info=(x.lanes||[]).find(y=>y.account===scope.account);
     const label=$('igcDawStatus'+i);
@@ -499,18 +508,32 @@ async function statusUpdate(silent=false){
        String(info.issues||0)+' pendientes de revisión'):'Sin estado para esta cuenta.';
     if(!info)continue;
     const state=String(info.state||'idle'),running=info.running===true;
-    const prev=laneSnapshots[scope.account],task=String(info.task||'');
-    if(running&&(!prev||!prev.running))completionAcknowledged[scope.account]=false;
-    const terminal=['complete','partial','review','blocked','error','paused'];
-    if(prev&&prev.task===task&&!completionAcknowledged[scope.account]&&
-       ((prev.running&&!running)||(terminal.includes(state)&&
-         !terminal.includes(prev.state)))){
-      enqueueCompletion({owner:linked.owner,account:scope.account,
+    const prev=laneSnapshots[scope.account],terminal=['complete','partial','review',
+      'blocked','error','paused'];
+    const awaiting=prev?.awaitingStart===true&&
+      Date.now()-Number(prev.startedAt||0)<30000;
+    const reported=String(info.task||'');
+    const task=['unfollow','cancel'].includes(reported)?reported:
+      awaiting?prev.task:'';
+    if(running&&(!prev||(!prev.running&&!prev.awaitingStart)))
+      completionAcknowledged[scope.account]=false;
+    const sameTask=prev&&task===prev.task&&['unfollow','cancel'].includes(task);
+    const terminalNow=terminal.includes(state);
+    // Only a previously observed worker, or an explicitly approved job which
+    // already reached a terminal state, can trigger completion.
+    if(sameTask&&!completionAcknowledged[scope.account]&&
+       ((prev.observedRunning&&((prev.running&&!running)||
+          (terminalNow&&!terminal.includes(prev.state))))||
+        (awaiting&&terminalNow))){
+      enqueueCompletion({owner:current.owner,account:scope.account,
         handle:scope.expected_handle,i,task,state,
         processed:Number(info.processed)||0,pending:Number(info.pending)||0,
         issues:Number(info.issues)||0});
     }
-    laneSnapshots[scope.account]={running,state,task};
+    laneSnapshots[scope.account]={running,task,state,
+      observedRunning:running||!!prev?.observedRunning,
+      awaitingStart:awaiting&&!running&&!terminalNow,
+      startedAt:prev?.startedAt||Date.now()};
   }
   // Never infer the active server mode from a stale checkbox.
   linked.parallel=x.parallel_mutations_enabled===true;
@@ -523,7 +546,7 @@ async function statusUpdate(silent=false){
 async function pollStatus(){
   if(!linked||activeBusy||statusPolling||document.hidden)return;
   // Poll only after an explicit start or when a worker was observed running.
-  if(!Object.values(laneSnapshots).some(x=>x.running))return;
+  if(!Object.values(laneSnapshots).some(x=>x.running||x.awaitingStart))return;
   statusPolling=true;
   try{await statusUpdate(true)}catch(_){/* Keep saved WAL intact on bridge errors. */}
   finally{statusPolling=false}
