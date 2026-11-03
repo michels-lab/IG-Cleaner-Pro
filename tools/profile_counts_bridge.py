@@ -21,6 +21,7 @@ from profile_counts_instagram import (signed_in_handle, challenge_detected, safe
                                       write_following_cache, read_following_cache, reconcile_following_discovery,
                                       verify_selected_owner_profile, FollowingControlUnavailable)
 from profile_actions import ActionRobot, ProtectedBatchCollision
+from action_chrome_profiles import ActionChromeProfiles
 from live_relationship_snapshot import LiveRelationships
 from robot_interlock import ActionSessionBusy
 from dual_chrome_sessions import DualChromeSessions
@@ -708,14 +709,21 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     audit_root = Path(audit_root) if audit_root is not None else collector.data_dir
     live_probe = (DeveloperLiveProbe(audit_root, collector.session_dir)
                   if developer_mode else None)
-    # Owner-approved Developer action tests intentionally write the canonical
-    # action/protection journal, rather than creating a parallel history that
-    # would later allow the public robot to replay the same Instagram click.
-    # The Chrome session remains separate from the public Windows robot.
-    dev_action_tests = (ActionRobot(collector, audit_root, collector.session_dir)
-                        if developer_mode else None)
+    # One shared persistent Chrome user-data-dir previously survived switching
+    # the visible Instagram workspace and could still be signed in to the OLD
+    # handle. Use a stable private Chrome directory PER owner/account instead;
+    # never copy the old cookies or claim that app-switch means IG login.
+    action_chrome_profiles = ActionChromeProfiles(collector.session_dir)
+    # Public and Developer keep their original journal scope and OS leases.
+    # Their configured legacy session parents stay distinct where installed.
+    dev_action_tests = (ActionRobot(
+        collector, audit_root, collector.session_dir,
+        session_for_scope=action_chrome_profiles.directory)
+        if developer_mode else None)
     developer_session_gate = threading.RLock()
-    actions = ActionRobot(collector, collector.data_dir, collector.session_dir)
+    actions = ActionRobot(
+        collector, collector.data_dir, collector.session_dir,
+        session_for_scope=action_chrome_profiles.directory)
     collector.actions = actions
     live_relationships = LiveRelationships(collector, actions, collector.data_dir, collector.session_dir)
     collector.live_relationships = live_relationships
