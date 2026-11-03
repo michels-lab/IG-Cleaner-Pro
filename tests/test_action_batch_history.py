@@ -200,6 +200,98 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertEqual({row["username"] for row in pool.overview()},
                          {"maybe.clicked","manual.challenge"})
 
+    def test_prefetch_close_exception_keeps_open_page_and_blocks_next_wave(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext())
+        stubborn = pool.open("staged.stubborn")
+        normal = pool.open("staged.normal")
+        pool.tabs["staged.stubborn"]["status"] = "prefetched"
+        pool.tabs["staged.normal"]["status"] = "prefetched"
+
+        def refuse_close():
+            raise OSError("Chrome did not acknowledge tab close")
+
+        stubborn.close = refuse_close
+        pool.close_unacted_prefetches()
+        self.assertFalse(stubborn.is_closed())
+        self.assertTrue(normal.is_closed())
+        self.assertEqual(pool.overview(), [
+            {"username": "staged.stubborn", "status": "prefetch_close_failed"}])
+        self.assertTrue(pool.has_open_tabs(),
+                        "The worker must not claim that a still-open tab disappeared.")
+        self.assertIs(pool.prepared("staged.stubborn"), stubborn)
+        self.assertFalse(pool.tabs["staged.stubborn"].get("click_intent", False))
+        # The same helper can be called again: never erase that warning.
+        pool.close_unacted_prefetches()
+        self.assertEqual(len(pool.overview()), 1)
+        stubborn.closed = True  # Human closes it in the real Chrome window.
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNone(pool.prepared("staged.stubborn"))
+
+    def test_prefetch_close_without_exception_but_open_page_keeps_warning(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext())
+        page = pool.open("staged.delayed.close")
+        pool.tabs["staged.delayed.close"]["status"] = "prefetch_pending"
+        page.close = lambda: None  # Transport claims success but tab remains.
+        pool.close_unacted_prefetches()
+        self.assertFalse(page.is_closed())
+        self.assertEqual(pool.overview(), [
+            {"username": "staged.delayed.close", "status": "prefetch_close_failed"}])
+        self.assertTrue(pool.has_open_tabs())
+        page.closed = True
+        self.assertFalse(pool.has_open_tabs())
+
+    def test_unknown_chrome_tab_state_cannot_free_pool_slot(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext(), limit=1)
+        page = pool.open("unknown.page")
+        page.is_closed = lambda: (_ for _ in ()).throw(
+            ConnectionError("Chrome transport unavailable"))
+        self.assertIsNone(pool.open("another.person"),
+                          "Unknown tab state must not authorize a fresh target.")
+        self.assertEqual(pool.overview(), [
+            {"username": "unknown.page", "status": "tab_state_unknown"}])
+        self.assertTrue(pool.has_open_tabs())
+        page.is_closed = lambda: True
+        self.assertFalse(pool.has_open_tabs())
+        self.assertIsNotNone(pool.open("another.person"))
+
+    def test_confirmed_action_tab_cannot_disappear_when_chrome_close_is_ignored(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext(), limit=1)
+        page = pool.open("clicked.confirmed")
+        page.close = lambda: None
+        with self.assertRaisesRegex(RuntimeError, "did not confirm"):
+            pool.record("clicked.confirmed", "ok", possible_click=True)
+        self.assertEqual(pool.overview(), [
+            {"username": "clicked.confirmed", "status": "tab_close_unconfirmed"}])
+        self.assertIsNone(pool.open("next.target"),
+                          "A confirmed saved action is not proof that the browser tab closed.")
+        pool.close_unacted_prefetches()
+        self.assertTrue(pool.has_open_tabs(),
+                        "Never treat this page as unacted prefetch and pop it.")
+        page.closed = True
+        self.assertFalse(pool.has_open_tabs())
+
+    def test_deferred_review_close_exception_keeps_review_tab_until_manual_close(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext(), limit=1)
+        page = pool.open("clicked.uncertain")
+        pool.record("clicked.uncertain", "review", possible_click=True)
+        def failed_close():
+            raise OSError("Chrome refused to release uncertain tab")
+        page.close = failed_close
+        with self.assertRaises(OSError):
+            pool.defer_persisted_pending("clicked.uncertain")
+        self.assertEqual(pool.overview(), [
+            {"username": "clicked.uncertain", "status": "tab_close_unconfirmed"}])
+        self.assertIsNone(pool.open("next.target"))
+        pool.close_unacted_prefetches()
+        self.assertTrue(pool.has_open_tabs())
+        page.closed = True
+        self.assertFalse(pool.has_open_tabs())
+
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
