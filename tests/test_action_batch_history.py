@@ -125,6 +125,29 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertFalse(uncertain.is_closed())
         self.assertIsNotNone(pool.open("next.untouched"))
 
+    def test_unavailable_profile_after_possible_click_keeps_tab_for_review(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext())
+        closed_before_click = pool.open("closed.before.click")
+        closed_after_click = pool.open("closed.after.click")
+
+        pool.record("closed.before.click", "profile_unavailable")
+        self.assertTrue(closed_before_click.is_closed(),
+                        "No-click unavailable is harmless and frees its tab.")
+        pool.record("closed.after.click", "profile_unavailable",
+                    possible_click=True)
+        self.assertFalse(closed_after_click.is_closed(),
+                         "Prior armed click cannot silently close its evidence.")
+        self.assertEqual(pool.tabs["closed.after.click"]["status"], "review")
+        self.assertEqual({entry["username"] for entry in pool.overview()},
+                         {"closed.after.click"})
+        # Deferring is a separate worker decision after the persistent WAL
+        # and healthy owner/session have been verified. The TabPool alone
+        # cannot assume an unavailable profile is safe to discard.
+        pool.defer_persisted_pending("closed.after.click")
+        self.assertTrue(closed_after_click.is_closed())
+        self.assertFalse(pool.has_open_tabs())
+
     def test_prefetch_uses_existing_tab_instead_of_duplicate(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()

@@ -201,9 +201,17 @@ class ActionTabPool:
         item = self.tabs.get(username)
         return item["page"] if item is not None else None
 
-    def record(self, username, status, *, safe_no_click=False):
+    def record(self, username, status, *, safe_no_click=False,
+               possible_click=False):
         item = self.tabs.get(username)
         if item is None:
+            return
+        # A currently unavailable profile is NOT a verified outcome when
+        # an earlier relationship click was armed. Preserve the live target
+        # tab until a separately verified healthy owner session explicitly
+        # defers that Review; never silently close it as harmless.
+        if possible_click and status == "profile_unavailable":
+            item["status"] = "review"
             return
         if status in ("ok", "skipped", "already_not_following", "already_not_requested",
                       "profile_unavailable") or safe_no_click:
@@ -1074,8 +1082,20 @@ def _invalid_saved_action_record(record):
 
 
 def _public_action_record(record):
-    """Readable non-destructive status; never invent an action terminal."""
+    """Non-destructive public status, including legacy ambiguous unavailable."""
     if not _invalid_saved_action_record(record):
+        # Older journals can hold 'profile_unavailable' as a terminal even
+        # with a DURABLE click intent. A profile disappearing does not prove
+        # a relationship-changing click succeeded or failed. Do not mutate
+        # original saved evidence or give it a benign public outcome.
+        if (record.get("status") == "profile_unavailable"
+                and "click_intent" in record):
+            return {**record, "status": "review",
+                    "issue": record.get("issue") or "unavailable_after_possible_click",
+                    "message": (
+                        "Pending verification: saved target became unavailable "
+                        "after a possible relationship click. Outcome unknown; "
+                        "no automatic replay. " + str(record.get("message") or ""))}
         return record
     return {"status": "review", "issue": "invalid_saved_action_evidence",
             "message": ("Saved action history contains unrecognized evidence. "
@@ -3366,6 +3386,24 @@ class ActionRobot:
                             # Without positive same-session proof a blocked
                             # target remains blocked: never silently continue.
                             pass
+                    # A profile can disappear or be deactivated AFTER a
+                    # relationship click was durably armed. 'Unavailable'
+                    # describes a read-only observation, NOT proof that the
+                    # prior Unfollow/Cancel succeeded (or was never clicked).
+                    # Preserve the initial WAL and classify as Review before
+                    # saving the terminal outcome or closing its Chrome tab.
+                    if (not self.review_only and self.task in ("unfollow", "cancel")
+                            and result == "profile_unavailable"
+                            and isinstance(journal.get(user), dict)
+                            and "click_intent" in journal[user]):
+                        result = "review"
+                        prefix = ("Pending verification: "
+                                  if self.task == "unfollow" else
+                                  "Pending cancellation unverified after read-only refresh: ")
+                        details = (prefix +
+                            "Target became unavailable after a prepared relationship "
+                            "click. Outcome unknown; do not repeat the click. " +
+                            details)
                     # A potentially sent Unfollow is PENDING until a positive
                     # exact-target Follow/Follow Back was verified. Unexpected
                     # post-click errors are likewise pending, not green OK.
@@ -3475,7 +3513,15 @@ class ActionRobot:
                             safely_unclicked = (self.review_only
                                 or _preclick_no_action(journal.get(user, {}))
                                 or _benign_preclick_issue(issue, journal.get(user, {})))
-                            action_tabs.record(user, result, safe_no_click=safely_unclicked)
+                            action_tabs.record(
+                                user, result, safe_no_click=safely_unclicked,
+                                # A separate READ-ONLY recheck never sends
+                                # another relationship click. Its temporary tab
+                                # is safe to close; the older uncertain WAL is
+                                # retained regardless of current availability.
+                                possible_click=(not self.review_only
+                                                and isinstance(recorded, dict)
+                                                and "click_intent" in recorded))
                             if defer_profile_warning:
                                 # Closing this tab is safe only after the
                                 # original per-profile WAL has been fsynced,
@@ -3543,7 +3589,8 @@ class ActionRobot:
                                  or {}).get("recheck_results", {}) if self.review_only else {}
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     (rechecked.get(u, {}).get("status") if self.review_only
-                                     else journal.get(u, {}).get("status"))
+                                     else _public_action_record(
+                                         journal.get(u, {})).get("status"))
                                     not in ("ok", "already_not_following", "already_not_requested",
                                             "profile_unavailable")
                                     for u in self.targets)
