@@ -291,7 +291,9 @@ function card(account,i){
         ' · '+String(outcome.message||'sin confirmación').slice(0,140)));
       list.append(row);
       // Completed green rows are historical evidence, NOT replay candidates.
-      if((!reviewed||outcome.possible_click===true)&&!unavailable){
+      // A *verified* OK may still carry a historical click-intent flag:
+      // that is evidence of the completed action, NOT a Review candidate.
+      if(status!=='ok'&&(!reviewed||outcome.possible_click===true)&&!unavailable){
         const o=el('option',null,'@'+username+' · '+status);
         o.value=username;select.append(o);
       }
