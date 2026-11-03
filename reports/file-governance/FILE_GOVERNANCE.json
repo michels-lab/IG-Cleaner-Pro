@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "4bbc5c7cd594fb4cd2456ec5c56567b95d018b9f7f97e1fe7224ab3d1e926769",
+  "inventory_fingerprint": "1916ce20dff87ca9093f55a28ad84d31d7ef0c861edae4600a08cfd819d793bf",
   "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
   "files": [
     {
@@ -1842,7 +1842,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b5643f5151206c4e0c91addf265a60db4e07f522"
+      "blob": "0a92429447bf84546f51a8606d4dccdbc6307f5e"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2206,7 +2206,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "40e2db1f70be6b94d6bea67fe30afdafaf343efb"
+      "blob": "7c7843d2d23d9a4febf72a18bebbf7920f9af558"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2486,7 +2486,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bdf14d20c0891ec08c2e3045ffa0a78293fd17ac"
+      "blob": "bcfc6272466fe3ac94085b6e3be13fb69abac1b4"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
