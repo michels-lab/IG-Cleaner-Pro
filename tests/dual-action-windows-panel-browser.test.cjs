@@ -139,7 +139,22 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),5);
    assert.match(await page.locator('#igcActHistory').innerText(),/OK confirmado/);
    assert.match(await page.locator('#igcActHistory').innerText(),/Review \/ advertencia/);
-   await page.locator('#igcActBreakdownPeriod').selectOption('h24');
+   // Action type and collapse filters must alter view only, never robot actions.
+   await page.locator('#igcActTask').selectOption('cancel');
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'0');
+   assert.equal(await page.locator('#igcActCount_h24').innerText(),'1');
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),3);
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
+   await page.locator('#igcActTask').selectOption('unfollow');
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),3);
+   await page.locator('#igcActTask').selectOption('all');
+   await page.locator('#igcActToggle').click();
+   assert.equal(await page.locator('#igcActToggle').getAttribute('aria-expanded'),'false');
+   assert.equal(await page.locator('#igcAutomationActivityLayout.igc-act-collapsed').count(),1);
+   await page.locator('#igcActToggle').click();
+   assert.equal(await page.locator('#igcActToggle').getAttribute('aria-expanded'),'true');
+      await page.locator('#igcActBreakdownPeriod').selectOption('h24');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.locator('#igcActAccount').selectOption('ig_second_123456');
    await page.waitForFunction(()=>
