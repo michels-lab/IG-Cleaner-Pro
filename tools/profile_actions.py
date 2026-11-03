@@ -225,8 +225,14 @@ class ActionTabPool:
             # Verified outcomes, explicit skips and known pre-click failures
             # close safely; uncertain post-click results retain visible tabs.
             # An ambiguous action, including post-click session loss, cannot.
+            # A successful action in the WAL does not prove Chrome closed.
+            # Mark the slot BEFORE interacting with the browser so a
+            # transport exception cannot turn it into an unacted prefetch.
+            item["status"] = "tab_close_unconfirmed"
             if not item["page"].is_closed():
                 item["page"].close()
+            if not item["page"].is_closed():
+                raise RuntimeError("Chrome did not confirm closing the target tab.")
             self.tabs.pop(username, None)
         else:
             item["status"] = status
@@ -243,8 +249,13 @@ class ActionTabPool:
         item = self.tabs.get(username)
         if item is None or item["status"] not in ("review", "error"):
             raise ValueError("Only a persisted unverified target can be deferred.")
+        # A previously saved Review may be deferred only after independently
+        # verifying the owner. Even then, never lose track of a live tab.
+        item["status"] = "tab_close_unconfirmed"
         if not item["page"].is_closed():
             item["page"].close()
+        if not item["page"].is_closed():
+            raise RuntimeError("Chrome did not confirm closing deferred Review tab.")
         self.tabs.pop(username, None)
 
     def close_unacted_prefetches(self):
@@ -3613,6 +3624,21 @@ class ActionRobot:
                             defer_profile_warning = False
                         with self.lock:
                             self.open_review_tabs = action_tabs.overview()
+                        # A verified action (or separately deferred Review)
+                        # cannot authorize the NEXT target while Chrome still
+                        # holds an unconfirmed tab. Preserve original WAL.
+                        if any(t.get("status") in ("tab_close_unconfirmed",
+                                                   "tab_state_unknown")
+                               for t in self.open_review_tabs):
+                            with self.lock:
+                                self.status = "review"
+                                self.message = (
+                                    "Chrome did not confirm closing @" + user +
+                                    ". Saved action evidence is intact; the next "
+                                    "profile was NOT opened. Inspect the tab "
+                                    "and pause the robot manually.")
+                            stopped_for_review = True
+                            break
                     if result == "skipped":
                         continue
                     if defer_profile_warning:
@@ -3700,6 +3726,7 @@ class ActionRobot:
                              "profile tab. The saved batch was NOT marked complete; "
                              "inspect or close that tab manually. "
                              if any(t.get("status") in ("prefetch_close_failed",
+                                                      "tab_close_unconfirmed",
                                                       "tab_state_unknown")
                                     for t in self.open_review_tabs) else
                              "Unverified Instagram tabs remain open for manual review. "
