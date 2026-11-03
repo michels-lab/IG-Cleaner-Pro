@@ -145,11 +145,14 @@ function displayNextCompletion(){
   const done=completionQueue.shift();completionShowing=true;
   const content=el('div','igc-daw-modal-card');
   const head=el('div','igc-daw-modal-head');
-  head.append(el('h3',null,'Tanda detenida o finalizada · @'+done.handle));
+  head.append(el('h3',null,(done.source==='saved'?
+    'Revisión guardada · @':'Tanda detenida o finalizada · @')+done.handle));
   const close=el('button',null,'Cerrar');close.type='button';
   close.addEventListener('click',dismissCompletion);head.append(close);
   content.append(head);
-  content.append(el('p','igc-daw-sub',
+  content.append(el('p','igc-daw-sub',done.source==='saved'?
+    'Cuenta '+done.account+' · '+done.task+
+    ' · resumen del historial original (sólo lectura). No se inició Chrome ni se aprobó ningún clic.':
     'Cuenta '+done.account+' · '+done.task+' · '+done.state.toUpperCase()+
     ' · '+done.processed+' procesados (no necesariamente OK) · '+done.pending+' pendientes · '+
     done.issues+' requieren atención. No se aprobó ni repitió ningún clic.'));
@@ -167,9 +170,14 @@ function displayNextCompletion(){
   // Read-only saved WAL; never use a live relationship or mutation endpoint
   // to populate the modal. A missing original cohort remains unresolved.
   if(!['unfollow','cancel'].includes(done.task))return;
-  api('review-one',{owner:done.owner,account:done.account,task:done.task})
-    .then(value=>{
+  const read=done.savedBatch?
+    Promise.resolve({owner:done.owner,account:done.account,task:done.task,
+      batch:done.savedBatch}):
+    api('review-one',{owner:done.owner,account:done.account,task:done.task});
+  read.then(value=>{
       if(!completionShowing||modal.hidden||!content.isConnected)return;
+      if(value?.owner!==done.owner||value?.account!==done.account||
+         value?.task!==done.task)throw Error('La revisión no corresponde a esta cuenta.');
       list.replaceChildren();
       const batch=value.batch;
       if(!batch){list.append(el('div','igc-daw-note',
@@ -230,8 +238,14 @@ function card(account,i){
   const review=el('button',null,'Revisar pendientes');review.type='button';
   review.id='igcDawReview'+i;review.addEventListener('click',()=>perform(async()=>{
     if(!linked)throw Error('Primero vincula las dos cuentas de Chrome.');
-    const result=await api('review-one',{owner:linked.owner,account:linked[i].account,task:task.value});
-    const batch=result.batch;savedReviews[i]={task:task.value,batch};
+    const bound=linked,selectedTask=task.value,account=bound[i].account;
+    const result=await api('review-one',{owner:bound.owner,account,
+      task:selectedTask});
+    if(linked!==bound||task.value!==selectedTask)return;
+    if(result?.owner!==bound.owner||result?.account!==account||
+       result?.task!==selectedTask)
+      throw Error('El historial recibido pertenece a otra cuenta.');
+    const batch=result.batch;savedReviews[i]={task:selectedTask,batch};
     const targets=batch&&batch.action_results||{};
     const select=$('igcDawTarget'+i),list=$('igcDawReviewList'+i);
     select.replaceChildren();list.replaceChildren();
@@ -260,6 +274,32 @@ function card(account,i){
       'Esta cuenta no tiene ninguna tanda pendiente.');
   }));
   controls.append(review);
+  // Completion polling sees only workers observed in this UI session. A reload
+  // or late re-link can miss the terminal transition. Recover the original
+  // saved review ON DEMAND, without assuming a worker ran or approving clicks.
+  const savedSummary=el('button',null,'Ver resumen guardado');
+  savedSummary.type='button';savedSummary.id='igcDawSavedSummary'+i;
+  savedSummary.addEventListener('click',()=>perform(async()=>{
+    if(!linked)throw Error('Vincula ambas cuentas antes de revisar su historial.');
+    const bound=linked,selectedTask=task.value,account=bound[i].account;
+    if(!['unfollow','cancel'].includes(selectedTask))
+      throw Error('Selecciona Unfollow o Cancel Pending.');
+    const answer=await api('review-one',{owner:bound.owner,account,
+      task:selectedTask});
+    if(linked!==bound||task.value!==selectedTask)return;
+    if(answer?.owner!==bound.owner||answer?.account!==account||
+       answer?.task!==selectedTask)
+      throw Error('El historial recibido pertenece a otra cuenta.');
+    if(!answer.batch){
+      notice('No hay una tanda pendiente guardada de esta cuenta y tarea.');
+      return;
+    }
+    completionQueue.push({owner:bound.owner,account,
+      handle:bound[i].expected_handle,i,task:selectedTask,state:'saved',
+      source:'saved',savedBatch:answer.batch});
+    displayNextCompletion();
+  }));
+  controls.append(savedSummary);
   const continueSaved=el('button',null,'Continuar tanda guardada');
   continueSaved.id='igcDawContinue'+i;continueSaved.type='button';
   continueSaved.addEventListener('click',()=>perform(async()=>{
