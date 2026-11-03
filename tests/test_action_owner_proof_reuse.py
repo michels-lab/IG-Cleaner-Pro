@@ -137,6 +137,26 @@ class OwnerProofReuseTests(unittest.TestCase):
                 self.assertEqual(context.new_page.call_count, 1)
                 self.assertEqual(self.nav_count[-1], "owner")
 
+    def test_sibling_proof_counter_is_separate_from_real_self_profile_visits(self):
+        from tempfile import TemporaryDirectory
+        from profile_actions import ActionRobot
+        with TemporaryDirectory() as folder:
+            robot = ActionRobot(folder)
+            robot.owner = "u_test_100"
+            robot.account = "legacy"
+            robot.handle = "my.profile"
+            robot.task = "unfollow"
+            self.assertEqual(robot.owner_profile_visits, 0)
+            self.assertEqual(robot.owner_sibling_proofs, 0)
+            robot._record_owner_sibling_proof()
+            robot._record_owner_sibling_proof()
+            robot._record_owner_profile_visit()
+            snapshot = robot.snapshot()
+            self.assertEqual(snapshot["owner_profile_visits"], 1)
+            self.assertEqual(snapshot["owner_sibling_proofs"], 2)
+            self.assertNotEqual(snapshot["owner_profile_visits"],
+                                snapshot["owner_sibling_proofs"])
+
     def test_hidden_sidebar_proves_owner_once_for_multiple_targets(self):
         context = Mock()
         context.cookies.return_value = owner_cookie("12345")
