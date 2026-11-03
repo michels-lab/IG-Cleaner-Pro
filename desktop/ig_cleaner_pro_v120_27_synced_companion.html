@@ -14532,16 +14532,23 @@ window.igcSyncSwitchState=()=>{
 };
 window.igcSyncSwitchAccount=function(){
  const entry=accountSwitchAdmission();
- if(entry.code==='automation_active'||entry.code==='android_account_screen'){
+ // Opening the chooser is read-only. The automation may start during
+ // initial sync/paint, after the operator sees the button but before clicking.
+ // Always show the saved accounts on Desktop; ONLY the later explicit choice
+ // can change owner, and admitChoice rechecks the live robot/sync guard.
+ if(entry.code==='android_account_screen'){
   status(entry.message,'warn');return;
  }
- document.getElementById('igcLoginChooser')?.remove();
+ const prior=document.getElementById('igcLoginChooser');
+ if(prior?.open){prior.focus();return;}
+ prior?.remove();
  const dialog=document.createElement('dialog');
  dialog.id='igcLoginChooser';dialog.style.cssText='max-width:min(460px,calc(100vw - 28px));width:100%;border:1px solid var(--line,#425064);border-radius:16px;background:var(--panel,#171d2a);color:var(--text,#fff);padding:20px;box-shadow:0 24px 85px #000a';
  const title=document.createElement('h3');title.textContent='Cambiar cuenta de Insta Cleaner';
  dialog.appendChild(title);
  const note=document.createElement('p');note.className='note';
- note.textContent=entry.code==='sync_busy'?entry.message:
+ note.textContent=entry.code==='sync_busy'||entry.code==='automation_active'?
+  entry.message:
   'Selecciona una sesión guardada. Tus listas, favoritos y revisiones se mantienen separadas por usuario.';
  dialog.appendChild(note);
  const admitChoice=(action)=>{
