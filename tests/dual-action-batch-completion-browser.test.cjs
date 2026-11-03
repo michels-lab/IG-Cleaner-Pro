@@ -49,6 +49,7 @@ const {chromium}=require('playwright');
    window.__activeParallel=false;
    window.__staleStartStatus=false;
    window.__wrongReviewScope=false;
+   window.__delayReview=false;
    window.__laneStates={
     'ig_first_1234567':{account:'ig_first_1234567',state:'idle',running:false,
       task:'',processed:0,pending:0,issues:0},
@@ -82,6 +83,7 @@ const {chromium}=require('playwright');
         task:data.action.task,processed:0,pending:1,issues:0};
       payload={status:'running',account:data.account,task:data.action.task};
     }else if(operation==='review-one'){
+      if(window.__delayReview)await new Promise(resolve=>window.__releaseReview=resolve);
       const first=data.account==='ig_first_1234567';
       payload={owner:window.__wrongReviewScope?'another_owner':data.owner,
         account:data.account,task:data.task,
@@ -129,6 +131,18 @@ const {chromium}=require('playwright');
   assert.equal(await savedModal.isVisible(),false);
   await page.evaluate(()=>window.__wrongReviewScope=false);
   assert.equal((await calls()).filter(x=>x.operation==='start-one').length,0);
+  // An outstanding read-only result must be discarded if the operator
+  // changes the selected task while it is in flight.
+  await page.evaluate(()=>window.__delayReview=true);
+  await page.locator('#igcDawSavedSummary0').click();
+  await page.waitForFunction(()=>typeof window.__releaseReview==='function');
+  await page.locator('#igcDawTask0').selectOption('cancel');
+  await page.evaluate(()=>{window.__delayReview=false;window.__releaseReview();});
+  await page.waitForFunction(()=>
+    !document.querySelector('#igcDawSavedSummary0')?.disabled);
+  assert.equal(await savedModal.isVisible(),false,
+    'Stale Unfollow summary must not appear after changing task to Cancel Pending.');
+  await page.locator('#igcDawTask0').selectOption('unfollow');
   // A start-one acknowledgement cannot be confused with the worker actually
   // running; mock a temporary idle status during backend thread startup.
   await page.evaluate(()=>window.__staleStartStatus=true);
