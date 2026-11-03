@@ -72,6 +72,7 @@ const {chromium}=require('playwright');
          processed:0,pending:0,issue_count:0})};
      }
      if(target.includes('/api/actions/history')){
+       if(window.__igcHistoryUnavailable)return {ok:false,json:async()=>({error:'offline fixture'})};
        const data=opts?.body?JSON.parse(opts.body):{};
        const now=new Date().toISOString();
        const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),
@@ -183,6 +184,21 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),1);
    assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   // Even with no saved history, current per-account progress still exists.
+   await page.evaluate(()=>window.__igcHistoryUnavailable=true);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActStatus')?.textContent
+     .includes('Sin historial verificable'));
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+   await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent
+     .includes('Procesados: 8'));
+   assert.match(await page.locator('#igcActBatch').innerText(),
+     /Procesados: 8.*Pendientes: 3.*Review: 2/);
+   await page.evaluate(()=>window.__igcHistoryUnavailable=false);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='2');
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
   const linked=await page.evaluate(()=>window.__dawRequests);
