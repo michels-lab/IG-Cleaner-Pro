@@ -36,6 +36,15 @@ AUTOMATION_ACTIVITY_PANEL = r"""
 #igcAutomationActivityPanel .igc-act-ok{color:#70d9a0}
 #igcAutomationActivityPanel .igc-act-warning{color:#eec470}
 #igcAutomationActivityPanel .igc-act-status{font-size:11px;color:#b4c7d8;overflow-wrap:anywhere}
+#igcAutomationActivityPanel .igc-act-head{display:flex;align-items:center;justify-content:space-between;gap:7px}
+#igcAutomationActivityPanel .igc-act-head button{margin:0;width:auto;min-width:72px;padding:6px}
+#igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr) 155px}
+#igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel{max-height:75px;padding:10px}
+#igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel > :not(.igc-act-head){display:none}
+@media(max-width:980px){
+ #igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr)}
+ #igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel{max-height:75px}
+}
 #igcAutomationActivityPanel .igc-act-window.igc-act-primary{
  background:linear-gradient(140deg,rgba(66,114,172,.21),rgba(18,36,55,.78));
  border-color:rgba(116,188,239,.33)}
@@ -201,15 +210,17 @@ function renderHistory(records){
 }
 function render(records){
  if(!dataReady)return;
+ const selected=$('igcActTask')?.value||'all';
+ const scoped=selected==='all'?records:records.filter(r=>r.task===selected);
  const now=new Date();
  for(const [key] of PERIODS){
-   const out=summarize(records,key,now);
+   const out=summarize(scoped,key,now);
    const el=$('igcActCount_'+key);
    if(el)el.textContent=String(out.verified);
  }
- renderHistory(records);
+ renderHistory(scoped);
  const period=$('igcActBreakdownPeriod')?.value||'today';
- const data=summarize(records,period,now);
+ const data=summarize(scoped,period,now);
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
    const el=$('igcActMetric_'+key);if(el)el.textContent=String(data[key]);
  }
@@ -265,11 +276,28 @@ function mount(){
  if(dual)layout.append(dual);
  const panel=node('aside');panel.id='igcAutomationActivityPanel';
  panel.setAttribute('aria-label','Estadísticas de acciones automáticas');
- panel.append(node('h3',null,'Automation Activity'));
+ const head=node('div','igc-act-head');
+ head.append(node('h3',null,'Automation Activity'));
+ const toggle=node('button',null,'Contraer');toggle.type='button';toggle.id='igcActToggle';
+ toggle.setAttribute('aria-expanded','true');
+ toggle.setAttribute('aria-label','Contraer o expandir estadísticas de Automations');
+ toggle.addEventListener('click',()=>{
+   const compact=layout.classList.toggle('igc-act-collapsed');
+   toggle.textContent=compact?'Expandir':'Contraer';
+   toggle.setAttribute('aria-expanded',String(!compact));
+ });
+ head.append(toggle);panel.append(head);
  panel.append(node('p','igc-act-muted','Actividad confirmada por cuenta · misma lógica de periodos diarios y móviles.'));
  const label=node('label',null,'Cuenta de Instagram');label.htmlFor='igcActAccount';panel.append(label);
  const select=node('select');select.id='igcActAccount';
  select.addEventListener('change',()=>{latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
+ const taskLabel=node('label',null,'Tipo de acción');taskLabel.htmlFor='igcActTask';panel.append(taskLabel);
+ const task=node('select');task.id='igcActTask';
+ for(const [value,label] of [['all','Todas las acciones'],['unfollow','Unfollow'],
+    ['cancel','Cancel Pending']]){
+   const opt=node('option',null,label);opt.value=value;task.append(opt);
+ }
+ task.addEventListener('change',()=>render(latest));panel.append(task);
  const grid=node('div','igc-act-windows');
  for(const [key,name] of PERIODS){
    const primary=['session','today','d7'].includes(key);
@@ -299,7 +327,7 @@ function mount(){
  history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
  historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
-  'Solo OK con fecha cuenta como acción hecha. Los casos amarillos se cuentan aparte; los perfiles que ya no seguías NO cuentan como unfollow.'));
+  'Actividad del robot (no sumada al historial manual). Solo OK con fecha cuenta como acción realizada; Review y perfiles ya resueltos se cuentan aparte.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
  refreshButton.id='igcActRefresh';refreshButton.addEventListener('click',refresh);panel.append(refreshButton);
  const status=node('div','igc-act-status','Consulta de solo lectura; no inicia robots.');
