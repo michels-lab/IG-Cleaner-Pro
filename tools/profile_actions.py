@@ -3722,15 +3722,20 @@ class ActionRobot:
                         self.open_review_tabs = action_tabs.overview()
                         previous_reason = self.message
                         self.message = (
-                            ("Chrome could not confirm closure of an unacted prefetched "
-                             "profile tab. The saved batch was NOT marked complete; "
-                             "inspect or close that tab manually. "
-                             if any(t.get("status") in ("prefetch_close_failed",
-                                                      "tab_close_unconfirmed",
-                                                      "tab_state_unknown")
+                            ("Chrome could not confirm closing a recorded action "
+                             "or deferred Review tab. Saved action evidence is "
+                             "unchanged; the batch is NOT marked complete. "
+                             "Inspect or close the remaining tab manually. "
+                             if any(t.get("status") == "tab_close_unconfirmed"
                                     for t in self.open_review_tabs) else
-                             "Unverified Instagram tabs remain open for manual review. "
-                             "Inspect them before selecting Pause; Pause closes Chrome. ") +
+                             ("Chrome could not confirm closure of an unacted prefetched "
+                              "profile tab or its current state. The saved batch "
+                              "is NOT marked complete; inspect or close manually. "
+                              if any(t.get("status") in ("prefetch_close_failed",
+                                                       "tab_state_unknown")
+                                     for t in self.open_review_tabs) else
+                              "Unverified Instagram tabs remain open for manual review. "
+                              "Inspect them before selecting Pause; Pause closes Chrome. ")) +
                             "No relationship click will be repeated." +
                             (" Cancel Pending was stopped because Instagram displayed "
                              "an unexpected Unfollow confirmation; its outcome is "
