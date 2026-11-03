@@ -312,6 +312,7 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             # Exercise failures inside waves, at wave boundaries, and as
             # the very last target, where Chrome previously closed early.
             failures = {targets[i] for i in (3, 14, 29, 39)}
+            uncertain = targets[17]  # Durable first click, no verified outcome.
             observed = []
 
             def action(page, username, task, expected, can_act=None,
@@ -324,6 +325,10 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                     # The original error must stay yellow, never turn green.
                     raise TimeoutError("Exact target menu failed before any click")
                 on_pre_click("relationship_control")
+                if username == uncertain:
+                    # Playwright may time out after the actual relationship
+                    # control click. Outcome is unknown and must never replay.
+                    raise RuntimeError("Click outcome uncertain after first armed phase")
                 on_pre_click("cancel_request_confirmation")
                 return "ok", "Cancel Request verified after refresh"
 
@@ -338,12 +343,19 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                     self.assertEqual(saved[username]["status"], "error")
                     self.assertNotIn("click_intent", saved[username])
                     self.assertTrue(_saved_journal_blocks_action(saved, username))
+                elif username == uncertain:
+                    self.assertEqual(saved[username]["status"], "error")
+                    intent = saved[username]["click_intent"]
+                    self.assertEqual(intent["phases"], ["relationship_control"])
+                    self.assertTrue(intent["outcome_recorded"])
+                    self.assertTrue(intent["requires_manual_review"])
+                    self.assertTrue(_saved_journal_blocks_action(saved, username))
                 else:
                     self.assertEqual(saved[username]["status"], "ok")
                     self.assertTrue(saved[username]["click_intent"]["outcome_recorded"])
             summary = robot.snapshot()
-            self.assertEqual(summary["successful"], 36)
-            self.assertEqual(summary["errors"], 4)
+            self.assertEqual(summary["successful"], 35)
+            self.assertEqual(summary["errors"], 5)
             self.assertEqual(summary["processed"], 40)
             self.assertEqual(summary["pending"], 0)
 
@@ -366,12 +378,13 @@ class CancelWarningContinuesBatch(unittest.TestCase):
 
             next_chrome = self.run_offline(next_robot, second_action)
             self.assertEqual(later, extra,
-                             "Saved 40 must not replay, including four no-click ERROR rows.")
+                             "Saved 40 must not replay, including no-click and uncertain-click ERROR rows.")
             self.assertEqual(len(next_chrome.targets), 5)
             next_saved = _read_json(robot._base(), {})
             self.assertEqual(set(next_saved), set(targets + extra))
-            self.assertEqual({u for u in failures
-                              if next_saved[u]["status"] == "error"}, failures)
+            blocked = failures | {uncertain}
+            self.assertEqual({u for u in blocked
+                              if next_saved[u]["status"] == "error"}, blocked)
 
 
 
