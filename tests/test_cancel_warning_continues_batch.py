@@ -155,6 +155,52 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertNotIn("second.person", saved)
             self.assertNotIn("third.person", saved)
 
+    def test_confirmed_action_with_unclosed_chrome_tab_stops_next_targets(self):
+        """A durable OK does not authorize another mutation while a tab remains open."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.tab_flow = "ten_tabs"
+            chrome = FakeChrome()
+            observed, attempted = [], []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                attempted.append(username)
+                self.assertEqual(username, "first.person")
+                self.assertEqual(len(chrome.targets), 3)
+                on_pre_click("relationship_control")
+                on_pre_click("cancel_request_confirmation")
+                # Playwright close returns normally, but the first target tab
+                # stays open. Saved OK must be retained; other targets stop.
+                page.close = lambda: None
+                return "ok", "Cancel Request verified after read-only refresh."
+
+            def pause_at_review(_seconds):
+                observed.append((robot.status, robot.message,
+                                 list(robot.open_review_tabs)))
+                robot.stop_event.set()
+                return True
+
+            robot.stop_event.wait = pause_at_review
+            self.run_offline(robot, action, chrome=chrome)
+            self.assertEqual(attempted, ["first.person"])
+            self.assertTrue(observed)
+            status, message, tabs = observed[0]
+            self.assertEqual(status, "review")
+            self.assertIn("recorded action", message)
+            self.assertIn("NOT marked complete", message)
+            self.assertEqual(tabs, [
+                {"username": "first.person", "status": "tab_close_unconfirmed"}])
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(saved["first.person"]["status"], "ok")
+            self.assertTrue(saved["first.person"]["click_intent"]["outcome_recorded"])
+            self.assertFalse(saved["first.person"]["click_intent"]["requires_manual_review"])
+            self.assertNotIn("second.person", saved)
+            self.assertNotIn("third.person", saved)
+            self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
+            self.assertEqual(len(chrome.targets), 3)
+
     def test_one_cancel_warning_is_saved_and_next_two_profiles_continue(self):
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
