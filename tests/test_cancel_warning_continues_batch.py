@@ -456,7 +456,8 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             with patch("profile_actions.recheck_action_readonly",
                        side_effect=recheck):
                 chrome = self.run_offline(robot, no_actions)
-            self.assertEqual(seen, robot.targets)
+            self.assertEqual(seen, robot.targets,
+                             f"Read-only fixture stopped: {robot.status} / {robot.message}")
             self.assertEqual(len(chrome.targets), 3)
             self.assertTrue(all(tab.is_closed() for tab in chrome.targets))
             self.assertEqual(robot.open_review_tabs, [])
