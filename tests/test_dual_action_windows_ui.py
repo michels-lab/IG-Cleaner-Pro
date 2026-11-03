@@ -89,6 +89,19 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("parallel-action-workspace-start:", DUAL_ACTION_PANEL)
         self.assertIn("response.parallel_mutations_enabled!==parallel", DUAL_ACTION_PANEL)
         self.assertIn("id='igcDawCompletionModal'", DUAL_ACTION_PANEL)
+        # No fabricated green OK when there was no actual relationship click.
+        self.assertIn("function savedActionLabel(result)", DUAL_ACTION_PANEL)
+        self.assertIn("possible_click===true&&status!=='ok'", DUAL_ACTION_PANEL)
+        self.assertIn("REVIEW · CLIC INCIERTO", DUAL_ACTION_PANEL)
+        self.assertIn("REVIEW · SIN CLIC", DUAL_ACTION_PANEL)
+        self.assertIn("SIN ACCIÓN · YA NO SIGUES", DUAL_ACTION_PANEL)
+        self.assertIn("SIN ACCIÓN · SIN SOLICITUD", DUAL_ACTION_PANEL)
+        self.assertIn("OK · ACCIÓN CONFIRMADA", DUAL_ACTION_PANEL)
+        self.assertIn("igc-daw-no-change", DUAL_ACTION_PANEL)
+        self.assertIn("igc-daw-uncertain", DUAL_ACTION_PANEL)
+        self.assertIn("String(result.message||'Sin diagnóstico guardado').slice(0,200)",
+                      DUAL_ACTION_PANEL)
+
         self.assertIn("savedSummary.id='igcDawSavedSummary'+i", DUAL_ACTION_PANEL)
         self.assertIn("source:'saved',savedBatch:answer.batch", DUAL_ACTION_PANEL)
         self.assertIn("if(linked!==bound||task.value!==selectedTask)return;", DUAL_ACTION_PANEL)

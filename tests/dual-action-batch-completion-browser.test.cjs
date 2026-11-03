@@ -88,11 +88,30 @@ const {chromium}=require('playwright');
       payload={owner:window.__wrongReviewScope?'another_owner':data.owner,
         account:data.account,task:data.task,
         batch:{id:first?'first-wave':'second-wave',
-          targets:first?['first.person','possible.click']:['pending.friend'],
+          targets:first?[
+            'first.person','previous.follow','no.click',
+            'possible.click','ambiguous.closed','missing.profile']:
+            ['pending.friend','old.pending'],
           action_results:first?{
-           'first.person':{status:'ok',at:'2026-10-30T18:00:00Z'},
-           'possible.click':{status:'review',at:'2026-10-30T18:01:00Z'}
-          }:{'pending.friend':{status:'review',at:'2026-10-30T18:03:00Z'}}
+           'first.person':{status:'ok',possible_click:true,
+             message:'Verified Unfollow after refresh',
+             at:'2026-10-30T18:00:00Z'},
+           'previous.follow':{status:'already_not_following',
+             possible_click:false,message:'No Unfollow clicked: already not following.'},
+           'no.click':{status:'error',possible_click:false,safe_no_click:true,
+             message:'Exact target was unavailable before any click.'},
+           'possible.click':{status:'review',possible_click:true,
+             message:'Durable relationship click phase was armed; outcome unknown.',
+             at:'2026-10-30T18:01:00Z'},
+           'ambiguous.closed':{status:'profile_unavailable',possible_click:true,
+             message:'Closed now; prior relationship click outcome unknown.'},
+           'missing.profile':{status:'profile_unavailable',possible_click:false,
+             message:'Exact page-unavailable notice; no action clicked.'}
+          }:{
+            'pending.friend':{status:'review',at:'2026-10-30T18:03:00Z'},
+            'old.pending':{status:'already_not_requested',possible_click:false,
+              message:'No Cancel Request clicked: no active request.'}
+          }
         }};
     }else payload={status:'idle'};
     return {ok:true,json:async()=>payload};
@@ -112,17 +131,41 @@ const {chromium}=require('playwright');
   await savedModal.getByText('@possible.click').waitFor({state:'visible',timeout:5000});
   assert.deepEqual(await savedModal.locator('.igc-daw-review-row').evaluateAll(
     rows=>rows.map(r=>r.querySelector('span')?.textContent)),
-    ['@possible.click','@first.person']);
+    ['@possible.click','@ambiguous.closed','@no.click',
+     '@missing.profile','@previous.follow','@first.person']);
+  const aRows=savedModal.locator('.igc-daw-review-row');
+  assert.match(await aRows.nth(0).innerText(),/REVIEW · CLIC INCIERTO/);
+  assert.match(await aRows.nth(0).innerText(),/Durable relationship click phase/);
+  assert.match(await aRows.nth(1).innerText(),/REVIEW · CLIC INCIERTO/);
+  assert.match(await aRows.nth(1).innerText(),/Closed now; prior relationship click/);
+  assert.match(await aRows.nth(2).innerText(),/REVIEW · SIN CLIC/);
+  assert.match(await aRows.nth(3).innerText(),/PERFIL NO DISPONIBLE/);
+  assert.match(await aRows.nth(4).innerText(),/SIN ACCIÓN · YA NO SIGUES/);
+  assert.match(await aRows.nth(5).innerText(),/OK · ACCIÓN CONFIRMADA/);
+  assert.match(await aRows.nth(0).getAttribute('class'),/igc-daw-uncertain/);
+  assert.match(await aRows.nth(1).getAttribute('class'),/igc-daw-uncertain/);
+  assert.match(await aRows.nth(4).getAttribute('class'),/igc-daw-no-change/);
+  assert.doesNotMatch(await aRows.nth(4).getAttribute('class'),/igc-daw-reviewed/);
   assert.equal((await calls()).filter(x=>x.operation==='review-one').length,
     before+1,'Saved summary reads the WAL once, not by repeated profile visits.');
   assert.equal((await calls()).filter(x=>x.operation==='start-one').length,0);
   assert.equal((await calls()).filter(x=>x.operation==='approve-one').length,0);
   await savedModal.getByRole('button',{name:'Cerrar'}).click();
+  await page.locator('#igcDawReview0').click();
+  await page.waitForFunction(()=>
+    document.querySelector('#igcDawTarget0')?.options?.length===3);
+  assert.deepEqual(await page.locator('#igcDawTarget0 option').evaluateAll(
+    rows=>rows.map(r=>r.value)),['possible.click','ambiguous.closed','no.click'],
+    'Only unresolved rows are manually inspectable, never green or blue no-action rows.');
   await page.locator('#igcDawTask1').selectOption('cancel');
   await page.locator('#igcDawSavedSummary1').click();
   await savedModal.waitFor({state:'visible',timeout:5000});
   assert.match(await savedModal.innerText(),/Revisión guardada.*@beta.two/);
   await savedModal.getByText('@pending.friend').waitFor({state:'visible',timeout:5000});
+  assert.match(await savedModal.locator('.igc-daw-review-row').nth(1).innerText(),
+    /SIN ACCIÓN · SIN SOLICITUD/);
+  assert.match(await savedModal.locator('.igc-daw-review-row').nth(1).getAttribute('class'),
+    /igc-daw-no-change/);
   await savedModal.getByRole('button',{name:'Cerrar'}).click();
   // Malformed/wrong-owner local bridge response cannot leak other account
   // records into the visible summary, or authorize any action.
@@ -164,18 +207,19 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>{
    window.__laneStates.ig_first_1234567={
     account:'ig_first_1234567',state:'complete',running:false,
-    task:'unfollow',processed:2,pending:0,issues:1
+    task:'unfollow',processed:6,pending:0,issues:3
    };
   });
   await page.locator('#igcDawRefresh').click();
   const modal=page.locator('#igcDawCompletionModal');
   await modal.waitFor({state:'visible',timeout:5000});
   assert.match(await modal.innerText(),/@alpha.one/);
-  assert.match(await modal.innerText(),/1 requieren atención/);
+  assert.match(await modal.innerText(),/3 requieren atención/);
   await modal.getByText('@possible.click').waitFor({state:'visible',timeout:5000});
   assert.deepEqual(await modal.locator('.igc-daw-review-row').evaluateAll(rows=>
     rows.map(r=>r.querySelector('span')?.textContent)),[
-    '@possible.click','@first.person'],
+    '@possible.click','@ambiguous.closed','@no.click',
+    '@missing.profile','@previous.follow','@first.person'],
     'Review must appear ahead of green OK, without changing the original batch order.');
   assert.match(await modal.innerText(),/REVIEW/);
   assert.match(await modal.innerText(),/2026-10-30T18:01:00Z/);
