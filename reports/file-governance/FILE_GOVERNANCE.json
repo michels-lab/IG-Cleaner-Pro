@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "8b36f34bdb6c98f37bf2346d9318bb71af3345838d6efc8143b6f85496c650fe",
-  "evidence_fingerprint": "2d240520ac86d0fecf594be88777d50e17c61d4ffbf6957038e445cc857bd058",
+  "inventory_fingerprint": "928bab00b9ad4ded669670a25e20714c453e48ed64432ee5ef7e69db712ba11f",
+  "evidence_fingerprint": "d92285d393e352dc133a4d12f9d98d3326b9a74350fa4e28a0c80c74982ffa07",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "3ea0e54e0e122bf9424b93be21ee80bd2faba503"
+      "blob": "c052a69422ff73b6e43de8d7623c394740404f7b"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1716,14 +1716,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "991fc1502e1bca0ee51afc7519bbec85de3844e1"
+      "blob": "6a7b2d8050676f5be38df91fd6b07368ee168382"
     },
     {
       "path": "tests/auth-account-switch.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "cc9030f4318ab884fb7af87c7d32cb30b52f2f0c"
+      "blob": "d61b3f188f07c903947ecffb65d06305c89f58be"
     },
     {
       "path": "tests/auth-email-templates-contract.py",
@@ -2878,11 +2878,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "a5cc24c927f1e13b",
+      "id": "77549a5bef6855c4",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "35 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-batch-completion-browser.test.cjs",
+      "observation": "37 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/auth-account-switch.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
