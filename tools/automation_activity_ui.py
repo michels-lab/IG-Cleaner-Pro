@@ -56,6 +56,9 @@ AUTOMATION_ACTIVITY_PANEL = r"""
 #igcAutomationActivityPanel .igc-act-last{background:rgba(80,125,181,.1);border:1px solid #36516a;
  border-radius:10px;padding:9px;margin:8px 0 12px;font-size:12px;color:#e9f1fa}
 #igcAutomationActivityPanel .igc-act-last small{display:block;font-size:10px;margin-top:3px;color:#a2b6c9}
+#igcAutomationActivityPanel .igc-act-batch{background:#131f30;border:1px solid #35516b;border-radius:10px;
+ padding:9px 10px;margin-top:10px;display:grid;gap:5px;font-size:11px;color:#a8bcd0}
+#igcAutomationActivityPanel .igc-act-batch strong{font-size:12px;color:#edf5ff}
 @media(max-width:980px){
  #igcAutomationActivityLayout{grid-template-columns:minmax(0,1fr);
    grid-template-areas:"activity" "center" "dual"}
@@ -77,7 +80,7 @@ const sessionStart=Date.now(); // This native app page session; reset on reload.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
  ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
  ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
-let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='';
+let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='',batchSequence=0;
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
  if(txt!==undefined)x.textContent=String(txt);return x;
@@ -166,8 +169,66 @@ async function readHistory(account,task){
    task,username:x.username,status:x.status,at:x.at
  }));
 }
+async function readBatchStatus(account,expectedOwner){
+ const a=auth();
+ const headers={'X-IGC-Bridge-Token':a.token};
+ async function get(path){
+  const res=await fetch('http://127.0.0.1:'+a.port+path,{headers});
+  const x=await res.json();
+  if(!res.ok)throw Error('No hay estado de tanda verificable.');
+  return x;
+ }
+ // Both are READ-ONLY. Two-account workspaces and the standard robot have
+ // distinct live job supervisors but a shared owner/account authorization.
+ const [dual,single]=await Promise.allSettled([
+  get('/api/actions/dual-action-workspaces/status?owner='+encodeURIComponent(expectedOwner)),
+  get('/api/actions/status')
+ ]);
+ if(dual.status==='fulfilled'&&dual.value.owner===expectedOwner&&
+    Array.isArray(dual.value.lanes)){
+  const lane=dual.value.lanes.find(x=>x&&x.account===account);
+  if(lane)return {running:lane.running,task:lane.task,state:lane.state,
+    processed:lane.processed,pending:lane.pending,issues:lane.issues,scope:'dos cuentas'};
+ }
+ if(single.status==='fulfilled'&&single.value.owner===expectedOwner&&single.value.account===account){
+  const x=single.value;
+  return {running:x.running,task:x.task,state:x.status,processed:x.processed,
+    pending:x.pending,issues:x.issue_count,scope:'robot principal'};
+ }
+ return null;
+}
+function showBatch(state){
+ const e=$('igcActBatch'),title=$('igcActBatchTitle');
+ if(!e||!title)return;
+ if(!state||!['unfollow','cancel'].includes(state.task)){
+   title.textContent='Sin tanda de acciones activa';
+   e.textContent='No hay un proceso asociado a esta cuenta en las sesiones locales del robot.';
+   return;
+ }
+ const n=value=>Number.isInteger(value)&&value>=0?String(value):'—';
+ title.textContent=(state.task==='unfollow'?'Unfollow':'Cancel Pending')+
+   ' · '+String(state.state||'sin estado').slice(0,32)+
+   (state.running?' · en ejecución':' · detenido');
+ e.textContent='Procesados: '+n(state.processed)+' · Pendientes: '+n(state.pending)+
+   ' · Review: '+n(state.issues)+' · '+state.scope+
+   '. Procesados NO significa unfollows confirmados.';
+}
+function refreshBatch(account,expectedOwner){
+ const request=++batchSequence;
+ readBatchStatus(account,expectedOwner).then(state=>{
+  if(request!==batchSequence||owner!==expectedOwner||
+     $('igcActAccount')?.value!==account||context().owner!==expectedOwner)return;
+  showBatch(state);
+ }).catch(()=>{
+  if(request!==batchSequence||$('igcActAccount')?.value!==account)return;
+  showBatch(null);
+ });
+}
 function setStatus(message){const e=$('igcActStatus');if(e)e.textContent=message}
 function clearValues(){
+ batchSequence++;
+ const bt=$('igcActBatchTitle');if(bt)bt.textContent='—';
+ const b=$('igcActBatch');if(b)b.textContent='—';
  const history=$('igcActHistory');if(history)history.replaceChildren();
  const last=$('igcActLast');if(last)last.textContent='—';
  for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
@@ -255,6 +316,7 @@ async function refresh(){
    // Reject stale responses after an account selection or login switch.
    if(owner!==ctx.owner||selector.value!==account||context().owner!==ctx.owner)return;
    latest=data.flat();dataReady=true;render(latest);
+   refreshBatch(account,ctx.owner);
    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'hora local';
    setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
      ' · datos del historial local verificado. No incluye lecturas sin clic.');
@@ -307,6 +369,10 @@ function mount(){
    item.append(caption,count);grid.append(item);
  }
  panel.append(grid);
+ const batch=node('div','igc-act-batch');
+ const batchTitle=node('strong',null,'—');batchTitle.id='igcActBatchTitle';
+ const batchBody=node('div',null,'—');batchBody.id='igcActBatch';
+ batch.append(batchTitle,batchBody);panel.append(batch);
  const last=node('div','igc-act-last','—');last.id='igcActLast';panel.append(last);
  const section=node('div','igc-act-section');
  const periodLabel=node('label',null,'Desglose del periodo');periodLabel.htmlFor='igcActBreakdownPeriod';section.append(periodLabel);
