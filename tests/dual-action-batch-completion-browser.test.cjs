@@ -48,6 +48,8 @@ const {chromium}=require('playwright');
    window.__completedCalls=[];
    window.__activeParallel=false;
    window.__staleStartStatus=false;
+   window.__wrongReviewScope=false;
+   window.__delayReview=false;
    window.__laneStates={
     'ig_first_1234567':{account:'ig_first_1234567',state:'idle',running:false,
       task:'',processed:0,pending:0,issues:0},
@@ -81,8 +83,10 @@ const {chromium}=require('playwright');
         task:data.action.task,processed:0,pending:1,issues:0};
       payload={status:'running',account:data.account,task:data.action.task};
     }else if(operation==='review-one'){
+      if(window.__delayReview)await new Promise(resolve=>window.__releaseReview=resolve);
       const first=data.account==='ig_first_1234567';
-      payload={owner:data.owner,account:data.account,task:data.task,
+      payload={owner:window.__wrongReviewScope?'another_owner':data.owner,
+        account:data.account,task:data.task,
         batch:{id:first?'first-wave':'second-wave',
           targets:first?['first.person','possible.click']:['pending.friend'],
           action_results:first?{
@@ -98,6 +102,47 @@ const {chromium}=require('playwright');
   const opt=page.locator('#igcDawParallelOptIn');
   await opt.check();
   await page.locator('#igcDawConfigure').click();
+  // No worker has run in this UI session, as after a Windows app restart.
+  // The owner can still reopen each saved original WAL without new actions.
+  const savedModal=page.locator('#igcDawCompletionModal');
+  let before=(await calls()).filter(x=>x.operation==='review-one').length;
+  await page.locator('#igcDawSavedSummary0').click();
+  await savedModal.waitFor({state:'visible',timeout:5000});
+  assert.match(await savedModal.innerText(),/Revisión guardada.*@alpha.one/);
+  await savedModal.getByText('@possible.click').waitFor({state:'visible',timeout:5000});
+  assert.deepEqual(await savedModal.locator('.igc-daw-review-row').evaluateAll(
+    rows=>rows.map(r=>r.querySelector('span')?.textContent)),
+    ['@possible.click','@first.person']);
+  assert.equal((await calls()).filter(x=>x.operation==='review-one').length,
+    before+1,'Saved summary reads the WAL once, not by repeated profile visits.');
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,0);
+  assert.equal((await calls()).filter(x=>x.operation==='approve-one').length,0);
+  await savedModal.getByRole('button',{name:'Cerrar'}).click();
+  await page.locator('#igcDawTask1').selectOption('cancel');
+  await page.locator('#igcDawSavedSummary1').click();
+  await savedModal.waitFor({state:'visible',timeout:5000});
+  assert.match(await savedModal.innerText(),/Revisión guardada.*@beta.two/);
+  await savedModal.getByText('@pending.friend').waitFor({state:'visible',timeout:5000});
+  await savedModal.getByRole('button',{name:'Cerrar'}).click();
+  // Malformed/wrong-owner local bridge response cannot leak other account
+  // records into the visible summary, or authorize any action.
+  await page.evaluate(()=>window.__wrongReviewScope=true);
+  await page.locator('#igcDawSavedSummary0').click();
+  assert.equal(await savedModal.isVisible(),false);
+  await page.evaluate(()=>window.__wrongReviewScope=false);
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,0);
+  // An outstanding read-only result must be discarded if the operator
+  // changes the selected task while it is in flight.
+  await page.evaluate(()=>window.__delayReview=true);
+  await page.locator('#igcDawSavedSummary0').click();
+  await page.waitForFunction(()=>typeof window.__releaseReview==='function');
+  await page.locator('#igcDawTask0').selectOption('cancel');
+  await page.evaluate(()=>{window.__delayReview=false;window.__releaseReview();});
+  await page.waitForFunction(()=>
+    !document.querySelector('#igcDawSavedSummary0')?.disabled);
+  assert.equal(await savedModal.isVisible(),false,
+    'Stale Unfollow summary must not appear after changing task to Cancel Pending.');
+  await page.locator('#igcDawTask0').selectOption('unfollow');
   // A start-one acknowledgement cannot be confused with the worker actually
   // running; mock a temporary idle status during backend thread startup.
   await page.evaluate(()=>window.__staleStartStatus=true);
