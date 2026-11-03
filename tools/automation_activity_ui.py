@@ -36,6 +36,17 @@ AUTOMATION_ACTIVITY_PANEL = r"""
 #igcAutomationActivityPanel .igc-act-ok{color:#70d9a0}
 #igcAutomationActivityPanel .igc-act-warning{color:#eec470}
 #igcAutomationActivityPanel .igc-act-status{font-size:11px;color:#b4c7d8;overflow-wrap:anywhere}
+#igcAutomationActivityPanel .igc-act-window.igc-act-primary{
+ background:linear-gradient(140deg,rgba(66,114,172,.21),rgba(18,36,55,.78));
+ border-color:rgba(116,188,239,.33)}
+#igcAutomationActivityPanel .igc-act-history{display:grid;gap:6px;max-height:210px;overflow-y:auto;margin:7px 0 10px}
+#igcAutomationActivityPanel .igc-act-history-row{padding:7px 9px;background:rgba(0,0,0,.13);
+ border:1px solid #33495f;border-radius:9px;font-size:11px;color:#dee8f4}
+#igcAutomationActivityPanel .igc-act-history-row small{display:block;color:#95adc0;font-size:10px;margin-top:4px}
+#igcAutomationActivityPanel .igc-act-history-head{font-size:12px;color:#f0f5fd;font-weight:700;margin:0 0 4px}
+#igcAutomationActivityPanel .igc-act-last{background:rgba(80,125,181,.1);border:1px solid #36516a;
+ border-radius:10px;padding:9px;margin:8px 0 12px;font-size:12px;color:#e9f1fa}
+#igcAutomationActivityPanel .igc-act-last small{display:block;font-size:10px;margin-top:3px;color:#a2b6c9}
 @media(max-width:980px){
  #igcAutomationActivityLayout{grid-template-columns:minmax(0,1fr);
    grid-template-areas:"activity" "center" "dual"}
@@ -53,9 +64,10 @@ const ACCOUNT=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 const TOKEN=/^[A-Za-z0-9_-]{20,256}$/;
 const sessionStart=Date.now(); // This native app page session; reset on reload.
-const PERIODS=[['session','Esta sesión'],['h1','Última hora'],['h3','Últimas 3 horas'],['today','Hoy'],
- ['h24','Últimas 24 horas'],['d7','Últimos 7 días'],['week','Esta semana'],
- ['month','Este mes'],['all','Histórico']];
+// Primary periods mirror igcStandardActivityTop() in Manual Actions.
+const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
+ ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
+ ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
 let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='';
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
@@ -96,6 +108,7 @@ function startOfWeek(d){
 function cutoff(id,now){
  if(id==='session')return sessionStart;
  if(id==='h1')return now.getTime()-3600000;
+ if(id==='h2')return now.getTime()-2*3600000;
  if(id==='h3')return now.getTime()-3*3600000;
  if(id==='h24')return now.getTime()-24*3600000;
  if(id==='d7')return now.getTime()-7*86400000;
@@ -146,9 +159,37 @@ async function readHistory(account,task){
 }
 function setStatus(message){const e=$('igcActStatus');if(e)e.textContent=message}
 function clearValues(){
+ const history=$('igcActHistory');if(history)history.replaceChildren();
+ const last=$('igcActLast');if(last)last.textContent='—';
  for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
    const el=$('igcActMetric_'+key);if(el)el.textContent='—';
+ }
+}
+function renderHistory(records){
+ const list=$('igcActHistory'),last=$('igcActLast');
+ if(!list||!last)return;
+ const entries=records.filter(r=>r&&['unfollow','cancel'].includes(r.task)&&
+   HANDLE.test(r.username||'')&&Number.isFinite(dateValue(r.at)))
+   .sort((a,b)=>dateValue(b.at)-dateValue(a.at)).slice(0,15);
+ list.replaceChildren();
+ if(!entries.length){
+   last.textContent='No hay acciones con fecha guardada.';
+   list.append(node('p','igc-act-muted','El historial está vacío o no tiene fechas verificables.'));
+   return;
+ }
+ function name(r){return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username}
+ function desc(r){const k=classify(r);return k==='verified'?'OK confirmado':
+   k==='warning'?'⚠ Review / advertencia':k==='no_action'?'Ya resuelto · sin clic':
+   k==='unavailable'?'No disponible':'No confirmado'}
+ const newest=entries[0];last.replaceChildren();
+ last.append(node('div',null,'Último registro · '+name(newest)),
+   node('small',null,desc(newest)+' · '+new Date(dateValue(newest.at)).toLocaleString()));
+ for(const entry of entries){
+   const row=node('div','igc-act-history-row');
+   row.append(node('div',null,name(entry)+' · '+desc(entry)),
+     node('small',null,new Date(dateValue(entry.at)).toLocaleString()));
+   list.append(row);
  }
 }
 function render(records){
@@ -159,6 +200,7 @@ function render(records){
    const el=$('igcActCount_'+key);
    if(el)el.textContent=String(out.verified);
  }
+ renderHistory(records);
  const period=$('igcActBreakdownPeriod')?.value||'today';
  const data=summarize(records,period,now);
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
@@ -223,11 +265,13 @@ function mount(){
  select.addEventListener('change',()=>{latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
  const grid=node('div','igc-act-windows');
  for(const [key,name] of PERIODS){
-   const item=node('div','igc-act-window'),caption=node('span',null,name);
+   const primary=['session','today','d7'].includes(key);
+  const item=node('div','igc-act-window'+(primary?' igc-act-primary':'')),caption=node('span',null,name);
    const count=node('strong',null,'—');count.id='igcActCount_'+key;
    item.append(caption,count);grid.append(item);
  }
  panel.append(grid);
+ const last=node('div','igc-act-last','—');last.id='igcActLast';panel.append(last);
  const section=node('div','igc-act-section');
  const periodLabel=node('label',null,'Desglose del periodo');periodLabel.htmlFor='igcActBreakdownPeriod';section.append(periodLabel);
  const period=node('select');period.id='igcActBreakdownPeriod';
@@ -242,6 +286,11 @@ function mount(){
    const number=node('b',null,'—');number.id='igcActMetric_'+key;row.append(number);section.append(row);
  }
  panel.append(section);
+ const historySection=node('div','igc-act-section');
+ historySection.append(node('div','igc-act-history-head','Historial de acciones · esta cuenta'));
+ const history=node('div','igc-act-history');history.id='igcActHistory';
+ history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
+ historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
   'Solo OK con fecha cuenta como acción hecha. Los casos amarillos se cuentan aparte; los perfiles que ya no seguías NO cuentan como unfollow.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
