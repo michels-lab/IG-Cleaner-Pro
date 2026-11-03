@@ -128,7 +128,8 @@ const {chromium}=require('playwright');
      items=>items.slice(0,6).map(item=>item.querySelector('span')?.textContent)),
      ['Esta sesión','Hoy','Últimos 7 días','Última hora','Últimas 2 horas','Últimas 3 horas']);
    assert.equal(await activity.locator('.igc-act-window.igc-act-primary').count(),3);
-   assert.equal(await page.locator('#igcActCount_h2').innerText(),'1');
+   assert([1,2].includes(Number(await page.locator('#igcActCount_h2').innerText())),
+     '2h is a rolling window and may cross local midnight');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
    assert.equal(await page.locator('#igcActMetric_warning').innerText(),'2');
