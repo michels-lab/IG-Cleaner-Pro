@@ -278,11 +278,11 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_profile_actions_chromium.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Chromium Instagram actions flow tests failed.' }
           python -m unittest discover -s tests -p 'test_cancel_request_unfollow_dialog_safety.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Cancel Pending must never confirm a normal Unfollow dialog or replay an uncertain request.' }
           python -m unittest discover -s tests -p 'test_cancel_warning_continues_batch.py' -v
-          if ($LASTEXITCODE -ne 0) { throw 'Cancel Pending must persist individual warnings, continue different targets and never replay click-WAL.' }
-          if ($LASTEXITCODE -ne 0) { throw 'Cancel Pending must never confirm an ordinary Unfollow dialog or replay an uncertain outgoing request.' }
-          if ($LASTEXITCODE -ne 0) { throw "Chromium Instagram actions flow tests failed." }
+          if ($LASTEXITCODE -ne 0) { throw 'Cancel Pending / Unfollow must persist isolated warnings, finish 40-profile waves and never replay click-WAL.' }
       - name: Reject Instagram reCAPTCHA login loops without navigation or bypass
         shell: pwsh
         run: |
