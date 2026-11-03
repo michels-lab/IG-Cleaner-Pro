@@ -123,10 +123,21 @@ const {chromium}=require('playwright');
    assert(['1','2'].includes(await page.locator('#igcActCount_h1').innerText()),
      'Just-before-midnight completion may fall inside the rolling last hour');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
+   // Same six priority windows/order as Manual Actions.
+   assert.deepEqual(await activity.locator('.igc-act-window').evaluateAll(
+     items=>items.slice(0,6).map(item=>item.querySelector('span')?.textContent)),
+     ['Esta sesión','Hoy','Últimos 7 días','Última hora','Últimas 2 horas','Últimas 3 horas']);
+   assert.equal(await activity.locator('.igc-act-window.igc-act-primary').count(),3);
+   assert.equal(await page.locator('#igcActCount_h2').innerText(),'1');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
    assert.equal(await page.locator('#igcActMetric_warning').innerText(),'2');
    assert.equal(await page.locator('#igcActMetric_no_action').innerText(),'1');
+   assert.match(await page.locator('#igcActLast').innerText(),/Último registro/);
+   // Duplicate journal snapshots must not duplicate visible list rows.
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),5);
+   assert.match(await page.locator('#igcActHistory').innerText(),/OK confirmado/);
+   assert.match(await page.locator('#igcActHistory').innerText(),/Review \/ advertencia/);
    await page.locator('#igcActBreakdownPeriod').selectOption('h24');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.locator('#igcActAccount').selectOption('ig_second_123456');
@@ -134,6 +145,8 @@ const {chromium}=require('playwright');
      document.querySelector('#igcActCount_h24')?.textContent==='1');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),1);
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
