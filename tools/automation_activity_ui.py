@@ -225,16 +225,19 @@ function refreshBatch(account,expectedOwner){
  });
 }
 function setStatus(message){const e=$('igcActStatus');if(e)e.textContent=message}
-function clearValues(){
- batchSequence++;
- const bt=$('igcActBatchTitle');if(bt)bt.textContent='—';
- const b=$('igcActBatch');if(b)b.textContent='—';
+function clearJournalValues(){
  const history=$('igcActHistory');if(history)history.replaceChildren();
  const last=$('igcActLast');if(last)last.textContent='—';
  for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
    const el=$('igcActMetric_'+key);if(el)el.textContent='—';
  }
+}
+function clearValues(){
+ batchSequence++;
+ const bt=$('igcActBatchTitle');if(bt)bt.textContent='—';
+ const b=$('igcActBatch');if(b)b.textContent='—';
+ clearJournalValues();
 }
 function renderHistory(records){
  const list=$('igcActHistory'),last=$('igcActLast');
@@ -310,20 +313,26 @@ async function refresh(){
  }
  loading=true;
  const button=$('igcActRefresh');if(button)button.disabled=true;
+ const account=selector.value;
  try{
-   const account=selector.value;
    const data=await Promise.all(['unfollow','cancel'].map(task=>readHistory(account,task)));
    // Reject stale responses after an account selection or login switch.
    if(owner!==ctx.owner||selector.value!==account||context().owner!==ctx.owner)return;
    latest=data.flat();dataReady=true;render(latest);
-   refreshBatch(account,ctx.owner);
    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'hora local';
    setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
      ' · datos del historial local verificado. No incluye lecturas sin clic.');
  }catch(e){
-   latest=[];dataReady=false;clearValues();
-   setStatus('Sin datos verificables: '+String(e.message||e).slice(0,120));
+   // Do not erase another account's metrics after a late failed request.
+   if(owner===ctx.owner&&selector.value===account&&context().owner===ctx.owner){
+     latest=[];dataReady=false;clearJournalValues();
+     setStatus('Sin historial verificable: '+String(e.message||e).slice(0,120));
+   }
  }finally{
+   // Live batch progress remains available even when history is missing.
+   if(owner===ctx.owner&&selector.value===account&&context().owner===ctx.owner){
+     refreshBatch(account,ctx.owner);
+   }
    loading=false;if(button)button.disabled=false;
    if(refreshAgain){refreshAgain=false;refresh()}
  }
