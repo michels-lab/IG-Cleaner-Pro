@@ -388,6 +388,33 @@ class CancelWarningContinuesBatch(unittest.TestCase):
 
 
 
+    def test_unfollow_profile_unavailable_after_post_is_review_not_false_success(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.task = "unfollow"
+            visited = []
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                self.assertTrue(use_reference_transport)
+                visited.append(username)
+                on_pre_click("relationship_control")
+                if username == "first.person":
+                    return "profile_unavailable", "Read-only target now unavailable."
+                return "ok", "Unfollow verified after refresh."
+
+            self.run_offline(robot, action)
+            self.assertEqual(visited, robot.targets)
+            journal = _read_json(robot._base(), {})
+            row = journal["first.person"]
+            self.assertEqual(row["status"], "review")
+            self.assertIn("Pending verification: ", row["message"])
+            self.assertTrue(row["click_intent"]["requires_manual_review"])
+            self.assertTrue(_saved_journal_blocks_action(journal, "first.person"))
+            self.assertEqual(journal["second.person"]["status"], "ok")
+            self.assertEqual(journal["third.person"]["status"], "ok")
+            self.assertEqual(robot.status, "partial")
+
     def test_sixty_profiles_across_six_waves_with_disappearance_after_click(self):
         """Closed-after-click is Review, not green unavailable or dropped wave."""
         with tempfile.TemporaryDirectory() as folder:
