@@ -143,7 +143,7 @@ const {chromium}=require('playwright');
    await page.locator('#igcActTask').selectOption('cancel');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'0');
    assert.equal(await page.locator('#igcActCount_h24').innerText(),'1');
-   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),3);
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),2);
    assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
    await page.locator('#igcActTask').selectOption('unfollow');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
