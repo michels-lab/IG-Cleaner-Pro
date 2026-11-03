@@ -13,6 +13,7 @@ on:
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/action_chrome_profiles.py'
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
@@ -37,6 +38,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_owner_proof_reuse.py'
+      - 'tests/test_action_chrome_profiles.py'
       - 'tests/test_action_tab_flow.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
@@ -98,6 +100,7 @@ on:
       - 'tests/test_granada_false_success_resume.py'
       - 'tests/test_granada_csv_recovery.py'
       - 'tools/profile_counts_bridge.py'
+      - 'tools/action_chrome_profiles.py'
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
@@ -122,6 +125,7 @@ on:
       - 'tests/test_action_click_wal.py'
       - 'tests/test_action_owner_probe_bound.py'
       - 'tests/test_action_owner_proof_reuse.py'
+      - 'tests/test_action_chrome_profiles.py'
       - 'tests/test_action_tab_flow.py'
       - 'tests/test_action_worker_journal_gate.py'
       - 'tools/robot_interlock.py'
@@ -274,6 +278,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Owner navigation verification regression; refuse Windows Setup.' }
           python -m unittest discover -s tests -p 'test_action_owner_proof_reuse.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Session-bound owner proof navigation regression; refuse Windows Setup.' }
+          python -m unittest discover -s tests -p 'test_action_chrome_profiles.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Robot reused the old signed-in Instagram account across app workspaces; refuse Windows Setup.' }
       - name: Offline public/private Instagram action flows in real Chromium
         shell: pwsh
         run: |
