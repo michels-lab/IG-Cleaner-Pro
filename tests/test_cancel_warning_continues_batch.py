@@ -388,6 +388,46 @@ class CancelWarningContinuesBatch(unittest.TestCase):
 
 
 
+    def test_legacy_unavailable_with_click_is_public_review_not_green(self):
+        """Previously saved WAL never becomes harmless on a fresh launch."""
+        from profile_actions import _atomic_json
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            legacy = {
+                "status": "profile_unavailable",
+                "message": "Profile later became unavailable.",
+                "at": "2026-10-30T21:45:00Z",
+                "click_intent": {
+                    "batch_id": "older-batch",
+                    "task": "cancel",
+                    "phase": "relationship_control",
+                    "phases": ["relationship_control"],
+                    "outcome_recorded": True,
+                    "requires_manual_review": True,
+                },
+            }
+            _atomic_json(robot._base(), {"first.person": legacy})
+            original_bytes = robot._base().read_bytes()
+            snapshot = robot.snapshot()
+            row = next(r for r in snapshot["rows"]
+                       if r["username"] == "first.person")
+            self.assertEqual(row["status"], "review")
+            self.assertEqual(row["issue"], "unavailable_after_possible_click")
+            self.assertIn("Outcome unknown", row["message"])
+            self.assertEqual(row["click_phase"], "relationship_control")
+            self.assertEqual(snapshot["errors"], 1)
+            self.assertEqual(snapshot["profile_unavailable"], 0)
+            self.assertEqual(snapshot["issue_count"], 1)
+            history = robot.attempted_history({
+                "owner": robot.owner, "account": robot.account,
+                "task": robot.task})
+            self.assertEqual(history["history_rows"][0]["status"], "review")
+            self.assertIn("first.person", history["attempted_usernames"])
+            self.assertTrue(_saved_journal_blocks_action(
+                _read_json(robot._base(), {}), "first.person"))
+            self.assertEqual(robot._base().read_bytes(), original_bytes,
+                             "Public legacy recovery must NEVER rewrite the WAL.")
+
     def test_unfollow_profile_unavailable_after_post_is_review_not_false_success(self):
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
