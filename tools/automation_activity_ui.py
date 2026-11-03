@@ -134,9 +134,9 @@ function summarize(records,id,now){
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   if(unique.has(key))continue;unique.add(key);
    const t=dateValue(r.at);
    if(!Number.isFinite(t)||t<lower||t>upper)continue;
+   if(unique.has(key))continue;unique.add(key);
    const category=classify(r);
    if(!Object.prototype.hasOwnProperty.call(out,category))continue;
    out[category]++;
@@ -169,9 +169,16 @@ function clearValues(){
 function renderHistory(records){
  const list=$('igcActHistory'),last=$('igcActLast');
  if(!list||!last)return;
- const entries=records.filter(r=>r&&['unfollow','cancel'].includes(r.task)&&
+ const ordered=records.filter(r=>r&&['unfollow','cancel'].includes(r.task)&&
    HANDLE.test(r.username||'')&&Number.isFinite(dateValue(r.at)))
-   .sort((a,b)=>dateValue(b.at)-dateValue(a.at)).slice(0,15);
+   .sort((a,b)=>dateValue(b.at)-dateValue(a.at));
+ const seen=new Set(),entries=[];
+ for(const r of ordered){
+   const key=r.task+':'+r.username.toLowerCase();
+   if(seen.has(key))continue;
+   seen.add(key);entries.push(r);
+   if(entries.length===15)break;
+ }
  list.replaceChildren();
  if(!entries.length){
    last.textContent='No hay acciones con fecha guardada.';
