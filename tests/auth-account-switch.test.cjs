@@ -105,6 +105,40 @@ function harness(){
  assert.equal(busy.test.S.session.user.email,'second@example.test');
  assert.equal(busy.reloads.length,1,'Only the new manually approved click may switch owner');
  assert.equal(busy.entries.get('ig_v13_done'),'["original-review-must-remain"]');
+ // A robot can become active during cold-start between seeing the
+ // "Cambiar cuenta" button and actually clicking it. The saved-account
+ // chooser must still open READ ONLY; a second explicit click after the
+ // robot stops is the sole way to activate another owner.
+ const active=harness();
+ active.test.saveRemembered(account('second@example.test','second'));
+ active.window.igcAutoSwitchGuard=()=>false;
+ assert.equal(active.window.igcSyncSwitchState().code,'automation_active');
+ active.window.igcSyncSwitchAccount();
+ const passive=active.created.find(node=>node.tag==='dialog');
+ assert(passive&&passive.opened,
+   'Active robot does not hide the read-only saved-account chooser.');
+ assert(passive.children.some(node=>node.tag==='p' &&
+   /Pause the Instagram robot/.test(node.textContent)));
+ const choices=passive.children.find(node=>node.tag==='div');
+ const secondChoice=choices.children.find(node=>
+   node.textContent.includes('second@example.test'));
+ secondChoice.click();
+ assert.equal(active.test.S.session.user.email,'first@example.test');
+ assert.equal(active.reloads.length,0);
+ assert(!passive.closed,'Denied active-robot selection keeps chooser open');
+ active.window.igcAutoSwitchGuard=()=>true;
+ secondChoice.click();
+ await Promise.resolve();await Promise.resolve();
+ assert.equal(active.test.S.session.user.email,'second@example.test');
+ assert.equal(active.reloads.length,1);
+ assert.equal(active.entries.get('ig_v13_done'),'["original-review-must-remain"]');
+
+ const android=harness();
+ android.window.AndroidBridge={};
+ android.window.igcSyncSwitchAccount();
+ assert.equal(android.created.filter(node=>node.tag==='dialog').length,0,
+   'Android still requires its own Account screen, not a Desktop chooser');
+ console.log('PASS: active robot read-only chooser survives veto, Android remains scoped');
  console.log('PASS: busy/robot vetoes preserve read-only chooser and cannot silently rebind owner');
  console.log('PASS: Desktop chooser, two remembered logins, owner reload, add, sign out and mismatch isolation');
 })().catch(e=>{console.error(e);process.exitCode=1});

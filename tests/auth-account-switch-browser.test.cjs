@@ -103,6 +103,46 @@ const {chromium}=require("playwright");
     "second@example.test","Robot veto must not switch current saved owner");
   await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await protectedChooser.getByText("Cancelar",{exact:true}).click();
+  // The robot may become active between paint of the account button and
+  // the click. Showing the read-only chooser must not be vetoed; changing
+  // accounts from it is still guarded on every selection.
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>false});
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const activeChooser=page.locator("#igcLoginChooser");
+  await activeChooser.waitFor({state:"visible",timeout:5000});
+  assert.match(await activeChooser.innerText(),/Pause the Instagram robot/);
+  await activeChooser.locator("button").filter({hasText:"first@example.test"}).click();
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","An active robot must NEVER change the signed-in owner.");
+  assert(await activeChooser.isVisible(),"A vetoed choice must leave the chooser readable");
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
+  await activeChooser.getByText("Cancelar",{exact:true}).click();
+  // Repeat cold-start reloads after the legitimate account change. Both
+  // sessions and local history must survive, with no phantom logout or
+  // intermittent missing chooser while initialization/sync is settling.
+  for(let cycle=1;cycle<=4;cycle++){
+   await page.reload({waitUntil:"domcontentloaded"});
+   await page.locator("#igcAppShell").waitFor({state:"visible",timeout:15000});
+   await page.evaluate(()=>showPage("sync"));
+   await page.locator("#igcSyncSignedIn").waitFor({state:"visible",timeout:15000});
+   await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+   const reopened=page.locator("#igcLoginChooser");
+   await reopened.waitFor({state:"visible",timeout:8000}).catch(async error=>{
+    const gate=await page.evaluate(()=>window.igcSyncSwitchState?.()?.code||"missing");
+    throw new Error("Cold-start cycle "+cycle+" failed to show chooser, gate="+gate+
+      ": "+error.message);
+   });
+   assert.match(await reopened.innerText(),/first@example\.test/);
+   assert.match(await reopened.innerText(),/second@example\.test/);
+   assert.equal(await page.evaluate(()=>
+     JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+     "second@example.test","The chooser must not switch owner without selecting one.");
+   assert.equal(await page.evaluate(()=>
+     localStorage.getItem("ig_v13_done")),'["review-stays-local"]');
+   await reopened.getByText("Cancelar",{exact:true}).click();
+  }
+  console.log("PASS: four cold-start account chooser reloads, active robot read-only chooser, no unsafe change");
   console.log("PASS: real Chromium chooser supports startup sync, account change and late robot veto");
   await context.close();
  }finally{await browser.close()}
