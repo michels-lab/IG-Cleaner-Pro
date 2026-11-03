@@ -47,6 +47,7 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>{
    window.__completedCalls=[];
    window.__activeParallel=false;
+   window.__staleStartStatus=false;
    window.__laneStates={
     'ig_first_1234567':{account:'ig_first_1234567',state:'idle',running:false,
       task:'',processed:0,pending:0,issues:0},
@@ -66,8 +67,10 @@ const {chromium}=require('playwright');
       window.__activeParallel=data.parallel_actions_consent===true;
       payload={parallel_mutations_enabled:window.__activeParallel,lanes:[]};
     }else if(operation==='status')
-      payload={parallel_mutations_enabled:window.__activeParallel,
-        lanes:Object.values(window.__laneStates)};
+      payload={owner:window.IGC_INSTAGRAM_PROFILES.owner,
+        parallel_mutations_enabled:window.__activeParallel,
+        lanes:Object.values(window.__laneStates).map(l=>window.__staleStartStatus&&
+          l.account==='ig_first_1234567'?{...l,state:'idle',running:false,task:''}:l)};
     else if(operation==='preflight-new-one')
       payload={read_only:true,actions_enabled:false,offline_untouched_only:true,
         unresolved_saved_cohort:false,evidence_counts:{untouched:data.targets.length},
@@ -95,9 +98,16 @@ const {chromium}=require('playwright');
   const opt=page.locator('#igcDawParallelOptIn');
   await opt.check();
   await page.locator('#igcDawConfigure').click();
+  // A start-one acknowledgement cannot be confused with the worker actually
+  // running; mock a temporary idle status during backend thread startup.
+  await page.evaluate(()=>window.__staleStartStatus=true);
   await page.locator('#igcDawNewTargets0').fill('@first.person');
   await page.locator('#igcDawNewVerify0').click();
   await page.locator('#igcDawNewStart0').click();
+  assert.equal(await page.locator('#igcDawCompletionModal').isVisible(),false,
+    'Start authorization followed by old idle status must not show phantom completion.');
+  await page.evaluate(()=>window.__staleStartStatus=false);
+  await page.locator('#igcDawRefresh').click();
   await page.locator('#igcDawTask1').selectOption('cancel');
   await page.locator('#igcDawNewTargets1').fill('@pending.friend');
   await page.locator('#igcDawNewVerify1').click();
@@ -118,6 +128,10 @@ const {chromium}=require('playwright');
   assert.match(await modal.innerText(),/@alpha.one/);
   assert.match(await modal.innerText(),/1 requieren atención/);
   await modal.getByText('@possible.click').waitFor({state:'visible',timeout:5000});
+  assert.deepEqual(await modal.locator('.igc-daw-review-row').evaluateAll(rows=>
+    rows.map(r=>r.querySelector('span')?.textContent)),[
+    '@possible.click','@first.person'],
+    'Review must appear ahead of green OK, without changing the original batch order.');
   assert.match(await modal.innerText(),/REVIEW/);
   assert.match(await modal.innerText(),/2026-10-30T18:01:00Z/);
   assert.equal((await calls()).filter(x=>x.operation==='approve-one').length,0,
