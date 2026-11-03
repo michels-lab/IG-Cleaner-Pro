@@ -839,6 +839,50 @@ def _local_owner_session_id(context):
         return None
 
 
+def _live_sibling_owner_proof(context, current_page, expected_handle, session_id):
+    """Read an already-open Instagram tab instead of navigating /owner/ again.
+
+    This is ONLY an alternative to creating a *new* owner-profile proof tab.
+    It requires a fresh, unambiguous ds_user_id and current visible Profile
+    identity from another tab in the SAME context. A login, challenge, wrong
+    owner or a changed cookie fails closed. Merely having the target URL or
+    another old profile tab is never sufficient proof.
+    """
+    if not session_id:
+        return "unknown"
+    try:
+        pages = context.pages
+        if not isinstance(pages, (list, tuple)):
+            return "unknown"
+        matching = False
+        for sibling in pages:
+            if sibling is current_page or sibling.is_closed():
+                continue
+            parsed = urlparse(getattr(sibling, "url", ""))
+            if (parsed.scheme != "https" or
+                    parsed.hostname not in ("instagram.com", "www.instagram.com")):
+                continue
+            if challenge_detected(sibling):
+                return "unsafe"
+            passwords = sibling.locator('input[name="password"]')
+            if any(passwords.nth(i).is_visible()
+                   for i in range(min(passwords.count(), 6))):
+                return "unsafe"
+            observed = signed_in_handle(sibling)
+            if observed is not None:
+                if not _same_instagram_owner(observed, expected_handle):
+                    return "wrong"
+                matching = True
+        if matching:
+            # Account switch while scanning sibling DOM invalidates its proof.
+            return ("matched" if _local_owner_session_id(context) == session_id
+                    else "unsafe")
+        return "unknown"
+    except Exception:
+        # A broken/ambiguous browser survey cannot authorize a click.
+        return "unsafe"
+
+
 def _verified_action_owner(page, expected_handle):
     """Prove the signed-in owner without repeatedly reopening /owner/.
 
@@ -886,6 +930,19 @@ def _verified_action_owner(page, expected_handle):
             # profile proof, never a mere remembered username.
             return True
         _OWNER_PROFILE_PROBE.bound_session = None
+
+    # If a separate same-context tab currently shows the authenticated
+    # Profile identity, a fresh stable session cookie plus live DOM is already
+    # positive proof. No new /owner/ tab or navigation is necessary.
+    sibling = _live_sibling_owner_proof(context, page, expected_handle, session_id)
+    if sibling in ("wrong", "unsafe"):
+        _OWNER_PROFILE_PROBE.bound_session = None
+        return False
+    if sibling == "matched":
+        callback = getattr(_OWNER_PROFILE_PROBE, "sibling_report", None)
+        if callable(callback):
+            callback()
+        return True
 
     check = None
     try:
@@ -1741,7 +1798,8 @@ class ActionRobot:
         self.targets = []
         self.open_review_tabs = []
         self.current_wait = None
-        self.owner_profile_visits = 0  # read-only owner fallback, distinct from target visits
+        self.owner_profile_visits = 0  # navigated read-only owner fallback
+        self.owner_sibling_proofs = 0  # owner DOM reused in other existing tab
         self.review_only = False
         self.review_profiles_only = False
         self.audit_source = "visible"
@@ -2777,6 +2835,7 @@ class ActionRobot:
                 self.open_review_tabs = []
                 self.current_wait = None
                 self.owner_profile_visits = 0
+                self.owner_sibling_proofs = 0
                 self.batch_size = count
                 self.tab_flow = tab_flow
                 self.max_count, self.window_minutes, self.min_delay_seconds = max_count, window, delay
@@ -2865,6 +2924,7 @@ class ActionRobot:
                     "tab_flow": self.tab_flow,
                     "target_tabs_per_wave": action_tab_stage_limit(self.tab_flow),
                     "owner_profile_visits": self.owner_profile_visits,
+                    "owner_sibling_proofs": self.owner_sibling_proofs,
                     "batch_size": self.batch_size,
                     "hourly_visit_limit": self.max_count,
                     "hourly_visit_window_minutes": self.window_minutes,
@@ -2983,10 +3043,15 @@ class ActionRobot:
         with self.lock:
             self.owner_profile_visits += 1
 
+    def _record_owner_sibling_proof(self):
+        with self.lock:
+            self.owner_sibling_proofs += 1
+
     def _run(self):
         browser = None
         _OWNER_PROFILE_PROBE.bound_session = None
         _OWNER_PROFILE_PROBE.report = self._record_owner_profile_visit
+        _OWNER_PROFILE_PROBE.sibling_report = self._record_owner_sibling_proof
         try:
             from playwright.sync_api import sync_playwright
             self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -3644,6 +3709,7 @@ class ActionRobot:
         finally:
             _OWNER_PROFILE_PROBE.bound_session = None
             _OWNER_PROFILE_PROBE.report = None
+            _OWNER_PROFILE_PROBE.sibling_report = None
             with self.lock:
                 self.current, self.wait_until, self.current_wait = "", 0, None
             if browser:
