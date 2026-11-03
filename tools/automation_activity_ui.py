@@ -38,7 +38,7 @@ AUTOMATION_ACTIVITY_PANEL = r"""
 #igcAutomationActivityPanel .igc-act-status{font-size:11px;color:#b4c7d8;overflow-wrap:anywhere}
 #igcAutomationActivityPanel .igc-act-head{display:flex;align-items:center;justify-content:space-between;gap:7px}
 #igcAutomationActivityPanel .igc-act-head button{margin:0;width:auto;min-width:72px;padding:6px}
-#igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr) 155px}
+#igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr) 175px}
 #igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel{max-height:75px;padding:10px}
 #igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel > :not(.igc-act-head){display:none}
 @media(max-width:980px){
@@ -277,13 +277,14 @@ function mount(){
  const panel=node('aside');panel.id='igcAutomationActivityPanel';
  panel.setAttribute('aria-label','Estadísticas de acciones automáticas');
  const head=node('div','igc-act-head');
- head.append(node('h3',null,'Automation Activity'));
+ const title=node('h3',null,'Automation Activity');head.append(title);
  const toggle=node('button',null,'Contraer');toggle.type='button';toggle.id='igcActToggle';
  toggle.setAttribute('aria-expanded','true');
  toggle.setAttribute('aria-label','Contraer o expandir estadísticas de Automations');
  toggle.addEventListener('click',()=>{
    const compact=layout.classList.toggle('igc-act-collapsed');
    toggle.textContent=compact?'Expandir':'Contraer';
+   title.textContent=compact?'Activity':'Automation Activity';
    toggle.setAttribute('aria-expanded',String(!compact));
  });
  head.append(toggle);panel.append(head);
