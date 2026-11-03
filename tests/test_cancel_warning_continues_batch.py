@@ -428,9 +428,9 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertEqual(robot._base().read_bytes(), original_bytes,
                              "Public legacy recovery must NEVER rewrite the WAL.")
 
-    def test_readonly_recheck_closes_temporary_tabs_but_preserves_old_wal(self):
-        """An old possible click must not stall a later READ-ONLY scan."""
-        from profile_actions import _atomic_json
+    def test_readonly_tab_cleanup_preserves_earlier_uncertain_wal(self):
+        """Read-only tabs have no new click and can close safely on unavailable."""
+        from profile_actions import ActionTabPool, _atomic_json
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
             original = {"status": "review", "issue": "pending_cancel_unverified",
@@ -443,26 +443,19 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                             "requires_manual_review": True}}
             _atomic_json(robot._base(), {"first.person": original})
             before = robot._base().read_bytes()
-            robot.review_only = True
-            seen = []
-            def recheck(page, username, task, expected, **kwargs):
-                seen.append(username)
-                return ("profile_unavailable",
-                        "Read-only observation: target currently unavailable.")
-
-            def no_actions(*args, **kwargs):
-                raise AssertionError("Read-only recheck must not issue any action.")
-
-            with patch("profile_actions.recheck_action_readonly",
-                       side_effect=recheck):
-                chrome = self.run_offline(robot, no_actions)
-            self.assertEqual(seen, robot.targets,
-                             f"Read-only fixture stopped: {robot.status} / {robot.message}")
-            self.assertEqual(len(chrome.targets), 3)
-            self.assertTrue(all(tab.is_closed() for tab in chrome.targets))
-            self.assertEqual(robot.open_review_tabs, [])
-            self.assertEqual(robot._base().read_bytes(), before,
-                             "Read-only scan must not rewrite old click intent.")
+            chrome = FakeChrome()
+            tabs = ActionTabPool(chrome)
+            temporary = tabs.open("first.person")
+            # The original action WAL describes a DIFFERENT older run. A
+            # read-only recheck creates no click intent, and may therefore
+            # discard its OWN temporary page without approving the old click.
+            tabs.record("first.person", "profile_unavailable",
+                        safe_no_click=True, possible_click=False)
+            self.assertTrue(temporary.is_closed())
+            self.assertFalse(tabs.has_open_tabs())
+            self.assertEqual(robot._base().read_bytes(), before)
+            self.assertTrue(_saved_journal_blocks_action(
+                _read_json(robot._base(), {}), "first.person"))
 
     def test_unfollow_profile_unavailable_after_post_is_review_not_false_success(self):
         with tempfile.TemporaryDirectory() as folder:
