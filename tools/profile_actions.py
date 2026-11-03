@@ -1782,15 +1782,20 @@ from chrome_lane_interlock import ChromeLaneLease, ChromeLaneBusy
 
 class ActionRobot:
     def __init__(self, collector, data_dir: Path, session_dir: Path, *,
-                 lease_factory=None):
+                 lease_factory=None, session_for_scope=None):
         # Default keeps the exact legacy GLOBAL + scoped OS admission contract.
         # A non-default factory is internal-only; production callers must NOT
         # activate concurrent relationship changes until the complete
         # owner/WAL/Chrome cross-worker acceptance contract is proven.
         if lease_factory is not None and not callable(lease_factory):
             raise TypeError("Action lease factory must be a callable.")
+        if session_for_scope is not None and not callable(session_for_scope):
+            raise TypeError("Scoped Chrome session resolver must be callable.")
         self._lease_factory = lease_factory or ScopedActionLease
-        self.collector, self.data_dir, self.session_dir = collector, data_dir, session_dir
+        self._session_for_scope = session_for_scope
+        self._legacy_session_dir = Path(session_dir).resolve()
+        self.collector, self.data_dir, self.session_dir = (
+            collector, data_dir, Path(session_dir))
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
         self.worker = None
@@ -1820,6 +1825,20 @@ class ActionRobot:
         self.status, self.message = "idle", "No active actions"
         self.current = ""
         self.wait_until = 0.0
+
+    def _browser_session_for(self, owner, account):
+        """Resolve the current owner's Chrome profile, never the prior account.
+
+        A scope resolver is opt-in for the historical single-worker Windows
+        bridge. Dual-workspace robots already receive distinct directories;
+        source-level offline tests may continue to supply explicit test dirs.
+        """
+        if self._session_for_scope is None:
+            return self.session_dir
+        folder = Path(self._session_for_scope(owner, account)).resolve()
+        if folder == self._legacy_session_dir:
+            raise ValueError("Account-specific Chrome must not reuse legacy shared cookies.")
+        return folder
 
     def _base_for(self, owner, account, task):
         ident = "\0".join((owner, account, task))
@@ -1965,7 +1984,10 @@ class ActionRobot:
             # same persistent Chrome directory is navigation, not a robot action.
             # A fresh process has no active self.owner/task and must not prevent
             # visiting earlier journal issues in the saved browser session.
-            session = self.session_dir.resolve()
+            # A cold-start manual Review can name an older owner/workspace
+            # before ActionRobot.start() ever binds its mutable state. Always
+            # resolve the directory from that exact requested scope.
+            session = self._browser_session_for(owner, account).resolve()
         candidates = [shutil.which("chrome.exe"), shutil.which("chrome")]
         for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
             base = os.environ.get(env)
@@ -2332,6 +2354,7 @@ class ActionRobot:
             data.get("gap_seconds", 10))
         rest_input = data.get("rest_minutes", 5)
         _, rest = check_batch_rest(count if rest_input else 0, rest_input)
+        browser_session = self._browser_session_for(owner, account)
         with self.collector.browser_admission, self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Pause the action robot before historical read-only checks.")
@@ -2345,6 +2368,7 @@ class ActionRobot:
             if not targets:
                 raise ValueError("No unresolved historical profiles need re-audit.")
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            self.session_dir = browser_session
             protected = self._protected()
             targets = [name for name in targets if name not in protected]
             if not targets:
@@ -2390,6 +2414,7 @@ class ActionRobot:
 
     def recheck_batch(self, data):
         owner, account, task = self._review_scope(data)
+        browser_session = self._browser_session_for(owner, account)
         with self.collector.browser_admission, self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("The Instagram robot is already active.")
@@ -2404,6 +2429,7 @@ class ActionRobot:
                 raise ValueError("Verify the active Instagram handle first.")
             # Never initiate a relationship-changing click during recheck.
             self.owner, self.account, self.handle, self.task = owner, account, expected, task
+            self.session_dir = browser_session
             only_issues = data.get("review_profiles_only") is True
             if "review_profiles_only" in data and not isinstance(data["review_profiles_only"], bool):
                 raise ValueError("Review-only selection must be explicit and Boolean.")
@@ -2675,6 +2701,9 @@ class ActionRobot:
             raise ValueError("Assign the active Instagram @handle before starting.")
         if task not in TASKS or not targets:
             raise ValueError("Select a job containing valid profiles.")
+        # Resolve only from the explicitly selected app owner/workspace, not
+        # from the last logged-in Instagram tab of another saved account.
+        browser_session = self._browser_session_for(owner, account)
         tab_flow = str(data.get("tab_flow") or "sequential")
         action_tab_stage_limit(tab_flow)  # reject unknown navigation modes
         count = int(data.get("batch_size", 30))
@@ -2823,6 +2852,7 @@ class ActionRobot:
                 # journal reads have now completed. Commit in-memory state
                 # only after writes succeeded, never on a denied start.
                 self.owner, self.account, self.handle, self.task = owner, account, expected, task
+                self.session_dir = browser_session
                 self.targets = list(retry_selection) if retry_selection is not None else targets
                 self.audit_source = audit_source
                 self.review_only = False
