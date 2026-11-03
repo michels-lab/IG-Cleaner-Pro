@@ -77,9 +77,9 @@ class CancelWarningContinuesBatch(unittest.TestCase):
         robot.min_delay_seconds = 1
         return robot
 
-    def run_offline(self, robot, action, *, challenge=None, owner=None):
+    def run_offline(self, robot, action, *, challenge=None, owner=None, chrome=None):
         import profile_actions
-        chrome = FakeChrome()
+        chrome = chrome if chrome is not None else FakeChrome()
         fake_playwright = types.SimpleNamespace(
             chromium=types.SimpleNamespace(
                 launch_persistent_context=lambda **_kw: chrome))
@@ -102,6 +102,104 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                  return_value=(0, "offline")):
             robot._run()
         return chrome
+
+    def test_real_worker_review_when_unused_chrome_tab_refuses_to_close(self):
+        """An unclosed prefetch cannot vanish or produce a fake completed batch."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.tab_flow = "ten_tabs"
+            chrome = FakeChrome()
+            observed = []
+            visited_actions = []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                visited_actions.append(username)
+                # A global blocked state prevents action on later prepared
+                # tabs. None of the three targets has a relationship click.
+                self.assertEqual(username, "first.person")
+                self.assertEqual(len(chrome.targets), 3)
+                def cannot_close():
+                    raise OSError("Chrome transport refused to close prefetched tab")
+                chrome.targets[1].close = cannot_close
+                return "blocked", "Owner session login check interrupted."
+
+            def leave_review_loop(_seconds):
+                observed.append({
+                    "status": robot.status,
+                    "message": robot.message,
+                    "open_tabs": list(robot.open_review_tabs),
+                })
+                robot.stop_event.set()
+                return True
+
+            # The worker itself reaches its normal manual-review hold loop;
+            # stop it on the first wait so offline CI never hangs.
+            robot.stop_event.wait = leave_review_loop
+            self.run_offline(robot, action, chrome=chrome)
+            self.assertEqual(visited_actions, ["first.person"])
+            self.assertTrue(observed, "Worker must stop and expose live Chrome tabs.")
+            self.assertEqual(observed[0]["status"], "review")
+            self.assertIn("could not confirm closure", observed[0]["message"])
+            self.assertIn("NOT marked complete", observed[0]["message"])
+            self.assertEqual(
+                {row["username"]: row["status"]
+                 for row in observed[0]["open_tabs"]},
+                {"first.person": "blocked", "second.person": "prefetch_close_failed"})
+            self.assertEqual(len(chrome.targets), 3,
+                             "Chrome must not open or replay a fourth target.")
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(saved["first.person"]["status"], "blocked")
+            self.assertNotIn("click_intent", saved["first.person"])
+            self.assertNotIn("second.person", saved)
+            self.assertNotIn("third.person", saved)
+
+    def test_confirmed_action_with_unclosed_chrome_tab_stops_next_targets(self):
+        """A durable OK does not authorize another mutation while a tab remains open."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.tab_flow = "ten_tabs"
+            chrome = FakeChrome()
+            observed, attempted = [], []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                attempted.append(username)
+                self.assertEqual(username, "first.person")
+                self.assertEqual(len(chrome.targets), 3)
+                on_pre_click("relationship_control")
+                on_pre_click("cancel_request_confirmation")
+                # Playwright close returns normally, but the first target tab
+                # stays open. Saved OK must be retained; other targets stop.
+                page.close = lambda: None
+                return "ok", "Cancel Request verified after read-only refresh."
+
+            def pause_at_review(_seconds):
+                observed.append((robot.status, robot.message,
+                                 list(robot.open_review_tabs)))
+                robot.stop_event.set()
+                return True
+
+            robot.stop_event.wait = pause_at_review
+            self.run_offline(robot, action, chrome=chrome)
+            self.assertEqual(attempted, ["first.person"])
+            self.assertTrue(observed)
+            status, message, tabs = observed[0]
+            self.assertEqual(status, "review")
+            self.assertIn("recorded action", message)
+            self.assertIn("NOT marked complete", message)
+            self.assertEqual(tabs, [
+                {"username": "first.person", "status": "tab_close_unconfirmed"}])
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(saved["first.person"]["status"], "ok")
+            self.assertTrue(saved["first.person"]["click_intent"]["outcome_recorded"])
+            self.assertFalse(saved["first.person"]["click_intent"]["requires_manual_review"])
+            self.assertNotIn("second.person", saved)
+            self.assertNotIn("third.person", saved)
+            self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
+            self.assertEqual(len(chrome.targets), 3)
 
     def test_one_cancel_warning_is_saved_and_next_two_profiles_continue(self):
         with tempfile.TemporaryDirectory() as folder:
