@@ -251,6 +251,32 @@ class CancelWarningContinuesBatch(unittest.TestCase):
 
 
 
+    def test_no_click_exception_stops_if_owner_cannot_be_reverified(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            tried = []
+
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                tried.append(username)
+                raise RuntimeError("Read-only target error before WAL click barrier")
+
+            def owner(page, handle):
+                # The target exception cannot authorize the next mutation
+                # when owner identity is missing or has switched.
+                robot.stop_event.set()
+                return False
+
+            self.run_offline(robot, action, owner=owner)
+            self.assertEqual(tried, ["first.person"])
+            journal = _read_json(robot._base(), {})
+            self.assertEqual(journal["first.person"]["status"], "error")
+            self.assertNotIn("click_intent", journal["first.person"])
+            self.assertNotIn("second.person", journal)
+            self.assertNotIn("third.person", journal)
+            self.assertTrue(_saved_journal_blocks_action(journal, "first.person"))
+
     def test_unfollow_no_click_exception_is_reviewable_and_next_target_runs(self):
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
