@@ -141,7 +141,7 @@ class OwnerProofReuseTests(unittest.TestCase):
         from tempfile import TemporaryDirectory
         from profile_actions import ActionRobot
         with TemporaryDirectory() as folder:
-            robot = ActionRobot(folder)
+            robot = ActionRobot(None, Path(folder), Path(folder) / "session")
             robot.owner = "u_test_100"
             robot.account = "legacy"
             robot.handle = "my.profile"
