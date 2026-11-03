@@ -1082,8 +1082,20 @@ def _invalid_saved_action_record(record):
 
 
 def _public_action_record(record):
-    """Readable non-destructive status; never invent an action terminal."""
+    """Non-destructive public status, including legacy ambiguous unavailable."""
     if not _invalid_saved_action_record(record):
+        # Older journals can hold 'profile_unavailable' as a terminal even
+        # with a DURABLE click intent. A profile disappearing does not prove
+        # a relationship-changing click succeeded or failed. Do not mutate
+        # original saved evidence or give it a benign public outcome.
+        if (record.get("status") == "profile_unavailable"
+                and "click_intent" in record):
+            return {**record, "status": "review",
+                    "issue": record.get("issue") or "unavailable_after_possible_click",
+                    "message": (
+                        "Pending verification: saved target became unavailable "
+                        "after a possible relationship click. Outcome unknown; "
+                        "no automatic replay. " + str(record.get("message") or ""))}
         return record
     return {"status": "review", "issue": "invalid_saved_action_evidence",
             "message": ("Saved action history contains unrecognized evidence. "
@@ -3577,7 +3589,8 @@ class ActionRobot:
                                  or {}).get("recheck_results", {}) if self.review_only else {}
                     remaining = sum(u not in self._protected() and u not in self.skipped and
                                     (rechecked.get(u, {}).get("status") if self.review_only
-                                     else journal.get(u, {}).get("status"))
+                                     else _public_action_record(
+                                         journal.get(u, {})).get("status"))
                                     not in ("ok", "already_not_following", "already_not_requested",
                                             "profile_unavailable")
                                     for u in self.targets)
