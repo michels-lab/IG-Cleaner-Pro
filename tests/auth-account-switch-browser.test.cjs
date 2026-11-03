@@ -133,8 +133,8 @@ const {chromium}=require("playwright");
     throw new Error("Cold-start cycle "+cycle+" failed to show chooser, gate="+gate+
       ": "+error.message);
    });
-   assert.match(await reopened.innerText(),/first@example\\.test/);
-   assert.match(await reopened.innerText(),/second@example\\.test/);
+   assert.match(await reopened.innerText(),/first@example\.test/);
+   assert.match(await reopened.innerText(),/second@example\.test/);
    assert.equal(await page.evaluate(()=>
      JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
      "second@example.test","The chooser must not switch owner without selecting one.");
