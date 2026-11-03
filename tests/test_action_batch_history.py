@@ -257,6 +257,41 @@ class ActionTabPoolTests(unittest.TestCase):
         self.assertFalse(pool.has_open_tabs())
         self.assertIsNotNone(pool.open("another.person"))
 
+    def test_confirmed_action_tab_cannot_disappear_when_chrome_close_is_ignored(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext(), limit=1)
+        page = pool.open("clicked.confirmed")
+        page.close = lambda: None
+        with self.assertRaisesRegex(RuntimeError, "did not confirm"):
+            pool.record("clicked.confirmed", "ok", possible_click=True)
+        self.assertEqual(pool.overview(), [
+            {"username": "clicked.confirmed", "status": "tab_close_unconfirmed"}])
+        self.assertIsNone(pool.open("next.target"),
+                          "A confirmed saved action is not proof that the browser tab closed.")
+        pool.close_unacted_prefetches()
+        self.assertTrue(pool.has_open_tabs(),
+                        "Never treat this page as unacted prefetch and pop it.")
+        page.closed = True
+        self.assertFalse(pool.has_open_tabs())
+
+    def test_deferred_review_close_exception_keeps_review_tab_until_manual_close(self):
+        from profile_actions import ActionTabPool
+        pool = ActionTabPool(FakeTabContext(), limit=1)
+        page = pool.open("clicked.uncertain")
+        pool.record("clicked.uncertain", "review", possible_click=True)
+        def failed_close():
+            raise OSError("Chrome refused to release uncertain tab")
+        page.close = failed_close
+        with self.assertRaises(OSError):
+            pool.defer_persisted_pending("clicked.uncertain")
+        self.assertEqual(pool.overview(), [
+            {"username": "clicked.uncertain", "status": "tab_close_unconfirmed"}])
+        self.assertIsNone(pool.open("next.target"))
+        pool.close_unacted_prefetches()
+        self.assertTrue(pool.has_open_tabs())
+        page.closed = True
+        self.assertFalse(pool.has_open_tabs())
+
     def test_manual_owner_close_frees_slot_without_confirming_result(self):
         from profile_actions import ActionTabPool
         context = FakeTabContext()
