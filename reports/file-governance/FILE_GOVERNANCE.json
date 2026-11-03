@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "733ed1d3c887be1ba1967a3fdf5c3d54757c452ed5f8ef2d6b5391bbeec55a1f",
+  "inventory_fingerprint": "72b38c547015a6b7c45222f425929121880abd85cf38b6c2354122a20eb08214",
   "evidence_fingerprint": "0f6a6108ff78553c89636e94c3addd6bb1f9fa4fd12ab7a2306dd431f3e70ac7",
   "files": [
     {
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "9abb8d122646de8d5cea6ed0196f4cb8bde47edd"
+      "blob": "90b2a46081badd393976028b928ec94c8fdfdf3e"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -2178,7 +2178,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "5e8dad8e437471bbd5f6874a1ab9a0d36d3679f9"
+      "blob": "f3824494a272e339cc765c8fadc0d3d316a15c14"
     },
     {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
@@ -2654,7 +2654,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b138ce4e96336da3d3308d3279d056281a525559"
+      "blob": "42b07d840736e8c8840f579b7611d9968e5646bb"
     },
     {
       "path": "tools/profile_counts_audit.py",
