@@ -250,6 +250,31 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertEqual(robot._base().read_bytes(), before)
 
 
+
+    def test_unfollow_no_click_exception_is_reviewable_and_next_target_runs(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.task = "unfollow"
+            called = []
+            def action(page, username, task, expected, can_act=None,
+                       on_wait=None, preloaded=False, on_pre_click=None,
+                       use_reference_transport=False):
+                self.assertTrue(use_reference_transport)
+                called.append(username)
+                if username == "second.person":
+                    raise RuntimeError("Read-only lookup failed before durable click")
+                on_pre_click("relationship_control")
+                return "ok", "Unfollow confirmed"
+            self.run_offline(robot, action)
+            self.assertEqual(called, robot.targets)
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(saved["second.person"]["status"], "error")
+            self.assertNotIn("click_intent", saved["second.person"])
+            self.assertTrue(_saved_journal_blocks_action(saved, "second.person"))
+            self.assertEqual(saved["third.person"]["status"], "ok")
+            self.assertEqual(robot.status, "partial")
+
+
     def test_forty_profile_ten_tab_waves_continue_past_isolated_no_click_errors(self):
         """Errors at wave boundaries and the last profile never silently end a cohort."""
         with tempfile.TemporaryDirectory() as folder:
