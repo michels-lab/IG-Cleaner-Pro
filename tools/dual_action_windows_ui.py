@@ -151,7 +151,7 @@ function displayNextCompletion(){
   content.append(head);
   content.append(el('p','igc-daw-sub',
     'Cuenta '+done.account+' · '+done.task+' · '+done.state.toUpperCase()+
-    ' · '+done.processed+' revisados · '+done.pending+' pendientes · '+
+    ' · '+done.processed+' procesados (no necesariamente OK) · '+done.pending+' pendientes · '+
     done.issues+' requieren atención. No se aprobó ni repitió ningún clic.'));
   const list=el('div','igc-daw-review-list');list.setAttribute('aria-label',
     'Resultados originales de la tanda de esta cuenta');
@@ -504,7 +504,7 @@ async function statusUpdate(silent=false){
     const label=$('igcDawStatus'+i);
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
-       ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' revisados · '+
+       ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
        String(info.issues||0)+' pendientes de revisión'):'Sin estado para esta cuenta.';
     if(!info)continue;
     const state=String(info.state||'idle'),running=info.running===true;
