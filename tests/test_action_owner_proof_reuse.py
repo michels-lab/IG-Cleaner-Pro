@@ -53,9 +53,9 @@ class OwnerProofReuseTests(unittest.TestCase):
         context.pages = [sibling, *targets]
         actions._OWNER_PROFILE_PROBE.sibling_report = Mock()
         try:
-            with patch.object(actions, "challenge_detected", return_value=False), \\
+            with patch.object(actions, "challenge_detected", return_value=False), \
                  patch.object(actions, "signed_in_handle",
-                              side_effect=lambda page: ("my.profile" if page is sibling else None)), \\
+                              side_effect=lambda page: ("my.profile" if page is sibling else None)), \
                  patch.object(actions, "verify_selected_owner_profile") as navigation:
                 for target in targets:
                     self.assertTrue(actions._verified_action_owner(target, "my.profile"))
@@ -75,9 +75,9 @@ class OwnerProofReuseTests(unittest.TestCase):
         sibling.is_closed.return_value = False
         target = make_page(context)
         context.pages = [sibling, target]
-        with patch.object(actions, "challenge_detected", return_value=False), \\
+        with patch.object(actions, "challenge_detected", return_value=False), \
              patch.object(actions, "signed_in_handle",
-                          side_effect=lambda p: "other.account" if p is sibling else None), \\
+                          side_effect=lambda p: "other.account" if p is sibling else None), \
              patch.object(actions, "verify_selected_owner_profile") as navigation:
             self.assertFalse(actions._verified_action_owner(target, "my.profile"))
             navigation.assert_not_called()
@@ -97,9 +97,9 @@ class OwnerProofReuseTests(unittest.TestCase):
                 target = make_page(context)
                 context.pages = [sibling, target]
                 with patch.object(actions, "challenge_detected",
-                                  side_effect=lambda p: challenge if p is sibling else False), \\
+                                  side_effect=lambda p: challenge if p is sibling else False), \
                      patch.object(actions, "signed_in_handle",
-                                  side_effect=lambda p: "my.profile" if p is sibling else None), \\
+                                  side_effect=lambda p: "my.profile" if p is sibling else None), \
                      patch.object(actions, "verify_selected_owner_profile") as navigate:
                     self.assertFalse(actions._verified_action_owner(target, "my.profile"))
                     navigate.assert_not_called()
@@ -112,9 +112,9 @@ class OwnerProofReuseTests(unittest.TestCase):
         sibling.is_closed.return_value = False
         target = make_page(context)
         context.pages = [sibling, target]
-        with patch.object(actions, "challenge_detected", return_value=False), \\
+        with patch.object(actions, "challenge_detected", return_value=False), \
              patch.object(actions, "signed_in_handle",
-                          side_effect=lambda p: "my.profile" if p is sibling else None), \\
+                          side_effect=lambda p: "my.profile" if p is sibling else None), \
              patch.object(actions, "verify_selected_owner_profile") as navigate:
             self.assertFalse(actions._verified_action_owner(target, "my.profile"))
             navigate.assert_not_called()
@@ -129,9 +129,9 @@ class OwnerProofReuseTests(unittest.TestCase):
                 sibling.is_closed.return_value = closed
                 target = make_page(context)
                 context.pages = [sibling, target]
-                with patch.object(actions, "challenge_detected", return_value=False), \\
+                with patch.object(actions, "challenge_detected", return_value=False), \
                      patch.object(actions, "signed_in_handle",
-                                  side_effect=lambda p: "my.profile" if p is sibling else None), \\
+                                  side_effect=lambda p: "my.profile" if p is sibling else None), \
                      patch.object(actions, "verify_selected_owner_profile", side_effect=self.proof):
                     self.assertTrue(actions._verified_action_owner(target, "my.profile"))
                 self.assertEqual(context.new_page.call_count, 1)
