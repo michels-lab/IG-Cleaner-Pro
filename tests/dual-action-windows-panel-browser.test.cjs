@@ -58,7 +58,21 @@ const {chromium}=require('playwright');
    const original=window.fetch;
    window.fetch=async(url,opts)=>{
      const target=String(url);
+     if(target.includes('/api/actions/dual-action-workspaces/status?')){
+       const owner=window.IGC_INSTAGRAM_PROFILES.owner;
+       return {ok:true,json:async()=>({owner,lanes:[
+         {account:'ig_first_1234567',state:'running',running:true,task:'unfollow',
+           processed:8,pending:3,issues:2},
+         {account:'ig_second_123456',state:'paused',running:false,task:'cancel',
+           processed:4,pending:6,issues:1}
+       ]})};
+     }
+     if(target.endsWith('/api/actions/status')){
+       return {ok:true,json:async()=>({owner:'',account:'',task:'',status:'idle',
+         processed:0,pending:0,issue_count:0})};
+     }
      if(target.includes('/api/actions/history')){
+       if(window.__igcHistoryUnavailable)return {ok:false,json:async()=>({error:'offline fixture'})};
        const data=opts?.body?JSON.parse(opts.body):{};
        const now=new Date().toISOString();
        const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),
@@ -131,6 +145,9 @@ const {chromium}=require('playwright');
    assert([1,2].includes(Number(await page.locator('#igcActCount_h2').innerText())),
      '2h is a rolling window and may cross local midnight');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
+   await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 3.*Review: 2/);
+   assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
    assert.equal(await page.locator('#igcActMetric_warning').innerText(),'2');
    assert.equal(await page.locator('#igcActMetric_no_action').innerText(),'1');
@@ -139,16 +156,49 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),5);
    assert.match(await page.locator('#igcActHistory').innerText(),/OK confirmado/);
    assert.match(await page.locator('#igcActHistory').innerText(),/Review \/ advertencia/);
-   await page.locator('#igcActBreakdownPeriod').selectOption('h24');
+   // Action type and collapse filters must alter view only, never robot actions.
+   await page.locator('#igcActTask').selectOption('cancel');
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'0');
+   assert.equal(await page.locator('#igcActCount_h24').innerText(),'1');
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),2);
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
+   await page.locator('#igcActTask').selectOption('unfollow');
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),3);
+   await page.locator('#igcActTask').selectOption('all');
+   await page.locator('#igcActToggle').click();
+   assert.equal(await page.locator('#igcActToggle').getAttribute('aria-expanded'),'false');
+   assert.equal(await page.locator('#igcAutomationActivityLayout.igc-act-collapsed').count(),1);
+   await page.locator('#igcActToggle').click();
+   assert.equal(await page.locator('#igcActToggle').getAttribute('aria-expanded'),'true');
+      await page.locator('#igcActBreakdownPeriod').selectOption('h24');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.locator('#igcActAccount').selectOption('ig_second_123456');
    await page.waitForFunction(()=>
      document.querySelector('#igcActCount_h24')?.textContent==='1');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
+   await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
+   assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 6.*Review: 1/);
+   assert.match(await page.locator('#igcActBatchTitle').innerText(),/Cancel Pending.*detenido/);
    assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),1);
    assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   // Even with no saved history, current per-account progress still exists.
+   await page.evaluate(()=>window.__igcHistoryUnavailable=true);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActStatus')?.textContent
+     .includes('Sin historial verificable'));
+   assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+   await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent
+     .includes('Procesados: 8'));
+   assert.match(await page.locator('#igcActBatch').innerText(),
+     /Procesados: 8.*Pendientes: 3.*Review: 2/);
+   await page.evaluate(()=>window.__igcHistoryUnavailable=false);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='2');
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
   const linked=await page.evaluate(()=>window.__dawRequests);
