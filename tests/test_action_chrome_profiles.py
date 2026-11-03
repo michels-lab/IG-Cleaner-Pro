@@ -144,7 +144,7 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
                               session_for_scope=sessions.directory)
             chrome=root/"chrome.exe"
             chrome.write_text("fake executable")
-            with patch("profile_actions.shutil.which",return_value=str(chrome)), \\
+            with patch("profile_actions.shutil.which",return_value=str(chrome)), \
                  patch("profile_actions.subprocess.Popen") as launch:
                 for account in (A,B,A):
                     result=robot.open_profile({"owner":OWNER,"account":account,
@@ -183,10 +183,10 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
             with patch.dict(sys.modules,{
                  "playwright":types.ModuleType("playwright"),
                  "playwright.sync_api":types.SimpleNamespace(sync_playwright=lambda:manager)
-                }), patch("profile_actions.preserve_instagram_auth_page",return_value=True), \\
-                patch("profile_actions.challenge_detected",return_value=False), \\
+                }), patch("profile_actions.preserve_instagram_auth_page",return_value=True), \
+                patch("profile_actions.challenge_detected",return_value=False), \
                 patch("profile_actions._find_verified_owner_tab",
-                      return_value=(None,"realmichelduarte")), \\
+                      return_value=(None,"realmichelduarte")), \
                 patch("profile_actions.perform_visible_action",
                       side_effect=AssertionError("NO relationship click allowed")):
                 robot._run()
