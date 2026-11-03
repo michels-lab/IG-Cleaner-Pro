@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 398; classified: 394; readable documents: 102; above read cap: 1; findings: 9.
+Tracked: 400; classified: 396; readable documents: 103; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 398; classified: 394; readable documents: 102; above read cap: 1; findi
 | config | 70 |
 | database_migration | 5 |
 | database_schema | 1 |
-| document | 97 |
+| document | 98 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 54 |
-| test | 104 |
+| test | 105 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -37,7 +37,7 @@ Tracked: 398; classified: 394; readable documents: 102; above read cap: 1; findi
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 33 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-new-batch-browser.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID a47b25d00d3a4cd9)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 34 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-batch-completion-browser.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 8ee24f50abf091fe)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

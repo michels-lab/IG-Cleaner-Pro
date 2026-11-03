@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 398,
-  "classified_files_total": 394,
-  "docs_content_inspected": 102,
+  "tracked_files_total": 400,
+  "classified_files_total": 396,
+  "docs_content_inspected": 103,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 97,
+    "document": 98,
     "index": 5,
     "installer_metadata": 1,
     "source": 54,
-    "test": 104,
+    "test": 105,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "734ef5f40fb4faf83b4686913a182b12920f5e51644c5c605534ccfb0e349608",
-  "evidence_fingerprint": "e224fcbfd957e9fd38a3dfb1fefc24657454986e47b47035f4945f18539ffbe2",
+  "inventory_fingerprint": "733ed1d3c887be1ba1967a3fdf5c3d54757c452ed5f8ef2d6b5391bbeec55a1f",
+  "evidence_fingerprint": "0f6a6108ff78553c89636e94c3addd6bb1f9fa4fd12ab7a2306dd431f3e70ac7",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "925ec6686e7b5d306af0e9d2aec84d6024a153a2"
+      "blob": "9abb8d122646de8d5cea6ed0196f4cb8bde47edd"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1257,6 +1257,13 @@
       "blob": "77805ab433edd02100853781ca6f2c80b84889b2"
     },
     {
+      "path": "docs/GRANADA_DUAL_ACTION_BATCH_COMPLETION_REVIEW_2026-10-30.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "579565833eed201d1c186b652516a82e7afdb119"
+    },
+    {
       "path": "docs/GRANADA_DUAL_ACTION_CHROME_WORKSPACES_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1824,6 +1831,13 @@
       "blob": "4bbbb830aca135598df7a0a0f7038195a7883ead"
     },
     {
+      "path": "tests/dual-action-batch-completion-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "93c0f45869ee6d52083022b425f9d47a4045307e"
+    },
+    {
       "path": "tests/dual-action-new-batch-browser.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2206,7 +2220,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7c7843d2d23d9a4febf72a18bebbf7920f9af558"
+      "blob": "31fccffc28e0deecde3b33869fdf4fcef4a2e602"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2570,7 +2584,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "26ab3fa49eb4d381bf4e33b06f05500a7c7abf16"
+      "blob": "dacc472e82a198c28fc2cf3095de85475880b3b0"
     },
     {
       "path": "tools/dual_action_workspaces.py",
@@ -2864,11 +2878,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "a47b25d00d3a4cd9",
+      "id": "8ee24f50abf091fe",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "33 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-new-batch-browser.test.cjs",
+      "observation": "34 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/dual-action-batch-completion-browser.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
