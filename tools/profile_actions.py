@@ -183,7 +183,14 @@ class ActionTabPool:
 
     def _prune_manually_closed(self):
         for user, item in list(self.tabs.items()):
-            if item["page"].is_closed():
+            try:
+                closed = item["page"].is_closed()
+            except Exception:
+                # Browser transport can fail while a tab is still open. Do
+                # NOT release its slot or claim it was closed successfully.
+                item["status"] = "tab_state_unknown"
+                continue
+            if closed:
                 self.tabs.pop(user, None)
 
     def open(self, username):
@@ -241,10 +248,12 @@ class ActionTabPool:
         self.tabs.pop(username, None)
 
     def close_unacted_prefetches(self):
-        """Release staged no-click tabs after the worker exhausts its cohort.
+        """Release only demonstrably closed, unacted staged tabs.
 
-        Never close a page whose action result is ambiguous. Prefetch means
-        navigation only, not a relationship click or a completed review.
+        An interrupted Chrome close must NOT erase the still-open page from
+        our internal pool. Retain its slot, expose an explicit Review warning
+        and let the worker hold the session for human inspection. These tabs
+        have no relationship click: the original WAL/visit log is untouched.
         """
         no_action = {"queued", "prefetching", "prefetched",
                      "prefetch_pending", "loading_profile"}
@@ -254,9 +263,14 @@ class ActionTabPool:
             try:
                 if not item["page"].is_closed():
                     item["page"].close()
+                if item["page"].is_closed():
+                    self.tabs.pop(username, None)
+                else:
+                    # Some browser transports acknowledge close but leave a
+                    # tab open. Don't release a slot without confirmation.
+                    item["status"] = "prefetch_close_failed"
             except Exception:
-                pass
-            self.tabs.pop(username, None)
+                item["status"] = "prefetch_close_failed"
 
     def overview(self):
         self._prune_manually_closed()
@@ -3682,8 +3696,14 @@ class ActionRobot:
                         self.open_review_tabs = action_tabs.overview()
                         previous_reason = self.message
                         self.message = (
-                            "Unverified Instagram tabs remain open for manual review. "
-                            "Inspect them before selecting Pause; Pause closes Chrome. "
+                            ("Chrome could not confirm closure of an unacted prefetched "
+                             "profile tab. The saved batch was NOT marked complete; "
+                             "inspect or close that tab manually. "
+                             if any(t.get("status") in ("prefetch_close_failed",
+                                                      "tab_state_unknown")
+                                    for t in self.open_review_tabs) else
+                             "Unverified Instagram tabs remain open for manual review. "
+                             "Inspect them before selecting Pause; Pause closes Chrome. ") +
                             "No relationship click will be repeated." +
                             (" Cancel Pending was stopped because Instagram displayed "
                              "an unexpected Unfollow confirmation; its outcome is "
