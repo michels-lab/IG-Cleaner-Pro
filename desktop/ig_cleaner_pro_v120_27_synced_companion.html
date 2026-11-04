@@ -3842,7 +3842,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <button class="btn" onclick="exportPendingDecisionsCSV()">⬇ Export decisions</button>
 <button class="btn" onclick="exportPendingCrosscheckCSV()">⬇ Export comparison</button>
 </div>
-<div class="focuslab-mini-table"><table><thead><tr><th>Status</th><th>Reviewed</th><th>Decision</th><th>Review date</th><th>Username</th><th>Profile</th><th>Name</th><th>Requested on</th><th>Current cross-check</th><th>Risk</th><th>Reasons</th></tr></thead><tbody id="pendingTableBody"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Import pending_follow_requests.json to begin.</td></tr></tbody></table></div>
+<div class="focuslab-mini-table"><table><thead><tr><th>Status</th><th>Reviewed</th><th>Decision</th><th>Review date</th><th>Username</th><th>Profile</th><th>Name</th><th>Requested on</th><th>Current cross-check</th><th>Risk</th><th>Reasons</th></tr></thead><tbody id="pendingTableBody"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Import pending_follow_requests.json to begin.</td></tr></tbody></table></div><div id="pendingTablePager" class="focuslab-actions" role="status" aria-live="polite"></div>
 </div>
 </div><div class="maintenance-panel">
 <div class="title">🧽 Mantenimiento inteligente</div>
@@ -9156,10 +9156,48 @@ function pendingSnoozeUntil(row){return pendingSnoozeMap?.[row.username]||0}
 function isPendingSnoozed(row){const t=pendingSnoozeUntil(row);return t&&t>Date.now()}
 function clearExpiredPendingSnoozes(){let changed=false;Object.keys(pendingSnoozeMap||{}).forEach(k=>{if(pendingSnoozeMap[k]&&pendingSnoozeMap[k]<=Date.now()){delete pendingSnoozeMap[k];changed=true}});if(changed)savePendingSnoozeMap()}
 function pendingLabelMap(item){const m={};(item.label_values||[]).forEach(v=>{if(v&&typeof v==='object'){m[String(v.label||'').toLowerCase().trim()]=v.value||''}});return m}
-function extractPendingRequestsFromJSON(data,source){const out=[];function push(entry){if(!entry||typeof entry!=='object')return;const labels=pendingLabelMap(entry);const rawUsername=labels.username||entry.username||entry.user||entry.value||entry.name||'';const url=labels.url||entry.url||entry.href||'';const name=labels.name||entry.name||'';let username=cleanUsername(rawUsername);if(!username&&url)username=cleanUsername(url);if(!username)return;out.push({username,href:profileUrl(username,url),name:String(name||''),url:String(url||''),timestamp:parseTimestamp(entry.timestamp||entry.created_at||entry.date||0),source,fbid:entry.fbid||''})}function walk(node){if(!node)return;if(Array.isArray(node)){node.forEach(walk);return}if(typeof node!=='object')return;if(Array.isArray(node.label_values))push(node);Object.values(node).forEach(v=>{if(v&&(Array.isArray(v)||typeof v==='object'))walk(v)})}walk(data);return dedupePending(out)}
+function extractPendingRequestsFromJSON(data,source){
+  // Native Pending JSON may use label_values or string_list_data.
+  // Only accept verified username or Instagram-profile URL evidence.
+  const out=[];
+  function add(value,href,ts,name='',fbid=''){
+    const username=cleanUsername(value)||cleanUsername(href);
+    if(!username)return;
+    out.push({username,href:profileUrl(username,href||''),name:String(name||''),
+      url:String(href||''),timestamp:parseTimestamp(ts||0),source,fbid:fbid||''});
+  }
+  function walk(node){
+    if(!node)return;
+    if(Array.isArray(node)){node.forEach(walk);return}
+    if(typeof node!=='object')return;
+    const labels=pendingLabelMap(node);
+    if(Array.isArray(node.string_list_data)){
+      node.string_list_data.forEach(entry=>{
+        if(!entry||typeof entry!=='object')return;
+        add(entry.value||node.title||labels.username||node.username||'',
+          entry.href||labels.url||node.url||node.href||'',
+          entry.timestamp||node.timestamp||node.created_at||node.date||0,
+          labels.name||node.name||'',node.fbid||'');
+      });
+      if(node.string_list_data.length)return;
+    }
+    if(Array.isArray(node.label_values)){
+      add(labels.username||node.username||node.user||node.value||'',
+        labels.url||node.url||node.href||'',
+        node.timestamp||node.created_at||node.date||0,
+        labels.name||node.name||'',node.fbid||'');
+      return;
+    }
+    Object.values(node).forEach(v=>{
+      if(v&&(Array.isArray(v)||typeof v==='object'))walk(v)
+    });
+  }
+  walk(data);
+  return dedupePending(out);
+}
 function extractPendingRequestsFromRaw(text,source){let out=[];try{out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source))}catch{}const raw=decodeText(text);const re=/"label"\s*:\s*"Username"[\s\S]{0,120}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;while((m=re.exec(raw))!==null){const username=cleanUsername(m[1]);if(username)out.push({username,href:profileUrl(username,''),name:'',url:'',timestamp:0,source,fbid:''})}return dedupePending(out)}
 function dedupePending(list){const map=new Map();(list||[]).forEach(x=>{if(!x||!x.username)return;const old=map.get(x.username);if(!old||(x.timestamp||0)>(old.timestamp||0))map.set(x.username,x)});return [...map.values()].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)||a.username.localeCompare(b.username))}
-async function processPendingFiles(){const files=document.getElementById('pendingInput')?.files;if(!files||!files.length){msg('Sube primero el archivo pending_follow_requests.json.','w');return}let all=[];for(const file of Array.from(files)){const text=await readFile(file);all=all.concat(extractPendingRequestsFromRaw(text,file.name))}pendingRequestsRaw=dedupePending(all);savePendingRequests();renderPendingRequests();logAction('import',`Pending requests cargadas: ${pendingRequestsRaw.length}`,{count:pendingRequestsRaw.length,source:'pending requests'});msg(`Pending requests procesadas: ${pendingRequestsRaw.length}.`,'s')}
+async function processPendingFiles(){const files=document.getElementById('pendingInput')?.files;if(!files||!files.length){msg('Sube primero el archivo pending_follow_requests.json.','w');return}let all=[];for(const file of Array.from(files)){const text=await readFile(file);all=all.concat(extractPendingRequestsFromRaw(text,file.name))}pendingRequestsRaw=dedupePending(all);pendingTableLimit=300;savePendingRequests();renderPendingRequests();logAction('import',`Pending requests cargadas: ${pendingRequestsRaw.length}`,{count:pendingRequestsRaw.length,source:'pending requests'});msg(`Pending requests procesadas: ${pendingRequestsRaw.length}.`,'s')}
 function pendingAgeDays(row){if(!row.timestamp)return 0;return Math.max(0,Math.round((Date.now()/1000-row.timestamp)/86400))}
 function analyzePendingRow(row){const medium=getMediumThreshold(),high=getHighThreshold();const base=calcRisk(row.username,{mode:'pending',followsBack:false,iFollow:true,hasFwDate:!!row.timestamp,hasFrDate:false,medium,high});let score=base.score,reasons=[...base.reasons],codes=[...base.codes];const age=pendingAgeDays(row);function add(n,label,code){score+=n;reasons.push(label);codes.push(code)}if(age>=180)add(28,'solicitud muy antigua +180 días','old_pending');else if(age>=90)add(20,'solicitud antigua +90 días','old_pending');else if(age>=45)add(10,'solicitud pendiente +45 días','old_pending');if(!row.name)add(10,'sin nombre visible en export','missing_name');if(row.url&&!/instagram\.com/i.test(row.url))add(10,'URL externa en perfil/export','external_url');score=Math.max(0,Math.min(100,Math.round(score)));let level='bajo';if(score>=high)level='alto';else if(score>=medium)level='medio';return{score,level,reasons:[...new Set(reasons)],codes:[...new Set(codes)]}}
 function pendingRows(){return(pendingRequestsRaw||[]).map(r=>{const risk=analyzePendingRow(r);return{...r,riskScore:risk.score,riskLevel:risk.level,riskReasons:risk.reasons,riskCodes:risk.codes,opened:pendingOpenedSet.has(r.username),reviewed:isPendingReviewed(r),decision:pendingDecision(r),reviewDate:pendingReviewDate(r.username),reviewLabel:pendingDecisionLabel(pendingDecision(r.username)),snoozed:isPendingSnoozed(r)}}).sort((a,b)=>Number(a.opened)-Number(b.opened)||b.riskScore-a.riskScore||(b.timestamp||0)-(a.timestamp||0))}
@@ -9288,13 +9326,16 @@ function countTodayMsList(list){
 
 
 function isPendingOpenableForFocus(row){
-  return !!row && !row.reviewed && !row.snoozed && !isInActiveFocus(row,'pending');
+  // Keep opened but unreviewed accounts visible; exclude from new Focus.
+  return !!row && !row.opened && !row.reviewed && !row.snoozed &&
+    !isInActiveFocus(row,'pending');
 }
 function pendingNoOpenReason(row){
   if(!row)return 'sin datos';
   if(isInActiveFocus(row,'pending'))return 'tanda activa';
   if(row.reviewed)return 'revisado';
   if(row.snoozed)return 'pausado';
+  if(row.opened)return 'ya abierto; revisar o reiniciar';
   return '';
 }
 function isMutualOpenableForFocus(row){
@@ -10150,9 +10191,14 @@ function pendingSmartBatch(n){
   renderPendingRequests();
 }
 
-function renderPendingRequests(){renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>Unreviewed</span></div><div class="focuslab-kpi"><b>${shown}</b><span>mostrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;if(!rows.length){body.innerHTML=allRows.length
+let pendingTableLimit=300;
+function pendingShowMore(){pendingTableLimit+=300;renderPendingRequests()}
+function renderPendingRequests(){renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>Unreviewed</span></div><div class="focuslab-kpi"><b>${Math.min(shown,pendingTableLimit)}</b><span>visibles de ${shown} filtrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;const pager=document.getElementById('pendingTablePager');if(pager){const visible=Math.min(rows.length,pendingTableLimit);pager.innerHTML=rows.length>visible
+  ? '<span>'+visible+' de '+rows.length+' solicitudes filtradas visibles</span> <button class="btn" onclick="pendingShowMore()">Mostrar siguientes '+Math.min(300,rows.length-visible)+'</button>'
+  : (rows.length?'<span>'+visible+' de '+rows.length+' solicitudes filtradas visibles</span>':'');
+}if(!rows.length){body.innerHTML=allRows.length
   ? `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Hay ${allRows.length} Pending cargados, pero ninguno coincide con los filtros actuales. Cambia la vista a “Todos”.</td></tr>`
-  : '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay Pending cargados. Importa el ZIP completo de Instagram o usa la carga manual.</td></tr>';return}body.innerHTML=rows.slice(0,300).map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const blockReason=pendingNoOpenReason(r);
+  : '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay Pending cargados. Importa el ZIP completo de Instagram o usa la carga manual.</td></tr>';return}body.innerHTML=rows.slice(0,pendingTableLimit).map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const blockReason=pendingNoOpenReason(r);
     const status=r.reviewed?'revisado':(r.snoozed?'pausado':(isInActiveFocus(r,'pending')?'abierto sin confirmar':(r.opened?'abierto':'sin abrir')));const revBadge=r.reviewed?'<span class="badge bgreen">Sí</span>':'<span class="badge bblue">No</span>';const decisionBadge=r.reviewed?`<span class="badge bpurple">${esc(r.reviewLabel)}</span>`:'<span class="muted">—</span>';const revDate=r.reviewDate?new Date(r.reviewDate).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}):'—';return`<tr class="${r.reviewed?'done':''}"><td><span class="focuslab-status ${isInActiveFocus(r,'pending')?'status-unconfirmed':(r.reviewed||r.snoozed||r.opened?'opened':'pending')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td><td>${revBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(revDate)}</span></td><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td>${esc(r.name||'—')}</td><td><span class="date">${esc(formatDateFromTs(r.timestamp)||'sin fecha')}</span></td><td>${pendingCrossBadge(r)}</td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td></tr>`}).join('')}
 function pendingOldestFirstSort(a,b){
   const ta=a.timestamp||0, tb=b.timestamp||0;
@@ -10168,7 +10214,7 @@ function followerOldestFirstSort(a,b){
   if(!ta && tb)return 1;
   return b.riskScore-a.riskScore || a.username.localeCompare(b.username);
 }
-function pendingCandidateRows(){return pendingRows().filter(r=>!r.reviewed&&!r.snoozed&&!isInActiveFocus(r,'pending')).sort(pendingOldestFirstSort)}
+function pendingCandidateRows(){return pendingRows().filter(isPendingOpenableForFocus).sort(pendingOldestFirstSort)}
 function openFocusRows(rows,label,type='focus',popupKind=''){
   if(!rows.length){msg('No hay perfiles para abrir en este foco.','w');return false}
   if(popupKind)showExtraFocusModal(popupKind,rows,label);
@@ -10188,6 +10234,7 @@ function focusBatchFill(primaryRows, fallbackRows, n, kind){
       if(!r || !r.username)return;
       if(seen.has(r.username))return;
       if(activeBatchRowResolved(r,kind))return;
+      if(kind==='pending'&&!isPendingOpenableForFocus(r))return;
       seen.add(r.username);
       if(!target || out.length<target)out.push(r);
     });
@@ -10198,9 +10245,7 @@ function focusBatchFill(primaryRows, fallbackRows, n, kind){
 }
 
 function pendingAnyFocusCandidates(){
-  return pendingRows()
-    .filter(r=>!r.reviewed&&!r.snoozed&&!isInActiveFocus(r,'pending'))
-    .sort(pendingOldestFirstSort);
+  return pendingRows().filter(isPendingOpenableForFocus).sort(pendingOldestFirstSort);
 }
 
 function followersMutualAnyFocusCandidates(){
@@ -13105,7 +13150,16 @@ async function parseZipPending(items,zipName=''){
     all=all.concat(rows);
     try{diagData.push(window.igcDiagEntry(item.file,'pending',item.payload,rows,''))}catch{}
   }
+  // Guard historical Pending against a recognized nonempty ZIP that yielded
+  // no identifiable users. Never claim zero while silently erasing history.
+  const expectedRows=(items||[]).reduce((n,item)=>{
+    const data=item.payload?.data;
+    const list=data&&typeof data==='object'?data.relationships_follow_requests_sent:null;
+    return n+(Array.isArray(list)?list.length:0);
+  },0);
+  if(expectedRows>0&&!all.length)throw new Error('El ZIP contiene '+expectedRows+' solicitudes enviadas, pero no identifiqué sus usuarios. Se conservaron los Pending anteriores.');
   pendingRequestsRaw=dedupePending(all);
+  pendingTableLimit=300;
   savePendingRequests();
 
   // ZIP is a first-class Pending source. The manual file input cannot legally be populated
