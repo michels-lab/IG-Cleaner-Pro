@@ -11725,6 +11725,14 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   if(!opts?.skipQuality && !igcConfirmBatchQuality(rows,kind,label)){msg('Tanda cancelada antes de abrir perfiles.','i');return false;}
 
   setActiveFocusBatch(kind,rows,label);
+  // Pending 'opened' means an owner-approved OPEN ATTEMPT, not a review or
+  // confirmed cancellation. Persist before Chrome pops up any target tab so
+  // an app reload cannot silently recycle the same list. The explicit
+  // 'Could not review' / Reset opened controls can release these rows.
+  if(kind==='pending'){
+    rows.forEach(row=>pendingOpenedSet.add(row.username));
+    savePendingOpened();
+  }
 
   // Los focos SIEMPRE abren perfiles. No son selección.
   // Browser popup policy can block a second/third 20–40-tab burst. We cannot
