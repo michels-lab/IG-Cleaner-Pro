@@ -80,7 +80,7 @@ const sessionStart=Date.now(); // This native app page session; reset on reload.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
  ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
  ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
-let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='',batchSequence=0;
+let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='',lastActive='',batchSequence=0;
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
  if(txt!==undefined)x.textContent=String(txt);return x;
@@ -92,7 +92,7 @@ function auth(){
 }
 function context(){
  const p=window.IGC_INSTAGRAM_PROFILES;
- if(!p||!OWNER.test(p.owner||''))return {owner:'',accounts:[]};
+ if(!p||!OWNER.test(p.owner||''))return {owner:'',accounts:[],active:''};
  let arr=Array.isArray(p.accounts)?p.accounts:[];
  if(!arr.length){
    try{arr=JSON.parse(localStorage.getItem('igc_multi_profile_registry_cache_'+p.owner)||'[]')}
@@ -106,7 +106,8 @@ function context(){
    if(!ACCOUNT.test(account||'')||!HANDLE.test(handle||'')||seen.has(account))continue;
    seen.add(account);accounts.push({account,handle:handle.toLowerCase()});
  }
- return {owner:p.owner,accounts};
+ const active=accounts.some(x=>x.account===p.active)?p.active:'';
+ return {owner:p.owner,accounts,active};
 }
 function dateValue(value){
  if(typeof value!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(value))return NaN;
@@ -290,10 +291,9 @@ function render(records){
  }
 }
 async function refresh(){
- if(loading){refreshAgain=true;return;}
  const ctx=context(),selector=$('igcActAccount');
  if(!selector)return;
- if(!ctx.owner){latest=[];owner='';lastKey='';dataReady=false;clearValues();
+ if(!ctx.owner){latest=[];owner='';lastKey='';lastActive='';dataReady=false;clearValues();
    selector.replaceChildren();setStatus('Inicia sesión para consultar estadísticas guardadas.');return}
  const signature=ctx.owner+'|'+ctx.accounts.map(a=>a.account+':'+a.handle).join('|');
  if(signature!==lastKey){
@@ -302,12 +302,20 @@ async function refresh(){
    for(const account of ctx.accounts){
      const opt=node('option',null,'@'+account.handle);opt.value=account.account;selector.append(opt);
    }
-   if(ctx.accounts.some(x=>x.account===selected))selector.value=selected;
-   else if(ctx.accounts.some(x=>x.account===window.IGC_INSTAGRAM_PROFILES.active))
-     selector.value=window.IGC_INSTAGRAM_PROFILES.active;
-   owner=ctx.owner;registry=ctx.accounts;lastKey=signature;
-   latest=[];dataReady=false;clearValues()
+   // Native stats default to the workspace currently pinned to THIS window.
+   // A manual stats-only comparison is preserved until the app itself switches.
+   if(ctx.active)selector.value=ctx.active;
+   else if(ctx.accounts.some(x=>x.account===selected))selector.value=selected;
+   owner=ctx.owner;registry=ctx.accounts;lastKey=signature;lastActive=ctx.active;
+   latest=[];dataReady=false;clearValues();
+ }else if(ctx.active!==lastActive){
+   // A real Instagram workspace switch invalidates the old account's numbers,
+   // even if an earlier network request is still outstanding.
+   if(ctx.active)selector.value=ctx.active;
+   lastActive=ctx.active;
+   latest=[];dataReady=false;clearValues();
  }
+ if(loading){refreshAgain=true;return;}
  if(!registry.length||!ACCOUNT.test(selector.value)){
    dataReady=false;clearValues();setStatus('No hay cuentas registradas para consultar.');return;
  }
@@ -317,20 +325,23 @@ async function refresh(){
  try{
    const data=await Promise.all(['unfollow','cancel'].map(task=>readHistory(account,task)));
    // Reject stale responses after an account selection or login switch.
-   if(owner!==ctx.owner||selector.value!==account||context().owner!==ctx.owner)return;
+   if(owner!==ctx.owner||selector.value!==account||
+      context().owner!==ctx.owner||context().active!==ctx.active)return;
    latest=data.flat();dataReady=true;render(latest);
    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'hora local';
    setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
      ' · datos del historial local verificado. No incluye lecturas sin clic.');
  }catch(e){
    // Do not erase another account's metrics after a late failed request.
-   if(owner===ctx.owner&&selector.value===account&&context().owner===ctx.owner){
+   if(owner===ctx.owner&&selector.value===account&&
+      context().owner===ctx.owner&&context().active===ctx.active){
      latest=[];dataReady=false;clearJournalValues();
      setStatus('Sin historial verificable: '+String(e.message||e).slice(0,120));
    }
  }finally{
    // Live batch progress remains available even when history is missing.
-   if(owner===ctx.owner&&selector.value===account&&context().owner===ctx.owner){
+   if(owner===ctx.owner&&selector.value===account&&
+      context().owner===ctx.owner&&context().active===ctx.active){
      refreshBatch(account,ctx.owner);
    }
    loading=false;if(button)button.disabled=false;
@@ -421,6 +432,14 @@ function setup(){
    const panel=$('igcAutomationActivityPanel');
    if(panel&&panel.getClientRects().length)refresh();
  },15000);
+ // Detect a changed pinned account promptly without polling the robot API.
+ // Read-only DOM state check; journal requests occur only on a real change.
+ window.setInterval(()=>{
+   const panel=$('igcAutomationActivityPanel');
+   if(!panel)return;
+   const ctx=context();
+   if(ctx.owner!==owner||ctx.active!==lastActive)refresh();
+ },1000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});
 else setup();

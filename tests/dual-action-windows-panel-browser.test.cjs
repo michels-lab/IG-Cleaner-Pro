@@ -186,6 +186,21 @@ const {chromium}=require('playwright');
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   // Switching the *app's* pinned Instagram workspace must immediately
+   // rebind Automations statistics, unlike the read-only stats dropdown.
+   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_second_123456'});
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActAccount')?.value==='ig_second_123456',
+     null,{timeout:5000});
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
+   assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
+   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_first_1234567'});
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActAccount')?.value==='ig_first_1234567',
+     null,{timeout:5000});
+   await page.waitForFunction(()=>
+     document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    // Even with no saved history, current per-account progress still exists.
    await page.evaluate(()=>window.__igcHistoryUnavailable=true);
    await page.locator('#igcActRefresh').click();
