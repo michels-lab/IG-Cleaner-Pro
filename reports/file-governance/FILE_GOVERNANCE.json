@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "3b5a38de27e7b0dad48d0a790d4ebe323535a4d71b518500a0416b756c609ba4",
+  "inventory_fingerprint": "64f7f8cec368fb8aa7e8ee95856523024e9cd0757571c999273847167db20d2c",
   "evidence_fingerprint": "6e840493f7e04cd73005740ee47b521ef39c447a43142ca879e3bf0725319a29",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "13bad04c6fad3929249d47e5d31dad3f386fe226"
+      "blob": "2adfd5acb4c2da4e5b9b0922f88f605e2db56f74"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2017,7 +2017,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7fe28474d83c87b68ace97f48847b7414530d44e"
+      "blob": "483f9f64c9bf5e1c8fe857cb7a822e22a809944e"
     },
     {
       "path": "tests/premium-visual-contract.py",
