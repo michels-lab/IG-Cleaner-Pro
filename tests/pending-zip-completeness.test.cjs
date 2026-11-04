@@ -26,7 +26,8 @@ const ctx={console,URL,Date,Math,JSON,Map,Set,Array,Object,String,Number,
 ctx.window=ctx;
 ctx.decodeText=v=>String(v||"");
 ctx.pendingRows=()=>ctx.pendingRequestsRaw.map(x=>({...x,reviewed:!!x.reviewed,
- opened:!!x.opened,snoozed:!!x.snoozed,riskLevel:"bajo",riskScore:0,riskReasons:[]}));
+ opened:!!x.opened||ctx.pendingOpenedSet.has(x.username),
+ snoozed:!!x.snoozed,riskLevel:"bajo",riskScore:0,riskReasons:[]}));
 ctx.pendingFilteredRows=()=>ctx.pendingRows();
 ctx.igcDiagEntry=()=>({type:"pending"});
 vm.createContext(ctx);
@@ -38,7 +39,8 @@ vm.runInContext(
  section("function pendingCandidateRows(){","function openFocusRows(rows,label")+
  section("function focusBatchFill(primaryRows, fallbackRows, n, kind){","function followersMutualAnyFocusCandidates(){")+
  section("let pendingTableLimit=300;","function pendingOldestFirstSort(a,b){")+
- section("async function parseZipPending(items,zipName=''){","async function parseZipExtras(groups){"),ctx,{timeout:4000});
+ section("async function parseZipPending(items,zipName=''){","async function parseZipExtras(groups){")+
+ section("function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){","</script>"),ctx,{timeout:4000});
 
 // Official fixture is string_list_data, NOT label_values.
 const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,
@@ -119,6 +121,25 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  assert.equal(fallback.length,20,"Existing untouched requests refill Focus 20");
  assert(!fallback.some(x=>x.opened||x.reviewed||x.snoozed||x.username==="request0003"),
    "Fallback never reintroduces opened, reviewed or active Pending profiles");
+
+ // Opening a Pending Focus saves an open ATTEMPT before Chrome without
+ // inventing a completed review, cancellation or window.open success.
+ const beforeReview=Object.keys(ctx.pendingReviewedMeta).length;
+ const selected=eligible.slice(0,2).map(x=>x.username);
+ const recorded=[];
+ ctx.igcConfirmBatchQuality=()=>true;
+ ctx.setActiveFocusBatch=(kind,rows)=>{ctx.activeFocusBatch={kind,rows}};
+ ctx.savePendingOpened=()=>recorded.push([...ctx.pendingOpenedSet]);
+ ctx.showSafeFocusPopup=()=>{};
+ ctx.forceLiveRefresh=()=>{};
+ ctx.open=()=>null; // Chrome blocked popup, no confirmed browser opening.
+ assert.equal(ctx.openConfirmedFocusRows(eligible.slice(0,2),"Pending · Foco 2","pending",2,{exact:true}),true);
+ assert(selected.every(u=>ctx.pendingOpenedSet.has(u)));
+ assert.equal(Object.keys(ctx.pendingReviewedMeta).length,beforeReview,
+   "Opening a tab must NEVER invent a reviewed or cancelled request");
+ assert.equal(recorded.length,1,"Open attempts must persist even when Chrome blocks popups");
+ assert(selected.every(u=>!ctx.pendingCandidateRows().some(r=>r.username===u)),
+   "A blocked popup must not recycle a previously attempted Pending profile");
 
  // All rows are stored. Display starts at 300 and gives access to 301..725.
  ctx.pendingRequestsRaw.forEach(x=>{x.opened=false;x.reviewed=false;x.snoozed=false});
