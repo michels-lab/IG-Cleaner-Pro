@@ -13168,6 +13168,24 @@ function renderZipSummary(groups,profileCounts={},ignored=0){
   box.innerHTML=cards.join('');
 }
 async function parseZipPending(items,zipName=''){
+  const sources=Array.isArray(items)?items:[];
+  const label=q('pendingFilesLabel');
+  // A partial Instagram export without a Pending file is NOT a confirmed
+  // empty Pending list. Retain the previous imported snapshot and say so.
+  if(!sources.length){
+    if(label){
+      label.textContent='Este ZIP no incluye solicitudes enviadas · '+
+        (pendingRequestsRaw.length?pendingRequestsRaw.length+' Pending anteriores conservados':'sin lista Pending anterior');
+      label.dataset.source='previous';
+      label.title='El ZIP importado no contiene pending_follow_requests; no se modificó la lista guardada.';
+    }
+    renderPendingRequests();
+    return 0;
+  }
+  // Invalid files must never replace an existing saved snapshot with zero.
+  const invalid=sources.find(item=>['invalid-json','invalid-html','unknown'].includes(item.payload?.format));
+  if(invalid)throw new Error('No pude leer el archivo de Pending '+
+    String(invalid.entry?.name||'')+'. Se conservaron los Pending anteriores.');
   let all=[];
   for(const item of items||[]){
     let rows=[];
@@ -13192,18 +13210,23 @@ async function parseZipPending(items,zipName=''){
     return n+(Array.isArray(list)?list.length:0);
   },0);
   if(expectedRows>0&&!all.length)throw new Error('El ZIP contiene '+expectedRows+' solicitudes enviadas, pero no identifiqué sus usuarios. Se conservaron los Pending anteriores.');
+  // Do not interpret an unknown unparseable layout as an intentionally
+  // empty list. A valid empty native JSON array is explicit evidence.
+  const explicitEmpty=sources.every(item=>item.payload?.format==='json' &&
+    Array.isArray(item.payload?.data?.relationships_follow_requests_sent) &&
+    item.payload.data.relationships_follow_requests_sent.length===0);
+  if(!all.length&&!explicitEmpty)throw new Error('El archivo de Pending no contiene usuarios legibles ni una lista vacía confirmada. Se conservaron los Pending anteriores.');
   pendingRequestsRaw=dedupePending(all);
   pendingTableLimit=300;
   savePendingRequests();
 
   // ZIP is a first-class Pending source. The manual file input cannot legally be populated
   // by script, so synchronize the visible source/status instead of leaving “Sin archivo”.
-  const label=q('pendingFilesLabel');
   if(label){
-    const names=(items||[]).map(x=>basename(x.entry?.name||x.file?.name||'')).filter(Boolean);
+    const names=sources.map(x=>basename(x.entry?.name||x.file?.name||'')).filter(Boolean);
     label.textContent=pendingRequestsRaw.length
-      ? `Cargado desde ZIP · ${pendingRequestsRaw.length} solicitudes${names.length?` · ${names.join(', ')}`:''}`
-      : 'ZIP procesado · sin solicitudes Pending';
+      ? `Cargado desde ZIP · ${pendingRequestsRaw.length} usuarios únicos${expectedRows?` de ${expectedRows} registros fuente`:''}${names.length?` · ${names.join(', ')}`:''}`
+      : 'ZIP contiene una lista Pending explícitamente vacía · 0 solicitudes';
     label.dataset.source='zip';
     if(zipName)label.title=`Fuente: ${zipName}`;
   }
