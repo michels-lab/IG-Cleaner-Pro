@@ -66,12 +66,12 @@ const {chromium}=require('playwright');
            processed:8,pending:3,issues:2,total:13,successful:0,
            already_not_following:2,already_not_requested:1,batch_size:10,
            batch_id:'batch-owner-A',message:'Acción pendiente de verificación',
-           owner_profile_visits:3,owner_sibling_proofs:2},
+           current_profile:'active.pending',owner_profile_visits:3,owner_sibling_proofs:2},
          {account:'ig_second_123456',state:'paused',running:false,task:'cancel',
            processed:4,pending:6,issues:1,total:11,successful:3,
            already_not_following:0,already_not_requested:2,batch_size:10,
            batch_id:'batch-owner-B',message:'Pausado por usuario',
-           owner_profile_visits:1,owner_sibling_proofs:5}
+           current_profile:'paused.target',owner_profile_visits:1,owner_sibling_proofs:5}
        ]})};
      }
      if(target.endsWith('/api/actions/status')){
@@ -168,6 +168,8 @@ const {chromium}=require('playwright');
    assert.match(await page.locator('#igcActBatch').innerText(),/Ya no seguías \(sin clic\): 2/);
    assert.match(await page.locator('#igcActBatch').innerText(),/Sin solicitud activa \(sin clic\): 1/);
    assert.match(await page.locator('#igcActBatch').innerText(),/Diagnóstico: Acción pendiente de verificación/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Perfil actual: @active.pending/);
+   assert.doesNotMatch(await page.locator('#igcActBatch').innerText(),/paused.target/);
    assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 3/);
    assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 2/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
@@ -203,6 +205,9 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 6.*Review: 1/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Diagnóstico: Pausado por usuario/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Último perfil: @paused.target/);
+   assert.doesNotMatch(await page.locator('#igcActBatch').innerText(),/active.pending/);
    assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 1/);
    assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 5/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Cancel Pending.*detenido/);
