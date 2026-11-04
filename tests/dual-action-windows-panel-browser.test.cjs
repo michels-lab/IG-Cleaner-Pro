@@ -334,6 +334,13 @@ const {chromium}=require('playwright');
   assert.match(await restored.locator('#igcDawStatus1').innerText(),/Robot detenido/);
   assert(restoredCalls.includes('GET')&&restoredCalls.every(x=>x==='GET'||x==='OPTIONS'),
     'No new action, review approval, Chrome launch or account mutation on rehydrate');
+  // A login change in the application must promptly clear previous-owner
+  // robot controls, rather than leaving actionable accounts on screen.
+  await restored.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.owner='u_other_42'});
+  await restored.waitForFunction(()=>
+    !document.querySelector('#igcDawGrid')?.textContent?.includes('@alpha.one'),
+    null,{timeout:11000});
+  assert.doesNotMatch(await restoredPanel.innerText(),/@alpha\.one|@beta\.two/);
   await restored.close();
   await context.close();
   console.log('PASS: native Windows renders dual action cards; exact owner/session, Pending/Review, no parallel mutation, token and Chrome isolation UI');
