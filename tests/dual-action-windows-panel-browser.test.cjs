@@ -63,9 +63,15 @@ const {chromium}=require('playwright');
        const owner=window.IGC_INSTAGRAM_PROFILES.owner;
        return {ok:true,json:async()=>({owner,lanes:[
          {account:'ig_first_1234567',state:'running',running:true,task:'unfollow',
-           processed:8,pending:3,issues:2,owner_profile_visits:3,owner_sibling_proofs:2},
+           processed:8,pending:3,issues:2,total:13,successful:0,
+           already_not_following:2,already_not_requested:1,batch_size:10,
+           batch_id:'batch-owner-A',message:'Acción pendiente de verificación',
+           owner_profile_visits:3,owner_sibling_proofs:2},
          {account:'ig_second_123456',state:'paused',running:false,task:'cancel',
-           processed:4,pending:6,issues:1,owner_profile_visits:1,owner_sibling_proofs:5}
+           processed:4,pending:6,issues:1,total:11,successful:3,
+           already_not_following:0,already_not_requested:2,batch_size:10,
+           batch_id:'batch-owner-B',message:'Pausado por usuario',
+           owner_profile_visits:1,owner_sibling_proofs:5}
        ]})};
      }
      if(target.endsWith('/api/actions/status')){
@@ -155,6 +161,13 @@ const {chromium}=require('playwright');
    await page.locator('#igcActBreakdownPeriod').selectOption('today');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 3.*Review: 2/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Tamaño real de tanda: 13/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Tamaño configurado: 10/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Lote: batch-owner-A/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Acciones confirmadas: 0/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Ya no seguías \(sin clic\): 2/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Sin solicitud activa \(sin clic\): 1/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Diagnóstico: Acción pendiente de verificación/);
    assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 3/);
    assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 2/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
