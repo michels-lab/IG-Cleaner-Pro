@@ -572,10 +572,17 @@ async function statusUpdate(silent=false,knownSnapshot=null){
   for(let i=0;i<2;i++){
     const scope=linked[i],info=(x.lanes||[]).find(y=>y.account===scope.account);
     const label=$('igcDawStatus'+i);
+    const ownerVisits=info&&Number.isSafeInteger(info.owner_profile_visits)&&
+      info.owner_profile_visits>=0?info.owner_profile_visits:null;
+    const siblingProofs=info&&Number.isSafeInteger(info.owner_sibling_proofs)&&
+      info.owner_sibling_proofs>=0?info.owner_sibling_proofs:null;
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
-       String(info.issues||0)+' pendientes de revisión'):'Sin estado para esta cuenta.';
+       String(info.issues||0)+' pendientes de revisión'+
+       (ownerVisits!==null?' · visitas a mi perfil: '+ownerVisits:'')+
+       (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')):
+      'Sin estado para esta cuenta.';
     if(!info)continue;
     const state=String(info.state||'idle'),running=info.running===true;
     const prev=laneSnapshots[scope.account],terminal=['complete','partial','review',

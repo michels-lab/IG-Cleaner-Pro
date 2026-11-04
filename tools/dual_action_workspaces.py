@@ -294,6 +294,10 @@ class DualActionWorkspaces:
                 "current_profile": state["current_profile"],
                 "processed": state["processed"], "pending": state["pending"],
                 "issues": state["issue_count"],
+                # Read-only, redacted diagnostics: distinct from target visits
+                # and NEVER counted as Instagram relationship mutations.
+                "owner_profile_visits": state["owner_profile_visits"],
+                "owner_sibling_proofs": state["owner_sibling_proofs"],
                 "review_batch_open": state["review_batch"] is not None,
             })
         return {

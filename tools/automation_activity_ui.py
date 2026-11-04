@@ -191,12 +191,16 @@ async function readBatchStatus(account,expectedOwner){
     Array.isArray(dual.value.lanes)){
   const lane=dual.value.lanes.find(x=>x&&x.account===account);
   if(lane)return {running:lane.running,task:lane.task,state:lane.state,
-    processed:lane.processed,pending:lane.pending,issues:lane.issues,scope:'dos cuentas'};
+    processed:lane.processed,pending:lane.pending,issues:lane.issues,
+    ownerProfileVisits:lane.owner_profile_visits,
+    ownerSiblingProofs:lane.owner_sibling_proofs,scope:'dos cuentas'};
  }
  if(single.status==='fulfilled'&&single.value.owner===expectedOwner&&single.value.account===account){
   const x=single.value;
   return {running:x.running,task:x.task,state:x.status,processed:x.processed,
-    pending:x.pending,issues:x.issue_count,scope:'robot principal'};
+    pending:x.pending,issues:x.issue_count,
+    ownerProfileVisits:x.owner_profile_visits,
+    ownerSiblingProofs:x.owner_sibling_proofs,scope:'robot principal'};
  }
  return null;
 }
@@ -212,8 +216,14 @@ function showBatch(state){
  title.textContent=(state.task==='unfollow'?'Unfollow':'Cancel Pending')+
    ' · '+String(state.state||'sin estado').slice(0,32)+
    (state.running?' · en ejecución':' · detenido');
+ const ownerVisits=Number.isSafeInteger(state.ownerProfileVisits)&&state.ownerProfileVisits>=0?
+   state.ownerProfileVisits:null;
+ const siblingProofs=Number.isSafeInteger(state.ownerSiblingProofs)&&state.ownerSiblingProofs>=0?
+   state.ownerSiblingProofs:null;
  e.textContent='Procesados: '+n(state.processed)+' · Pendientes: '+n(state.pending)+
    ' · Review: '+n(state.issues)+' · '+state.scope+
+   (ownerVisits===null?'':' · visitas a mi perfil: '+ownerVisits)+
+   (siblingProofs===null?'':' · identidad desde otra pestaña: '+siblingProofs)+
    '. Procesados NO significa unfollows confirmados.';
 }
 function refreshBatch(account,expectedOwner){
