@@ -51,7 +51,7 @@ const {chromium}=require('playwright');
   const panel=page.locator('#igcDualActionWorkspacePanel');
   await panel.waitFor({state:'visible',timeout:12000});
   assert.equal(await panel.locator('.igc-daw-card').count(),2);
-  assert.match(await panel.innerText(),/sin acciones simultáneas/i);
+  assert.match(await panel.innerText(),/serial por defecto/i);
   await page.locator('#igcDualSecondary').selectOption('ig_second_123456');
   await page.evaluate(()=>{
    window.__dawRequests=[];
@@ -300,6 +300,41 @@ const {chromium}=require('playwright');
   await late.locator('#igcDualActionWorkspacePanel').waitFor({state:'attached',timeout:3000});
   assert.equal(await late.locator('#igcDualActionWorkspacePanel').count(),1);
   await late.close();
+  // Regression: app restart must restore only the exact server-pinned pair,
+  // without silently starting a worker, changing an account or replaying WAL.
+  const restoredCalls=[];
+  await context.route('**/api/actions/dual-action-workspaces/status*',async route=>{
+    const method=route.request().method();
+    restoredCalls.push(method);
+    const headers={'Access-Control-Allow-Origin':'*',
+      'Access-Control-Allow-Methods':'GET, OPTIONS',
+      'Access-Control-Allow-Headers':'X-IGC-Bridge-Token, Content-Type'};
+    if(method==='OPTIONS')return route.fulfill({status:204,headers});
+    assert.equal(method,'GET','Recovery is status-only, never a POST');
+    return route.fulfill({status:200,headers,contentType:'application/json',
+      body:JSON.stringify({owner,two_workspaces:true,
+        parallel_mutations_enabled:true,lanes:[
+        {account:'ig_first_1234567',expected_handle:'alpha.one',
+          running:true,state:'running',task:'unfollow',processed:4,issues:1},
+        {account:'ig_second_123456',expected_handle:'beta.two',
+          running:false,state:'paused',task:'cancel',processed:3,issues:0}
+      ]})});
+  });
+  const restored=await context.newPage();
+  await restored.goto(url,{waitUntil:'domcontentloaded'});
+  await restored.locator('#igcAppShell').waitFor({state:'visible',timeout:15000});
+  await restored.evaluate(()=>window.showPage('automations'));
+  const restoredPanel=restored.locator('#igcDualActionWorkspacePanel');
+  await restoredPanel.waitFor({state:'visible',timeout:12000});
+  await restoredPanel.getByText('@alpha.one').waitFor({state:'visible',timeout:12000});
+  assert.match(await restoredPanel.innerText(),/@beta\.two/);
+  assert.equal(await restored.locator('#igcDawParallelOptIn').isChecked(),true,
+    'Existing exact controller mode must display correctly after reload');
+  assert.match(await restored.locator('#igcDawStatus0').innerText(),/Robot activo/);
+  assert.match(await restored.locator('#igcDawStatus1').innerText(),/Robot detenido/);
+  assert(restoredCalls.includes('GET')&&restoredCalls.every(x=>x==='GET'||x==='OPTIONS'),
+    'No new action, review approval, Chrome launch or account mutation on rehydrate');
+  await restored.close();
   await context.close();
   console.log('PASS: native Windows renders dual action cards; exact owner/session, Pending/Review, no parallel mutation, token and Chrome isolation UI');
  }finally{
