@@ -305,15 +305,22 @@ const {chromium}=require('playwright');
     'Never re-open green confirmed profiles as new Review targets');
   await page.locator('#igcDawOpen0').click();
   await page.locator('#igcDawStop0').click();
+  // Status polling can interleave extra GETs between user actions. Assert
+  // exact operation evidence rather than brittle fixed request positions.
+  await page.waitForFunction(()=>{
+    const calls=window.__dawRequests||[];
+    return ['review-one','open-review-one','pause-one'].every(
+      operation=>calls.some(x=>x.operation===operation));
+  },null,{timeout:12000});
   const calls=await page.evaluate(()=>window.__dawRequests);
-  assert.equal(calls[2].operation,'review-one');
-  assert.equal(calls[2].data.account,'ig_first_1234567');
-  assert.equal(calls[3].operation,'open-review-one');
-  assert.equal(calls[3].data.username,'review.target');
-  assert.equal(calls[3].data.confirmation,
+  const reviewCall=calls.find(x=>x.operation==='review-one');
+  const openCall=calls.find(x=>x.operation==='open-review-one');
+  const pauseCall=calls.find(x=>x.operation==='pause-one');
+  assert.equal(reviewCall.data.account,'ig_first_1234567');
+  assert.equal(openCall.data.username,'review.target');
+  assert.equal(openCall.data.confirmation,
     'action-workspace-review:'+owner+':ig_first_1234567:review.target');
-  assert.equal(calls[4].operation,'pause-one');
-  assert.equal(calls[4].data.account,'ig_first_1234567');
+  assert.equal(pauseCall.data.account,'ig_first_1234567');
   assert(!calls.some(x=>x.operation==='start-one'),'No implicit relationship actions during Review/Pause');
   await page.locator('#igcDawApprove0').click();
   const beforeActualApproval=await page.evaluate(()=>window.__dawRequests);
