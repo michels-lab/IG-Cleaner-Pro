@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "c54896c6dc605331ad218f96e2ac24cdffd6c2d491de12af46ea01e80c28a3dd",
+  "inventory_fingerprint": "f4cdb566e98201768ea912c3845794bbe1f172dab474020e0491b8139ea79419",
   "evidence_fingerprint": "85649dc995ef675fd2b29525ce6452d1a794988e03b292812dc9df0ad0f4004b",
   "files": [
     {
@@ -2080,7 +2080,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0b1f425dd4c3f7b687c3a2ab4584e126cd144e6e"
+      "blob": "56ed69413450946120c0725c91a68c9e05f22d2c"
     },
     {
       "path": "tests/test_action_chrome_profiles.py",
@@ -2185,7 +2185,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0a78c62008ad68d27b5d58a5d0ffa534c1162546"
+      "blob": "a0c395d06d5119d3f7f279103baacbc8dce31c1c"
     },
     {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
@@ -2668,7 +2668,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fe90b0fb3e995198441fc68ae84b61814a751f7a"
+      "blob": "75cd735c15ecf5de0483901f64831370dfbf015f"
     },
     {
       "path": "tools/profile_counts_audit.py",
