@@ -77,6 +77,19 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertEqual(first["robot"].data_dir, second["robot"].data_dir)
         self.assertEqual(first["robot"].session_dir, self.sessions.directory(OWNER, A))
         self.assertEqual(second["robot"].session_dir, self.sessions.directory(OWNER, B))
+        # The two action lanes expose owner-proof navigation separately
+        # from relationship results, without leaking browser paths or cookies.
+        first["robot"].owner_profile_visits = 4
+        first["robot"].owner_sibling_proofs = 2
+        second["robot"].owner_profile_visits = 1
+        second["robot"].owner_sibling_proofs = 7
+        snapshot = self.manager.status(OWNER)
+        by_account = {row["account"]: row for row in snapshot["lanes"]}
+        self.assertEqual(by_account[A]["owner_profile_visits"], 4)
+        self.assertEqual(by_account[A]["owner_sibling_proofs"], 2)
+        self.assertEqual(by_account[B]["owner_profile_visits"], 1)
+        self.assertEqual(by_account[B]["owner_sibling_proofs"], 7)
+        self.assertNotIn("session_dir", str(snapshot))
         self.assertFalse(self.collector.data_dir.exists())
         self.assertFalse(self.sessions.root.exists(),
                          "Configuring workspaces must not open Chrome or create login data.")
