@@ -326,6 +326,7 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_native_desktop.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Integrated native desktop tests failed.' }
           python -m unittest discover -s tests -p 'test_dual_action_windows_ui.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Dual-account native Windows UI injection/consent failed.' }
           if ($LASTEXITCODE -ne 0) { throw "Integrated desktop tests failed." }
@@ -340,15 +341,21 @@ jobs:
           node tests/profile-counts-indexeddb-browser.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Actual Automations command center browser regression failed.' }
           node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows live robot diagnostic/account isolation test failed.' }
           node tests/dual-action-new-batch-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows new-batch consent test failed.' }
           node tests/dual-action-parallel-windows-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows parallel opt-in test failed.' }
           node tests/dual-action-batch-completion-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows saved-batch Review modal test failed.' }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows account-scoped completion Review modal or WAL no-auto-approval failed." }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows parallel opt-in and distinct-account action approvals failed." }
           if ($LASTEXITCODE -ne 0) { throw "Native Windows new-batch consent and per-account preflight failed." }
           if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Windows live relationship UI test failed.' }
           if ($LASTEXITCODE -ne 0) { throw "Rendered Windows Analysis/Action command center acceptance failed." }
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
