@@ -80,16 +80,17 @@ const {chromium}=require('playwright');
        const first=data.account==='ig_first_1234567';
        const history_rows=first?
          (data.task==='unfollow'?[
-           {username:'done.recent',status:'ok',at:now},
-           {username:'already.done',status:'already_not_following',at:now},
-           {username:'warn.now',status:'review',at:now},
-           {username:'done.recent',status:'ok',at:now}
+           {username:'done.recent',status:'ok',at:now,origin:'robot'},
+           {username:'already.done',status:'already_not_following',at:now,origin:'robot'},
+           {username:'warn.now',status:'review',at:now,origin:'robot'},
+           {username:'done.recent',status:'ok',at:now,origin:'robot'}
          ]:[
-           {username:'cancel.yesterday',status:'ok',at:yesterday},
-           {username:'warn.pending',status:'blocked',at:now},
-           {username:'cancel.unknown',status:'ok',at:'bad-timestamp'}
+           {username:'cancel.yesterday',status:'ok',at:yesterday,origin:'robot'},
+           {username:'legacy.unattributed',status:'ok',at:yesterday},
+           {username:'warn.pending',status:'blocked',at:now,origin:'robot'},
+           {username:'cancel.unknown',status:'ok',at:'bad-timestamp',origin:'robot'}
          ]):
-         (data.task==='cancel'?[{username:'other.person',status:'ok',at:now}]:[]);
+         (data.task==='cancel'?[{username:'other.person',status:'ok',at:now,origin:'robot'}]:[]);
        return {ok:true,json:async()=>({owner:data.owner,account:data.account,
          task:data.task,history_rows})};
      }
@@ -145,6 +146,11 @@ const {chromium}=require('playwright');
    assert([1,2].includes(Number(await page.locator('#igcActCount_h2').innerText())),
      '2h is a rolling window and may cross local midnight');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'2');
+   await page.locator('#igcActBreakdownPeriod').selectOption('all');
+   assert.equal(await page.locator('#igcActMetric_legacy_unknown').innerText(),'1',
+     'Unknown legacy source must not be represented as a confirmed robot action');
+   assert.match(await page.locator('#igcActHistory').innerText(),/origen sin registrar/);
+   await page.locator('#igcActBreakdownPeriod').selectOption('today');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 3.*Review: 2/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
@@ -153,14 +159,14 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActMetric_no_action').innerText(),'1');
    assert.match(await page.locator('#igcActLast').innerText(),/Último registro/);
    // Duplicate journal snapshots must not duplicate visible list rows.
-   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),5);
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),6);
    assert.match(await page.locator('#igcActHistory').innerText(),/OK confirmado/);
    assert.match(await page.locator('#igcActHistory').innerText(),/Review \/ advertencia/);
    // Action type and collapse filters must alter view only, never robot actions.
    await page.locator('#igcActTask').selectOption('cancel');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'0');
    assert.equal(await page.locator('#igcActCount_h24').innerText(),'1');
-   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),2);
+   assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),3);
    assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
    await page.locator('#igcActTask').selectOption('unfollow');
    assert.equal(await page.locator('#igcActCount_today').innerText(),'1');
