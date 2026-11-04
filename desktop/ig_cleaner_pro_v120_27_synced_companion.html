@@ -13256,17 +13256,44 @@ async function parseZipExtras(groups){
   return out;
 }
 async function applyZipCore(groups,zipName){
-  const fw=(groups.following||[]).map(x=>x.file),fr=(groups.followers||[]).map(x=>x.file);
+  const followSources=groups.following||[],followerSources=groups.followers||[];
+  const fw=followSources.map(x=>x.file),fr=followerSources.map(x=>x.file);
   diagData=[];
-  followingRaw=await parseFiles(fw,'following');
-  followersRaw=await parseFiles(fr,'followers');
+  // An absent source is not an empty Instagram relationship list. Do not
+  // erase a previously imported list when a ZIP contains only Pending or one
+  // of Following/Followers. Parse and validate both BEFORE any assignment.
+  function explicitEmptyRelationship(items,kind){
+    return items.length>0&&items.every(x=>x.payload?.format==='json'&&
+      (kind==='following'
+        ? Array.isArray(x.payload?.data?.relationships_following)&&
+          x.payload.data.relationships_following.length===0
+        : Array.isArray(x.payload?.data)&&x.payload.data.length===0));
+  }
+  function rejectInvalidRelationship(items,kind){
+    const bad=items.find(x=>['invalid-json','invalid-html','unknown'].includes(x.payload?.format));
+    if(bad)throw new Error('Archivo '+kind+' ilegible: '+
+      basename(bad.entry?.name||bad.file?.name||'').slice(0,100)+
+      '. Se conservaron las listas anteriores.');
+  }
+  rejectInvalidRelationship(followSources,'Following');
+  rejectInvalidRelationship(followerSources,'Followers');
+  const newFollowing=fw.length?await parseFiles(fw,'following'):null;
+  const newFollowers=fr.length?await parseFiles(fr,'followers'):null;
+  if(newFollowing!==null&&!newFollowing.length&&!explicitEmptyRelationship(followSources,'following'))
+    throw new Error('Following sin usuarios verificables ni lista explícitamente vacía. Se conservaron las listas anteriores.');
+  if(newFollowers!==null&&!newFollowers.length&&!explicitEmptyRelationship(followerSources,'followers'))
+    throw new Error('Followers sin usuarios verificables ni lista explícitamente vacía. Se conservaron las listas anteriores.');
+  // Pending itself is similarly validated before publishing new relationship
+  // lists. If Pending fails, do not silently replace Following/Followers.
+  const pendingCount=await parseZipPending(groups.pending_follow_requests||[],zipName);
+  if(newFollowing!==null)followingRaw=newFollowing;
+  if(newFollowers!==null)followersRaw=newFollowers;
   followingMap=new Map(followingRaw.map(u=>[u.username,u]));
   followersMap=new Map(followersRaw.map(u=>[u.username,u]));
-  // v120.20: ZIP and manual import now share the same HTML evidence evaluation.
-  // JSON is intentionally untouched: if Followers JSON is present, this guard disables itself.
   try{await window.igcEvaluateHtmlEvidence?.({refresh:false,preferSource:'zip'})}catch(e){console.warn('html evidence ZIP',e)}
-  const pendingCount=await parseZipPending(groups.pending_follow_requests||[],zipName);
-  try{window.igcCaptureZipRelationshipHistory?.(zipName)}catch(e){console.warn('ZIP relationship history',e)}
+  if(fw.length||fr.length){
+    try{window.igcCaptureZipRelationshipHistory?.(zipName)}catch(e){console.warn('ZIP relationship history',e)}
+  }
   const extras=await parseZipExtras(groups);
 
   selected.clear();buildRows();setFullDateRange(true);
@@ -13284,8 +13311,11 @@ async function applyZipCore(groups,zipName){
   try{v113RefreshAll?.(true)}catch{}
   try{igcRenderPrecisionAudit?.('ZIP')}catch(e){console.warn('precision audit',e)}
   const extrasCount=extras.reduce((n,x)=>n+x.count,0);
-  logAction('import',`Export ZIP importado: ${followingRaw.length} following · ${followersRaw.length} followers · ${pendingCount} pending`,{count:followingRaw.length+followersRaw.length+pendingCount+extrasCount,source:'instagram zip',file:zipName,following:followingRaw.length,followers:followersRaw.length,pending:pendingCount,extras:extrasCount});
-  return {following:followingRaw.length,followers:followersRaw.length,pending:pendingCount,extras};
+  const importedFollowing=newFollowing===null?0:followingRaw.length;
+  const importedFollowers=newFollowers===null?0:followersRaw.length;
+  logAction('import',`Export ZIP importado: ${importedFollowing} following · ${importedFollowers} followers · ${pendingCount} pending`,{count:importedFollowing+importedFollowers+pendingCount+extrasCount,source:'instagram zip',file:zipName,following:importedFollowing,followers:importedFollowers,pending:pendingCount,extras:extrasCount});
+  return {following:importedFollowing,followers:importedFollowers,pending:pendingCount,extras,
+          preservedFollowing:newFollowing===null, preservedFollowers:newFollowers===null};
 }
 window.igcHandleZipInput=async function(file){
   if(!file||ZIP_STATE.busy)return;
@@ -13327,7 +13357,7 @@ window.igcHandleZipInput=async function(file){
     for(const cat of ['recent_follow_requests','recently_unfollowed_profiles','blocked_profiles'])counts[cat]=result.extras.filter(x=>x.category===cat).reduce((n,x)=>n+x.count,0);
     renderZipSummary(groups,counts,ignored);
     setZipStatus('Export listo',`${result.following} following · ${result.followers} followers · ${result.pending} pending`,100);
-    const note=q('igcZipNote');if(note)note.innerHTML=`<b style="color:#70efb0">Procesado automáticamente.</b> Ya puedes entrar a Review, Mutuals, Followers o Pending. ${result.extras.length?`También analicé ${result.extras.length} archivo(s) adicional(es) compatible(s).`:''}`;
+    const note=q('igcZipNote');if(note)note.innerHTML=`<b style="color:#70efb0">Procesado automáticamente.</b> Ya puedes entrar a Review, Mutuals, Followers o Pending. ${result.preservedFollowing?'<b>Following anterior conservado (ausente del ZIP).</b> ':''}${result.preservedFollowers?'<b>Followers anteriores conservados (ausentes del ZIP).</b> ':''}${result.extras.length?`También analicé ${result.extras.length} archivo(s) adicional(es) compatible(s).`:''}`;
     msg(`ZIP procesado: ${result.following} following, ${result.followers} followers y ${result.pending} pending.`,'s');
     try{showPostProcessNavPopup()}catch{}
   }catch(e){console.error(e);zipError(e?.message||String(e))}
