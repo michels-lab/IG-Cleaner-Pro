@@ -62,9 +62,9 @@ const {chromium}=require('playwright');
        const owner=window.IGC_INSTAGRAM_PROFILES.owner;
        return {ok:true,json:async()=>({owner,lanes:[
          {account:'ig_first_1234567',state:'running',running:true,task:'unfollow',
-           processed:8,pending:3,issues:2},
+           processed:8,pending:3,issues:2,owner_profile_visits:3,owner_sibling_proofs:2},
          {account:'ig_second_123456',state:'paused',running:false,task:'cancel',
-           processed:4,pending:6,issues:1}
+           processed:4,pending:6,issues:1,owner_profile_visits:1,owner_sibling_proofs:5}
        ]})};
      }
      if(target.endsWith('/api/actions/status')){
@@ -153,6 +153,8 @@ const {chromium}=require('playwright');
    await page.locator('#igcActBreakdownPeriod').selectOption('today');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 3.*Review: 2/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 3/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 2/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'1');
    assert.equal(await page.locator('#igcActMetric_warning').innerText(),'2');
@@ -186,6 +188,8 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 6.*Review: 1/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 1/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 5/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Cancel Pending.*detenido/);
    assert.equal(await page.locator('#igcActHistory .igc-act-history-row').count(),1);
    assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
