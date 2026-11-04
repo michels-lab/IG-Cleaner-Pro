@@ -230,6 +230,11 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertTrue(journal["first.person"]["click_intent"]["requires_manual_review"])
             self.assertEqual(journal["second.person"]["status"], "ok")
             self.assertEqual(journal["third.person"]["status"], "ok")
+            self.assertTrue(all(row.get("origin") == "robot" for row in journal.values()),
+                            "New worker writes must carry explicit provenance.")
+            history = robot.attempted_history({
+                "owner": robot.owner, "account": robot.account, "task": robot.task})
+            self.assertTrue(all(row["origin"] == "robot" for row in history["history_rows"]))
             self.assertEqual(robot.status, "partial")
             self.assertTrue(_saved_journal_blocks_action(journal, "first.person"),
                             "Never retry the uncertain first profile after restart.")
