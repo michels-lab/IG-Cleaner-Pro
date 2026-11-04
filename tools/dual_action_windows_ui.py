@@ -73,7 +73,7 @@ const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
 let laneSnapshots={}, completionAcknowledged={}, completionQueue=[], completionShowing=false;
-let statusPolling=false;
+let statusPolling=false,restoreInFlight=false,restoreDone=false,restoreOwner='';
 const $=(id)=>document.getElementById(id);
 function el(tag,className,text){
   const x=document.createElement(tag);if(className)x.className=className;
@@ -613,8 +613,60 @@ async function statusUpdate(silent=false){
     'Sesiones independientes. Las acciones siguen SERIALIZADAS; no hay dos unfollows paralelos.');
   return x;
 }
+async function restoreLinkedSessions(){
+  // Controller status is READ ONLY. Never grant consent or start any robot.
+  const p=window.IGC_INSTAGRAM_PROFILES,owner=p&&p.owner;
+  if(!OWNER.test(owner||'')||linked||activeBusy||restoreInFlight)return;
+  if(restoreOwner!==owner){restoreOwner=owner;restoreDone=false}
+  if(restoreDone)return;
+  restoreInFlight=true;
+  try{
+    const saved=await api('status?owner='+encodeURIComponent(owner));
+    if(linked||activeBusy||window.IGC_INSTAGRAM_PROFILES?.owner!==owner)return;
+    if(saved.owner!==owner)throw Error('Estado de otro propietario: recuperación bloqueada.');
+    if(saved.two_workspaces!==true||!Array.isArray(saved.lanes)||saved.lanes.length!==2){
+      restoreDone=true;return;
+    }
+    let registry=Array.isArray(p.accounts)?p.accounts:[];
+    if(!registry.length){
+      try{registry=JSON.parse(localStorage.getItem('igc_multi_profile_registry_cache_'+owner)||'[]')}
+      catch(_){registry=[]}
+    }
+    if(!Array.isArray(registry))registry=[];
+    const used=new Set();
+    const mapped=saved.lanes.map(item=>{
+      if(!item||!PROFILE.test(item.account||'')||!HANDLE.test(item.expected_handle||'')
+          ||used.has(item.account))return null;
+      used.add(item.account);
+      const row=registry.find(x=>x&&(x.account_key||x.account)===item.account);
+      const handle=row&&(row.username||row.expected_handle);
+      if(!HANDLE.test(handle||'')||handle.toLowerCase()!==item.expected_handle.toLowerCase())return null;
+      return {account:item.account,expected_handle:handle.toLowerCase()};
+    });
+    if(mapped.some(x=>!x)||mapped[0].expected_handle===mapped[1].expected_handle){
+      restoreDone=true;
+      notice('La sesión guardada no coincide con las cuentas registradas. Vincula las cuentas manualmente.');
+      return;
+    }
+    const parallel=saved.parallel_mutations_enabled===true;
+    draw({owner,primary:mapped[0],secondary:mapped[1],parallel});
+    const checkbox=$('igcDawParallelOptIn');if(checkbox)checkbox.checked=parallel;
+    restoreDone=true;
+    await statusUpdate(true);
+    notice('Sesiones y estado recuperados · '+(parallel?'paralelo autorizado':'serial')+
+      '. Sin iniciar robots ni repetir acciones.');
+  }catch(_){/* Local bridge unavailable: next visible poll can retry. */}
+  finally{restoreInFlight=false}
+}
 async function pollStatus(){
-  if(!linked||activeBusy||statusPolling||document.hidden)return;
+  if(document.hidden)return;
+  const activeOwner=window.IGC_INSTAGRAM_PROFILES?.owner||'';
+  if(linked&&activeOwner!==linked.owner){
+    linked=null;draw(null);restoreDone=false;restoreOwner='';
+    notice('Cambió la cuenta de InstaCleaner; se ocultaron las sesiones anteriores.');
+  }
+  if(!linked){await restoreLinkedSessions();return;}
+  if(activeBusy||statusPolling)return;
   // Poll only after an explicit start or when a worker was observed running.
   if(!Object.values(laneSnapshots).some(x=>x.running||x.awaitingStart))return;
   statusPolling=true;
@@ -627,7 +679,7 @@ function mount(){
   const header=el('div','igc-daw-header');
   const heading=el('div');heading.append(el('h3',null,'Dos cuentas · Sesiones de acciones'));
   heading.append(el('div','igc-daw-sub',
-    'Chrome separado por cuenta · historial original · sin acciones simultáneas'));
+    'Chrome por cuenta · historial original · serial por defecto, paralelo con autorización'));
   header.append(heading);
   const actions=el('div','igc-daw-actions');
   const mode=el('label','igc-daw-mode');
@@ -670,7 +722,7 @@ function mount(){
   modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
   modal.setAttribute('aria-label','Revisión de tanda de Instagram');
   panel.append(modal);center.insertAdjacentElement('afterend',panel);
-  draw(null);return true;
+  draw(null);void restoreLinkedSessions();return true;
 }
 function setup(){
   if(mount())return;
