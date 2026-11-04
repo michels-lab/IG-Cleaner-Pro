@@ -12582,7 +12582,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   window.processPendingFiles=async function(){
     const files=document.getElementById('pendingInput')?.files;
     if(!files||!files.length){msg('Sube primero pending_follow_requests en JSON o HTML.','w');return}
-    let all=[];
+    let all=[];let sourceCount=0;
     for(const file of Array.from(files)){
       const fileText=await readFile(file);
       const payload=detectPayload(fileText,file.name);
@@ -12593,6 +12593,8 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
         if(payload.category==='unknown')payload.category='pending_follow_requests';
         rows=parseHTMLUsers(payload,file.name).map(x=>({username:x.username,href:x.href,name:x.name||'',url:x.url||'',timestamp:x.timestamp||0,source:file.name,fbid:''}));
       }else if(payload.format==='json'){
+        sourceCount+=Array.isArray(payload.data?.relationships_follow_requests_sent)?
+          payload.data.relationships_follow_requests_sent.length:0;
         rows=typeof extractPendingRequestsFromJSON==='function'?(extractPendingRequestsFromJSON(payload.data,file.name)||[]):[];
       }else{
         rows=window.extractPendingRequestsFromRaw(fileText,file.name);
@@ -12601,7 +12603,10 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
       all=all.concat(rows);
       diagData.push(diagEntry(file,'pending',payload,rows,warning));
     }
-    pendingRequestsRaw=dedupePending(all);savePendingRequests();renderPendingRequests();
+    // A valid nonempty manual Pending JSON must not silently erase the old
+    // snapshot when no identity can be parsed.
+    if(sourceCount>0&&!all.length){msg('Encontré solicitudes enviadas, pero no pude identificar los usuarios. Se conservaron los Pending anteriores.','e');return}
+    pendingRequestsRaw=dedupePending(all);pendingTableLimit=300;savePendingRequests();renderPendingRequests();
     logAction('import',`Pending requests cargadas: ${pendingRequestsRaw.length}`,{count:pendingRequestsRaw.length,source:'pending requests JSON/HTML'});
     msg(`Pending requests procesadas: ${pendingRequestsRaw.length}.`,'s');
     try{renderDiag()}catch{}
