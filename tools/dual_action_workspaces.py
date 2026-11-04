@@ -294,6 +294,16 @@ class DualActionWorkspaces:
                 "current_profile": state["current_profile"],
                 "processed": state["processed"], "pending": state["pending"],
                 "issues": state["issue_count"],
+                # Raw worker counters: actions really confirmed vs outcomes that
+                # were already resolved without any relationship-changing click.
+                # Missing historical values stay UNKNOWN, never fabricated 0.
+                "total": state.get("total"),
+                "successful": state.get("successful"),
+                "already_not_following": state.get("already_not_following"),
+                "already_not_requested": state.get("already_not_requested"),
+                "batch_size": state.get("batch_size"),
+                "batch_id": (state.get("review_batch") or {}).get("id")
+                    if isinstance(state.get("review_batch"), dict) else None,
                 # Read-only, redacted diagnostics: distinct from target visits
                 # and NEVER counted as Instagram relationship mutations.
                 "owner_profile_visits": state["owner_profile_visits"],

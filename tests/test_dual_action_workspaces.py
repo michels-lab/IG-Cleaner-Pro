@@ -89,6 +89,30 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertEqual(by_account[A]["owner_sibling_proofs"], 2)
         self.assertEqual(by_account[B]["owner_profile_visits"], 1)
         self.assertEqual(by_account[B]["owner_sibling_proofs"], 7)
+        # Read-only per-lane SOURCE results, not fabricated from processed.
+        def fake_status(task, total, processed, successful, no_follow, no_request, batch):
+            return {"status": "running", "message": "Live exact target", "running": True,
+                    "task": task, "current_profile": "", "processed": processed,
+                    "pending": total-processed, "issue_count": 1,
+                    "owner_profile_visits": 0, "owner_sibling_proofs": 0,
+                    "total": total, "successful": successful,
+                    "already_not_following": no_follow,
+                    "already_not_requested": no_request,
+                    "batch_size": 10, "review_batch": {"id": batch}}
+        with patch.object(first["robot"], "snapshot", return_value=fake_status(
+                "unfollow", 13, 8, 0, 2, 1, "batch-owner-A")), patch.object(
+                second["robot"], "snapshot", return_value=fake_status(
+                "cancel", 15, 5, 3, 0, 2, "batch-owner-B")):
+            evidence = {x["account"]: x for x in self.manager.status(OWNER)["lanes"]}
+        self.assertEqual(evidence[A]["successful"], 0)
+        self.assertEqual(evidence[A]["already_not_following"], 2)
+        self.assertEqual(evidence[A]["already_not_requested"], 1)
+        self.assertEqual(evidence[A]["total"], 13)
+        self.assertEqual(evidence[A]["batch_id"], "batch-owner-A")
+        self.assertEqual(evidence[B]["successful"], 3)
+        self.assertEqual(evidence[B]["already_not_requested"], 2)
+        self.assertEqual(evidence[B]["total"], 15)
+        self.assertEqual(evidence[B]["batch_id"], "batch-owner-B")
         self.assertNotIn("session_dir", str(snapshot))
         self.assertFalse(self.collector.data_dir.exists())
         self.assertFalse(self.sessions.root.exists(),
