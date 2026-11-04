@@ -33,6 +33,7 @@ vm.createContext(ctx);
 vm.runInContext(
  section("function cleanUsername(value){","function extractFromJSON(data,source)")+
  section("function pendingLabelMap(item){","async function processPendingFiles()")+
+ section("function parseHTMLUsers(payload,source){","function parseJSONUsers(payload,source){")+
  section("function isPendingOpenableForFocus(row){","function isMutualOpenableForFocus(row){")+
  section("function pendingCandidateRows(){","function openFocusRows(rows,label")+
  section("function focusBatchFill(primaryRows, fallbackRows, n, kind){","function followersMutualAnyFocusCandidates(){")+
@@ -67,6 +68,27 @@ const labelPayload={relationships_follow_requests_sent:[{
 }]};
 assert.equal(ctx.extractPendingRequestsFromJSON(labelPayload,"pending_follow_requests.json")[0].username,"label.one",
  "Legacy label_values remains backward compatible");
+
+// HTML exports can have plain profile anchors, rather than <td> Username.
+// Preserve strict category isolation: recent requests are NOT Pending requests.
+ctx.directCards=doc=>doc.cards||[];
+ctx.profileAnchor=card=>card.anchor||null;
+ctx.tableFields=card=>card.fields||{};
+ctx.dateTextFromCard=()=>"";ctx.dedupe=list=>Array.from(new Map(list.map(x=>[x.username,x])).values());
+const anchor=url=>({getAttribute:()=>url,parentElement:null});
+const htmlDoc={cards:[],main:{querySelectorAll:()=>[
+ anchor("https://www.instagram.com/_u/html.pending.one"),
+ anchor("https://evil.example/instagram.com/not_a_pending")
+]},querySelector:selector=>selector==="main"?htmlDoc.main:null};
+assert.deepEqual(Array.from(ctx.parseHTMLUsers(
+ {category:"pending_follow_requests",doc:htmlDoc},"pending_follow_requests.html"),
+ x=>x.username),["html.pending.one"]);
+assert.equal(ctx.parseHTMLUsers(
+ {category:"recent_follow_requests",doc:htmlDoc},"recent_follow_requests.html").length,0);
+const htmlTable={cards:[{fields:{username:"html.table",name:"Pending"}}],
+ querySelector:()=>null,body:{querySelectorAll:()=>[]}};
+assert.equal(ctx.parseHTMLUsers(
+ {category:"pending_follow_requests",doc:htmlTable},"pending_follow_requests.html")[0].username,"html.table");
 
 // This is the real ZIP-to-Pending function with the parser directly connected.
 ctx.igcParseDetected=(detected,text,source)=>ctx.extractPendingRequestsFromJSON(detected.data,source);
