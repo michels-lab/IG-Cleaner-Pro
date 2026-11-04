@@ -13164,9 +13164,14 @@ async function parseZipPending(items,zipName=''){
   for(const item of items||[]){
     let rows=[];
     if(typeof window.igcParseDetected==='function')rows=window.igcParseDetected(item.payload,item.text,item.entry.name)||[];
-    // Some Instagram JSON variants store Pending with string_list_data instead of label_values.
-    // Reuse the core generic JSON extractor as a compatibility fallback instead of dropping them.
-    if(!rows.length && item.payload?.format==='json' && typeof extractFromJSON==='function')rows=extractFromJSON(item.payload.data,item.entry.name)||[];
+    // The sent-request section is authoritative for outgoing Pending.
+    // A generic relationship extractor can mistakenly promote metadata/title
+    // fields into fake usernames; only use that compatibility fallback for
+    // genuinely unknown legacy JSON layouts, never this known section.
+    const canonicalSent=item.payload?.data?.relationships_follow_requests_sent;
+    if(!rows.length && item.payload?.format==='json' &&
+        !Array.isArray(canonicalSent) && typeof extractFromJSON==='function')
+      rows=extractFromJSON(item.payload.data,item.entry.name)||[];
     rows=(rows||[]).map(r=>({username:r.username,href:r.href||profileUrl(r.username,''),name:r.name||'',url:r.url||'',timestamp:r.timestamp||0,source:item.entry.name,fbid:r.fbid||''}));
     all=all.concat(rows);
     try{diagData.push(window.igcDiagEntry(item.file,'pending',item.payload,rows,''))}catch{}
