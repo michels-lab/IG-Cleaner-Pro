@@ -349,19 +349,26 @@ function card(account,i){
     const pending=targets.filter(x=>!Object.prototype.hasOwnProperty.call(done,x)
       ||done[x]?.status==='pending').length;
     if(!pending)throw Error('La tanda no tiene perfiles vírgenes; revisa los amarillos manualmente.');
-    if(!confirm('Cuenta @'+handle+' · '+task.value+' · '+targets.length+
-      ' objetivos originales, de los cuales '+pending+' no tienen resultado. '+
-      'Modo '+(linked.parallel?'PARALELO':'serial')+
-      '. Se conservarán los clics inciertos sin repetirlos. ¿Continuar ESTA tanda guardada?'))return;
-    // This is an explicit owner attestation, not an independent live check.
-    // Followback audit must have been completed before authorizing Unfollow.
-    if(task.value==='unfollow'&&!confirm('¿Confirmas que ya verificaste la lista COMPLETA '+
-      'de seguidores de @'+handle+'? Sin esa evidencia NO se iniciará Unfollow.'))return;
     const input=(id,def,min,max)=>{
       const n=Number($(id)?.value);
       return Number.isFinite(n)&&n>=min&&n<=max?n:def;
     };
     const batchSize=input('igcAutoBatch',Math.min(targets.length,30),1,1000);
+    // batch_size controls pacing/rest, NOT the number of approved saved
+    // targets. An old 40-target cohort must never be mistaken for a NEW 10.
+    const sizeWarning=targets.length>batchSize?
+      ' ATENCIÓN: el tamaño configurado '+batchSize+
+      ' NO reduce los '+targets.length+' objetivos de la tanda guardada. '+
+      'Para trabajar sólo con una lista nueva, usa Nueva tanda. ':'';
+    if(!confirm('Cuenta @'+handle+' · '+task.value+' · '+targets.length+
+      ' objetivos originales, de los cuales '+pending+' no tienen resultado. '+
+      'Tamaño configurado de sublote: '+batchSize+'.'+sizeWarning+
+      ' Modo '+(linked.parallel?'PARALELO':'serial')+
+      '. Se conservarán los clics inciertos sin repetirlos. ¿Continuar ESTA tanda guardada?'))return;
+    // This is an explicit owner attestation, not an independent live check.
+    // Followback audit must have been completed before authorizing Unfollow.
+    if(task.value==='unfollow'&&!confirm('¿Confirmas que ya verificaste la lista COMPLETA '+
+      'de seguidores de @'+handle+'? Sin esa evidencia NO se iniciará Unfollow.'))return;
     const gapSeconds=input('igcAutoGap',10,1,600);
     const restMinutes=input('igcAutoRest',5,0,240);
     const action={owner:linked.owner,account,expected_handle:handle,
