@@ -134,7 +134,7 @@ function classify(record){
  const state=String(record.status||'');
  // Only a verified action is counted; preexisting Follow and read-only
  // confirmations cannot be advertised as new unfollows/cancellations.
- if(state==='ok')return 'verified';
+ if(state==='ok')return record.origin==='robot'?'verified':'legacy_unknown';
  if(['review','error','blocked'].includes(state))return 'warning';
  if(['already_not_following','already_not_requested'].includes(state))return 'no_action';
  if(state==='profile_unavailable')return 'unavailable';
@@ -142,7 +142,8 @@ function classify(record){
 }
 function summarize(records,id,now){
  const lower=cutoff(id,now), upper=now.getTime();
- const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0};
+ const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
+   legacy_unknown:0};
  const unique=new Set();
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
@@ -167,7 +168,8 @@ async function readHistory(account,task){
  if(!response.ok||data.owner!==owner||data.account!==account||data.task!==task||
     !Array.isArray(data.history_rows))throw Error('Historial no verificable para la cuenta seleccionada.');
  return data.history_rows.map(x=>({
-   task,username:x.username,status:x.status,at:x.at
+   task,username:x.username,status:x.status,at:x.at,
+   origin:x.origin==='robot'?'robot':'unknown'
  }));
 }
 async function readBatchStatus(account,expectedOwner){
@@ -230,7 +232,7 @@ function clearJournalValues(){
  const history=$('igcActHistory');if(history)history.replaceChildren();
  const last=$('igcActLast');if(last)last.textContent='—';
  for(const [key] of PERIODS){const el=$('igcActCount_'+key);if(el)el.textContent='—'}
- for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
+ for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable','legacy_unknown']){
    const el=$('igcActMetric_'+key);if(el)el.textContent='—';
  }
 }
@@ -261,7 +263,8 @@ function renderHistory(records){
  }
  function name(r){return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username}
  function desc(r){const k=classify(r);return k==='verified'?'OK confirmado':
-   k==='warning'?'⚠ Review / advertencia':k==='no_action'?'Ya resuelto · sin clic':
+   k==='warning'?'⚠ Review / advertencia':k==='legacy_unknown'?
+   'OK histórico · origen sin registrar':k==='no_action'?'Ya resuelto · sin clic':
    k==='unavailable'?'No disponible':'No confirmado'}
  const newest=entries[0];last.replaceChildren();
  last.append(node('div',null,'Último registro · '+name(newest)),
@@ -286,7 +289,7 @@ function render(records){
  renderHistory(scoped);
  const period=$('igcActBreakdownPeriod')?.value||'today';
  const data=summarize(scoped,period,now);
- for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable']){
+ for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable','legacy_unknown']){
    const el=$('igcActMetric_'+key);if(el)el.textContent=String(data[key]);
  }
 }
@@ -330,7 +333,7 @@ async function refresh(){
    latest=data.flat();dataReady=true;render(latest);
    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'hora local';
    setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
-     ' · datos del historial local verificado. No incluye lecturas sin clic.');
+     ' · origen robot confirmado cuando está registrado. Históricos sin origen: separados.');
  }catch(e){
    // Do not erase another account's metrics after a late failed request.
    if(owner===ctx.owner&&selector.value===account&&
@@ -401,7 +404,8 @@ function mount(){
  period.value='today';period.addEventListener('change',()=>render(latest));section.append(period);
  for(const [key,name] of [['verified','Acciones confirmadas'],['unfollow','Unfollow realizados'],
   ['cancel','Solicitudes canceladas'],['warning','Review / advertencias'],
-  ['no_action','Ya estaban resueltas (sin clic)'],['unavailable','Perfiles no disponibles']]){
+  ['no_action','Ya estaban resueltas (sin clic)'],['unavailable','Perfiles no disponibles'],
+  ['legacy_unknown','OK históricos sin procedencia registrada']]){
    const row=node('div','igc-act-row');
    row.append(node('span',key==='verified'||key==='unfollow'||key==='cancel'?'igc-act-ok':
      key==='warning'?'igc-act-warning':null,name));
@@ -414,7 +418,7 @@ function mount(){
  history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
  historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
-  'Actividad del robot (no sumada al historial manual). Solo OK con fecha cuenta como acción realizada; Review y perfiles ya resueltos se cuentan aparte.'));
+  'Actividad explícita del robot, no sumada al historial manual. Solo OK con fecha y origen robot cuenta como acción confirmada; los OK históricos sin origen identificado se muestran aparte, sin atribución inventada.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
  refreshButton.id='igcActRefresh';refreshButton.addEventListener('click',refresh);panel.append(refreshButton);
  const status=node('div','igc-act-status','Consulta de solo lectura; no inicia robots.');
