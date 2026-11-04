@@ -187,26 +187,38 @@ async function readBatchStatus(account,expectedOwner){
   get('/api/actions/dual-action-workspaces/status?owner='+encodeURIComponent(expectedOwner)),
   get('/api/actions/status')
  ]);
- if(dual.status==='fulfilled'&&dual.value.owner===expectedOwner&&
-    Array.isArray(dual.value.lanes)){
-  const lane=dual.value.lanes.find(x=>x&&x.account===account);
-  if(lane)return {running:lane.running,task:lane.task,state:lane.state,
-    processed:lane.processed,pending:lane.pending,issues:lane.issues,
-    ownerProfileVisits:lane.owner_profile_visits,
-    ownerSiblingProofs:lane.owner_sibling_proofs,scope:'dos cuentas'};
- }
- if(single.status==='fulfilled'&&single.value.owner===expectedOwner&&single.value.account===account){
-  const x=single.value;
-  return {running:x.running,task:x.task,state:x.status,processed:x.processed,
-    pending:x.pending,issues:x.issue_count,
-    ownerProfileVisits:x.owner_profile_visits,
-    ownerSiblingProofs:x.owner_sibling_proofs,scope:'robot principal'};
- }
+ // Report the exact active account only, preferring actually running jobs.
+ const dualLane=dual.status==='fulfilled'&&dual.value.owner===expectedOwner&&
+    Array.isArray(dual.value.lanes)?
+    dual.value.lanes.find(x=>x&&x.account===account):null;
+ const exactSingle=single.status==='fulfilled'&&single.value.owner===expectedOwner&&
+    single.value.account===account?single.value:null;
+ const dualState=dualLane?{running:dualLane.running,task:dualLane.task,state:dualLane.state,
+   processed:dualLane.processed,pending:dualLane.pending,issues:dualLane.issues,
+   ownerProfileVisits:dualLane.owner_profile_visits,
+   ownerSiblingProofs:dualLane.owner_sibling_proofs,scope:'dos cuentas'}:null;
+ const singleState=exactSingle?{running:exactSingle.running,task:exactSingle.task,
+   state:exactSingle.status,processed:exactSingle.processed,pending:exactSingle.pending,
+   issues:exactSingle.issue_count,ownerProfileVisits:exactSingle.owner_profile_visits,
+   ownerSiblingProofs:exactSingle.owner_sibling_proofs,scope:'robot principal'}:null;
+ if(dualState?.running===true)return dualState;
+ if(singleState?.running===true)return singleState;
+ if(dualState&&['unfollow','cancel'].includes(dualState.task))return dualState;
+ if(singleState&&['unfollow','cancel'].includes(singleState.task))return singleState;
+ // An unrelated idle response from one supervisor cannot prove that the
+ // other account-scoped supervisor has stopped if its endpoint is offline.
+ if(dual.status==='rejected'||single.status==='rejected')
+   throw new Error('Estado del controlador local no verificable.');
  return null;
 }
 function showBatch(state){
  const e=$('igcActBatch'),title=$('igcActBatchTitle');
  if(!e||!title)return;
+ if(state&&state.unavailable===true){
+   title.textContent='Estado del robot no verificable';
+   e.textContent='El controlador local no respondió. La tanda podría seguir activa; no se confirmó que terminara. Verifica la sesión del robot antes de iniciar otra acción.';
+   return;
+ }
  if(!state||!['unfollow','cancel'].includes(state.task)){
    title.textContent='Sin tanda de acciones activa';
    e.textContent='No hay un proceso asociado a esta cuenta en las sesiones locales del robot.';
@@ -233,8 +245,9 @@ function refreshBatch(account,expectedOwner){
      $('igcActAccount')?.value!==account||context().owner!==expectedOwner)return;
   showBatch(state);
  }).catch(()=>{
-  if(request!==batchSequence||$('igcActAccount')?.value!==account)return;
-  showBatch(null);
+  if(request!==batchSequence||owner!==expectedOwner||
+     $('igcActAccount')?.value!==account||context().owner!==expectedOwner)return;
+  showBatch({unavailable:true});
  });
 }
 function setStatus(message){const e=$('igcActStatus');if(e)e.textContent=message}
