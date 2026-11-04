@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "3e594bf73624d2e4110ae6267f7251bcd45ce789551d41a0105ec83b26981a19",
+  "inventory_fingerprint": "1417b12283cd09e9e0de64a5874f40a4bf2a05df2102092b41d5e83929d6abaf",
   "evidence_fingerprint": "85649dc995ef675fd2b29525ce6452d1a794988e03b292812dc9df0ad0f4004b",
   "files": [
     {
@@ -1856,7 +1856,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "771ef5d24eafd422bf0186d52f424097a993a656"
+      "blob": "20f9159b5eebd3edb9cd5870bd4d41ac925aee50"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2227,7 +2227,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "543e37140d36d42c4afda090e522ac2ef813eaf7"
+      "blob": "df06c137c74d9a0b7f1641a031b6b6c392d9f54b"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2241,7 +2241,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "65b339046ebcdc51c40681dd6cdea3f79afc34ee"
+      "blob": "2ac950dcb6eaf18e94c82b63b3722ef04ff3bd9d"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2514,7 +2514,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d02315da9fb013e08bb12d4050b666ac7d3c5bac"
+      "blob": "23427fbc103a266a8d56890ab9e481204fbc250c"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -2598,14 +2598,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0cc0ae1ee0de00cb8348c0b1e49ab94b00665585"
+      "blob": "b67454e84323fc364b1154d2840a609a7a2f9b68"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "26975e6371fe0af2475ccd03a019b8a56365348d"
+      "blob": "e271b784f15e57762ac1512e206229f267f6d0e6"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
