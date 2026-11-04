@@ -72,6 +72,7 @@ on:
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
+      - 'tests/pending-zip-completeness.test.cjs'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -159,6 +160,7 @@ on:
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
+      - 'tests/pending-zip-completeness.test.cjs'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
       - 'desktop/ig_cleaner_pro_v120_27_synced_companion.html'
@@ -251,6 +253,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Developer real Instagram read-only/consent gate tests failed." }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
+          node tests/pending-zip-completeness.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Native Pending ZIP request counts, no-repeat Focus or pagination failed." }
           python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
           if ($LASTEXITCODE -ne 0) { throw "GRANADA full-wave robot regression failed." }
           python -m unittest discover -s tests -p 'test_action_tab_flow.py' -v
