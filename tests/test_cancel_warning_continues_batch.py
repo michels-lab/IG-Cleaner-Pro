@@ -201,6 +201,34 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
             self.assertEqual(len(chrome.targets), 3)
 
+    def test_legacy_origin_is_not_guessed_or_migrated_on_history_read(self):
+        """Old verified actions stay visible without fabricated robot attribution."""
+        from profile_actions import _atomic_json
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            journal_file = robot._base()
+            _atomic_json(journal_file, {
+                "legacy.person": {
+                    "status": "ok",
+                    "message": "Historical outcome without explicit origin.",
+                    "at": "2026-10-30T15:40:00Z",
+                },
+                "new.person": {
+                    "status": "ok", "origin": "robot",
+                    "message": "Verified by current worker.",
+                    "at": "2026-11-03T22:40:00Z",
+                },
+            })
+            original_bytes = journal_file.read_bytes()
+            response = robot.attempted_history({
+                "owner": robot.owner, "account": robot.account, "task": robot.task})
+            by_name = {entry["username"]: entry for entry in response["history_rows"]}
+            self.assertEqual(by_name["legacy.person"]["status"], "ok")
+            self.assertEqual(by_name["legacy.person"]["origin"], "unknown")
+            self.assertEqual(by_name["new.person"]["origin"], "robot")
+            self.assertEqual(journal_file.read_bytes(), original_bytes,
+                             "Origin inspection must never rewrite historical WAL.")
+
     def test_one_cancel_warning_is_saved_and_next_two_profiles_continue(self):
         with tempfile.TemporaryDirectory() as folder:
             robot = self.new_robot(folder)
