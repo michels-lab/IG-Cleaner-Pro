@@ -195,11 +195,18 @@ async function readBatchStatus(account,expectedOwner){
     single.value.account===account?single.value:null;
  const dualState=dualLane?{running:dualLane.running,task:dualLane.task,state:dualLane.state,
    processed:dualLane.processed,pending:dualLane.pending,issues:dualLane.issues,
+   total:dualLane.total,successful:dualLane.successful,
+   noFollow:dualLane.already_not_following,noRequest:dualLane.already_not_requested,
+   batchSize:dualLane.batch_size,batchId:dualLane.batch_id,
    ownerProfileVisits:dualLane.owner_profile_visits,
    ownerSiblingProofs:dualLane.owner_sibling_proofs,scope:'dos cuentas'}:null;
  const singleState=exactSingle?{running:exactSingle.running,task:exactSingle.task,
    state:exactSingle.status,processed:exactSingle.processed,pending:exactSingle.pending,
-   issues:exactSingle.issue_count,ownerProfileVisits:exactSingle.owner_profile_visits,
+   issues:exactSingle.issue_count,total:exactSingle.total,
+   successful:exactSingle.successful,noFollow:exactSingle.already_not_following,
+   noRequest:exactSingle.already_not_requested,
+   batchSize:exactSingle.batch_size,batchId:exactSingle.review_batch?.id,
+   ownerProfileVisits:exactSingle.owner_profile_visits,
    ownerSiblingProofs:exactSingle.owner_sibling_proofs,scope:'robot principal'}:null;
  if(dualState?.running===true)return dualState;
  if(singleState?.running===true)return singleState;
@@ -232,11 +239,22 @@ function showBatch(state){
    state.ownerProfileVisits:null;
  const siblingProofs=Number.isSafeInteger(state.ownerSiblingProofs)&&state.ownerSiblingProofs>=0?
    state.ownerSiblingProofs:null;
- e.textContent='Procesados: '+n(state.processed)+' · Pendientes: '+n(state.pending)+
+ const batchId=typeof state.batchId==='string'&&state.batchId.length<=128
+   ? state.batchId:'';
+ const description=typeof state.message==='string'
+   ? state.message.replace(/[\\r\\n]+/g,' ').slice(0,220):'';
+ e.textContent='Tamaño real de tanda: '+n(state.total)+
+   ' · Tamaño configurado: '+n(state.batchSize)+
+   (batchId?' · Lote: '+batchId:'')+
+   ' · Procesados: '+n(state.processed)+' · Pendientes: '+n(state.pending)+
+   ' · Acciones confirmadas: '+n(state.successful)+
+   ' · Ya no seguías (sin clic): '+n(state.noFollow)+
+   ' · Sin solicitud activa (sin clic): '+n(state.noRequest)+
    ' · Review: '+n(state.issues)+' · '+state.scope+
    (ownerVisits===null?'':' · visitas a mi perfil: '+ownerVisits)+
    (siblingProofs===null?'':' · identidad desde otra pestaña: '+siblingProofs)+
-   '. Procesados NO significa unfollows confirmados.';
+   (description?' · Diagnóstico: '+description:'')+
+   '. Procesados NO significa acciones confirmadas. Un estado desconocido se muestra como —, nunca como 0.';
 }
 function refreshBatch(account,expectedOwner){
  const request=++batchSequence;
