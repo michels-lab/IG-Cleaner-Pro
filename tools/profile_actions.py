@@ -1948,6 +1948,9 @@ class ActionRobot:
                 "issue": clean.get("issue", ""),
                 "message": clean.get("message", ""),
                 "at": str(record.get("at") or "") if isinstance(record, dict) else "",
+                # Older WAL entries never specified origin. Leave them unknown.
+                "origin": ("robot" if isinstance(record, dict)
+                           and record.get("origin") == "robot" else "unknown"),
                 "click_phase": _public_click_phase(record),
             })
         return {"owner": owner, "account": account, "task": task,
@@ -3553,6 +3556,8 @@ class ActionRobot:
                             history.append({k: v for k, v in previous_attempt.items()
                                             if k != "attempt_history"})
                         journal[user] = {"status": result, "message": details,
+                                         # Only this verified worker can assign robot origin.
+                                         "origin": "robot",
                                          "audit_relation": relation, "issue": issue,
                                          "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                                          "attempt_history": history,
