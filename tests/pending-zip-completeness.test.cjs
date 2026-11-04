@@ -112,7 +112,7 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  assert.equal(ctx.isPendingOpenableForFocus(ctx.pendingRows()[0]),false);
  const eligible=ctx.pendingCandidateRows();
  assert.equal(eligible.length,721);
- assert(!eligible.some(x=>["request0000","request0724","request0723","request0003"].includes(x.username)));
+ assert(!eligible.some(x=>["request0724","request0723","request0722","request0003"].includes(x.username)));
  const fallback=ctx.focusBatchFill([],ctx.pendingRows(),20,"pending");
  assert.equal(fallback.length,20,"Existing untouched requests refill Focus 20");
  assert(!fallback.some(x=>x.opened||x.reviewed||x.snoozed||x.username==="request0003"),
