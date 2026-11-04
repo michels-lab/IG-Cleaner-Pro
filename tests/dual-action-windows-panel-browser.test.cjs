@@ -321,9 +321,11 @@ const {chromium}=require('playwright');
       body:JSON.stringify({owner,two_workspaces:true,
         parallel_mutations_enabled:true,lanes:[
         {account:'ig_first_1234567',expected_handle:'alpha.one',
-          running:true,state:'running',task:'unfollow',processed:4,issues:1},
+          running:true,state:'running',task:'unfollow',processed:4,issues:1,
+          owner_profile_visits:3,owner_sibling_proofs:2},
         {account:'ig_second_123456',expected_handle:'beta.two',
-          running:false,state:'paused',task:'cancel',processed:3,issues:0}
+          running:false,state:'paused',task:'cancel',processed:3,issues:0,
+          owner_profile_visits:1,owner_sibling_proofs:5}
       ]})});
   });
   const restored=await context.newPage();
@@ -338,6 +340,12 @@ const {chromium}=require('playwright');
     'Existing exact controller mode must display correctly after reload');
   assert.match(await restored.locator('#igcDawStatus0').innerText(),/Robot activo/);
   assert.match(await restored.locator('#igcDawStatus1').innerText(),/Robot detenido/);
+  assert.match(await restored.locator('#igcDawStatus0').innerText(),/visitas a mi perfil: 3/);
+  assert.match(await restored.locator('#igcDawStatus0').innerText(),/identidad desde otra pestaña: 2/);
+  assert.match(await restored.locator('#igcDawStatus1').innerText(),/visitas a mi perfil: 1/);
+  assert.match(await restored.locator('#igcDawStatus1').innerText(),/identidad desde otra pestaña: 5/);
+  assert(!/visitas a mi perfil: 4/.test(await restored.locator('#igcDawStatus0').innerText()),
+    'The processed-target count must never be reported as owner-profile navigations');
   assert(restoredCalls.includes('GET')&&restoredCalls.every(x=>x==='GET'||x==='OPTIONS'),
     'No new action, review approval, Chrome launch or account mutation on rehydrate');
   // A login change in the application must promptly clear previous-owner
