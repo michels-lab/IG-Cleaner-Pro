@@ -59,6 +59,7 @@ const {chromium}=require('playwright');
    window.fetch=async(url,opts)=>{
      const target=String(url);
      if(target.includes('/api/actions/dual-action-workspaces/status?')){
+       if(window.__igcBatchOffline||window.__igcDualStatusOffline)return {ok:false,json:async()=>({error:'offline fixture'})};
        const owner=window.IGC_INSTAGRAM_PROFILES.owner;
        return {ok:true,json:async()=>({owner,lanes:[
          {account:'ig_first_1234567',state:'running',running:true,task:'unfollow',
@@ -68,6 +69,7 @@ const {chromium}=require('playwright');
        ]})};
      }
      if(target.endsWith('/api/actions/status')){
+       if(window.__igcBatchOffline)return {ok:false,json:async()=>({error:'offline fixture'})};
        return {ok:true,json:async()=>({owner:'',account:'',task:'',status:'idle',
          processed:0,pending:0,issue_count:0})};
      }
@@ -224,6 +226,22 @@ const {chromium}=require('playwright');
    await page.evaluate(()=>window.__igcHistoryUnavailable=false);
    await page.locator('#igcActRefresh').click();
    await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='2');
+   // Both status endpoints offline means UNKNOWN, never idle/completed.
+   await page.evaluate(()=>{window.__igcBatchOffline=true});
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActBatchTitle')?.textContent==='Estado del robot no verificable');
+   assert.match(await page.locator('#igcActBatch').innerText(),/La tanda podría seguir activa/);
+   assert.doesNotMatch(await page.locator('#igcActBatch').innerText(),/No hay un proceso asociado/);
+   // One reachable but unrelated idle status is still NOT authority for
+   // the missing dual controller's active account.
+   await page.evaluate(()=>{window.__igcBatchOffline=false;window.__igcDualStatusOffline=true});
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActBatchTitle')?.textContent==='Estado del robot no verificable');
+   assert.match(await page.locator('#igcActBatch').innerText(),/La tanda podría seguir activa/);
+   await page.evaluate(()=>{window.__igcDualStatusOffline=false});
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
   const linked=await page.evaluate(()=>window.__dawRequests);
