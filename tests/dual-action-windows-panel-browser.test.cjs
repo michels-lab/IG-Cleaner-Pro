@@ -47,6 +47,14 @@ const {chromium}=require('playwright');
    localStorage.setItem('igc_multi_profile_active_'+p.owner,'ig_first_1234567');
   });
   await page.reload({waitUntil:'domcontentloaded'});
+  // Exercise the actual public account switch API and its reload/persistence,
+  // NOT a synthetic assignment to the getter-only .active property.
+  await page.locator('#igcInstagramIdentity').selectOption('ig_second_123456');
+  await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_second_123456',
+    null,{timeout:12000});
+  await page.locator('#igcInstagramIdentity').selectOption('ig_first_1234567');
+  await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_first_1234567',
+    null,{timeout:12000});
   await page.evaluate(()=>window.showPage('automations'));
   const panel=page.locator('#igcDualActionWorkspacePanel');
   await panel.waitFor({state:'visible',timeout:12000});
@@ -216,19 +224,21 @@ const {chromium}=require('playwright');
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
-   // Switching the *app's* pinned Instagram workspace must immediately
-   // rebind Automations statistics, unlike the read-only stats dropdown.
-   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_second_123456'});
-   await page.waitForFunction(()=>
-     document.querySelector('#igcActAccount')?.value==='ig_second_123456',
-     null,{timeout:5000});
+   // Active is getter-only; read-only statistics selections must never
+   // switch the actual pinned Instagram workspace or change action ownership.
+   assert.equal(await page.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),
+     'ig_first_1234567');
+   assert.equal(await page.evaluate(()=>{
+     const descriptor=Object.getOwnPropertyDescriptor(window.IGC_INSTAGRAM_PROFILES,'active');
+     return typeof descriptor?.get==='function'&&descriptor.set===undefined;
+   }),true,'Active Instagram workspace is getter-only; direct mutation is invalid');
+   await page.locator('#igcActAccount').selectOption('ig_second_123456');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
+   assert.equal(await page.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),
+     'ig_first_1234567','Stats-only comparison must never change pinned Instagram identity');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
-   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_first_1234567'});
-   await page.waitForFunction(()=>
-     document.querySelector('#igcActAccount')?.value==='ig_first_1234567',
-     null,{timeout:5000});
+   await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    // Even with no saved history, current per-account progress still exists.
