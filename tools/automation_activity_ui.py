@@ -242,7 +242,7 @@ function showBatch(state){
  const batchId=typeof state.batchId==='string'&&state.batchId.length<=128
    ? state.batchId:'';
  const description=typeof state.message==='string'
-   ? state.message.replace(/[\\r\\n]+/g,' ').slice(0,220):'';
+   ? state.message.replace(/[\r\n]+/g,' ').slice(0,220):'';
  e.textContent='Tamaño real de tanda: '+n(state.total)+
    ' · Tamaño configurado: '+n(state.batchSize)+
    (batchId?' · Lote: '+batchId:'')+
