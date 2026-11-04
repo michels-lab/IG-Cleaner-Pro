@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "fee8971a530394640d740e537915d60b1ad4972afa1e1ecea76cdfde80c17002",
+  "inventory_fingerprint": "48c18cc2502275310d2097286133abcf41fc74e751a3a5689f58e2feba266ede",
   "evidence_fingerprint": "85649dc995ef675fd2b29525ce6452d1a794988e03b292812dc9df0ad0f4004b",
   "files": [
     {
@@ -1856,7 +1856,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "13f8f6c139f94e906350a49121ad033f6c520c20"
+      "blob": "afa9d98b9880c436d5477a1803ece5ea9cb5c050"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2185,7 +2185,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a0c395d06d5119d3f7f279103baacbc8dce31c1c"
+      "blob": "e71b057e01bedca3ac53cd11c93849ca79a254e4"
     },
     {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
@@ -2227,7 +2227,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b8d0edf9c89503d214f55e076489ece876aeca92"
+      "blob": "543e37140d36d42c4afda090e522ac2ef813eaf7"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2514,7 +2514,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e222f68ca3447462e78736777295ccd61edeff6a"
+      "blob": "d02315da9fb013e08bb12d4050b666ac7d3c5bac"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -2668,7 +2668,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "75cd735c15ecf5de0483901f64831370dfbf015f"
+      "blob": "ffabe12c201aef78579cec6bccf567ad5051b7f4"
     },
     {
       "path": "tools/profile_counts_audit.py",
