@@ -104,7 +104,7 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  assert.equal(imported,725);
  assert.equal(ctx.pendingRequestsRaw.length,725,"ZIP import must use all native string_list_data rows");
  assert(!ctx.pendingRequestsRaw.some(x=>x.username==="old.saved"),"New verified ZIP replaces old imported snapshot");
- assert.match(element("pendingFilesLabel").textContent,/725 solicitudes/);
+ assert.match(element("pendingFilesLabel").textContent,/725 usuarios únicos de 727 registros fuente/);
  assert.equal(saved.at(-1).length,725);
 
  // Unreviewed opened rows remain visible but are excluded from fresh Focus.
@@ -161,5 +161,28 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
      {title:"unparseable!",string_list_data:[{value:"bad/name"}]}
     ]}},text:"{}"}],"bad.zip"),/Se conservaron los Pending anteriores/);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+ // A partial export without pending_follow_requests must retain saved prior ZIP
+ // rather than silently rendering 0 or claiming an empty outgoing request list.
+ const savedBefore=saved.length;
+ assert.equal(await ctx.parseZipPending([],"following-only.zip"),0);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+ assert.equal(saved.length,savedBefore,"No Pending source must not overwrite storage");
+ assert.match(element("pendingFilesLabel").textContent,/no incluye solicitudes enviadas/);
+ assert.match(element("pendingFilesLabel").textContent,/725 Pending anteriores conservados/);
+ // Malformed canonical source is NOT a verified empty list.
+ await assert.rejects(()=>ctx.parseZipPending([{
+  entry:{name:"pending_follow_requests.json"},file:{size:50},
+  payload:{format:"invalid-json",error:"bad syntax"},text:"{broken"
+ }],"bad-json.zip"),/Se conservaron los Pending anteriores/);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+ // A well-formed native JSON declaring an explicitly EMPTY array is the
+ // only evidence that replacing a prior Pending snapshot with zero is valid.
+ assert.equal(await ctx.parseZipPending([{
+  entry:{name:"pending_follow_requests.json"},file:{size:51},
+  payload:{format:"json",category:"pending_follow_requests",
+    data:{relationships_follow_requests_sent:[]}},text:'{"relationships_follow_requests_sent":[]}'
+ }],"verified-empty.zip"),0);
+ assert.equal(ctx.pendingRequestsRaw.length,0);
+ assert.match(element("pendingFilesLabel").textContent,/explícitamente vacía/);
  console.log("PASS: native Pending JSON (725 rows), ZIP import, legacy labels, no-repeat Focus, 300+ pagination, non-destructive malformed ZIP");
 })().catch(e=>{console.error(e);process.exitCode=1});
