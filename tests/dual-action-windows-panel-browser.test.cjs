@@ -47,11 +47,15 @@ const {chromium}=require('playwright');
    localStorage.setItem('igc_multi_profile_active_'+p.owner,'ig_first_1234567');
   });
   await page.reload({waitUntil:'domcontentloaded'});
-  // Exercise the actual public account switch API and its reload/persistence,
-  // NOT a synthetic assignment to the getter-only .active property.
+  // Exercise the actual public account switch API and reload/persistence.
+  // A fake offline robot bridge has UNKNOWN action status, correctly denying
+  // switches in production. Only this no-Instagram fixture declares safe idle,
+  // without modifying or bypassing the production owner-action admission path.
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await page.locator('#igcInstagramIdentity').selectOption('ig_second_123456');
   await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_second_123456',
     null,{timeout:12000});
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await page.locator('#igcInstagramIdentity').selectOption('ig_first_1234567');
   await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_first_1234567',
     null,{timeout:12000});
