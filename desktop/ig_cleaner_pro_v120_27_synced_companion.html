@@ -12494,12 +12494,28 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
       });
     }else if(['pending_follow_requests','recent_follow_requests','recently_unfollowed_profiles','blocked_profiles'].includes(category)){
       cards.forEach(card=>{
-        const f=tableFields(card);
-        const username=cleanUsername(f.username||'');
+        const fields=tableFields(card),anchor=profileAnchor(card);
+        const anchorHref=anchor?.getAttribute('href')||'';
+        const href=fields.url||anchorHref;
+        const username=cleanUsername(fields.username||fields.usuario||'')||
+          cleanUsername(anchorHref);
         if(!username)return;
         const dt=dateTextFromCard(card);
-        out.push({username,href:profileUrl(username,''),timestamp:parseTimestamp(dt),method:`html.${category}`,source,name:f.name||'',url:f.url||'',category});
+        out.push({username,href:profileUrl(username,href),timestamp:parseTimestamp(dt),
+          method:'html.'+category,source,name:fields.name||'',url:href||'',category});
       });
+      // HTML Pending can list profile <a> links without key/value tables.
+      // Never combine Recent/Blocked with actual unaccepted outgoing requests.
+      if(category==='pending_follow_requests'&&!out.length){
+        const root=doc.querySelector('main')||doc.body;
+        if(root)Array.from(root.querySelectorAll('a[href]')).forEach(a=>{
+          const href=a.getAttribute('href')||'',username=cleanUsername(href);
+          if(!username)return;
+          out.push({username,href:profileUrl(username,href),
+            timestamp:parseTimestamp(dateTextFromCard(a.parentElement||a)),
+            method:'html.pending_links',source,name:'',url:href,category});
+        });
+      }
     }else{
       cards.forEach(card=>{
         const a=profileAnchor(card);if(!a)return;
