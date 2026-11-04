@@ -128,6 +128,7 @@ jobs:
           node tests/owner-unfollow-transport.test.cjs
           node tests/pending-focus-reimport.test.cjs
           node tests/focus-batch-priority.test.cjs
+          node tests/pending-zip-completeness.test.cjs
           python3 -m unittest discover -s tests -p 'test_action_batch_history.py' -v
           python3 -m unittest discover -s tests -p 'test_historical_recheck.py' -v
       - name: Verify Windows-only updater dialog and required click-to-install
