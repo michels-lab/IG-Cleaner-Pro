@@ -561,10 +561,10 @@ async function perform(fn){
   try{await fn()}catch(e){notice('No se ejecutó ninguna nueva acción: '+String(e.message||e).slice(0,190))}
   finally{activeBusy=false;for(const b of buttons)b.disabled=false}
 }
-async function statusUpdate(silent=false){
+async function statusUpdate(silent=false,knownSnapshot=null){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
   const current=linked;
-  const x=await api('status?owner='+encodeURIComponent(current.owner));
+  const x=knownSnapshot||await api('status?owner='+encodeURIComponent(current.owner));
   // If the owner reconfigured accounts during the request, do not associate
   // a stale account's state with a new pair of Instagram sessions.
   if(linked!==current)return x;
@@ -652,7 +652,7 @@ async function restoreLinkedSessions(){
     draw({owner,primary:mapped[0],secondary:mapped[1],parallel});
     const checkbox=$('igcDawParallelOptIn');if(checkbox)checkbox.checked=parallel;
     restoreDone=true;
-    await statusUpdate(true);
+    await statusUpdate(true,saved);
     notice('Sesiones y estado recuperados · '+(parallel?'paralelo autorizado':'serial')+
       '. Sin iniciar robots ni repetir acciones.');
   }catch(_){/* Local bridge unavailable: next visible poll can retry. */}
