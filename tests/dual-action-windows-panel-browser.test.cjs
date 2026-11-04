@@ -276,12 +276,17 @@ const {chromium}=require('playwright');
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
+  // Account cards can render BEFORE the asynchronous live status fetch.
+  // Wait for the actual request rather than assuming linked[1] exists.
+  await page.waitForFunction(()=>
+    window.__dawRequests?.some(x=>x.operation==='status'),null,{timeout:12000});
   const linked=await page.evaluate(()=>window.__dawRequests);
-  assert.equal(linked[0].operation,'configure');
-  assert.equal(linked[0].data.confirmation,'dual-action-workspaces:ig_first_1234567:ig_second_123456');
-  assert.equal(linked[0].data.acknowledge_serial_actions,true);
-  assert.equal(linked[0].token,'a'.repeat(32));
-  assert.equal(linked[1].operation,'status');
+  const configured=linked.find(x=>x.operation==='configure');
+  const statusRequest=linked.find(x=>x.operation==='status');
+  assert(configured&&statusRequest,'Configured account lanes must fetch robot status');
+  assert.equal(configured.data.confirmation,'dual-action-workspaces:ig_first_1234567:ig_second_123456');
+  assert.equal(configured.data.acknowledge_serial_actions,true);
+  assert.equal(configured.token,'a'.repeat(32));
   await page.locator('#igcDawReview0').click();
   await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
   const unresolved=page.locator('#igcDawReviewList0 .igc-daw-unresolved');
