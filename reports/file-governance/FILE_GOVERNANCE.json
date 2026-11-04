@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "48c18cc2502275310d2097286133abcf41fc74e751a3a5689f58e2feba266ede",
+  "inventory_fingerprint": "3e594bf73624d2e4110ae6267f7251bcd45ce789551d41a0105ec83b26981a19",
   "evidence_fingerprint": "85649dc995ef675fd2b29525ce6452d1a794988e03b292812dc9df0ad0f4004b",
   "files": [
     {
@@ -1856,7 +1856,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "afa9d98b9880c436d5477a1803ece5ea9cb5c050"
+      "blob": "771ef5d24eafd422bf0186d52f424097a993a656"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2598,7 +2598,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6f94794f445ce9e72efe6afb16de456b13eb7c8b"
+      "blob": "0cc0ae1ee0de00cb8348c0b1e49ab94b00665585"
     },
     {
       "path": "tools/dual_action_workspaces.py",
