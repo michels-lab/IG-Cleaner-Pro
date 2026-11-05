@@ -58,6 +58,10 @@ padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;fo
 #igcDualActionWorkspacePanel .igc-daw-uncertain{border-left:4px solid #e28a57;background:#2c231f}
 #igcDualActionWorkspacePanel .igc-daw-unresolved{border-left:3px solid #d9a43c}
 #igcDualActionWorkspacePanel .igc-daw-unavailable{border-left:3px solid #8797a9}
+#igcDualActionWorkspacePanel .igc-daw-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+justify-content:space-between;padding:9px 3px;color:#a9bed2;font-size:12px}
+#igcDualActionWorkspacePanel .igc-daw-pager button{min-height:34px}
+#igcDualActionWorkspacePanel .igc-daw-pager-count{font-variant-numeric:tabular-nums}
 #igcDualActionWorkspacePanel .igc-daw-note{font-size:12px;margin:12px 0 0;color:#a9bed2;
 overflow-wrap:anywhere;white-space:pre-line}
 @media(max-width:650px){#igcDualActionWorkspacePanel .igc-daw-grid{grid-template-columns:minmax(0,1fr)}}
@@ -189,18 +193,15 @@ function displayNextCompletion(){
       // Reuse the original Review-first presentation; never reorder batch.targets.
       const names=prioritizedSavedReviewTargets(batch);
       const results=batch.action_results||{};
-      for(const username of names.slice(0,50)){
+      showSavedResultPages(list,names,username=>{
         const result=results[username]||{},state=String(result.status||'pending');
         const row=el('div','igc-daw-review-row '+savedActionClass(result));
         row.append(el('span',null,'@'+String(username)),
           el('span',null,savedActionLabel(result)));
         row.append(el('small',null,String(result.at||'sin fecha')+' · '+
           state+' · '+String(result.message||'Sin diagnóstico guardado').slice(0,200)));
-        list.append(row);
-      }
-      if(names.length>50)list.append(el('div','igc-daw-note',
-        'Mostrando 50 de '+names.length+'. Ver lista completa para los demás.'));
-      if(!names.length)list.append(el('div','igc-daw-note','Sin objetivos guardados.'));
+        return row;
+      });
     })
     .catch(()=>{if(content.isConnected){list.replaceChildren();
       list.append(el('div','igc-daw-note',
@@ -209,6 +210,42 @@ function displayNextCompletion(){
 // Saved WAL distinguishes a CONFIRMED relationship action from a profile
 // already in the requested state (where the robot did NOT click). A pending
 // possible-click is never shown as green or auto-approved.
+// Keep large original saved cohorts inspectable without rendering 1,000 DOM
+// rows at once. This is READ ONLY: paging cannot start/approve/replay actions,
+// does not sort or mutate WAL targets, and never fetches another account.
+const SAVED_RESULTS_PER_PAGE=50;
+function showSavedResultPages(container,names,renderRow,intro=''){
+ let index=0;
+ const total=names.length;
+ const pages=Math.max(1,Math.ceil(total/SAVED_RESULTS_PER_PAGE));
+ function drawPage(){
+   if(!container.isConnected)return;
+   container.replaceChildren();
+   if(intro)container.append(el('div','igc-daw-note',intro));
+   if(!total){container.append(el('div','igc-daw-note','Sin objetivos guardados.'));return}
+   const start=index*SAVED_RESULTS_PER_PAGE;
+   for(const username of names.slice(start,start+SAVED_RESULTS_PER_PAGE))
+     container.append(renderRow(username));
+   if(pages>1){
+     const bar=el('div','igc-daw-pager');
+     const prev=el('button','igc-daw-page-prev','Anteriores');
+     prev.type='button';prev.disabled=index===0;
+     prev.setAttribute('aria-label','Página anterior de resultados');
+     prev.addEventListener('click',()=>{index--;drawPage();container.scrollTop=0});
+     const counter=el('span','igc-daw-pager-count',
+       'Resultados '+(start+1)+'–'+Math.min(start+SAVED_RESULTS_PER_PAGE,total)+
+       ' de '+total+' · página '+(index+1)+' de '+pages);
+     counter.setAttribute('aria-live','polite');
+     const next=el('button','igc-daw-page-next','Siguientes');
+     next.type='button';next.disabled=index===pages-1;
+     next.setAttribute('aria-label','Página siguiente de resultados');
+     next.addEventListener('click',()=>{index++;drawPage();container.scrollTop=0});
+     bar.append(prev,counter,next);
+     container.append(bar);
+   }
+ }
+ drawPage();
+}
 function savedActionLabel(result){
  const status=String(result?.status||'pending');
  if(result?.possible_click===true&&status!=='ok')
@@ -279,27 +316,28 @@ function card(account,i){
     const targets=batch&&batch.action_results||{};
     const select=$('igcDawTarget'+i),list=$('igcDawReviewList'+i);
     select.replaceChildren();list.replaceChildren();
-    list.append(el('div','igc-daw-note',
-      '⚠ Clic incierto primero · ⚠ Sin clic · ○ Pendiente · ◌ No disponible · '+
-      '◇ Sin acción · ✓ Acción confirmada al final'));
-    for(const username of prioritizedSavedReviewTargets(batch)){
-      if(!HANDLE.test(username))continue;
-      const outcome=targets[username]||{status:'pending'},status=String(outcome.status||'pending');
+    const ordered=prioritizedSavedReviewTargets(batch).filter(x=>HANDLE.test(x));
+    for(const username of ordered){
+      const outcome=targets[username]||{status:'pending'},
+        status=String(outcome.status||'pending');
       const reviewed=['ok','already_not_following','already_not_requested'].includes(status);
       const unavailable=status==='profile_unavailable'&&outcome.possible_click!==true;
-      const row=el('div','igc-daw-review-row '+savedActionClass(outcome));
-      row.append(el('span',null,'@'+username),el('span',null,savedActionLabel(outcome)));
-      row.append(el('small',null,'Acción: '+String(outcome.at||'sin fecha registrada')+
-        ' · '+String(outcome.message||'sin confirmación').slice(0,140)));
-      list.append(row);
-      // Completed green rows are historical evidence, NOT replay candidates.
-      // A *verified* OK may still carry a historical click-intent flag:
-      // that is evidence of the completed action, NOT a Review candidate.
+      // Populate ALL unresolved options, even those on later display pages.
+      // Green and proven no-action outcomes are not action candidates.
       if(status!=='ok'&&(!reviewed||outcome.possible_click===true)&&!unavailable){
         const o=el('option',null,'@'+username+' · '+status);
         o.value=username;select.append(o);
       }
     }
+    showSavedResultPages(list,ordered,username=>{
+      const outcome=targets[username]||{status:'pending'};
+      const row=el('div','igc-daw-review-row '+savedActionClass(outcome));
+      row.append(el('span',null,'@'+username),el('span',null,savedActionLabel(outcome)));
+      row.append(el('small',null,'Acción: '+String(outcome.at||'sin fecha registrada')+
+        ' · '+String(outcome.message||'sin confirmación').slice(0,140)));
+      return row;
+    },'⚠ Clic incierto primero · ⚠ Sin clic · ○ Pendiente · ◌ No disponible · '+
+      '◇ Sin acción · ✓ Acción confirmada al final');
     notice(batch?('Cuenta '+(i+1)+': '+Object.keys(targets).length+
       ' perfiles de la tanda '+String(batch.id||'').slice(0,30)+
       '. Inspección manual; no se repite ningún clic.'):
