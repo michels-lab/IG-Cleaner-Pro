@@ -77,6 +77,27 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertNotIn("window.open(", AUTOMATION_ACTIVITY_PANEL)
         self.assertNotIn("eval(", AUTOMATION_ACTIVITY_PANEL)
 
+    def test_saved_725_target_pages_preserve_review_selection_and_read_only_history(self):
+        # Saved cohorts can contain hundreds of pending names. Display pages
+        # must not change the untouched canonical batch or hide later targets.
+        self.assertIn("const SAVED_RESULTS_PER_PAGE=50", DUAL_ACTION_PANEL)
+        self.assertIn("function showSavedResultPages(container,names,renderRow", DUAL_ACTION_PANEL)
+        self.assertIn("container.append(renderRow(username))", DUAL_ACTION_PANEL)
+        self.assertIn("Página siguiente de resultados", DUAL_ACTION_PANEL)
+        self.assertIn("Página anterior de resultados", DUAL_ACTION_PANEL)
+        self.assertIn("showSavedResultPages(list,names,username=>", DUAL_ACTION_PANEL)
+        self.assertIn("showSavedResultPages(list,ordered,username=>", DUAL_ACTION_PANEL)
+        # All unresolved targets stay in the manual inspection select even
+        # while the UI renders only 50 original results per page.
+        self.assertIn("for(const username of ordered)", DUAL_ACTION_PANEL)
+        self.assertIn("o.value=username;select.append(o)", DUAL_ACTION_PANEL)
+        pager = DUAL_ACTION_PANEL.split("function showSavedResultPages(")[1].split(
+            "function savedActionLabel(", 1)[0]
+        self.assertNotIn("api(", pager)
+        self.assertNotIn("start-one", pager)
+        self.assertNotIn("approve-one", pager)
+        self.assertNotIn("localStorage", pager)
+
     def test_windows_ci_checks_each_browser_exit_code_not_only_last(self):
         # A later successful Node invocation used to hide an earlier red
         # dual-action browser test, incorrectly allowing a green workflow.
