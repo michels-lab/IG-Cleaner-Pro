@@ -56,6 +56,11 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("if(id===\'h2\')", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("igcActCount_\'+key", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("renderHistory(records)", AUTOMATION_ACTIVITY_PANEL)
+        self.assertIn("message:dualLane.message,currentProfile:dualLane.current_profile", AUTOMATION_ACTIVITY_PANEL)
+        self.assertIn("message:exactSingle.message,currentProfile:exactSingle.current_profile", AUTOMATION_ACTIVITY_PANEL)
+        self.assertIn("HANDLE.test(state.currentProfile)", AUTOMATION_ACTIVITY_PANEL)
+        self.assertIn("Perfil actual", AUTOMATION_ACTIVITY_PANEL)
+        self.assertIn("Último perfil", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("ownerProfileVisits:dualLane.owner_profile_visits", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("ownerProfileVisits:exactSingle.owner_profile_visits", AUTOMATION_ACTIVITY_PANEL)
         self.assertIn("ownerSiblingProofs:dualLane.owner_sibling_proofs", AUTOMATION_ACTIVITY_PANEL)
@@ -71,6 +76,25 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertNotIn("localStorage.setItem", AUTOMATION_ACTIVITY_PANEL)
         self.assertNotIn("window.open(", AUTOMATION_ACTIVITY_PANEL)
         self.assertNotIn("eval(", AUTOMATION_ACTIVITY_PANEL)
+
+    def test_windows_ci_checks_each_browser_exit_code_not_only_last(self):
+        # A later successful Node invocation used to hide an earlier red
+        # dual-action browser test, incorrectly allowing a green workflow.
+        workflow = (Path(__file__).resolve().parents[1]
+                    / ".github/workflows/profile-counts-windows-preview.yml").read_text()
+        html = 'artifacts/profile-counts-preview/IG-Cleaner-Pro.html'
+        commands = [
+            "automation-center-browser.test.cjs",
+            "dual-action-windows-panel-browser.test.cjs",
+            "dual-action-new-batch-browser.test.cjs",
+            "dual-action-parallel-windows-browser.test.cjs",
+            "dual-action-batch-completion-browser.test.cjs",
+            "live-relationships-browser.test.cjs",
+        ]
+        for filename in commands:
+            command = f'node tests/{filename} "{html}"'
+            self.assertIn(command + "\n          if ($LASTEXITCODE -ne 0)", workflow,
+                          f"{filename} must fail Windows CI immediately on nonzero exit")
 
     def test_panel_must_never_start_auto_unfollow_or_reuse_wrong_account(self):
         self.assertIn("continueSaved.addEventListener('click'", DUAL_ACTION_PANEL)

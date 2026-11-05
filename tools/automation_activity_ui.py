@@ -198,6 +198,7 @@ async function readBatchStatus(account,expectedOwner){
    total:dualLane.total,successful:dualLane.successful,
    noFollow:dualLane.already_not_following,noRequest:dualLane.already_not_requested,
    batchSize:dualLane.batch_size,batchId:dualLane.batch_id,
+   message:dualLane.message,currentProfile:dualLane.current_profile,
    ownerProfileVisits:dualLane.owner_profile_visits,
    ownerSiblingProofs:dualLane.owner_sibling_proofs,scope:'dos cuentas'}:null;
  const singleState=exactSingle?{running:exactSingle.running,task:exactSingle.task,
@@ -206,6 +207,7 @@ async function readBatchStatus(account,expectedOwner){
    successful:exactSingle.successful,noFollow:exactSingle.already_not_following,
    noRequest:exactSingle.already_not_requested,
    batchSize:exactSingle.batch_size,batchId:exactSingle.review_batch?.id,
+   message:exactSingle.message,currentProfile:exactSingle.current_profile,
    ownerProfileVisits:exactSingle.owner_profile_visits,
    ownerSiblingProofs:exactSingle.owner_sibling_proofs,scope:'robot principal'}:null;
  if(dualState?.running===true)return dualState;
@@ -243,9 +245,14 @@ function showBatch(state){
    ? state.batchId:'';
  const description=typeof state.message==='string'
    ? state.message.replace(/[\r\n]+/g,' ').slice(0,220):'';
+ // User-visible only, scoped to the selected Instagram account. Reject URLs,
+ // arbitrary bridge text and invalid handles before showing a target.
+ const currentProfile=typeof state.currentProfile==='string'&&HANDLE.test(state.currentProfile)
+   ? state.currentProfile:'';
  e.textContent='Tamaño real de tanda: '+n(state.total)+
    ' · Tamaño configurado: '+n(state.batchSize)+
    (batchId?' · Lote: '+batchId:'')+
+   (currentProfile?' · '+(state.running?'Perfil actual':'Último perfil')+': @'+currentProfile:'')+
    ' · Procesados: '+n(state.processed)+' · Pendientes: '+n(state.pending)+
    ' · Acciones confirmadas: '+n(state.successful)+
    ' · Ya no seguías (sin clic): '+n(state.noFollow)+

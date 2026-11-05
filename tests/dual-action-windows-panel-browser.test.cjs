@@ -47,6 +47,18 @@ const {chromium}=require('playwright');
    localStorage.setItem('igc_multi_profile_active_'+p.owner,'ig_first_1234567');
   });
   await page.reload({waitUntil:'domcontentloaded'});
+  // Exercise the actual public account switch API and reload/persistence.
+  // A fake offline robot bridge has UNKNOWN action status, correctly denying
+  // switches in production. Only this no-Instagram fixture declares safe idle,
+  // without modifying or bypassing the production owner-action admission path.
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
+  await page.locator('#igcInstagramIdentity').selectOption('ig_second_123456');
+  await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_second_123456',
+    null,{timeout:12000});
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
+  await page.locator('#igcInstagramIdentity').selectOption('ig_first_1234567');
+  await page.waitForFunction(()=>window.IGC_INSTAGRAM_PROFILES.active==='ig_first_1234567',
+    null,{timeout:12000});
   await page.evaluate(()=>window.showPage('automations'));
   const panel=page.locator('#igcDualActionWorkspacePanel');
   await panel.waitFor({state:'visible',timeout:12000});
@@ -59,6 +71,10 @@ const {chromium}=require('playwright');
    window.fetch=async(url,opts)=>{
      const target=String(url);
      if(target.includes('/api/actions/dual-action-workspaces/status?')){
+       // Record this fake GET, too: the operation log must include reads so
+       // the assertion can prove the UI requested status before rendering it.
+       window.__dawRequests.push({operation:'status',
+         token:opts?.headers?.['X-IGC-Bridge-Token'],data:null});
        if(window.__igcBatchOffline||window.__igcDualStatusOffline)return {ok:false,json:async()=>({error:'offline fixture'})};
        const owner=window.IGC_INSTAGRAM_PROFILES.owner;
        return {ok:true,json:async()=>({owner,lanes:[
@@ -66,12 +82,12 @@ const {chromium}=require('playwright');
            processed:8,pending:3,issues:2,total:13,successful:0,
            already_not_following:2,already_not_requested:1,batch_size:10,
            batch_id:'batch-owner-A',message:'Acción pendiente de verificación',
-           owner_profile_visits:3,owner_sibling_proofs:2},
+           current_profile:'active.pending',owner_profile_visits:3,owner_sibling_proofs:2},
          {account:'ig_second_123456',state:'paused',running:false,task:'cancel',
            processed:4,pending:6,issues:1,total:11,successful:3,
            already_not_following:0,already_not_requested:2,batch_size:10,
            batch_id:'batch-owner-B',message:'Pausado por usuario',
-           owner_profile_visits:1,owner_sibling_proofs:5}
+           current_profile:'paused.target',owner_profile_visits:1,owner_sibling_proofs:5}
        ]})};
      }
      if(target.endsWith('/api/actions/status')){
@@ -168,6 +184,8 @@ const {chromium}=require('playwright');
    assert.match(await page.locator('#igcActBatch').innerText(),/Ya no seguías \(sin clic\): 2/);
    assert.match(await page.locator('#igcActBatch').innerText(),/Sin solicitud activa \(sin clic\): 1/);
    assert.match(await page.locator('#igcActBatch').innerText(),/Diagnóstico: Acción pendiente de verificación/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Perfil actual: @active.pending/);
+   assert.doesNotMatch(await page.locator('#igcActBatch').innerText(),/paused.target/);
    assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 3/);
    assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 2/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
@@ -203,6 +221,9 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'1');
    await page.waitForFunction(()=>document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
    assert.match(await page.locator('#igcActBatch').innerText(),/Pendientes: 6.*Review: 1/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Diagnóstico: Pausado por usuario/);
+   assert.match(await page.locator('#igcActBatch').innerText(),/Último perfil: @paused.target/);
+   assert.doesNotMatch(await page.locator('#igcActBatch').innerText(),/active.pending/);
    assert.match(await page.locator('#igcActBatch').innerText(),/visitas a mi perfil: 1/);
    assert.match(await page.locator('#igcActBatch').innerText(),/identidad desde otra pestaña: 5/);
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Cancel Pending.*detenido/);
@@ -211,19 +232,21 @@ const {chromium}=require('playwright');
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
-   // Switching the *app's* pinned Instagram workspace must immediately
-   // rebind Automations statistics, unlike the read-only stats dropdown.
-   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_second_123456'});
-   await page.waitForFunction(()=>
-     document.querySelector('#igcActAccount')?.value==='ig_second_123456',
-     null,{timeout:5000});
+   // Active is getter-only; read-only statistics selections must never
+   // switch the actual pinned Instagram workspace or change action ownership.
+   assert.equal(await page.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),
+     'ig_first_1234567');
+   assert.equal(await page.evaluate(()=>{
+     const descriptor=Object.getOwnPropertyDescriptor(window.IGC_INSTAGRAM_PROFILES,'active');
+     return typeof descriptor?.get==='function'&&descriptor.set===undefined;
+   }),true,'Active Instagram workspace is getter-only; direct mutation is invalid');
+   await page.locator('#igcActAccount').selectOption('ig_second_123456');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 4'));
+   assert.equal(await page.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.active),
+     'ig_first_1234567','Stats-only comparison must never change pinned Instagram identity');
    assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'0');
-   await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.active='ig_first_1234567'});
-   await page.waitForFunction(()=>
-     document.querySelector('#igcActAccount')?.value==='ig_first_1234567',
-     null,{timeout:5000});
+   await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
    // Even with no saved history, current per-account progress still exists.
@@ -257,17 +280,25 @@ const {chromium}=require('playwright');
    assert.match(await page.locator('#igcActBatchTitle').innerText(),/Unfollow.*en ejecución/);
    await page.locator('#igcDawConfigure').click();
   await page.locator('#igcDawGrid .igc-daw-card').first().getByText('@alpha.one').waitFor();
+  // Account cards can render BEFORE the asynchronous live status fetch.
+  // Wait for the actual request rather than assuming linked[1] exists.
+  await page.waitForFunction(()=>
+    window.__dawRequests?.some(x=>x.operation==='status'),null,{timeout:12000});
   const linked=await page.evaluate(()=>window.__dawRequests);
-  assert.equal(linked[0].operation,'configure');
-  assert.equal(linked[0].data.confirmation,'dual-action-workspaces:ig_first_1234567:ig_second_123456');
-  assert.equal(linked[0].data.acknowledge_serial_actions,true);
-  assert.equal(linked[0].token,'a'.repeat(32));
-  assert.equal(linked[1].operation,'status');
+  const configured=linked.find(x=>x.operation==='configure');
+  const statusRequest=linked.find(x=>x.operation==='status');
+  assert(configured&&statusRequest,'Configured account lanes must fetch robot status');
+  assert.equal(configured.data.confirmation,'dual-action-workspaces:ig_first_1234567:ig_second_123456');
+  assert.equal(configured.data.acknowledge_serial_actions,true);
+  assert.equal(configured.token,'a'.repeat(32));
   await page.locator('#igcDawReview0').click();
   await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
-  const unresolved=page.locator('#igcDawReviewList0 .igc-daw-unresolved');
+  const unresolved=page.locator(
+    '#igcDawReviewList0 .igc-daw-uncertain, #igcDawReviewList0 .igc-daw-unresolved');
   const confirmed=page.locator('#igcDawReviewList0 .igc-daw-reviewed');
-  assert.equal(await unresolved.count(),2);
+  assert.equal(await unresolved.count(),2,'One uncertain click plus one untouched target');
+  assert.equal(await page.locator('#igcDawReviewList0 .igc-daw-uncertain').count(),1,
+    'Potential click is orange, never mislabeled as an ordinary untouched warning');
   assert.equal(await confirmed.count(),1);
   assert.match(await confirmed.first().innerText(),/done.profile.*OK/s);
   // Stored cohort intentionally begins with a green OK. Visible Review
@@ -275,21 +306,28 @@ const {chromium}=require('playwright');
   assert.deepEqual(await page.locator('#igcDawReviewList0 .igc-daw-review-row')
     .evaluateAll(rows=>rows.map(x=>x.querySelector('span')?.textContent)),[
     '@review.target','@untouched.one','@done.profile']);
-  assert.match(await page.locator('#igcDawReviewList0').innerText(),/Review primero/);
+  assert.match(await page.locator('#igcDawReviewList0').innerText(),/Clic incierto primero/);
   assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
   assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
     'Never re-open green confirmed profiles as new Review targets');
   await page.locator('#igcDawOpen0').click();
   await page.locator('#igcDawStop0').click();
+  // Status polling can interleave extra GETs between user actions. Assert
+  // exact operation evidence rather than brittle fixed request positions.
+  await page.waitForFunction(()=>{
+    const calls=window.__dawRequests||[];
+    return ['review-one','open-review-one','pause-one'].every(
+      operation=>calls.some(x=>x.operation===operation));
+  },null,{timeout:12000});
   const calls=await page.evaluate(()=>window.__dawRequests);
-  assert.equal(calls[2].operation,'review-one');
-  assert.equal(calls[2].data.account,'ig_first_1234567');
-  assert.equal(calls[3].operation,'open-review-one');
-  assert.equal(calls[3].data.username,'review.target');
-  assert.equal(calls[3].data.confirmation,
+  const reviewCall=calls.find(x=>x.operation==='review-one');
+  const openCall=calls.find(x=>x.operation==='open-review-one');
+  const pauseCall=calls.find(x=>x.operation==='pause-one');
+  assert.equal(reviewCall.data.account,'ig_first_1234567');
+  assert.equal(openCall.data.username,'review.target');
+  assert.equal(openCall.data.confirmation,
     'action-workspace-review:'+owner+':ig_first_1234567:review.target');
-  assert.equal(calls[4].operation,'pause-one');
-  assert.equal(calls[4].data.account,'ig_first_1234567');
+  assert.equal(pauseCall.data.account,'ig_first_1234567');
   assert(!calls.some(x=>x.operation==='start-one'),'No implicit relationship actions during Review/Pause');
   await page.locator('#igcDawApprove0').click();
   const beforeActualApproval=await page.evaluate(()=>window.__dawRequests);
@@ -383,9 +421,26 @@ const {chromium}=require('playwright');
     'The processed-target count must never be reported as owner-profile navigations');
   assert(restoredCalls.includes('GET')&&restoredCalls.every(x=>x==='GET'||x==='OPTIONS'),
     'No new action, review approval, Chrome launch or account mutation on rehydrate');
-  // A login change in the application must promptly clear previous-owner
-  // robot controls, rather than leaving actionable accounts on screen.
-  await restored.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.owner='u_other_42'});
+  // Change the actual persisted test login and reload. The Instagram
+  // registry's owner is a read-only getter: assigning to it never switches
+  // an authenticated account. The test must exercise a real owner change.
+  await restored.evaluate(()=>{
+    const key='igc_v12027_supabase_session';
+    const saved=JSON.parse(localStorage.getItem(key)||'null');
+    if(!saved?.user)throw Error('Missing signed-in offline session fixture');
+    saved.user={...saved.user,id:'other-owner-fixture',
+      email:'different-owner@example.test'};
+    saved.access_token='offline-other-owner';
+    saved.refresh_token='offline-other-owner';
+    localStorage.setItem(key,JSON.stringify(saved));
+    localStorage.setItem('igc_v12027_supabase_config',
+      JSON.stringify({email:'different-owner@example.test'}));
+  });
+  await restored.reload({waitUntil:'domcontentloaded'});
+  await restored.locator('#igcAppShell').waitFor({state:'visible',timeout:15000});
+  await restored.evaluate(()=>window.showPage('automations'));
+  const newOwner=await restored.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.owner);
+  assert.notEqual(newOwner,owner,'Real account change must select a different owner scope');
   await restored.waitForFunction(()=>
     !document.querySelector('#igcDawGrid')?.textContent?.includes('@alpha.one'),
     null,{timeout:11000});
