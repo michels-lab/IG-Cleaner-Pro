@@ -72,6 +72,8 @@ const PROFILE=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
+// Pausing a running account is independent from the other lane's busy UI.
+let lanePauseBusy=new Set();
 let laneSnapshots={}, completionAcknowledged={}, completionQueue=[], completionShowing=false;
 let statusPolling=false,restoreInFlight=false,restoreDone=false,restoreOwner='';
 const $=(id)=>document.getElementById(id);
@@ -428,12 +430,12 @@ function card(account,i){
   }));
   controls.append(open);
   const stop=el('button','igc-daw-stop','Pausar esta cuenta');stop.type='button';
-  stop.id='igcDawStop'+i;stop.addEventListener('click',()=>perform(async()=>{
+  stop.id='igcDawStop'+i;stop.addEventListener('click',()=>performPause(i,async()=>{
     if(!linked)throw Error('Primero vincula las dos cuentas.');
-    const account=linked[i].account;
-    await api('pause-one',{owner:linked.owner,account,
-      confirmation:'action-workspace-pause:'+linked.owner+':'+account});
-    await statusUpdate();
+    const bound=linked,account=bound[i].account;
+    await api('pause-one',{owner:bound.owner,account,
+      confirmation:'action-workspace-pause:'+bound.owner+':'+account});
+    if(linked===bound)await statusUpdate();
   }));
   controls.append(stop);
   outer.append(controls);
@@ -564,9 +566,27 @@ async function perform(fn){
   if(activeBusy)return;
   activeBusy=true;
   const buttons=$('igcDualActionWorkspacePanel')?.querySelectorAll('button')||[];
-  for(const b of buttons)b.disabled=true;
+  // A slow inspection/start for account A must never disable the emergency
+  // Pause button for account B. Pause itself is guarded by a per-lane latch.
+  for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=true;
   try{await fn()}catch(e){notice('No se ejecutó ninguna nueva acción: '+String(e.message||e).slice(0,190))}
-  finally{activeBusy=false;for(const b of buttons)b.disabled=false}
+  finally{
+    activeBusy=false;
+    for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=false;
+  }
+}
+async function performPause(i,fn){
+  if(lanePauseBusy.has(i))return;
+  lanePauseBusy.add(i);
+  const control=$('igcDawStop'+i);
+  if(control)control.disabled=true;
+  try{await fn()}
+  catch(e){notice('No se pudo confirmar la pausa de esta cuenta: '+
+    String(e.message||e).slice(0,190)+'. Consulta el estado; no repitas acciones a ciegas.')}
+  finally{
+    lanePauseBusy.delete(i);
+    if(control)control.disabled=false;
+  }
 }
 async function statusUpdate(silent=false,knownSnapshot=null){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
