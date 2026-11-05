@@ -34,6 +34,7 @@ vm.createContext(ctx);
 vm.runInContext(
  section("function cleanUsername(value){","function extractFromJSON(data,source)")+
  section("function pendingLabelMap(item){","async function processPendingFiles()")+
+ section("async function processPendingFiles(){","function pendingAgeDays(row){")+
  section("function parseHTMLUsers(payload,source){","function parseJSONUsers(payload,source){")+
  section("function isPendingOpenableForFocus(row){","function isMutualOpenableForFocus(row){")+
  section("function pendingCandidateRows(){","function openFocusRows(rows,label")+
@@ -70,6 +71,14 @@ const labelPayload={relationships_follow_requests_sent:[{
 }]};
 assert.equal(ctx.extractPendingRequestsFromJSON(labelPayload,"pending_follow_requests.json")[0].username,"label.one",
  "Legacy label_values remains backward compatible");
+// Mixed relationship JSON MUST NOT promote recent/blocked/following into outgoing
+// requests, even when those sections contain perfectly valid usernames.
+const mixed={relationships_follow_requests_sent:[requests[0]],
+ recent_follow_requests:[{string_list_data:[{value:"not.pending.user"}]}],
+ blocked_profiles:[{string_list_data:[{value:"also.not.pending"}]}],
+ relationships_following:[{string_list_data:[{value:"already.accepted"}]}]};
+assert.deepEqual(Array.from(ctx.extractPendingRequestsFromJSON(mixed,"pending_follow_requests.json"),
+ x=>x.username),["request0000"],"Only sent requests count as Pending");
 
 // HTML exports can have plain profile anchors, rather than <td> Username.
 // Preserve strict category isolation: recent requests are NOT Pending requests.
@@ -184,5 +193,62 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  }],"verified-empty.zip"),0);
  assert.equal(ctx.pendingRequestsRaw.length,0);
  assert.match(element("pendingFilesLabel").textContent,/explícitamente vacía/);
- console.log("PASS: native Pending JSON (725 rows), ZIP import, legacy labels, no-repeat Focus, 300+ pagination, non-destructive malformed ZIP");
+ // Manual Pending import historically erased the saved snapshot when JSON
+ // was corrupt, of the wrong category, or partly missing. All file inputs
+ // must validate before publishing a new list or touching existing history.
+ const manualFile=(name,data)=>({name,raw:typeof data==="string"?data:JSON.stringify(data)});
+ ctx.readFile=async file=>file.raw;
+ ctx.document.getElementById=element;
+ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1234}];
+ element("pendingInput").files=[manualFile("pending_follow_requests.json","{invalid")];
+ const savedBaseline=saved.length;
+ assert.equal(await ctx.processPendingFiles(),false);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["old.saved"]);
+ assert.equal(saved.length,savedBaseline,"Corrupt file must never write empty Pending storage");
+ assert.match(messages.at(-1),/Se conservaron 1 Pending anteriores/);
+
+ element("pendingInput").files=[manualFile("recent_follow_requests.json",{
+  relationships_follow_requests_received:[{title:"recent.not.pending"}]})];
+ assert.equal(await ctx.processPendingFiles(),false,
+  "Incoming/recent requests are not outgoing Pending");
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["old.saved"]);
+
+ element("pendingInput").files=[
+  manualFile("pending_follow_requests.json",payload),
+  manualFile("pending_follow_requests_2.json","{broken")
+ ];
+ assert.equal(await ctx.processPendingFiles(),false,
+  "One corrupt chunk must reject the WHOLE multi-file Pending import");
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["old.saved"]);
+ assert.equal(saved.length,savedBaseline);
+
+ element("pendingInternalFilter").value="reviewed";
+ element("pendingRiskFilter").value="alto";
+ element("pendingAgeFilter").value="90";
+ element("pendingSearchBox").value="old.saved";
+ element("pendingInput").files=[manualFile("pending_follow_requests.json",{
+  ...payload,recent_follow_requests:[{string_list_data:[{value:"not.pending"}]}]})];
+ assert.equal(await ctx.processPendingFiles(),true);
+ assert.equal(ctx.pendingRequestsRaw.length,725);
+ assert(!ctx.pendingRequestsRaw.some(r=>r.username==="not.pending"));
+ assert.match(messages.at(-1),/725 usuarios únicos de 727 registros fuente/);
+ assert.match(messages.at(-1),/1 registros sin @usuario verificable/);
+ assert.equal(element("pendingInternalFilter").value,"all");
+ assert.equal(element("pendingRiskFilter").value,"all");
+ assert.equal(element("pendingAgeFilter").value,"0");
+ assert.equal(element("pendingSearchBox").value,"");
+ assert.equal(saved.at(-1).length,725);
+
+ // Explicitly empty native JSON is the ONLY verified manual zero.
+ element("pendingInput").files=[manualFile("pending_follow_requests.json",{
+  relationships_follow_requests_sent:[]})];
+ assert.equal(await ctx.processPendingFiles(),true);
+ assert.equal(ctx.pendingRequestsRaw.length,0);
+
+ // Legacy label_values exports still import, and a filename alone cannot
+ // turn an unrelated valid JSON into Pending.
+ element("pendingInput").files=[manualFile("pending_follow_requests.json",labelPayload)];
+ assert.equal(await ctx.processPendingFiles(),true);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["label.one"]);
+ console.log("PASS: native Pending 725 + category isolation + atomic manual import on corrupt/mixed/empty files; ZIP retains original WAL");
 })().catch(e=>{console.error(e);process.exitCode=1});
