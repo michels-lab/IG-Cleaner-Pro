@@ -64,7 +64,18 @@ const {chromium}=require('playwright');
     }else if(operation==='status'){
      if(window.__parallelStatusOffline)
        return {ok:false,json:async()=>({error:'offline fixture'})};
-     payload={parallel_mutations_enabled:window.__parallelMode,lanes:[]};
+     payload=window.__parallelLiveMessages?
+       {owner:window.IGC_INSTAGRAM_PROFILES.owner,
+        parallel_mutations_enabled:window.__parallelMode,
+        lanes:[
+          {account:'ig_first_1234567',state:'running',running:true,
+           task:'unfollow',processed:3,issues:1,
+           current_profile:'alpha.pending',message:'Esperando confirmación A'},
+          {account:'ig_second_123456',state:'running',running:true,
+           task:'cancel',processed:7,issues:2,
+           current_profile:'beta.pending',message:'Esperando confirmación B'}
+        ]}:
+       {parallel_mutations_enabled:window.__parallelMode,lanes:[]};
     }else if(operation==='review-one'){
      // Model a slow read-only inspection on A while the owner urgently
      // pauses B. The second account must not wait for A's network reply.
@@ -178,6 +189,18 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>window.__releaseReview?.());
   await page.waitForFunction(()=>
     document.querySelector('#igcDawReviewList0')?.textContent?.includes('Clic incierto primero'));
+  // Human-readable diagnosis must be target- and account-scoped inside each
+  // robot card, not visible only in the separate activity statistics panel.
+  await page.evaluate(()=>{window.__parallelLiveMessages=true});
+  await page.locator('#igcDawRefresh').click();
+  assert.match(await page.locator('#igcDawStatus0').innerText(),
+    /Perfil actual: @alpha.pending.*Diagnóstico: Esperando confirmación A/);
+  assert.doesNotMatch(await page.locator('#igcDawStatus0').innerText(),/beta.pending/);
+  assert.match(await page.locator('#igcDawStatus1').innerText(),
+    /Perfil actual: @beta.pending.*Diagnóstico: Esperando confirmación B/);
+  assert.doesNotMatch(await page.locator('#igcDawStatus1').innerText(),/alpha.pending/);
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
+    'Live diagnostic polling cannot initiate an extra Instagram action');
   await ctx.close();
   console.log('PASS: serial default, parallel exact opt-in, two independent action approvals, account-scoped pause and fail-closed status disconnect/recovery');
  }finally{
