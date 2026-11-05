@@ -624,7 +624,7 @@ async function statusUpdate(silent=false,knownSnapshot=null){
     const current=typeof info?.current_profile==='string'&&HANDLE.test(info.current_profile)
       ? info.current_profile:'';
     const diagnostic=typeof info?.message==='string'
-      ? info.message.replace(/[\\r\\n\\x00-\\x1f]+/g,' ').slice(0,180):'';
+      ? info.message.replace(/[\r\n\x00-\x1f]+/g,' ').slice(0,180):'';
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
