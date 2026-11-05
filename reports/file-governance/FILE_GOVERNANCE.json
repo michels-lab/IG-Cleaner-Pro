@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "3e7c291af558cbe9869cea44165876435031fd1d5ea37cd17c6ccdfaf94957c2",
+  "inventory_fingerprint": "116020546ef8c505c037fe424b67521980c3979df24205490c5d1559cf8cc9a6",
   "evidence_fingerprint": "ffed5353b390336b78da4b684e85499a613746023a36faeca3fe2cdff0c7deb9",
   "files": [
     {
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f62460ac5d6f32a75e1f69ee05f7dce132a063c5"
+      "blob": "5a5c24e8fed770d12b9bbd7c21373dbb97a82d10"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1856,7 +1856,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6d30823bd319c32033f00a7441e16ea21ddd9685"
+      "blob": "3d8be78f50f03c267390da6e5705a517aa0fa9f5"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2234,7 +2234,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a90f6c9120cd9abc71fc6898ff6a97149d53f4e2"
+      "blob": "249f0be4f6ebc4f16ac15ba9bf6e5f3753f4bba5"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2528,7 +2528,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6e70e714d782739031be01723a4fbc012df4013a"
+      "blob": "682fb43c2e027ad766f9c991b7e06fe2fac2f2a7"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
