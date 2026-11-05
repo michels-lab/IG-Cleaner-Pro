@@ -88,6 +88,61 @@ const {chromium}=require("playwright");
   assert.equal(stored.review,'["review-stays-local"]');
   assert(!errors.some(x=>/igcSyncSwitchAccount|activateRemembered|SyntaxError/.test(x)),
       "No Switch Account script errors: "+JSON.stringify(errors));
+  // Regression #264: a robot can become active AFTER the chooser checks its
+  // admission gate but BEFORE the saved-account activation checks its own.
+  // Previously the UI closed the chooser first and then silently vetoed the
+  // account change, leaving the operator with no selector or explanation.
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const racedChooser=page.locator("#igcLoginChooser");
+  await racedChooser.waitFor({state:"visible",timeout:5000});
+  await page.evaluate(()=>{
+    window.__switchRaceChecks=0;
+    window.igcAutoSwitchGuard=()=>++window.__switchRaceChecks===1;
+  });
+  await racedChooser.locator("button").filter({hasText:"first@example.test"}).click();
+  await page.waitForFunction(()=>
+    window.__switchRaceChecks>=2 &&
+    document.querySelector("#igcLoginChooser")?.open &&
+    document.querySelector("#igcLoginChooser")?.textContent?.includes("Pause the Instagram robot"),
+    null,{timeout:10000});
+  assert(await racedChooser.isVisible(),
+    "An activation denied by a LATE robot guard must keep saved accounts visible");
+  assert(await racedChooser.locator("button").filter({hasText:"first@example.test"}).isEnabled(),
+    "The rejected switch must restore controls for a later valid choice");
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","Late robot veto must NEVER mutate the signed-in user");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("ig_v13_done")),
+    '["review-stays-local"]',"Late guard veto preserves local review history");
+  await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
+  await racedChooser.getByText("Cancelar",{exact:true}).click();
+  // Simulate a token refresh failure on a remembered but expired session.
+  // Async failure must also keep the chooser; no phantom logout or change.
+  await page.evaluate(()=>{
+    const key="igc_v120_login_accounts_v1";
+    const wallet=JSON.parse(localStorage.getItem(key));
+    wallet["first@example.test"].expires_at=1;
+    localStorage.setItem(key,JSON.stringify(wallet));
+  });
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const expiredChooser=page.locator("#igcLoginChooser");
+  await expiredChooser.waitFor({state:"visible",timeout:5000});
+  await expiredChooser.locator("button").filter({hasText:"first@example.test"}).click();
+  await page.waitForFunction(()=>
+    document.querySelector("#igcLoginChooser")?.open &&
+    document.querySelector("#igcLoginChooser")?.textContent?.includes("No se cambió de cuenta."),
+    null,{timeout:15000});
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","Failed expired-session refresh cannot change owners");
+  assert(await expiredChooser.locator("button").filter({hasText:"first@example.test"}).isEnabled());
+  await expiredChooser.getByText("Cancelar",{exact:true}).click();
+  await page.evaluate(()=>{
+    const key="igc_v120_login_accounts_v1";
+    const wallet=JSON.parse(localStorage.getItem(key));
+    wallet["first@example.test"].expires_at=Math.floor(Date.now()/1000)+3600;
+    localStorage.setItem(key,JSON.stringify(wallet));
+  });
   // Simulate a real action robot starting AFTER the chooser was displayed.
   // The account button must not close it or change session mid-action.
   await page.waitForFunction(()=>window.igcSyncSwitchState?.().ready===true,
