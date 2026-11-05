@@ -73,6 +73,7 @@ on:
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
       - 'tests/pending-zip-completeness.test.cjs'
+      - 'tests/zip-crc-integrity.test.cjs'
       - 'tests/zip-partial-relationships-preserve.test.cjs'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
@@ -162,6 +163,7 @@ on:
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
       - 'tests/pending-zip-completeness.test.cjs'
+      - 'tests/zip-crc-integrity.test.cjs'
       - 'tests/zip-partial-relationships-preserve.test.cjs'
       - 'tools/profile_counts_pacing.py'
       - 'tools/profile_counts_instagram.py'
@@ -257,6 +259,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           node tests/pending-zip-completeness.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Native Pending ZIP request counts, no-repeat Focus or pagination failed." }
+          node tests/zip-crc-integrity.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw "ZIP CRC32, size and truncated directory integrity failed." }
           node tests/zip-partial-relationships-preserve.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Partial ZIP erased existing Following/Followers or miscounted preserved imports." }
           python -m unittest discover -s tests -p 'test_action_tab_waves.py' -v
