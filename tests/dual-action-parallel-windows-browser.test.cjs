@@ -69,6 +69,7 @@ const {chromium}=require('playwright');
         parallel_mutations_enabled:window.__parallelMode,
         lanes:[
           {account:'ig_first_1234567',state:'running',running:true,
+           expected_handle:window.__parallelWrongHandle?'another.login':'alpha.one',
            task:'unfollow',processed:3,issues:1,
            current_profile:'alpha.pending',message:'Esperando confirmación A'},
           {account:'ig_second_123456',state:'running',running:true,
@@ -79,7 +80,7 @@ const {chromium}=require('playwright');
     }else if(operation==='review-one'){
      // Model a slow read-only inspection on A while the owner urgently
      // pauses B. The second account must not wait for A's network reply.
-     if(window.__parallelHoldReview)
+     if(window.__parallelHoldReview&&data.account==='ig_first_1234567')
        await new Promise(resolve=>{window.__releaseReview=resolve});
      payload={owner:data.owner,account:data.account,task:data.task,
        batch:{id:'offline-review',targets:[],action_results:{}}};
@@ -185,6 +186,20 @@ const {chromium}=require('playwright');
     typeof window.__releaseReview==='function',null,{timeout:10000});
   assert.equal(await page.locator('#igcDawStop1').isEnabled(),true,
     'B must remain independently pausable while A awaits a network response');
+  assert.equal(await page.locator('#igcDawReview1').isEnabled(),true,
+    'B read-only review must remain usable while account A awaits its own reply');
+  assert.equal(await page.locator('#igcDawReview0').isEnabled(),false,
+    'A must not dispatch duplicate API calls during its in-flight read');
+  assert.equal(await page.locator('#igcDawConfigure').isEnabled(),false,
+    'Changing account assignments during an in-flight A review is not allowed');
+  await page.locator('#igcDawReview1').click();
+  await page.locator('#igcDawReviewList1').getByText('Clic incierto primero').waitFor({
+    state:'visible',timeout:10000});
+  assert.equal((await calls()).filter(x=>x.operation==='review-one'&&
+    x.data.account==='ig_second_123456').length,1,
+    'B must fetch its own original WAL while A is still pending');
+  assert.equal(await page.locator('#igcDawReview0').isEnabled(),false,
+    'A cannot be used twice before its delayed reply completes');
   await page.locator('#igcDawStop1').click();
   await page.waitForFunction(()=>
     window.__parallelCalls.filter(x=>x.operation==='pause-one'&&
@@ -194,6 +209,8 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>window.__releaseReview?.());
   await page.waitForFunction(()=>
     document.querySelector('#igcDawReviewList0')?.textContent?.includes('Clic incierto primero'));
+  assert.equal(await page.locator('#igcDawConfigure').isEnabled(),true,
+    'Both lanes idle: account-linking controls become available again');
   // Human-readable diagnosis must be target- and account-scoped inside each
   // robot card, not visible only in the separate activity statistics panel.
   await page.evaluate(()=>{window.__parallelLiveMessages=true});
@@ -206,6 +223,15 @@ const {chromium}=require('playwright');
   assert.doesNotMatch(await page.locator('#igcDawStatus1').innerText(),/alpha.pending/);
   assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
     'Live diagnostic polling cannot initiate an extra Instagram action');
+  await page.evaluate(()=>{window.__parallelWrongHandle=true});
+  await page.locator('#igcDawRefresh').click();
+  assert.match(await page.locator('#igcDawStatus0').innerText(),
+    /IDENTIDAD NO VERIFICADA.*alpha.one/,
+    'A stale server response bound to another Instagram login must not appear as valid A');
+  assert.doesNotMatch(await page.locator('#igcDawStatus1').innerText(),
+    /IDENTIDAD NO VERIFICADA/,'B must retain its own independent valid identity');
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
+    'Mismatched owner proof must not re-launch a robot');
   await ctx.close();
   console.log('PASS: serial default, parallel exact opt-in, two independent action approvals, account-scoped pause and fail-closed status disconnect/recovery');
  }finally{
