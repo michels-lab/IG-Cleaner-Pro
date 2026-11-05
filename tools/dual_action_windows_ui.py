@@ -72,6 +72,8 @@ const PROFILE=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
+// Pausing a running account is independent from the other lane's busy UI.
+let lanePauseBusy=new Set();
 let laneSnapshots={}, completionAcknowledged={}, completionQueue=[], completionShowing=false;
 let statusPolling=false,restoreInFlight=false,restoreDone=false,restoreOwner='';
 const $=(id)=>document.getElementById(id);
@@ -434,12 +436,12 @@ function card(account,i){
   }));
   controls.append(open);
   const stop=el('button','igc-daw-stop','Pausar esta cuenta');stop.type='button';
-  stop.id='igcDawStop'+i;stop.addEventListener('click',()=>perform(async()=>{
+  stop.id='igcDawStop'+i;stop.addEventListener('click',()=>performPause(i,async()=>{
     if(!linked)throw Error('Primero vincula las dos cuentas.');
-    const account=linked[i].account;
-    await api('pause-one',{owner:linked.owner,account,
-      confirmation:'action-workspace-pause:'+linked.owner+':'+account});
-    await statusUpdate();
+    const bound=linked,account=bound[i].account;
+    await api('pause-one',{owner:bound.owner,account,
+      confirmation:'action-workspace-pause:'+bound.owner+':'+account});
+    if(linked===bound)await statusUpdate();
   }));
   controls.append(stop);
   outer.append(controls);
@@ -570,14 +572,55 @@ async function perform(fn){
   if(activeBusy)return;
   activeBusy=true;
   const buttons=$('igcDualActionWorkspacePanel')?.querySelectorAll('button')||[];
-  for(const b of buttons)b.disabled=true;
-  try{await fn()}catch(e){notice('No se ejecutó ninguna nueva acción: '+String(e.message||e).slice(0,190))}
-  finally{activeBusy=false;for(const b of buttons)b.disabled=false}
+  // A slow inspection/start for account A must never disable the emergency
+  // Pause button for account B. Pause itself is guarded by a per-lane latch.
+  for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=true;
+  try{await fn()}catch(e){
+    // An accepted start command may already have launched the worker when a
+    // later status GET fails. Never falsely claim no action occurred.
+    notice('No se pudo confirmar la operación: '+String(e.message||e).slice(0,140)+
+      '. Una tanda autorizada podría seguir activa; consulta estado e historial antes de repetir.');
+  }
+  finally{
+    activeBusy=false;
+    for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=false;
+  }
+}
+async function performPause(i,fn){
+  if(lanePauseBusy.has(i))return;
+  lanePauseBusy.add(i);
+  const control=$('igcDawStop'+i);
+  if(control)control.disabled=true;
+  try{await fn()}
+  catch(e){notice('No se pudo confirmar la pausa de esta cuenta: '+
+    String(e.message||e).slice(0,190)+'. Consulta el estado; no repitas acciones a ciegas.')}
+  finally{
+    lanePauseBusy.delete(i);
+    if(control)control.disabled=false;
+  }
 }
 async function statusUpdate(silent=false,knownSnapshot=null){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
   const current=linked;
-  const x=knownSnapshot||await api('status?owner='+encodeURIComponent(current.owner));
+  let x;
+  try{
+    x=knownSnapshot||await api('status?owner='+encodeURIComponent(current.owner));
+  }catch(_){
+    // A lost bridge is NOT evidence that either Chrome robot stopped. Never
+    // leave stale RUNNING/PAUSED badges looking like freshly verified state.
+    // Retain laneSnapshots and the original WAL; polling must keep retrying
+    // a previously observed running worker after reconnect.
+    if(linked===current){
+      for(let i=0;i<2;i++){
+        const label=$('igcDawStatus'+i);
+        if(label)label.textContent='ESTADO NO VERIFICABLE · conexión con Chrome perdida. '+
+          'La tanda podría seguir activa. No reinicies ni repitas acciones hasta consultar el historial.';
+      }
+      notice('Conexión perdida con el robot. Estado de ambas cuentas desconocido; '+
+        'no se iniciaron clics nuevos. Consulta el historial antes de repetir.');
+    }
+    throw Error('No se pudo consultar el estado de los dos robots de Chrome.');
+  }
   // If the owner reconfigured accounts during the request, do not associate
   // a stale account's state with a new pair of Instagram sessions.
   if(linked!==current)return x;
@@ -589,10 +632,16 @@ async function statusUpdate(silent=false,knownSnapshot=null){
       info.owner_profile_visits>=0?info.owner_profile_visits:null;
     const siblingProofs=info&&Number.isSafeInteger(info.owner_sibling_proofs)&&
       info.owner_sibling_proofs>=0?info.owner_sibling_proofs:null;
+    const current=typeof info?.current_profile==='string'&&HANDLE.test(info.current_profile)
+      ? info.current_profile:'';
+    const diagnostic=typeof info?.message==='string'
+      ? info.message.replace(/[\r\n\x00-\x1f]+/g,' ').slice(0,180):'';
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
        String(info.issues||0)+' pendientes de revisión'+
+       (current?' · '+(info.running?'Perfil actual':'Último perfil')+': @'+current:'')+
+       (diagnostic?' · Diagnóstico: '+diagnostic:'')+
        (ownerVisits!==null?' · visitas a mi perfil: '+ownerVisits:'')+
        (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')):
       'Sin estado para esta cuenta.';

@@ -61,9 +61,29 @@ const {chromium}=require('playwright');
     if(operation==='configure'){
      window.__parallelMode=data.parallel_actions_consent===true;
      payload={parallel_mutations_enabled:window.__parallelMode,lanes:[],mode:'fake'};
-    }else if(operation==='status')
-     payload={parallel_mutations_enabled:window.__parallelMode,lanes:[]};
-    else if(operation==='preflight-new-one')
+    }else if(operation==='status'){
+     if(window.__parallelStatusOffline)
+       return {ok:false,json:async()=>({error:'offline fixture'})};
+     payload=window.__parallelLiveMessages?
+       {owner:window.IGC_INSTAGRAM_PROFILES.owner,
+        parallel_mutations_enabled:window.__parallelMode,
+        lanes:[
+          {account:'ig_first_1234567',state:'running',running:true,
+           task:'unfollow',processed:3,issues:1,
+           current_profile:'alpha.pending',message:'Esperando confirmación A'},
+          {account:'ig_second_123456',state:'running',running:true,
+           task:'cancel',processed:7,issues:2,
+           current_profile:'beta.pending',message:'Esperando confirmación B'}
+        ]}:
+       {parallel_mutations_enabled:window.__parallelMode,lanes:[]};
+    }else if(operation==='review-one'){
+     // Model a slow read-only inspection on A while the owner urgently
+     // pauses B. The second account must not wait for A's network reply.
+     if(window.__parallelHoldReview)
+       await new Promise(resolve=>{window.__releaseReview=resolve});
+     payload={owner:data.owner,account:data.account,task:data.task,
+       batch:{id:'offline-review',targets:[],action_results:{}}};
+    }else if(operation==='preflight-new-one')
      payload={read_only:true,actions_enabled:false,offline_untouched_only:true,
       unresolved_saved_cohort:false,evidence_counts:{untouched:data.targets.length},
       targets:data.targets.map(username=>({username,offline_evidence:'untouched'}))};
@@ -137,8 +157,57 @@ const {chromium}=require('playwright');
   assert.equal(pauses[0].data.account,'ig_first_1234567');
   assert.equal(pauses[0].data.confirmation,
     'action-workspace-pause:'+owner+':ig_first_1234567');
+  // A disconnected local bridge must NOT leave stale badges claiming that
+  // either Chrome worker has stopped or completed, or silently relaunch one.
+  const actionsBeforeDisconnect=(await calls()).filter(x=>x.operation==='start-one').length;
+  await page.evaluate(()=>{window.__parallelStatusOffline=true});
+  await page.locator('#igcDawRefresh').click();
+  for(const i of [0,1]){
+    assert.match(await page.locator('#igcDawStatus'+i).innerText(),
+      /ESTADO NO VERIFICABLE.*La tanda podría seguir activa/);
+  }
+  assert.match(await page.locator('#igcDualActionWorkspaceFeedback').innerText(),
+    /tanda autorizada podría seguir activa/,
+    'A failed status GET after a prior start must never promise zero actions');
+  assert.doesNotMatch(await page.locator('#igcDualActionWorkspaceFeedback').innerText(),
+    /No se ejecutó ninguna nueva acción/);
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,
+    actionsBeforeDisconnect,'Read-only status disconnect must not start or replay actions');
+  await page.evaluate(()=>{window.__parallelStatusOffline=false});
+  await page.locator('#igcDawRefresh').click();
+  assert.match(await page.locator('#igcDawStatus0').innerText(),
+    /Sin estado para esta cuenta/,'Reconnect must replace unknown status with fresh response');
+  // Long-running read-only command for A must never disable account B's Pause.
+  await page.evaluate(()=>{window.__parallelHoldReview=true});
+  await page.locator('#igcDawReview0').click();
+  await page.waitForFunction(()=>
+    window.__parallelCalls.some(x=>x.operation==='review-one') &&
+    typeof window.__releaseReview==='function',null,{timeout:10000});
+  assert.equal(await page.locator('#igcDawStop1').isEnabled(),true,
+    'B must remain independently pausable while A awaits a network response');
+  await page.locator('#igcDawStop1').click();
+  await page.waitForFunction(()=>
+    window.__parallelCalls.filter(x=>x.operation==='pause-one'&&
+      x.data.account==='ig_second_123456').length===1,null,{timeout:10000});
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
+    'Pausing B during A inspection must never relaunch either action batch');
+  await page.evaluate(()=>window.__releaseReview?.());
+  await page.waitForFunction(()=>
+    document.querySelector('#igcDawReviewList0')?.textContent?.includes('Clic incierto primero'));
+  // Human-readable diagnosis must be target- and account-scoped inside each
+  // robot card, not visible only in the separate activity statistics panel.
+  await page.evaluate(()=>{window.__parallelLiveMessages=true});
+  await page.locator('#igcDawRefresh').click();
+  assert.match(await page.locator('#igcDawStatus0').innerText(),
+    /Perfil actual: @alpha.pending.*Diagnóstico: Esperando confirmación A/);
+  assert.doesNotMatch(await page.locator('#igcDawStatus0').innerText(),/beta.pending/);
+  assert.match(await page.locator('#igcDawStatus1').innerText(),
+    /Perfil actual: @beta.pending.*Diagnóstico: Esperando confirmación B/);
+  assert.doesNotMatch(await page.locator('#igcDawStatus1').innerText(),/alpha.pending/);
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
+    'Live diagnostic polling cannot initiate an extra Instagram action');
   await ctx.close();
-  console.log('PASS: serial default, parallel exact opt-in, two independent approved action jobs, scoped pause, token and Chrome account identity');
+  console.log('PASS: serial default, parallel exact opt-in, two independent action approvals, account-scoped pause and fail-closed status disconnect/recovery');
  }finally{
   await browser.close();fs.rmSync(tmp,{recursive:true,force:true});
  }
