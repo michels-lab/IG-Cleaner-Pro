@@ -255,6 +255,71 @@ class OwnerProofReuseTests(unittest.TestCase):
             self.assertFalse(actions._verified_action_owner(make_page(context), "my.profile"))
         self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
 
+    def test_cached_owner_proof_rejects_late_conflicting_sibling_without_navigation(self):
+        # Regression: the owner proved his own /profile/ once and the short
+        # cache is valid, but another real Chrome tab now visibly identifies a
+        # DIFFERENT account. A same ds_user_id is not permission to ignore it.
+        context = Mock()
+        context.cookies.return_value = owner_cookie("12345")
+        target = make_page(context)
+        target.is_closed.return_value = False
+        other = make_page(context)
+        other.url = "https://www.instagram.com/"
+        other.is_closed.return_value = False
+        context.pages = [target]
+        with patch.object(actions, "challenge_detected", return_value=False), \
+             patch.object(actions, "signed_in_handle",
+                          side_effect=lambda p: "wrong.owner" if p is other else None), \
+             patch.object(actions, "verify_selected_owner_profile", side_effect=self.proof):
+            self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+            self.assertIsNotNone(actions._OWNER_PROFILE_PROBE.bound_session)
+            context.pages = [target, other]
+            self.assertFalse(actions._verified_action_owner(target, "my.profile"))
+        self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
+        self.assertEqual(context.new_page.call_count, 1,
+                         "Detect the wrong owner without another self-profile navigation")
+        self.assertEqual(self.nav_count, ["owner"])
+
+    def test_cached_owner_proof_rejects_new_challenge_in_other_tab(self):
+        context = Mock()
+        context.cookies.return_value = owner_cookie("12345")
+        target = make_page(context)
+        target.is_closed.return_value = False
+        challenged = make_page(context)
+        challenged.url = "https://www.instagram.com/"
+        challenged.is_closed.return_value = False
+        context.pages = [target]
+        with patch.object(actions, "challenge_detected",
+                          side_effect=lambda page: page is challenged), \
+             patch.object(actions, "signed_in_handle", return_value=None), \
+             patch.object(actions, "verify_selected_owner_profile", side_effect=self.proof):
+            self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+            context.pages = [target, challenged]
+            self.assertFalse(actions._verified_action_owner(target, "my.profile"))
+        self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
+        self.assertEqual(context.new_page.call_count, 1,
+                         "Do not navigate own profile again when challenge already forbids actions")
+
+    def test_cached_owner_proof_accepts_matching_live_sibling_without_new_visit(self):
+        context = Mock()
+        context.cookies.return_value = owner_cookie("12345")
+        target = make_page(context)
+        target.is_closed.return_value = False
+        matching = make_page(context)
+        matching.url = "https://www.instagram.com/"
+        matching.is_closed.return_value = False
+        context.pages = [target]
+        with patch.object(actions, "challenge_detected", return_value=False), \
+             patch.object(actions, "signed_in_handle",
+                          side_effect=lambda p: "my.profile" if p is matching else None), \
+             patch.object(actions, "verify_selected_owner_profile", side_effect=self.proof):
+            self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+            context.pages = [target, matching]
+            self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+        self.assertEqual(context.new_page.call_count, 1,
+                         "A verified matching sibling should not force another /owner/ visit")
+        self.assertEqual(self.nav_count, ["owner"])
+
     def test_no_cross_context_or_wrong_protocol_reuse(self):
         first_context = Mock()
         first_context.cookies.return_value = owner_cookie("12345")
