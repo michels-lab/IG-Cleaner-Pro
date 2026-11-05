@@ -13177,30 +13177,62 @@ async function inflateRaw(bytes){
   const stream=new Blob([bytes]).stream().pipeThrough(ds);
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
+// Verify ZIP central-directory CRC32 before consuming any relationship
+// evidence: a changed-but-still-parseable JSON must never become a new list.
+const ZIP_CRC_TABLE=(()=>{
+  const table=new Uint32Array(256);
+  for(let n=0;n<256;n++){
+    let c=n;
+    for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0);
+    table[n]=c>>>0;
+  }
+  return table;
+})();
+function zipCrc32(bytes){
+  let crc=0xffffffff;
+  for(let i=0;i<bytes.length;i++)
+    crc=(ZIP_CRC_TABLE[(crc^bytes[i])&255]^(crc>>>8))>>>0;
+  return (crc^0xffffffff)>>>0;
+}
 async function readZipEntries(file){
   const buffer=await file.arrayBuffer(),view=new DataView(buffer),u8=new Uint8Array(buffer),eocd=findEOCD(view);
   if(eocd<0)throw new Error('No encontré el directorio central del ZIP. El archivo puede estar incompleto o no ser un ZIP válido.');
   const total=view.getUint16(eocd+10,true),cdOffset=view.getUint32(eocd+16,true),cdSize=view.getUint32(eocd+12,true);
   if(total===0xffff||cdOffset===0xffffffff||cdSize===0xffffffff)throw new Error('Este export usa ZIP64 y esta versión todavía no lo admite.');
+  const cdEnd=cdOffset+cdSize;
+  if(cdOffset>=eocd||cdEnd>eocd||cdEnd>view.byteLength)
+    throw new Error('Directorio central ZIP incompleto; conservé las listas anteriores.');
   const entries=[];let pos=cdOffset;
   for(let i=0;i<total;i++){
     if(pos+46>view.byteLength||view.getUint32(pos,true)!==0x02014b50)throw new Error('El directorio del ZIP está dañado o truncado.');
-    const flags=view.getUint16(pos+8,true),method=view.getUint16(pos+10,true),compSize=view.getUint32(pos+20,true),size=view.getUint32(pos+24,true);
-    const nameLen=view.getUint16(pos+28,true),extraLen=view.getUint16(pos+30,true),commentLen=view.getUint16(pos+32,true),localOffset=view.getUint32(pos+42,true);
+    const flags=view.getUint16(pos+8,true),method=view.getUint16(pos+10,true),
+      crc32=view.getUint32(pos+16,true),compSize=view.getUint32(pos+20,true),
+      size=view.getUint32(pos+24,true);
+    const nameLen=view.getUint16(pos+28,true),extraLen=view.getUint16(pos+30,true),
+      commentLen=view.getUint16(pos+32,true),localOffset=view.getUint32(pos+42,true);
+    const next=pos+46+nameLen+extraLen+commentLen;
+    if(next>cdEnd||size===0xffffffff||compSize===0xffffffff||localOffset===0xffffffff)
+      throw new Error('Entrada ZIP incompleta o ZIP64 no compatible. Conservé las listas anteriores.');
     const name=decodeZipName(u8.subarray(pos+46,pos+46+nameLen),!!(flags&0x0800));
-    entries.push({name,flags,method,compSize,size,localOffset,isDir:name.endsWith('/')});
-    pos+=46+nameLen+extraLen+commentLen;
+    entries.push({name,flags,method,crc32,compSize,size,localOffset,isDir:name.endsWith('/')});
+    pos=next;
   }
   async function extract(entry){
     if(entry.flags&1)throw new Error(`El ZIP está protegido con contraseña (${entry.name}). Instagram normalmente entrega exports sin cifrar.`);
     const p=entry.localOffset;
     if(p+30>view.byteLength||view.getUint32(p,true)!==0x04034b50)throw new Error(`Cabecera ZIP inválida: ${entry.name}`);
-    const nameLen=view.getUint16(p+26,true),extraLen=view.getUint16(p+28,true),start=p+30+nameLen+extraLen,end=start+entry.compSize;
-    if(end>u8.length)throw new Error(`Entrada truncada en ZIP: ${entry.name}`);
+    const nameLen=view.getUint16(p+26,true),extraLen=view.getUint16(p+28,true),
+      start=p+30+nameLen+extraLen,end=start+entry.compSize;
+    if(end>cdOffset||end>u8.length)
+      throw new Error(`Entrada truncada en ZIP: ${entry.name}. Conservé las listas anteriores.`);
     const compressed=u8.slice(start,end);
-    if(entry.method===0)return compressed;
-    if(entry.method===8)return await inflateRaw(compressed);
-    throw new Error(`Compresión ZIP no compatible (método ${entry.method}) en ${entry.name}.`);
+    let bytes;
+    if(entry.method===0)bytes=compressed;
+    else if(entry.method===8)bytes=await inflateRaw(compressed);
+    else throw new Error(`Compresión ZIP no compatible (método ${entry.method}) en ${entry.name}.`);
+    if(bytes.length!==entry.size||zipCrc32(bytes)!==(entry.crc32>>>0))
+      throw new Error(`Archivo ZIP dañado o modificado (tamaño/CRC): ${entry.name}. Conservé las listas anteriores.`);
+    return bytes;
   }
   return {entries,extract};
 }
