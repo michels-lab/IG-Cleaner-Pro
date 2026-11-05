@@ -50,6 +50,7 @@ const {chromium}=require('playwright');
    window.__staleStartStatus=false;
    window.__wrongReviewScope=false;
    window.__delayReview=false;
+   window.__largeSavedReview=false;
    window.__laneStates={
     'ig_first_1234567':{account:'ig_first_1234567',state:'idle',running:false,
       task:'',processed:0,pending:0,issues:0},
@@ -113,6 +114,17 @@ const {chromium}=require('playwright');
               message:'No Cancel Request clicked: no active request.'}
           }
         }};
+      if(window.__largeSavedReview&&first){
+        // 725 original saved profiles: a late uncertain click must lead the
+        // display and a green historical OK must remain reachable on page 15.
+        const targets=Array.from({length:725},(_,i)=>
+          'bulk.'+String(i).padStart(3,'0'));
+        payload.batch={id:'saved-725',targets,action_results:{
+          'bulk.724':{status:'review',possible_click:true,
+            message:'Previous click outcome unknown. No automatic replay.'},
+          'bulk.000':{status:'ok',message:'Earlier confirmed action.'}
+        }};
+      }
     }else payload={status:'idle'};
     return {ok:true,json:async()=>payload};
    };
@@ -256,8 +268,69 @@ const {chromium}=require('playwright');
   await page.locator('#igcDawRefresh').click();
   assert.equal(await modal.isVisible(),false,
     'Review->Paused is still the same B batch; no duplicate notification.');
+  // Large real-world cohort UX: all 725 original targets must be reachable
+  // without a new browser action, fresh review approval, or mutation of WAL.
+  await page.evaluate(()=>window.__largeSavedReview=true);
+  const beforeLarge=(await calls()).filter(x=>x.operation==='start-one').length;
+  const beforeApproval=(await calls()).filter(x=>x.operation==='approve-one').length;
+  await page.locator('#igcDawSavedSummary0').click();
+  await savedModal.waitFor({state:'visible',timeout:5000});
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),50,
+    'Do not render 725 browser rows and freeze the completion dialog');
+  assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
+    /Resultados 1–50 de 725 · página 1 de 15/);
+  assert.match(await savedModal.locator('.igc-daw-review-row').first().innerText(),
+    /@bulk\.724.*REVIEW · CLIC INCIERTO/s);
+  await savedModal.locator('.igc-daw-page-jump').selectOption('15');
+  assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
+    /Resultados 701–725 de 725 · página 15 de 15/);
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),25);
+  assert.match(await savedModal.locator('.igc-daw-review-row').last().innerText(),
+    /@bulk\.000.*OK · ACCIÓN CONFIRMADA/s);
+  assert.equal(await savedModal.locator('.igc-daw-page-next').isDisabled(),true);
+  await savedModal.locator('.igc-daw-page-prev').click();
+  assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
+    /Resultados 651–700 de 725/);
+  // Search across the WHOLE saved 725 (not only 50 rendered), preserving
+  // input focus and with no browser, server or action requests on each key.
+  const beforeSearch=(await calls()).length;
+  await savedModal.locator('.igc-daw-review-search').fill('@bulk.724');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),1);
+  assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
+    /Resultados 1–1 de 1 \(de 725 originales\)/);
+  assert.equal(await savedModal.locator('.igc-daw-review-search').inputValue(),
+    '@bulk.724','Typing must not lose text when page rows rerender');
+  await savedModal.locator('.igc-daw-review-search').fill('absent.person');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),0);
+  assert.match(await savedModal.innerText(),/Sin coincidencias en esta tanda/);
+  await savedModal.locator('.igc-daw-review-search').fill('');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),50);
+  assert.equal((await calls()).length,beforeSearch,
+    'Searching historical saved outcomes must not fetch or change Instagram');
+  await savedModal.getByRole('button',{name:'Cerrar'}).click();
+
+  await page.locator('#igcDawReview0').click();
+  await page.waitForFunction(()=>
+    document.querySelector('#igcDawTarget0')?.options?.length===724,null,
+    {timeout:10000});
+  assert.equal(await page.locator('#igcDawReviewList0 .igc-daw-review-row').count(),50);
+  assert.match(await page.locator('#igcDawReviewList0 .igc-daw-pager-count').innerText(),
+    /Resultados 1–50 de 725/);
+  assert.equal(await page.locator('#igcDawTarget0 option[value="bulk.724"]').count(),1,
+    'Uncertain clicked target remains available for manual inspection');
+  assert.equal(await page.locator('#igcDawTarget0 option[value="bulk.000"]').count(),0,
+    'Green confirmed target may be displayed but never offered for action');
+  await page.locator('#igcDawReviewList0 .igc-daw-page-jump').selectOption('15');
+  assert.match(await page.locator('#igcDawReviewList0 .igc-daw-pager-count').innerText(),
+    /Resultados 701–725 de 725/);
+  assert.match(await page.locator('#igcDawReviewList0 .igc-daw-review-row').last().innerText(),
+    /@bulk\.000.*OK · ACCIÓN CONFIRMADA/s);
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,beforeLarge,
+    'Paging through the saved WAL must never start or replay a robot action');
+  assert.equal((await calls()).filter(x=>x.operation==='approve-one').length,beforeApproval,
+    'Paging must never silently approve saved Review results');
   await ctx.close();
-  console.log('PASS: two independent per-account completion popups show original WAL, retain unresolved, do not approve/reclick, no duplicate notification');
+  console.log('PASS: per-account completion + 725 saved targets pageable in dialog and Review, unchanged WAL, zero replay and zero approval');
  }finally{
   await browser.close();fs.rmSync(folder,{recursive:true,force:true});
  }
