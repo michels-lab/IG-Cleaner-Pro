@@ -82,7 +82,7 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         # must not change the untouched canonical batch or hide later targets.
         self.assertIn("const SAVED_RESULTS_PER_PAGE=50", DUAL_ACTION_PANEL)
         self.assertIn("function showSavedResultPages(container,names,renderRow", DUAL_ACTION_PANEL)
-        self.assertIn("container.append(renderRow(username))", DUAL_ACTION_PANEL)
+        self.assertIn("rows.append(renderRow(username))", DUAL_ACTION_PANEL)
         self.assertIn("Página siguiente de resultados", DUAL_ACTION_PANEL)
         self.assertIn("Página anterior de resultados", DUAL_ACTION_PANEL)
         self.assertIn("Buscar usuario en resultados guardados", DUAL_ACTION_PANEL)
