@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "e8bb4ca15509e79c5c418e7381882131e23cf7d675f722b5219cf1514c43de99",
+  "inventory_fingerprint": "f9ce6729798d27cabbd35ae3053f64cdc51585fe3c6c433644117fbecaa94a05",
   "evidence_fingerprint": "ffed5353b390336b78da4b684e85499a613746023a36faeca3fe2cdff0c7deb9",
   "files": [
     {
@@ -1842,7 +1842,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7f3819394ae618b7491e2b1ce045d1fcea462ad1"
+      "blob": "e4f2db2b749b0ad4bd15191b6520c159a4c81daa"
     },
     {
       "path": "tests/dual-action-parallel-windows-browser.test.cjs",
@@ -2612,7 +2612,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b67454e84323fc364b1154d2840a609a7a2f9b68"
+      "blob": "ff6610f2a95ac02b1639738ccb732770c04ece46"
     },
     {
       "path": "tools/dual_action_workspaces.py",
