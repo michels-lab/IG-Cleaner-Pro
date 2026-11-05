@@ -13372,7 +13372,23 @@ async function parseZipExtras(groups){
   }
   return out;
 }
-async function applyZipCore(groups,zipName){
+// ZIP parsing involves asynchronous I/O. Never attribute an export to
+// whichever Instagram workspace happens to be active when it finishes.
+function zipImportScope(){
+  const id=window.IGC_INSTAGRAM_PROFILES;
+  return id?{owner:String(id.owner||''),account:String(id.active||''),
+    verified:!!id.verified}:null;
+}
+function assertZipImportScope(original){
+  if(!original)return;
+  const now=window.IGC_INSTAGRAM_PROFILES;
+  if(!now||String(now.owner||'')!==original.owner||
+      String(now.active||'')!==original.account||
+      (original.account!=='legacy'&&!now.verified))
+    throw new Error('Cambió la cuenta o el perfil de Instagram durante la importación. No se guardaron nuevas listas: vuelve a seleccionar el ZIP en el perfil correcto.');
+}
+async function applyZipCore(groups,zipName,expectedScope=null){
+  if(expectedScope)assertZipImportScope(expectedScope);
   const followSources=groups.following||[],followerSources=groups.followers||[];
   const fw=followSources.map(x=>x.file),fr=followerSources.map(x=>x.file);
   diagData=[];
@@ -13395,14 +13411,20 @@ async function applyZipCore(groups,zipName){
   rejectInvalidRelationship(followSources,'Following');
   rejectInvalidRelationship(followerSources,'Followers');
   const newFollowing=fw.length?await parseFiles(fw,'following'):null;
+  if(expectedScope)assertZipImportScope(expectedScope);
   const newFollowers=fr.length?await parseFiles(fr,'followers'):null;
+  if(expectedScope)assertZipImportScope(expectedScope);
   if(newFollowing!==null&&!newFollowing.length&&!explicitEmptyRelationship(followSources,'following'))
     throw new Error('Following sin usuarios verificables ni lista explícitamente vacía. Se conservaron las listas anteriores.');
   if(newFollowers!==null&&!newFollowers.length&&!explicitEmptyRelationship(followerSources,'followers'))
     throw new Error('Followers sin usuarios verificables ni lista explícitamente vacía. Se conservaron las listas anteriores.');
   // Pending itself is similarly validated before publishing new relationship
   // lists. If Pending fails, do not silently replace Following/Followers.
+  if(expectedScope)assertZipImportScope(expectedScope);
   const pendingCount=await parseZipPending(groups.pending_follow_requests||[],zipName);
+  // Pending parser publishes synchronously before its resolved Promise;
+  // another workspace must not be allowed to publish Following/Followers.
+  if(expectedScope)assertZipImportScope(expectedScope);
   if(newFollowing!==null)followingRaw=newFollowing;
   if(newFollowers!==null)followersRaw=newFollowers;
   followingMap=new Map(followingRaw.map(u=>[u.username,u]));
@@ -13443,11 +13465,13 @@ window.igcHandleZipInput=async function(file){
     if(!confirm('Import '+String(file.name||'this ZIP')+' into '+ (account?.username?'@'+account.username:'the selected Instagram profile')+'? Lists from other Instagram profiles will remain separate.'))return false;
   }
   if(!/\.zip$/i.test(file.name||'')){zipError('Selecciona el archivo .zip completo que entrega Instagram.');return}
+  const importScope=zipImportScope();
   ZIP_STATE.busy=true;ZIP_STATE.file=file;ZIP_STATE.entries=[];ZIP_STATE.groups={};
   q('igcZipSummary').innerHTML='';q('igcZipNote').textContent='';
   setZipStatus('Abriendo export de Instagram…',`${file.name} · ${(file.size/1024/1024).toFixed(1)} MB`,4);
   try{
     const zip=await readZipEntries(file),textEntries=zip.entries.filter(e=>!e.isDir&&isTextCandidate(e.name));
+    assertZipImportScope(importScope);
     if(!textEntries.length)throw new Error('No encontré archivos JSON/HTML/TXT dentro del ZIP.');
     setZipStatus('Buscando archivos de relaciones…',`${zip.entries.length} entradas · ${textEntries.length} archivos de texto`,10);
     const groups={};CATEGORY_ORDER.forEach(k=>groups[k]=[]);let ignored=0;
@@ -13460,6 +13484,7 @@ window.igcHandleZipInput=async function(file){
       if(!likely){ignored++;continue}
       if(e.size>80*1024*1024){ignored++;continue}
       const item=await inspectZipTextFile(e,zip.extract);
+      assertZipImportScope(importScope);
       const cat=zipCategoryFor(item);
       if(CATEGORY_ORDER.includes(cat)){item.zipCategory=cat;groups[cat].push(item)}else ignored++;
       setZipStatus('Detectando exports…',`${i+1}/${textEntries.length} revisados`,10+Math.round(38*(i+1)/textEntries.length));
@@ -13469,7 +13494,8 @@ window.igcHandleZipInput=async function(file){
     if(!found)throw new Error('Abrí el ZIP, pero no encontré exports compatibles de Following/Followers/Pending.');
     renderZipSummary(groups,{},ignored);
     setZipStatus('Procesando datos automáticamente…',`${found} archivos compatibles encontrados`,55);
-    const result=await applyZipCore(groups,file.name);
+    assertZipImportScope(importScope);
+    const result=await applyZipCore(groups,file.name,importScope);
     const counts={following:result.following,followers:result.followers,pending_follow_requests:result.pending};
     for(const cat of ['recent_follow_requests','recently_unfollowed_profiles','blocked_profiles'])counts[cat]=result.extras.filter(x=>x.category===cat).reduce((n,x)=>n+x.count,0);
     renderZipSummary(groups,counts,ignored);
