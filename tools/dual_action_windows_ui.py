@@ -621,10 +621,16 @@ async function statusUpdate(silent=false,knownSnapshot=null){
       info.owner_profile_visits>=0?info.owner_profile_visits:null;
     const siblingProofs=info&&Number.isSafeInteger(info.owner_sibling_proofs)&&
       info.owner_sibling_proofs>=0?info.owner_sibling_proofs:null;
+    const current=typeof info?.current_profile==='string'&&HANDLE.test(info.current_profile)
+      ? info.current_profile:'';
+    const diagnostic=typeof info?.message==='string'
+      ? info.message.replace(/[\\r\\n\\x00-\\x1f]+/g,' ').slice(0,180):'';
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
        String(info.issues||0)+' pendientes de revisión'+
+       (current?' · '+(info.running?'Perfil actual':'Último perfil')+': @'+current:'')+
+       (diagnostic?' · Diagnóstico: '+diagnostic:'')+
        (ownerVisits!==null?' · visitas a mi perfil: '+ownerVisits:'')+
        (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')):
       'Sin estado para esta cuenta.';
