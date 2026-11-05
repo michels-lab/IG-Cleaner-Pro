@@ -17,9 +17,20 @@ function harness(){
  const refs=new Map(['igcSyncSignedOut','igcSyncSignedIn','igcSyncAccount'].map(id=>[id,{style:{},textContent:''}]));
  const created=[],events=[],reloads=[];
  function makeNode(tag){const node={tag,children:[],style:{},textContent:'',disabled:false,
+  isConnected:true,open:false,attributes:{},
   appendChild(child){this.children.push(child);return child},
-  remove(){this.removed=true},close(){this.closed=true},
-  showModal(){this.opened=true},addEventListener(name,cb){this[name]=cb}};created.push(node);return node}
+  setAttribute(name,value){this.attributes[name]=String(value)},
+  querySelectorAll(selector){
+   const found=[];const scan=entry=>{
+    if(entry.tag===selector)found.push(entry);
+    for(const child of entry.children||[])scan(child);
+   };
+   scan(this);return found;
+  },
+  remove(){this.removed=true;this.isConnected=false;this.open=false},
+  close(){this.closed=true;this.open=false},
+  showModal(){this.opened=true;this.open=true},
+  addEventListener(name,cb){this[name]=cb}};created.push(node);return node}
  const document={getElementById:id=>refs.get(id)||null,createElement:makeNode,
   body:{appendChild(node){refs.set(node.id,node);return node}},addEventListener(){},hidden:false};
  const window={IGC_INSTAGRAM_PROFILES:{scopeRest:(path,opt)=>({path,opt}),setCloudStatus(){},active:'legacy',accounts:[]},

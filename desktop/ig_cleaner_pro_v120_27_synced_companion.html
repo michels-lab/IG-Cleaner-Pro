@@ -14611,41 +14611,68 @@ window.igcSyncDisconnect=function(){
  location.reload();
 };
 function addAnotherLogin(){
- if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de añadir otra cuenta.','warn');return}
- if(S.busy){status('Termina la sincronización antes de añadir un usuario.','warn');return}
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de añadir otra cuenta.','warn');return false}
+ if(S.busy){status('Termina la sincronización antes de añadir un usuario.','warn');return false}
  saveRemembered(S.session);
  clearTimeout(statePushTimer);
  S.session=null;S.needsReauth=false;
  saveSession();
  S.cfg.email='';saveCfg();
  location.reload();
+ return true;
 }
 async function activateRemembered(owner){
- if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de cambiar de cuenta.','warn');return}
+ // This is a SECOND independent admission check after the chooser's gate:
+ // a sync or action worker can start between the two checks.
+ if(window.igcAutoSwitchGuard?.()===false){status('Pausa primero la automatización de Instagram antes de cambiar de cuenta.','warn');return false}
  const next=readRemembered()[owner];
  if(!next?.refresh_token||!next?.access_token||sessionOwner(next)!==owner){
-  status('La sesión guardada no es válida. Entra con la contraseña de ese usuario.','warn');return;
+  status('La sesión guardada no es válida. Entra con la contraseña de ese usuario.','warn');return false;
  }
- if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return}
- const previous=S.session;
- const previousReauth=S.needsReauth;
- saveRemembered(previous);
- S.session=next;
- S.needsReauth=false;
+ if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return false}
+ const previous=S.session,previousReauth=S.needsReauth;
+ const previousEmail=S.cfg.email;
+ let applied=false;
  try{
+  let candidate=next;
   if(expiresAtSeconds(next)<=Date.now()/1000+90){
-   const ok=await refresh(next.access_token);
-   if(!ok)throw new Error('La sesión caducó; inicia sesión nuevamente con ese usuario.');
+   // Refresh the REMEMBERED account independently. The current account
+   // must NOT be overwritten, displayed or persisted while HTTP is pending.
+   // refresh() is for the CURRENT account and intentionally changes S.session.
+   const data=await jfetch('/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',auth:false,body:JSON.stringify({refresh_token:next.refresh_token})
+   });
+   if(!data?.access_token||!data?.refresh_token||
+      (data.user&&sessionOwner(data)!==owner))
+    throw new Error('La sesión guardada caducó o devolvió otra identidad. Inicia sesión de nuevo.');
+   candidate={...next,...data,user:data.user||next.user};
   }
+  // An active robot, a newly started sync, or a changed current account
+  // invalidates the original admission. No write before these checks.
+  const lastGate=accountSwitchAdmission();
+  if(lastGate.code!=='ready'||S.session!==previous||sessionOwner(candidate)!==owner){
+   status(lastGate.code!=='ready'?lastGate.message:
+    'La cuenta activa cambió mientras se verificaba la sesión. Vuelve a seleccionarla.','warn');
+   return false;
+  }
+  saveRemembered(previous);
+  applied=true;
+  S.session=candidate;S.needsReauth=false;
   clearTimeout(statePushTimer);
   S.cfg.email=owner;saveCfg();
   saveSession();
   // Rebuild owner-dependent localStorage, Focus state and Instagram registry.
   location.reload();
+  return true;
  }catch(error){
-  S.session=previous;S.needsReauth=previousReauth;
-  saveSession();
+  // Restore only if this operation applied the new session. A separate
+  // owner change made during the awaited refresh must never be overwritten.
+  if(applied){
+   S.session=previous;S.needsReauth=previousReauth;
+   S.cfg.email=previousEmail;saveCfg();saveSession();
+  }
   status('No se cambió de cuenta: '+String(error.message||error),'warn');
+  return false;
  }
 }
 function makeAccountButton(label,action,container){
@@ -14688,18 +14715,46 @@ window.igcSyncSwitchAccount=function(){
  const title=document.createElement('h3');title.textContent='Cambiar cuenta de Insta Cleaner';
  dialog.appendChild(title);
  const note=document.createElement('p');note.className='note';
+ note.setAttribute('role','status');
+ note.setAttribute('aria-live','polite');
  note.textContent=entry.code==='sync_busy'||entry.code==='automation_active'?
   entry.message:
   'Selecciona una sesión guardada. Tus listas, favoritos y revisiones se mantienen separadas por usuario.';
  dialog.appendChild(note);
- const admitChoice=(action)=>{
+ let choiceInFlight=false;
+ const admitChoice=async(action)=>{
+  if(choiceInFlight)return;
   const gate=accountSwitchAdmission();
   if(gate.code!=='ready'){
    note.textContent=gate.message;
    status(gate.message,'warn');
    return;
   }
-  dialog.close();dialog.remove();action();
+  // Do not dismiss the chooser before an asynchronous account activation
+  // actually passes its SECOND guard. Otherwise a concurrent sync or robot
+  // can veto the switch after the modal is gone (silent cold-start no-op).
+  choiceInFlight=true;
+  const buttons=Array.from(dialog.querySelectorAll('button'));
+  const wasDisabled=buttons.map(button=>button.disabled);
+  for(const button of buttons)button.disabled=true;
+  try{
+   const accepted=await action();
+   if(accepted!==true){
+    const latest=accountSwitchAdmission();
+    note.textContent=latest.code==='ready'?
+     'No se cambió de cuenta. Revisa el estado de la sesión y vuelve a intentarlo.':
+     latest.message;
+    return;
+   }
+   if(dialog.open)dialog.close();
+   dialog.remove();
+  }catch(error){
+   note.textContent='No se cambió de cuenta: '+String(error?.message||error).slice(0,160);
+   status(note.textContent,'warn');
+  }finally{
+   choiceInFlight=false;
+   buttons.forEach((button,i)=>{if(button.isConnected)button.disabled=wasDisabled[i]});
+  }
  };
  const list=document.createElement('div');list.style.cssText='display:grid;gap:9px;margin:14px 0';
  const active=sessionOwner(S.session);
