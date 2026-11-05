@@ -58,6 +58,10 @@ padding:7px 9px;border:1px solid #34445a;border-radius:7px;background:#142032;fo
 #igcDualActionWorkspacePanel .igc-daw-uncertain{border-left:4px solid #e28a57;background:#2c231f}
 #igcDualActionWorkspacePanel .igc-daw-unresolved{border-left:3px solid #d9a43c}
 #igcDualActionWorkspacePanel .igc-daw-unavailable{border-left:3px solid #8797a9}
+#igcDualActionWorkspacePanel .igc-daw-review-search{width:100%;box-sizing:border-box;min-height:34px;
+background:#142638;border:1px solid #466077;border-radius:8px;color:#e9f0f8;
+font:inherit;font-size:12px;padding:7px 9px;margin:8px 0 3px}
+#igcDualActionWorkspacePanel .igc-daw-page-rows{display:grid;gap:5px}
 #igcDualActionWorkspacePanel .igc-daw-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
 justify-content:space-between;padding:9px 3px;color:#a9bed2;font-size:12px}
 #igcDualActionWorkspacePanel .igc-daw-pager button{min-height:34px}
@@ -215,33 +219,69 @@ function displayNextCompletion(){
 // does not sort or mutate WAL targets, and never fetches another account.
 const SAVED_RESULTS_PER_PAGE=50;
 function showSavedResultPages(container,names,renderRow,intro=''){
- let index=0;
+ let index=0,term='';
  const total=names.length;
- const pages=Math.max(1,Math.ceil(total/SAVED_RESULTS_PER_PAGE));
+ container.replaceChildren();
+ if(intro)container.append(el('div','igc-daw-note',intro));
+ // Search is read-only over this exact saved cohort. Keep the input outside
+ // the dynamically replaced page so typing never loses keyboard focus.
+ if(total>SAVED_RESULTS_PER_PAGE){
+   const find=el('input','igc-daw-review-search');
+   find.type='search';find.placeholder='Buscar @usuario en esta tanda';
+   find.setAttribute('aria-label','Buscar usuario en resultados guardados');
+   find.autocomplete='off';
+   find.addEventListener('input',()=>{
+     term=find.value.trim().replace(/^@/,'').toLowerCase();
+     index=0;drawPage();
+   });
+   container.append(find);
+ }
+ const rows=el('div','igc-daw-page-rows');
+ const pager=el('div','igc-daw-pager');
+ container.append(rows,pager);
  function drawPage(){
    if(!container.isConnected)return;
-   container.replaceChildren();
-   if(intro)container.append(el('div','igc-daw-note',intro));
-   if(!total){container.append(el('div','igc-daw-note','Sin objetivos guardados.'));return}
+   const visible=term?names.filter(username=>
+     String(username).toLowerCase().includes(term)):names;
+   const size=visible.length,pages=Math.max(1,Math.ceil(size/SAVED_RESULTS_PER_PAGE));
+   index=Math.max(0,Math.min(index,pages-1));
    const start=index*SAVED_RESULTS_PER_PAGE;
-   for(const username of names.slice(start,start+SAVED_RESULTS_PER_PAGE))
-     container.append(renderRow(username));
+   rows.replaceChildren();
+   if(!size)rows.append(el('div','igc-daw-note',
+     total?'Sin coincidencias en esta tanda.':'Sin objetivos guardados.'));
+   else for(const username of visible.slice(start,start+SAVED_RESULTS_PER_PAGE))
+     rows.append(renderRow(username));
+   pager.replaceChildren();
+   const counter=el('span','igc-daw-pager-count',size?
+     'Resultados '+(start+1)+'–'+Math.min(start+SAVED_RESULTS_PER_PAGE,size)+
+     ' de '+size+(term?' (de '+total+' originales)':'')+
+     ' · página '+(index+1)+' de '+pages:
+     '0 resultados'+(term?' (de '+total+' originales)':''));
+   counter.setAttribute('aria-live','polite');
    if(pages>1){
-     const bar=el('div','igc-daw-pager');
      const prev=el('button','igc-daw-page-prev','Anteriores');
      prev.type='button';prev.disabled=index===0;
      prev.setAttribute('aria-label','Página anterior de resultados');
      prev.addEventListener('click',()=>{index--;drawPage();container.scrollTop=0});
-     const counter=el('span','igc-daw-pager-count',
-       'Resultados '+(start+1)+'–'+Math.min(start+SAVED_RESULTS_PER_PAGE,total)+
-       ' de '+total+' · página '+(index+1)+' de '+pages);
-     counter.setAttribute('aria-live','polite');
+     pager.append(prev);
+   }
+   pager.append(counter);
+   if(pages>1){
+     const jump=el('select','igc-daw-page-jump');
+     jump.setAttribute('aria-label','Ir a página de resultados');
+     for(let n=1;n<=pages;n++){
+       const option=el('option',null,'Página '+n);option.value=String(n);
+       jump.append(option);
+     }
+     jump.value=String(index+1);
+     jump.addEventListener('change',()=>{
+       index=Number(jump.value)-1;drawPage();container.scrollTop=0;
+     });
      const next=el('button','igc-daw-page-next','Siguientes');
      next.type='button';next.disabled=index===pages-1;
      next.setAttribute('aria-label','Página siguiente de resultados');
      next.addEventListener('click',()=>{index++;drawPage();container.scrollTop=0});
-     bar.append(prev,counter,next);
-     container.append(bar);
+     pager.append(jump,next);
    }
  }
  drawPage();
