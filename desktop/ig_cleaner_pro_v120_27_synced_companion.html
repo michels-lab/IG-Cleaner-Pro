@@ -9215,9 +9215,9 @@ async function processPendingFiles(){
    const name=String(file.name||'');
    const text=await readFile(file);
    let rows=[],count=0;
-   if(/\\.json$/i.test(name)){
+   if(/\.json$/i.test(name)){
     let data;
-    try{data=JSON.parse(String(text||'').replace(/^\\uFEFF/,''))}
+    try{data=JSON.parse(String(text||'').replace(/^\uFEFF/,''))}
     catch{throw Error(name+': JSON dañado o incompleto')}
     const sent=data&&!Array.isArray(data)&&typeof data==='object'?
       data.relationships_follow_requests_sent:undefined;
@@ -9234,7 +9234,7 @@ async function processPendingFiles(){
     }else{
      throw Error(name+': no contiene solicitudes enviadas verificables');
     }
-   }else if(/\\.html?$/i.test(name)){
+   }else if(/\.html?$/i.test(name)){
     const payload=window.igcDetectPayload?.(text,name);
     if(payload?.format!=='html'||payload.category!=='pending_follow_requests'
          ||typeof window.igcParseDetected!=='function')
