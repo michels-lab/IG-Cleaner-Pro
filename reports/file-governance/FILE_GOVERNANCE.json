@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "116020546ef8c505c037fe424b67521980c3979df24205490c5d1559cf8cc9a6",
+  "inventory_fingerprint": "fbf1fb72b32fcc600ad163a835d449bc801b48650308a588ba9df86d27f5905d",
   "evidence_fingerprint": "ffed5353b390336b78da4b684e85499a613746023a36faeca3fe2cdff0c7deb9",
   "files": [
     {
@@ -1835,7 +1835,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "78c3ba0ba469c75e9ee170cada5853dc5995d6bf"
+      "blob": "9f90ab56ebc13eb42d5ac74b0eca842f318bc843"
     },
     {
       "path": "tests/dual-action-new-batch-browser.test.cjs",
@@ -2234,7 +2234,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "249f0be4f6ebc4f16ac15ba9bf6e5f3753f4bba5"
+      "blob": "bc262b9bdb4d10c12ff46238c71b5d5f07a5ce59"
     },
     {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
@@ -2612,7 +2612,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "cbee98f0b80719e49f1a4db1f0501c648a212182"
+      "blob": "5ad7cbdf08c458d37a8d1205dc07cfdc395193f5"
     },
     {
       "path": "tools/dual_action_workspaces.py",
