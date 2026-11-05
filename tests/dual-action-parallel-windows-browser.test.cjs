@@ -65,6 +65,13 @@ const {chromium}=require('playwright');
      if(window.__parallelStatusOffline)
        return {ok:false,json:async()=>({error:'offline fixture'})};
      payload={parallel_mutations_enabled:window.__parallelMode,lanes:[]};
+    }else if(operation==='review-one'){
+     // Model a slow read-only inspection on A while the owner urgently
+     // pauses B. The second account must not wait for A's network reply.
+     if(window.__parallelHoldReview)
+       await new Promise(resolve=>{window.__releaseReview=resolve});
+     payload={owner:data.owner,account:data.account,task:data.task,
+       batch:{id:'offline-review',targets:[],action_results:{}}};
     }else if(operation==='preflight-new-one')
      payload={read_only:true,actions_enabled:false,offline_untouched_only:true,
       unresolved_saved_cohort:false,evidence_counts:{untouched:data.targets.length},
@@ -154,6 +161,23 @@ const {chromium}=require('playwright');
   await page.locator('#igcDawRefresh').click();
   assert.match(await page.locator('#igcDawStatus0').innerText(),
     /Sin estado para esta cuenta/,'Reconnect must replace unknown status with fresh response');
+  // Long-running read-only command for A must never disable account B's Pause.
+  await page.evaluate(()=>{window.__parallelHoldReview=true});
+  await page.locator('#igcDawReview0').click();
+  await page.waitForFunction(()=>
+    window.__parallelCalls.some(x=>x.operation==='review-one') &&
+    typeof window.__releaseReview==='function',null,{timeout:10000});
+  assert.equal(await page.locator('#igcDawStop1').isEnabled(),true,
+    'B must remain independently pausable while A awaits a network response');
+  await page.locator('#igcDawStop1').click();
+  await page.waitForFunction(()=>
+    window.__parallelCalls.filter(x=>x.operation==='pause-one'&&
+      x.data.account==='ig_second_123456').length===1,null,{timeout:10000});
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
+    'Pausing B during A inspection must never relaunch either action batch');
+  await page.evaluate(()=>window.__releaseReview?.());
+  await page.waitForFunction(()=>
+    document.querySelector('#igcDawReviewList0')?.textContent?.includes('Clic incierto primero'));
   await ctx.close();
   console.log('PASS: serial default, parallel exact opt-in, two independent action approvals, account-scoped pause and fail-closed status disconnect/recovery');
  }finally{
