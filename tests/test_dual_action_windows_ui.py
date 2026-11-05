@@ -85,6 +85,11 @@ class DualActionWindowsPanelTests(unittest.TestCase):
         self.assertIn("container.append(renderRow(username))", DUAL_ACTION_PANEL)
         self.assertIn("Página siguiente de resultados", DUAL_ACTION_PANEL)
         self.assertIn("Página anterior de resultados", DUAL_ACTION_PANEL)
+        self.assertIn("Buscar usuario en resultados guardados", DUAL_ACTION_PANEL)
+        self.assertIn("Ir a página de resultados", DUAL_ACTION_PANEL)
+        self.assertIn("index=0;drawPage()", DUAL_ACTION_PANEL)
+        self.assertIn("term?names.filter(username=>", DUAL_ACTION_PANEL)
+        self.assertIn("const rows=el('div','igc-daw-page-rows')", DUAL_ACTION_PANEL)
         self.assertIn("showSavedResultPages(list,names,username=>", DUAL_ACTION_PANEL)
         self.assertIn("showSavedResultPages(list,ordered,username=>", DUAL_ACTION_PANEL)
         # All unresolved targets stay in the manual inspection select even
