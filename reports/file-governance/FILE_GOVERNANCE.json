@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "5c1f1a5f64b8669af12da6af49bdfb70c084027c6386bf4821f3736e935d86b7",
+  "inventory_fingerprint": "423a0048039f5351cff96548cc54355610637610fc162c42c1dc3ede60b93764",
   "evidence_fingerprint": "ffed5353b390336b78da4b684e85499a613746023a36faeca3fe2cdff0c7deb9",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "8a7b19695bfa68d5ac6b9be9aaa60988fe3491d9"
+      "blob": "646f820ee4c0976363a15f45af9d5eb875f2f344"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1716,14 +1716,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6a7b2d8050676f5be38df91fd6b07368ee168382"
+      "blob": "89e6825e58ce257b405198985dfe98063a5f1686"
     },
     {
       "path": "tests/auth-account-switch.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d61b3f188f07c903947ecffb65d06305c89f58be"
+      "blob": "b5afcb1cb41ca5c13c99f1ffca5e37f23ae223f5"
     },
     {
       "path": "tests/auth-email-templates-contract.py",
