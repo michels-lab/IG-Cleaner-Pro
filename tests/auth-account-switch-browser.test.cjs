@@ -137,6 +137,53 @@ const {chromium}=require("playwright");
     "second@example.test","Failed expired-session refresh cannot change owners");
   assert(await expiredChooser.locator("button").filter({hasText:"first@example.test"}).isEnabled());
   await expiredChooser.getByText("Cancelar",{exact:true}).click();
+  // Regression: a REMEMBERED session refresh must NOT provisionally overwrite
+  // the currently signed-in owner during a pending HTTP response. If a robot
+  // starts in the meantime, the final gate denies switching after response.
+  await page.evaluate(()=>{
+    const original=window.fetch;
+    window.__originalSwitchFetch=original;
+    window.__switchRefreshRequested=false;
+    window.fetch=(url,opts)=>{
+      if(String(url).includes("/auth/v1/token?grant_type=refresh_token")){
+        window.__switchRefreshRequested=true;
+        return new Promise(resolve=>{
+          window.__resolveSwitchRefresh=()=>resolve({ok:true,text:async()=>JSON.stringify({
+            access_token:"offline-renewed-first",refresh_token:"offline-new-refresh",
+            expires_at:Math.floor(Date.now()/1000)+3600,
+            user:{id:"fixture-user-first",email:"first@example.test"}
+          })});
+        });
+      }
+      return original(url,opts);
+    };
+  });
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const pendingChooser=page.locator("#igcLoginChooser");
+  await pendingChooser.waitFor({state:"visible"});
+  await pendingChooser.locator("button").filter({hasText:"first@example.test"}).click();
+  await page.waitForFunction(()=>window.__switchRefreshRequested &&
+    typeof window.__resolveSwitchRefresh==="function",null,{timeout:10000});
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","An in-flight token refresh may NOT persist another owner early");
+  assert.equal(await page.locator("#igcSyncAccount").innerText(),"second@example.test");
+  await page.evaluate(()=>{
+    window.igcAutoSwitchGuard=()=>false;
+    window.__resolveSwitchRefresh();
+  });
+  await page.waitForFunction(()=>
+    document.querySelector("#igcLoginChooser")?.open &&
+    document.querySelector("#igcLoginChooser")?.textContent?.includes("Pause the Instagram robot"),
+    null,{timeout:10000});
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "second@example.test","A newly activated robot vetoes a completed refresh before commit");
+  await page.evaluate(()=>{
+    window.fetch=window.__originalSwitchFetch;
+    window.igcAutoSwitchGuard=()=>true;
+  });
+  await pendingChooser.getByText("Cancelar",{exact:true}).click();
   await page.evaluate(()=>{
     const key="igc_v120_login_accounts_v1";
     const wallet=JSON.parse(localStorage.getItem(key));
