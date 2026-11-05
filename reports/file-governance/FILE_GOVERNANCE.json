@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "fbf1fb72b32fcc600ad163a835d449bc801b48650308a588ba9df86d27f5905d",
+  "inventory_fingerprint": "5c1f1a5f64b8669af12da6af49bdfb70c084027c6386bf4821f3736e935d86b7",
   "evidence_fingerprint": "ffed5353b390336b78da4b684e85499a613746023a36faeca3fe2cdff0c7deb9",
   "files": [
     {
@@ -2115,7 +2115,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "43cb5a1f4b9840e736d1b18fffa54ad50d32c712"
+      "blob": "9518330f96520e690ed97875b5656d59e89388f0"
     },
     {
       "path": "tests/test_action_reference_worker_contract.py",
@@ -2682,7 +2682,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ffabe12c201aef78579cec6bccf567ad5051b7f4"
+      "blob": "7400b11e3e0b54a08f77fd23b34e4222f114861a"
     },
     {
       "path": "tools/profile_counts_audit.py",
