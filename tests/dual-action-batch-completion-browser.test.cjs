@@ -281,7 +281,7 @@ const {chromium}=require('playwright');
     /Resultados 1–50 de 725 · página 1 de 15/);
   assert.match(await savedModal.locator('.igc-daw-review-row').first().innerText(),
     /@bulk\.724.*REVIEW · CLIC INCIERTO/s);
-  for(let n=0;n<14;n++)await savedModal.locator('.igc-daw-page-next').click();
+  await savedModal.locator('.igc-daw-page-jump').selectOption('15');
   assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
     /Resultados 701–725 de 725 · página 15 de 15/);
   assert.equal(await savedModal.locator('.igc-daw-review-row').count(),25);
@@ -291,6 +291,22 @@ const {chromium}=require('playwright');
   await savedModal.locator('.igc-daw-page-prev').click();
   assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
     /Resultados 651–700 de 725/);
+  // Search across the WHOLE saved 725 (not only 50 rendered), preserving
+  // input focus and with no browser, server or action requests on each key.
+  const beforeSearch=(await calls()).length;
+  await savedModal.locator('.igc-daw-review-search').fill('@bulk.724');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),1);
+  assert.match(await savedModal.locator('.igc-daw-pager-count').innerText(),
+    /Resultados 1–1 de 1 \(de 725 originales\)/);
+  assert.equal(await savedModal.locator('.igc-daw-review-search').inputValue(),
+    '@bulk.724','Typing must not lose text when page rows rerender');
+  await savedModal.locator('.igc-daw-review-search').fill('absent.person');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),0);
+  assert.match(await savedModal.innerText(),/Sin coincidencias en esta tanda/);
+  await savedModal.locator('.igc-daw-review-search').fill('');
+  assert.equal(await savedModal.locator('.igc-daw-review-row').count(),50);
+  assert.equal((await calls()).length,beforeSearch,
+    'Searching historical saved outcomes must not fetch or change Instagram');
   await savedModal.getByRole('button',{name:'Cerrar'}).click();
 
   await page.locator('#igcDawReview0').click();
@@ -304,8 +320,7 @@ const {chromium}=require('playwright');
     'Uncertain clicked target remains available for manual inspection');
   assert.equal(await page.locator('#igcDawTarget0 option[value="bulk.000"]').count(),0,
     'Green confirmed target may be displayed but never offered for action');
-  for(let n=0;n<14;n++)
-    await page.locator('#igcDawReviewList0 .igc-daw-page-next').click();
+  await page.locator('#igcDawReviewList0 .igc-daw-page-jump').selectOption('15');
   assert.match(await page.locator('#igcDawReviewList0 .igc-daw-pager-count').innerText(),
     /Resultados 701–725 de 725/);
   assert.match(await page.locator('#igcDawReviewList0 .igc-daw-review-row').last().innerText(),
