@@ -166,6 +166,11 @@ const {chromium}=require('playwright');
     assert.match(await page.locator('#igcDawStatus'+i).innerText(),
       /ESTADO NO VERIFICABLE.*La tanda podría seguir activa/);
   }
+  assert.match(await page.locator('#igcDualActionWorkspaceFeedback').innerText(),
+    /tanda autorizada podría seguir activa/,
+    'A failed status GET after a prior start must never promise zero actions');
+  assert.doesNotMatch(await page.locator('#igcDualActionWorkspaceFeedback').innerText(),
+    /No se ejecutó ninguna nueva acción/);
   assert.equal((await calls()).filter(x=>x.operation==='start-one').length,
     actionsBeforeDisconnect,'Read-only status disconnect must not start or replay actions');
   await page.evaluate(()=>{window.__parallelStatusOffline=false});
