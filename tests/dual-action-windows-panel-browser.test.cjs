@@ -293,9 +293,12 @@ const {chromium}=require('playwright');
   assert.equal(configured.token,'a'.repeat(32));
   await page.locator('#igcDawReview0').click();
   await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
-  const unresolved=page.locator('#igcDawReviewList0 .igc-daw-unresolved');
+  const unresolved=page.locator(
+    '#igcDawReviewList0 .igc-daw-uncertain, #igcDawReviewList0 .igc-daw-unresolved');
   const confirmed=page.locator('#igcDawReviewList0 .igc-daw-reviewed');
-  assert.equal(await unresolved.count(),2);
+  assert.equal(await unresolved.count(),2,'One uncertain click plus one untouched target');
+  assert.equal(await page.locator('#igcDawReviewList0 .igc-daw-uncertain').count(),1,
+    'Potential click is orange, never mislabeled as an ordinary untouched warning');
   assert.equal(await confirmed.count(),1);
   assert.match(await confirmed.first().innerText(),/done.profile.*OK/s);
   // Stored cohort intentionally begins with a green OK. Visible Review
