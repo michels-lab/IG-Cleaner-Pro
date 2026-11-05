@@ -69,6 +69,7 @@ const {chromium}=require('playwright');
         parallel_mutations_enabled:window.__parallelMode,
         lanes:[
           {account:'ig_first_1234567',state:'running',running:true,
+           expected_handle:window.__parallelWrongHandle?'another.login':'alpha.one',
            task:'unfollow',processed:3,issues:1,
            current_profile:'alpha.pending',message:'Esperando confirmación A'},
           {account:'ig_second_123456',state:'running',running:true,
@@ -222,9 +223,7 @@ const {chromium}=require('playwright');
   assert.doesNotMatch(await page.locator('#igcDawStatus1').innerText(),/alpha.pending/);
   assert.equal((await calls()).filter(x=>x.operation==='start-one').length,2,
     'Live diagnostic polling cannot initiate an extra Instagram action');
-  await page.evaluate(()=>{
-    window.__laneStates.ig_first_1234567.expected_handle='another.login';
-  });
+  await page.evaluate(()=>{window.__parallelWrongHandle=true});
   await page.locator('#igcDawRefresh').click();
   assert.match(await page.locator('#igcDawStatus0').innerText(),
     /IDENTIDAD NO VERIFICADA.*alpha.one/,
