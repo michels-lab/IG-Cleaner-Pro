@@ -71,6 +71,10 @@ const {chromium}=require('playwright');
    window.fetch=async(url,opts)=>{
      const target=String(url);
      if(target.includes('/api/actions/dual-action-workspaces/status?')){
+       // Record this fake GET, too: the operation log must include reads so
+       // the assertion can prove the UI requested status before rendering it.
+       window.__dawRequests.push({operation:'status',
+         token:opts?.headers?.['X-IGC-Bridge-Token'],data:null});
        if(window.__igcBatchOffline||window.__igcDualStatusOffline)return {ok:false,json:async()=>({error:'offline fixture'})};
        const owner=window.IGC_INSTAGRAM_PROFILES.owner;
        return {ok:true,json:async()=>({owner,lanes:[
