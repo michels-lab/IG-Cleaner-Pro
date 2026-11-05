@@ -61,9 +61,11 @@ const {chromium}=require('playwright');
     if(operation==='configure'){
      window.__parallelMode=data.parallel_actions_consent===true;
      payload={parallel_mutations_enabled:window.__parallelMode,lanes:[],mode:'fake'};
-    }else if(operation==='status')
+    }else if(operation==='status'){
+     if(window.__parallelStatusOffline)
+       return {ok:false,json:async()=>({error:'offline fixture'})};
      payload={parallel_mutations_enabled:window.__parallelMode,lanes:[]};
-    else if(operation==='preflight-new-one')
+    }else if(operation==='preflight-new-one')
      payload={read_only:true,actions_enabled:false,offline_untouched_only:true,
       unresolved_saved_cohort:false,evidence_counts:{untouched:data.targets.length},
       targets:data.targets.map(username=>({username,offline_evidence:'untouched'}))};
@@ -137,8 +139,23 @@ const {chromium}=require('playwright');
   assert.equal(pauses[0].data.account,'ig_first_1234567');
   assert.equal(pauses[0].data.confirmation,
     'action-workspace-pause:'+owner+':ig_first_1234567');
+  // A disconnected local bridge must NOT leave stale badges claiming that
+  // either Chrome worker has stopped or completed, or silently relaunch one.
+  const actionsBeforeDisconnect=(await calls()).filter(x=>x.operation==='start-one').length;
+  await page.evaluate(()=>{window.__parallelStatusOffline=true});
+  await page.locator('#igcDawRefresh').click();
+  for(const i of [0,1]){
+    assert.match(await page.locator('#igcDawStatus'+i).innerText(),
+      /ESTADO NO VERIFICABLE.*La tanda podría seguir activa/);
+  }
+  assert.equal((await calls()).filter(x=>x.operation==='start-one').length,
+    actionsBeforeDisconnect,'Read-only status disconnect must not start or replay actions');
+  await page.evaluate(()=>{window.__parallelStatusOffline=false});
+  await page.locator('#igcDawRefresh').click();
+  assert.match(await page.locator('#igcDawStatus0').innerText(),
+    /Sin estado para esta cuenta/,'Reconnect must replace unknown status with fresh response');
   await ctx.close();
-  console.log('PASS: serial default, parallel exact opt-in, two independent approved action jobs, scoped pause, token and Chrome account identity');
+  console.log('PASS: serial default, parallel exact opt-in, two independent action approvals, account-scoped pause and fail-closed status disconnect/recovery');
  }finally{
   await browser.close();fs.rmSync(tmp,{recursive:true,force:true});
  }
