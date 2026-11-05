@@ -14630,16 +14630,34 @@ async function activateRemembered(owner){
   status('La sesión guardada no es válida. Entra con la contraseña de ese usuario.','warn');return false;
  }
  if(S.busy){status('Termina la sincronización actual antes de cambiar de cuenta.','warn');return false}
- const previous=S.session;
- const previousReauth=S.needsReauth;
- saveRemembered(previous);
- S.session=next;
- S.needsReauth=false;
+ const previous=S.session,previousReauth=S.needsReauth;
+ const previousEmail=S.cfg.email;
+ let applied=false;
  try{
+  let candidate=next;
   if(expiresAtSeconds(next)<=Date.now()/1000+90){
-   const ok=await refresh(next.access_token);
-   if(!ok)throw new Error('La sesión caducó; inicia sesión nuevamente con ese usuario.');
+   // Refresh the REMEMBERED account independently. The current account
+   // must NOT be overwritten, displayed or persisted while HTTP is pending.
+   // refresh() is for the CURRENT account and intentionally changes S.session.
+   const data=await jfetch('/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',auth:false,body:JSON.stringify({refresh_token:next.refresh_token})
+   });
+   if(!data?.access_token||!data?.refresh_token||
+      (data.user&&sessionOwner(data)!==owner))
+    throw new Error('La sesión guardada caducó o devolvió otra identidad. Inicia sesión de nuevo.');
+   candidate={...next,...data,user:data.user||next.user};
   }
+  // An active robot, a newly started sync, or a changed current account
+  // invalidates the original admission. No write before these checks.
+  const lastGate=accountSwitchAdmission();
+  if(lastGate.code!=='ready'||S.session!==previous||sessionOwner(candidate)!==owner){
+   status(lastGate.code!=='ready'?lastGate.message:
+    'La cuenta activa cambió mientras se verificaba la sesión. Vuelve a seleccionarla.','warn');
+   return false;
+  }
+  saveRemembered(previous);
+  applied=true;
+  S.session=candidate;S.needsReauth=false;
   clearTimeout(statePushTimer);
   S.cfg.email=owner;saveCfg();
   saveSession();
@@ -14647,8 +14665,12 @@ async function activateRemembered(owner){
   location.reload();
   return true;
  }catch(error){
-  S.session=previous;S.needsReauth=previousReauth;
-  saveSession();
+  // Restore only if this operation applied the new session. A separate
+  // owner change made during the awaited refresh must never be overwritten.
+  if(applied){
+   S.session=previous;S.needsReauth=previousReauth;
+   S.cfg.email=previousEmail;saveCfg();saveSession();
+  }
   status('No se cambió de cuenta: '+String(error.message||error),'warn');
   return false;
  }
