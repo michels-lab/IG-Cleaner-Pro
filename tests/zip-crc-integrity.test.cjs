@@ -75,9 +75,8 @@ const file=buf=>({arrayBuffer:async()=>Uint8Array.from(buf).buffer});
  assert(location>0,"Fixture must include cleartext target in stored ZIP data");
  changed[location+1]="z".charCodeAt(0);
  const altered=await ctx.readZipEntries(file(changed));
- assert.rejects(()=>altered.extract(altered.entries[0]),/CRC|dañado|modificado/,
+ await assert.rejects(()=>altered.extract(altered.entries[0]),/CRC|dañado|modificado/,
   "JSON that remains syntactically valid must not pass a forged/stale ZIP CRC");
- assert.equal(JSON.parse(changed.subarray(location-9,location+100).toString().slice(0,1)||"null")??null,null);
 
  const wrongCrc=Buffer.from(bundle.bytes);
  wrongCrc.writeUInt32LE(0,bundle.centralOffset+16);
