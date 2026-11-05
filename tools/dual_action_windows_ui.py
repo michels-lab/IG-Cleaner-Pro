@@ -569,7 +569,12 @@ async function perform(fn){
   // A slow inspection/start for account A must never disable the emergency
   // Pause button for account B. Pause itself is guarded by a per-lane latch.
   for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=true;
-  try{await fn()}catch(e){notice('No se ejecutó ninguna nueva acción: '+String(e.message||e).slice(0,190))}
+  try{await fn()}catch(e){
+    // An accepted start command may already have launched the worker when a
+    // later status GET fails. Never falsely claim no action occurred.
+    notice('No se pudo confirmar la operación: '+String(e.message||e).slice(0,140)+
+      '. Una tanda autorizada podría seguir activa; consulta estado e historial antes de repetir.');
+  }
   finally{
     activeBusy=false;
     for(const b of buttons)if(!b.classList.contains('igc-daw-stop'))b.disabled=false;
