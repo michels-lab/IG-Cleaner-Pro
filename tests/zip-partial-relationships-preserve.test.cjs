@@ -2,7 +2,7 @@
 /* GRANADA: source-real partial ZIP import atomicity; synthetic users only. */
 const assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
 const html=fs.readFileSync(path.join(__dirname,"../desktop/ig_cleaner_pro_v120_27_synced_companion.html"),"utf8");
-const a=html.indexOf("async function applyZipCore(groups,zipName){"),
+const a=html.indexOf("function zipImportScope(){"),
  b=html.indexOf("window.igcHandleZipInput=async function(file){",a);
 assert(a>=0&&b>a,"Real integrated ZIP core must be available");
 const logs=[],parseCalls=[],capture=[],pendingCalls=[],nodes=new Map();
@@ -98,5 +98,37 @@ const same=(list,prior)=>assert.deepEqual(Array.from(list,x=>x.username),prior);
  assert.equal(capture.length,3);
  assert.equal(logs.at(-1).details.count,5);
  assert(!parseCalls.some(x=>x.count===0),"Absent list files must never invoke the parser");
- console.log("PASS: source-real partial ZIP import keeps lists atomically, rejects invalid, honors true empties, preserves histories, reports import counts.");
+
+ // A ZIP may take several seconds to read or parse. It must never publish
+ // to whichever Instagram workspace happens to be selected at the end.
+ ctx.IGC_INSTAGRAM_PROFILES={owner:"u_owner",active:"ig_first",verified:true};
+ const frozen=ctx.zipImportScope(),oldParse=ctx.parseFiles,oldPendingCalls=pendingCalls.length;
+ const priorFollowing=ctx.followingRaw.map(r=>r.username);
+ const priorFollowers=ctx.followersRaw.map(r=>r.username);
+ const priorSnapshots=capture.length;
+ ctx.parseFiles=async()=>{ctx.IGC_INSTAGRAM_PROFILES.active="ig_second";
+  return [{username:"wrong.account.import"}]};
+ await assert.rejects(()=>ctx.applyZipCore({
+  following:[follow(["wrong.account.import"])]},"slow-changed-owner.zip",frozen),
+  /Cambió la cuenta o el perfil de Instagram/,
+  "Switch during an awaited parse must abort before any ZIP list is published");
+ same(ctx.followingRaw,priorFollowing);
+ same(ctx.followersRaw,priorFollowers);
+ assert.equal(pendingCalls.length,oldPendingCalls,
+  "No Pending snapshot may be touched after a late owner-switch veto");
+ assert.equal(capture.length,priorSnapshots);
+ ctx.parseFiles=oldParse;
+ ctx.IGC_INSTAGRAM_PROFILES.active="ig_first";
+ const successful=await ctx.applyZipCore({
+  following:[follow(["correct.workspace"])],pending_follow_requests:[{isPending:true}]
+ },"same-owner.zip",frozen);
+ assert.equal(successful.following,1,"Unchanged original scope may commit normally");
+ same(ctx.followingRaw,["correct.workspace"]);
+ ctx.IGC_INSTAGRAM_PROFILES.owner="u_other";
+ await assert.rejects(()=>ctx.applyZipCore({
+  following:[follow(["never.cross-owner"])]},"different-owner.zip",frozen),
+  /Cambió la cuenta o el perfil de Instagram/,
+  "Changing the app login also invalidates the captured ZIP target");
+ same(ctx.followingRaw,["correct.workspace"]);
+ console.log("PASS: partial ZIP retains lists, and delayed import aborts on workspace/account switch without Pending or Following writes");
 })().catch(error=>{console.error(error);process.exitCode=1});
