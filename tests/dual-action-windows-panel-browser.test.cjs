@@ -306,7 +306,7 @@ const {chromium}=require('playwright');
   assert.deepEqual(await page.locator('#igcDawReviewList0 .igc-daw-review-row')
     .evaluateAll(rows=>rows.map(x=>x.querySelector('span')?.textContent)),[
     '@review.target','@untouched.one','@done.profile']);
-  assert.match(await page.locator('#igcDawReviewList0').innerText(),/Review primero/);
+  assert.match(await page.locator('#igcDawReviewList0').innerText(),/Clic incierto primero/);
   assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
   assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
     'Never re-open green confirmed profiles as new Review targets');
