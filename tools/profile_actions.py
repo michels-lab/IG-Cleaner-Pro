@@ -951,8 +951,16 @@ def _verified_action_owner(page, expected_handle):
                 and bound["session_id"] == session_id
                 and 0 <= time.monotonic() - bound["verified_at"] <
                 OWNER_PROOF_REUSE_SECONDS):
-            # Fresh browser-cookie evidence with previous own-profile + Edit
-            # profile proof, never a mere remembered username.
+            # The cached positive proof avoids another /owner/ navigation,
+            # but must NOT override contradictory CURRENT DOM in another
+            # Instagram tab of this same robot Chrome. A changed owner,
+            # login or challenge in a sibling tab is unsafe even when the
+            # cookie's numeric ds_user_id has not changed yet.
+            sibling_now = _live_sibling_owner_proof(
+                context, page, expected_handle, session_id)
+            if sibling_now in ("wrong", "unsafe"):
+                _OWNER_PROFILE_PROBE.bound_session = None
+                return False
             return True
         _OWNER_PROFILE_PROBE.bound_session = None
 
