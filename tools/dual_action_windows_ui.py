@@ -350,8 +350,14 @@ function card(account,i){
       ||done[x]?.status==='pending').length;
     if(!pending)throw Error('La tanda no tiene perfiles vírgenes; revisa los amarillos manualmente.');
     const input=(id,def,min,max)=>{
-      const n=Number($(id)?.value);
-      return Number.isFinite(n)&&n>=min&&n<=max?n:def;
+      const raw=$(id)?.value;
+      if(raw===undefined||raw==='')return def;
+      const n=Number(raw);
+      // Invalid numbers must stop BEFORE asking the owner to approve the
+      // frozen cohort. Silently falling back to 30 could run extra profiles.
+      if(!Number.isInteger(n)||n<min||n>max)
+        throw Error('Corrige el tamaño de tanda, espera y descanso; sólo enteros dentro del rango.');
+      return n;
     };
     const batchSize=input('igcAutoBatch',Math.min(targets.length,30),1,1000);
     // batch_size controls pacing/rest, NOT the number of approved saved
