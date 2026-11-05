@@ -23,7 +23,13 @@ const {chromium}=require('playwright');
     const context=await browser.newContext({viewport:{width:1300,height:850}});
     await context.route('**/*',r=>r.request().url().startsWith('file:')?r.continue():r.abort());
     const page=await context.newPage();
-    page.on('dialog',d=>d.accept());
+    const dialogs=[];let approveSavedMismatch=false;
+    page.on('dialog',async d=>{
+      dialogs.push(d.message());
+      if(d.message().includes('NO reduce los 40 objetivos')&&!approveSavedMismatch)
+        await d.dismiss();
+      else await d.accept();
+    });
     await page.goto(pathToFileURL(native).href+'#igc-robot=37777.'+'a'.repeat(32),
       {waitUntil:'domcontentloaded'});
     await page.evaluate(()=>{
@@ -79,6 +85,10 @@ const {chromium}=require('playwright');
             targets:data.targets.map(x=>({username:x,
               offline_evidence:isBlocked?'previously_inspected':'untouched'}))
           };
+        }else if(operation==='review-one'){
+          const targets=Array.from({length:40},(_,i)=>'saved.'+String(i+1).padStart(2,'0'));
+          response={owner:data.owner,account:data.account,task:data.task,
+            batch:{id:'original-forty',targets,action_results:{}}};
         }else if(operation==='start-one')
           response={status:'starting',account:data.account,task:data.action.task};
         else response={owner:window.IGC_INSTAGRAM_PROFILES.owner,
@@ -185,6 +195,37 @@ const {chromium}=require('playwright');
     assert.equal(calls.filter(x=>x.operation==='start-one').length,2);
     assert(calls.some(x=>x.operation==='preflight-new-one'&&x.data.account==='ig_second_123456'));
     assert.equal(await page.locator('#igcDawGrid .igc-daw-card').count(),2);
+    // An old 40-target cohort must NOT silently become 10 when batch pacing
+    // changes. Declining the explicit warning must never send a start command.
+    await page.locator('#igcAutoBatch').fill('10');
+    await page.locator('#igcDawReview1').click();
+    await page.waitForFunction(()=>
+      document.querySelector('#igcDawReviewList1')?.textContent?.includes('@saved.01'));
+    const beforeSaved=(await requests()).filter(x=>x.operation==='start-one').length;
+    await page.locator('#igcDawContinue1').click();
+    assert.equal((await requests()).filter(x=>x.operation==='start-one').length,
+      beforeSaved,'Declining saved 40-vs-10 warning must never start the robot');
+    assert(dialogs.some(x=>x.includes('40 objetivos originales')&&
+      x.includes('Tamaño configurado de sublote: 10')&&
+      x.includes('NO reduce los 40 objetivos')),
+      'Original 40 vs configured 10 must be clear BEFORE automation');
+    approveSavedMismatch=true;
+    // Fractional pacing must never silently revert to the old default,
+    // because that could advance more of the saved 40 than the owner intended.
+    await page.locator('#igcAutoBatch').fill('10.5');
+    const beforeBad=(await requests()).filter(x=>x.operation==='start-one').length;
+    await page.locator('#igcDawContinue1').click();
+    assert.equal((await requests()).filter(x=>x.operation==='start-one').length,
+      beforeBad,'Invalid sublot size may not start or silently default an old cohort');
+    await page.locator('#igcAutoBatch').fill('10');
+    await page.locator('#igcDawContinue1').click();
+    await page.waitForFunction(()=>
+      window.__newBatchCalls.filter(x=>x.operation==='start-one').length===3);
+    const resumed=(await requests()).filter(x=>x.operation==='start-one').at(-1).data;
+    assert.equal(resumed.action.batch_id,'original-forty');
+    assert.equal(resumed.action.targets.length,40,'Saved originals remain intact');
+    assert.equal(resumed.action.batch_size,10,'Batch size controls sublot pacing');
+    assert.equal(resumed.account,'ig_second_123456');
     await context.close();
     console.log('PASS: dual-account new batch exact owner/WAL preflight, duplicate/visited/pending denial, pacing and one-shot manual consent');
   }finally{
