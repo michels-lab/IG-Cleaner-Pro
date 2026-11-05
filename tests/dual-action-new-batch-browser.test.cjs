@@ -210,6 +210,14 @@ const {chromium}=require('playwright');
       x.includes('NO reduce los 40 objetivos')),
       'Original 40 vs configured 10 must be clear BEFORE automation');
     approveSavedMismatch=true;
+    // Fractional pacing must never silently revert to the old default,
+    // because that could advance more of the saved 40 than the owner intended.
+    await page.locator('#igcAutoBatch').fill('10.5');
+    const beforeBad=(await requests()).filter(x=>x.operation==='start-one').length;
+    await page.locator('#igcDawContinue1').click();
+    assert.equal((await requests()).filter(x=>x.operation==='start-one').length,
+      beforeBad,'Invalid sublot size may not start or silently default an old cohort');
+    await page.locator('#igcAutoBatch').fill('10');
     await page.locator('#igcDawContinue1').click();
     await page.waitForFunction(()=>
       window.__newBatchCalls.filter(x=>x.operation==='start-one').length===3);
