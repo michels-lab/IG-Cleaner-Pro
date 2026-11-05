@@ -421,9 +421,26 @@ const {chromium}=require('playwright');
     'The processed-target count must never be reported as owner-profile navigations');
   assert(restoredCalls.includes('GET')&&restoredCalls.every(x=>x==='GET'||x==='OPTIONS'),
     'No new action, review approval, Chrome launch or account mutation on rehydrate');
-  // A login change in the application must promptly clear previous-owner
-  // robot controls, rather than leaving actionable accounts on screen.
-  await restored.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.owner='u_other_42'});
+  // Change the actual persisted test login and reload. The Instagram
+  // registry's owner is a read-only getter: assigning to it never switches
+  // an authenticated account. The test must exercise a real owner change.
+  await restored.evaluate(()=>{
+    const key='igc_v12027_supabase_session';
+    const saved=JSON.parse(localStorage.getItem(key)||'null');
+    if(!saved?.user)throw Error('Missing signed-in offline session fixture');
+    saved.user={...saved.user,id:'other-owner-fixture',
+      email:'different-owner@example.test'};
+    saved.access_token='offline-other-owner';
+    saved.refresh_token='offline-other-owner';
+    localStorage.setItem(key,JSON.stringify(saved));
+    localStorage.setItem('igc_v12027_supabase_config',
+      JSON.stringify({email:'different-owner@example.test'}));
+  });
+  await restored.reload({waitUntil:'domcontentloaded'});
+  await restored.locator('#igcAppShell').waitFor({state:'visible',timeout:15000});
+  await restored.evaluate(()=>window.showPage('automations'));
+  const newOwner=await restored.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.owner);
+  assert.notEqual(newOwner,owner,'Real account change must select a different owner scope');
   await restored.waitForFunction(()=>
     !document.querySelector('#igcDawGrid')?.textContent?.includes('@alpha.one'),
     null,{timeout:11000});
