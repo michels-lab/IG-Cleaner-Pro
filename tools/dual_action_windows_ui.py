@@ -571,7 +571,25 @@ async function perform(fn){
 async function statusUpdate(silent=false,knownSnapshot=null){
   if(!linked)throw Error('Primero vincula los dos workspaces.');
   const current=linked;
-  const x=knownSnapshot||await api('status?owner='+encodeURIComponent(current.owner));
+  let x;
+  try{
+    x=knownSnapshot||await api('status?owner='+encodeURIComponent(current.owner));
+  }catch(_){
+    // A lost bridge is NOT evidence that either Chrome robot stopped. Never
+    // leave stale RUNNING/PAUSED badges looking like freshly verified state.
+    // Retain laneSnapshots and the original WAL; polling must keep retrying
+    // a previously observed running worker after reconnect.
+    if(linked===current){
+      for(let i=0;i<2;i++){
+        const label=$('igcDawStatus'+i);
+        if(label)label.textContent='ESTADO NO VERIFICABLE · conexión con Chrome perdida. '+
+          'La tanda podría seguir activa. No reinicies ni repitas acciones hasta consultar el historial.';
+      }
+      notice('Conexión perdida con el robot. Estado de ambas cuentas desconocido; '+
+        'no se iniciaron clics nuevos. Consulta el historial antes de repetir.');
+    }
+    throw Error('No se pudo consultar el estado de los dos robots de Chrome.');
+  }
   // If the owner reconfigured accounts during the request, do not associate
   // a stale account's state with a new pair of Instagram sessions.
   if(linked!==current)return x;
