@@ -443,7 +443,32 @@ function card(account,i){
       ' · '+total+' históricas. Solo lectura; ninguna acción se reintentará.'));
     const safeCount=value=>Number.isSafeInteger(value)&&value>=0&&value<=1000?
       value:'?';
-    for(const record of answer.recent.slice(0,20)){
+    // Old archive UI hid every cancelled wave older than the latest twenty.
+    // Fetch bounded pages only on explicit user request, with exact account,
+    // task, archive snapshot size and monotonic cursor checked each time.
+    let nextArchiveOffset=0;
+    const seenArchiveIds=new Set();
+    const more=el('button','igc-daw-archive-more','Mostrar otras tandas');
+    more.type='button';
+    const appendArchivePage=page=>{
+      const records=page?.recent;
+      if(page?.owner!==bound.owner||page?.account!==account||
+         page?.task!==selectedTask||page?.read_only!==true||
+         page?.total_deferred!==answer.total_deferred||
+         !Number.isSafeInteger(page.offset)||page.offset!==nextArchiveOffset||
+         !Array.isArray(records)||records.length>20||
+         typeof page.has_more!=='boolean'||
+         page.has_more!==(page.offset+records.length<page.total_deferred)||
+         (page.has_more?
+           page.next_offset!==page.offset+records.length||!records.length:
+           page.next_offset!==null))
+        throw Error('El historial cambió o la página no es verificable. Recarga el archivo.');
+      const pageIds=records.map(r=>r?.batch_id);
+      if(pageIds.some(id=>typeof id!=='string'||!id||seenArchiveIds.has(id))||
+         new Set(pageIds).size!==pageIds.length)
+        throw Error('Hay tandas duplicadas o ilegibles. Recarga el historial antes de continuar.');
+      for(const id of pageIds)seenArchiveIds.add(id);
+      for(const record of records){
       if(!record||typeof record!=='object')continue;
       const box=el('div','igc-daw-review-row igc-daw-unresolved');
       const batch=typeof record.batch_id==='string'?
@@ -529,7 +554,23 @@ function card(account,i){
       }));
       box.append(inspect,detail);
       list.append(box);
-    }
+      }
+      nextArchiveOffset=page.has_more?page.next_offset:null;
+      if(nextArchiveOffset===null)more.remove();
+      else list.append(more);
+    };
+    more.addEventListener('click',()=>performLane(i,async()=>{
+      if(nextArchiveOffset===null||linked!==bound||
+         task.value!==selectedTask||!more.isConnected)
+        throw Error('La cuenta o el historial cambió. Vuelve a abrir las tandas.');
+      const page=await api('archived-one',{
+        owner:bound.owner,account,task:selectedTask,offset:nextArchiveOffset,
+        confirmation:'action-workspace-archive:'+bound.owner+':'+account+':'+selectedTask
+      });
+      if(linked!==bound||task.value!==selectedTask||!more.isConnected)return;
+      appendArchivePage(page);
+    }));
+    appendArchivePage(answer);
   }));
   controls.append(archive);
   const continueSaved=el('button',null,'Continuar tanda guardada');

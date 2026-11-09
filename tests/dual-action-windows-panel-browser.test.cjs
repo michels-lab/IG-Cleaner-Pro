@@ -136,18 +136,25 @@ const {chromium}=require('playwright');
              message:'Outcome unknown. Do not replay.'},
            'no.click':{status:'already_not_following',possible_click:false}
          }
-       }:        operation==='archived-one'?{
-         owner:p.owner,account:data.account,task:data.task,read_only:true,
-         total_deferred:data.account==='ig_first_1234567'?2:1,
-         recent:[{
-           batch_id:data.account==='ig_first_1234567'?'archive-A':'archive-B',
+       }:        operation==='archived-one'?(()=>{
+         const first=data.account==='ig_first_1234567';
+         const count=first?25:1;
+         const offset=data.offset===undefined?0:data.offset;
+         const all=Array.from({length:count},(_,j)=>({
+           batch_id:first?(j===0?'archive-A':'archive-A-'+j):'archive-B',
            created_at:'2026-11-09T07:00:00Z',
            deferred_at:'2026-11-09T08:00:00Z',
            reason:'owner_cancelled',target_count:40,
            action_recorded:2,untouched:38,protected_count:1,
            marked_reviewed:false
-         }]
-       }:        operation==='review-one'?{
+         }));
+         const recent=all.slice(offset,offset+20);
+         const has_more=offset+recent.length<count;
+         return {owner:p.owner,account:data.account,task:data.task,
+           read_only:true,total_deferred:count,
+           offset,page_size:20,has_more,
+           next_offset:has_more?offset+recent.length:null,recent};
+       })():       operation==='review-one'?{
          owner:p.owner,account:data.account,task:data.task,
          batch:{id:'saved-wave',targets:['done.profile','untouched.one','review.target'],
            action_results:{
@@ -320,9 +327,9 @@ const {chromium}=require('playwright');
   // Read-only archive by exact Instagram owner + task; the other lane must
   // not render this result or receive any relationship-changing POST.
   await page.locator('#igcDawArchived0').click();
-  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A').waitFor();
+  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A', {exact:true}).waitFor();
   const archivedA=await page.locator('#igcDawArchivedList0').innerText();
-  assert.match(archivedA,/2 históricas/);
+  assert.match(archivedA,/25 históricas/);
   assert.match(archivedA,/Cancelada por usuario/);
   assert.match(archivedA,/Perfiles 40/);
   assert.match(archivedA,/acciones registradas.*2/i);
@@ -358,6 +365,26 @@ const {chromium}=require('playwright');
     .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,
     0,'Archived detail cannot replay, approve or open Instagram profiles.');
 
+  // The previous UI silently hid all but 20 archived waves. A deliberate
+  // second read-only page must display the remaining five in the same lane.
+  const older=page.locator('#igcDawArchivedList0 .igc-daw-archive-more');
+  assert.equal(await older.count(),1,'An archive with 25 waves must offer older history.');
+  assert.equal(await page.locator('#igcDawArchivedList0 .igc-daw-archive-open').count(),20);
+  await older.click();
+  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A-24').waitFor();
+  assert.equal(await page.locator('#igcDawArchivedList0 .igc-daw-archive-open').count(),25,
+    'All 25 saved waves must be reachable, without duplicate cohorts.');
+  assert.equal(await older.count(),0,'No phantom third page should be offered.');
+  assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/,
+    'Paginating account A must not paint its history into B.');
+  const olderCalls=(await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>x.operation==='archived-one');
+  assert.equal(olderCalls.length,2);
+  assert.equal(olderCalls[1].data.offset,20);
+  assert.equal(olderCalls[1].data.account,'ig_first_1234567');
+  assert.equal(olderCalls[1].data.task,'unfollow');
+  assert.equal(olderCalls[1].token,'a'.repeat(32));
+
   assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/,
     'Account B must not display account A archive');
   await page.locator('#igcDawTask1').selectOption('cancel');
@@ -366,10 +393,10 @@ const {chromium}=require('playwright');
   assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/);
   const archiveRequests=(await page.evaluate(()=>window.__dawRequests))
     .filter(x=>x.operation==='archived-one');
-  assert.equal(archiveRequests.length,2);
+  assert.equal(archiveRequests.length,3);
   assert.deepEqual(archiveRequests.map(x=>x.data.account),
-    ['ig_first_1234567','ig_second_123456']);
-  assert.deepEqual(archiveRequests.map(x=>x.data.task),['unfollow','cancel']);
+    ['ig_first_1234567','ig_first_1234567','ig_second_123456']);
+  assert.deepEqual(archiveRequests.map(x=>x.data.task),['unfollow','unfollow','cancel']);
   assert(archiveRequests.every(x=>x.token==='a'.repeat(32)));
   assert.equal((await page.evaluate(()=>window.__dawRequests))
     .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,

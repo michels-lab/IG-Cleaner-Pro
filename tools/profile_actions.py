@@ -2145,29 +2145,52 @@ class ActionRobot:
         changes and distinguish it from their new active cohort.
         """
         owner, account, task = self._review_scope(data)
+        offset = data.get("offset", 0)
+        # Never allow booleans, negative indices or unbounded offsets to
+        # become accidental "all history" responses. Older API callers use 0.
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Choose a valid archived-history page offset.")
+        page_size = 20
         with self.lock:
             saved = self._review_batches(owner, account, task)
             deferred = [
                 entry for entry in saved
                 if isinstance(entry, dict) and entry.get("deferred_at")
             ]
-            recent = list(reversed(deferred))[:20]
+            recent = list(reversed(deferred))[offset:offset + page_size]
+            def saved_count(value):
+                # Older local archives can have absent or damaged counters.
+                # Unknown is NOT zero; the Windows panel renders null as '?'.
+                if type(value) is int and 0 <= value <= 1000:
+                    return value
+                if (isinstance(value, str) and value.isascii()
+                        and value.isdecimal() and len(value) <= 4):
+                    parsed = int(value)
+                    if parsed <= 1000:
+                        return parsed
+                return None
+
             rows = [
                 {"batch_id": str(entry.get("id", "")),
                  "created_at": str(entry.get("created_at", "")),
                  "deferred_at": str(entry.get("deferred_at", "")),
                  "reason": str(entry.get("deferred_reason", "")),
-                 "target_count": len(entry.get("targets", []))
-                    if isinstance(entry.get("targets"), list) else 0,
-                 "protected_count": len(entry.get("deferred_protected_usernames", []))
-                    if isinstance(entry.get("deferred_protected_usernames"), list) else 0,
-                 "action_recorded": int(entry.get("deferred_action_recorded") or 0),
-                 "untouched": int(entry.get("deferred_untouched") or 0),
+                 "target_count": len(entry["targets"])
+                    if isinstance(entry.get("targets"), list) else None,
+                 "protected_count": len(entry["deferred_protected_usernames"])
+                    if isinstance(entry.get("deferred_protected_usernames"), list) else None,
+                 "action_recorded": saved_count(entry.get("deferred_action_recorded")),
+                 "untouched": saved_count(entry.get("deferred_untouched")),
                  "marked_reviewed": False}
                 for entry in recent
             ]
+            next_offset = offset + len(rows)
+            has_more = next_offset < len(deferred)
             return {"owner": owner, "account": account, "task": task,
                     "total_deferred": len(deferred), "recent": rows,
+                    "offset": offset, "page_size": page_size,
+                    "has_more": has_more,
+                    "next_offset": next_offset if has_more else None,
                     "read_only": True, "source": "local_saved_action_batches"}
 
     def deferred_batch_details(self, data):
