@@ -12680,38 +12680,8 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     return dedupePending(out);
   };
 
-  window.processPendingFiles=async function(){
-    const files=document.getElementById('pendingInput')?.files;
-    if(!files||!files.length){msg('Sube primero pending_follow_requests en JSON o HTML.','w');return}
-    let all=[];let sourceCount=0;
-    for(const file of Array.from(files)){
-      const fileText=await readFile(file);
-      const payload=detectPayload(fileText,file.name);
-      let rows=[];let warning='';
-      if(payload.category!=='unknown'&&payload.category!=='pending_follow_requests'){
-        warning=`Tipo incompatible: detecté ${TYPE_LABELS[payload.category]||payload.category}; aquí se espera Pending follow requests.`;
-      }else if(payload.format==='html'){
-        if(payload.category==='unknown')payload.category='pending_follow_requests';
-        rows=parseHTMLUsers(payload,file.name).map(x=>({username:x.username,href:x.href,name:x.name||'',url:x.url||'',timestamp:x.timestamp||0,source:file.name,fbid:''}));
-      }else if(payload.format==='json'){
-        sourceCount+=Array.isArray(payload.data?.relationships_follow_requests_sent)?
-          payload.data.relationships_follow_requests_sent.length:0;
-        rows=typeof extractPendingRequestsFromJSON==='function'?(extractPendingRequestsFromJSON(payload.data,file.name)||[]):[];
-      }else{
-        rows=window.extractPendingRequestsFromRaw(fileText,file.name);
-      }
-      if(warning){msg(`${file.name}: ${warning}`,'w');rows=[]}
-      all=all.concat(rows);
-      diagData.push(diagEntry(file,'pending',payload,rows,warning));
-    }
-    // A valid nonempty manual Pending JSON must not silently erase the old
-    // snapshot when no identity can be parsed.
-    if(sourceCount>0&&!all.length){msg('Encontré solicitudes enviadas, pero no pude identificar los usuarios. Se conservaron los Pending anteriores.','e');return}
-    pendingRequestsRaw=dedupePending(all);pendingTableLimit=300;savePendingRequests();renderPendingRequests();
-    logAction('import',`Pending requests cargadas: ${pendingRequestsRaw.length}`,{count:pendingRequestsRaw.length,source:'pending requests JSON/HTML'});
-    msg(`Pending requests procesadas: ${pendingRequestsRaw.length}.`,'s');
-    try{renderDiag()}catch{}
-  };
+  // Keep the earlier canonical processPendingFiles() handler; the old
+  // compatibility override erased saved Pending on invalid or partial files.
 
   const oldRenderDiag=window.renderDiag;
   window.renderDiag=function(){
@@ -13251,19 +13221,24 @@ async function inspectZipTextFile(entry,extract){
 function zipCategoryFor(item){
   const name=basename(item?.entry?.name||item?.file?.name||'').toLowerCase();
   const ext='(?:json|html?|txt)';
-  if(new RegExp('^following\\.'+ext+'$','i').test(name))return 'following';
+  // A relationship list may span several numbered files. Treat each shard
+  // as the canonical unsuffixed source.
+  if(new RegExp('^following(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'following';
   if(new RegExp('^followers(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'followers';
-  if(new RegExp('^pending_follow_requests\\.'+ext+'$','i').test(name))return 'pending_follow_requests';
-  if(new RegExp('^recent_follow_requests\\.'+ext+'$','i').test(name))return 'recent_follow_requests';
-  if(new RegExp('^recently_unfollowed_profiles\\.'+ext+'$','i').test(name))return 'recently_unfollowed_profiles';
-  if(new RegExp('^blocked_profiles\\.'+ext+'$','i').test(name))return 'blocked_profiles';
-  // Real Instagram exports contain nearby files whose names include “following” but are not account lists.
+  if(new RegExp('^pending_follow_requests(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'pending_follow_requests';
+  if(new RegExp('^recent_follow_requests(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'recent_follow_requests';
+  if(new RegExp('^recently_unfollowed_profiles(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'recently_unfollowed_profiles';
+  if(new RegExp('^blocked_profiles(?:_\\d+)?\\.'+ext+'$','i').test(name))return 'blocked_profiles';
   if(/following_hashtags|close_friends|removed_suggestions|favorited|synced_contacts/.test(name))return 'unknown';
+  const detected=item?.payload?.category||'unknown';
+  // Native Pending, Recent and Blocked lists can be string_list_data arrays.
+  // The old array heuristic incorrectly relabeled them Followers, hiding
+  // sent requests from the Pending module.
+  if(detected!=='unknown'&&CATEGORY_ORDER.includes(detected))return detected;
   const data=item?.payload?.data;
   if(data&&typeof data==='object'&&!Array.isArray(data)&&Array.isArray(data.relationships_following))return 'following';
   if(Array.isArray(data)&&data.some(x=>x&&Array.isArray(x.string_list_data)))return 'followers';
-  const detected=item?.payload?.category||'unknown';
-  return CATEGORY_ORDER.includes(detected)?detected:'unknown';
+  return 'unknown';
 }
 function renderZipSummary(groups,profileCounts={},ignored=0){
   const box=q('igcZipSummary');if(!box)return;
