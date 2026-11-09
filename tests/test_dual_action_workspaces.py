@@ -309,6 +309,80 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertFalse(self.manager.sessions.root.exists(),
                          "Read-only totals must not start a Chrome session.")
 
+    def test_damaged_saved_batch_fails_closed_without_hiding_sibling_lane(self):
+        """Native Windows status must show a recoverable warning, not HTTP 500.
+
+        Historically a syntactically valid JSON list containing null/string
+        entries threw AttributeError inside _pending_review. A malformed
+        active cohort could also throw KeyError/TypeError in batch_review.
+        All original files must remain byte-for-byte unchanged.
+        """
+        self.manager.configure(config())
+        first = self.manager.workspaces[A]["robot"]
+        second = self.manager.workspaces[B]["robot"]
+        bad_file = first._review_batches_file_for(OWNER, A, "unfollow")
+        good_file = second._review_batches_file_for(OWNER, B, "cancel")
+        good = {"id": "second-saved", "targets": ["second.pending"],
+                "approved_at": None, "recheck_results": {}}
+        _atomic_json(good_file, [good])
+        good_bytes = good_file.read_bytes()
+        valid = {"id": "first-saved", "targets": ["first.pending"],
+                 "approved_at": None, "recheck_results": {}}
+        malformed = (
+            [None],                         # valid JSON, invalid batch record
+            [valid, "previous-damaged"],    # older/wrongly typed row not skipped
+            [{"id": "bad-targets", "targets": "first.pending"}],
+            [{"id": "missing-targets", "approved_at": None}],
+            [{"id": "duplicates", "targets": ["first.pending", "first.pending"]}],
+        )
+        for rows in malformed:
+            with self.subTest(saved=rows):
+                _atomic_json(bad_file, rows)
+                original = bad_file.read_bytes()
+                snapshot = self.manager.status(OWNER)
+                lanes = {row["account"]: row for row in snapshot["lanes"]}
+                self.assertEqual(lanes[A]["saved_batches"], [{
+                    "task": "unfollow", "unverifiable": True,
+                    "requires_manual_review": True,
+                    "source": "saved_local_action_journal",
+                }])
+                self.assertEqual(lanes[B]["saved_batches"][0]["batch_id"],
+                                 "second-saved")
+                self.assertEqual(lanes[B]["saved_batches"][0]["untouched"], 1)
+                self.assertNotIn("first.pending", str(snapshot))
+                with self.assertRaises(ValueError):
+                    self.manager.review_one(
+                        {"owner": OWNER, "account": A, "task": "unfollow"})
+                self.assertEqual(bad_file.read_bytes(), original)
+                self.assertEqual(good_file.read_bytes(), good_bytes)
+                self.assertFalse(self.sessions.root.exists(),
+                                 "Recovering status may not start Chrome.")
+                self.assertFalse(any(self.manager._alive(lane["robot"])
+                                     for lane in self.manager.workspaces.values()))
+
+    def test_warm_action_lane_retains_status_when_saved_review_is_damaged(self):
+        """A nonrunning previously bound robot must not crash both UI lanes."""
+        self.manager.configure(config())
+        first = self.manager.workspaces[A]["robot"]
+        second = self.manager.workspaces[B]["robot"]
+        first.owner, first.account, first.task = OWNER, A, "unfollow"
+        first.status, first.message = "completed", "Earlier action finished"
+        first.targets = ["first.pending"]
+        file_a = first._review_batches_file_for(OWNER, A, "unfollow")
+        file_b = second._review_batches_file_for(OWNER, B, "cancel")
+        _atomic_json(file_a, [{"id": "invalid", "targets": None}])
+        _atomic_json(file_b, [{"id": "healthy", "targets": ["second.pending"],
+                               "approved_at": None, "recheck_results": {}}])
+        old_a, old_b = file_a.read_bytes(), file_b.read_bytes()
+        lanes = {x["account"]: x for x in self.manager.status(OWNER)["lanes"]}
+        self.assertEqual(lanes[A]["state"], "blocked")
+        self.assertIn("unreadable", lanes[A]["message"])
+        self.assertEqual(lanes[A]["saved_batches"][0]["unverifiable"], True)
+        self.assertEqual(lanes[B]["saved_batches"][0]["batch_id"], "healthy")
+        self.assertEqual(file_a.read_bytes(), old_a)
+        self.assertEqual(file_b.read_bytes(), old_b)
+        self.assertFalse(self.sessions.root.exists())
+
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)
         valid = {"version": 1, "owner": OWNER,
