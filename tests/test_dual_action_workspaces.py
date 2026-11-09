@@ -441,6 +441,26 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                         {"owner": OWNER, "account": A, "task": "unfollow"})
                 self.assertEqual(bad_file.read_bytes(), original)
 
+        # Cold Windows restart has no bound worker, but must still reveal A's
+        # broken action WAL even when no unfinished review cohort exists.
+        reopened = DualActionWorkspaces(
+            DualChromeSessions(self.root / "browser"), self.collector,
+            self.collector.data_dir, self.legacy)
+        self.addCleanup(reopened.shutdown)
+        restored = reopened.status(OWNER)
+        cold_lanes = {row["account"]: row for row in restored["lanes"]}
+        self.assertTrue(restored["bindings_restored_from_disk"])
+        self.assertEqual(cold_lanes[A]["saved_batches"], [{
+            "task": "unfollow", "unverifiable": True,
+            "requires_manual_review": True,
+            "source": "saved_local_action_journal",
+        }])
+        self.assertEqual(cold_lanes[B]["saved_batches"][0]["batch_id"],
+                         "healthy-second")
+        self.assertFalse(self.sessions.root.exists())
+        self.assertEqual(bad_file.read_bytes(), original)
+        self.assertEqual(good_file.read_bytes(), good_bytes)
+
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)
         valid = {"version": 1, "owner": OWNER,
