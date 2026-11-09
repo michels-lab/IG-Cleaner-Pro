@@ -287,6 +287,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'test_robot_interlock.py failed; stop integrated Windows acceptance immediately.' }
           python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'test_action_scoped_admission.py failed; stop integrated Windows acceptance immediately.' }
+          python -m unittest discover -s tests -p 'test_windows_ci_exitcode_gate.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows test exit-code sentinel is missing or invalid.' }
           python -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'test_dual_action_workspaces.py failed; stop integrated Windows acceptance immediately.' }
           python -m unittest discover -s tests -p 'test_dual_action_coordinator.py' -v
