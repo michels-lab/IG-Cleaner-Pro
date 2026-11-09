@@ -796,6 +796,29 @@ async function statusUpdate(silent=false,knownSnapshot=null){
       ? info.current_profile:'';
     const diagnostic=typeof info?.message==='string'
       ? info.message.replace(/[\r\n\x00-\x1f]+/g,' ').slice(0,180):'';
+    // After a Windows restart there is no in-memory task, but its actual
+    // original approved batch still lives in the per-account action journal.
+    // Read-only labels must show 40 original vs 10 currently selected, without
+    // silently restarting either relationship action.
+    const count=(value)=>Number.isSafeInteger(value)&&value>=0&&value<=1000?value:'?';
+    const savedText=(Array.isArray(info?.saved_batches)?info.saved_batches:[])
+      .slice(0,2).map(batch=>{
+        const taskLabel=batch?.task==='unfollow'?'Unfollow':
+          batch?.task==='cancel'?'Cancel Pending':'tarea no verificable';
+        if(batch?.unverifiable===true)
+          return ' · HISTORIAL GUARDADO NO VERIFICABLE ('+taskLabel+
+            '). Revisar registros antes de reanudar; ningún clic nuevo.';
+        if(!batch||typeof batch.batch_id!=='string')return '';
+        const batchId=batch.batch_id.replace(/[\r\n\x00-\x1f]/g,'').slice(0,90);
+        return ' · TANDA GUARDADA (no ejecutándose): '+taskLabel+
+          ' · Lote '+batchId+
+          ' · Original '+count(batch.original_total)+
+          ' · Selección actual '+count(batch.current_total)+
+          ' · Sin registro '+count(batch.untouched)+
+          ' · Review/advertencias '+count(batch.warnings)+
+          ' · Acciones confirmadas '+count(batch.confirmed_clicks)+
+          ' · Ya resueltos (sin clic) '+count(batch.already_resolved_no_click);
+      }).join('');
     if(label)label.textContent=info?
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
@@ -803,7 +826,8 @@ async function statusUpdate(silent=false,knownSnapshot=null){
        (currentProfile?' · '+(info.running?'Perfil actual':'Último perfil')+': @'+currentProfile:'')+
        (diagnostic?' · Diagnóstico: '+diagnostic:'')+
        (ownerVisits!==null?' · visitas a mi perfil: '+ownerVisits:'')+
-       (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')):
+       (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')+
+       savedText):
       'Sin estado para esta cuenta.';
     if(!info)continue;
     const state=String(info.state||'idle'),running=info.running===true;

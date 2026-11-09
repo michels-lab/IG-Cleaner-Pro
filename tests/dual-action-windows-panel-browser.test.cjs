@@ -428,7 +428,13 @@ const {chromium}=require('playwright');
           owner_profile_visits:3,owner_sibling_proofs:2},
         {account:'ig_second_123456',expected_handle:'beta.two',
           running:false,state:'paused',task:'cancel',processed:3,issues:0,
-          owner_profile_visits:1,owner_sibling_proofs:5}
+          owner_profile_visits:1,owner_sibling_proofs:5,
+          saved_batches:[{
+            task:'cancel',batch_id:'saved-forty',original_total:40,
+            current_total:10,untouched:7,confirmed_clicks:1,
+            already_resolved_no_click:1,warnings:1,unavailable_no_click:0,
+            requires_explicit_resume:true,source:'saved_local_action_journal'
+          }]}
       ]})});
   });
   const restored=await context.newPage();
@@ -443,6 +449,12 @@ const {chromium}=require('playwright');
     'Existing exact controller mode must display correctly after reload');
   assert.match(await restored.locator('#igcDawStatus0').innerText(),/Robot activo/);
   assert.match(await restored.locator('#igcDawStatus1').innerText(),/Robot detenido/);
+  assert.match(await restored.locator('#igcDawStatus1').innerText(),
+    /TANDA GUARDADA.*Cancel Pending.*Lote saved-forty.*Original 40.*Selección actual 10.*Sin registro 7.*Review\/advertencias 1/s,
+    'Restart must show the ORIGINAL 40, selected 10 and unresolved warnings, not a false empty task.');
+  assert.doesNotMatch(await restored.locator('#igcDawStatus0').innerText(),/TANDA GUARDADA/,
+    'A saved cohort from B must never appear in the other Instagram workspace.');
+
   assert.match(await restored.locator('#igcDawStatus0').innerText(),/visitas a mi perfil: 3/);
   assert.match(await restored.locator('#igcDawStatus0').innerText(),/identidad desde otra pestaña: 2/);
   assert.match(await restored.locator('#igcDawStatus1').innerText(),/visitas a mi perfil: 1/);

@@ -188,6 +188,80 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                                  "action": {**action(), "expected_handle": "other.person"}})
         self.assertFalse(any(restarted._alive(l["robot"]) for l in restarted.workspaces.values()))
 
+    def test_cold_restart_shows_original_40_vs_replanned_10_and_scoped_warnings(self):
+        """After Windows reopens, original 40 must not look like an empty job."""
+        self.manager.configure(config())
+        robot_a = self.manager.workspaces[A]["robot"]
+        robot_b = self.manager.workspaces[B]["robot"]
+        original = ["old.wave." + str(i) for i in range(40)]
+        chosen = original[:10]
+        batch_a = robot_a._review_batches_file_for(OWNER, A, "unfollow")
+        journal_a = robot_a._base_for(OWNER, A, "unfollow")
+        batch_b = robot_b._review_batches_file_for(OWNER, B, "cancel")
+        journal_b = robot_b._base_for(OWNER, B, "cancel")
+        _atomic_json(batch_a, [{
+            "id": "saved-forty", "targets": chosen, "original_targets": original,
+            "approved_at": None, "recheck_results": {},
+        }])
+        _atomic_json(journal_a, {
+            chosen[0]: {"status": "already_not_following"},
+            chosen[1]: {"status": "review",
+                        "issue": "interrupted_action_uncertain",
+                        "click_intent": {"phase": "relationship_control"}},
+            chosen[2]: {"status": "ok"},
+        })
+        _atomic_json(batch_b, [{
+            "id": "saved-second", "targets": ["request.one", "request.two"],
+            "approved_at": None, "recheck_results": {},
+        }])
+        _atomic_json(journal_b, {
+            "request.one": {"status": "already_not_requested"},
+        })
+        saved_bytes = [(p, p.read_bytes()) for p in
+                       (batch_a, journal_a, batch_b, journal_b)]
+        restarted = DualActionWorkspaces(
+            DualChromeSessions(self.root / "browser"),
+            self.collector, self.collector.data_dir, self.legacy)
+        self.addCleanup(restarted.shutdown)
+        snapshot = restarted.status(OWNER)
+        self.assertTrue(snapshot["bindings_restored_from_disk"])
+        lanes = {row["account"]: row for row in snapshot["lanes"]}
+        self.assertFalse(lanes[A]["running"])
+        self.assertFalse(lanes[B]["running"])
+        self.assertEqual(lanes[A]["task"], "",
+                         "Saved metadata may not start an action robot.")
+        self.assertEqual(lanes[B]["task"], "")
+        self.assertEqual(lanes[A]["saved_batches"], [{
+            "task": "unfollow", "batch_id": "saved-forty",
+            "original_total": 40, "current_total": 10,
+            "untouched": 7, "confirmed_clicks": 1,
+            "already_resolved_no_click": 1, "warnings": 1,
+            "unavailable_no_click": 0, "requires_explicit_resume": True,
+            "source": "saved_local_action_journal",
+        }])
+        self.assertEqual(lanes[B]["saved_batches"][0]["task"], "cancel")
+        self.assertEqual(lanes[B]["saved_batches"][0]["current_total"], 2)
+        self.assertEqual(lanes[B]["saved_batches"][0]["untouched"], 1)
+        self.assertEqual(lanes[B]["saved_batches"][0]["already_resolved_no_click"], 1)
+        self.assertNotIn("old.wave.", str(snapshot),
+                         "Status summaries must not leak original target usernames.")
+        self.assertFalse(self.sessions.root.exists(),
+                         "Restart status cannot open Chrome or create browser profiles.")
+        for file, original_data in saved_bytes:
+            self.assertEqual(file.read_bytes(), original_data,
+                             "Hydrating the badge must not mutate canonical action WAL.")
+
+        # A damaged persisted cohort is NOT interpreted as no unfinished job.
+        _atomic_json(batch_a, [{
+            "id": "saved-forty", "targets": "corrupt",
+            "approved_at": None, "recheck_results": {},
+        }])
+        damaged = restarted.status(OWNER)["lanes"][0]["saved_batches"]
+        self.assertTrue(damaged[0]["unverifiable"])
+        self.assertTrue(damaged[0]["requires_manual_review"])
+        self.assertNotIn("current_total", damaged[0],
+                         "Do not invent a zero when original saved wave is corrupt.")
+
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)
         valid = {"version": 1, "owner": OWNER,
