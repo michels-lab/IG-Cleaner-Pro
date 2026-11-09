@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 411,
-  "classified_files_total": 407,
+  "tracked_files_total": 412,
+  "classified_files_total": 408,
   "docs_content_inspected": 104,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,18 +18,17 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 114,
+    "test": 115,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "0d7b898a51c586fd8a34daa2b80752c1315193bb11a6b7f3f5fc34fcea589158",
-  "evidence_fingerprint": "7457c1a9a0921a280611476e1143dff712558d2a0c24144c902fbf5ee2bf79cc",
+  "finding_total": 8,
+  "inventory_fingerprint": "394079ff5dc481d006a473d392e02460c503470d956474d93f3ea894eb85c0fb",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "8f44a327b8e954464d38e8af39b1c2c6784e9a52"
+      "blob": "7a1f0d57f46c64eb03f9b7e229b07bcba3cfe6e4"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "647b2e9987b07012793f5b0af02b0d19bae6dfaf"
+      "blob": "f8648b71a2db3d6e032fb63a214b4617ad73758e"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "edf9fbaed391cf4268f6900dc967cfdf0783360f"
+      "blob": "9357cfc08050f8f640708fae21d4563a1f9e70d3"
     },
     {
       "path": "README.md",
@@ -1870,7 +1869,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d04f6a07ec271c73600823b6637bb88902f3361a"
+      "blob": "7793e20d5d27a87521f973ec29c5fac5bdf648d0"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2249,6 +2248,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "2366a65cc495d78c7d4253d98021f5ccd1220388"
+    },
+    {
+      "path": "tests/test_dual_action_archived_history.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "4830f7639b47844105db330e6f610289d20b2d97"
     },
     {
       "path": "tests/test_dual_action_coordinator.py",
@@ -2661,14 +2667,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d480e914d491aea172840cb7022b14308572a171"
+      "blob": "ccb416c5c67f6ac88a7c8fcb3be296de90bcf16d"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "2745e0be2fb61c80814d653e8e886d8b5c9a5fc9"
+      "blob": "d12a05f81c8a332157bb627ba8d0fa3567407e6a"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -2745,7 +2751,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9ba2ec0307742072ac7408fad8f1770784cec1b1"
+      "blob": "bab711968c7414848898a33168d79cf3ff673b04"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2952,15 +2958,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "485159d79bf475f3",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: tests/dual-action-windows-panel-browser.test.cjs, tests/test_dual_action_workspaces.py, tools/dual_action_windows_ui.py, tools/dual_action_workspaces.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
