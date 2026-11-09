@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "6ed79cb5103e7eb8d6ed29af0b5e1ff3492fa3caa2b26e8313a0b7d5ef16cff7",
+  "inventory_fingerprint": "ccba42f957c5433e5c9f209487a95e76de455e9ecf675a201ae6575c4becfe59",
   "evidence_fingerprint": "6e11bf76d7adf89f1d05a1c3d4eb1a1b61789a1d4952ec74362f478a5c61767b",
   "files": [
     {
@@ -1835,7 +1835,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9f90ab56ebc13eb42d5ac74b0eca842f318bc843"
+      "blob": "e74aadc55a9e435c020607e07667c4b18f8073be"
     },
     {
       "path": "tests/dual-action-new-batch-browser.test.cjs",
@@ -1849,7 +1849,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "47d04cbc9c2346534c163e3eb5a66d1e9877754d"
+      "blob": "dee73accee2c8b4dbc445e41484e939b61e6f66d"
     },
     {
       "path": "tests/dual-action-windows-panel-browser.test.cjs",
@@ -2619,7 +2619,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "5ad7cbdf08c458d37a8d1205dc07cfdc395193f5"
+      "blob": "99f1b82deb586db1422ff8078ac65e1dd7f56269"
     },
     {
       "path": "tools/dual_action_workspaces.py",
