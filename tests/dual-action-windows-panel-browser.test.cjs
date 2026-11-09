@@ -374,6 +374,29 @@ const {chromium}=require('playwright');
   assert.equal((await page.evaluate(()=>window.__dawRequests))
     .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,
     0,'Archive inspection must not trigger action, approval or Chrome navigation');
+  // Only a user click opens the ORIGINAL uncertain saved target. Untouched,
+  // no-click and green results have NO manual Review button in archived rows.
+  const archivedManual=page.locator(
+    '#igcDawArchivedList0 .igc-daw-archive-details .igc-daw-archived-manual');
+  assert.equal(await archivedManual.count(),1,
+    'Archived manual Chrome opening is limited to uncertain saved click evidence.');
+  await archivedManual.click();
+  await page.waitForFunction(()=>window.__dawRequests?.some(
+    x=>x.operation==='open-review-one'&&x.data?.username==='uncertain.click'),
+    null,{timeout:12000});
+  const archivedOpens=(await page.evaluate(()=>window.__dawRequests)).filter(
+    x=>x.operation==='open-review-one'&&x.data.username==='uncertain.click');
+  assert.equal(archivedOpens.length,1);
+  assert.deepEqual(archivedOpens[0].data,{
+    owner,account:'ig_first_1234567',task:'unfollow',username:'uncertain.click',
+    confirmation:'action-workspace-review:'+owner+':ig_first_1234567:uncertain.click'
+  });
+  assert.equal(archivedOpens[0].token,'a'.repeat(32));
+  assert.equal((await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>['start-one','approve-one','cancel-batch-one'].includes(x.operation)).length,
+    0,'Explicit review-opening may navigate Chrome, never perform account actions');
+  assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),
+    /uncertain.click/,'A cannot place its archived target into B view');
   await page.locator('#igcDawTask1').selectOption('unfollow');
   assert.equal((await page.locator('#igcDawArchivedList1').innerText()).trim(),'',
     'Changing B task must clear stale B archive without touching account A');
@@ -407,7 +430,8 @@ const {chromium}=require('playwright');
   },null,{timeout:12000});
   const calls=await page.evaluate(()=>window.__dawRequests);
   const reviewCall=calls.find(x=>x.operation==='review-one');
-  const openCall=calls.find(x=>x.operation==='open-review-one');
+  const openCall=calls.find(x=>x.operation==='open-review-one'&&
+    x.data.username==='review.target');
   const pauseCall=calls.find(x=>x.operation==='pause-one');
   assert.equal(reviewCall.data.account,'ig_first_1234567');
   assert.equal(openCall.data.username,'review.target');
