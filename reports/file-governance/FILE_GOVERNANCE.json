@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 412,
-  "classified_files_total": 408,
-  "docs_content_inspected": 104,
+  "tracked_files_total": 414,
+  "classified_files_total": 410,
+  "docs_content_inspected": 105,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,21 +14,22 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 99,
+    "document": 100,
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 115,
+    "test": 116,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "322b1ce7abc2af9868c8d77472717ffb2b8f4e1992d9ab23dc2ebf0afe85ec36",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "62f92a6784a7aa9d4a1dc3a13ec1c9aabe5db744cc5da9327ac8682a4d7e5e26",
+  "evidence_fingerprint": "c159685e93ba9a2d1714f4fe3970dd35de2bcb019fbb56dcbbc1013a361976b0",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -98,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "7a1f0d57f46c64eb03f9b7e229b07bcba3cfe6e4"
+      "blob": "94c79054e2ab0d3b98f7530d357d556093f84ae6"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -126,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f8648b71a2db3d6e032fb63a214b4617ad73758e"
+      "blob": "ba40da5f1f8d75bd73626281d208f8ef06686a9e"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1214,6 +1215,13 @@
       "blob": "c7d364c6fab20f2e4a9ff1d702d4bb0bc5ea2238"
     },
     {
+      "path": "docs/GRANADA_APPROVAL_LEASE_2026-11-09.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a9a316a6d7800e5c03b3ab8bbbc911a458e34dc0"
+    },
+    {
       "path": "docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2103,6 +2111,13 @@
       "blob": "8f8e11163ba49a1f72b6fde66475ad97d8e86ced"
     },
     {
+      "path": "tests/test_action_batch_approval_lease.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "d40c83c05bd8949235c0297ef63523315c0fb246"
+    },
+    {
       "path": "tests/test_action_batch_history.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2737,7 +2752,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "91e5cdc88b0bf13c57bcd1cf2f739986582eb91c"
+      "blob": "4dcd1323bd403b9d0eb2668af0e6e2c4090464e9"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2958,6 +2973,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "5571da17d5b7d43c",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "4 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_approval_lease.py, tools/profile_actions.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
