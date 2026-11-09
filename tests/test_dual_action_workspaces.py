@@ -545,6 +545,60 @@ class BridgeIsolatedWorkspaceTests(unittest.TestCase):
                 server.server_close()
                 thread.join(5)
 
+    def test_real_http_bridge_restores_two_identities_after_native_restart(self):
+        """New process, new token and server: GET only must rebind both accounts."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            def launch(token):
+                server = build_server(
+                    Collector(root / "data", root / "browser-legacy"), token, 0)
+                thread = threading.Thread(target=server.serve_forever, daemon=True)
+                thread.start()
+                return server, thread
+            def query(server, token, url, payload=None):
+                req = urllib.request.Request(
+                    "http://127.0.0.1:" + str(server.server_port) + url,
+                    data=json.dumps(payload).encode() if payload is not None else None,
+                    method="POST" if payload is not None else "GET",
+                    headers={"X-IGC-Bridge-Token": token, "Origin": "null",
+                             "Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    return json.load(response)
+            first, old_thread = launch("old-process-token")
+            try:
+                result = query(first, "old-process-token",
+                    "/api/actions/dual-action-workspaces/configure", config())
+                self.assertTrue(result["two_workspaces"])
+            finally:
+                first.shutdown()
+                first.server_close()
+                old_thread.join(5)
+
+            second, new_thread = launch("fresh-process-token")
+            try:
+                status = query(second, "fresh-process-token",
+                               "/api/actions/dual-action-workspaces/status?owner=" + OWNER)
+                self.assertEqual(status["owner"], OWNER)
+                self.assertTrue(status["bindings_restored_from_disk"])
+                self.assertTrue(status["two_workspaces"])
+                self.assertEqual([lane["account"] for lane in status["lanes"]], [A, B])
+                self.assertFalse(status["parallel_mutations_enabled"])
+                self.assertTrue(all(not lane["running"] for lane in status["lanes"]))
+                self.assertIsNone(second.dual_action_workspaces.workspaces[A]["robot"].worker)
+                self.assertFalse(list((root / "data").glob("instagram-actions-*.json")))
+                with self.assertRaises(urllib.error.HTTPError) as forbidden:
+                    query(second, "old-process-token",
+                          "/api/actions/dual-action-workspaces/status?owner=" + OWNER)
+                self.assertEqual(forbidden.exception.code, 403)
+                with self.assertRaises(urllib.error.HTTPError) as other:
+                    query(second, "fresh-process-token",
+                          "/api/actions/dual-action-workspaces/status?owner=u_other_42")
+                self.assertEqual(other.exception.code, 400)
+            finally:
+                second.shutdown()
+                second.server_close()
+                new_thread.join(5)
+
     def test_developer_disallows_workspace_action_controls(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
