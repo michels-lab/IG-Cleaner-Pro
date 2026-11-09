@@ -365,6 +365,79 @@ class DualActionWorkspaces:
                 raise ValueError("Cannot inspect another owner's Instagram action workspaces.")
             return self._snapshot_locked()
 
+    def _saved_cohort_summaries(self, owner, account, robot):
+        """Redacted read-only unfinished Unfollow/Cancel cohorts after restart.
+
+        The robot's in-memory task is blank after Windows is relaunched even
+        when the ORIGINAL approved cohort is durable. Never infer a new
+        action, successful click or login from historical WAL.
+        """
+        from profile_counts_robot import valid_username
+        rows = []
+        for task in ("unfollow", "cancel"):
+            try:
+                result = robot.batch_review({
+                    "owner": owner, "account": account, "task": task})
+                batch = result.get("batch")
+                if batch is None:
+                    continue
+                names = batch.get("targets")
+                batch_id = batch.get("id")
+                if (not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                        or not isinstance(names, list) or not 1 <= len(names) <= 1000
+                        or any(not isinstance(name, str) or valid_username(name) != name
+                               for name in names) or len(set(names)) != len(names)):
+                    raise ValueError("Invalid original saved target cohort.")
+                original = batch.get("original_targets")
+                original_count = (len(original)
+                                  if isinstance(original, list) and original
+                                  and len(original) <= 1000 and
+                                  all(isinstance(x, str) and valid_username(x) == x
+                                      for x in original) else len(names))
+                outcomes = batch.get("action_results")
+                if not isinstance(outcomes, dict):
+                    raise ValueError("Saved action outcomes are not verifiable.")
+                pending = confirmed = no_click = warnings = unavailable = 0
+                for username in names:
+                    item = outcomes.get(username)
+                    if not isinstance(item, dict):
+                        warnings += 1
+                    elif item.get("status") == "pending":
+                        pending += 1
+                    elif item.get("possible_click") is True:
+                        # A former click must remain an unresolved warning
+                        # even if a later read-only observation looks resolved.
+                        warnings += 1
+                    elif item.get("status") == "ok":
+                        confirmed += 1
+                    elif item.get("status") in (
+                            "already_not_following", "already_not_requested"):
+                        no_click += 1
+                    elif item.get("status") == "profile_unavailable":
+                        unavailable += 1
+                    else:
+                        warnings += 1
+                rows.append({
+                    "task": task, "batch_id": batch_id,
+                    "original_total": original_count,
+                    "current_total": len(names),
+                    "untouched": pending,
+                    "confirmed_clicks": confirmed,
+                    "already_resolved_no_click": no_click,
+                    "warnings": warnings,
+                    "unavailable_no_click": unavailable,
+                    "requires_explicit_resume": True,
+                    "source": "saved_local_action_journal",
+                })
+            except (TypeError, KeyError, ValueError, OSError):
+                # A damaged local file is not proof of an empty saved wave.
+                # Show an explicit read failure without exposing usernames
+                # or silently claiming the account has nothing outstanding.
+                rows.append({"task": task, "unverifiable": True,
+                             "requires_manual_review": True,
+                             "source": "saved_local_action_journal"})
+        return rows
+
     def _snapshot_locked(self):
         lanes = []
         for account, item in self.workspaces.items():
@@ -393,6 +466,12 @@ class DualActionWorkspaces:
                 "owner_profile_visits": state["owner_profile_visits"],
                 "owner_sibling_proofs": state["owner_sibling_proofs"],
                 "review_batch_open": state["review_batch"] is not None,
+                # After a native restart the in-memory worker/task is blank.
+                # Show both persisted cohorts without rebinding or replaying
+                # an account, Chrome tab, action job or owner consent.
+                "saved_batches": (
+                    self._saved_cohort_summaries(self.owner, account, r)
+                    if self.owner and not state["running"] else []),
             })
         return {
             "owner": self.owner, "two_workspaces": len(lanes) == 2,
