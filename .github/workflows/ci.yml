@@ -101,6 +101,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_dual_action_preflight.py' -v
       - name: Verify approval cannot race another Windows Public or Developer action process
         run: python3 -m unittest discover -s tests -p 'test_action_batch_approval_lease.py' -v
+      - name: Verify owner-selected resize and archived cohorts cannot race external action WAL
+        run: python3 -m unittest discover -s tests -p 'test_action_cohort_mutation_lease.py' -v
       - name: Verify exact-account Cancel Batch across restart and concurrent Chrome workers
         run: python3 -m unittest discover -s tests -p 'test_dual_account_cancel_batch.py' -v
       - name: Verify redacted archived two-account history and authenticated read-only route

@@ -25,6 +25,7 @@ on:
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
       - 'tests/test_action_batch_approval_lease.py'
+      - 'tests/test_action_cohort_mutation_lease.py'
       - 'tests/test_dual_action_archived_history.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
@@ -124,6 +125,7 @@ on:
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
       - 'tests/test_action_batch_approval_lease.py'
+      - 'tests/test_action_cohort_mutation_lease.py'
       - 'tests/test_dual_action_archived_history.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
@@ -253,6 +255,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_action_batch_approval_lease.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Cross-process approval bypassed shared action journal lease.' }
+      - name: Verify resize set-aside and protected deferral own the global Windows WAL lease
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_action_cohort_mutation_lease.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Batch resizing or archiving raced a Public/Developer action writer.' }
       - name: Verify owner-selected Cancel Batch preserves A/B journals and does not replay possible clicks
         shell: pwsh
         run: |
