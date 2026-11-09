@@ -2145,13 +2145,19 @@ class ActionRobot:
         changes and distinguish it from their new active cohort.
         """
         owner, account, task = self._review_scope(data)
+        offset = data.get("offset", 0)
+        # Never allow booleans, negative indices or unbounded offsets to
+        # become accidental "all history" responses. Older API callers use 0.
+        if type(offset) is not int or not 0 <= offset <= 1_000_000:
+            raise ValueError("Choose a valid archived-history page offset.")
+        page_size = 20
         with self.lock:
             saved = self._review_batches(owner, account, task)
             deferred = [
                 entry for entry in saved
                 if isinstance(entry, dict) and entry.get("deferred_at")
             ]
-            recent = list(reversed(deferred))[:20]
+            recent = list(reversed(deferred))[offset:offset + page_size]
             rows = [
                 {"batch_id": str(entry.get("id", "")),
                  "created_at": str(entry.get("created_at", "")),
@@ -2166,8 +2172,13 @@ class ActionRobot:
                  "marked_reviewed": False}
                 for entry in recent
             ]
+            next_offset = offset + len(rows)
+            has_more = next_offset < len(deferred)
             return {"owner": owner, "account": account, "task": task,
                     "total_deferred": len(deferred), "recent": rows,
+                    "offset": offset, "page_size": page_size,
+                    "has_more": has_more,
+                    "next_offset": next_offset if has_more else None,
                     "read_only": True, "source": "local_saved_action_batches"}
 
     def deferred_batch_details(self, data):
