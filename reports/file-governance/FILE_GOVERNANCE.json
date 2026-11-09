@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "ccba42f957c5433e5c9f209487a95e76de455e9ecf675a201ae6575c4becfe59",
+  "inventory_fingerprint": "266bce6d8db8fe2714a7d8c5cebfa0431d9ae99b7e4db791287f6aa87a9cfbdd",
   "evidence_fingerprint": "6e11bf76d7adf89f1d05a1c3d4eb1a1b61789a1d4952ec74362f478a5c61767b",
   "files": [
     {
@@ -2248,7 +2248,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e5800c124a95d239a22b48a86d498760637c60a1"
+      "blob": "3f698c1acbb5efa1874b4c02e1ef09c3fbd35e12"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2619,14 +2619,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "99f1b82deb586db1422ff8078ac65e1dd7f56269"
+      "blob": "41b0321e860fb9a9c8c44b21153f33a9b0acef9a"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3ba3b4b5e5bb4f04abe6265049c131068dc75c98"
+      "blob": "047b652eda3badb4f9d80d198aefadfca15c6c0d"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
