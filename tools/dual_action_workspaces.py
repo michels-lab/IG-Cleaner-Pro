@@ -165,6 +165,26 @@ class DualActionWorkspaces:
             raise ValueError("The selected Instagram action workspace belongs to another owner.")
         return self.workspaces[account]
 
+    @staticmethod
+    def _assert_account_evidence_readable(owner, account, robot, tasks=("unfollow", "cancel")):
+        """Refuse action admission if saved evidence is not safely readable.
+
+        A status warning must also be an admission barrier: a damaged
+        Unfollow WAL cannot be bypassed by starting Cancel Pending for the
+        same Instagram owner/account after a restart. Healthy account B is
+        independent. Never rewrite, clear, or silently approve old evidence.
+        """
+        try:
+            for task in tasks:
+                _read_json(robot._base_for(owner, account, task), {})
+                robot._pending_review(owner, account, task)
+        except (ValueError, TypeError, KeyError, OSError) as exc:
+            raise ValueError(
+                "Saved action evidence for this Instagram account is "
+                "unreadable; preserve the original WAL and review it "
+                "before starting or preflighting another action."
+            ) from exc
+
     def preflight_new_one(self, data):
         """Read-only exact-account new-cohort eligibility from canonical WAL.
 
@@ -193,6 +213,8 @@ class DualActionWorkspaces:
                     or (not self._parallel_enabled and self._offline_cohort is None
                         and any(self._alive(row["robot"]) for row in self.workspaces.values()))):
                 raise ValueError("Pause the existing action robot before checking a new cohort.")
+            self._assert_account_evidence_readable(
+                owner, account, lane["robot"])
             inspection = DualActionPreflight(self.sessions, self.legacy_actions)
             # Classifies one cohort using the same journal/protection/visit
             # evidence and precise scope already proven by the dual preflight.
@@ -233,6 +255,11 @@ class DualActionWorkspaces:
             if (not self._parallel_enabled and self._offline_cohort is None
                     and any(self._alive(row["robot"]) for row in self.workspaces.values())):
                 raise ValueError("Only one relationship-changing action worker can run at a time.")
+            # The visible blocked state must be enforced at action admission.
+            # Check BOTH task journals before either Unfollow or Cancel starts,
+            # without mutating the original data or launching Chrome.
+            self._assert_account_evidence_readable(
+                owner, account, lane["robot"])
             # A parallel configuration still uses independent ActionRobot
             # instances and the original per-account WAL. A single cohort
             # holds the LEGACY GLOBAL kernel lock until the LAST active worker
@@ -301,6 +328,11 @@ class DualActionWorkspaces:
             raise ValueError("Choose Unfollow or Cancel Pending for this workspace review.")
         with self.lock:
             lane = self._lane(owner, account)
+            # A missing unfinished cohort is not proof that its action WAL
+            # is healthy. Reject a damaged journal instead of returning
+            # {"batch": None} as if the account had no history to inspect.
+            self._assert_account_evidence_readable(
+                owner, account, lane["robot"], tasks=(task,))
             return lane["robot"].batch_review(
                 {"owner": owner, "account": account, "task": task})
 
@@ -531,6 +563,12 @@ class DualActionWorkspaces:
                     "be verified. Original files are preserved; inspect "
                     "the affected task before starting a new robot."
                 )
+                # Recovered idle counters must NOT masquerade as proven zeros.
+                # Without valid WAL we cannot know how many actions finished.
+                for name in ("processed", "pending", "issue_count", "total",
+                             "successful", "already_not_following",
+                             "already_not_requested", "batch_size"):
+                    state[name] = None
             lanes.append({
                 "account": account, "expected_handle": item["handle"],
                 "state": state["status"], "message": state["message"],
