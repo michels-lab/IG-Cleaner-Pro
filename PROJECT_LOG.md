@@ -1,3 +1,10 @@
+## 2026-11-09 — GRANADA: evitar importación manual Pending bajo otro perfil (source only)
+
+- **Fallo funcional:** `processPendingFiles()` permitía importar uno o varios archivos `pending_follow_requests*.json/.html` con `await readFile(file)` sin comprobar la identidad de cuenta activa. Cambiar de cuenta Instagram durante la lectura hacía que `pendingRequestsRaw=...` y `savePendingRequests()` publicaran los Pending de A en el espacio de B, aunque el ZIP completo `applyZipCore` sí verifica el ámbito de cada importación.
+- **Corrección:** congelar `zipImportScope()` del propietario/perfil antes de leer, llamar `assertZipImportScope` después de **cada** lectura asíncrona y nuevamente **antes de escribir** el snapshot; excepción capturada conserva el historial anterior y presenta aviso de cuenta cambiada/no verificada. No se ejecutan bots, clics o navegación de Chrome.
+- **Pruebas reales del JS distribuible:** `tests/pending-zip-completeness.test.cjs` extrae el runtime exacto del HTML, simula un ZIP manual con 2 fragmentos, cambia de cuenta antes del segundo resultado, exige cero writes y conservación byte-lógica de la lista anterior, valida importación normal con 725 solicitudes y pérdida de verificación del perfil. Las rutas Linux CI y Windows integrado ya ejecutan esta prueba.
+- **Liberación bloqueada:** no publicación, RC, instalación o actividad real en Instagram. Seguir esperando el ZIP del propietario y aceptación de ambos perfiles por separado.
+
 ## 2026-11-09 — GRANADA: consultar tandas canceladas por cuenta (source only)
 
 - **Fallo funcional:** tras cancelar una tanda por cuenta (#333) sus entradas se conservan como `deferred_at` en el WAL de revisiones. El panel dual muestra únicamente `review-one` (tanda pendiente), así que la lista cancelada desaparece del flujo habitual y obliga a buscar registros técnicos. La necesidad de revisar primero advertencias de la tanda cancelada persiste.

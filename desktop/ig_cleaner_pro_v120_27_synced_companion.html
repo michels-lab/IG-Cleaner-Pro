@@ -9207,6 +9207,10 @@ function dedupePending(list){const map=new Map();(list||[]).forEach(x=>{if(!x||!
 async function processPendingFiles(){
  const files=document.getElementById('pendingInput')?.files;
  if(!files||!files.length){msg('Sube primero pending_follow_requests.json o .html.','w');return false}
+ // Freeze the exact Instagram workspace before the first async file read.
+ // Otherwise changing active profiles during File.text()/readFile() can
+ // publish another account's Pending in the newly selected account.
+ const pendingImportScope=zipImportScope();
  // Validate ALL selected manual files before replacing ANY saved Pending data.
  // An unreadable/partial export must not erase the previous imported snapshot.
  let all=[],sourceCount=0,unreadable=0,explicitEmpty=false;
@@ -9214,6 +9218,7 @@ async function processPendingFiles(){
   for(const file of Array.from(files)){
    const name=String(file.name||'');
    const text=await readFile(file);
+   assertZipImportScope(pendingImportScope);
    let rows=[],count=0;
    if(/\.json$/i.test(name)){
     let data;
@@ -9249,6 +9254,9 @@ async function processPendingFiles(){
   if(!all.length&&!explicitEmpty)
    throw Error('No se confirmó una lista vacía ni usuarios legibles');
   const imported=dedupePending(all);
+  // Verify AGAIN before publishing, not just after the first file: this
+  // guards multi-file imports whose second read finishes after a profile switch.
+  assertZipImportScope(pendingImportScope);
   // Only now publish the complete verified snapshot; never clear opened,
   // reviewed, snoozed or protected history for any previously known user.
   pendingRequestsRaw=imported;
