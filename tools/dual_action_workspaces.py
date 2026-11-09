@@ -483,7 +483,33 @@ class DualActionWorkspaces:
         for account, item in self.workspaces.items():
             r = item["robot"]
             # Never include Chrome session paths, tokens or browser cookies.
-            state = r.snapshot()
+            # An already-bound worker reads its owner/account/task action WAL
+            # in snapshot(), BEFORE _saved_cohort_summaries can protect its
+            # archived-batch reads. A torn or wrong-type WAL for lane A must
+            # not crash the entire Windows status route and hide healthy B.
+            # Never repair, approve or truncate uncertain original evidence.
+            try:
+                state = r.snapshot()
+            except (ValueError, OSError, TypeError, KeyError):
+                state = {
+                    "status": "blocked",
+                    "message": (
+                        "Saved action journal or related account evidence is "
+                        "unreadable; original files are preserved. Review this "
+                        "Instagram account before starting another action."
+                    ),
+                    "running": self._alive(r),
+                    "task": r.task if r.task in ("unfollow", "cancel", "audit") else None,
+                    "current_profile": None,
+                    # Unknown is never zero or a confirmed relationship click.
+                    "processed": None, "pending": None, "issue_count": None,
+                    "total": None, "successful": None,
+                    "already_not_following": None,
+                    "already_not_requested": None,
+                    "batch_size": None, "review_batch": None,
+                    "owner_profile_visits": None,
+                    "owner_sibling_proofs": None,
+                }
             lanes.append({
                 "account": account, "expected_handle": item["handle"],
                 "state": state["status"], "message": state["message"],
