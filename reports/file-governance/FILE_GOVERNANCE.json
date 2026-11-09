@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 406,
-  "classified_files_total": 402,
+  "tracked_files_total": 408,
+  "classified_files_total": 404,
   "docs_content_inspected": 103,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 110,
+    "test": 112,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "e63a5ca76b55623452d02aef151aad3a28d09b0c950f1c97c233adf20a41bb23",
+  "inventory_fingerprint": "00aaadc8f40c2a58f3d713b40b99bfcd15565bd8f33197f3fe85750eff10b455",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a77972144c6deac89c303eae02163dfee9ddd49a"
+      "blob": "8697291df4602bdb7941a5f230bb44d49f0a0523"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "7e0a589d1e99a449ad9a9236a47e8455956fba62"
+      "blob": "b7d103535672cbc8d3ff0e7e396b8436b06271b7"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "0a639674d04229aa37b1c679eb9fcb8081e01ef8"
+      "blob": "8aa69947877de23413bfe31d5ba2bacf26a86b22"
     },
     {
       "path": "README.md",
@@ -1746,6 +1746,13 @@
       "blob": "02c8cc65add77eefe68ae518a0bb62fd7c993747"
     },
     {
+      "path": "tests/automation-warning-events.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1dbb310e4f10a63f15123bf3c2b779020f753542"
+    },
+    {
       "path": "tests/automations-cold-start.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2180,6 +2187,13 @@
       "blob": "3fda4920737f28770d72e6bfcc15cb03101edeef"
     },
     {
+      "path": "tests/test_automation_warning_events.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "f3f6447c2dce9a70bbf6ea89ed747f2ae410d68b"
+    },
+    {
       "path": "tests/test_cancel_request_unfollow_dialog_safety.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2541,7 +2555,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "682fb43c2e027ad766f9c991b7e06fe2fac2f2a7"
+      "blob": "d571175d260277528164395fd72632c2900fbb79"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -2695,7 +2709,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7400b11e3e0b54a08f77fd23b34e4222f114861a"
+      "blob": "c5f76759f7ceeaf5939805af5b40c5d056b82a6c"
     },
     {
       "path": "tools/profile_counts_audit.py",
