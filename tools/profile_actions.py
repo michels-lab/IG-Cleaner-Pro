@@ -2221,6 +2221,17 @@ class ActionRobot:
                 or not batch_id or data.get("confirmation") !=
                 "replan-size:" + batch_id + ":" + str(desired)):
             raise ValueError("Replanning requires exact current batch and selected size.")
+        # Another installed Public/Developer process may have the SAME WAL.
+        # Serialize every saved cohort mutation with the exact action-click
+        # global + workspace OS lease, BEFORE reading batch or action journal.
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
+        try:
+            return self._replan_incomplete_batch_under_lease(owner, account, task, batch_id, desired)
+        finally:
+            lease.release()
+
+    def _replan_incomplete_batch_under_lease(self, owner, account, task, batch_id, desired):
+        """Recheck scoped cohort under the canonical cross-process action lease."""
         with self.collector.browser_admission, self.lock:
             if (self.worker and self.worker.is_alive()) or (
                     self.collector.worker and self.collector.worker.is_alive()):
@@ -2289,6 +2300,17 @@ class ActionRobot:
                 not batch_id or
                 data.get("confirmation") != "new-batch:" + batch_id + ":" + str(desired)):
             raise ValueError("Confirm the exact saved batch and requested new size.")
+        # Another installed Public/Developer process may have the SAME WAL.
+        # Serialize every saved cohort mutation with the exact action-click
+        # global + workspace OS lease, BEFORE reading batch or action journal.
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
+        try:
+            return self._set_aside_incomplete_batch_under_lease(owner, account, task, batch_id, desired)
+        finally:
+            lease.release()
+
+    def _set_aside_incomplete_batch_under_lease(self, owner, account, task, batch_id, desired):
+        """Recheck scoped cohort under the canonical cross-process action lease."""
         with self.collector.browser_admission, self.lock:
             if ((self.worker and self.worker.is_alive()) or
                     (self.collector.worker and self.collector.worker.is_alive())):
@@ -2346,6 +2368,17 @@ class ActionRobot:
         batch_id = str(data.get("batch_id") or "")
         if not batch_id or data.get("confirmation") != "defer-protected:" + batch_id:
             raise ValueError("Deferring a protected cohort requires explicit batch confirmation.")
+        # Another installed Public/Developer process may have the SAME WAL.
+        # Serialize every saved cohort mutation with the exact action-click
+        # global + workspace OS lease, BEFORE reading batch or action journal.
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
+        try:
+            return self._defer_protected_batch_under_lease(owner, account, task, batch_id)
+        finally:
+            lease.release()
+
+    def _defer_protected_batch_under_lease(self, owner, account, task, batch_id):
+        """Recheck scoped cohort under the canonical cross-process action lease."""
         with self.collector.browser_admission, self.lock:
             if (self.worker and self.worker.is_alive()) or (
                     self.collector.worker and self.collector.worker.is_alive()):
