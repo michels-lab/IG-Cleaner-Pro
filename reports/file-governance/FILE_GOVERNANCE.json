@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 415,
-  "classified_files_total": 411,
+  "tracked_files_total": 416,
+  "classified_files_total": 412,
   "docs_content_inspected": 106,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 116,
+    "test": 117,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "711d16ea6a7c8980ef1cca89b513b017cbb1d5c78206a1c52a27da475cafaffb",
+  "inventory_fingerprint": "95ff138d2d98900024689fccb9acad4239498f2668501377fb700564d3e1b48e",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "94c79054e2ab0d3b98f7530d357d556093f84ae6"
+      "blob": "25a11f98adc3027ae40316e08df014ae183ea38e"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "ba40da5f1f8d75bd73626281d208f8ef06686a9e"
+      "blob": "5215262920c60229f5a6131fe70a34e414e806b5"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "8943b2284d0ca28b3c0ce478ee72e8b61db732c9"
+      "blob": "9fcf7e9ae28c290ce96161a4197804ff91446a09"
     },
     {
       "path": "README.md",
@@ -2145,6 +2145,13 @@
       "blob": "4dad0b40a84f108849668a41aa0544f4234d1383"
     },
     {
+      "path": "tests/test_action_cohort_mutation_lease.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "fbb0d394ce07990c1d9433176b8aae11e8705ad0"
+    },
+    {
       "path": "tests/test_action_owner_probe_bound.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2758,7 +2765,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d598b73fd127648ccf723612ea094b88248000fc"
+      "blob": "02373e640176c8cd1744a4a9540abe5dcc790cbf"
     },
     {
       "path": "tools/profile_counts_audit.py",
