@@ -144,17 +144,33 @@ function summarize(records,id,now){
  const lower=cutoff(id,now), upper=now.getTime();
  const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
    legacy_unknown:0};
- const unique=new Set();
+ const unique=new Set(),warningEvents=new Set();
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   const t=dateValue(r.at);
-   if(!Number.isFinite(t)||t<lower||t>upper)continue;
    if(unique.has(key))continue;unique.add(key);
-   const category=classify(r);
-   if(!Object.prototype.hasOwnProperty.call(out,category))continue;
-   out[category]++;
-   if(category==='verified')out[r.task]++;
+   const t=dateValue(r.at),category=classify(r);
+   // A later OK is a single confirmed action. A prior failed/review attempt
+   // remains a warning at ITS own event time, never another verified click.
+   if(Number.isFinite(t)&&t>=lower&&t<=upper&&
+      Object.prototype.hasOwnProperty.call(out,category)){
+     if(category==='warning'){
+       warningEvents.add(key+':'+r.status+':'+r.at);
+       out.warning++;
+     }else{
+       out[category]++;
+       if(category==='verified')out[r.task]++;
+     }
+   }
+   for(const past of (Array.isArray(r.warning_events)?r.warning_events:[])){
+     if(!past||!['review','error','blocked'].includes(past.status))continue;
+     const when=dateValue(past.at);
+     if(!Number.isFinite(when)||when<lower||when>upper)continue;
+     const eventKey=key+':'+past.status+':'+past.at;
+     if(warningEvents.has(eventKey))continue;
+     warningEvents.add(eventKey);
+     out.warning++;
+   }
  }
  return out;
 }
@@ -169,7 +185,11 @@ async function readHistory(account,task){
     !Array.isArray(data.history_rows))throw Error('Historial no verificable para la cuenta seleccionada.');
  return data.history_rows.map(x=>({
    task,username:x.username,status:x.status,at:x.at,
-   origin:x.origin==='robot'?'robot':'unknown'
+   origin:x.origin==='robot'?'robot':'unknown',
+   warning_events:Array.isArray(x.warning_events)?x.warning_events.map(e=>({
+     status:e&&e.status,at:e&&e.at,
+     origin:e&&e.origin==='robot'?'robot':'unknown'
+   })):[]
  }));
 }
 async function readBatchStatus(account,expectedOwner){
@@ -451,7 +471,7 @@ function mount(){
  for(const [key,name] of PERIODS){const opt=node('option',null,name);opt.value=key;period.append(opt)}
  period.value='today';period.addEventListener('change',()=>render(latest));section.append(period);
  for(const [key,name] of [['verified','Acciones confirmadas'],['unfollow','Unfollow realizados'],
-  ['cancel','Solicitudes canceladas'],['warning','Review / advertencias'],
+  ['cancel','Solicitudes canceladas'],['warning','Review / advertencias (eventos)'],
   ['no_action','Ya estaban resueltas (sin clic)'],['unavailable','Perfiles no disponibles'],
   ['legacy_unknown','OK históricos sin procedencia registrada']]){
    const row=node('div','igc-act-row');
@@ -466,7 +486,7 @@ function mount(){
  history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
  historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
-  'Actividad explícita del robot, no sumada al historial manual. Solo OK con fecha y origen robot cuenta como acción confirmada; los OK históricos sin origen identificado se muestran aparte, sin atribución inventada.'));
+  'Actividad explícita del robot, no sumada al historial manual. Cada OK verificado cuenta una sola vez; las advertencias anteriores se cuentan por fecha de evento aunque después haya OK. Los OK antiguos sin origen identificado siguen separados.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
  refreshButton.id='igcActRefresh';refreshButton.addEventListener('click',refresh);panel.append(refreshButton);
  const status=node('div','igc-act-status','Consulta de solo lectura; no inicia robots.');

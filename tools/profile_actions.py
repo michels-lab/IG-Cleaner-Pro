@@ -1950,6 +1950,34 @@ class ActionRobot:
             if valid_username(username) != username:
                 continue
             clean = _public_action_record(record)
+            # Keep old warning events visible after a later positive result.
+            # Export only status, UTC time and provenance: the archived journal
+            # also holds diagnostics and possible click/WAL fields which must
+            # never leave the local app through activity statistics.
+            warning_events = []
+            seen_warning_events = set()
+            past = record.get("attempt_history", []) if isinstance(record, dict) else []
+            if isinstance(past, list):
+                for attempt in past:
+                    if not isinstance(attempt, dict):
+                        continue
+                    state, at = attempt.get("status"), attempt.get("at")
+                    if (state not in ("review", "error", "blocked")
+                            or not isinstance(at, str)
+                            or not re.fullmatch(
+                                r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z",
+                                at)):
+                        continue
+                    key = (state, at)
+                    if key in seen_warning_events:
+                        continue
+                    seen_warning_events.add(key)
+                    warning_events.append({
+                        "status": state,
+                        "origin": ("robot" if attempt.get("origin") == "robot"
+                                   else "unknown"),
+                        "at": at,
+                    })
             history_rows.append({
                 "username": username,
                 "status": clean.get("status", "review"),
@@ -1960,6 +1988,7 @@ class ActionRobot:
                 "origin": ("robot" if isinstance(record, dict)
                            and record.get("origin") == "robot" else "unknown"),
                 "click_phase": _public_click_phase(record),
+                "warning_events": warning_events,
             })
         return {"owner": owner, "account": account, "task": task,
                 "attempted_usernames": attempted,
