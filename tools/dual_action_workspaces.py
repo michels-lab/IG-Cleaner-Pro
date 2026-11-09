@@ -352,7 +352,8 @@ class DualActionWorkspaces:
         with self.lock:
             lane = self._lane(owner, account)
             return lane["robot"].deferred_batch_history(
-                {"owner": owner, "account": account, "task": task})
+                {"owner": owner, "account": account, "task": task,
+                 "offset": data.get("offset", 0)})
 
     def archived_detail_one(self, data):
         """Read one archived cohort without rerunning or approving anything."""
