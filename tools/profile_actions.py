@@ -2328,8 +2328,28 @@ class ActionRobot:
                     "next_batch_requires_confirmation": True}
 
     def approve_batch(self, data):
+        """Commit saved Review only with the canonical OS action journal lease.
+
+        Another installed Public/Developer app can own the same durable WAL
+        even when this ActionRobot has no in-process worker after restart.
+        Acquire the same global + workspace lease used by action clicks BEFORE
+        reading review/journal state. No approval may race any external writer.
+        """
         owner, account, task = self._review_scope(data)
         batch_id = str(data.get("batch_id") or "")
+        if not batch_id or data.get("confirmation") != "reviewed:" + batch_id:
+            raise ValueError("Only your explicit batch confirmation can mark this reviewed.")
+        with self.lock:
+            if self.worker and self.worker.is_alive():
+                raise ValueError("Wait for the robot to finish before approving the batch.")
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
+        try:
+            return self._approve_batch_under_lease(data, owner, account, task, batch_id)
+        finally:
+            lease.release()
+
+    def _approve_batch_under_lease(self, data, owner, account, task, batch_id):
+        """Revalidate the original cohort and click WAL while holding OS lease."""
         with self.lock:
             if self.worker and self.worker.is_alive():
                 raise ValueError("Wait for the robot to finish before approving the batch.")
