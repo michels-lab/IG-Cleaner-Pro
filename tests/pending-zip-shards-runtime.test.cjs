@@ -87,6 +87,7 @@ assert.equal(groups.recent_follow_requests.length,1);
  const oldNames=ctx.pendingRequestsRaw.map(x=>x.username);
  const broken=shard('pending_follow_requests_3.json',
  {relationships_follow_requests_sent:[{string_list_data:[{value:'not/a/handle'}]}]});
+ broken.payload.format='invalid-json';
  await assert.rejects(()=>ctx.parseZipPending([a,broken],'bad-shard.zip'),
   /Se conservaron los Pending anteriores/);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),oldNames);
