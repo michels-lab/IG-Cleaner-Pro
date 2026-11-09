@@ -35,6 +35,7 @@ vm.runInContext(
  section("function cleanUsername(value){","function extractFromJSON(data,source)")+
  section("function pendingLabelMap(item){","async function processPendingFiles()")+
  section("async function processPendingFiles(){","function pendingAgeDays(row){")+
+ section("function zipImportScope(){","async function applyZipCore(")+
  section("function parseHTMLUsers(payload,source){","function parseJSONUsers(payload,source){")+
  section("function isPendingOpenableForFocus(row){","function isMutualOpenableForFocus(row){")+
  section("function pendingCandidateRows(){","function openFocusRows(rows,label")+
@@ -250,5 +251,52 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  element("pendingInput").files=[manualFile("pending_follow_requests.json",labelPayload)];
  assert.equal(await ctx.processPendingFiles(),true);
  assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["label.one"]);
+ // The full ZIP already pins account identity. Manual Pending imports must
+ // enforce the same binding after asynchronous File reads before ANY writes.
+ // A user can switch Instagram accounts while a large .json/.html is loading.
+ const importOwner={owner:"u_owner_42",active:"ig_first_1234567",verified:true};
+ ctx.IGC_INSTAGRAM_PROFILES=importOwner;
+ ctx.pendingRequestsRaw=[{username:"original.owner.pending",timestamp:15}];
+ const beforeCrossAccount=saved.length;
+ const correctFiles=[
+  manualFile("pending_follow_requests_1.json",payload),
+  manualFile("pending_follow_requests_2.json",payload)
+ ];
+ element("pendingInput").files=correctFiles;
+ let fileReads=0;
+ ctx.readFile=async file=>{
+   fileReads++;
+   if(fileReads===2)importOwner.active="ig_second_123456";
+   return file.raw;
+ };
+ assert.equal(await ctx.processPendingFiles(),false,
+   "Switching to B while importing the second Pending shard must abort.");
+ assert.equal(fileReads,2);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),
+   ["original.owner.pending"],"A's import cannot be published to B");
+ assert.equal(saved.length,beforeCrossAccount,
+   "A mid-import account switch must never write storage or review history");
+ assert.match(messages.at(-1),/Cambió la cuenta o el perfil de Instagram/);
+
+ // Exact same-account manual multi-file import still succeeds and keeps
+ // proper unique count. No switch, no new Chrome or Instagram action.
+ importOwner.active="ig_first_1234567";
+ fileReads=0;
+ ctx.readFile=async file=>{fileReads++;return file.raw};
+ assert.equal(await ctx.processPendingFiles(),true);
+ assert.equal(fileReads,2);
+ assert.equal(ctx.pendingRequestsRaw.length,725);
+ assert.equal(saved.length,beforeCrossAccount+1);
+
+ // Signed-in account identity becoming unverified must also fail closed.
+ ctx.pendingRequestsRaw=[{username:"original.owner.pending",timestamp:15}];
+ const safeCount=saved.length;
+ ctx.readFile=async file=>{importOwner.verified=false;return file.raw};
+ element("pendingInput").files=[correctFiles[0]];
+ assert.equal(await ctx.processPendingFiles(),false);
+ assert.equal(saved.length,safeCount);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),
+   ["original.owner.pending"]);
+ importOwner.verified=true;
  console.log("PASS: native Pending 725 + category isolation + atomic manual import on corrupt/mixed/empty files; ZIP retains original WAL");
 })().catch(e=>{console.error(e);process.exitCode=1});
