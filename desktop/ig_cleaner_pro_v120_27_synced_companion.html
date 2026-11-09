@@ -9204,6 +9204,32 @@ function extractPendingRequestsFromJSON(data,source){
 }
 function extractPendingRequestsFromRaw(text,source){let out=[];try{out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source))}catch{}const raw=decodeText(text);const re=/"label"\s*:\s*"Username"[\s\S]{0,120}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;while((m=re.exec(raw))!==null){const username=cleanUsername(m[1]);if(username)out.push({username,href:profileUrl(username,''),name:'',url:'',timestamp:0,source,fbid:''})}return dedupePending(out)}
 function dedupePending(list){const map=new Map();(list||[]).forEach(x=>{if(!x||!x.username)return;const old=map.get(x.username);if(!old||(x.timestamp||0)>(old.timestamp||0))map.set(x.username,x)});return [...map.values()].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)||a.username.localeCompare(b.username))}
+// Native Pending exports declare the actual number of sent requests. Counting
+// unique parsed handles ALONE is not enough: a partly unreadable shard would
+// silently omit real Pending requests while still overwriting saved history.
+// Duplicated usernames remain legitimate source rows (dedupe happens later).
+function pendingUnreadableEntries(data,source){
+ const sent=data&&!Array.isArray(data)&&typeof data==='object'?
+   data.relationships_follow_requests_sent:null;
+ const legacy=Array.isArray(data)&&data.some(row=>row&&typeof row==='object'&&
+   (Array.isArray(row.label_values)||Array.isArray(row.string_list_data)));
+ const rows=Array.isArray(sent)?sent:legacy?data:null;
+ if(!rows)return 0;
+ const one=entry=>extractPendingRequestsFromJSON({
+   relationships_follow_requests_sent:[entry]},source).length>0;
+ return rows.reduce((n,entry)=>{
+   if(!entry||typeof entry!=='object')return n+1;
+   // Within a single native record, *every* declared identity must be
+   // readable; one valid child cannot hide another invalid child.
+   const parts=entry.string_list_data;
+   if(Array.isArray(parts)){
+     if(!parts.length)return n+1;
+     if(parts.some(part=>!part||typeof part!=='object'||
+         !one({string_list_data:[part]})))return n+1;
+   }
+   return n+(one(entry)?0:1);
+ },0);
+}
 async function processPendingFiles(){
  const files=document.getElementById('pendingInput')?.files;
  if(!files||!files.length){msg('Sube primero pending_follow_requests.json o .html.','w');return false}
@@ -9229,13 +9255,13 @@ async function processPendingFiles(){
     if(Array.isArray(sent)){
      count=sent.length;explicitEmpty=explicitEmpty||count===0;
      rows=extractPendingRequestsFromJSON(data,name);
-     unreadable+=sent.filter(entry=>!extractPendingRequestsFromJSON({
-       relationships_follow_requests_sent:[entry]},name).length).length;
+     unreadable+=pendingUnreadableEntries(data,name);
     }else if(Array.isArray(data)&&data.some(row=>
         row&&typeof row==='object'&&Array.isArray(row.label_values))){
      // Backward-compatible legacy export rows; not an arbitrary JSON dump.
      count=data.length;
      rows=extractPendingRequestsFromJSON(data,name);
+     unreadable+=pendingUnreadableEntries(data,name);
     }else{
      throw Error(name+': no contiene solicitudes enviadas verificables');
     }
@@ -9251,6 +9277,11 @@ async function processPendingFiles(){
      throw Error(name+': hay solicitudes pero no se reconoció ningún @usuario');
    sourceCount+=count;all.push(...rows);
   }
+  // Never save just the readable half of an authoritative JSON export.
+  // The owner can re-export or inspect the named source without losing any
+  // earlier Pending, opened/reviewed or protected records.
+  if(unreadable>0)
+   throw Error(unreadable+' solicitud(es) enviadas sin @usuario verificable. No se guardó ninguna parte de esta importación');
   if(!all.length&&!explicitEmpty)
    throw Error('No se confirmó una lista vacía ni usuarios legibles');
   const imported=dedupePending(all);
@@ -13297,6 +13328,11 @@ async function parseZipPending(items,zipName=''){
     const declaredSent=item.payload?.data?.relationships_follow_requests_sent;
     const verifiedEmptyShard=item.payload?.format==='json'&&
       Array.isArray(declaredSent)&&declaredSent.length===0;
+    const missing=item.payload?.format==='json'?
+      pendingUnreadableEntries(item.payload.data,item.entry?.name||''):0;
+    if(missing>0)throw new Error(
+      'El archivo Pending '+basename(item.entry?.name||item.file?.name||'')+
+      ' tiene '+missing+' solicitud(es) sin @usuario verificable. No se importó ninguna parte del ZIP. Se conservaron los Pending anteriores.');
     if(!rows.length&&!verifiedEmptyShard)
       throw new Error('El archivo Pending '+basename(item.entry?.name||item.file?.name||'')+
         ' no pudo aportar solicitudes verificables. No se importó ninguna parte del ZIP. Se conservaron los Pending anteriores.');
@@ -13318,12 +13354,9 @@ async function parseZipPending(items,zipName=''){
     item.payload.data.relationships_follow_requests_sent.length===0);
   // Distinguish duplicate usernames from malformed/unreadable source rows.
   // The latter cannot be counted as valid requests or silently hidden.
-  const unreadable=sources.reduce((count,item)=>{
-    const sent=item.payload?.data?.relationships_follow_requests_sent;
-    return count+(Array.isArray(sent)?sent.filter(entry=>
-      !extractPendingRequestsFromJSON({
-        relationships_follow_requests_sent:[entry]},item.entry?.name||'').length).length:0);
-  },0);
+  const unreadable=sources.reduce((count,item)=>count+
+    (item.payload?.format==='json'?
+      pendingUnreadableEntries(item.payload.data,item.entry?.name||''):0),0);
   if(!all.length&&!explicitEmpty)throw new Error('El archivo de Pending no contiene usuarios legibles ni una lista vacía confirmada. Se conservaron los Pending anteriores.');
   pendingRequestsRaw=dedupePending(all);
   pendingTableLimit=300;

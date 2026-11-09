@@ -62,6 +62,9 @@ const requests=Array.from({length:725},(_,i)=>({
 requests.push({title:"REQUEST0000",string_list_data:[{value:"REQUEST0000",timestamp:1700000900}]});
 requests.push({title:"My Requests",string_list_data:[{value:"invalid/username",href:"https://not-instagram.example/u/invalid"}]});
 const payload={relationships_follow_requests_sent:requests};
+// Extraction may identify valid rows even from a partially corrupted source;
+// import must reject that source rather than publish the incomplete subset.
+const completePayload={relationships_follow_requests_sent:requests.slice(0,-1)};
 const parsed=ctx.extractPendingRequestsFromJSON(payload,"pending_follow_requests.json");
 assert.equal(parsed.length,725,"Every valid unique sent request must survive; duplicate not counted twice");
 assert.equal(parsed.find(x=>x.username==="request0000").timestamp,1700000900);
@@ -108,13 +111,13 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
 (async()=>{
  const imported=await ctx.parseZipPending([{
   entry:{name:"connections/followers_and_following/pending_follow_requests.json"},
-  file:{name:"pending_follow_requests.json",size:180000},payload:{format:"json",category:"pending_follow_requests",data:payload},
-  text:JSON.stringify(payload)
+  file:{name:"pending_follow_requests.json",size:180000},payload:{format:"json",category:"pending_follow_requests",data:completePayload},
+  text:JSON.stringify(completePayload)
  }],"export.zip");
  assert.equal(imported,725);
  assert.equal(ctx.pendingRequestsRaw.length,725,"ZIP import must use all native string_list_data rows");
  assert(!ctx.pendingRequestsRaw.some(x=>x.username==="old.saved"),"New verified ZIP replaces old imported snapshot");
- assert.match(element("pendingFilesLabel").textContent,/725 usuarios únicos de 727 registros fuente/);
+ assert.match(element("pendingFilesLabel").textContent,/725 usuarios únicos de 726 registros fuente/);
  assert.equal(saved.at(-1).length,725);
 
  // Unreviewed opened rows remain visible but are excluded from fresh Focus.
@@ -215,7 +218,7 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["old.saved"]);
 
  element("pendingInput").files=[
-  manualFile("pending_follow_requests.json",payload),
+  manualFile("pending_follow_requests.json",completePayload),
   manualFile("pending_follow_requests_2.json","{broken")
  ];
  assert.equal(await ctx.processPendingFiles(),false,
@@ -228,17 +231,48 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  element("pendingAgeFilter").value="90";
  element("pendingSearchBox").value="old.saved";
  element("pendingInput").files=[manualFile("pending_follow_requests.json",{
-  ...payload,recent_follow_requests:[{string_list_data:[{value:"not.pending"}]}]})];
+  ...completePayload,recent_follow_requests:[{string_list_data:[{value:"not.pending"}]}]})];
  assert.equal(await ctx.processPendingFiles(),true);
  assert.equal(ctx.pendingRequestsRaw.length,725);
  assert(!ctx.pendingRequestsRaw.some(r=>r.username==="not.pending"));
- assert.match(messages.at(-1),/725 usuarios únicos de 727 registros fuente/);
- assert.match(messages.at(-1),/1 registros sin @usuario verificable/);
+ assert.match(messages.at(-1),/725 usuarios únicos de 726 registros fuente/);
+ assert.doesNotMatch(messages.at(-1),/sin @usuario verificable/);
  assert.equal(element("pendingInternalFilter").value,"all");
  assert.equal(element("pendingRiskFilter").value,"all");
  assert.equal(element("pendingAgeFilter").value,"0");
  assert.equal(element("pendingSearchBox").value,"");
  assert.equal(saved.at(-1).length,725);
+
+ // One malformed record among 726 valid/duplicate entries MUST reject the
+ // entire manual JSON, even though 725 handles can still be extracted. A
+ // warning on a successful import would silently lose pending invitations.
+ const lastComplete=ctx.pendingRequestsRaw.map(x=>x.username),beforePartial=saved.length;
+ element("pendingInput").files=[manualFile("pending_follow_requests.json",payload)];
+ assert.equal(await ctx.processPendingFiles(),false,
+   "Partially readable native JSON must not replace a complete Pending snapshot.");
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),lastComplete);
+ assert.equal(saved.length,beforePartial,"No partial Pending snapshot may be stored.");
+ assert.match(messages.at(-1),/1 solicitud\(es\) enviadas sin @usuario verificable/);
+ // Two valid source shards are still rejected when one has a hidden bad row.
+ element("pendingInput").files=[
+  manualFile("pending_follow_requests_1.json",completePayload),
+  manualFile("pending_follow_requests_2.json",payload)
+ ];
+ assert.equal(await ctx.processPendingFiles(),false);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),lastComplete);
+ assert.equal(saved.length,beforePartial);
+
+ // An individual native record with two child identities cannot hide its
+ // malformed second child merely because its first child was readable.
+ const mixedNested={relationships_follow_requests_sent:[{
+  string_list_data:[
+   {value:"valid.inner",href:"https://www.instagram.com/valid.inner/"},
+   {value:"not/a/handle",href:"https://invalid.example/not-a-profile"}
+  ]
+ }]};
+ element("pendingInput").files=[manualFile("pending_follow_requests.json",mixedNested)];
+ assert.equal(await ctx.processPendingFiles(),false);
+ assert.equal(saved.length,beforePartial);
 
  // Explicitly empty native JSON is the ONLY verified manual zero.
  element("pendingInput").files=[manualFile("pending_follow_requests.json",{
@@ -259,8 +293,8 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
  ctx.pendingRequestsRaw=[{username:"original.owner.pending",timestamp:15}];
  const beforeCrossAccount=saved.length;
  const correctFiles=[
-  manualFile("pending_follow_requests_1.json",payload),
-  manualFile("pending_follow_requests_2.json",payload)
+  manualFile("pending_follow_requests_1.json",completePayload),
+  manualFile("pending_follow_requests_2.json",completePayload)
  ];
  element("pendingInput").files=correctFiles;
  let fileReads=0;
