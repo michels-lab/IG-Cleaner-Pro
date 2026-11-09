@@ -136,6 +136,10 @@ const {chromium}=require('playwright');
            }}
        }:operation==='open-review-one'?{status:'opening',relationship_action:false}:
        operation==='pause-one'?{status:'paused'}:
+       operation==='cancel-batch-one'?{
+         owner:p.owner,account:data.account,task:data.task,
+         batch_id:data.batch_id,status:'cancelled'
+       }:
        operation==='approve-one'?{approved_usernames:['done.profile','untouched.one'],
          unresolved_usernames:['review.target']}:
        operation==='start-one'?{status:'starting',account:data.account,task:data.action.task}:{
@@ -362,6 +366,32 @@ const {chromium}=require('playwright');
   assert(afterApproval.every(x=>x.token==='a'.repeat(32)));
   const status=await page.locator('#igcDualActionWorkspaceFeedback').innerText();
   assert.match(status,/permanecen sin confirmación/);
+  // The new Cancel Batch control MUST require a saved original cohort ID.
+  await page.locator('#igcDawCancelBatch0').click();
+  assert.equal((await page.evaluate(()=>window.__dawRequests)).filter(
+    x=>x.operation==='cancel-batch-one').length,0,
+    'No cancellation before reading the original saved batch.');
+  await page.locator('#igcDawReview0').click();
+  await page.locator('#igcDawCancelBatch0').click();
+  await page.waitForFunction(()=>window.__dawRequests?.some(
+    x=>x.operation==='cancel-batch-one'),null,{timeout:12000});
+  const cancelCalls=(await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>x.operation==='cancel-batch-one');
+  assert.equal(cancelCalls.length,1);
+  assert.equal(cancelCalls[0].data.account,'ig_first_1234567');
+  assert.equal(cancelCalls[0].data.task,'unfollow');
+  assert.equal(cancelCalls[0].data.batch_id,'saved-wave');
+  assert.equal(cancelCalls[0].data.confirmation,
+    'action-workspace-cancel:'+owner+':ig_first_1234567:unfollow:saved-wave');
+  assert.equal(cancelCalls[0].token,'a'.repeat(32));
+  assert.equal((await page.evaluate(()=>window.__dawRequests)).filter(
+    x=>x.operation==='start-one').length,1,
+    'Cancel must never automatically restart a relationship worker.');
+  assert.equal((await page.evaluate(()=>window.__dawRequests)).filter(
+    x=>x.operation==='pause-one'&&x.data?.account==='ig_second_123456').length,0,
+    'Cancel A must never pause the sibling account.');
+  assert.match(await page.locator('#igcDualActionWorkspaceFeedback').innerText(),
+    /cancelada y archivada/i);
   // Regression: user opens Automations after the old 7.5 s startup window.
   // The panel must mount even when Command Center is created much later.
   const html=fs.readFileSync(native,'utf8');
