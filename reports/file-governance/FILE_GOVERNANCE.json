@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 408,
-  "classified_files_total": 404,
+  "tracked_files_total": 409,
+  "classified_files_total": 405,
   "docs_content_inspected": 103,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 112,
+    "test": 113,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "00aaadc8f40c2a58f3d713b40b99bfcd15565bd8f33197f3fe85750eff10b455",
+  "inventory_fingerprint": "3e4f6eafa11d628c65528bc5af187906312a28ac149db538d99053cf6c679c2c",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "8697291df4602bdb7941a5f230bb44d49f0a0523"
+      "blob": "262a622fcc6ac5decae417f73d50acf1cbb09bea"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b7d103535672cbc8d3ff0e7e396b8436b06271b7"
+      "blob": "279c9aea3ffb49eab71c5cdf65c06d882d8097e0"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "8aa69947877de23413bfe31d5ba2bacf26a86b22"
+      "blob": "e1cf2a64b287a2759b0d22f534435f6a4bd72c77"
     },
     {
       "path": "README.md",
@@ -1862,7 +1862,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3d8be78f50f03c267390da6e5705a517aa0fa9f5"
+      "blob": "d6561e6ec4260fec440d7fc4e19e97d0e949e3ed"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2227,6 +2227,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "56b0927b4a33f58c340734a833c1c84e83066655"
+    },
+    {
+      "path": "tests/test_dual_account_cancel_batch.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "2366a65cc495d78c7d4253d98021f5ccd1220388"
     },
     {
       "path": "tests/test_dual_action_coordinator.py",
@@ -2639,14 +2646,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "41b0321e860fb9a9c8c44b21153f33a9b0acef9a"
+      "blob": "863fd19ba40c2d8ff51295d9f3f43499e3dbbd11"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "047b652eda3badb4f9d80d198aefadfca15c6c0d"
+      "blob": "cf6b8529a2e2e2db2ee97ee041ef9bf66192be91"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -2709,7 +2716,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c5f76759f7ceeaf5939805af5b40c5d056b82a6c"
+      "blob": "91e5cdc88b0bf13c57bcd1cf2f739986582eb91c"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2723,7 +2730,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "062a0aeb73e26813498ee99e43ace60754a4c134"
+      "blob": "9ba2ec0307742072ac7408fad8f1770784cec1b1"
     },
     {
       "path": "tools/profile_counts_instagram.py",
