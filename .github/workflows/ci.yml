@@ -85,6 +85,8 @@ jobs:
         run: python3 tests/english-ui-contract.py
       - name: Verify Windows Profile Counts re-audit cycle, history and cross-owner isolation
         run: python3 -m unittest discover -s tests -p 'test_profile_counts_audit.py' -v
+      - name: Fail CI if Windows could silently pass broken action robot tests
+        run: python3 -m unittest discover -s tests -p 'test_windows_ci_exitcode_gate.py' -v
       - name: Verify dual Chrome profiles cannot confuse owner/account or share cookies
         run: python3 -m unittest discover -s tests -p 'test_dual_chrome_sessions.py' -v
       - name: Confirm normal Windows action Chrome switches with the selected Instagram workspace

@@ -23,6 +23,7 @@ on:
       - 'tests/test_dual_action_preflight.py'
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
+      - 'tests/test_windows_ci_exitcode_gate.py'
       - 'tests/test_dual_account_cancel_batch.py'
       - 'tests/test_action_batch_approval_lease.py'
       - 'tests/test_action_cohort_mutation_lease.py'
@@ -123,6 +124,7 @@ on:
       - 'tests/test_dual_action_preflight.py'
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
+      - 'tests/test_windows_ci_exitcode_gate.py'
       - 'tests/test_dual_account_cancel_batch.py'
       - 'tests/test_action_batch_approval_lease.py'
       - 'tests/test_action_cohort_mutation_lease.py'
@@ -223,11 +225,13 @@ jobs:
         shell: pwsh
         run: |
           npm install --no-save playwright@1.57.0
+          if ($LASTEXITCODE -ne 0) { throw 'Playwright Node dependencies failed to install.' }
           npx playwright install chromium
       - name: Install build-time dependencies only
         shell: pwsh
         run: |
           python -m pip install playwright==1.57.0 pyinstaller==6.16.0
+          if ($LASTEXITCODE -ne 0) { throw 'Playwright and PyInstaller Python dependencies failed to install.' }
           choco install innosetup --yes --no-progress
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup dependency install failed." }
           python tests/windows-installer-contract.py
@@ -274,6 +278,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
           python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_instagram_unfollow_reference.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_instagram_unfollow_chromium_e2e.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Chromium user-reference actual worker offline integration failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'User supplied single-POST Unfollow and no-replay contract failed.' }
@@ -284,8 +289,13 @@ jobs:
           python -m unittest discover -s tests -p 'test_profile_counts_actions.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Exact Instagram target identity and action safety regressions failed; refuse publication.' }
           python -m unittest discover -s tests -p 'test_robot_interlock.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_robot_interlock.py failed; stop integrated Windows acceptance immediately.' }
           python -m unittest discover -s tests -p 'test_action_scoped_admission.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_action_scoped_admission.py failed; stop integrated Windows acceptance immediately.' }
+          python -m unittest discover -s tests -p 'test_windows_ci_exitcode_gate.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Windows test exit-code sentinel is missing or invalid.' }
           python -m unittest discover -s tests -p 'test_dual_action_workspaces.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_dual_action_workspaces.py failed; stop integrated Windows acceptance immediately.' }
           python -m unittest discover -s tests -p 'test_dual_action_coordinator.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Legacy-compatible dual scope global WAL reservation failed.' }
           python -m unittest discover -s tests -p 'test_dual_action_worker_lease_adapter.py' -v
@@ -329,7 +339,9 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_profile_lists_live.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_live_relationship_snapshot.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
       - name: Exact two-account action preflight uses canonical journals without clicks
