@@ -71,6 +71,9 @@ on:
       - 'tests/test_cancel_request_unfollow_dialog_safety.py'
       - 'tests/test_cancel_warning_continues_batch.py'
       - 'tests/test_action_batch_history.py'
+      - 'tests/automation-warning-events.test.cjs'
+      - 'tests/test_automation_warning_events.py'
+      - 'tools/automation_activity_ui.py'
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
@@ -163,6 +166,9 @@ on:
       - 'tests/test_cancel_request_unfollow_dialog_safety.py'
       - 'tests/test_cancel_warning_continues_batch.py'
       - 'tests/test_action_batch_history.py'
+      - 'tests/automation-warning-events.test.cjs'
+      - 'tests/test_automation_warning_events.py'
+      - 'tools/automation_activity_ui.py'
       - 'tests/test_historical_recheck.py'
       - 'tests/automations-next-batch.test.cjs'
       - 'tests/pending-focus-reimport.test.cjs'
@@ -227,6 +233,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Dual Chrome session isolation or partial-launch recovery failed.' }
           python -m unittest discover -s tests -p 'test_dual_lane_terminal_status.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Blocked Chrome identity lane was falsely reverified.' }
+      - name: Verify Automations activity warnings survive retries and exact calendar-day boundaries
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_automation_warning_events.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Original saved Review history was lost or leaked.' }
+          node tests/automation-warning-events.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Automations warning count or midnight period failed.' }
       - name: Verify Pending import, focus, third-batch and no-click replay protections
         shell: pwsh
         run: |
