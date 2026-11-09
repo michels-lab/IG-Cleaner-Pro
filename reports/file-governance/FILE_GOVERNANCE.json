@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 405,
-  "classified_files_total": 401,
+  "tracked_files_total": 406,
+  "classified_files_total": 402,
   "docs_content_inspected": 103,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,18 +18,17 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 109,
+    "test": 110,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "266bce6d8db8fe2714a7d8c5cebfa0431d9ae99b7e4db791287f6aa87a9cfbdd",
-  "evidence_fingerprint": "6e11bf76d7adf89f1d05a1c3d4eb1a1b61789a1d4952ec74362f478a5c61767b",
+  "finding_total": 8,
+  "inventory_fingerprint": "e63a5ca76b55623452d02aef151aad3a28d09b0c950f1c97c233adf20a41bb23",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "53fcb4a44755a561249a019f6673da85df2e9fd6"
+      "blob": "a77972144c6deac89c303eae02163dfee9ddd49a"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "391c11ca2be0e5fef2121a89d4d9a5cca3a4ddff"
+      "blob": "7e0a589d1e99a449ad9a9236a47e8455956fba62"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "94e644a2724082b74425617a2f44f9dcae645e5c"
+      "blob": "0a639674d04229aa37b1c679eb9fcb8081e01ef8"
     },
     {
       "path": "README.md",
@@ -2255,7 +2254,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a1e50e5b38806f24bc063010f1a5bf069e61eccd"
+      "blob": "d564b7e215cff163e27a6d7a4f85e7544e783029"
+    },
+    {
+      "path": "tests/test_dual_lane_terminal_status.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "23b666cc82300dafb1dce5b848d25e3c1bab198f"
     },
     {
       "path": "tests/test_dual_manager_offline_integration.py",
@@ -2633,14 +2639,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "485adad518240b38f27cc4bf867f0e8f05824570"
+      "blob": "b58a5d703bf94dd7646e69fd5afd7bf48e07ad3e"
     },
     {
       "path": "tools/dual_robot_lanes.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c013a3b41c8decfeeef4a6c1e5737e06b7aed223"
+      "blob": "c769a27982ab52c3b01abfa7eaa616043a0427dc"
     },
     {
       "path": "tools/ig_cleaner_desktop.py",
@@ -2910,15 +2916,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "b8bc10bf29e5b1e2",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "42 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-ci.yml, .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/auth-account-switch.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
