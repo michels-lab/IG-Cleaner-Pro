@@ -112,7 +112,7 @@ assert.equal(groups.recent_follow_requests.length,1);
  const beforePartialNames=ctx.pendingRequestsRaw.map(x=>x.username);
  await assert.rejects(
    ()=>ctx.parseZipPending([a,mixed],'mixed-valid-invalid-shard.zip'),
-   /pending_follow_requests_4\\.json.*1 solicitud\\(es\\).*Se conservaron los Pending anteriores/,
+   /pending_follow_requests_4\.json.*1 solicitud\(es\).*Se conservaron los Pending anteriores/,
    'Readable rows must not mask one bad sent-request row in the same shard.');
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
  assert.equal(saved.length,beforePartialCount);
@@ -124,7 +124,7 @@ assert.equal(groups.recent_follow_requests.length,1);
    }]
  });
  await assert.rejects(()=>ctx.parseZipPending([a,mixedChildren],'bad-child.zip'),
-  /pending_follow_requests_5\\.json.*Se conservaron los Pending anteriores/);
+  /pending_follow_requests_5\.json.*Se conservaron los Pending anteriores/);
  assert.equal(saved.length,beforePartialCount);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
  // A genuinely empty *declared* sent-request shard is valid and must not
