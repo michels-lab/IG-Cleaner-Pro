@@ -114,6 +114,8 @@ class ArchivedHistoryTests(unittest.TestCase):
              "deferred_action_recorded": 0, "deferred_untouched": 1}
             for n in range(47)
         ]
+        rows[4]["deferred_action_recorded"] = "damaged legacy counter"
+        rows[4].pop("deferred_untouched")
         _atomic_json(batches, rows)
         _atomic_json(journal, {"target.0": {
             "status": "review", "issue": "interrupted_action_uncertain",
@@ -133,6 +135,11 @@ class ArchivedHistoryTests(unittest.TestCase):
             self.assertNotIn("target.", str(result),
                              "Archive index must never expose target usernames.")
         self.assertEqual(found, ["archived-" + str(n) for n in reversed(range(47))])
+        old_record = next(row for row in self.manager.archived_one(
+            {**request(), "offset": 40})["recent"] if row["batch_id"] == "archived-4")
+        self.assertIsNone(old_record["action_recorded"],
+                          "Damaged historical counts must not become confirmed zero.")
+        self.assertIsNone(old_record["untouched"])
         self.assertEqual(self.manager.archived_one({**request(), "offset": 47})["recent"], [])
         self.assertEqual(self.manager.archived_one(request(B, "cancel"))["recent"][0]["batch_id"],
                          "separate-B")
