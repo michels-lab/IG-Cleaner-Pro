@@ -56,6 +56,11 @@ class DualRobotLanes:
                 lane["state"] = "stopping"
                 lane["message"] = "Stopping this Chrome session; no actions performed."
                 lane["verified"] = False
+            elif lane["state"] in ("blocked", "stopped", "closed"):
+                # Identity mismatch, challenge and closed sessions are terminal
+                # until the owner explicitly restarts this lane. A delayed
+                # browser callback cannot silently restore "verified".
+                return
             else:
                 lane["state"] = state
                 lane["message"] = message
