@@ -1,3 +1,10 @@
+## 2026-11-08 — GRANADA dual-Chrome blocked identity status cannot revive (source-only)
+
+- **Root cause:** `tools/dual_robot_lanes.py::_report` previously accepted a late `verified=True` callback after the same lane had already entered `blocked` (e.g. wrong Instagram login or challenge). It could overwrite the failure and the next cleanup could incorrectly classify the browser as an ordinary `closed` session. No fixture covered this precise late-callback transition.
+- **Change:** terminal `blocked`, `stopped`, and `closed` states now ignore late browser status callbacks. Explicit owner-authenticated `restart_one` resets the named lane to `starting` so genuine recovery remains possible without touching the sibling lane, saved Chrome profiles, batch history or action WAL. Existing no-action read-only authority is unchanged.
+- **Negative regression:** new `tests/test_dual_lane_terminal_status.py` reproduces wrong-owner `blocked` -> stale `verified`/`login` and verifies the lane stays blocked; confirms sibling keeps running and only explicit restart enables a fresh verified state. Source-only test; no real Instagram account or Chrome accessed.
+- **Evidence:** commits and PR CI must be checked independently; physical owner identity/Unfollow/Cancel and two concurrent relationship-changing action workers remain **PENDING**. No RC, version bump, stable release, tag or installed app claim.
+
 ## 2026-10-27 — GRANADA source-only two independent Chrome robot lanes (NO RELEASE)
 
 - Owner explicitly vetoed premature releases. `release/release-readiness.json` remains `release_hold=true`; no tag, version change, publishing request or updater change in this source block.
