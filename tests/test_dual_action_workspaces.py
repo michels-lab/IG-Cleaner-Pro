@@ -360,6 +360,29 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                 self.assertFalse(any(self.manager._alive(lane["robot"])
                                      for lane in self.manager.workspaces.values()))
 
+    def test_warm_action_lane_retains_status_when_saved_review_is_damaged(self):
+        """A nonrunning previously bound robot must not crash both UI lanes."""
+        self.manager.configure(config())
+        first = self.manager.workspaces[A]["robot"]
+        second = self.manager.workspaces[B]["robot"]
+        first.owner, first.account, first.task = OWNER, A, "unfollow"
+        first.status, first.message = "completed", "Earlier action finished"
+        first.targets = ["first.pending"]
+        file_a = first._review_batches_file_for(OWNER, A, "unfollow")
+        file_b = second._review_batches_file_for(OWNER, B, "cancel")
+        _atomic_json(file_a, [{"id": "invalid", "targets": None}])
+        _atomic_json(file_b, [{"id": "healthy", "targets": ["second.pending"],
+                               "approved_at": None, "recheck_results": {}}])
+        old_a, old_b = file_a.read_bytes(), file_b.read_bytes()
+        lanes = {x["account"]: x for x in self.manager.status(OWNER)["lanes"]}
+        self.assertEqual(lanes[A]["state"], "blocked")
+        self.assertIn("unreadable", lanes[A]["message"])
+        self.assertEqual(lanes[A]["saved_batches"][0]["unverifiable"], True)
+        self.assertEqual(lanes[B]["saved_batches"][0]["batch_id"], "healthy")
+        self.assertEqual(file_a.read_bytes(), old_a)
+        self.assertEqual(file_b.read_bytes(), old_b)
+        self.assertFalse(self.sessions.root.exists())
+
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)
         valid = {"version": 1, "owner": OWNER,
