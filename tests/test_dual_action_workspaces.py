@@ -715,7 +715,7 @@ class IsolatedWorkspaceTests(unittest.TestCase):
             with self.subTest(args=args), self.assertRaisesRegex(
                     ValueError, "never inspected"):
                 self.manager.open_review_one(request(*args))
-        with patch("profile_actions.shutil.which", return_value=sys.executable), \\
+        with patch("profile_actions.shutil.which", return_value=sys.executable), \
              patch("profile_actions.subprocess.Popen") as opened:
             outcome = self.manager.open_review_one(
                 request(A, "unfollow", "untouched.a"))
