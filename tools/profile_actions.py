@@ -2662,32 +2662,68 @@ class ActionRobot:
             self.skipped.add(user)
             return self.snapshot()
 
+    def _archive_cancelled_batch_locked(self, owner, account, task, batch_id):
+        """Defer an EXACT original cohort, never rewrite its click journal.
+
+        Caller holds the robot lock AND the matching account's kernel WAL
+        lease (or is the active worker already holding that lease).
+        """
+        entries = self._review_batches(owner, account, task)
+        pending = next((e for e in reversed(entries)
+                        if not e.get("approved_at") and not e.get("deferred_at")), None)
+        if pending is None or pending.get("id") != batch_id:
+            raise ValueError("Saved cohort changed during cancellation; evidence preserved.")
+        journal = _read_json(self._base_for(owner, account, task), {})
+        if not isinstance(journal, dict):
+            raise ValueError("Action journal is invalid; preserve it for inspection.")
+        targets = pending.get("targets", [])
+        if (not isinstance(targets, list) or not targets
+                or any(not isinstance(u, str) or valid_username(u) != u for u in targets)
+                or len(set(targets)) != len(targets)):
+            raise ValueError("Saved cohort invalid; preserve it for inspection.")
+        recorded = sum(u in journal for u in targets)
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        pending["deferred_at"] = now
+        pending["cancelled_by_owner_at"] = now
+        pending["deferred_reason"] = "owner_cancelled"
+        pending["deferred_action_recorded"] = recorded
+        pending["deferred_untouched"] = len(targets) - recorded
+        pending["marked_reviewed"] = False
+        _atomic_json(self._review_batches_file_for(owner, account, task), entries)
+        return {"owner": owner, "account": account, "task": task,
+                "batch_id": batch_id, "status": "cancelled",
+                "recorded": recorded, "untouched": len(targets) - recorded,
+                "message": "Saved batch cancelled. Action journal and uncertain clicks preserved."}
+
+    def cancel_saved_batch(self, data):
+        """Owner cancels an idle persisted cohort after restart, without Chrome.
+
+        The supervisor MUST acquire the exact global+account WAL lease first.
+        A running job is handled by cancel_current_batch instead.
+        """
+        owner, account, task = self._review_scope(data)
+        batch_id = data.get("batch_id")
+        if (task not in ("unfollow", "cancel")
+                or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                or data.get("confirmation") != "cancel-batch:" + batch_id):
+            raise ValueError("Confirm the exact owner, task and saved batch to cancel.")
+        with self.lock:
+            if self.worker is not None and self.worker.is_alive():
+                raise ValueError("Pause or cancel the active worker through its own action lane.")
+            result = self._archive_cancelled_batch_locked(owner, account, task, batch_id)
+            if (self.owner, self.account, self.task) == (owner, account, task):
+                self.status = "cancelled"
+                self.message = result["message"]
+            return result
+
     def _finish_owner_cancel_locked(self):
-        """Archive only the selected unapproved cohort; NEVER change the action WAL."""
+        """Complete a requested cancellation after the in-flight visit stops."""
         if not self.cancel_requested:
             return
         batch_id = self.cancel_batch_id
         if batch_id:
-            entries = self._review_batches(self.owner, self.account, self.task)
-            pending = next((e for e in reversed(entries)
-                            if not e.get("approved_at") and not e.get("deferred_at")), None)
-            if pending is None or pending.get("id") != batch_id:
-                raise ValueError("Saved cohort changed during cancellation; evidence preserved.")
-            journal = _read_json(self._base(), {})
-            if not isinstance(journal, dict):
-                raise ValueError("Action journal is invalid; preserve it for inspection.")
-            targets = pending.get("targets", [])
-            if not isinstance(targets, list):
-                raise ValueError("Saved cohort invalid; preserve it for inspection.")
-            recorded = sum(u in journal for u in targets)
-            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            pending["deferred_at"] = now
-            pending["cancelled_by_owner_at"] = now
-            pending["deferred_reason"] = "owner_cancelled"
-            pending["deferred_action_recorded"] = recorded
-            pending["deferred_untouched"] = len(targets) - recorded
-            pending["marked_reviewed"] = False
-            _atomic_json(self._review_batches_file_for(self.owner, self.account, self.task), entries)
+            self._archive_cancelled_batch_locked(
+                self.owner, self.account, self.task, batch_id)
         self.cancel_requested = False
         self.cancel_batch_id = ""
         self.status = "cancelled"

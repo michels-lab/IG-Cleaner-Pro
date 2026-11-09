@@ -475,6 +475,45 @@ function card(account,i){
     await statusUpdate();
   }));
   controls.append(continueSaved);
+  const cancelBatch=el('button','igc-daw-stop','Cancelar tanda (conservar historial)');
+  cancelBatch.type='button';cancelBatch.id='igcDawCancelBatch'+i;
+  cancelBatch.addEventListener('click',()=>performLane(i,async()=>{
+    if(!linked||!savedReviews[i]||savedReviews[i].task!==task.value
+       ||!savedReviews[i].batch)
+      throw Error('Primero carga la tanda original de esta cuenta con Revisar pendientes.');
+    const bound=linked,selectedTask=task.value,account=bound[i].account;
+    const batch=savedReviews[i].batch;
+    if(typeof batch.id!=='string'||!batch.id||batch.id.length>128
+       ||!Array.isArray(batch.targets)||!batch.targets.length)
+      throw Error('La tanda guardada no se puede identificar. No se canceló nada.');
+    const unresolved=batch.targets.filter(name=>![
+      'ok','already_not_following','already_not_requested'
+    ].includes(batch.action_results?.[name]?.status)).length;
+    if(!confirm('¿Cancelar SÓLO la tanda '+batch.id+' de @'+bound[i].expected_handle+
+      ' ('+selectedTask+')? '+unresolved+' perfiles aún requieren atención. '+
+      'Se detendrán futuras acciones de ESTA cuenta; los clics inciertos, '+
+      'resultados originales y protecciones NO se borrarán. '+
+      'La otra cuenta continuará por separado.'))return;
+    const result=await api('cancel-batch-one',{
+      owner:bound.owner,account,task:selectedTask,batch_id:batch.id,
+      confirmation:'action-workspace-cancel:'+bound.owner+':'+account+':'+
+        selectedTask+':'+batch.id
+    });
+    if(linked!==bound||task.value!==selectedTask)return;
+    if(result?.owner!==bound.owner||result?.account!==account||
+       result?.task!==selectedTask)
+      throw Error('Confirmación de cancelación perteneciente a otra cuenta.');
+    savedReviews[i]=null;preparedNew[i]=null;
+    const original=$('igcDawReviewList'+i);
+    if(original)original.replaceChildren();
+    await statusUpdate();
+    notice(result.status==='cancelling'?
+      'Cancelación solicitada a @'+bound[i].expected_handle+
+      '. El último perfil puede seguir en curso; consulta el estado hasta que termine.':
+      'Tanda de @'+bound[i].expected_handle+
+      ' cancelada y archivada. Resultados y clics inciertos conservados.');
+  }));
+  controls.append(cancelBatch);
   const approve=el('button',null,'Aprobar revisión');
   approve.id='igcDawApprove'+i;approve.type='button';
   approve.addEventListener('click',()=>performLane(i,async()=>{
