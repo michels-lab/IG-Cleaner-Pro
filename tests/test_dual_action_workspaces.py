@@ -208,7 +208,11 @@ class IsolatedWorkspaceTests(unittest.TestCase):
             chosen[1]: {"status": "review",
                         "issue": "interrupted_action_uncertain",
                         "click_intent": {"phase": "relationship_control"}},
-            chosen[2]: {"status": "ok"},
+            chosen[2]: {"status": "ok",
+                        # Exact persisted proof of one successful relationship
+                        # change must still appear as green after restart.
+                        "click_intent": {"phase": "relationship_control",
+                                         "outcome_recorded": True}},
         })
         _atomic_json(batch_b, [{
             "id": "saved-second", "targets": ["request.one", "request.two"],
@@ -261,6 +265,49 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertTrue(damaged[0]["requires_manual_review"])
         self.assertNotIn("current_total", damaged[0],
                          "Do not invent a zero when original saved wave is corrupt.")
+
+    def test_saved_batch_counts_verified_click_separately_from_ambiguous_intent(self):
+        """An outcome-recorded click is confirmed; missing proof is Review."""
+        self.manager.configure(config())
+        robot = self.manager.workspaces[A]["robot"]
+        batch = robot._review_batches_file_for(OWNER, A, "unfollow")
+        journal = robot._base_for(OWNER, A, "unfollow")
+        _atomic_json(batch, [{
+            "id": "signed-evidence", "targets": [
+                "confirmed.with.wal", "unconfirmed.with.wal",
+                "no.click", "untouched.profile"],
+            "approved_at": None, "recheck_results": {},
+        }])
+        _atomic_json(journal, {
+            "confirmed.with.wal": {
+                "status": "ok", "click_intent": {
+                    "phase": "relationship_control", "outcome_recorded": True},
+            },
+            "unconfirmed.with.wal": {
+                "status": "ok", "click_intent": {
+                    "phase": "relationship_control"},
+            },
+            "no.click": {"status": "already_not_following"},
+        })
+        saved_batch, saved_journal = batch.read_bytes(), journal.read_bytes()
+        restored = DualActionWorkspaces(
+            DualChromeSessions(self.root / "browser"),
+            self.collector, self.collector.data_dir, self.legacy)
+        self.addCleanup(restored.shutdown)
+        snapshot = restored.status(OWNER)
+        row = next(x for x in snapshot["lanes"] if x["account"] == A)
+        results = row["saved_batches"][0]
+        self.assertEqual(results["confirmed_clicks"], 1,
+                         "Valid terminal OK with recorded click must be counted.")
+        self.assertEqual(results["warnings"], 1,
+                         "Forged OK without recorded outcome cannot turn green.")
+        self.assertEqual(results["already_resolved_no_click"], 1)
+        self.assertEqual(results["untouched"], 1)
+        self.assertEqual(results["current_total"], 4)
+        self.assertEqual(batch.read_bytes(), saved_batch)
+        self.assertEqual(journal.read_bytes(), saved_journal)
+        self.assertFalse(self.manager.sessions.root.exists(),
+                         "Read-only totals must not start a Chrome session.")
 
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)

@@ -422,12 +422,17 @@ class DualActionWorkspaces:
                         warnings += 1
                     elif item.get("status") == "pending":
                         pending += 1
-                    elif item.get("possible_click") is True:
-                        # A former click must remain an unresolved warning
-                        # even if a later read-only observation looks resolved.
-                        warnings += 1
                     elif item.get("status") == "ok":
+                        # Validated terminal OK often retains its original
+                        # click_intent WAL with outcome_recorded=true. This is
+                        # real confirmed evidence, not an unresolved warning.
+                        # ActionRobot.batch_review already downgrades invalid
+                        # or unresolved "ok" WAL to review before reaching us.
                         confirmed += 1
+                    elif item.get("possible_click") is True:
+                        # A genuinely unresolved click still takes precedence
+                        # over read-only "already" or unavailable observations.
+                        warnings += 1
                     elif item.get("status") in (
                             "already_not_following", "already_not_requested"):
                         no_click += 1
