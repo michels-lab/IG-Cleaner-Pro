@@ -327,7 +327,7 @@ const {chromium}=require('playwright');
   // Read-only archive by exact Instagram owner + task; the other lane must
   // not render this result or receive any relationship-changing POST.
   await page.locator('#igcDawArchived0').click();
-  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A').waitFor();
+  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A', {exact:true}).waitFor();
   const archivedA=await page.locator('#igcDawArchivedList0').innerText();
   assert.match(archivedA,/25 históricas/);
   assert.match(archivedA,/Cancelada por usuario/);
