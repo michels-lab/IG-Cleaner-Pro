@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "62f92a6784a7aa9d4a1dc3a13ec1c9aabe5db744cc5da9327ac8682a4d7e5e26",
-  "evidence_fingerprint": "c159685e93ba9a2d1714f4fe3970dd35de2bcb019fbb56dcbbc1013a361976b0",
+  "finding_total": 8,
+  "inventory_fingerprint": "9d1ac4efd1a71fbae08d74079ac45490354c99bc020c02057572e9bba22b652c",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "b40aeaa06d4089d4282193b395783a9717a718ec"
+      "blob": "c288a90098155a2e7d895800eee20072bb62cf0c"
     },
     {
       "path": "README.md",
@@ -855,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "018fa412c7024c078ca0a64ece27eae27e9f7d58"
+      "blob": "ba2ecb2569fe3dd9bcbd51b2496f17f113fc73ce"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2038,14 +2037,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ac95d88a7146039eb11455fe27e0eb58a83b9636"
+      "blob": "4046040766432a886f7c6836a45664b904ff659c"
     },
     {
       "path": "tests/pending-zip-shards-runtime.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4af34e528a06b643cd70898bdcf867f1921d7a7a"
+      "blob": "53e7de1ea54d1076ee49ce1cf28f93de694efeed"
     },
     {
       "path": "tests/premium-visual-contract.py",
@@ -2973,15 +2972,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "5571da17d5b7d43c",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, tests/test_action_batch_approval_lease.py, tools/profile_actions.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
