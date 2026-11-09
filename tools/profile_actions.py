@@ -2023,12 +2023,30 @@ class ActionRobot:
                     "source": "read_only_no_relationship_click"}
 
     def _review_batches(self, owner, account, task):
-        return _read_json(self._review_batches_file_for(owner, account, task), [])
+        batches = _read_json(self._review_batches_file_for(owner, account, task), [])
+        # JSON may be a valid list with damaged rows. Never interpret those
+        # rows as absent/approved or let an AttributeError tear down the
+        # entire two-account Windows status page. Preserve the file as-is.
+        if any(not isinstance(entry, dict) for entry in batches):
+            raise ValueError(
+                "Corrupted saved action batch entry. Original history was "
+                "preserved; inspect this account's saved batch before continuing.")
+        return batches
 
     def _pending_review(self, owner, account, task):
         batches = self._review_batches(owner, account, task)
-        return next((entry for entry in reversed(batches)
-                     if not entry.get("approved_at") and not entry.get("deferred_at")), None)
+        pending = next((entry for entry in reversed(batches)
+                        if not entry.get("approved_at") and not entry.get("deferred_at")), None)
+        if pending is not None:
+            targets, batch_id = pending.get("targets"), pending.get("id")
+            if (not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                    or not isinstance(targets, list) or not 1 <= len(targets) <= 1000
+                    or any(not isinstance(user, str) or valid_username(user) != user
+                           for user in targets) or len(set(targets)) != len(targets)):
+                raise ValueError(
+                    "Corrupted unfinished action cohort. Original saved batch "
+                    "was preserved; review it without restarting the robot.")
+        return pending
 
     def open_profile(self, data):
         """Open an owner-selected issue in the robot's persistent Chrome profile.
