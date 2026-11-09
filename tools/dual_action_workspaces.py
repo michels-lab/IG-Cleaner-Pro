@@ -304,6 +304,24 @@ class DualActionWorkspaces:
             return lane["robot"].batch_review(
                 {"owner": owner, "account": account, "task": task})
 
+    def archived_one(self, data):
+        """Inspect cancelled/deferred saved waves for one selected account/task.
+
+        A read-only history viewer is not batch approval, resumption or an
+        Instagram relationship action. Never return targets, cookies or Chrome
+        paths; the existing ActionRobot exposes only bounded safe summaries.
+        """
+        owner = self._owner(data)
+        account, task = data.get("account"), data.get("task")
+        if (not isinstance(account, str) or task not in ("unfollow", "cancel")
+                or data.get("confirmation") !=
+                "action-workspace-archive:" + owner + ":" + account + ":" + task):
+            raise ValueError("Confirm the exact account and task to inspect archived batches.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            return lane["robot"].deferred_batch_history(
+                {"owner": owner, "account": account, "task": task})
+
     def approve_one(self, data):
         """Owner-confirmed exact-scope batch approval; never promotes Review to OK."""
         owner = self._owner(data)
