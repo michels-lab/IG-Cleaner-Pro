@@ -322,6 +322,23 @@ class DualActionWorkspaces:
             return lane["robot"].deferred_batch_history(
                 {"owner": owner, "account": account, "task": task})
 
+    def archived_detail_one(self, data):
+        """Read one archived cohort without rerunning or approving anything."""
+        owner = self._owner(data)
+        account, task, batch_id = (
+            data.get("account"), data.get("task"), data.get("batch_id"))
+        if (not isinstance(account, str) or task not in ("unfollow", "cancel")
+                or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                or data.get("confirmation") !=
+                "action-workspace-archive-detail:" + owner + ":" + account +
+                ":" + task + ":" + batch_id):
+            raise ValueError("Confirm exact Instagram account, task and archived batch.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            return lane["robot"].deferred_batch_details({
+                "owner": owner, "account": account,
+                "task": task, "batch_id": batch_id})
+
     def approve_one(self, data):
         """Owner-confirmed exact-scope batch approval; never promotes Review to OK."""
         owner = self._owner(data)
