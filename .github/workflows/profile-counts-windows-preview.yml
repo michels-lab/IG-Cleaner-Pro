@@ -24,6 +24,7 @@ on:
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
+      - 'tests/test_dual_action_archived_history.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -121,6 +122,7 @@ on:
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
+      - 'tests/test_dual_action_archived_history.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -248,6 +250,9 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_dual_account_cancel_batch.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Dual Cancel Batch offline integration failed." }
+          python -m unittest discover -s tests -p 'test_dual_action_archived_history.py' -v
+          if ($LASTEXITCODE -ne 0) { throw "Read-only archived A/B action batch history broke owner isolation or original WAL." }
           if ($LASTEXITCODE -ne 0) { throw 'Dual action batch cancellation was not owner-scoped or durable.' }
       - name: Verify Pending import, focus, third-batch and no-click replay protections
         shell: pwsh
