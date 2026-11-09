@@ -14,25 +14,41 @@ WORKFLOW = (Path(__file__).resolve().parents[1] / ".github" /
 
 
 class WindowsExitCodeGuardTests(unittest.TestCase):
-    def test_each_action_isolation_unittest_is_immediately_fatal_on_failure(self):
+    def test_each_windows_unittest_checks_its_own_exit_status(self):
         lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
-        for filename in ("test_robot_interlock.py",
-                         "test_action_scoped_admission.py",
-                         "test_dual_action_workspaces.py"):
-            command = ("python -m unittest discover -s tests -p '" +
-                       filename + "' -v")
-            occurrences = [i for i, line in enumerate(lines)
-                           if line.strip() == command]
-            with self.subTest(filename=filename):
-                self.assertEqual(len(occurrences), 1)
-                next_line = next(
-                    (line.strip() for line in lines[occurrences[0]+1:]
+        cases = [
+            i for i, line in enumerate(lines)
+            if line.strip().startswith(
+                "python -m unittest discover -s tests -p '")
+        ]
+        self.assertGreaterEqual(
+            len(cases), 20,
+            "Check every actual Windows robot unittest, not just one fixture.")
+        for index in cases:
+            command = lines[index].strip()
+            with self.subTest(command=command):
+                following = next(
+                    (line.strip() for line in lines[index + 1:]
                      if line.strip()), "")
                 self.assertTrue(
-                    next_line.startswith("if ($LASTEXITCODE -ne 0) { throw ")
-                    and next_line.endswith("}"),
-                    "PowerShell must stop immediately after " + filename +
-                    "; a succeeding later command can otherwise hide failure.")
+                    following.startswith("if ($LASTEXITCODE -ne 0) { throw ")
+                    and following.endswith("}"),
+                    command + " must immediately fail the Windows job; "
+                    "another succeeding command must not mask it.")
+
+    def test_windows_dependency_installs_fail_immediately(self):
+        lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
+        for command in (
+            "npm install --no-save playwright@1.57.0",
+            "python -m pip install playwright==1.57.0 pyinstaller==6.16.0",
+        ):
+            indices = [i for i, line in enumerate(lines)
+                       if line.strip() == command]
+            with self.subTest(command=command):
+                self.assertEqual(len(indices), 1)
+                following = lines[indices[0] + 1].strip()
+                self.assertTrue(following.startswith(
+                    "if ($LASTEXITCODE -ne 0) { throw "))
 
     def test_workflow_trigger_includes_this_regression(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
