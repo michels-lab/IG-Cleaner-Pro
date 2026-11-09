@@ -456,7 +456,7 @@ function card(account,i){
         'Guardada '+String(record.created_at||'sin fecha').slice(0,32)+
         ' · Archivada '+String(record.deferred_at||'sin fecha').slice(0,32)+
         ' · Perfiles '+safeCount(record.target_count)+
-        ' · Requieren revisión (acciones registradas) '+safeCount(record.action_recorded)+
+        ' · Acciones registradas '+safeCount(record.action_recorded)+
         ' · Sin acción '+safeCount(record.untouched)+
         ' · Protegidos '+safeCount(record.protected_count)+
         ' · No marcados como revisados'));
