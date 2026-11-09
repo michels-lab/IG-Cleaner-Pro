@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 416,
-  "classified_files_total": 412,
-  "docs_content_inspected": 106,
+  "tracked_files_total": 417,
+  "classified_files_total": 413,
+  "docs_content_inspected": 107,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 5,
     "database_schema": 1,
-    "document": 101,
+    "document": 102,
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "95ff138d2d98900024689fccb9acad4239498f2668501377fb700564d3e1b48e",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "ec4e499bd7a198a32c98d76c1a930a8b1961e9dd9c1e04d7ab74e4d65910d810",
+  "evidence_fingerprint": "a9860dc61117f3a27b358134f91ec1fb59feefe1381199d3594c36d9c6522643",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1326,6 +1327,13 @@
       "blob": "1ed80ce61482fbae32580a011eacaa5708af48ac"
     },
     {
+      "path": "docs/GRANADA_MANUAL_REVIEW_CHROME_LANE_LOCK_2026-11-09.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "0ac0f8a298103a0910088aa4e7a5e218a509d351"
+    },
+    {
       "path": "docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2135,7 +2143,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e3d0de67ffd3b74fbe5b0c2633b7ee31ffd82b35"
+      "blob": "2ee34cbd8ec6ec45ca6037dfede0786d723ad1af"
     },
     {
       "path": "tests/test_action_click_wal.py",
@@ -2317,7 +2325,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1e48537b77b3a199727732bd3874dada19801e26"
+      "blob": "c360151b481037991c7571c08c8f09f60bbd2205"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2765,7 +2773,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "02373e640176c8cd1744a4a9540abe5dcc790cbf"
+      "blob": "3112396107385f74a040205869c41d81ad9fd4d0"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2986,6 +2994,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "0e1877e0968cd030",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: tests/test_action_chrome_profiles.py, tests/test_dual_action_workspaces.py, tools/profile_actions.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
