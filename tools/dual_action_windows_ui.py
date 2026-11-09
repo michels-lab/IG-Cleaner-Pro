@@ -460,6 +460,74 @@ function card(account,i){
         ' · Sin acción '+safeCount(record.untouched)+
         ' · Protegidos '+safeCount(record.protected_count)+
         ' · No marcados como revisados'));
+      const inspect=el('button','igc-daw-archive-open','Ver perfiles · Review primero');
+      inspect.type='button';
+      inspect.setAttribute('aria-label','Ver perfiles del lote archivado '+batch);
+      const detail=el('div','igc-daw-archive-details');
+      detail.style.gridColumn='1/-1';
+      inspect.addEventListener('click',()=>performLane(i,async()=>{
+        if(!linked||linked!==bound||task.value!==selectedTask||
+           !box.isConnected||!HANDLE.test(String(bound[i].expected_handle||'')))
+          throw Error('La cuenta o tarea cambió; vuelve a consultar el historial.');
+        const result=await api('archived-detail-one',{
+          owner:bound.owner,account,task:selectedTask,batch_id:record.batch_id,
+          confirmation:'action-workspace-archive-detail:'+bound.owner+':'+
+            account+':'+selectedTask+':'+record.batch_id
+        });
+        if(linked!==bound||task.value!==selectedTask||!box.isConnected)return;
+        if(result?.owner!==bound.owner||result?.account!==account||
+           result?.task!==selectedTask||result?.batch_id!==record.batch_id||
+           result?.archived!==true||result?.read_only!==true||
+           !Array.isArray(result.targets)||result.targets.length>1000||
+           !result.targets.length||new Set(result.targets).size!==result.targets.length||
+           result.targets.some(user=>typeof user!=='string'||!HANDLE.test(user))||
+           !result.action_results||typeof result.action_results!=='object')
+          throw Error('Detalle archivado inválido o correspondiente a otra cuenta.');
+        const ordered=prioritizedSavedReviewTargets({
+          targets:result.targets,action_results:result.action_results});
+        showSavedResultPages(detail,ordered,username=>{
+          const outcome=result.action_results[username]||{status:'pending'};
+          const row=el('div','igc-daw-review-row '+savedActionClass(outcome));
+          row.append(el('span',null,'@'+username),
+            el('span',null,savedActionLabel(outcome)));
+          row.append(el('small',null,'Historial: '+
+            String(outcome.at||'sin fecha').slice(0,32)+' · '+
+            String(outcome.message||'sin evidencia final').slice(0,160)));
+          // Only a saved, uncertain action may be reopened manually. An
+          // untouched profile is not review evidence or permission to click.
+          if(outcome.possible_click===true&&outcome.status!=='ok'){
+            const open=el('button','igc-daw-archived-manual',
+              'Abrir perfil solo para revisión');
+            open.type='button';
+            open.style.gridColumn='1/-1';
+            open.addEventListener('click',()=>performLane(i,async()=>{
+              if(!linked||linked!==bound||task.value!==selectedTask||
+                 !box.isConnected)
+                throw Error('Cambió la cuenta/tarea; vuelve a consultar la tanda.');
+              if(!confirm('Abrir @'+username+' en Chrome de @'+
+                bound[i].expected_handle+
+                ' SOLO para revisión manual? No se hará ningún unfollow ni cancelación.'))
+                return;
+              const opened=await api('open-review-one',{
+                owner:bound.owner,account,task:selectedTask,username,
+                confirmation:'action-workspace-review:'+bound.owner+':'+
+                  account+':'+username
+              });
+              if(linked!==bound||task.value!==selectedTask||!box.isConnected)return;
+              if(opened?.relationship_action!==false||opened?.username&&
+                 opened.username!==username)
+                throw Error('Chrome no confirmó una revisión sin acción.');
+              notice('Revisión manual de @'+username+
+                ' abierta en el Chrome de @'+bound[i].expected_handle+
+                '. Sin nuevo clic automatizado.');
+            }));
+            row.append(open);
+          }
+          return row;
+        },'Archivo de @'+bound[i].expected_handle+
+          ' · Review y clics inciertos arriba · ningún clic o aprobación.');
+      }));
+      box.append(inspect,detail);
       list.append(box);
     }
   }));

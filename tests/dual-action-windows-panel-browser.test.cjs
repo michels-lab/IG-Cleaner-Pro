@@ -125,7 +125,18 @@ const {chromium}=require('playwright');
        const p=window.IGC_INSTAGRAM_PROFILES;
        const response=operation==='configure'?
          {owner:p.owner,two_workspaces:true,parallel_mutations_enabled:false,lanes:[]}:
-       operation==='archived-one'?{
+       operation==='archived-detail-one'?{
+         owner:p.owner,account:data.account,task:data.task,
+         batch_id:data.batch_id,archived:true,read_only:true,
+         targets:['done.profile','untouched.one','uncertain.click','no.click'],
+         action_results:{
+           'done.profile':{status:'ok',possible_click:true,message:'Recorded outcome'},
+           'untouched.one':{status:'pending',possible_click:false},
+           'uncertain.click':{status:'review',possible_click:true,
+             message:'Outcome unknown. Do not replay.'},
+           'no.click':{status:'already_not_following',possible_click:false}
+         }
+       }:        operation==='archived-one'?{
          owner:p.owner,account:data.account,task:data.task,read_only:true,
          total_deferred:data.account==='ig_first_1234567'?2:1,
          recent:[{
@@ -317,6 +328,36 @@ const {chromium}=require('playwright');
   assert.match(archivedA,/acciones registradas.*2/i);
   assert.match(archivedA,/Sin acción 38/);
   assert.match(archivedA,/No marcados como revisados/);
+  // The archived cohort is no longer pending, but its EXACT original
+  // uncertain-click rows must remain accessible without a new Instagram click.
+  await page.locator('#igcDawArchivedList0 .igc-daw-archive-open').first().click();
+  await page.locator('#igcDawArchivedList0 .igc-daw-archive-details')
+    .getByText('@uncertain.click').waitFor();
+  const archivedDetails=page.locator(
+    '#igcDawArchivedList0 .igc-daw-archive-details .igc-daw-review-row');
+  assert.deepEqual((await archivedDetails.locator('span:first-child').allTextContents()),
+    ['@uncertain.click','@untouched.one','@no.click','@done.profile'],
+    'Uncertain Review first, untouched next, then proven no-click and OK.');
+  assert.match(await page.locator('#igcDawArchivedList0').innerText(),
+    /REVIEW · CLIC INCIERTO/);
+  assert.match(await page.locator('#igcDawArchivedList0').innerText(),
+    /OK · ACCIÓN CONFIRMADA/);
+  const archiveDetailCalls=(await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>x.operation==='archived-detail-one');
+  assert.equal(archiveDetailCalls.length,1);
+  assert.deepEqual(archiveDetailCalls[0].data,{
+    owner,account:'ig_first_1234567',task:'unfollow',
+    batch_id:'archive-A',
+    confirmation:'action-workspace-archive-detail:'+owner+
+      ':ig_first_1234567:unfollow:archive-A'
+  });
+  assert.equal(archiveDetailCalls[0].token,'a'.repeat(32));
+  assert.equal(await page.locator('#igcDawArchivedList1 .igc-daw-archive-details').count(),0,
+    'Archive A must not populate a detail view in account B.');
+  assert.equal((await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,
+    0,'Archived detail cannot replay, approve or open Instagram profiles.');
+
   assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/,
     'Account B must not display account A archive');
   await page.locator('#igcDawTask1').selectOption('cancel');
@@ -333,6 +374,29 @@ const {chromium}=require('playwright');
   assert.equal((await page.evaluate(()=>window.__dawRequests))
     .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,
     0,'Archive inspection must not trigger action, approval or Chrome navigation');
+  // Only a user click opens the ORIGINAL uncertain saved target. Untouched,
+  // no-click and green results have NO manual Review button in archived rows.
+  const archivedManual=page.locator(
+    '#igcDawArchivedList0 .igc-daw-archive-details .igc-daw-archived-manual');
+  assert.equal(await archivedManual.count(),1,
+    'Archived manual Chrome opening is limited to uncertain saved click evidence.');
+  await archivedManual.click();
+  await page.waitForFunction(()=>window.__dawRequests?.some(
+    x=>x.operation==='open-review-one'&&x.data?.username==='uncertain.click'),
+    null,{timeout:12000});
+  const archivedOpens=(await page.evaluate(()=>window.__dawRequests)).filter(
+    x=>x.operation==='open-review-one'&&x.data.username==='uncertain.click');
+  assert.equal(archivedOpens.length,1);
+  assert.deepEqual(archivedOpens[0].data,{
+    owner,account:'ig_first_1234567',task:'unfollow',username:'uncertain.click',
+    confirmation:'action-workspace-review:'+owner+':ig_first_1234567:uncertain.click'
+  });
+  assert.equal(archivedOpens[0].token,'a'.repeat(32));
+  assert.equal((await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>['start-one','approve-one','cancel-batch-one'].includes(x.operation)).length,
+    0,'Explicit review-opening may navigate Chrome, never perform account actions');
+  assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),
+    /uncertain.click/,'A cannot place its archived target into B view');
   await page.locator('#igcDawTask1').selectOption('unfollow');
   assert.equal((await page.locator('#igcDawArchivedList1').innerText()).trim(),'',
     'Changing B task must clear stale B archive without touching account A');
@@ -366,7 +430,8 @@ const {chromium}=require('playwright');
   },null,{timeout:12000});
   const calls=await page.evaluate(()=>window.__dawRequests);
   const reviewCall=calls.find(x=>x.operation==='review-one');
-  const openCall=calls.find(x=>x.operation==='open-review-one');
+  const openCall=calls.find(x=>x.operation==='open-review-one'&&
+    x.data.username==='review.target');
   const pauseCall=calls.find(x=>x.operation==='pause-one');
   assert.equal(reviewCall.data.account,'ig_first_1234567');
   assert.equal(openCall.data.username,'review.target');

@@ -112,6 +112,114 @@ class ArchivedHistoryTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 self.manager.archived_one(bad)
 
+    def test_archived_details_show_uncertain_first_in_view_and_never_replay(self):
+        a_files = self.seed(self.manager, A, "unfollow", "cancelled-A")
+        b_files = self.seed(self.manager, B, "cancel", "cancelled-B")
+        old = json.loads(a_files[0].read_text("utf-8"))
+        old[0]["targets"] = [
+            "confirmed.click", "uncertain.click", "untouched.one",
+            "forged.ok", "already.resolved"]
+        _atomic_json(a_files[0], old)
+        _atomic_json(a_files[1], {
+            "confirmed.click": {"status": "ok", "click_intent": {
+                "phase": "relationship_control", "outcome_recorded": True}},
+            "uncertain.click": {"status": "review", "click_intent": {
+                "phase": "relationship_control"}},
+            "forged.ok": {"status": "ok", "click_intent": {
+                "phase": "relationship_control"}},
+            "already.resolved": {"status": "already_not_following"},
+        })
+        before = [(p, p.read_bytes()) for part in (a_files, b_files) for p in part]
+        fresh = DualActionWorkspaces(
+            DualChromeSessions(self.root / "chrome"),
+            self.collector, self.collector.data_dir, self.legacy)
+        self.addCleanup(fresh.shutdown)
+        self.assertTrue(fresh.status(OWNER)["bindings_restored_from_disk"])
+        payload = {
+            **request(), "batch_id": "cancelled-A",
+            "confirmation": ("action-workspace-archive-detail:" + OWNER + ":" +
+                             A + ":unfollow:cancelled-A"),
+        }
+        result = fresh.archived_detail_one(payload)
+        self.assertTrue(result["archived"])
+        self.assertTrue(result["read_only"])
+        self.assertEqual(result["targets"], old[0]["targets"],
+                         "The archived original order is immutable on disk.")
+        states = result["action_results"]
+        self.assertEqual(states["confirmed.click"]["status"], "ok")
+        self.assertTrue(states["confirmed.click"]["possible_click"])
+        self.assertEqual(states["uncertain.click"]["status"], "review")
+        self.assertTrue(states["uncertain.click"]["possible_click"])
+        self.assertEqual(states["forged.ok"]["status"], "review",
+                         "A forged OK without recorded click outcome stays warning.")
+        self.assertEqual(states["untouched.one"]["status"], "pending")
+        self.assertFalse(states["untouched.one"]["possible_click"])
+        self.assertEqual(states["already.resolved"]["status"],
+                         "already_not_following")
+        self.assertFalse(states["already.resolved"]["possible_click"])
+        self.assertNotIn("click_intent", str(result),
+                         "Return a minimal read-only view, not raw WAL internals.")
+        for file, blob in before:
+            self.assertEqual(file.read_bytes(), blob)
+        self.assertFalse(any(x["robot"].worker for x in fresh.workspaces.values()))
+        for bad in (
+            {**payload, "confirmation": "wrong"},
+            {**payload, "batch_id": "cancelled-B"},
+            {**payload, "account": B},
+            {**payload, "task": "cancel"},
+            {**payload, "owner": "u_else_42"},
+        ):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                fresh.archived_detail_one(bad)
+        # A valid confirmation cannot bypass the exact archived batch scope.
+        bad_scope = {
+            **request(B, "cancel"), "batch_id": "cancelled-A",
+            "confirmation": ("action-workspace-archive-detail:" + OWNER + ":" +
+                             B + ":cancel:cancelled-A"),
+        }
+        with self.assertRaises(ValueError):
+            fresh.archived_detail_one(bad_scope)
+
+    def test_archived_detail_route_requires_token_and_exact_cohort(self):
+        server = build_server(self.collector, "z"*32, 0)
+        self.addCleanup(server.server_close)
+        server.dual_action_workspaces.configure(bindings())
+        self.seed(server.dual_action_workspaces, A, "unfollow", "cancelled-A")
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        url = "http://127.0.0.1:" + str(server.server_port) + (
+            "/api/actions/dual-action-workspaces/archived-detail-one")
+        payload = {
+            **request(), "batch_id": "cancelled-A",
+            "confirmation": ("action-workspace-archive-detail:" + OWNER + ":" +
+                             A + ":unfollow:cancelled-A"),
+        }
+
+        def send(body, token="z"*32):
+            req = urllib.request.Request(
+                url, data=json.dumps(body).encode(), method="POST",
+                headers={"X-IGC-Bridge-Token": token, "Origin": "null",
+                         "Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    return resp.status, json.load(resp)
+            except urllib.error.HTTPError as exc:
+                return exc.code, json.load(exc)
+        try:
+            self.assertNotEqual(send(payload, "invalid")[0], 200)
+            self.assertEqual(send({**payload, "confirmation": "wrong"})[0], 400)
+            self.assertEqual(send({**payload, "batch_id": "not-archived"})[0], 400)
+            status, data = send(payload)
+            self.assertEqual(status, 200)
+            self.assertEqual(data["account"], A)
+            self.assertTrue(data["read_only"])
+            self.assertEqual(data["targets"], ["possible.click", "not.attempted"])
+            self.assertTrue(data["action_results"]["possible.click"]["possible_click"])
+            self.assertEqual(data["action_results"]["not.attempted"]["status"], "pending")
+        finally:
+            server.shutdown()
+            thread.join(timeout=4)
+
     def test_authenticated_local_bridge_matches_exact_account(self):
         server = build_server(self.collector, "z"*32, 0)
         self.addCleanup(server.server_close)
