@@ -211,6 +211,40 @@ class DualBatchCancelTests(unittest.TestCase):
             server.server_close()
             listener.join(timeout=4)
 
+    def test_idle_a_saved_batch_can_be_cancelled_while_parallel_b_stays_running(self):
+        self.manager.configure(pair(parallel=True))
+        batch_a, journal_a = self.seed(
+            A, "unfollow", "saved-A", {
+                "maybe.clicked": {
+                    "status": "review", "issue": "interrupted_action_uncertain",
+                    "click_intent": {"task": "unfollow", "batch_id": "saved-A",
+                                     "requires_manual_review": True},
+                },
+            }, ["maybe.clicked", "untouched.user"])
+        original_a = journal_a.read_bytes()
+        worker_b = self.manager.workspaces[B]["robot"]
+        entered_b, finish_b = threading.Event(), threading.Event()
+        worker_b._run = lambda: (entered_b.set(), finish_b.wait(5))
+        try:
+            self.manager.start_one(command(B, "beta.two", "cancel", "pending.b"))
+            self.assertTrue(entered_b.wait(5))
+            self.assertEqual(self.manager._live_cohort.status()["active_scopes"], 1)
+            result = self.manager.cancel_batch_one(cancel())
+            self.assertEqual(result["status"], "cancelled")
+            self.assertTrue(worker_b.worker.is_alive())
+            self.assertFalse(worker_b.stop_event.is_set())
+            self.assertEqual(self.manager._live_cohort.status()["active_scopes"], 1,
+                             "Temporary A archive lease cannot release B's lock.")
+            self.assertEqual(journal_a.read_bytes(), original_a)
+            self.assertEqual(json.loads(batch_a.read_text("utf-8"))[0][
+                "deferred_reason"], "owner_cancelled")
+            with self.assertRaises(ActionSessionBusy):
+                ActionLease(self.collector.data_dir).acquire()
+        finally:
+            finish_b.set()
+            if worker_b.worker:
+                worker_b.worker.join(5)
+
     def test_parallel_running_a_cancel_does_not_stop_b_or_release_global_lease(self):
         self.manager.configure(pair(parallel=True))
         robot_a = self.manager.workspaces[A]["robot"]
