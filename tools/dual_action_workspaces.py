@@ -515,6 +515,22 @@ class DualActionWorkspaces:
                     "owner_profile_visits": None,
                     "owner_sibling_proofs": None,
                 }
+            saved_batches = (
+                self._saved_cohort_summaries(self.owner, account, r)
+                if self.owner and not state["running"] else [])
+            # A cold-started robot has no task bound in memory, so snapshot()
+            # alone reports idle. Do not leave Run looking safe if the saved
+            # WAL of either Unfollow or Cancel Pending cannot be verified.
+            if (not state["running"]
+                    and any(row.get("unverifiable") is True
+                            for row in saved_batches)
+                    and state["status"] != "blocked"):
+                state["status"] = "blocked"
+                state["message"] = (
+                    "Saved action evidence for this Instagram account cannot "
+                    "be verified. Original files are preserved; inspect "
+                    "the affected task before starting a new robot."
+                )
             lanes.append({
                 "account": account, "expected_handle": item["handle"],
                 "state": state["status"], "message": state["message"],
@@ -540,9 +556,7 @@ class DualActionWorkspaces:
                 # After a native restart the in-memory worker/task is blank.
                 # Show both persisted cohorts without rebinding or replaying
                 # an account, Chrome tab, action job or owner consent.
-                "saved_batches": (
-                    self._saved_cohort_summaries(self.owner, account, r)
-                    if self.owner and not state["running"] else []),
+                "saved_batches": saved_batches,
             })
         return {
             "owner": self.owner, "two_workspaces": len(lanes) == 2,
