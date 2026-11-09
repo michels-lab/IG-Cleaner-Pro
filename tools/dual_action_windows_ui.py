@@ -493,6 +493,36 @@ function card(account,i){
           row.append(el('small',null,'Historial: '+
             String(outcome.at||'sin fecha').slice(0,32)+' · '+
             String(outcome.message||'sin evidencia final').slice(0,160)));
+          // Only a saved, uncertain action may be reopened manually. An
+          // untouched profile is not review evidence or permission to click.
+          if(outcome.possible_click===true&&outcome.status!=='ok'){
+            const open=el('button','igc-daw-archived-manual',
+              'Abrir perfil solo para revisión');
+            open.type='button';
+            open.style.gridColumn='1/-1';
+            open.addEventListener('click',()=>performLane(i,async()=>{
+              if(!linked||linked!==bound||task.value!==selectedTask||
+                 !box.isConnected)
+                throw Error('Cambió la cuenta/tarea; vuelve a consultar la tanda.');
+              if(!confirm('Abrir @'+username+' en Chrome de @'+
+                bound[i].expected_handle+
+                ' SOLO para revisión manual? No se hará ningún unfollow ni cancelación.'))
+                return;
+              const opened=await api('open-review-one',{
+                owner:bound.owner,account,task:selectedTask,username,
+                confirmation:'action-workspace-review:'+bound.owner+':'+
+                  account+':'+username
+              });
+              if(linked!==bound||task.value!==selectedTask||!box.isConnected)return;
+              if(opened?.relationship_action!==false||opened?.username&&
+                 opened.username!==username)
+                throw Error('Chrome no confirmó una revisión sin acción.');
+              notice('Revisión manual de @'+username+
+                ' abierta en el Chrome de @'+bound[i].expected_handle+
+                '. Sin nuevo clic automatizado.');
+            }));
+            row.append(open);
+          }
           return row;
         },'Archivo de @'+bound[i].expected_handle+
           ' · Review y clics inciertos arriba · ningún clic o aprobación.');
