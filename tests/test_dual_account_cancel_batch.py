@@ -8,6 +8,8 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,7 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 from dual_action_workspaces import DualActionWorkspaces
 from dual_chrome_sessions import DualChromeSessions
 from profile_actions import ActionRobot, _atomic_json
-from profile_counts_bridge import Collector
+from profile_counts_bridge import Collector, build_server
 from robot_interlock import ActionLease, ActionSessionBusy
 
 OWNER = "u_owner_42"
@@ -164,6 +166,50 @@ class DualBatchCancelTests(unittest.TestCase):
             lease.release()
         self.assertEqual(batch.read_bytes(), snapshot)
         self.assertEqual(json.loads(journal.read_text("utf-8")), {})
+
+    def test_windows_loopback_route_rejects_invalid_token_and_wrong_batch(self):
+        server = build_server(self.collector, "t" * 32, 0)
+        backend = server.dual_action_workspaces
+        backend.configure(pair())
+        robot = backend.workspaces[A]["robot"]
+        batchfile = robot._review_batches_file_for(OWNER, A, "unfollow")
+        journal = robot._base_for(OWNER, A, "unfollow")
+        _atomic_json(batchfile, [{"id": "saved-A", "targets": ["pending.user"],
+                                 "approved_at": None, "recheck_results": {}}])
+        _atomic_json(journal, {})
+        before = batchfile.read_bytes()
+        listener = threading.Thread(target=server.serve_forever, daemon=True)
+        listener.start()
+        url = "http://127.0.0.1:" + str(server.server_port) + (
+            "/api/actions/dual-action-workspaces/cancel-batch-one")
+
+        def send(payload, token="t" * 32):
+            request = urllib.request.Request(
+                url, data=json.dumps(payload).encode("utf-8"),
+                method="POST",
+                headers={"X-IGC-Bridge-Token": token, "Origin": "null",
+                         "Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    return response.status, json.load(response)
+            except urllib.error.HTTPError as error:
+                return error.code, json.load(error)
+
+        try:
+            self.assertNotEqual(send(cancel(), token="wrong")[0], 200)
+            self.assertEqual(batchfile.read_bytes(), before)
+            self.assertEqual(send(cancel(batch_id="not-mine"))[0], 400)
+            self.assertEqual(batchfile.read_bytes(), before)
+            status, payload = send(cancel())
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["status"], "cancelled")
+            self.assertEqual(payload["account"], A)
+            self.assertEqual(payload["batch_id"], "saved-A")
+            self.assertEqual(json.loads(journal.read_text("utf-8")), {})
+        finally:
+            server.shutdown()
+            server.server_close()
+            listener.join(timeout=4)
 
     def test_parallel_running_a_cancel_does_not_stop_b_or_release_global_lease(self):
         self.manager.configure(pair(parallel=True))
