@@ -15,6 +15,7 @@ from pathlib import Path
 from dual_chrome_sessions import APP_OWNER, DualChromeSessions
 from profile_actions import ActionRobot, _atomic_json, _read_json
 from dual_action_coordinator import SharedGlobalActionCohort
+from robot_interlock import ScopedActionLease
 
 
 class DualActionWorkspaces:
@@ -251,6 +252,40 @@ class DualActionWorkspaces:
         with self.lock:
             lane = self._lane(owner, account)
             return lane["robot"].pause({"owner": owner, "account": account})
+
+    def cancel_batch_one(self, data):
+        """Cancel one original saved cohort; never mistake it for Cancel Pending.
+
+        The idle after-restart route uses the same canonical account WAL under
+        a kernel lease. Parallel mode shares its already-held legacy GLOBAL
+        lock with the still-running sibling action robot, without stopping B.
+        """
+        owner = self._owner(data)
+        account, task, batch_id = (data.get("account"), data.get("task"),
+                                   data.get("batch_id"))
+        if (not isinstance(account, str) or task not in ("unfollow", "cancel")
+                or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
+                or data.get("confirmation") != (
+                    "action-workspace-cancel:" + owner + ":" + account + ":" +
+                    task + ":" + batch_id)):
+            raise ValueError("Confirm the exact owner, account, task and saved batch to cancel.")
+        with self.lock:
+            lane = self._lane(owner, account)
+            robot = lane["robot"]
+            request = {"owner": owner, "account": account, "task": task,
+                       "batch_id": batch_id, "confirmation": "cancel-batch:" + batch_id}
+            if self._alive(robot):
+                if (robot.owner, robot.account, robot.task) != (owner, account, task):
+                    raise ValueError("A different task is running in this action lane; no batch cancelled.")
+                return robot.cancel_current_batch(request)
+            # Do not mutate idle WAL unless the OS guarantees the same scope
+            # is not owned by a different public/Developer InstaCleaner.
+            cohort = self._offline_cohort or self._live_cohort
+            lease = (cohort.lease(self.journal_root, owner, account)
+                     if cohort is not None else
+                     ScopedActionLease(self.journal_root, owner, account))
+            with lease:
+                return robot.cancel_saved_batch(request)
 
     def review_one(self, data):
         """Read the unresolved cohort from the EXACT owner/account/task WAL."""
