@@ -341,8 +341,10 @@ function card(account,i){
   controls.append(task);
   task.addEventListener('change',()=>{
     savedReviews[i]=null;preparedNew[i]=null;
-    const old=$('igcDawReviewList'+i),fresh=$('igcDawNewList'+i);
+    const old=$('igcDawReviewList'+i),fresh=$('igcDawNewList'+i),
+      archive=$('igcDawArchivedList'+i);
     if(old)old.replaceChildren();if(fresh)fresh.replaceChildren();
+    if(archive)archive.replaceChildren();
   });
   const review=el('button',null,'Revisar pendientes');review.type='button';
   review.id='igcDawReview'+i;review.addEventListener('click',()=>performLane(i,async()=>{
@@ -412,6 +414,56 @@ function card(account,i){
     displayNextCompletion();
   }));
   controls.append(savedSummary);
+  const archive=el('button',null,'Ver tandas canceladas');
+  archive.type='button';archive.id='igcDawArchived'+i;
+  archive.addEventListener('click',()=>performLane(i,async()=>{
+    if(!linked)throw Error('Vincula las dos cuentas antes de consultar el historial archivado.');
+    const bound=linked,selectedTask=task.value,account=bound[i].account;
+    if(!['unfollow','cancel'].includes(selectedTask))
+      throw Error('Selecciona Unfollow o Cancel Pending.');
+    const answer=await api('archived-one',{
+      owner:bound.owner,account,task:selectedTask,
+      confirmation:'action-workspace-archive:'+bound.owner+':'+account+':'+selectedTask
+    });
+    // An async response from A must never appear in B after a workspace
+    // switch or a task change. Nothing here can resume or click a target.
+    if(linked!==bound||task.value!==selectedTask)return;
+    if(answer?.owner!==bound.owner||answer?.account!==account||
+       answer?.task!==selectedTask||answer?.read_only!==true||
+       !Array.isArray(answer.recent))
+      throw Error('El archivo consultado no corresponde a esta cuenta y tarea.');
+    const list=$('igcDawArchivedList'+i);
+    if(!list)return;
+    list.replaceChildren();
+    const total=Number.isSafeInteger(answer.total_deferred)&&
+      answer.total_deferred>=0?answer.total_deferred:'?';
+    list.append(el('div','igc-daw-note',
+      'Tandas canceladas/archivadas de @'+bound[i].expected_handle+
+      ' · '+(selectedTask==='unfollow'?'Unfollow':'Cancel Pending')+
+      ' · '+total+' históricas. Solo lectura; ninguna acción se reintentará.'));
+    const safeCount=value=>Number.isSafeInteger(value)&&value>=0&&value<=1000?
+      value:'?';
+    for(const record of answer.recent.slice(0,20)){
+      if(!record||typeof record!=='object')continue;
+      const box=el('div','igc-daw-review-row igc-daw-unresolved');
+      const batch=typeof record.batch_id==='string'?
+        record.batch_id.replace(/[\r\n\x00-\x1f]/g,' ').slice(0,90):'no verificable';
+      const why=record.reason==='owner_cancelled'?'Cancelada por usuario':
+        'Archivada · '+String(record.reason||'motivo no verificable').slice(0,60);
+      box.append(el('span',null,'Lote '+batch),
+        el('span',null,why));
+      box.append(el('small',null,
+        'Guardada '+String(record.created_at||'sin fecha').slice(0,32)+
+        ' · Archivada '+String(record.deferred_at||'sin fecha').slice(0,32)+
+        ' · Perfiles '+safeCount(record.target_count)+
+        ' · Requieren revisión (acciones registradas) '+safeCount(record.action_recorded)+
+        ' · Sin acción '+safeCount(record.untouched)+
+        ' · Protegidos '+safeCount(record.protected_count)+
+        ' · No marcados como revisados'));
+      list.append(box);
+    }
+  }));
+  controls.append(archive);
   const continueSaved=el('button',null,'Continuar tanda guardada');
   continueSaved.id='igcDawContinue'+i;continueSaved.type='button';
   continueSaved.addEventListener('click',()=>performLane(i,async()=>{
@@ -567,6 +619,10 @@ function card(account,i){
   const history=el('div','igc-daw-review-list');history.id='igcDawReviewList'+i;
   history.setAttribute('aria-label','Resultados de la tanda de esta cuenta');
   outer.append(history);
+  const archiveHistory=el('div','igc-daw-review-list');
+  archiveHistory.id='igcDawArchivedList'+i;
+  archiveHistory.setAttribute('aria-label','Historial de tandas canceladas de esta cuenta');
+  outer.append(archiveHistory);
   const newBox=el('section','igc-daw-new');
   newBox.append(el('h4',null,'Nueva tanda · sólo esta cuenta'));
   const caption=el('label','igc-daw-sub','@usuarios exactos, separados por saltos de línea, coma o espacio.');
