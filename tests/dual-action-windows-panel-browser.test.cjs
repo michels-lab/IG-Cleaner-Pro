@@ -125,7 +125,18 @@ const {chromium}=require('playwright');
        const p=window.IGC_INSTAGRAM_PROFILES;
        const response=operation==='configure'?
          {owner:p.owner,two_workspaces:true,parallel_mutations_enabled:false,lanes:[]}:
-       operation==='review-one'?{
+       operation==='archived-one'?{
+         owner:p.owner,account:data.account,task:data.task,read_only:true,
+         total_deferred:data.account==='ig_first_1234567'?2:1,
+         recent:[{
+           batch_id:data.account==='ig_first_1234567'?'archive-A':'archive-B',
+           created_at:'2026-11-09T07:00:00Z',
+           deferred_at:'2026-11-09T08:00:00Z',
+           reason:'owner_cancelled',target_count:40,
+           action_recorded:2,untouched:38,protected_count:1,
+           marked_reviewed:false
+         }]
+       }:        operation==='review-one'?{
          owner:p.owner,account:data.account,task:data.task,
          batch:{id:'saved-wave',targets:['done.profile','untouched.one','review.target'],
            action_results:{
@@ -295,6 +306,36 @@ const {chromium}=require('playwright');
   assert.equal(configured.data.confirmation,'dual-action-workspaces:ig_first_1234567:ig_second_123456');
   assert.equal(configured.data.acknowledge_serial_actions,true);
   assert.equal(configured.token,'a'.repeat(32));
+  // Read-only archive by exact Instagram owner + task; the other lane must
+  // not render this result or receive any relationship-changing POST.
+  await page.locator('#igcDawArchived0').click();
+  await page.locator('#igcDawArchivedList0').getByText('Lote archive-A').waitFor();
+  const archivedA=await page.locator('#igcDawArchivedList0').innerText();
+  assert.match(archivedA,/2 históricas/);
+  assert.match(archivedA,/Cancelada por usuario/);
+  assert.match(archivedA,/Perfiles 40/);
+  assert.match(archivedA,/acciones registradas.*2/i);
+  assert.match(archivedA,/Sin acción 38/);
+  assert.match(archivedA,/No marcados como revisados/);
+  assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/,
+    'Account B must not display account A archive');
+  await page.locator('#igcDawTask1').selectOption('cancel');
+  await page.locator('#igcDawArchived1').click();
+  await page.locator('#igcDawArchivedList1').getByText('Lote archive-B').waitFor();
+  assert.doesNotMatch(await page.locator('#igcDawArchivedList1').innerText(),/archive-A/);
+  const archiveRequests=(await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>x.operation==='archived-one');
+  assert.equal(archiveRequests.length,2);
+  assert.deepEqual(archiveRequests.map(x=>x.data.account),
+    ['ig_first_1234567','ig_second_123456']);
+  assert.deepEqual(archiveRequests.map(x=>x.data.task),['unfollow','cancel']);
+  assert(archiveRequests.every(x=>x.token==='a'.repeat(32)));
+  assert.equal((await page.evaluate(()=>window.__dawRequests))
+    .filter(x=>['start-one','approve-one','cancel-batch-one','open-review-one'].includes(x.operation)).length,
+    0,'Archive inspection must not trigger action, approval or Chrome navigation');
+  await page.locator('#igcDawTask1').selectOption('unfollow');
+  assert.equal((await page.locator('#igcDawArchivedList1').innerText()).trim(),'',
+    'Changing B task must clear stale B archive without touching account A');
   await page.locator('#igcDawReview0').click();
   await page.locator('#igcDawTarget0 option[value="review.target"]').waitFor({state:'attached'});
   const unresolved=page.locator(
