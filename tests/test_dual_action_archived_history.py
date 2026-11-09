@@ -101,6 +101,50 @@ class ArchivedHistoryTests(unittest.TestCase):
                              "History read must never change original action WAL.")
         self.assertFalse(any(l["robot"].worker for l in restarted.workspaces.values()))
 
+    def test_all_47_archived_waves_paginate_without_crossing_accounts(self):
+        """Never hide waves 21+ or mutate journals while inspecting an archive."""
+        robot = self.manager.workspaces[A]["robot"]
+        batches = robot._review_batches_file_for(OWNER, A, "unfollow")
+        journal = robot._base_for(OWNER, A, "unfollow")
+        rows = [
+            {"id": "archived-" + str(n), "targets": ["target." + str(n)],
+             "created_at": "2026-11-09T07:00:00Z",
+             "deferred_at": "2026-11-09T08:00:00Z",
+             "deferred_reason": "owner_cancelled",
+             "deferred_action_recorded": 0, "deferred_untouched": 1}
+            for n in range(47)
+        ]
+        _atomic_json(batches, rows)
+        _atomic_json(journal, {"target.0": {
+            "status": "review", "issue": "interrupted_action_uncertain",
+            "click_intent": {"phase": "relationship_control"}}})
+        sibling = self.seed(self.manager, B, "cancel", "separate-B")
+        snapshots = [(p, p.read_bytes()) for p in (batches, journal, *sibling)]
+        found = []
+        for page, expected in ((0, 20), (20, 20), (40, 7)):
+            result = self.manager.archived_one({**request(), "offset": page})
+            self.assertEqual(result["offset"], page)
+            self.assertEqual(result["page_size"], 20)
+            self.assertEqual(result["total_deferred"], 47)
+            self.assertEqual(len(result["recent"]), expected)
+            self.assertEqual(result["has_more"], page < 40)
+            self.assertEqual(result["next_offset"], page + expected if page < 40 else None)
+            found.extend(record["batch_id"] for record in result["recent"])
+            self.assertNotIn("target.", str(result),
+                             "Archive index must never expose target usernames.")
+        self.assertEqual(found, ["archived-" + str(n) for n in reversed(range(47))])
+        self.assertEqual(self.manager.archived_one({**request(), "offset": 47})["recent"], [])
+        self.assertEqual(self.manager.archived_one(request(B, "cancel"))["recent"][0]["batch_id"],
+                         "separate-B")
+        self.assertEqual(self.manager.archived_one(request(A, "cancel"))["total_deferred"], 0)
+        for bad in (-1, True, False, 1.5, "20", 1_000_001):
+            with self.subTest(cursor=bad), self.assertRaises(ValueError):
+                self.manager.archived_one({**request(), "offset": bad})
+        for path, saved in snapshots:
+            self.assertEqual(path.read_bytes(), saved)
+        self.assertFalse(self.manager.sessions.root.exists(),
+                         "Archive pagination cannot start Chrome.")
+
     def test_invalid_account_task_owner_or_confirmation_denied(self):
         self.seed(self.manager, A, "unfollow", "cancelled-A")
         for bad in (
