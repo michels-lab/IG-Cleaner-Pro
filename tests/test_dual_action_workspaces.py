@@ -450,6 +450,9 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         restored = reopened.status(OWNER)
         cold_lanes = {row["account"]: row for row in restored["lanes"]}
         self.assertTrue(restored["bindings_restored_from_disk"])
+        self.assertEqual(cold_lanes[A]["state"], "blocked",
+                         "Cold restart must not falsely show a safe idle lane.")
+        self.assertIn("cannot be verified", cold_lanes[A]["message"])
         self.assertEqual(cold_lanes[A]["saved_batches"], [{
             "task": "unfollow", "unverifiable": True,
             "requires_manual_review": True,
