@@ -3071,7 +3071,26 @@ class ActionRobot:
             pending = sum(u not in protected and u not in self.skipped and
                           rows[u].get("status") not in completed_states
                           for u in self.targets)
-            return {"status": self.status, "message": self.message,
+            # A repaired/restored Windows action lane can still have its last
+            # task bound in memory when the saved batch JSON becomes damaged.
+            # Never let that one account's snapshot tear down the sibling lane
+            # or silently display the old worker state as a completed batch.
+            saved_review_unverifiable = False
+            review_batch = None
+            if self.owner and self.account and self.task:
+                try:
+                    review_batch = self._pending_review(
+                        self.owner, self.account, self.task)
+                except ValueError:
+                    saved_review_unverifiable = True
+            damaged_message = (
+                "Saved action batch history is unreadable; original evidence "
+                "is preserved. Review this account before any new robot action.")
+            active_worker = bool(self.worker and self.worker.is_alive())
+            return {"status": ("blocked" if saved_review_unverifiable and not active_worker
+                                else self.status),
+                    "message": (damaged_message if saved_review_unverifiable
+                                else self.message),
                     "owner": self.owner, "account": self.account, "task": self.task,
                     "current_profile": self.current,
                     "running": bool(self.worker and self.worker.is_alive()),
@@ -3103,8 +3122,8 @@ class ActionRobot:
                     "history_recheck": self.history_recheck_mode,
                     "historical_checked": historical_checked,
                     "historical_not_following": historical_not_following,
-                    "review_batch": (self._pending_review(self.owner, self.account, self.task)
-                        if self.owner and self.account and self.task else None),
+                    "review_batch": review_batch,
+                    "review_batch_unverifiable": saved_review_unverifiable,
                     "rows": [{"username": u, "status": rows[u].get("status", "pending"),
                               "audit_relation": rows[u].get("audit_relation", ""),
                               "issue": rows[u].get("issue", ""),
