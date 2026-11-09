@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 417,
-  "classified_files_total": 413,
+  "tracked_files_total": 418,
+  "classified_files_total": 414,
   "docs_content_inspected": 107,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 117,
+    "test": 118,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "ec4e499bd7a198a32c98d76c1a930a8b1961e9dd9c1e04d7ab74e4d65910d810",
-  "evidence_fingerprint": "a9860dc61117f3a27b358134f91ec1fb59feefe1381199d3594c36d9c6522643",
+  "inventory_fingerprint": "066f8fa98c240eb21dcfe993884cfc4ac010e52991c9ef6459902a36b614282c",
+  "evidence_fingerprint": "72ccb4c6dedc3b9c64f048a3ee1d422178fb53dc5cc2095bcf09d99b9202ca99",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "25a11f98adc3027ae40316e08df014ae183ea38e"
+      "blob": "1a1779204b09cc56a8f7a3f4070492b06ff24d4f"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "5215262920c60229f5a6131fe70a34e414e806b5"
+      "blob": "3f17735793ab7e13ee58d206099c2e921b546a9a"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -246,7 +246,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "9fcf7e9ae28c290ce96161a4197804ff91446a09"
+      "blob": "5df7b7da3a0c349711e964ecf758fb348141bcee"
     },
     {
       "path": "README.md",
@@ -2325,7 +2325,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c360151b481037991c7571c08c8f09f60bbd2205"
+      "blob": "958d99829b360e3e3f98067cb098c7820f887373"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2552,6 +2552,13 @@
       "blob": "334d26af06b6435c91766e6a5e9ee6eb11e645a3"
     },
     {
+      "path": "tests/test_windows_ci_exitcode_gate.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "20c7af849de83b69e489c497b94be41d6ba3b219"
+    },
+    {
       "path": "tests/test_windows_updater.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2710,7 +2717,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7fb9de6589d6ea9baf126d6756dd4429ddf28314"
+      "blob": "c8c6c7ebbba108906b2b8f52a5161f4be0930a05"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -2997,11 +3004,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "0e1877e0968cd030",
+      "id": "b9d8ed1d69f20ae0",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "3 implementation/config paths changed since this log's last commit; examples: tests/test_action_chrome_profiles.py, tests/test_dual_action_workspaces.py, tools/profile_actions.py",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/test_windows_ci_exitcode_gate.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
