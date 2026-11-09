@@ -13283,6 +13283,15 @@ async function parseZipPending(items,zipName=''){
         !Array.isArray(canonicalSent) && typeof extractFromJSON==='function')
       rows=extractFromJSON(item.payload.data,item.entry.name)||[];
     rows=(rows||[]).map(r=>({username:r.username,href:r.href||profileUrl(r.username,''),name:r.name||'',url:r.url||'',timestamp:r.timestamp||0,source:item.entry.name,fbid:r.fbid||''}));
+    // A ZIP can contain multiple Pending shards. Never publish just the
+    // successful first shard if a later nonempty shard is unreadable. A
+    // recognized, explicitly empty native array is the only safe exception.
+    const declaredSent=item.payload?.data?.relationships_follow_requests_sent;
+    const verifiedEmptyShard=item.payload?.format==='json'&&
+      Array.isArray(declaredSent)&&declaredSent.length===0;
+    if(!rows.length&&!verifiedEmptyShard)
+      throw new Error('El archivo Pending '+basename(item.entry?.name||item.file?.name||'')+
+        ' no pudo aportar solicitudes verificables. No se importó ninguna parte del ZIP. Se conservaron los Pending anteriores.');
     all=all.concat(rows);
     try{diagData.push(window.igcDiagEntry(item.file,'pending',item.payload,rows,''))}catch{}
   }

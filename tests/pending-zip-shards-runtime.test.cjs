@@ -82,6 +82,31 @@ assert.equal(groups.recent_follow_requests.length,1);
  assert(!ctx.pendingRequestsRaw.some(x=>x.username==='saved.before'));
  assert.equal(saved.length,1,'One completed ZIP snapshot, not one per shard');
  assert.match(node('pendingFilesLabel').textContent,/725 usuarios únicos/);
+ // A second VALID JSON shard that declares requests but whose usernames
+ // cannot be extracted must reject the WHOLE ZIP. The old code imported only
+ // the good first shard and silently abandoned every request in the second.
+ const beforeIncomplete=saved.length;
+ const firstSnapshot=ctx.pendingRequestsRaw.map(x=>x.username);
+ const unreadableShard=shard('pending_follow_requests_3.json',{
+   relationships_follow_requests_sent:[{
+     title:'unparseable!',string_list_data:[{value:'not/a/handle'}]
+   }]
+ });
+ await assert.rejects(
+   ()=>ctx.parseZipPending([a,unreadableShard],'truncated-shard.zip'),
+   /pending_follow_requests_3\.json.*Se conservaron los Pending anteriores/i,
+   'Unusable nonempty shard cannot cause partial replacement when A was valid.');
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),firstSnapshot);
+ assert.equal(saved.length,beforeIncomplete,
+   'No snapshot write is allowed when any nonempty Pending shard is unreadable.');
+ // A genuinely empty *declared* sent-request shard is valid and must not
+ // invalidate other nonempty shards; only the final union is persisted.
+ const verifiedEmptyShard=shard('pending_follow_requests_3.json',{
+   relationships_follow_requests_sent:[]
+ });
+ assert.equal(await ctx.parseZipPending([a,b,verifiedEmptyShard],
+    'empty-plus-valid-shards.zip'),725);
+ assert.equal(ctx.pendingRequestsRaw.length,725);
  // Empty or malformed shard aborts before replacement and must retain WAL.
  const original=saved.length;
  const oldNames=ctx.pendingRequestsRaw.map(x=>x.username);
