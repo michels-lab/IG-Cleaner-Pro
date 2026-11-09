@@ -99,6 +99,34 @@ assert.equal(groups.recent_follow_requests.length,1);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),firstSnapshot);
  assert.equal(saved.length,beforeIncomplete,
    'No snapshot write is allowed when any nonempty Pending shard is unreadable.');
+ // Even if a single shard has hundreds of valid requests, ONE unreadable
+ // source entry means the native Pending export is incomplete and must not
+ // replace the old snapshot. A zero-rows-only guard misses this case.
+ const mixed=shard('pending_follow_requests_4.json',{
+   relationships_follow_requests_sent:[
+     users[700],
+     {title:'unparseable!',string_list_data:[{value:'bad/name'}]}
+   ]
+ });
+ const beforePartialCount=saved.length;
+ const beforePartialNames=ctx.pendingRequestsRaw.map(x=>x.username);
+ await assert.rejects(
+   ()=>ctx.parseZipPending([a,mixed],'mixed-valid-invalid-shard.zip'),
+   /pending_follow_requests_4\\.json.*1 solicitud\\(es\\).*Se conservaron los Pending anteriores/,
+   'Readable rows must not mask one bad sent-request row in the same shard.');
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
+ assert.equal(saved.length,beforePartialCount);
+ // Mixed children in ONE native request are also corrupt; valid first
+ // identity must not hide an invalid second identity in source data.
+ const mixedChildren=shard('pending_follow_requests_5.json',{
+   relationships_follow_requests_sent:[{
+     string_list_data:[{value:'valid.inner'},{value:'not/a/handle'}]
+   }]
+ });
+ await assert.rejects(()=>ctx.parseZipPending([a,mixedChildren],'bad-child.zip'),
+  /pending_follow_requests_5\\.json.*Se conservaron los Pending anteriores/);
+ assert.equal(saved.length,beforePartialCount);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
  // A genuinely empty *declared* sent-request shard is valid and must not
  // invalidate other nonempty shards; only the final union is persisted.
  const verifiedEmptyShard=shard('pending_follow_requests_3.json',{
