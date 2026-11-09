@@ -99,6 +99,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_dual_lane_terminal_status.py' -v
       - name: Verify dual account action eligibility reads canonical journals without Instagram clicks
         run: python3 -m unittest discover -s tests -p 'test_dual_action_preflight.py' -v
+      - name: Verify cross-process owner approval cannot race a Public/Developer robot
+        run: python3 -m unittest discover -s tests -p 'test_action_batch_approval_lease.py' -v
       - name: Verify exact-account Cancel Batch across restart and concurrent Chrome workers
         run: python3 -m unittest discover -s tests -p 'test_dual_account_cancel_batch.py' -v
       - name: Verify independent Chrome action workspace controllers and serial WAL interlock
