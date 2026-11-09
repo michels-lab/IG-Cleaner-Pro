@@ -118,6 +118,116 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertFalse(self.sessions.root.exists(),
                          "Configuring workspaces must not open Chrome or create login data.")
 
+    def test_restart_recovers_two_links_without_actions_secrets_or_parallel_consent(self):
+        """Real native manager restart loads only identities; never a Chrome job."""
+        parallel = {
+            **config(), "acknowledge_serial_actions": False,
+            "parallel_actions_consent": True, "acknowledge_parallel_actions": True,
+            "confirmation": "dual-action-workspaces-parallel:" + A + ":" + B,
+        }
+        original = self.manager.configure(parallel)
+        self.assertTrue(original["parallel_mutations_enabled"])
+        links = self.manager._binding_file(OWNER)
+        self.assertTrue(links.is_file())
+        self.assertFalse(links.is_relative_to(self.collector.data_dir))
+        self.assertFalse(links.is_relative_to(self.sessions.root))
+        saved = json.loads(links.read_text("utf-8"))
+        self.assertEqual(saved, {
+            "version": 1, "owner": OWNER,
+            "primary": {"account": A, "expected_handle": "first.person"},
+            "secondary": {"account": B, "expected_handle": "second.person"},
+        })
+        for forbidden in ("cookie", "session", "token", "password", "targets",
+                          "confirmation", "consent", "parallel", "protected"):
+            self.assertNotIn(forbidden, links.read_text("utf-8").lower())
+        first_robot = self.manager.workspaces[A]["robot"]
+        journal = first_robot._base_for(OWNER, A, "cancel")
+        batch = first_robot._review_batches_file_for(OWNER, A, "cancel")
+        _atomic_json(journal, {"clicked.uncertain": {
+            "status": "review", "issue": "interrupted_action_uncertain",
+            "message": "Click outcome not proven",
+        }})
+        _atomic_json(batch, [{
+            "id": "saved-on-previous-run",
+            "targets": ["clicked.uncertain"], "approved_at": None,
+            "recheck_results": {},
+        }])
+        original_journal = journal.read_bytes()
+        original_batch = batch.read_bytes()
+
+        # New backend instance: no configure, no consent and NO worker or browser.
+        restarted = DualActionWorkspaces(
+            DualChromeSessions(self.root / "browser"),
+            self.collector, self.collector.data_dir, self.legacy)
+        self.addCleanup(restarted.shutdown)
+        result = restarted.status(OWNER)
+        self.assertTrue(result["bindings_restored_from_disk"])
+        self.assertTrue(result["two_workspaces"])
+        self.assertFalse(result["parallel_mutations_enabled"],
+                         "Prior parallel consent cannot survive app restart.")
+        self.assertEqual(result["mode"], "independent_chrome_sessions_serialized_actions")
+        self.assertEqual([r["account"] for r in result["lanes"]], [A, B])
+        self.assertEqual([r["expected_handle"] for r in result["lanes"]],
+                         ["first.person", "second.person"])
+        self.assertTrue(all(not r["running"] for r in result["lanes"]))
+        self.assertEqual(restarted.workspaces[A]["chrome"],
+                         self.sessions.directory(OWNER, A))
+        self.assertEqual(restarted.workspaces[B]["chrome"],
+                         self.sessions.directory(OWNER, B))
+        self.assertIsNone(restarted.workspaces[A]["robot"].worker)
+        self.assertIsNone(restarted.workspaces[B]["robot"].worker)
+        self.assertFalse(self.sessions.root.exists(), "Restoring metadata cannot open Chrome.")
+        review = restarted.review_one({"owner": OWNER, "account": A, "task": "cancel"})
+        self.assertEqual(review["batch"]["id"], "saved-on-previous-run")
+        self.assertEqual(review["batch"]["action_results"]["clicked.uncertain"]["status"],
+                         "review", "Uncertain click must never be promoted to OK.")
+        self.assertEqual(journal.read_bytes(), original_journal)
+        self.assertEqual(batch.read_bytes(), original_batch)
+        with self.assertRaisesRegex(ValueError, "must match"):
+            restarted.start_one({**command(),
+                                 "action": {**action(), "expected_handle": "other.person"}})
+        self.assertFalse(any(restarted._alive(l["robot"]) for l in restarted.workspaces.values()))
+
+    def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
+        binding = self.manager._binding_file(OWNER)
+        valid = {"version": 1, "owner": OWNER,
+                 "primary": {"account": A, "expected_handle": "first.person"},
+                 "secondary": {"account": B, "expected_handle": "second.person"}}
+        reopened = DualActionWorkspaces(
+            DualChromeSessions(self.root / "browser"), self.collector,
+            self.collector.data_dir, self.legacy)
+        self.addCleanup(reopened.shutdown)
+        for bad in (
+            {**valid, "owner": "u_other_44"},
+            {**valid, "secondary": {"account": B, "expected_handle": "first.person"}},
+            {**valid, "secondary": {"account": A, "expected_handle": "second.person"}},
+            {**valid, "confirmation": "cancel:1"},
+            {**valid, "version": 2},
+            {**valid, "primary": {"account": "../../evil", "expected_handle": "first.person"}},
+        ):
+            with self.subTest(saved=bad):
+                _atomic_json(binding, bad)
+                with self.assertRaises(ValueError):
+                    reopened.status(OWNER)
+                self.assertIsNone(reopened.owner)
+                self.assertEqual(reopened.workspaces, {})
+                self.assertFalse(self.collector.data_dir.exists())
+                self.assertFalse(self.sessions.root.exists())
+        binding.write_text("{broken json", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            reopened.status(OWNER)
+        self.assertIsNone(reopened.owner)
+        self.assertFalse(reopened._restored_from_disk)
+
+    def test_binding_write_failure_never_claims_configured_accounts(self):
+        with patch("dual_action_workspaces._atomic_json",
+                   side_effect=OSError("disk is unavailable")):
+            with self.assertRaises(OSError):
+                self.manager.configure(config())
+        self.assertIsNone(self.manager.owner)
+        self.assertEqual(self.manager.workspaces, {})
+        self.assertFalse(self.sessions.root.exists())
+
     def test_wrong_owner_handles_accounts_or_consent_can_never_rebind(self):
         c = config()
         wrong = [
