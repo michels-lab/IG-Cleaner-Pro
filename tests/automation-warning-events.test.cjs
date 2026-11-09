@@ -12,7 +12,8 @@ const begin = src.indexOf('function dateValue(value){');
 const end = src.indexOf('async function readHistory(account,task){', begin);
 assert(begin >= 0 && end > begin, 'Use real production period and summary functions');
 const sessionStart = Date.parse('2026-11-09T05:50:00Z');
-const context = {Date, Number, Math, String, Object, Set, sessionStart};
+const context = {Date, Number, Math, String, Object, Set, sessionStart,
+ HANDLE:/^[a-z0-9._]{1,30}$/i};
 const fns = vm.runInNewContext(src.slice(begin,end) + '\n({summarize,cutoff})', context, {timeout:2500});
 const now = new Date('2026-11-09T06:15:00Z'); // 00:15 Nov 9 Monterrey
 
