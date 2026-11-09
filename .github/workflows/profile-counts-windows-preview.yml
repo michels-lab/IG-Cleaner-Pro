@@ -274,6 +274,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_action_click_wal.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Durable before-click journal fail-closed tests failed.' }
           python -m unittest discover -s tests -p 'test_instagram_unfollow_reference.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_instagram_unfollow_reference.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_instagram_unfollow_chromium_e2e.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Chromium user-reference actual worker offline integration failed.' }
           if ($LASTEXITCODE -ne 0) { throw 'User supplied single-POST Unfollow and no-replay contract failed.' }
@@ -334,7 +335,9 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p 'test_profile_lists_live.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_profile_lists_live.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_live_relationship_snapshot.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'test_live_relationship_snapshot.py failed; cannot continue Windows verification.' }
           python -m unittest discover -s tests -p 'test_live_relationship_bridge.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Optional live friendship list contract failed.' }
       - name: Exact two-account action preflight uses canonical journals without clicks
