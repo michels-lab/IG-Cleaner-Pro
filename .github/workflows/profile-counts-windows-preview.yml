@@ -24,6 +24,7 @@ on:
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
+      - 'tests/test_action_batch_approval_lease.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -121,6 +122,7 @@ on:
       - 'tools/dual_action_workspaces.py'
       - 'tests/test_dual_action_workspaces.py'
       - 'tests/test_dual_account_cancel_batch.py'
+      - 'tests/test_action_batch_approval_lease.py'
       - 'tests/two-workspaces-windows-browser.test.cjs'
       - 'tools/windows_updater.py'
       - 'tests/test_windows_updater.py'
@@ -244,6 +246,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Original saved Review history was lost or leaked.' }
           node tests/automation-warning-events.test.cjs
           if ($LASTEXITCODE -ne 0) { throw 'Automations warning count or midnight period failed.' }
+      - name: Verify saved batch approval requires global OS lease before changing shared journal
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_action_batch_approval_lease.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Cross-process saved batch approval raced an active Windows Public/Developer action.' }
       - name: Verify owner-selected Cancel Batch preserves A/B journals and does not replay possible clicks
         shell: pwsh
         run: |
