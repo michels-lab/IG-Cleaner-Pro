@@ -1,3 +1,10 @@
+## 2026-11-09 — GRANADA P0: corregir CI Windows falsamente verde tras fallar pruebas de robots
+
+- **Prueba real del fallo:** la ejecución integrada Windows #1317, commit `65218336`, reportó éxito del instalador, pero el registro de `test_dual_action_workspaces.py` contenía **dos FAIL**: se esperaba `ValueError` para un WAL corrupto y `review_one` devolvía la vista vacía. El bloque PowerShell corría `test_dual_action_coordinator.py` después y sólo comprobaba `$LASTEXITCODE` del último comando; por eso una segunda suite exitosa ocultaba la falla.
+- **Código corregido:** `review_one` comprueba el WAL solicitado aunque no haya lote abierto. `start_one` y `preflight_new_one` validan WAL de Unfollow **y** Cancel Pending de la cuenta antes de iniciar una nueva tarea, de modo que cambiar de tarea no esquive una advertencia de integridad. La otra cuenta conserva el funcionamiento independiente; no se reescribe ningún WAL.
+- **CI corregida:** Windows comprueba inmediatamente `$LASTEXITCODE` de `test_robot_interlock.py`, `test_action_scoped_admission.py` y `test_dual_action_workspaces.py`, con `throw` para impedir verde engañoso. Nuevo test `test_windows_ci_exitcode_gate.py` ejecutado tanto en Linux CI como en Windows asegura que nunca se vuelva a separar una suite de su comprobación de salida.
+- **Límites:** la ejecución anterior **no** es evidencia de éxito de esa suite; exigir pruebas sobre SHA exacto nuevo y compilar Windows final. Sin tag/release/RC/APK, sin Instagram real, sin publicar v120.72 hasta aprobación y aceptación física.
+
 ## 2026-11-09 — GRANADA P0: un WAL de acciones ilegible no apaga ambas cuentas Windows (source only)
 
 - **Fallo reproducido en código:** la protección de tandas JSON dañadas de #344 sólo cubría `*-batch-reviews.json`. Con un robot anterior todavía enlazado en memoria, `DualActionWorkspaces._snapshot_locked()` llamaba a `ActionRobot.snapshot()`, que lee `*-actions.json` antes de los resúmenes protegidos. Un JSON de acciones truncado o con tipo incorrecto levantaba `ValueError` y hacía fallar toda la vista de A+B. En arranque frío, sin tanda activa, un WAL roto también podía pasar desapercibido como lista vacía.
