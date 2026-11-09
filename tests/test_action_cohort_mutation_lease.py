@@ -80,29 +80,41 @@ class CohortMutationLeaseTests(unittest.TestCase):
             lease.release()
         return previous
 
-    def test_replan_original_40_to_1_rejects_cross_process_and_keeps_uncertain(self):
+    def test_replan_original_40_to_10_rejects_cross_process_and_keeps_uncertain(self):
         batches, journal, protection = self.seed()
+        original_40 = TARGETS + [
+            "fresh.extra." + str(i).zfill(2) for i in range(35)]
+        self.assertEqual(len(original_40), 40)
+        _atomic_json(batches, [{
+            "id": "wave-40", "targets": original_40,
+            "approved_at": None, "recheck_results": {},
+        }])
         original_wal = journal.read_bytes()
-        params = self.req()
+        params = {**self.req(), "desired_batch_size": 10,
+                  "confirmation": "replan-size:wave-40:10"}
         self.assert_busy_preserves_all(self.robot.replan_incomplete_batch, params)
         result = self.robot.replan_incomplete_batch(params)
-        self.assertEqual(result["active_size"], 1)
-        self.assertEqual(result["reusable_after_active"], 1)
+        self.assertEqual(result["previous_size"], 40)
+        self.assertEqual(result["active_size"], 10)
+        self.assertEqual(result["reusable_after_active"], 27)
         batch = self.robot.batch_review(params)["batch"]
-        self.assertEqual(batch["targets"], ["fresh.four"])
-        self.assertEqual(batch["carryover_targets"], ["fresh.five"])
-        self.assertEqual(batch["original_targets"], TARGETS)
+        self.assertEqual(batch["targets"],
+            ["fresh.four", "fresh.five"] +
+            ["fresh.extra." + str(i).zfill(2) for i in range(8)])
+        self.assertEqual(len(batch["carryover_targets"]), 27)
+        self.assertEqual(batch["carryover_targets"][0], "fresh.extra.08")
+        self.assertEqual(batch["original_targets"], original_40)
         self.assertFalse(batch.get("approved_at"))
         self.assertEqual(journal.read_bytes(), original_wal)
         self.assertEqual(batch["action_results"]["fresh.four"]["status"], "pending")
-        # Both malformed and uncertain prior WAL must never enter a new wave.
-        self.assertNotIn("uncertain.two", batch["targets"])
-        self.assertNotIn("done.one", batch["targets"])
-        self.assertNotIn("protected.three", batch["targets"])
+        # Both an uncertain possible click and a verified prior outcome must
+        # never sneak into the newly approved 10, or into later carryovers.
+        self.assertFalse({"uncertain.two", "done.one", "protected.three"} &
+                         set(batch["targets"] + batch["carryover_targets"]))
         with self.assertRaisesRegex(ValueError, "already matches"):
             self.robot.replan_incomplete_batch(params)
-        lease = ActionLease(self.collector.data_dir).acquire()
-        lease.release()  # A denied resize cannot leave the OS lock held.
+        ActionLease(self.collector.data_dir).acquire().release()
+
 
     def test_owner_set_aside_is_blocked_by_other_app_and_preserves_click_wal(self):
         batches, journal, protection = self.seed(task="cancel")
