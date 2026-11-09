@@ -2145,6 +2145,59 @@ class ActionRobot:
                     "total_deferred": len(deferred), "recent": rows,
                     "read_only": True, "source": "local_saved_action_batches"}
 
+    def deferred_batch_details(self, data):
+        """Inspect an EXACT archived cohort, without changing action evidence.
+
+        Cancelled batches are no longer returned by batch_review(), yet their
+        original click WAL must remain available for manual Review. Never
+        conflate an unvisited target, an ambiguous click, and verified OK.
+        """
+        owner, account, task = self._review_scope(data)
+        batch_id = data.get("batch_id")
+        if (task not in ("unfollow", "cancel") or
+                not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128):
+            raise ValueError("Choose the exact archived Unfollow or Cancel Pending batch.")
+        with self.lock:
+            saved = self._review_batches(owner, account, task)
+            if not isinstance(saved, list):
+                raise ValueError("Saved review history is invalid; preserve original evidence.")
+            cohort = [entry for entry in saved if isinstance(entry, dict)
+                      and entry.get("id") == batch_id and entry.get("deferred_at")
+                      and not entry.get("approved_at")]
+            if len(cohort) != 1:
+                raise ValueError("Archived batch not found in this exact owner/account/task.")
+            targets = cohort[0].get("targets")
+            if (not isinstance(targets, list) or not 1 <= len(targets) <= 1000
+                    or any(not isinstance(u, str) or valid_username(u) != u
+                           for u in targets) or len(set(targets)) != len(targets)):
+                raise ValueError("Original archived cohort is invalid; do not infer any outcomes.")
+            journal = _read_json(self._base_for(owner, account, task), {})
+            if not isinstance(journal, dict):
+                raise ValueError("Action journal is invalid; original evidence preserved.")
+            results = {}
+            for username in targets:
+                if username not in journal:
+                    results[username] = {"status": "pending",
+                                         "message": "", "at": "",
+                                         "possible_click": False,
+                                         "safe_no_click": False}
+                    continue
+                original = journal[username]
+                public = _public_action_record(original)
+                results[username] = {
+                    "status": public.get("status", "review"),
+                    "at": str(public.get("at") or "")[:32],
+                    "message": str(public.get("message") or "").replace("\n", " ")[:180],
+                    "possible_click": (not isinstance(original, dict) or
+                        "click_intent" in original or _invalid_saved_action_record(original)),
+                    "safe_no_click": (not _invalid_saved_action_record(original)
+                                      and _preclick_no_action(original)),
+                }
+            return {"owner": owner, "account": account, "task": task,
+                    "batch_id": batch_id, "archived": True, "read_only": True,
+                    "targets": list(targets), "action_results": results,
+                    "source": "local_saved_action_batches"}
+
     def _review_scope(self, data):
         owner = str(data.get("owner") or "").strip()
         account = str(data.get("account") or "").strip()
