@@ -383,6 +383,64 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertEqual(file_b.read_bytes(), old_b)
         self.assertFalse(self.sessions.root.exists())
 
+    def test_damaged_action_journal_blocks_only_its_own_warm_lane(self):
+        """One corrupt A WAL must not hide the healthy B robot in Windows.
+
+        The previous saved-batch repair covered *-batch-reviews.json, but an
+        already-bound ActionRobot.snapshot() first reads its separate action
+        journal and raised ValueError before the dual status could render B.
+        No repair may rewrite or silently approve the damaged original WAL.
+        """
+        self.manager.configure(config())
+        first = self.manager.workspaces[A]["robot"]
+        second = self.manager.workspaces[B]["robot"]
+        first.owner, first.account, first.task = OWNER, A, "unfollow"
+        first.status, first.message = "completed", "Prior completion"
+        first.targets = ["first.pending"]
+        bad_file = first._base_for(OWNER, A, "unfollow")
+        good_file = second._review_batches_file_for(OWNER, B, "cancel")
+        _atomic_json(good_file, [{"id": "healthy-second",
+                                  "targets": ["second.pending"],
+                                  "approved_at": None, "recheck_results": {}}])
+        good_bytes = good_file.read_bytes()
+        for damaged in ('{"first.pending":', '["not", "a", "journal"]'):
+            with self.subTest(damaged=damaged):
+                bad_file.parent.mkdir(parents=True, exist_ok=True)
+                bad_file.write_text(damaged, encoding="utf-8")
+                original = bad_file.read_bytes()
+                with self.assertRaises(ValueError):
+                    first.snapshot()  # Exact original exception, still fail-closed.
+                status = self.manager.status(OWNER)
+                lanes = {row["account"]: row for row in status["lanes"]}
+                self.assertEqual(len(lanes), 2)
+                self.assertEqual(lanes[A]["state"], "blocked")
+                self.assertIn("action journal", lanes[A]["message"])
+                self.assertFalse(lanes[A]["running"])
+                self.assertIsNone(lanes[A]["successful"])
+                self.assertIsNone(lanes[A]["processed"])
+                self.assertIsNone(lanes[A]["pending"])
+                self.assertIsNone(lanes[A]["issues"])
+                self.assertIsNone(lanes[A]["total"])
+                self.assertFalse(lanes[A]["review_batch_open"])
+                self.assertEqual(lanes[A]["saved_batches"], [{
+                    "task": "unfollow", "unverifiable": True,
+                    "requires_manual_review": True,
+                    "source": "saved_local_action_journal",
+                }])
+                self.assertEqual(lanes[B]["saved_batches"][0]["batch_id"],
+                                 "healthy-second")
+                self.assertEqual(lanes[B]["saved_batches"][0]["untouched"], 1)
+                self.assertNotIn("first.pending", str(status))
+                self.assertNotIn(str(bad_file), str(status))
+                self.assertEqual(bad_file.read_bytes(), original)
+                self.assertEqual(good_file.read_bytes(), good_bytes)
+                self.assertFalse(self.sessions.root.exists(),
+                                 "A status request must never start Chrome.")
+                with self.assertRaises(ValueError):
+                    self.manager.review_one(
+                        {"owner": OWNER, "account": A, "task": "unfollow"})
+                self.assertEqual(bad_file.read_bytes(), original)
+
     def test_restart_rejects_corrupted_or_cross_owner_links_without_starting(self):
         binding = self.manager._binding_file(OWNER)
         valid = {"version": 1, "owner": OWNER,
