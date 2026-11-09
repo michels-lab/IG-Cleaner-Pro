@@ -284,8 +284,14 @@ class DualActionWorkspaces:
             lease = (cohort.lease(self.journal_root, owner, account)
                      if cohort is not None else
                      ScopedActionLease(self.journal_root, owner, account))
-            with lease:
+            # ScopedActionLease intentionally exposes acquire()/release()
+            # rather than __enter__/__exit__. Both cohort and legacy leases
+            # are released even if the disk archive fails.
+            lease.acquire()
+            try:
                 return robot.cancel_saved_batch(request)
+            finally:
+                lease.release()
 
     def review_one(self, data):
         """Read the unresolved cohort from the EXACT owner/account/task WAL."""
