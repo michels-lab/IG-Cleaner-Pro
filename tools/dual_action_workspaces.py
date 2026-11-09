@@ -411,6 +411,11 @@ class DualActionWorkspaces:
         rows = []
         for task in ("unfollow", "cancel"):
             try:
+                # A missing/incomplete saved batch cannot hide a damaged
+                # canonical action WAL. Check each task's own file even when
+                # _pending_review() would return None without reading it.
+                # This is read-only and never changes the original evidence.
+                _read_json(robot._base_for(owner, account, task), {})
                 result = robot.batch_review({
                     "owner": owner, "account": account, "task": task})
                 batch = result.get("batch")
