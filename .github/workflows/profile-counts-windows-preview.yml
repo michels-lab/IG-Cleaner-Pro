@@ -17,6 +17,8 @@ on:
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
+      - 'tests/test_dual_lane_terminal_status.py'
+      - 'tests/test_dual_chrome_sessions.py'
       - 'tools/dual_action_preflight.py'
       - 'tests/test_dual_action_preflight.py'
       - 'tools/dual_action_workspaces.py'
@@ -107,6 +109,8 @@ on:
       - 'tools/dual_chrome_sessions.py'
       - 'tools/dual_robot_lanes.py'
       - 'tests/test_dual_robot_lanes.py'
+      - 'tests/test_dual_lane_terminal_status.py'
+      - 'tests/test_dual_chrome_sessions.py'
       - 'tools/dual_action_preflight.py'
       - 'tests/test_dual_action_preflight.py'
       - 'tools/dual_action_workspaces.py'
@@ -216,6 +220,13 @@ jobs:
         shell: pwsh
         run: |
           ./tests/test_installer_process_guard.ps1
+      - name: Verify two isolated Chrome windows recover from partial launch without wrong-owner state
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p 'test_dual_chrome_sessions.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Dual Chrome session isolation or partial-launch recovery failed.' }
+          python -m unittest discover -s tests -p 'test_dual_lane_terminal_status.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Blocked Chrome identity lane was falsely reverified.' }
       - name: Verify Pending import, focus, third-batch and no-click replay protections
         shell: pwsh
         run: |
