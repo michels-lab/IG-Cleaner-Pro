@@ -156,11 +156,14 @@ class DualBatchCancelTests(unittest.TestCase):
         self.manager.configure(pair())
         batch, journal = self.seed(A, "unfollow", "saved-A", {}, ["untouched.user"])
         snapshot = batch.read_bytes()
-        with ActionLease(self.collector.data_dir):
+        lease = ActionLease(self.collector.data_dir).acquire()
+        try:
             with self.assertRaises(ActionSessionBusy):
                 self.manager.cancel_batch_one(cancel())
+        finally:
+            lease.release()
         self.assertEqual(batch.read_bytes(), snapshot)
-        self.assertEqual(journal.read_bytes(), b"{}")
+        self.assertEqual(json.loads(journal.read_text("utf-8")), {})
 
     def test_parallel_running_a_cancel_does_not_stop_b_or_release_global_lease(self):
         self.manager.configure(pair(parallel=True))
