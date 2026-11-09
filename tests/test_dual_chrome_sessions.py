@@ -103,5 +103,69 @@ class DualChromeSessionTests(unittest.TestCase):
             self.assertEqual(len(calls),2)
 
 
+    def test_failed_second_window_closes_only_the_newly_launched_first_process(self):
+        class NewChromeProcess:
+            def __init__(self):
+                self.terminated = False
+                self.waited = False
+
+            def poll(self):
+                return None if not self.terminated else 0
+
+            def terminate(self):
+                self.terminated = True
+
+            def wait(self, timeout=None):
+                self.waited = True
+                return 0
+
+        with TemporaryDirectory() as temp:
+            opened = []
+            first_process = NewChromeProcess()
+
+            def launcher(args):
+                opened.append(args)
+                if len(opened) == 1:
+                    return first_process
+                raise OSError("second Chrome process failed")
+
+            duo = DualChromeSessions(temp, chrome_locator=lambda: Path("chrome.exe"),
+                                     launcher=launcher)
+            with self.assertRaisesRegex(ValueError, "window B"):
+                duo.open_pair(self.request())
+            self.assertEqual(len(opened), 2)
+            self.assertTrue(first_process.terminated,
+                            "A newly launched partial Chrome pair must be cleaned up.")
+            self.assertTrue(first_process.waited)
+            self.assertNotEqual(opened[0][-2], opened[1][-2],
+                                "Never reuse the failed first account's Chrome directory.")
+
+    def test_failed_first_window_does_not_attempt_second_or_leak_exception(self):
+        with TemporaryDirectory() as temp:
+            opened = []
+
+            def launcher(args):
+                opened.append(args)
+                raise OSError("private local browser path")
+
+            duo = DualChromeSessions(temp, chrome_locator=lambda: Path("chrome.exe"),
+                                     launcher=launcher)
+            with self.assertRaisesRegex(ValueError, "window A") as result:
+                duo.open_pair(self.request())
+            self.assertNotIn("private local browser path", str(result.exception))
+            self.assertEqual(len(opened), 1, "Never start B after A cannot launch.")
+
+    def test_invalid_pair_payload_fails_closed_without_process_launch(self):
+        with TemporaryDirectory() as temp:
+            launched = []
+            duo = DualChromeSessions(temp, chrome_locator=lambda: Path("chrome.exe"),
+                                     launcher=lambda args: launched.append(args))
+            with self.assertRaises(ValueError):
+                duo.open_pair(None)
+            with self.assertRaises(ValueError):
+                duo.open_pair([])
+            self.assertEqual(launched, [])
+
+
 if __name__=="__main__":
     unittest.main()
