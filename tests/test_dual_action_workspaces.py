@@ -439,7 +439,24 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.manager.review_one(
                         {"owner": OWNER, "account": A, "task": "unfollow"})
+                # The other task must not bypass a corrupt Unfollow WAL.
+                # Both the read-only preflight and approved start must
+                # refuse before opening Chrome or writing any batch.
+                with self.assertRaisesRegex(ValueError, "unreadable"):
+                    self.manager.preflight_new_one({
+                        "owner": OWNER, "account": A, "task": "cancel",
+                        "targets": ["different.target"],
+                        "expected_handle": "first.person",
+                        "confirmation": (
+                            "action-workspace-preflight:" + OWNER + ":" +
+                            A + ":cancel"),
+                    })
+                with self.assertRaisesRegex(ValueError, "unreadable"):
+                    self.manager.start_one(command(task="cancel"))
+                self.assertIsNone(first.worker)
+                self.assertIsNone(second.worker)
                 self.assertEqual(bad_file.read_bytes(), original)
+                self.assertEqual(good_file.read_bytes(), good_bytes)
 
         # Cold Windows restart has no bound worker, but must still reveal A's
         # broken action WAL even when no unfinished review cohort exists.
@@ -453,6 +470,11 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertEqual(cold_lanes[A]["state"], "blocked",
                          "Cold restart must not falsely show a safe idle lane.")
         self.assertIn("cannot be verified", cold_lanes[A]["message"])
+        for field in ("processed", "pending", "issues", "total", "successful",
+                      "already_not_following", "already_not_requested",
+                      "batch_size"):
+            self.assertIsNone(cold_lanes[A][field],
+                              "Unverifiable WAL must not become a zero count.")
         self.assertEqual(cold_lanes[A]["saved_batches"], [{
             "task": "unfollow", "unverifiable": True,
             "requires_manual_review": True,
