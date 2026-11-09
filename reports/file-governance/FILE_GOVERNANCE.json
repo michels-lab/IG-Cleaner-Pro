@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "0d435aeee502b219afddef1055474a9059660b4206ae3cc9a66a569371ee6e78",
+  "inventory_fingerprint": "e3df44b627dd2cae6f41a9e2d5db04fd007cd9c8f05658c99a12b6e631225686",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a216a8b04969f1ba14d9c965ab8c0227d20bfddd"
+      "blob": "edf9fbaed391cf4268f6900dc967cfdf0783360f"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "9e04acad37349464e6b6442d21a950186f104d5e"
+      "blob": "9b8cf5597d522ebd098c6d4b939132656a3d717f"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2030,7 +2030,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "87729470359e1a4bd4e60ab698402af13b200370"
+      "blob": "4af34e528a06b643cd70898bdcf867f1921d7a7a"
     },
     {
       "path": "tests/premium-visual-contract.py",
