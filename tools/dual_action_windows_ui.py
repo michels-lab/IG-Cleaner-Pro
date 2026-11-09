@@ -843,7 +843,10 @@ async function restoreLinkedSessions(){
     const checkbox=$('igcDawParallelOptIn');if(checkbox)checkbox.checked=parallel;
     restoreDone=true;
     await statusUpdate(true,saved);
-    notice('Sesiones y estado recuperados · '+(parallel?'paralelo autorizado':'serial')+
+    notice(saved.bindings_restored_from_disk===true?
+      'Vínculos de las dos cuentas recuperados tras reiniciar Windows. Ambos robots detenidos; '+
+      'Chrome NO se abrió automáticamente. Modo serial: el paralelo requiere nueva autorización.':
+      'Sesiones y estado recuperados · '+(parallel?'paralelo autorizado':'serial')+
       '. Sin iniciar robots ni repetir acciones.');
   }catch(_){/* Local bridge unavailable: next visible poll can retry. */}
   finally{restoreInFlight=false}

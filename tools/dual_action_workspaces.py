@@ -8,11 +8,12 @@ and Developer installations cannot bypass the global file admission.
 """
 from __future__ import annotations
 
+import hashlib
 import threading
 from pathlib import Path
 
 from dual_chrome_sessions import APP_OWNER, DualChromeSessions
-from profile_actions import ActionRobot
+from profile_actions import ActionRobot, _atomic_json, _read_json
 from dual_action_coordinator import SharedGlobalActionCohort
 
 
@@ -39,6 +40,64 @@ class DualActionWorkspaces:
         self.lock = threading.RLock()
         self.owner = None
         self.workspaces = {}
+        self._restored_from_disk = False
+
+    def _binding_file(self, owner):
+        """Private metadata next to isolated browser data, outside exported robot WAL.
+
+        Only owner/workspace/expected Instagram handle are stored. No cookies,
+        credentials, approvals, target lists or background action state.
+        """
+        digest = hashlib.sha256(owner.encode("utf-8")).hexdigest()[:32]
+        return self.sessions.root.parent / "linked-action-workspaces-v1" / (digest + ".json")
+
+    def _build_lanes(self, owner, first, second, parallel):
+        """Build two idle ActionRobot instances; NEVER launch Playwright."""
+        folders = [self.sessions.directory(owner, a) for a, _ in (first, second)]
+        if folders[0].resolve() == folders[1].resolve():
+            raise ValueError("Instagram Chrome profile collision: no workspaces configured.")
+        # Both robots retain the original owner/account/task-scoped canonical
+        # WAL. Only the explicit current-session parallel consent installs a
+        # two-worker cohort; restored bindings always use serial OS leases.
+        live_cohort = SharedGlobalActionCohort(self.journal_root) if parallel else None
+        cohort = self._offline_cohort or live_cohort
+        workspaces = {}
+        for (account, handle), folder in zip((first, second), folders):
+            robot = ActionRobot(
+                self.collector, self.journal_root, folder,
+                lease_factory=(cohort.lease if cohort is not None else None),
+            )
+            if self._offline_test_runner is not None:
+                robot._run = (
+                    lambda a=account, ev=robot.stop_event:
+                    self._offline_test_runner(a, ev)
+                )
+            workspaces[account] = {
+                "handle": handle, "chrome": folder, "robot": robot,
+            }
+        return live_cohort, workspaces
+
+    def _restore_saved_locked(self, owner):
+        """Read-only rebind on native restart; cannot resurrect a worker/consent."""
+        path = self._binding_file(owner)
+        if not path.exists():
+            return
+        saved = _read_json(path, {})
+        if saved.get("version") != 1 or saved.get("owner") != owner or (
+                set(saved) != {"version", "owner", "primary", "secondary"}):
+            raise ValueError("Saved two-account bindings are invalid. No robots were started.")
+        try:
+            first = self.sessions._workspace(saved["primary"])
+            second = self.sessions._workspace(saved["secondary"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Saved Instagram account bindings are invalid. No robots were started.") from exc
+        if first[0] == second[0] or first[1] == second[1]:
+            raise ValueError("Saved Chrome profiles overlap. No robots were started.")
+        live_cohort, workspaces = self._build_lanes(owner, first, second, False)
+        self._live_cohort = live_cohort
+        self._parallel_enabled = False
+        self.owner, self.workspaces = owner, workspaces
+        self._restored_from_disk = True
 
     @staticmethod
     def _owner(data):
@@ -84,38 +143,20 @@ class DualActionWorkspaces:
             if self._alive(self.legacy_actions) or any(
                     self._alive(item["robot"]) for item in self.workspaces.values()):
                 raise ValueError("Stop all active action workers before changing account assignments.")
-            folders = [self.sessions.directory(owner, a) for a, _ in (first, second)]
-            if folders[0].resolve() == folders[1].resolve():
-                raise ValueError("Instagram Chrome profile collision: no workspaces configured.")
-            # Never share ActionRobot's mutable owner/target/stop/worker state
-            # across these accounts. Reuse only the canonical data directory
-            # for existing WAL, protections and batch history.
-            # The production coordinator exists ONLY for explicit parallel
-            # consent. The offline-only coordinator never has browser/click
-            # code. The serial default continues using ScopedActionLease.
-            live_cohort = (
-                SharedGlobalActionCohort(self.journal_root) if parallel else None
-            )
-            cohort = self._offline_cohort or live_cohort
-            workspaces = {}
-            for (account, handle), folder in zip((first, second), folders):
-                robot = ActionRobot(
-                    self.collector, self.journal_root, folder,
-                    lease_factory=(cohort.lease if cohort is not None else None),
-                )
-                if self._offline_test_runner is not None:
-                    # Completely replaces network-bound Playwright/click code,
-                    # not just the final click. Only unit tests inject runner.
-                    robot._run = (
-                        lambda a=account, ev=robot.stop_event:
-                        self._offline_test_runner(a, ev)
-                    )
-                workspaces[account] = {
-                    "handle": handle, "chrome": folder, "robot": robot,
-                }
+            live_cohort, workspaces = self._build_lanes(owner, first, second, parallel)
+            # Persist only the owner-confirmed *identity bindings*. Never
+            # persist parallel-action approval, the original job, login
+            # cookies, token, targets or the robot's running flag. Commit
+            # metadata atomically BEFORE replacing in-memory assignments.
+            _atomic_json(self._binding_file(owner), {
+                "version": 1, "owner": owner,
+                "primary": {"account": first[0], "expected_handle": first[1]},
+                "secondary": {"account": second[0], "expected_handle": second[1]},
+            })
             self._live_cohort = live_cohort
             self._parallel_enabled = parallel
             self.owner, self.workspaces = owner, workspaces
+            self._restored_from_disk = False
             return self._snapshot_locked()
 
     def _lane(self, owner, account):
@@ -277,6 +318,8 @@ class DualActionWorkspaces:
         if not isinstance(owner, str) or not APP_OWNER.fullmatch(owner):
             raise ValueError("Invalid InstaCleaner owner.")
         with self.lock:
+            if self.owner is None:
+                self._restore_saved_locked(owner)
             if self.owner is not None and owner != self.owner:
                 raise ValueError("Cannot inspect another owner's Instagram action workspaces.")
             return self._snapshot_locked()
@@ -319,6 +362,7 @@ class DualActionWorkspaces:
                      if self._parallel_enabled else
                      "independent_chrome_sessions_serialized_actions"),
             "parallel_mutations_enabled": self._parallel_enabled,
+            "bindings_restored_from_disk": self._restored_from_disk,
             "legacy_global_lease_held": (
                 self._live_cohort.status()["legacy_global_lease_held"]
                 if self._live_cohort is not None else False
