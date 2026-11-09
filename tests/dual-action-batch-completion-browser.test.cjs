@@ -228,6 +228,12 @@ const {chromium}=require('playwright');
   assert.match(await modal.innerText(),/@alpha.one/);
   assert.match(await modal.innerText(),/3 requieren atención/);
   await modal.getByText('@possible.click').waitFor({state:'visible',timeout:5000});
+  const exactOwner=await page.evaluate(()=>window.IGC_INSTAGRAM_PROFILES.owner);
+  const firstCompletionRead=(await calls()).filter(x=>x.operation==='review-one').at(-1);
+  assert.equal(firstCompletionRead.data.owner,exactOwner,
+    'Completion A MUST include the current app OWNER, not the current Chrome profile string');
+  assert.equal(firstCompletionRead.data.account,'ig_first_1234567');
+  assert.equal(firstCompletionRead.data.task,'unfollow');
   assert.deepEqual(await modal.locator('.igc-daw-review-row').evaluateAll(rows=>
     rows.map(r=>r.querySelector('span')?.textContent)),[
     '@possible.click','@ambiguous.closed','@no.click',
@@ -255,6 +261,11 @@ const {chromium}=require('playwright');
   await modal.waitFor({state:'visible',timeout:5000});
   assert.match(await modal.innerText(),/@beta.two/);
   await modal.getByText('@pending.friend').waitFor({state:'visible',timeout:5000});
+  const secondCompletionRead=(await calls()).filter(x=>x.operation==='review-one').at(-1);
+  assert.equal(secondCompletionRead.data.owner,exactOwner,
+    'Completion B MUST also use the same exact app owner, scoped to account B');
+  assert.equal(secondCompletionRead.data.account,'ig_second_123456');
+  assert.equal(secondCompletionRead.data.task,'cancel');
   await modal.getByRole('button',{name:'Revisar lista completa'}).click();
   assert.equal(await modal.isVisible(),false);
   await page.locator('#igcDawTarget1 option[value="pending.friend"]').waitFor({state:'attached'});

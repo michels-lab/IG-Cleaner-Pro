@@ -80,6 +80,8 @@ const PROFILE=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 let linked=null, activeBusy=false, savedReviews={}, preparedNew={};
+// A slow read-only/API request in lane A must not freeze lane B's controls.
+let laneBusy=new Set(), laneGlobalControlState=null;
 // Pausing a running account is independent from the other lane's busy UI.
 let lanePauseBusy=new Set();
 let laneSnapshots={}, completionAcknowledged={}, completionQueue=[], completionShowing=false;
@@ -343,7 +345,7 @@ function card(account,i){
     if(old)old.replaceChildren();if(fresh)fresh.replaceChildren();
   });
   const review=el('button',null,'Revisar pendientes');review.type='button';
-  review.id='igcDawReview'+i;review.addEventListener('click',()=>perform(async()=>{
+  review.id='igcDawReview'+i;review.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked)throw Error('Primero vincula las dos cuentas de Chrome.');
     const bound=linked,selectedTask=task.value,account=bound[i].account;
     const result=await api('review-one',{owner:bound.owner,account,
@@ -389,7 +391,7 @@ function card(account,i){
   // saved review ON DEMAND, without assuming a worker ran or approving clicks.
   const savedSummary=el('button',null,'Ver resumen guardado');
   savedSummary.type='button';savedSummary.id='igcDawSavedSummary'+i;
-  savedSummary.addEventListener('click',()=>perform(async()=>{
+  savedSummary.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked)throw Error('Vincula ambas cuentas antes de revisar su historial.');
     const bound=linked,selectedTask=task.value,account=bound[i].account;
     if(!['unfollow','cancel'].includes(selectedTask))
@@ -412,7 +414,7 @@ function card(account,i){
   controls.append(savedSummary);
   const continueSaved=el('button',null,'Continuar tanda guardada');
   continueSaved.id='igcDawContinue'+i;continueSaved.type='button';
-  continueSaved.addEventListener('click',()=>perform(async()=>{
+  continueSaved.addEventListener('click',()=>performLane(i,async()=>{
     // No browser automation until the human has read the exact disk-backed
     // Pending batch and explicitly approved owner+task+original targets.
     if(!linked||!savedReviews[i]||savedReviews[i].task!==task.value
@@ -475,7 +477,7 @@ function card(account,i){
   controls.append(continueSaved);
   const approve=el('button',null,'Aprobar revisión');
   approve.id='igcDawApprove'+i;approve.type='button';
-  approve.addEventListener('click',()=>perform(async()=>{
+  approve.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked||!savedReviews[i]||savedReviews[i].task!==task.value
        ||!savedReviews[i].batch)
       throw Error('Carga la tanda exacta de esta cuenta antes de aprobar.');
@@ -502,7 +504,7 @@ function card(account,i){
   controls.append(approve);
   const target=el('select');target.id='igcDawTarget'+i;controls.append(target);
   const open=el('button',null,'Abrir revisión');open.type='button';
-  open.id='igcDawOpen'+i;open.addEventListener('click',()=>perform(async()=>{
+  open.id='igcDawOpen'+i;open.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked||!savedReviews[i]||savedReviews[i].task!==task.value||!target.value)
       throw Error('Primero carga la tanda guardada en esta cuenta.');
     const account=linked[i].account,username=target.value;
@@ -553,7 +555,7 @@ function card(account,i){
   const newControls=el('div','igc-daw-controls');
   const verify=el('button',null,'Verificar lista sin clics');
   verify.type='button';verify.id='igcDawNewVerify'+i;
-  verify.addEventListener('click',()=>perform(async()=>{
+  verify.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked)throw Error('Vincula primero ambas cuentas.');
     const targets=parseTargets(newInput.value),account=linked[i].account,
       handle=linked[i].expected_handle;
@@ -582,7 +584,7 @@ function card(account,i){
   newControls.append(verify);
   const start=el('button',null,'Iniciar tanda nueva');
   start.type='button';start.id='igcDawNewStart'+i;
-  start.addEventListener('click',()=>perform(async()=>{
+  start.addEventListener('click',()=>performLane(i,async()=>{
     if(!linked)throw Error('Vincula primero ambas cuentas.');
     const exact=parseTargets(newInput.value),p=preparedNew[i];
     if(!p||!p.allowed||p.owner!==linked.owner||p.account!==linked[i].account
@@ -646,8 +648,39 @@ function draw(p){
     if($('igcDawCompletionModal'))$('igcDawCompletionModal').hidden=true;}
   for(let i=0;i<2;i++)target.append(card(linked?linked[i]:{},i));
 }
+function syncGlobalLaneControls(){
+  const controls=['igcDawConfigure','igcDawRefresh','igcDawParallelOptIn']
+    .map(id=>$(id)).filter(Boolean);
+  if(laneBusy.size&&laneGlobalControlState===null){
+    laneGlobalControlState=controls.map(node=>({node,disabled:node.disabled}));
+    for(const item of laneGlobalControlState)item.node.disabled=true;
+  }else if(!laneBusy.size&&laneGlobalControlState!==null){
+    for(const item of laneGlobalControlState)
+      if(item.node.isConnected)item.node.disabled=item.disabled;
+    laneGlobalControlState=null;
+  }
+}
+async function performLane(i,fn){
+  if(activeBusy||laneBusy.has(i))return;
+  laneBusy.add(i);
+  syncGlobalLaneControls();
+  const lane=$('igcDawGrid')?.querySelector('[data-lane="'+i+'"]');
+  const buttons=Array.from(lane?.querySelectorAll('button')||[])
+    .filter(x=>!x.classList.contains('igc-daw-stop'));
+  const disabled=buttons.map(button=>button.disabled);
+  for(const button of buttons)button.disabled=true;
+  try{await fn()}catch(e){
+    notice('No se pudo confirmar la operación de esta cuenta: '+
+      String(e.message||e).slice(0,140)+
+      '. Una tanda autorizada podría seguir activa; revisa estado e historial antes de repetir.');
+  }finally{
+    laneBusy.delete(i);
+    buttons.forEach((button,j)=>{if(button.isConnected)button.disabled=disabled[j]});
+    syncGlobalLaneControls();
+  }
+}
 async function perform(fn){
-  if(activeBusy)return;
+  if(activeBusy||laneBusy.size)return;
   activeBusy=true;
   const buttons=$('igcDualActionWorkspacePanel')?.querySelectorAll('button')||[];
   // A slow inspection/start for account A must never disable the emergency
@@ -706,11 +739,21 @@ async function statusUpdate(silent=false,knownSnapshot=null){
   for(let i=0;i<2;i++){
     const scope=linked[i],info=(x.lanes||[]).find(y=>y.account===scope.account);
     const label=$('igcDawStatus'+i);
+    // A server that reports the same workspace key but a DIFFERENT Instagram
+    // login must never feed this account's badge or completion/Review queue.
+    if(info&&typeof info.expected_handle==='string'&&
+       info.expected_handle.toLowerCase()!==scope.expected_handle){
+      if(label)label.textContent='IDENTIDAD NO VERIFICADA · la cuenta Chrome ya no coincide con @'+
+        scope.expected_handle+'. Detén los robots y revisa las sesiones antes de continuar.';
+      notice('El robot devolvió otra identidad para la cuenta '+scope.account+
+        '. No se mostró ningún resultado ni se inició una acción nueva.');
+      continue;
+    }
     const ownerVisits=info&&Number.isSafeInteger(info.owner_profile_visits)&&
       info.owner_profile_visits>=0?info.owner_profile_visits:null;
     const siblingProofs=info&&Number.isSafeInteger(info.owner_sibling_proofs)&&
       info.owner_sibling_proofs>=0?info.owner_sibling_proofs:null;
-    const current=typeof info?.current_profile==='string'&&HANDLE.test(info.current_profile)
+    const currentProfile=typeof info?.current_profile==='string'&&HANDLE.test(info.current_profile)
       ? info.current_profile:'';
     const diagnostic=typeof info?.message==='string'
       ? info.message.replace(/[\r\n\x00-\x1f]+/g,' ').slice(0,180):'';
@@ -718,7 +761,7 @@ async function statusUpdate(silent=false,knownSnapshot=null){
       (String(info.state||'idle').toUpperCase()+' · '+(info.running?'Robot activo':'Robot detenido')+
        ' · '+String(info.task||'sin tarea')+' · '+String(info.processed||0)+' procesados · '+
        String(info.issues||0)+' pendientes de revisión'+
-       (current?' · '+(info.running?'Perfil actual':'Último perfil')+': @'+current:'')+
+       (currentProfile?' · '+(info.running?'Perfil actual':'Último perfil')+': @'+currentProfile:'')+
        (diagnostic?' · Diagnóstico: '+diagnostic:'')+
        (ownerVisits!==null?' · visitas a mi perfil: '+ownerVisits:'')+
        (siblingProofs!==null?' · identidad desde otra pestaña: '+siblingProofs:'')):
