@@ -57,6 +57,8 @@ class DualChromeSessions:
         return self.root / digest
 
     def open_pair(self, data):
+        if not isinstance(data, dict):
+            raise ValueError("Select two Instagram workspaces before opening Chrome.")
         owner = data.get("owner")
         if not isinstance(owner, str) or not APP_OWNER.fullmatch(owner):
             raise ValueError("Sign in to InstaCleaner before opening two Chrome sessions.")
@@ -79,12 +81,32 @@ class DualChromeSessions:
                 return [str(chrome), "--no-first-run", "--no-default-browser-check",
                         "--new-window", "--user-data-dir=" + str(folder),
                         "https://www.instagram.com/"]
-            self.launcher(args(left))
+            try:
+                first_process = self.launcher(args(left))
+            except Exception as exc:
+                raise ValueError("Chrome window A did not launch; B was not attempted. "
+                                 "No Instagram action was performed.") from exc
             try:
                 self.launcher(args(right))
             except Exception as exc:
-                raise ValueError("Chrome window B did not launch after window A. No "
-                                 "Instagram action was performed.") from exc
+                # A may already be open while B fails. Clean up only the child
+                # process JUST spawned by this request, if it is still alive;
+                # never kill any pre-existing Chrome window or erase profiles.
+                try:
+                    if (first_process is not None
+                            and callable(getattr(first_process, "poll", None))
+                            and callable(getattr(first_process, "terminate", None))
+                            and first_process.poll() is None):
+                        first_process.terminate()
+                        if callable(getattr(first_process, "wait", None)):
+                            first_process.wait(timeout=3)
+                except Exception:
+                    # Best effort only. If A remains, the owner gets a clear
+                    # partial-launch warning and can close it before retrying.
+                    pass
+                raise ValueError("Chrome window B did not launch after window A. "
+                                 "Close any remaining first window before retrying; "
+                                 "no Instagram action was performed.") from exc
         return {"status": "launched", "windows_requested": 2, "owner": owner,
                 "accounts": [primary[0], secondary[0]], "handles": [primary[1], secondary[1]],
                 "distinct_chrome_profiles": True, "actions_enabled": False,
