@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "d35f10f436e699e3cc7ffbd8fa700921fd47f4ee4499ffb60e2cddc7cadfec24",
-  "evidence_fingerprint": "559c321f9b42122db1668ed03e8ec2434a01b645b59fff7a6baa3dd7f5389c2a",
+  "finding_total": 8,
+  "inventory_fingerprint": "711d16ea6a7c8980ef1cca89b513b017cbb1d5c78206a1c52a27da475cafaffb",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "c288a90098155a2e7d895800eee20072bb62cf0c"
+      "blob": "8943b2284d0ca28b3c0ce478ee72e8b61db732c9"
     },
     {
       "path": "README.md",
@@ -1884,7 +1883,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7793e20d5d27a87521f973ec29c5fac5bdf648d0"
+      "blob": "9f7fb8de36ec03913722bc5ac9cb64cbef90b5d3"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2276,7 +2275,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4830f7639b47844105db330e6f610289d20b2d97"
+      "blob": "3af23f9fbae6acf2aea7f73d107c3bf6fa3e44d7"
     },
     {
       "path": "tests/test_dual_action_coordinator.py",
@@ -2689,14 +2688,14 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ccb416c5c67f6ac88a7c8fcb3be296de90bcf16d"
+      "blob": "c818b651ba75d0319c68b4d4629b9385a40144a5"
     },
     {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c1a9ea40336d7fdb4129ef1587e4d236793df1ce"
+      "blob": "7fb9de6589d6ea9baf126d6756dd4429ddf28314"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -2759,7 +2758,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4dcd1323bd403b9d0eb2668af0e6e2c4090464e9"
+      "blob": "d598b73fd127648ccf723612ea094b88248000fc"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -2773,7 +2772,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bab711968c7414848898a33168d79cf3ff673b04"
+      "blob": "3f01b3280799b7e5ecb5c29acbd2612e8c4e35a5"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -2980,15 +2979,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "9e610f8e3194d271",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: tests/test_dual_action_workspaces.py, tools/dual_action_workspaces.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
