@@ -2065,10 +2065,17 @@ class ActionRobot:
         # user-data-dir is already active. Do not open the app's UI profile.
         url = "https://www.instagram.com/" + username + "/"
         try:
-            subprocess.Popen([chrome, "--user-data-dir=" + str(session),
-                              "--new-tab", url],
-                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, close_fds=True)
+            # Manual Review is navigation, never an action. Still forbid a
+            # second Public/Developer process from writing a new tab into a
+            # Chrome lane currently owned by a supervised action worker.
+            # This is the SAME per-directory OS lease used by _run_with_lease.
+            # Release after the launch request; never hold a permanent lock
+            # while the user manually inspects a separate Chrome window.
+            with ChromeLaneLease(session):
+                subprocess.Popen([chrome, "--user-data-dir=" + str(session),
+                                  "--new-tab", url],
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, close_fds=True)
         except OSError as exc:
             raise ValueError("Unable to reopen robot Chrome: " + str(exc)) from exc
         return {"status": "opening", "username": username,

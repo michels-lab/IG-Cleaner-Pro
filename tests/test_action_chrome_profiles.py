@@ -162,6 +162,81 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
                 robot.open_profile({"owner":OWNER,"account":B,
                                     "task":"cancel","username":"some.target"})
 
+    def test_manual_review_denies_busy_chrome_lane_but_other_account_remains_available(self):
+        """An external Windows worker owns A: manual Review cannot attach to A."""
+        from chrome_lane_interlock import ChromeLaneLease, ChromeLaneBusy
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            counts = Collector(root / "journal", root / "legacy-chrome")
+            sessions = ActionChromeProfiles(counts.session_dir)
+            # Fresh instance simulates restarting Public while Developer is
+            # actively controlling A's persistent Chrome profile.
+            new_app = ActionRobot(counts, counts.data_dir,
+                                  counts.session_dir,
+                                  session_for_scope=sessions.directory)
+            first = sessions.directory(OWNER, A)
+            second = sessions.directory(OWNER, B)
+            journal_a = new_app._base_for(OWNER, A, "unfollow")
+            journal_b = new_app._base_for(OWNER, B, "unfollow")
+            _atomic_json(journal_a, {
+                "possible.click": {"status": "review", "click_intent": {
+                    "phase": "relationship_control"}}})
+            _atomic_json(journal_b, {})
+            unchanged = journal_a.read_bytes(), journal_b.read_bytes()
+            chrome = root / "chrome.exe"
+            chrome.write_text("mock executable")
+            with patch("profile_actions.shutil.which", return_value=str(chrome)), \
+                 patch("profile_actions.subprocess.Popen") as launch:
+                with ChromeLaneLease(first):
+                    with self.assertRaises(ChromeLaneBusy):
+                        new_app.open_profile({
+                            "owner": OWNER, "account": A, "task": "unfollow",
+                            "username": "possible.click"})
+                    launch.assert_not_called()
+                    opened = new_app.open_profile({
+                        "owner": OWNER, "account": B, "task": "unfollow",
+                        "username": "safe.second"})
+                    self.assertFalse(opened["relationship_action"])
+                    self.assertEqual(launch.call_count, 1)
+                    self.assertIn("--user-data-dir=" + str(second),
+                                  launch.call_args.args[0])
+                    self.assertNotIn("--user-data-dir=" + str(first),
+                                     launch.call_args.args[0])
+                # Once A worker releases, explicit manual Review is possible
+                # in the CORRECT A Chrome without a relationship action.
+                reopened = new_app.open_profile({
+                    "owner": OWNER, "account": A, "task": "unfollow",
+                    "username": "possible.click"})
+                self.assertFalse(reopened["relationship_action"])
+                self.assertEqual(launch.call_count, 2)
+                self.assertIn("--user-data-dir=" + str(first),
+                              launch.call_args.args[0])
+            self.assertEqual((journal_a.read_bytes(), journal_b.read_bytes()),
+                             unchanged,
+                             "Manual inspection never edits either account WAL.")
+
+    def test_manual_review_chrome_launch_error_always_releases_lane(self):
+        from chrome_lane_interlock import ChromeLaneLease
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            counts=Collector(root/"journal",root/"legacy-chrome")
+            sessions=ActionChromeProfiles(counts.session_dir)
+            robot=ActionRobot(counts,counts.data_dir,counts.session_dir,
+                              session_for_scope=sessions.directory)
+            chrome=root/"chrome.exe"
+            chrome.write_text("fake executable")
+            with patch("profile_actions.shutil.which",return_value=str(chrome)), \
+                 patch("profile_actions.subprocess.Popen",
+                       side_effect=OSError("Chrome exited")):
+                with self.assertRaisesRegex(ValueError,
+                    "Unable to reopen robot Chrome"):
+                    robot.open_profile({
+                        "owner":OWNER,"account":A,"task":"cancel",
+                        "username":"some.target"})
+            with ChromeLaneLease(sessions.directory(OWNER,A)):
+                pass  # Failed Popen did not leak the OS Chrome lane lock.
+
     def test_wrong_live_instagram_identity_blocks_before_click_in_scoped_chrome(self):
         with TemporaryDirectory() as tmp:
             root=Path(tmp)
