@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "394079ff5dc481d006a473d392e02460c503470d956474d93f3ea894eb85c0fb",
+  "inventory_fingerprint": "322b1ce7abc2af9868c8d77472717ffb2b8f4e1992d9ab23dc2ebf0afe85ec36",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "9357cfc08050f8f640708fae21d4563a1f9e70d3"
+      "blob": "b40aeaa06d4089d4282193b395783a9717a718ec"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "9b8cf5597d522ebd098c6d4b939132656a3d717f"
+      "blob": "018fa412c7024c078ca0a64ece27eae27e9f7d58"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2030,7 +2030,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "886a8f94202b13ecb22e12c1d0c8a06a79da3bc4"
+      "blob": "ac95d88a7146039eb11455fe27e0eb58a83b9636"
     },
     {
       "path": "tests/pending-zip-shards-runtime.test.cjs",
