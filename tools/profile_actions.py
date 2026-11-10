@@ -1845,6 +1845,7 @@ class ActionRobot:
         self.historical_seen = set()
         self.historical_not_following_seen = set()
         self.continuing_batch = False
+        self._new_batch_manual_visit_gate = False
         self.active_batch_id = ""
         self.cancel_requested = False
         self.cancel_batch_id = ""
@@ -1886,14 +1887,33 @@ class ActionRobot:
         base = self._base_for(owner, account, task)
         return base.with_name(base.stem + "-target-visits.json")
 
+    def _manual_review_visits_file_for(self, owner, account, task):
+        """Separate read-only owner-opened visit evidence; never action WAL."""
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-manual-review-visits.json")
+
+    def _manual_review_visits(self, owner, account, task):
+        visits = _read_json(self._manual_review_visits_file_for(
+            owner, account, task), {})
+        if (not isinstance(visits, dict) or
+                any(not isinstance(u, str) or valid_username(u) != u
+                    or not isinstance(record, dict)
+                    for u, record in visits.items())):
+            raise ValueError(
+                "Manual Review visits are unreadable; preserve the original "
+                "read-only navigation evidence and do not reuse its targets.")
+        return visits
+
     def _visited_usernames(self, owner, account, task, journal):
-        """All past targets, including confirmed, no-click and interrupted visits."""
+        """All past targets, including confirmed, no-click and manual visits."""
         visits = _read_json(self._target_visits_file_for(owner, account, task), {})
-        if (not isinstance(journal, dict) or
-                any(valid_username(u) != u or not isinstance(record, dict)
+        if (not isinstance(journal, dict) or not isinstance(visits, dict) or
+                any(not isinstance(u, str) or valid_username(u) != u
+                    or not isinstance(record, dict)
                     for u, record in visits.items())):
             raise ValueError("Saved target-visit history is invalid; inspect it before a new batch.")
-        return sorted(set(journal) | set(visits))
+        manual = self._manual_review_visits(owner, account, task)
+        return sorted(set(journal) | set(visits) | set(manual))
 
     def _reserve_target_visit(self, username):
         """Persist BEFORE opening an Instagram target URL; never imply a click."""
@@ -2090,6 +2110,23 @@ class ActionRobot:
             # Release after the launch request; never hold a permanent lock
             # while the user manually inspects a separate Chrome window.
             with ChromeLaneLease(session):
+                # A manually opened current-batch member was previously NOT
+                # written to the target-visit ledger. Once its batch was
+                # archived, a brand-new automated wave could revisit it.
+                # Write a distinct read-only navigation INTENT before asking
+                # Chrome to open the URL. A crash may leave an uncertain
+                # attempted visit, but never a fabricated relationship click.
+                # The same-account Chrome lane lease serializes this sidecar
+                # with action workers across Public/Developer processes.
+                marks = self._manual_review_visits(owner, account, task)
+                if username not in marks:
+                    marks[username] = {
+                        "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "source": "owner_selected_manual_readonly_review",
+                        "state": "navigation_requested_not_relationship_action",
+                    }
+                    _atomic_json(self._manual_review_visits_file_for(
+                        owner, account, task), marks)
                 subprocess.Popen([chrome, "--user-data-dir=" + str(session),
                                   "--new-tab", url],
                                  stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -3116,6 +3153,14 @@ class ActionRobot:
                 if not resume:
                     self.continuing_batch = pending_entry is not None
                     self.skipped.clear()
+                # start() checked the manual ledger under the action WAL
+                # lease, but owner sign-in may take minutes. A short manual
+                # Review launch may race BEFORE the worker owns Chrome. The
+                # worker must re-read those visits AFTER acquiring its Chrome
+                # lease and login proof, before any target navigation.
+                self._new_batch_manual_visit_gate = (
+                    not resume and pending_entry is None
+                    and task in ("unfollow", "cancel"))
                 self.active_batch_id = next_batch_id
                 self.open_review_tabs = []
                 self.current_wait = None
@@ -3430,6 +3475,28 @@ class ActionRobot:
                             "during sign-in. No profile action was attempted. "
                             "Keep the original journal and inspect Issues before retrying.")
                     return
+                if self._new_batch_manual_visit_gate:
+                    try:
+                        new_manual_visits = self._manual_review_visits(
+                            self.owner, self.account, self.task)
+                    except ValueError:
+                        with self.lock:
+                            self.status = "blocked"
+                            self.message = (
+                                "Manual Review navigation history changed during "
+                                "Instagram sign-in. No target was opened or clicked.")
+                        return
+                    collided = sorted(set(self.targets) & set(new_manual_visits))
+                    if collided:
+                        with self.lock:
+                            self.status = "blocked"
+                            self.message = (
+                                "A manual Review opened " + str(len(collided)) +
+                                " selected profile(s) after this NEW action batch "
+                                "started. Do not revisit: @" +
+                                ", @".join(collided[:5]) +
+                                ". Inspect saved visits before approving another wave.")
+                        return
                 path = self._base()
                 visits_file, rests_file = history_path(path), batch_path(path)
                 visits = load_history(visits_file)

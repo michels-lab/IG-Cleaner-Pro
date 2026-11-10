@@ -162,6 +162,99 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
                 robot.open_profile({"owner":OWNER,"account":B,
                                     "task":"cancel","username":"some.target"})
 
+    def test_manual_review_navigation_is_durable_no_repeat_without_action_click(self):
+        """Manual Chrome-open must not silently become a fresh robot target."""
+        from profile_actions import _atomic_json, _read_json
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            collector = Collector(root / "journal", root / "legacy-chrome")
+            sessions = ActionChromeProfiles(collector.session_dir)
+            robot = ActionRobot(
+                collector, collector.data_dir, collector.session_dir,
+                session_for_scope=sessions.directory,
+                lease_factory=lambda *_args: FakeLease())
+            action_wal = robot._base_for(OWNER, A, "cancel")
+            _atomic_json(action_wal, {})
+            action_before = action_wal.read_bytes()
+            manual_a = robot._manual_review_visits_file_for(OWNER, A, "cancel")
+            manual_b = robot._manual_review_visits_file_for(OWNER, B, "cancel")
+            manual_other_task = robot._manual_review_visits_file_for(OWNER, A, "unfollow")
+            self.assertFalse(manual_a.exists())
+            chrome = root / "chrome.exe"
+            chrome.write_text("mock executable")
+
+            with patch("profile_actions.shutil.which", return_value=str(chrome)):
+                with patch("profile_actions.subprocess.Popen") as spawned:
+                    opened = robot.open_profile({
+                        "owner": OWNER, "account": A,
+                        "task": "cancel", "username": "opened.manually"})
+                    self.assertFalse(opened["relationship_action"])
+                    spawned.assert_called_once()
+                    manual = _read_json(manual_a, {})
+                    self.assertEqual(set(manual), {"opened.manually"})
+                    self.assertEqual(manual["opened.manually"]["source"],
+                                     "owner_selected_manual_readonly_review")
+                    self.assertEqual(manual["opened.manually"]["state"],
+                                     "navigation_requested_not_relationship_action")
+                    first_bytes = manual_a.read_bytes()
+                    # Explicit reinspection remains allowed but NEVER
+                    # duplicates the durable visit record or action history.
+                    robot.open_profile({
+                        "owner": OWNER, "account": A,
+                        "task": "cancel", "username": "opened.manually"})
+                    self.assertEqual(manual_a.read_bytes(), first_bytes)
+                    self.assertEqual(spawned.call_count, 2)
+
+            self.assertEqual(action_wal.read_bytes(), action_before)
+            self.assertFalse(manual_b.exists())
+            self.assertFalse(manual_other_task.exists())
+            self.assertEqual(
+                robot._visited_usernames(OWNER, A, "cancel", {}),
+                ["opened.manually"])
+            self.assertEqual(robot._visited_usernames(OWNER, B, "cancel", {}), [])
+            self.assertEqual(robot._visited_usernames(OWNER, A, "unfollow", {}), [])
+
+            # A cold-start Windows/Developer process must see the same
+            # manual navigation and reject the SAME profile in a fresh batch
+            # BEFORE any Chrome robot, click or new cohort is launched.
+            restarted = ActionRobot(
+                collector, collector.data_dir, collector.session_dir,
+                session_for_scope=sessions.directory,
+                lease_factory=lambda *_args: FakeLease())
+            with self.assertRaisesRegex(ValueError, "previously opened/reviewed"):
+                restarted.start(request(A, "first.person", "opened.manually"))
+            self.assertIsNone(restarted.worker)
+            self.assertEqual(action_wal.read_bytes(), action_before)
+            self.assertFalse(
+                restarted._review_batches_file_for(OWNER, A, "cancel").exists())
+            # The independent account B can still authorize this exact
+            # username: A's manual visit is not B's visit or action evidence.
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                result = restarted.start(request(B, "second.person", "opened.manually"))
+                self.assertEqual(result["account"], B)
+                worker.return_value.start.assert_called_once()
+
+    def test_malformed_manual_visit_ledger_blocks_new_batch_without_repair(self):
+        from profile_actions import _atomic_json
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            collector = Collector(root / "journal", root / "legacy-chrome")
+            sessions = ActionChromeProfiles(collector.session_dir)
+            robot = ActionRobot(
+                collector, collector.data_dir, collector.session_dir,
+                session_for_scope=sessions.directory,
+                lease_factory=lambda *_args: FakeLease())
+            manual = robot._manual_review_visits_file_for(OWNER, A, "cancel")
+            _atomic_json(manual, {"opened.manually": "not a visit record"})
+            original = manual.read_bytes()
+            with self.assertRaisesRegex(ValueError, "Manual Review visits are unreadable"):
+                robot.start(request(A, "first.person", "new.target"))
+            self.assertEqual(manual.read_bytes(), original)
+            self.assertIsNone(robot.worker)
+            self.assertFalse(
+                robot._review_batches_file_for(OWNER, A, "cancel").exists())
+
     def test_manual_review_denies_busy_chrome_lane_but_other_account_remains_available(self):
         """An external Windows worker owns A: manual Review cannot attach to A."""
         from chrome_lane_interlock import ChromeLaneLease, ChromeLaneBusy
@@ -236,6 +329,14 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
                         "username":"some.target"})
             with ChromeLaneLease(sessions.directory(OWNER,A)):
                 pass  # Failed Popen did not leak the OS Chrome lane lock.
+            # Popen may fail after Chrome already received a navigation
+            # request. Fail closed: the separate READ-ONLY visit intent stays
+            # durable, without fabricating a relationship-changing action.
+            manual = robot._manual_review_visits_file_for(OWNER, A, "cancel")
+            self.assertIn("some.target", manual.read_text(encoding="utf-8"))
+            self.assertIn(
+                "some.target", robot._visited_usernames(OWNER, A, "cancel", {}))
+            self.assertFalse(robot._base_for(OWNER, A, "cancel").exists())
 
     def test_wrong_live_instagram_identity_blocks_before_click_in_scoped_chrome(self):
         with TemporaryDirectory() as tmp:
