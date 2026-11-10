@@ -1957,8 +1957,13 @@ class ActionRobot:
             base = entry.get("original_targets") or []
             if not isinstance(base, list): continue
             for user in base:
-                if (valid_username(user) == user and user not in protected
-                        and user not in manual_visits and
+                # Old original_targets arrays may contain malformed elements.
+                # valid_username(None) is ALSO None; equality alone could
+                # falsely advertise null as a reusable Instagram profile.
+                # Skip invalid elements without mutating the saved cohort.
+                if not isinstance(user, str) or valid_username(user) != user:
+                    continue
+                if (user not in protected and user not in manual_visits and
                         (user not in journal or
                          (not _invalid_saved_action_record(journal[user]) and
                           _preclick_no_action(journal[user])))):
