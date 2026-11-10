@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "f43114ba89e980ca6733c305564cf406b89e034bfb751c29b76801dd4fbe323b",
-  "evidence_fingerprint": "46c6f8805ca30771d3aec3c2497b2b2b21ef2d4ee605f607194ddfe3c3d4d821",
+  "inventory_fingerprint": "a8f4f424cee955f254bc5b429feb12ad2aa81c5ade29dcac83d562c77c54c0ef",
+  "evidence_fingerprint": "a689dc5c3bf3e8e9452e93367a68f81f9689f34fae10d752c454883ec4828a6d",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1891,7 +1891,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6d0a988f82519dee5a2a11d9d9b605cceade322d"
+      "blob": "7b6ca23258682847098df5f6d2ce5ed336ebfbc8"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2143,14 +2143,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b325658761c6c05b2f1a4cddf5d7151415ec2e87"
+      "blob": "1a645396589511f30707b41042f2fb79a148aaf3"
     },
     {
       "path": "tests/test_action_click_wal.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4dad0b40a84f108849668a41aa0544f4234d1383"
+      "blob": "4b818e877de4632cd2509f4b70533e07b3c13bd1"
     },
     {
       "path": "tests/test_action_cohort_mutation_lease.py",
@@ -2710,7 +2710,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ef938192452d77f678c6aa1f32f9b0208f777871"
+      "blob": "cd7fa6f0fc54872e137944e4768950d4a7250bc9"
     },
     {
       "path": "tools/dual_action_workspaces.py",
@@ -2780,7 +2780,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "42a73f88adace71d7b955fcdd6fee83104c7ff65"
+      "blob": "75daab15a2d9520c192585eb360487c56b44af62"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3004,11 +3004,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "b443f2ea332cd1af",
+      "id": "d521a34547364124",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "10 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_chrome_profiles.py, tests/test_dual_action_archived_history.py, tests/test_dual_action_workspaces.py, tests/test_windows_ci_exitcode_gate.py",
+      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_chrome_profiles.py, tests/test_action_click_wal.py, tests/test_dual_action_archived_history.py, tests/test_dual_action_workspaces.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
