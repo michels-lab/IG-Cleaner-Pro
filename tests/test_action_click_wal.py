@@ -153,6 +153,81 @@ class DurableClickIntentTests(unittest.TestCase):
             self.assertNotIn("safe.miss", history["attempted_usernames"])
             self.assertTrue(_preclick_no_action(report))
 
+    def test_cold_start_reusable_history_excludes_manual_chrome_visits(self):
+        """Do not re-offer manually inspected usernames from archived cohorts."""
+        with tempfile.TemporaryDirectory() as directory:
+            robot = self.make_robot(directory)
+            owner, account, task = robot.owner, robot.account, robot.task
+            safe_no_click = {
+                "status": "blocked",
+                "message": "Instagram session verification failed before the first click. No action performed.",
+            }
+            journal = robot._base_for(owner, account, task)
+            _atomic_json(journal, {
+                "opened.manually": safe_no_click,
+                "safe.miss": safe_no_click,
+                "possible.click": {
+                    "status": "review",
+                    "click_intent": {"phase": "relationship_control"},
+                },
+            })
+            cohorts = robot._review_batches_file_for(owner, account, task)
+            _atomic_json(cohorts, [{
+                "id": "saved-archive", "targets": ["opened.manually", "possible.click"],
+                "original_targets": ["opened.manually", "safe.miss",
+                                     "untouched", "possible.click", "other.manual"],
+                "approved_at": None, "deferred_at": "2026-11-09T22:00:00Z",
+                "recheck_results": {},
+            }])
+            manual = robot._manual_review_visits_file_for(owner, account, task)
+            _atomic_json(manual, {
+                "opened.manually": {
+                    "source": "owner_selected_manual_readonly_review",
+                    "state": "navigation_requested_not_relationship_action",
+                },
+                "other.manual": {
+                    "source": "owner_selected_manual_readonly_review",
+                    "state": "navigation_requested_not_relationship_action",
+                },
+            })
+            saved = [(p, p.read_bytes()) for p in (journal, cohorts, manual)]
+            current = robot.attempted_history({
+                "owner": owner, "account": account, "task": task})
+            self.assertEqual(set(current["reusable_usernames"]), {"safe.miss", "untouched"})
+            self.assertIn("opened.manually", current["visited_usernames"])
+            self.assertIn("other.manual", current["visited_usernames"])
+            self.assertIn("possible.click", current["attempted_usernames"])
+            self.assertNotIn("opened.manually", current["reusable_usernames"])
+            self.assertNotIn("other.manual", current["reusable_usernames"])
+
+            # The same literal handle in a DIFFERENT Instagram account is
+            # independent. Account B cannot inherit account A's visit marks.
+            second = "ig-second-account"
+            _atomic_json(robot._review_batches_file_for(owner, second, task), [{
+                "id": "batch-B", "targets": ["opened.manually"],
+                "original_targets": ["opened.manually", "untouched"],
+                "approved_at": None, "recheck_results": {},
+            }])
+            other = robot.attempted_history({
+                "owner": owner, "account": second, "task": task})
+            self.assertEqual(set(other["reusable_usernames"]),
+                             {"opened.manually", "untouched"})
+            self.assertNotIn("opened.manually", other["visited_usernames"])
+            # A cancel Pending visit must NOT hide an independent Unfollow
+            # task's original unvisited targets within the same account.
+            other_task = "cancel"
+            _atomic_json(robot._review_batches_file_for(owner, account, other_task), [{
+                "id": "batch-cancel", "targets": ["opened.manually"],
+                "original_targets": ["opened.manually"],
+                "approved_at": None, "recheck_results": {},
+            }])
+            independent = robot.attempted_history({
+                "owner": owner, "account": account, "task": other_task})
+            self.assertEqual(independent["reusable_usernames"], ["opened.manually"])
+            for p, before in saved:
+                self.assertEqual(p.read_bytes(), before,
+                    "Read-only reusable discovery must preserve original manual and action WAL.")
+
     def test_power_loss_after_intent_before_first_click_survives_restart(self):
         with tempfile.TemporaryDirectory() as directory:
             robot = self.make_robot(directory)
