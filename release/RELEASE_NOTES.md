@@ -1,3 +1,10 @@
+## v120.72 — Owner-requested release for post-publication PC testing (2026-11-10)
+
+- **Authorization:** owner expressly requested publishing v120.72 now, to review on their own PC afterward. This is NOT an owner's acceptance of completed behavior; live Instagram checks, simultaneous two-account robot actions, physical Windows/Android tests and P0 issue closure remain pending.
+- **Fix:** `Destrabar Pending` now cancels only the active Pending cohort and preserves opened/unreviewed history, preventing accidental repeat selections in later Focus batches (merged PR #356, commit `31498bb33f969036249b7dfbead2141492a177ca`).
+- **Required official CI:** Windows public and Developer installers, Android production-signed public and Developer APKs, emulator co-install, real rendered UI previews, self-contained Desktop HTML/ZIP, update-feed and SHA-256 verification. No release if the official publisher fails any of these automated gates.
+- **Limitations:** no live authenticated Instagram action success or full-list completeness is asserted; two simultaneous relationship-changing robots are NOT verified. Back up local state before upgrade and run a small deliberately chosen batch. No RC, beta, or prerelease.
+
 ## v120.71 — Published NORMAL FINAL (2026-10-28 UTC)
 
 - **Official release:** [v120.71](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71) published at 2026-10-28T00:32:34Z, `prerelease=false`, tag commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`; publisher [run 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) completed all five mandatory gates, delivering 12 SHA-256-tracked assets (Windows public/Developer, Android public/Developer, Desktop standalone HTML/ZIP, updater/metadata).

@@ -33,11 +33,33 @@ class ReleaseBlocked(ValueError):
     """Prevent publication; never turn a missing proof into a pass."""
 
 
+def owner_device_review_override_active(readiness: dict, tag: str) -> bool:
+    """Exact-version owner instruction: distribute for real-device evaluation later.
+
+    Does NOT certify Instagram actions, close P0s or waive any publisher build,
+    signing, UI, installer, checksum or update gate. No standing authorization.
+    """
+    override = readiness.get("owner_device_review_release_override")
+    if not isinstance(override, dict) or override.get("authorized") is not True:
+        return False
+    if (override.get("release_tag") != tag
+            or readiness.get("next_version") != tag
+            or override.get("source") != "explicit-owner-chat-instruction-2026-11-10"
+            or override.get("physical_tests_deferred") is not True
+            or override.get("automated_publisher_gates_required") is not True):
+        raise ReleaseBlocked("Owner post-publication review override must be explicit, exact-tag and scope-limited.")
+    if readiness.get("owner_final_acceptance", {}).get("approved") is not False:
+        raise ReleaseBlocked("Do not falsely combine post-publication testing with completed product acceptance.")
+    return True
+
+
 def check_readiness(readiness: dict, tag: str, issue_states: dict[int, str]) -> None:
     if readiness.get("schema") != "ig-cleaner-release-readiness-v1":
         raise ReleaseBlocked("Missing or unexpected owner completion-gate schema.")
     if not re.fullmatch(r"v\d+\.\d+", tag):
         raise ReleaseBlocked("Invalid release tag.")
+    if owner_device_review_override_active(readiness, tag):
+        return
     if readiness.get("release_hold") is not False:
         raise ReleaseBlocked(
             "RELEASE BLOCKED BY OWNER: product is unfinished; no release, even if CI passed."
@@ -101,6 +123,10 @@ def main():
     args = parser.parse_args()
     try:
         readiness = json.loads(READINESS_PATH.read_text(encoding="utf-8"))
+        if owner_device_review_override_active(readiness, args.tag):
+            check_readiness(readiness, args.tag, {})
+            print("OWNER-DIRECTED POST-PUBLICATION REVIEW: incomplete P0/physical acceptance remains unverified; automated official publisher gates still mandatory.")
+            return
         # Always fail locally before querying any remote service when the owner
         # hold or acceptance requirements are unsatisfied.
         check_readiness(readiness, args.tag, {})

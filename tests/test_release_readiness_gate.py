@@ -16,6 +16,7 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
     def setUp(self):
         self.current = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
         self.valid = deepcopy(self.current)
+        self.valid.pop("owner_device_review_release_override", None)
         self.valid["release_hold"] = False
         self.valid["next_version"] = "v120.72"
         self.valid["critical_acceptance"] = {name: True for name in REQUIRED_ACCEPTANCE}
@@ -29,8 +30,30 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
     def test_current_repo_is_under_hard_release_hold(self):
         self.assertTrue(self.current["release_hold"])
         self.assertIs(self.current["owner_final_acceptance"]["approved"], False)
+        without_express_owner_release_request = deepcopy(self.current)
+        without_express_owner_release_request.pop("owner_device_review_release_override", None)
         with self.assertRaisesRegex(ReleaseBlocked, "RELEASE BLOCKED BY OWNER"):
-            check_readiness(self.current, "v120.72", self.closed)
+            check_readiness(without_express_owner_release_request, "v120.72", self.closed)
+
+    def test_owner_direct_request_allows_only_postpublication_review_without_fake_acceptance(self):
+        self.assertTrue(self.current["release_hold"])
+        self.assertFalse(self.current["owner_final_acceptance"]["approved"])
+        self.assertTrue(any(not v for v in self.current["critical_acceptance"].values()))
+        check_readiness(self.current, "v120.72", {})
+        with self.assertRaises(ReleaseBlocked):
+            check_readiness(self.current, "v120.73", {})
+        for field, incorrect in (("source", "generic-ci"),
+                                 ("physical_tests_deferred", False),
+                                 ("automated_publisher_gates_required", False),
+                                 ("release_tag", "v120.73")):
+            case = deepcopy(self.current)
+            case["owner_device_review_release_override"][field] = incorrect
+            with self.subTest(field=field), self.assertRaises(ReleaseBlocked):
+                check_readiness(case, "v120.72", {})
+        case = deepcopy(self.current)
+        case["owner_device_review_release_override"]["authorized"] = False
+        with self.assertRaisesRegex(ReleaseBlocked, "RELEASE BLOCKED BY OWNER"):
+            check_readiness(case, "v120.72", {})
 
     def test_green_ci_does_not_override_owner_hold(self):
         ready = deepcopy(self.valid)

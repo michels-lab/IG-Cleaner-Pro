@@ -32,5 +32,14 @@
     176
   ],
   "next_version": "v120.72",
-  "notes": "This is a hard hold. Do NOT bypass it with standard Operacion Granada, CI checks, automated GitHub workflow_dispatch, or a generic standing publication authorization. Only an explicit later user instruction after all blocking requirements are complete may change it."
+  "notes": "Owner expressly requested publication of v120.72 for post-publication physical evaluation on 2026-11-10. The existing product-completeness hold and all unverified acceptance states remain in place. The narrow, version-scoped explicit owner override may only waive prior physical acceptance; not automated signing/runtime/visual/checksum/publishing gates. No falsely closed issues or claimed real Instagram testing.",
+  "owner_device_review_release_override": {
+    "authorized": true,
+    "release_tag": "v120.72",
+    "source": "explicit-owner-chat-instruction-2026-11-10",
+    "physical_tests_deferred": true,
+    "automated_publisher_gates_required": true,
+    "owner_direct_quote": "yo si puedo perra, tu me obedeces y yo lo reviso despues en mi pc",
+    "disclosure": "For user evaluation only. Live Instagram functionality, P0 completion, owner-final product acceptance, physical Windows/Android test and issue closure remain unverified. Official automated build, signing, rendered-UI, Windows runtime and SHA256 checks MUST still pass."
+  }
 }
