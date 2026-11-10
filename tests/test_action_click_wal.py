@@ -228,6 +228,64 @@ class DurableClickIntentTests(unittest.TestCase):
                 self.assertEqual(p.read_bytes(), before,
                     "Read-only reusable discovery must preserve original manual and action WAL.")
 
+    def test_current_and_archived_review_distinguish_manual_open_from_action(self):
+        """Manual navigation is visible after restart but NEVER green/approved."""
+        with tempfile.TemporaryDirectory() as directory:
+            robot = self.make_robot(directory)
+            owner, account, task = robot.owner, robot.account, robot.task
+            batches = robot._review_batches_file_for(owner, account, task)
+            journal = robot._base_for(owner, account, task)
+            manual = robot._manual_review_visits_file_for(owner, account, task)
+            _atomic_json(batches, [{
+                "id": "deferred", "targets": ["opened.archive", "archive.unvisited"],
+                "deferred_at": "2026-11-09T22:00:00Z", "approved_at": None
+            }, {
+                "id": "current", "targets": [
+                    "opened.now", "never.opened", "uncertain.click"],
+                "approved_at": None, "recheck_results": {},
+            }])
+            _atomic_json(journal, {
+                "uncertain.click": {
+                    "status": "review", "click_intent": {
+                        "phase": "relationship_control"
+                    }
+                }
+            })
+            _atomic_json(manual, {
+                "opened.now": {"state": "navigation_requested_not_relationship_action"},
+                "opened.archive": {"state": "navigation_requested_not_relationship_action"},
+            })
+            before = [(p, p.read_bytes()) for p in (batches, journal, manual)]
+            req = {"owner": owner, "account": account, "task": task}
+            active = robot.batch_review(req)["batch"]
+            self.assertEqual(active["id"], "current")
+            self.assertEqual(active["action_results"]["opened.now"]["status"], "pending")
+            self.assertTrue(active["action_results"]["opened.now"]["manual_review_opened"])
+            self.assertFalse(active["action_results"]["opened.now"]["possible_click"])
+            self.assertFalse(active["action_results"]["never.opened"]["manual_review_opened"])
+            self.assertEqual(active["action_results"]["never.opened"]["status"], "pending")
+            self.assertFalse(active["action_results"]["uncertain.click"]["manual_review_opened"])
+            self.assertTrue(active["action_results"]["uncertain.click"]["possible_click"])
+            archived = robot.deferred_batch_details({**req, "batch_id": "deferred"})
+            self.assertTrue(archived["read_only"])
+            self.assertTrue(archived["action_results"]["opened.archive"]["manual_review_opened"])
+            self.assertEqual(archived["action_results"]["opened.archive"]["status"], "pending")
+            self.assertFalse(archived["action_results"]["archive.unvisited"]["manual_review_opened"])
+
+            # Another Instagram account may have the same username. Its
+            # manual status is absent; the saved record is not cross-account.
+            second = "ig-sibling"
+            _atomic_json(robot._review_batches_file_for(owner, second, task), [{
+                "id": "other", "targets": ["opened.now"], "approved_at": None,
+                "recheck_results": {}
+            }])
+            sibling = robot.batch_review({
+                "owner": owner, "account": second, "task": task})["batch"]
+            self.assertFalse(sibling["action_results"]["opened.now"]["manual_review_opened"])
+            for path, bytes_before in before:
+                self.assertEqual(path.read_bytes(), bytes_before,
+                                 "Review must remain read-only, never change action WAL.")
+
     def test_power_loss_after_intent_before_first_click_survives_restart(self):
         with tempfile.TemporaryDirectory() as directory:
             robot = self.make_robot(directory)
