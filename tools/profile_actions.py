@@ -2109,6 +2109,23 @@ class ActionRobot:
             # Release after the launch request; never hold a permanent lock
             # while the user manually inspects a separate Chrome window.
             with ChromeLaneLease(session):
+                # A manually opened current-batch member was previously NOT
+                # written to the target-visit ledger. Once its batch was
+                # archived, a brand-new automated wave could revisit it.
+                # Write a distinct read-only navigation INTENT before asking
+                # Chrome to open the URL. A crash may leave an uncertain
+                # attempted visit, but never a fabricated relationship click.
+                # The same-account Chrome lane lease serializes this sidecar
+                # with action workers across Public/Developer processes.
+                marks = self._manual_review_visits(owner, account, task)
+                if username not in marks:
+                    marks[username] = {
+                        "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "source": "owner_selected_manual_readonly_review",
+                        "state": "navigation_requested_not_relationship_action",
+                    }
+                    _atomic_json(self._manual_review_visits_file_for(
+                        owner, account, task), marks)
                 subprocess.Popen([chrome, "--user-data-dir=" + str(session),
                                   "--new-tab", url],
                                  stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
