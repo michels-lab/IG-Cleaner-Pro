@@ -2158,7 +2158,7 @@ class ActionRobot:
                     if username not in journal:
                         return {"status": "pending", "message": "", "at": "",
                                 "possible_click": False, "safe_no_click": False,
-                                "manual_review_opened": username in manual_opened}
+                                "manual_review_requested": username in manual_opened}
                     source = journal[username]
                     public = _public_action_record(source)
                     return {"status": public.get("status", "review"),
@@ -2166,7 +2166,7 @@ class ActionRobot:
                             # Expose only the saved action timestamp; do not
                             # imply a Pending/Review profile was successfully changed.
                             "at": public.get("at", ""),
-                            "manual_review_opened": username in manual_opened,
+                            "manual_review_requested": username in manual_opened,
                             # Current unavailable screen must not hide a PRIOR
                             # ambiguous click or malformed action journal in UI.
                             "possible_click": (not isinstance(source, dict) or
@@ -2276,7 +2276,7 @@ class ActionRobot:
                                          "message": "", "at": "",
                                          "possible_click": False,
                                          "safe_no_click": False,
-                                         "manual_review_opened": username in manual_opened}
+                                         "manual_review_requested": username in manual_opened}
                     continue
                 original = journal[username]
                 public = _public_action_record(original)
@@ -2288,7 +2288,7 @@ class ActionRobot:
                         "click_intent" in original or _invalid_saved_action_record(original)),
                     "safe_no_click": (not _invalid_saved_action_record(original)
                                       and _preclick_no_action(original)),
-                    "manual_review_opened": username in manual_opened,
+                    "manual_review_requested": username in manual_opened,
                 }
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "archived": True, "read_only": True,
