@@ -337,6 +337,20 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
             self.assertIn(
                 "some.target", robot._visited_usernames(OWNER, A, "cancel", {}))
             self.assertFalse(robot._base_for(OWNER, A, "cancel").exists())
+            # A failed Popen still leaves a durable *navigation request*.
+            # Neither server nor UI may call that a successfully loaded
+            # profile, verified review, or a relationship-changing action.
+            from profile_actions import _atomic_json
+            _atomic_json(robot._review_batches_file_for(OWNER, A, "cancel"), [{
+                "id": "manual-open-error", "targets": ["some.target"],
+                "approved_at": None, "recheck_results": {},
+            }])
+            result = robot.batch_review({
+                "owner": OWNER, "account": A, "task": "cancel"})["batch"]["action_results"]["some.target"]
+            self.assertEqual(result["status"], "pending")
+            self.assertTrue(result["manual_review_requested"])
+            self.assertFalse(result["possible_click"])
+            self.assertFalse(robot._base_for(OWNER, A, "cancel").exists())
 
     def test_wrong_live_instagram_identity_blocks_before_click_in_scoped_chrome(self):
         with TemporaryDirectory() as tmp:

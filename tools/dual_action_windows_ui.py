@@ -296,7 +296,8 @@ function savedActionLabel(result){
  if(status==='already_not_following')return 'SIN ACCIÓN · YA NO SIGUES';
  if(status==='already_not_requested')return 'SIN ACCIÓN · SIN SOLICITUD';
  if(status==='profile_unavailable')return 'PERFIL NO DISPONIBLE';
- if(status==='pending')return 'PENDIENTE · NO PROCESADO';
+ if(status==='pending')return result?.manual_review_requested===true?
+   'APERTURA MANUAL SOLICITADA · SIN ACCIÓN CONFIRMADA':'PENDIENTE · NO PROCESADO';
  if(result?.safe_no_click===true)return 'REVIEW · SIN CLIC';
  return 'REVIEW · '+status.toUpperCase();
 }
@@ -321,7 +322,8 @@ function prioritizedSavedReviewTargets(batch){
    const priority=entry.possible_click===true&&status!=='ok'?0:
      ['ok','already_not_following','already_not_requested'].includes(status)?
        (status==='ok'?5:4):
-     status==='profile_unavailable'?3:status==='pending'?2:1;
+     status==='profile_unavailable'?3:
+       status==='pending'?(entry.manual_review_requested===true?2.5:2):1;
    return {username,index,priority};
   }).sort((a,b)=>a.priority-b.priority||a.index-b.index)
   .map(x=>x.username);
@@ -369,7 +371,8 @@ function card(account,i){
       // Populate ALL unresolved options, even those on later display pages.
       // Green and proven no-action outcomes are not action candidates.
       if(status!=='ok'&&(!reviewed||outcome.possible_click===true)&&!unavailable){
-        const o=el('option',null,'@'+username+' · '+status);
+        const o=el('option',null,'@'+username+' · '+status+
+          (outcome.manual_review_requested===true?' · apertura manual solicitada':''));
         o.value=username;select.append(o);
       }
     }
@@ -377,8 +380,11 @@ function card(account,i){
       const outcome=targets[username]||{status:'pending'};
       const row=el('div','igc-daw-review-row '+savedActionClass(outcome));
       row.append(el('span',null,'@'+username),el('span',null,savedActionLabel(outcome)));
+      row.dataset.username=username;
       row.append(el('small',null,'Acción: '+String(outcome.at||'sin fecha registrada')+
-        ' · '+String(outcome.message||'sin confirmación').slice(0,140)));
+        ' · '+String(outcome.message||'sin confirmación').slice(0,140)+
+        (outcome.manual_review_requested===true?
+          ' · Apertura manual solicitada, sin acción confirmada':'')));
       return row;
     },'⚠ Clic incierto primero · ⚠ Sin clic · ○ Pendiente · ◌ No disponible · '+
       '◇ Sin acción · ✓ Acción confirmada al final');
@@ -710,9 +716,32 @@ function card(account,i){
     const account=linked[i].account,username=target.value;
     if(!confirm('Abrir @'+username+' únicamente en Chrome de '+linked[i].expected_handle+
       '? No se hará ningún unfollow.'))return;
-    await api('open-review-one',{owner:linked.owner,account,task:task.value,
-      username,confirmation:'action-workspace-review:'+linked.owner+':'+account+':'+username});
-    notice('Revisión manual abierta para @'+username+'. Sin clic automatizado.');
+    const bound=linked,selectedTask=task.value;
+    const result=await api('open-review-one',{owner:bound.owner,account,
+      task:selectedTask,username,
+      confirmation:'action-workspace-review:'+bound.owner+':'+account+':'+username});
+    if(linked!==bound||task.value!==selectedTask)return;
+    if(result?.relationship_action!==false||
+       (result.username&&result.username!==username))
+      throw Error('Chrome no confirmó una apertura manual sin acción.');
+    const saved=savedReviews[i]?.task===selectedTask?
+      savedReviews[i]?.batch?.action_results?.[username]:null;
+    if(saved){
+      saved.manual_review_requested=true;
+      const option=Array.from(target.options).find(x=>x.value===username);
+      if(option&&!option.textContent.includes('apertura manual solicitada'))
+        option.textContent+=' · apertura manual solicitada';
+      // Keep Pending unresolved: this is a visit, not a confirmed action.
+      // Update the visible page immediately; later pages use saved flag.
+      const list=$('igcDawReviewList'+i);
+      for(const row of list?.querySelectorAll('.igc-daw-review-row')||[]){
+        if(row.dataset.username!==username)continue;
+        const label=row.querySelector('span:nth-child(2)');
+        if(label)label.textContent=savedActionLabel(saved);
+      }
+    }
+    notice('Revisión manual abierta para @'+username+
+      '. Apertura solicitada, SIN acción confirmada ni revisión aprobada.');
   }));
   controls.append(open);
   const stop=el('button','igc-daw-stop','Pausar esta cuenta');stop.type='button';

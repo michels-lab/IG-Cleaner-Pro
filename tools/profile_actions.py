@@ -1946,13 +1946,24 @@ class ActionRobot:
             journal = _read_json(self._base_for(owner, account, task), {})
             cohorts = self._review_batches(owner, account, task)
             protected = set(_read_json(self._protection_file_for(owner, account), []))
+            # A saved batch's original_targets list may outlive a manual
+            # read-only Chrome opening. Report only truly reusable targets:
+            # never offer one manually inspected and reserved in the
+            # durable per-owner/account/task visit sidecar (#351).
+            manual_visits = self._manual_review_visits(owner, account, task)
         reusable = []
         for entry in cohorts:
             if not isinstance(entry, dict): continue
             base = entry.get("original_targets") or []
             if not isinstance(base, list): continue
             for user in base:
-                if (valid_username(user) == user and user not in protected and
+                # Old original_targets arrays may contain malformed elements.
+                # valid_username(None) is ALSO None; equality alone could
+                # falsely advertise null as a reusable Instagram profile.
+                # Skip invalid elements without mutating the saved cohort.
+                if not isinstance(user, str) or valid_username(user) != user:
+                    continue
+                if (user not in protected and user not in manual_visits and
                         (user not in journal or
                          (not _invalid_saved_action_record(journal[user]) and
                           _preclick_no_action(journal[user])))):
@@ -2146,11 +2157,13 @@ class ActionRobot:
                 # Disk-only protection may have changed after this cohort was
                 # saved. Return a read-only conflict list to the owner UI.
                 guard = set(_read_json(self._protection_file_for(owner, account), []))
+                manual_opened = self._manual_review_visits(owner, account, task)
                 details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
                 def _safe_batch_result(username):
                     if username not in journal:
                         return {"status": "pending", "message": "", "at": "",
-                                "possible_click": False, "safe_no_click": False}
+                                "possible_click": False, "safe_no_click": False,
+                                "manual_review_requested": username in manual_opened}
                     source = journal[username]
                     public = _public_action_record(source)
                     return {"status": public.get("status", "review"),
@@ -2158,6 +2171,7 @@ class ActionRobot:
                             # Expose only the saved action timestamp; do not
                             # imply a Pending/Review profile was successfully changed.
                             "at": public.get("at", ""),
+                            "manual_review_requested": username in manual_opened,
                             # Current unavailable screen must not hide a PRIOR
                             # ambiguous click or malformed action journal in UI.
                             "possible_click": (not isinstance(source, dict) or
@@ -2259,13 +2273,15 @@ class ActionRobot:
             journal = _read_json(self._base_for(owner, account, task), {})
             if not isinstance(journal, dict):
                 raise ValueError("Action journal is invalid; original evidence preserved.")
+            manual_opened = self._manual_review_visits(owner, account, task)
             results = {}
             for username in targets:
                 if username not in journal:
                     results[username] = {"status": "pending",
                                          "message": "", "at": "",
                                          "possible_click": False,
-                                         "safe_no_click": False}
+                                         "safe_no_click": False,
+                                         "manual_review_requested": username in manual_opened}
                     continue
                 original = journal[username]
                 public = _public_action_record(original)
@@ -2277,6 +2293,7 @@ class ActionRobot:
                         "click_intent" in original or _invalid_saved_action_record(original)),
                     "safe_no_click": (not _invalid_saved_action_record(original)
                                       and _preclick_no_action(original)),
+                    "manual_review_requested": username in manual_opened,
                 }
             return {"owner": owner, "account": account, "task": task,
                     "batch_id": batch_id, "archived": True, "read_only": True,
