@@ -304,6 +304,14 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('#igcActCount_all').innerText(),'1');
    assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'false');
    await page.locator('#igcActTask').selectOption('all');
+   // A's healthy Unfollow rows must never appear in B when B's Cancel
+   // history independently fails. Do not reuse A's old lower-bound total.
+   await page.locator('#igcActAccount').selectOption('ig_second_123456');
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥0');
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
+   assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'true');
+   await page.locator('#igcActAccount').selectOption('ig_first_1234567');
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥1');
    // Make the opposite task unreadable: Unfollow must be UNKNOWN but a
    // verified Cancel Pending action remains visible and is NOT a false 0.
    await page.evaluate(()=>{
