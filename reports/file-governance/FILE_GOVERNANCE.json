@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "a8f4f424cee955f254bc5b429feb12ad2aa81c5ade29dcac83d562c77c54c0ef",
-  "evidence_fingerprint": "a689dc5c3bf3e8e9452e93367a68f81f9689f34fae10d752c454883ec4828a6d",
+  "inventory_fingerprint": "07a0bbc15e67c14b0f6d749aaf83ab74097eccbbd7e276c6aa94715bf3038589",
+  "evidence_fingerprint": "04c1d4d1aca7a74859a4529e8ed3286454c3d522f64b1d4f73625597510d97c5",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "ba2ecb2569fe3dd9bcbd51b2496f17f113fc73ce"
+      "blob": "fe65f611d4b2149096615fa70da3ff9518721203"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1744,7 +1744,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "89e6825e58ce257b405198985dfe98063a5f1686"
+      "blob": "ba8c85513ccc9a06f401db7ad856f0313d286b6e"
     },
     {
       "path": "tests/auth-account-switch.test.cjs",
@@ -3004,11 +3004,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "d521a34547364124",
+      "id": "11ceb1c1e881ca06",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_chrome_profiles.py, tests/test_action_click_wal.py, tests/test_dual_action_archived_history.py, tests/test_dual_action_workspaces.py",
+      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_chrome_profiles.py, tests/test_action_click_wal.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
