@@ -296,8 +296,8 @@ function savedActionLabel(result){
  if(status==='already_not_following')return 'SIN ACCIÓN · YA NO SIGUES';
  if(status==='already_not_requested')return 'SIN ACCIÓN · SIN SOLICITUD';
  if(status==='profile_unavailable')return 'PERFIL NO DISPONIBLE';
- if(status==='pending')return result?.manual_review_opened===true?
-   'ABIERTO MANUALMENTE · SIN ACCIÓN CONFIRMADA':'PENDIENTE · NO PROCESADO';
+ if(status==='pending')return result?.manual_review_requested===true?
+   'APERTURA MANUAL SOLICITADA · SIN ACCIÓN CONFIRMADA':'PENDIENTE · NO PROCESADO';
  if(result?.safe_no_click===true)return 'REVIEW · SIN CLIC';
  return 'REVIEW · '+status.toUpperCase();
 }
@@ -323,7 +323,7 @@ function prioritizedSavedReviewTargets(batch){
      ['ok','already_not_following','already_not_requested'].includes(status)?
        (status==='ok'?5:4):
      status==='profile_unavailable'?3:
-       status==='pending'?(entry.manual_review_opened===true?2.5:2):1;
+       status==='pending'?(entry.manual_review_requested===true?2.5:2):1;
    return {username,index,priority};
   }).sort((a,b)=>a.priority-b.priority||a.index-b.index)
   .map(x=>x.username);
@@ -372,7 +372,7 @@ function card(account,i){
       // Green and proven no-action outcomes are not action candidates.
       if(status!=='ok'&&(!reviewed||outcome.possible_click===true)&&!unavailable){
         const o=el('option',null,'@'+username+' · '+status+
-          (outcome.manual_review_opened===true?' · abierto manualmente':''));
+          (outcome.manual_review_requested===true?' · apertura manual solicitada':''));
         o.value=username;select.append(o);
       }
     }
@@ -383,8 +383,8 @@ function card(account,i){
       row.dataset.username=username;
       row.append(el('small',null,'Acción: '+String(outcome.at||'sin fecha registrada')+
         ' · '+String(outcome.message||'sin confirmación').slice(0,140)+
-        (outcome.manual_review_opened===true?
-          ' · Abierto manualmente, sin acción confirmada':'')));
+        (outcome.manual_review_requested===true?
+          ' · Apertura manual solicitada, sin acción confirmada':'')));
       return row;
     },'⚠ Clic incierto primero · ⚠ Sin clic · ○ Pendiente · ◌ No disponible · '+
       '◇ Sin acción · ✓ Acción confirmada al final');
@@ -727,10 +727,10 @@ function card(account,i){
     const saved=savedReviews[i]?.task===selectedTask?
       savedReviews[i]?.batch?.action_results?.[username]:null;
     if(saved){
-      saved.manual_review_opened=true;
+      saved.manual_review_requested=true;
       const option=Array.from(target.options).find(x=>x.value===username);
-      if(option&&!option.textContent.includes('abierto manualmente'))
-        option.textContent+=' · abierto manualmente';
+      if(option&&!option.textContent.includes('apertura manual solicitada'))
+        option.textContent+=' · apertura manual solicitada';
       // Keep Pending unresolved: this is a visit, not a confirmed action.
       // Update the visible page immediately; later pages use saved flag.
       const list=$('igcDawReviewList'+i);
@@ -741,7 +741,7 @@ function card(account,i){
       }
     }
     notice('Revisión manual abierta para @'+username+
-      '. Marcado como abierto, SIN acción confirmada ni revisión aprobada.');
+      '. Apertura solicitada, SIN acción confirmada ni revisión aprobada.');
   }));
   controls.append(open);
   const stop=el('button','igc-daw-stop','Pausar esta cuenta');stop.type='button';
