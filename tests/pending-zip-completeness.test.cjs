@@ -233,7 +233,8 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
      data:[{string_list_data:[{value:"legacy.sent",timestamp:1700000910}]}]},
    text:"[]"
  }],"legacy-sent.zip"),1);
- assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),["legacy.sent"]);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username),["legacy.sent"],
+   "Legacy row survives across the isolated parser's JS array realm");
  // Restore 725 verified source rows for subsequent snapshot-preservation tests.
  assert.equal(await ctx.parseZipPending([{
    entry:{name:"pending_follow_requests.json"},
