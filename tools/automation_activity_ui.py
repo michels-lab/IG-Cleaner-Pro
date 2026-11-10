@@ -326,8 +326,13 @@ function renderHistory(records){
  }
  list.replaceChildren();
  if(!entries.length){
-   last.textContent='No hay acciones con fecha guardada.';
-   list.append(node('p','igc-act-muted','El historial está vacío o no tiene fechas verificables.'));
+   const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
+   last.textContent=partial?
+     'Sin registros en las tareas verificables; total desconocido.':
+     'No hay acciones con fecha guardada.';
+   list.append(node('p','igc-act-muted',partial?
+     'Faltan registros de una tarea. No se puede concluir que hubo cero acciones.':
+     'El historial está vacío o no tiene fechas verificables.'));
    return;
  }
  function name(r){return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username}
@@ -336,7 +341,9 @@ function renderHistory(records){
    'OK histórico · origen sin registrar':k==='no_action'?'Ya resuelto · sin clic':
    k==='unavailable'?'No disponible':'No confirmado'}
  const newest=entries[0];last.replaceChildren();
- last.append(node('div',null,'Último registro · '+name(newest)),
+ last.append(node('div',null,(unavailableTasks.length>0&&
+   $('igcActTask')?.value==='all'?'Último registro verificable (parcial)':'Último registro')+
+   ' · '+name(newest)),
    node('small',null,desc(newest)+' · '+new Date(dateValue(newest.at)).toLocaleString()));
  for(const entry of entries){
    const row=node('div','igc-act-history-row');
