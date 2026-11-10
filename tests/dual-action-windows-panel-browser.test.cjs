@@ -166,7 +166,7 @@ const {chromium}=require('playwright');
              ...(window.__dawReviewCompleted?{'untouched.one':{
                status:'already_not_following',at:'2026-10-30T15:45:00Z',message:'Observed'}}:
                {'untouched.one':{status:'pending',possible_click:false,
-                 manual_review_opened:true}})
+                 manual_review_requested:true}})
            }}
        }:operation==='open-review-one'?{status:'opening',relationship_action:false}:
        operation==='pause-one'?{status:'paused'}:
@@ -495,16 +495,16 @@ const {chromium}=require('playwright');
     '@review.target','@untouched.one','@done.profile']);
   assert.match(await page.locator('#igcDawReviewList0').innerText(),/Clic incierto primero/);
   assert.match(await page.locator('#igcDawReviewList0').innerText(),
-    /ABIERTO MANUALMENTE · SIN ACCIÓN CONFIRMADA/,
+    /APERTURA MANUAL SOLICITADA · SIN ACCIÓN CONFIRMADA/,
     'Opening a profile is NOT a green action success or a never-visited pending row');
   assert.match(await page.locator('#igcDawTarget0 option[value="untouched.one"]').innerText(),
-    /abierto manualmente/);
+    /apertura manual solicitada/);
   assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
   assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
     'Never re-open green confirmed profiles as new Review targets');
   await page.locator('#igcDawOpen0').click();
   await page.waitForFunction(()=>document.querySelector(
-    '#igcDawTarget0 option[value="review.target"]')?.textContent?.includes('abierto manualmente'));
+    '#igcDawTarget0 option[value="review.target"]')?.textContent?.includes('apertura manual solicitada'));
   assert.match(await page.locator('#igcDawReviewList0').innerText(),/REVIEW · CLIC INCIERTO/,
     'Read-only Chrome opening never promotes ambiguous click to OK');
   await page.locator('#igcDawStop0').click();
