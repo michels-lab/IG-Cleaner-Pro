@@ -14829,6 +14829,8 @@ async function activateRemembered(owner){
   clearTimeout(statePushTimer);
   S.cfg.email=owner;saveCfg();
   saveSession();
+  // The selection is committed; never re-open a chooser on the new owner.
+  clearAccountChooserIntent();
   // Rebuild owner-dependent localStorage, Focus state and Instagram registry.
   location.reload();
   return true;
@@ -14860,13 +14862,38 @@ function accountSwitchAdmission(){
   code:'sync_busy',message:'Account sync is running. You can inspect saved accounts, but wait until sync finishes before switching.'};
  return {code:'ready',message:''};
 }
+// Only a user-requested, READ-ONLY account chooser may survive a cold-start
+// document reload. A delayed boot/hydration can discard an already clicked
+// dialog; NEVER persist tokens, action commands or an automatic account
+// selection. Scope to the exact signed-in Supabase owner and a short interval.
+const ACCOUNT_CHOOSER_INTENT_KEY='igc_v120_login_chooser_intent_v1';
+function clearAccountChooserIntent(){
+ try{sessionStorage.removeItem(ACCOUNT_CHOOSER_INTENT_KEY)}catch(_){}
+}
+function requestAccountChooserRestore(){
+ try{sessionStorage.setItem(ACCOUNT_CHOOSER_INTENT_KEY,JSON.stringify({
+   owner:sessionOwner(S.session)||'',at:Date.now(),read_only:true
+ }))}catch(_){}
+}
+function accountChooserRestoreAllowed(){
+ try{
+  const raw=sessionStorage.getItem(ACCOUNT_CHOOSER_INTENT_KEY);
+  if(!raw)return false;
+  const value=JSON.parse(raw),elapsed=Date.now()-value.at;
+  const valid=value&&value.read_only===true&&
+   typeof value.owner==='string'&&value.owner===(sessionOwner(S.session)||'')&&
+   Number.isFinite(elapsed)&&elapsed>=0&&elapsed<=12000&&!window.AndroidBridge;
+  if(!valid)clearAccountChooserIntent();
+  return !!valid;
+ }catch(_){clearAccountChooserIntent();return false}
+}
 // Read-only diagnostic for the rendered UI contract. Never expose tokens or
 // account identities and never turn a denied operation into an automatic retry.
 window.igcSyncSwitchState=()=>{
  const gate=accountSwitchAdmission();
  return {ready:gate.code==='ready',code:gate.code};
 };
-window.igcSyncSwitchAccount=function(){
+window.igcSyncSwitchAccount=function(userInitiated=true){
  const entry=accountSwitchAdmission();
  // Opening the chooser is read-only. The automation may start during
  // initial sync/paint, after the operator sees the button but before clicking.
@@ -14876,6 +14903,9 @@ window.igcSyncSwitchAccount=function(){
   status(entry.message,'warn');return;
  }
  const prior=document.getElementById('igcLoginChooser');
+ // Persist intent BEFORE showing a modal, so an unrelated app bootstrap
+ // reload cannot make the user's explicit Cambiar cuenta click look inert.
+ if(userInitiated===true)requestAccountChooserRestore();
  if(prior?.open){prior.focus();return;}
  prior?.remove();
  const dialog=document.createElement('dialog');
@@ -14914,6 +14944,7 @@ window.igcSyncSwitchAccount=function(){
      latest.message;
     return;
    }
+   clearAccountChooserIntent();
    if(dialog.open)dialog.close();
    dialog.remove();
   }catch(error){
@@ -14937,12 +14968,35 @@ window.igcSyncSwitchAccount=function(){
  }
  makeAccountButton('＋ Añadir otra cuenta',()=>admitChoice(addAnotherLogin),list);
  dialog.appendChild(list);
- const close=makeAccountButton('Cancelar',()=>{dialog.close();dialog.remove()},dialog);
+ const close=makeAccountButton('Cancelar',()=>{
+   // The close event is async. Clear intent at the CLICK boundary, before
+   // an immediate app reload can restore a modal the owner just dismissed.
+   clearAccountChooserIntent();dialog.close();dialog.remove();
+ },dialog);
  close.style.textAlign='center';
  document.body.appendChild(dialog);
- dialog.addEventListener('close',()=>dialog.remove(),{once:true});
- dialog.showModal();
+ dialog.addEventListener('cancel',()=>{
+   // Escape's cancel event precedes its async close event. Clear BEFORE
+   // browser/app navigation; otherwise the dismissed dialog can resurrect.
+   clearAccountChooserIntent();
+ });
+ dialog.addEventListener('close',()=>{
+   clearAccountChooserIntent();dialog.remove();
+ },{once:true});
+ try{dialog.showModal()}
+ catch(error){
+   clearAccountChooserIntent();
+   dialog.remove();
+   status('No se pudo abrir el selector de cuentas: '+String(error?.message||error).slice(0,140),'warn');
+ }
 };
+function restoreAccountChooserAfterStartup(){
+ if(!accountChooserRestoreAllowed())return;
+ // A modal is only a read-only view. Never auto-select a remembered owner,
+ // even if cloud sync/robot is still busy: the click gate is re-evaluated.
+ if(document.getElementById('igcSyncSignedIn')||
+    document.getElementById('igcSyncSignedOut'))window.igcSyncSwitchAccount(false);
+}
 function schedule(){clearInterval(S.timer);if(S.cfg.auto)S.timer=setInterval(()=>{if(S.session?.access_token&&!S.needsReauth&&!document.hidden)syncNow(false)},15000)}
 function renderAuthUi(){const out=document.getElementById('igcSyncSignedOut'),inn=document.getElementById('igcSyncSignedIn'),who=document.getElementById('igcSyncAccount');const on=!!S.session?.access_token&&!S.needsReauth;if(out)out.style.display=on?'none':'';if(inn)inn.style.display=on?'':'none';if(who)who.textContent=S.session?.user?.email||S.cfg.email||'Cuenta conectada';renderStats()}
 function install(){const sys=[...document.querySelectorAll('.igc-nav-group')].find(g=>/SYSTEM/i.test(g.querySelector('.igc-nav-cap')?.textContent||''));if(sys&&!document.getElementById('tab-sync')){const audit=document.getElementById('tab-audit'),b=document.createElement('button');b.className='navbtn';b.id='tab-sync';b.title='Cuenta';b.setAttribute('onclick',"showPage('sync')");b.innerHTML='<span class="igc-nav-icon">☁</span><span class="igc-nav-label">Cuenta</span>';sys.insertBefore(b,audit||null)}if(!document.getElementById('page-sync')){const main=document.querySelector('main.igc-workspace'),p=document.createElement('div');p.className='page';p.id='page-sync';p.innerHTML=`<div class="igc-page-flow"><div class="igc-page-head"><div class="igc-page-eyebrow">INSTAGRAM CLEANER PRO · MULTI-DEVICE</div><h2>Cuenta y sincronización</h2><p>Tu cuenta mantiene Desktop y Android al día, incluyendo las listas completas de personas.</p></div><div class="panel"><div class="title">Tu cuenta</div><div id="igcSyncSignedOut"><div class="igc-sync-fields"><div class="control"><label>Correo</label><input id="igcSyncEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div class="control"><label>Contraseña</label><input id="igcSyncPassword" type="password" autocomplete="current-password" placeholder="Your password"></div></div><div class="btnrow"><button class="btn primary" onclick="igcSyncPasswordSignIn()">Entrar</button><button class="btn" onclick="igcSyncSwitchAccount()">Cuentas guardadas</button><button class="btn" onclick="igcSyncToggleOtp()">Primera vez / recuperar contraseña</button></div><div id="igcSyncOtpGroup" class="igc-sync-fields" style="display:none;margin-top:12px"><div class="control"><label>Código de verificación</label><input id="igcSyncCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Email verification code"></div><div class="control"><label>Nueva contraseña</label><input id="igcSyncNewPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters"></div><div class="btnrow" style="grid-column:1/-1"><button class="btn" onclick="igcSyncSendCode()">Enviar código</button><button class="btn green" onclick="igcSyncVerifyCode()">Verificar y guardar contraseña</button></div></div><div class="igc-sync-help" style="margin-top:10px">Usa correo + contraseña normalmente. El código solo se necesita la primera vez o para recuperar acceso. Project URL y keys siguen preconfigurados.</div></div><div id="igcSyncSignedIn" style="display:none"><div class="igc-sync-card"><b>Conectado</b><small id="igcSyncAccount">Cuenta conectada</small></div><div class="btnrow" style="margin-top:10px"><button class="btn green" onclick="igcSyncNow()">Sincronizar ahora</button><button class="btn" onclick="igcSyncSwitchAccount()">Cambiar cuenta</button><button class="btn red" onclick="igcSyncDisconnect()">Sign out</button></div><div class="igc-sync-help" style="margin-top:10px">Sincronización automática activa cada 15 s mientras el Workspace esté abierto. Cambiar cuenta muestra las sesiones recordadas y permite añadir otro usuario. Cerrar sesión olvida únicamente la cuenta actual.</div></div><div id="igcSyncStatus" class="igc-sync-status">${S.session?.access_token?'Sesión restaurada.':'Inicia sesión una sola vez en este dispositivo.'}</div><div id="igcSyncKpis" class="igc-sync-kpis"></div></div><div class="igc-sync-grid"><div class="panel"><div class="title">Qué se sincroniza</div><div class="igc-sync-card"><b>Listas completas</b><small>Following, Followers y Pending viajan con sus usernames y metadatos para que Android muestre las mismas personas que Desktop.</small></div><div class="igc-sync-card"><b>Revisiones y decisiones</b><small>Revisiones históricas y nuevas, protegidos y pausas se sincronizan entre Desktop y Android.</small></div><div class="igc-sync-card"><b>Focus preparados</b><small>Los Foco 20/30/40 congelados de Desktop llegan a Android con exactamente los mismos usernames.</small></div><div class="igc-sync-card"><b>Audit Log</b><small>Abiertos, revisados, auditados, cambios de decisión y tandas completadas viajan como eventos.</small></div></div><div class="panel"><div class="title">Status</div><div class="igc-sync-help">• El servidor está preconfigurado en la app.<br>• La misma cuenta usa contraseña en Desktop y Android; OTP queda para alta o recuperación.<br>• Desktop publica la copia canónica de Following, Followers y Pending.<br>• Android descarga esas listas y reconstruye Review, Mutuals, Followers y Pending.<br>• Revisado y Auditado siguen siendo eventos distintos.</div></div></div></div>`;main.appendChild(p)}const email=document.getElementById('igcSyncEmail');if(email)email.value=S.cfg.email||S.session?.user?.email||'';S.cfg.auto=true;saveCfg();renderAuthUi();schedule();notifyHostSession();if(S.session?.access_token){
@@ -14951,7 +15005,11 @@ function install(){const sys=[...document.querySelectorAll('.igc-nav-group')].fi
   setTimeout(()=>syncNow(false),150);
  }else{
   window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Solo se muestran perfiles guardados en esta PC. Entra a Cuenta con el mismo correo de Android para cargar el resto.','error');
- }}
+ }
+ // Restore only a RECENT explicit chooser-open intent, after its actual
+ // Sync page elements exist. A blocked robot/sync still prevents selection.
+ setTimeout(restoreAccountChooserAfterStartup,0);
+}
 
 const oldShow=window.showPage;if(oldShow&&!oldShow.__syncWrapped){const w=function(id){const r=oldShow.apply(this,arguments);if(id==='sync'){renderAuthUi();renderStats();}return r};w.__syncWrapped=true;window.showPage=w}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.cfg.auto&&S.session?.access_token)syncNow(false)});
