@@ -7,9 +7,9 @@ const html=fs.readFileSync(path.join(__dirname,
   "../desktop/ig_cleaner_pro_v120_27_synced_companion.html"),"utf8");
 // Verify the SAFE action is reachable in the real Pending UI, not merely
 // a dead helper function. Keep the history-destroying reset distinct.
-assert.equal((html.match(/onclick="unlockModule\\('pending'\\)"/g)||[]).length,1,
+assert.equal((html.match(/onclick="unlockModule\('pending'\)"/g)||[]).length,1,
   "Pending Lab must expose the safe non-repeat Destrabar control");
-assert.equal((html.match(/onclick="clearPendingOpened\\(\\)"/g)||[]).length,1,
+assert.equal((html.match(/onclick="clearPendingOpened\(\)"/g)||[]).length,1,
   "Explicit history reset remains separately labeled");
 assert.match(html,/Destrabar tanda · sin repetir/);
 function section(a,b){
