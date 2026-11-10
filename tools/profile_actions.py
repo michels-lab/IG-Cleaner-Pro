@@ -1886,14 +1886,33 @@ class ActionRobot:
         base = self._base_for(owner, account, task)
         return base.with_name(base.stem + "-target-visits.json")
 
+    def _manual_review_visits_file_for(self, owner, account, task):
+        """Separate read-only owner-opened visit evidence; never action WAL."""
+        base = self._base_for(owner, account, task)
+        return base.with_name(base.stem + "-manual-review-visits.json")
+
+    def _manual_review_visits(self, owner, account, task):
+        visits = _read_json(self._manual_review_visits_file_for(
+            owner, account, task), {})
+        if (not isinstance(visits, dict) or
+                any(not isinstance(u, str) or valid_username(u) != u
+                    or not isinstance(record, dict)
+                    for u, record in visits.items())):
+            raise ValueError(
+                "Manual Review visits are unreadable; preserve the original "
+                "read-only navigation evidence and do not reuse its targets.")
+        return visits
+
     def _visited_usernames(self, owner, account, task, journal):
-        """All past targets, including confirmed, no-click and interrupted visits."""
+        """All past targets, including confirmed, no-click and manual visits."""
         visits = _read_json(self._target_visits_file_for(owner, account, task), {})
-        if (not isinstance(journal, dict) or
-                any(valid_username(u) != u or not isinstance(record, dict)
+        if (not isinstance(journal, dict) or not isinstance(visits, dict) or
+                any(not isinstance(u, str) or valid_username(u) != u
+                    or not isinstance(record, dict)
                     for u, record in visits.items())):
             raise ValueError("Saved target-visit history is invalid; inspect it before a new batch.")
-        return sorted(set(journal) | set(visits))
+        manual = self._manual_review_visits(owner, account, task)
+        return sorted(set(journal) | set(visits) | set(manual))
 
     def _reserve_target_visit(self, username):
         """Persist BEFORE opening an Instagram target URL; never imply a click."""
