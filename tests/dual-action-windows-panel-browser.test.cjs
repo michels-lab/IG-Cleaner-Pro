@@ -96,8 +96,11 @@ const {chromium}=require('playwright');
          processed:0,pending:0,issue_count:0})};
      }
      if(target.includes('/api/actions/history')){
-       if(window.__igcHistoryUnavailable)return {ok:false,json:async()=>({error:'offline fixture'})};
        const data=opts?.body?JSON.parse(opts.body):{};
+       if(window.__igcHistoryUnavailable ||
+          (window.__igcCancelHistoryUnavailable && data.task==='cancel') ||
+          (window.__igcUnfollowHistoryUnavailable && data.task==='unfollow'))
+        return {ok:false,json:async()=>({error:'offline fixture'})};
        const now=new Date().toISOString();
        const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),
          today.getDate()-1,23,59,0).toISOString();
@@ -282,6 +285,52 @@ const {chromium}=require('playwright');
    await page.locator('#igcActAccount').selectOption('ig_first_1234567');
    await page.waitForFunction(()=>
      document.querySelector('#igcActBatch')?.textContent?.includes('Procesados: 8'));
+   // One damaged/unreadable task WAL must NOT erase the healthy task.
+   // Do not falsely report combined totals or the bad task as confirmed 0.
+   await page.evaluate(()=>window.__igcCancelHistoryUnavailable=true);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥1');
+   assert.match(await page.locator('#igcActStatus').innerText(),/Lectura PARCIAL.*Cancel Pending/);
+   assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'true');
+   assert.equal(await page.locator('#igcActMetric_unfollow').innerText(),'≥1');
+   assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'≥0');
+   assert.match(await page.locator('#igcActHistory').innerText(),/done.recent/);
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/cancel.yesterday/);
+   await page.locator('#igcActTask').selectOption('cancel');
+   assert.equal(await page.locator('#igcActCount_all').innerText(),'—');
+   assert.equal(await page.locator('#igcActMetric_cancel').innerText(),'—');
+   assert.match(await page.locator('#igcActHistory').innerText(),/No se presume cero/);
+   await page.locator('#igcActTask').selectOption('unfollow');
+   assert.equal(await page.locator('#igcActCount_all').innerText(),'1');
+   assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'false');
+   await page.locator('#igcActTask').selectOption('all');
+   // A's healthy Unfollow rows must never appear in B when B's Cancel
+   // history independently fails. Do not reuse A's old lower-bound total.
+   await page.locator('#igcActAccount').selectOption('ig_second_123456');
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥0');
+   assert.doesNotMatch(await page.locator('#igcActHistory').innerText(),/done.recent/);
+   assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'true');
+   await page.locator('#igcActAccount').selectOption('ig_first_1234567');
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥1');
+   // Make the opposite task unreadable: Unfollow must be UNKNOWN but a
+   // verified Cancel Pending action remains visible and is NOT a false 0.
+   await page.evaluate(()=>{
+     window.__igcCancelHistoryUnavailable=false;
+     window.__igcUnfollowHistoryUnavailable=true;
+   });
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='≥1');
+   assert.match(await page.locator('#igcActStatus').innerText(),/Lectura PARCIAL.*Unfollow/);
+   await page.locator('#igcActTask').selectOption('unfollow');
+   assert.equal(await page.locator('#igcActCount_all').innerText(),'—');
+   await page.locator('#igcActTask').selectOption('cancel');
+   assert.equal(await page.locator('#igcActCount_all').innerText(),'1');
+   await page.locator('#igcActTask').selectOption('all');
+   await page.evaluate(()=>window.__igcUnfollowHistoryUnavailable=false);
+   await page.locator('#igcActRefresh').click();
+   await page.waitForFunction(()=>document.querySelector('#igcActCount_all')?.textContent==='2');
+   assert.equal(await page.locator('#igcAutomationActivityPanel').getAttribute('data-history-partial'),'false');
+
    // Even with no saved history, current per-account progress still exists.
    await page.evaluate(()=>window.__igcHistoryUnavailable=true);
    await page.locator('#igcActRefresh').click();

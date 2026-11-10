@@ -80,7 +80,7 @@ const sessionStart=Date.now(); // This native app page session; reset on reload.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
  ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
  ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
-let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],lastKey='',lastActive='',batchSequence=0;
+let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],unavailableTasks=[],lastKey='',lastActive='',batchSequence=0;
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
  if(txt!==undefined)x.textContent=String(txt);return x;
@@ -306,6 +306,7 @@ function clearJournalValues(){
 }
 function clearValues(){
  batchSequence++;
+ unavailableTasks=[];
  const bt=$('igcActBatchTitle');if(bt)bt.textContent='—';
  const b=$('igcActBatch');if(b)b.textContent='—';
  clearJournalValues();
@@ -325,8 +326,13 @@ function renderHistory(records){
  }
  list.replaceChildren();
  if(!entries.length){
-   last.textContent='No hay acciones con fecha guardada.';
-   list.append(node('p','igc-act-muted','El historial está vacío o no tiene fechas verificables.'));
+   const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
+   last.textContent=partial?
+     'Sin registros en las tareas verificables; total desconocido.':
+     'No hay acciones con fecha guardada.';
+   list.append(node('p','igc-act-muted',partial?
+     'Faltan registros de una tarea. No se puede concluir que hubo cero acciones.':
+     'El historial está vacío o no tiene fechas verificables.'));
    return;
  }
  function name(r){return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username}
@@ -335,7 +341,9 @@ function renderHistory(records){
    'OK histórico · origen sin registrar':k==='no_action'?'Ya resuelto · sin clic':
    k==='unavailable'?'No disponible':'No confirmado'}
  const newest=entries[0];last.replaceChildren();
- last.append(node('div',null,'Último registro · '+name(newest)),
+ last.append(node('div',null,(unavailableTasks.length>0&&
+   $('igcActTask')?.value==='all'?'Último registro verificable (parcial)':'Último registro')+
+   ' · '+name(newest)),
    node('small',null,desc(newest)+' · '+new Date(dateValue(newest.at)).toLocaleString()));
  for(const entry of entries){
    const row=node('div','igc-act-history-row');
@@ -348,17 +356,31 @@ function render(records){
  if(!dataReady)return;
  const selected=$('igcActTask')?.value||'all';
  const scoped=selected==='all'?records:records.filter(r=>r.task===selected);
+ // A damaged task WAL is unknown, not zero. Combined counters are LOWER
+ // BOUNDS; task-specific numbers remain exact only for healthy sources.
+ const incomplete=selected==='all'?unavailableTasks.length>0:
+   unavailableTasks.includes(selected);
+ const missingOnly=selected!=='all'&&incomplete;
+ const panel=$('igcAutomationActivityPanel');
+ if(panel)panel.setAttribute('data-history-partial',String(incomplete));
+ const display=n=>missingOnly?'—':incomplete?'≥'+n:String(n);
  const now=new Date();
  for(const [key] of PERIODS){
    const out=summarize(scoped,key,now);
    const el=$('igcActCount_'+key);
-   if(el)el.textContent=String(out.verified);
+   if(el)el.textContent=display(out.verified);
  }
- renderHistory(scoped);
+ if(missingOnly){
+   const list=$('igcActHistory'),last=$('igcActLast');
+   if(last)last.textContent='Historial no verificable de '+
+     (selected==='cancel'?'Cancel Pending':'Unfollow')+'.';
+   if(list)list.replaceChildren(node('p','igc-act-muted',
+     'La lectura de esta tarea falló. No se presume cero ni se borran acciones de la otra tarea.'));
+ }else renderHistory(scoped);
  const period=$('igcActBreakdownPeriod')?.value||'today';
  const data=summarize(scoped,period,now);
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable','legacy_unknown']){
-   const el=$('igcActMetric_'+key);if(el)el.textContent=String(data[key]);
+   const el=$('igcActMetric_'+key);if(el)el.textContent=display(data[key]);
  }
 }
 async function refresh(){
@@ -394,13 +416,24 @@ async function refresh(){
  const button=$('igcActRefresh');if(button)button.disabled=true;
  const account=selector.value;
  try{
-   const data=await Promise.all(['unfollow','cancel'].map(task=>readHistory(account,task)));
+   // A single corrupt Cancel Pending WAL must not erase valid Unfollow
+   // counts (or vice versa). Require exact owner/account/task for every row.
+   const tasks=['unfollow','cancel'];
+   const responses=await Promise.allSettled(tasks.map(task=>readHistory(account,task)));
    // Reject stale responses after an account selection or login switch.
    if(owner!==ctx.owner||selector.value!==account||
       context().owner!==ctx.owner||context().active!==ctx.active)return;
-   latest=data.flat();dataReady=true;render(latest);
+   const failed=tasks.filter((task,i)=>responses[i].status!=='fulfilled');
+   if(failed.length===tasks.length)
+     throw Error('Unfollow y Cancel Pending: ambos historiales no son verificables.');
+   unavailableTasks=failed;
+   latest=responses.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+   dataReady=true;render(latest);
    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'hora local';
-   setStatus('Actualizado: '+new Date().toLocaleTimeString()+' · '+tz+
+   const label=failed.map(t=>t==='cancel'?'Cancel Pending':'Unfollow').join(' y ');
+   setStatus((failed.length?'Lectura PARCIAL: '+label+
+     ' no verificable. Las cifras combinadas son mínimos (≥), no totales completos. · ':
+     'Actualizado: ')+new Date().toLocaleTimeString()+' · '+tz+
      ' · origen robot confirmado cuando está registrado. Históricos sin origen: separados.');
  }catch(e){
    // Do not erase another account's metrics after a late failed request.
