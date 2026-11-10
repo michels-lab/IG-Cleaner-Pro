@@ -414,12 +414,36 @@ class DualActionWorkspaces:
                 raise ValueError("Pause this action worker before manually reopening its profiles.")
             with robot.lock:
                 # Independently read exact scoped evidence even on app restart.
-                from profile_actions import _read_json
+                from profile_actions import _read_json, _public_action_record
                 saved = _read_json(robot._base_for(owner, account, task), {})
                 visited = _read_json(robot._target_visits_file_for(owner, account, task), {})
                 if not isinstance(saved, dict) or not isinstance(visited, dict):
                     raise ValueError(
                         "Saved review evidence is unreadable; original history preserved.")
+                if username in saved:
+                    # The Windows Review chooser excludes terminal green/blue
+                    # outcomes. Enforce the same rule at the native server:
+                    # a stale dropdown or direct request must not reopen an
+                    # already-verified target. A malformed or uncertain
+                    # possible-click WAL is downgraded to Review by the
+                    # canonical public evidence classifier, never to green.
+                    recorded = saved[username]
+                    observed = _public_action_record(recorded)
+                    status = observed.get("status")
+                    possible_click = (isinstance(recorded, dict)
+                                      and "click_intent" in recorded)
+                    # UI intentionally marks ANY non-OK post-click outcome
+                    # yellow, even when a legacy status says "already".
+                    # Those cases still need owner inspection; only terminal
+                    # green OK or positively proven ZERO-click resolutions
+                    # can be excluded from manual Review.
+                    if status == "ok" or (
+                            status in ("already_not_following",
+                                       "already_not_requested", "profile_unavailable")
+                            and not possible_click):
+                        raise ValueError(
+                            "This target already has a verified or resolved "
+                            "outcome; do not reopen it from manual Review.")
                 if username not in saved and username not in visited:
                     # The Windows Review selector includes genuinely untouched
                     # members of the CURRENT persisted batch. They have no
