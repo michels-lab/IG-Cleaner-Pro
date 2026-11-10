@@ -427,10 +427,20 @@ class DualActionWorkspaces:
                     # already-verified target. A malformed or uncertain
                     # possible-click WAL is downgraded to Review by the
                     # canonical public evidence classifier, never to green.
-                    observed = _public_action_record(saved[username])
-                    if observed.get("status") in (
-                            "ok", "already_not_following",
-                            "already_not_requested", "profile_unavailable"):
+                    recorded = saved[username]
+                    observed = _public_action_record(recorded)
+                    status = observed.get("status")
+                    possible_click = (isinstance(recorded, dict)
+                                      and "click_intent" in recorded)
+                    # UI intentionally marks ANY non-OK post-click outcome
+                    # yellow, even when a legacy status says "already".
+                    # Those cases still need owner inspection; only terminal
+                    # green OK or positively proven ZERO-click resolutions
+                    # can be excluded from manual Review.
+                    if status == "ok" or (
+                            status in ("already_not_following",
+                                       "already_not_requested", "profile_unavailable")
+                            and not possible_click):
                         raise ValueError(
                             "This target already has a verified or resolved "
                             "outcome; do not reopen it from manual Review.")
