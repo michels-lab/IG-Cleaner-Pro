@@ -747,6 +747,93 @@ class IsolatedWorkspaceTests(unittest.TestCase):
         self.assertFalse(a.worker)
         self.assertFalse(b.worker)
 
+    def test_manual_review_does_not_reopen_terminal_green_or_no_action_targets(self):
+        """Native API must enforce the Review selector's no-reopen rule."""
+        self.manager.configure(config())
+        a = self.manager.workspaces[A]["robot"]
+        b = self.manager.workspaces[B]["robot"]
+        journal_a = a._base_for(OWNER, A, "unfollow")
+        journal_b = b._base_for(OWNER, B, "unfollow")
+        visits_a = a._target_visits_file_for(OWNER, A, "unfollow")
+        batch_a = a._review_batches_file_for(OWNER, A, "unfollow")
+        _atomic_json(journal_a, {
+            "green.ok": {"status": "ok"},
+            "no.follow": {"status": "already_not_following"},
+            "no.request": {"status": "already_not_requested"},
+            "unavailable.one": {"status": "profile_unavailable"},
+            # A historical status can say unavailable after a possible click,
+            # but the canonical public outcome must remain Review.
+            "uncertain.one": {"status": "profile_unavailable",
+                              "click_intent": {"phase": "relationship_control",
+                                               "outcome_recorded": True}},
+        })
+        _atomic_json(journal_b, {
+            "green.ok": {"status": "review", "issue": "target_ambiguous"}
+        })
+        _atomic_json(visits_a, {
+            "green.ok": {"visit_started_at": "2026-11-09T08:00:00Z"},
+            "unavailable.one": {"visit_started_at": "2026-11-09T08:01:00Z"},
+        })
+        _atomic_json(batch_a, [{
+            "id": "active-review",
+            "targets": ["green.ok", "uncertain.one", "untouched.one"],
+            "approved_at": None, "recheck_results": {},
+        }])
+        files = [journal_a, journal_b, visits_a, batch_a]
+        before = [(p, p.read_bytes()) for p in files]
+
+        def request(account, username):
+            return {
+                "owner": OWNER, "account": account, "task": "unfollow",
+                "username": username,
+                "confirmation": "action-workspace-review:" + OWNER + ":" +
+                                account + ":" + username,
+            }
+
+        with patch("profile_actions.shutil.which", return_value=sys.executable):
+            with patch("profile_actions.subprocess.Popen") as launched:
+                for user in ("green.ok", "no.follow", "no.request", "unavailable.one"):
+                    with self.subTest(username=user):
+                        with self.assertRaisesRegex(ValueError, "do not reopen"):
+                            self.manager.open_review_one(request(A, user))
+                launched.assert_not_called()
+
+                # A saved click with unverified outcome stays Review, even
+                # when its historical status was profile_unavailable.
+                result = self.manager.open_review_one(request(A, "uncertain.one"))
+                self.assertFalse(result["relationship_action"])
+                self.assertEqual(result["username"], "uncertain.one")
+                args = launched.call_args.args[0]
+                self.assertIn("https://www.instagram.com/uncertain.one/", args)
+                self.assertEqual(Path(next(
+                    s.split("=", 1)[1] for s in args
+                    if s.startswith("--user-data-dir="))).resolve(),
+                    self.sessions.directory(OWNER, A).resolve())
+
+                # A current, truly untouched saved member is still eligible.
+                launched.reset_mock()
+                self.assertFalse(self.manager.open_review_one(
+                    request(A, "untouched.one"))["relationship_action"])
+                launched.assert_called_once()
+
+                # The same string in sibling B is a different account's
+                # unresolved target: never let A's green evidence block B.
+                launched.reset_mock()
+                other = self.manager.open_review_one(request(B, "green.ok"))
+                self.assertFalse(other["relationship_action"])
+                args = launched.call_args.args[0]
+                self.assertEqual(Path(next(
+                    s.split("=", 1)[1] for s in args
+                    if s.startswith("--user-data-dir="))).resolve(),
+                    self.sessions.directory(OWNER, B).resolve())
+                launched.assert_called_once()
+
+        for p, saved in before:
+            self.assertEqual(p.read_bytes(), saved,
+                             "Read-only manual Review must never rewrite WAL.")
+        self.assertFalse(a.worker)
+        self.assertFalse(b.worker)
+
     def test_approve_exact_account_archives_only_checked_and_preserves_uncertain(self):
         self.manager.configure(config())
         robot = self.manager.workspaces[A]["robot"]
