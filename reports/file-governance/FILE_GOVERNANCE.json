@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "07a0bbc15e67c14b0f6d749aaf83ab74097eccbbd7e276c6aa94715bf3038589",
-  "evidence_fingerprint": "04c1d4d1aca7a74859a4529e8ed3286454c3d522f64b1d4f73625597510d97c5",
+  "inventory_fingerprint": "22aaa14435ce2d0281a90b20f41cbf2e8ba22032effe459503920a71767b9a31",
+  "evidence_fingerprint": "e4c4cf7acf41636e3491b2a0796ab54a0fa9a9fe5ffb311ea21a927671a782ac",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "fe65f611d4b2149096615fa70da3ff9518721203"
+      "blob": "ee8a94a1eef0d0ef569e3be34125aa4a33c34113"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2052,14 +2052,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4046040766432a886f7c6836a45664b904ff659c"
+      "blob": "bea2cd96ece79559b2453e5d2aaad243fe6a6689"
     },
     {
       "path": "tests/pending-zip-shards-runtime.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "53e7de1ea54d1076ee49ce1cf28f93de694efeed"
+      "blob": "37d504aa7ed9e48749b86f2fb1303213cdbc4f82"
     },
     {
       "path": "tests/premium-visual-contract.py",
@@ -3004,11 +3004,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "11ceb1c1e881ca06",
+      "id": "5815f932adb4c611",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/dual-action-windows-panel-browser.test.cjs, tests/test_action_chrome_profiles.py, tests/test_action_click_wal.py",
+      "observation": "15 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/auth-account-switch-browser.test.cjs, tests/dual-action-windows-panel-browser.test.cjs, tests/pending-zip-completeness.test.cjs, tests/pending-zip-shards-runtime.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
