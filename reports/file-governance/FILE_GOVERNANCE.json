@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "7e4667f2a1b090d73fbc8801dea5586a0f76ff25eef05d7436b49cc247db406a",
+  "inventory_fingerprint": "277968f18f29db71790ddc9ba0b3e8011395aae9048184e31c330cba3d5d4df6",
   "evidence_fingerprint": "0fbbb35ea4f753753292c736c6f1a6a4d9586bc9c6fdb1bcdd04402c883aae2e",
   "files": [
     {
@@ -2325,7 +2325,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "cf6e6532933808fa2dbab9dbd06e7f430f5ef565"
+      "blob": "b7529e57f0b451ce356ee892706c3221d589c45e"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2717,7 +2717,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "207c63a7491133f34928e677817f8441f899615a"
+      "blob": "40a7cdbe8387c80111ef3abc3bebcc71b93b2990"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
