@@ -175,7 +175,9 @@ class DurableClickIntentTests(unittest.TestCase):
             _atomic_json(cohorts, [{
                 "id": "saved-archive", "targets": ["opened.manually", "possible.click"],
                 "original_targets": ["opened.manually", "safe.miss",
-                                     "untouched", "possible.click", "other.manual"],
+                                     "untouched", "possible.click", "other.manual",
+                                     None, [], {"unknown": "value"}, "@not.valid",
+                                     "UPPER.USER"],
                 "approved_at": None, "deferred_at": "2026-11-09T22:00:00Z",
                 "recheck_results": {},
             }])
@@ -194,6 +196,8 @@ class DurableClickIntentTests(unittest.TestCase):
             current = robot.attempted_history({
                 "owner": owner, "account": account, "task": task})
             self.assertEqual(set(current["reusable_usernames"]), {"safe.miss", "untouched"})
+            self.assertTrue(all(isinstance(name, str) for name in
+                                current["reusable_usernames"]))
             self.assertIn("opened.manually", current["visited_usernames"])
             self.assertIn("other.manual", current["visited_usernames"])
             self.assertIn("possible.click", current["attempted_usernames"])
