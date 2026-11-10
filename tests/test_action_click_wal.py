@@ -260,17 +260,17 @@ class DurableClickIntentTests(unittest.TestCase):
             active = robot.batch_review(req)["batch"]
             self.assertEqual(active["id"], "current")
             self.assertEqual(active["action_results"]["opened.now"]["status"], "pending")
-            self.assertTrue(active["action_results"]["opened.now"]["manual_review_opened"])
+            self.assertTrue(active["action_results"]["opened.now"]["manual_review_requested"])
             self.assertFalse(active["action_results"]["opened.now"]["possible_click"])
-            self.assertFalse(active["action_results"]["never.opened"]["manual_review_opened"])
+            self.assertFalse(active["action_results"]["never.opened"]["manual_review_requested"])
             self.assertEqual(active["action_results"]["never.opened"]["status"], "pending")
-            self.assertFalse(active["action_results"]["uncertain.click"]["manual_review_opened"])
+            self.assertFalse(active["action_results"]["uncertain.click"]["manual_review_requested"])
             self.assertTrue(active["action_results"]["uncertain.click"]["possible_click"])
             archived = robot.deferred_batch_details({**req, "batch_id": "deferred"})
             self.assertTrue(archived["read_only"])
-            self.assertTrue(archived["action_results"]["opened.archive"]["manual_review_opened"])
+            self.assertTrue(archived["action_results"]["opened.archive"]["manual_review_requested"])
             self.assertEqual(archived["action_results"]["opened.archive"]["status"], "pending")
-            self.assertFalse(archived["action_results"]["archive.unvisited"]["manual_review_opened"])
+            self.assertFalse(archived["action_results"]["archive.unvisited"]["manual_review_requested"])
 
             # Another Instagram account may have the same username. Its
             # manual status is absent; the saved record is not cross-account.
@@ -281,7 +281,7 @@ class DurableClickIntentTests(unittest.TestCase):
             }])
             sibling = robot.batch_review({
                 "owner": owner, "account": second, "task": task})["batch"]
-            self.assertFalse(sibling["action_results"]["opened.now"]["manual_review_opened"])
+            self.assertFalse(sibling["action_results"]["opened.now"]["manual_review_requested"])
             for path, bytes_before in before:
                 self.assertEqual(path.read_bytes(), bytes_before,
                                  "Review must remain read-only, never change action WAL.")
