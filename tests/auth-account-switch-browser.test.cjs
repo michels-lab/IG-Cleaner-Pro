@@ -56,8 +56,15 @@ const {chromium}=require("playwright");
   // An unrelated bootstrap reload can arrive AFTER the user's click, before
   // the chooser is fully displayed. Recover only that explicit READ-ONLY
   // chooser request; never automatically switch or discard the local review.
-  await page.evaluate(()=>{window.igcSyncSwitchAccount();location.reload()});
+  await page.evaluate(()=>window.igcSyncSwitchAccount());
+  const originalChooserAt=await page.evaluate(()=>
+    JSON.parse(sessionStorage.getItem("igc_v120_login_chooser_intent_v1"))?.at);
+  assert.equal(typeof originalChooserAt,"number");
+  await page.reload({waitUntil:"domcontentloaded"});
   await page.locator("#igcLoginChooser").waitFor({state:"visible",timeout:15000});
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(sessionStorage.getItem("igc_v120_login_chooser_intent_v1"))?.at),
+    originalChooserAt,"Restoring a read-only chooser must NOT extend its 12s expiry");
   assert.equal(await page.locator("#igcLoginChooser").count(),1,
     "Cold-start reload restores exactly one read-only chooser");
   assert.equal(await page.evaluate(()=>
@@ -257,6 +264,21 @@ const {chromium}=require("playwright");
   assert.equal(await page.evaluate(()=>
     sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null,
     "Expired intent should be removed");
+  // An intent from another Supabase owner must not appear in this
+  // owner's window; this is a read-only visibility boundary as well as an
+  // action-admission boundary.
+  await page.evaluate(()=>{
+    sessionStorage.setItem("igc_v120_login_chooser_intent_v1",
+      JSON.stringify({owner:"first@example.test",at:Date.now(),read_only:true}));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().code!==undefined,
+    null,{timeout:15000});
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("#igcLoginChooser").count(),0,
+    "A stale chooser from account A must never appear for account B");
+  assert.equal(await page.evaluate(()=>
+    sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null);
   // Repeat cold-start reloads after the legitimate account change. Both
   // sessions and local history must survive, with no phantom logout or
   // intermittent missing chooser while initialization/sync is settling.
