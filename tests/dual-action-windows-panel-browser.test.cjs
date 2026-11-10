@@ -164,7 +164,9 @@ const {chromium}=require('playwright');
              'review.target':{status:'review',possible_click:true,at:'2026-10-30T15:43:00Z'},
              'done.profile':{status:'ok',at:'2026-10-30T15:40:00Z',message:'Confirmed'},
              ...(window.__dawReviewCompleted?{'untouched.one':{
-               status:'already_not_following',at:'2026-10-30T15:45:00Z',message:'Observed'}}:{})
+               status:'already_not_following',at:'2026-10-30T15:45:00Z',message:'Observed'}}:
+               {'untouched.one':{status:'pending',possible_click:false,
+                 manual_review_opened:true}})
            }}
        }:operation==='open-review-one'?{status:'opening',relationship_action:false}:
        operation==='pause-one'?{status:'paused'}:
@@ -481,7 +483,7 @@ const {chromium}=require('playwright');
   const unresolved=page.locator(
     '#igcDawReviewList0 .igc-daw-uncertain, #igcDawReviewList0 .igc-daw-unresolved');
   const confirmed=page.locator('#igcDawReviewList0 .igc-daw-reviewed');
-  assert.equal(await unresolved.count(),2,'One uncertain click plus one untouched target');
+  assert.equal(await unresolved.count(),2,'One uncertain click plus one manually opened but unresolved target');
   assert.equal(await page.locator('#igcDawReviewList0 .igc-daw-uncertain').count(),1,
     'Potential click is orange, never mislabeled as an ordinary untouched warning');
   assert.equal(await confirmed.count(),1);
@@ -492,10 +494,19 @@ const {chromium}=require('playwright');
     .evaluateAll(rows=>rows.map(x=>x.querySelector('span')?.textContent)),[
     '@review.target','@untouched.one','@done.profile']);
   assert.match(await page.locator('#igcDawReviewList0').innerText(),/Clic incierto primero/);
+  assert.match(await page.locator('#igcDawReviewList0').innerText(),
+    /ABIERTO MANUALMENTE · SIN ACCIÓN CONFIRMADA/,
+    'Opening a profile is NOT a green action success or a never-visited pending row');
+  assert.match(await page.locator('#igcDawTarget0 option[value="untouched.one"]').innerText(),
+    /abierto manualmente/);
   assert.match(await unresolved.first().innerText(),/2026-10-30T15:43:00Z/);
   assert.equal(await page.locator('#igcDawTarget0 option[value="done.profile"]').count(),0,
     'Never re-open green confirmed profiles as new Review targets');
   await page.locator('#igcDawOpen0').click();
+  await page.waitForFunction(()=>document.querySelector(
+    '#igcDawTarget0 option[value="review.target"]')?.textContent?.includes('abierto manualmente'));
+  assert.match(await page.locator('#igcDawReviewList0').innerText(),/REVIEW · CLIC INCIERTO/,
+    'Read-only Chrome opening never promotes ambiguous click to OK');
   await page.locator('#igcDawStop0').click();
   // Status polling can interleave extra GETs between user actions. Assert
   // exact operation evidence rather than brittle fixed request positions.
