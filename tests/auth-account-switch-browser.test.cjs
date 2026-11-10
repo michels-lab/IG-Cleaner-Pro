@@ -135,6 +135,9 @@ const {chromium}=require("playwright");
     '["review-stays-local"]',"Late guard veto preserves local review history");
   await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await racedChooser.getByText("Cancelar",{exact:true}).click();
+  assert.equal(await page.evaluate(()=>
+    sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null,
+    "Cancel must clear chooser intent synchronously, not await the close event");
   // Cancel means cancel: even a subsequent reload must NOT resurrect the
   // chooser or replay any pending account switch.
   await page.reload({waitUntil:"domcontentloaded"});
@@ -279,6 +282,22 @@ const {chromium}=require("playwright");
     "A stale chooser from account A must never appear for account B");
   assert.equal(await page.evaluate(()=>
     sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null);
+  // Native Escape dismissal must also clear its intent synchronously,
+  // before the dialog's asynchronous 'close' event can be interrupted.
+  await page.evaluate(()=>showPage("sync"));
+  await page.locator("#igcSyncSignedIn").waitFor({state:"visible"});
+  await page.getByRole("button",{name:"Cambiar cuenta"}).click();
+  const escapeChooser=page.locator("#igcLoginChooser");
+  await escapeChooser.waitFor({state:"visible"});
+  await escapeChooser.press("Escape");
+  assert.equal(await page.evaluate(()=>
+    sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null);
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().code!==undefined,
+    null,{timeout:15000});
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("#igcLoginChooser").count(),0,
+    "Escape must not restore the dismissed selector on reload");
   // Repeat cold-start reloads after the legitimate account change. Both
   // sessions and local history must survive, with no phantom logout or
   // intermittent missing chooser while initialization/sync is settling.
