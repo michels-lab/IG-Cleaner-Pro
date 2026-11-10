@@ -1946,13 +1946,19 @@ class ActionRobot:
             journal = _read_json(self._base_for(owner, account, task), {})
             cohorts = self._review_batches(owner, account, task)
             protected = set(_read_json(self._protection_file_for(owner, account), []))
+            # A saved batch's original_targets list may outlive a manual
+            # read-only Chrome opening. Report only truly reusable targets:
+            # never offer one manually inspected and reserved in the
+            # durable per-owner/account/task visit sidecar (#351).
+            manual_visits = self._manual_review_visits(owner, account, task)
         reusable = []
         for entry in cohorts:
             if not isinstance(entry, dict): continue
             base = entry.get("original_targets") or []
             if not isinstance(base, list): continue
             for user in base:
-                if (valid_username(user) == user and user not in protected and
+                if (valid_username(user) == user and user not in protected
+                        and user not in manual_visits and
                         (user not in journal or
                          (not _invalid_saved_action_record(journal[user]) and
                           _preclick_no_action(journal[user])))):
