@@ -143,6 +143,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_action_reference_worker_contract.py' -v
           node tests/owner-unfollow-transport.test.cjs
           node tests/pending-focus-reimport.test.cjs
+          node tests/pending-unlock-no-repeat.test.cjs
           node tests/focus-batch-priority.test.cjs
           node tests/pending-zip-completeness.test.cjs
           node tests/pending-zip-shards-runtime.test.cjs
