@@ -127,6 +127,28 @@ assert.equal(groups.recent_follow_requests.length,1);
   /pending_follow_requests_5\.json.*Se conservaron los Pending anteriores/);
  assert.equal(saved.length,beforePartialCount);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
+ // Malformed canonical data in shard #2 cannot invent Pending from
+ // profile metadata, or commit partial results of preceding valid shards.
+ const malformedCanonical=shard('pending_follow_requests_6.json',{
+   relationships_follow_requests_sent:{
+     metadata:{name:'not.outgoing',href:'https://www.instagram.com/not.outgoing/'}
+   },recent_follow_requests:[users[11]]
+ });
+ await assert.rejects(
+  ()=>ctx.parseZipPending([a,malformedCanonical],'malformed-second-shard.zip'),
+  /pending_follow_requests_6\.json.*relationships_follow_requests_sent inválido.*Se conservaron los Pending anteriores/);
+ assert.equal(saved.length,beforePartialCount);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
+ // Renaming Recent as Pending also cannot promote accepted/incoming profiles.
+ const renamedRecent=shard('pending_follow_requests_7.json',{
+   recent_follow_requests:[users[13]]
+ });
+ await assert.rejects(
+  ()=>ctx.parseZipPending([a,renamedRecent],'renamed-recent-shard.zip'),
+  /pending_follow_requests_7\.json.*otra sección de Instagram.*Se conservaron los Pending anteriores/);
+ assert.equal(saved.length,beforePartialCount);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),beforePartialNames);
+
  // A genuinely empty *declared* sent-request shard is valid and must not
  // invalidate other nonempty shards; only the final union is persisted.
  const verifiedEmptyShard=shard('pending_follow_requests_3.json',{
