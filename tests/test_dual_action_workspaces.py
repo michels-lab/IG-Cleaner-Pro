@@ -672,6 +672,81 @@ class IsolatedWorkspaceTests(unittest.TestCase):
             self.assertIn("https://www.instagram.com/old.target/", args)
             opened.assert_called_once()
 
+    def test_manual_review_opens_untouched_saved_member_not_an_arbitrary_profile(self):
+        """An owner-selected unopened saved target is eligible for Chrome inspection only."""
+        self.manager.configure(config())
+        a = self.manager.workspaces[A]["robot"]
+        b = self.manager.workspaces[B]["robot"]
+        batch_a = a._review_batches_file_for(OWNER, A, "unfollow")
+        batch_b = b._review_batches_file_for(OWNER, B, "unfollow")
+        _atomic_json(batch_a, [{
+            "id": "persisted-A", "targets": ["untouched.a", "visited.a"],
+            "approved_at": None, "recheck_results": {}
+        }])
+        _atomic_json(batch_b, [{
+            "id": "persisted-B", "targets": ["untouched.b"],
+            "approved_at": None, "recheck_results": {}
+        }])
+        for robot, account in ((a, A), (b, B)):
+            _atomic_json(robot._base_for(OWNER, account, "unfollow"), {})
+            _atomic_json(robot._target_visits_file_for(OWNER, account, "unfollow"), {})
+        tracked = [batch_a, batch_b,
+                   a._base_for(OWNER, A, "unfollow"),
+                   b._base_for(OWNER, B, "unfollow"),
+                   a._target_visits_file_for(OWNER, A, "unfollow"),
+                   b._target_visits_file_for(OWNER, B, "unfollow")]
+        original_bytes = [(path, path.read_bytes()) for path in tracked]
+
+        def request(account, task, username):
+            return {"owner": OWNER, "account": account, "task": task,
+                    "username": username,
+                    "confirmation": "action-workspace-review:" + OWNER +
+                                    ":" + account + ":" + username}
+
+        # The visible saved Review selector lists untouched.a, yet its
+        # journal and visit history are still empty. Previously the route
+        # rejected this valid explicit manual review on every app restart.
+        self.assertEqual(self.manager.review_one({
+            "owner": OWNER, "account": A, "task": "unfollow"
+        })["batch"]["action_results"]["untouched.a"]["status"], "pending")
+        for args in ((B, "unfollow", "untouched.a"),
+                     (A, "cancel", "untouched.a"),
+                     (A, "unfollow", "arbitrary.user")):
+            with self.subTest(args=args), self.assertRaisesRegex(
+                    ValueError, "never inspected"):
+                self.manager.open_review_one(request(*args))
+        with patch("profile_actions.shutil.which", return_value=sys.executable), \
+             patch("profile_actions.subprocess.Popen") as opened:
+            outcome = self.manager.open_review_one(
+                request(A, "unfollow", "untouched.a"))
+            self.assertFalse(outcome["relationship_action"])
+            self.assertEqual(outcome["username"], "untouched.a")
+            args = opened.call_args.args[0]
+            self.assertEqual(
+                Path(next(v.split("=", 1)[1] for v in args
+                          if v.startswith("--user-data-dir="))).resolve(),
+                self.sessions.directory(OWNER, A).resolve())
+            self.assertIn("https://www.instagram.com/untouched.a/", args)
+            self.assertNotIn("https://www.instagram.com/untouched.b/", args)
+            opened.assert_called_once()
+
+        # A deferred/archived wave does not authorize an arbitrary revisit
+        # of a profile which never produced saved visit/click evidence.
+        _atomic_json(batch_a, [{
+            "id": "persisted-A", "targets": ["untouched.a"],
+            "deferred_at": "2026-11-09T22:00:00Z",
+            "approved_at": None, "recheck_results": {}
+        }])
+        with self.assertRaisesRegex(ValueError, "never inspected"):
+            self.manager.open_review_one(request(A, "unfollow", "untouched.a"))
+        for path, before in original_bytes:
+            if path == batch_a:
+                continue  # Deliberately changed to simulate an archived wave.
+            self.assertEqual(path.read_bytes(), before,
+                             "Manual review must not write action or visits WAL.")
+        self.assertFalse(a.worker)
+        self.assertFalse(b.worker)
+
     def test_approve_exact_account_archives_only_checked_and_preserves_uncertain(self):
         self.manager.configure(config())
         robot = self.manager.workspaces[A]["robot"]

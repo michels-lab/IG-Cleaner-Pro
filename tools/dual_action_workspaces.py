@@ -417,8 +417,20 @@ class DualActionWorkspaces:
                 from profile_actions import _read_json
                 saved = _read_json(robot._base_for(owner, account, task), {})
                 visited = _read_json(robot._target_visits_file_for(owner, account, task), {})
+                if not isinstance(saved, dict) or not isinstance(visited, dict):
+                    raise ValueError(
+                        "Saved review evidence is unreadable; original history preserved.")
                 if username not in saved and username not in visited:
-                    raise ValueError("This target was never inspected in this account's saved history.")
+                    # The Windows Review selector includes genuinely untouched
+                    # members of the CURRENT persisted batch. They have no
+                    # visit or click WAL yet; manual read-only inspection should
+                    # still work after an app restart. Never accept an
+                    # arbitrary Instagram handle or a batch from another task.
+                    pending = robot._pending_review(owner, account, task)
+                    if not pending or username not in pending["targets"]:
+                        raise ValueError(
+                            "This target was never inspected in this account's "
+                            "saved history or included in its current saved batch.")
             # Opens the bound hashed Chrome directory; no relationship click.
             return robot.open_profile(
                 {"owner": owner, "account": account, "task": task, "username": username})
