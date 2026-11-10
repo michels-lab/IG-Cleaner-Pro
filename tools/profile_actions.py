@@ -2152,11 +2152,13 @@ class ActionRobot:
                 # Disk-only protection may have changed after this cohort was
                 # saved. Return a read-only conflict list to the owner UI.
                 guard = set(_read_json(self._protection_file_for(owner, account), []))
+                manual_opened = self._manual_review_visits(owner, account, task)
                 details["protected_in_cohort"] = sorted(set(entry["targets"]) & guard)
                 def _safe_batch_result(username):
                     if username not in journal:
                         return {"status": "pending", "message": "", "at": "",
-                                "possible_click": False, "safe_no_click": False}
+                                "possible_click": False, "safe_no_click": False,
+                                "manual_review_opened": username in manual_opened}
                     source = journal[username]
                     public = _public_action_record(source)
                     return {"status": public.get("status", "review"),
@@ -2164,6 +2166,7 @@ class ActionRobot:
                             # Expose only the saved action timestamp; do not
                             # imply a Pending/Review profile was successfully changed.
                             "at": public.get("at", ""),
+                            "manual_review_opened": username in manual_opened,
                             # Current unavailable screen must not hide a PRIOR
                             # ambiguous click or malformed action journal in UI.
                             "possible_click": (not isinstance(source, dict) or
