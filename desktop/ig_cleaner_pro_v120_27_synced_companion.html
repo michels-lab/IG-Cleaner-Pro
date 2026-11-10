@@ -14968,7 +14968,11 @@ window.igcSyncSwitchAccount=function(userInitiated=true){
  }
  makeAccountButton('＋ Añadir otra cuenta',()=>admitChoice(addAnotherLogin),list);
  dialog.appendChild(list);
- const close=makeAccountButton('Cancelar',()=>{dialog.close();dialog.remove()},dialog);
+ const close=makeAccountButton('Cancelar',()=>{
+   // The close event is async. Clear intent at the CLICK boundary, before
+   // an immediate app reload can restore a modal the owner just dismissed.
+   clearAccountChooserIntent();dialog.close();dialog.remove();
+ },dialog);
  close.style.textAlign='center';
  document.body.appendChild(dialog);
  dialog.addEventListener('close',()=>{
