@@ -10387,8 +10387,8 @@ function pendingFocusRiskN(n){const primary=pendingCandidateRows().filter(r=>['a
 function clearPendingOpened(){
   const hasActive=activeFocusBatch&&activeFocusBatch.kind==='pending'&&activeFocusBatch.rows?.length;
   const text=hasActive
-    ? '¿Reiniciar abiertos de Pending Requests y cancelar la tanda activa pendiente? Esto destraba los focos; no borra revisiones guardadas.'
-    : '¿Reiniciar el estado de abiertos de Pending Requests?';
+    ? '¿REINICIAR historial de abiertos Pending y cancelar tanda activa? Los perfiles abiertos sin revisar podrán volver a salir en nuevos Focus. Para evitar repeticiones, usa «Destrabar tanda · sin repetir» en su lugar. No borra revisiones confirmadas.'
+    : '¿REINICIAR historial de abiertos Pending? Los perfiles abiertos sin revisar podrán volver a salir en nuevos Focus. Si solo quieres destrabar una tanda, usa «Destrabar tanda · sin repetir».';
   if(!confirm(text))return;
   pendingOpenedSet.clear();
   savePendingOpened();
