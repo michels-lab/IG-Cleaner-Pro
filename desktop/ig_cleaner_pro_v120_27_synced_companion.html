@@ -14893,7 +14893,7 @@ window.igcSyncSwitchState=()=>{
  const gate=accountSwitchAdmission();
  return {ready:gate.code==='ready',code:gate.code};
 };
-window.igcSyncSwitchAccount=function(){
+window.igcSyncSwitchAccount=function(userInitiated=true){
  const entry=accountSwitchAdmission();
  // Opening the chooser is read-only. The automation may start during
  // initial sync/paint, after the operator sees the button but before clicking.
@@ -14905,7 +14905,7 @@ window.igcSyncSwitchAccount=function(){
  const prior=document.getElementById('igcLoginChooser');
  // Persist intent BEFORE showing a modal, so an unrelated app bootstrap
  // reload cannot make the user's explicit Cambiar cuenta click look inert.
- requestAccountChooserRestore();
+ if(userInitiated===true)requestAccountChooserRestore();
  if(prior?.open){prior.focus();return;}
  prior?.remove();
  const dialog=document.createElement('dialog');
@@ -14986,7 +14986,7 @@ function restoreAccountChooserAfterStartup(){
  // A modal is only a read-only view. Never auto-select a remembered owner,
  // even if cloud sync/robot is still busy: the click gate is re-evaluated.
  if(document.getElementById('igcSyncSignedIn')||
-    document.getElementById('igcSyncSignedOut'))window.igcSyncSwitchAccount();
+    document.getElementById('igcSyncSignedOut'))window.igcSyncSwitchAccount(false);
 }
 function schedule(){clearInterval(S.timer);if(S.cfg.auto)S.timer=setInterval(()=>{if(S.session?.access_token&&!S.needsReauth&&!document.hidden)syncNow(false)},15000)}
 function renderAuthUi(){const out=document.getElementById('igcSyncSignedOut'),inn=document.getElementById('igcSyncSignedIn'),who=document.getElementById('igcSyncAccount');const on=!!S.session?.access_token&&!S.needsReauth;if(out)out.style.display=on?'none':'';if(inn)inn.style.display=on?'':'none';if(who)who.textContent=S.session?.user?.email||S.cfg.email||'Cuenta conectada';renderStats()}
