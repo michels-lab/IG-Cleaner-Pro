@@ -9583,14 +9583,25 @@ function viewAvailableFocus(kind){
 function unlockModule(kind){
   const f=focusFunnelData(kind);
   if(kind==='pending'){
-    const text=`Destrabar Pending Requests\\n\\nEsto cancelará la tanda activa de Pending si existe y reiniciará “abiertos no revisados”.\\nNo borra revisiones guardadas ni pausas.\\n\\nActual: ${f.total} total · ${f.available} abribles · ${f.activeBlocked} en tanda activa · ${f.openedLegacy} abiertos previos.\\n\\n¿Continuar?`;
+    // A user clicking "Destrabar" expects the frozen active cohort to be
+    // released, NOT the durable no-repeat marks from previous Chrome opens.
+    // Erasing pendingOpenedSet here silently made a brand-new Focus reopen
+    // users the owner had already inspected. Keep any destructive reset
+    // available ONLY via the separately labeled clearPendingOpened() action.
+    const hasPendingBatch=!!(activeFocusBatch&&
+      activeFocusBatch.kind==='pending'&&activeFocusBatch.rows?.length);
+    if(!hasPendingBatch){
+      msg('No hay tanda activa de Pending que destrabar. Se conservaron los perfiles ya abiertos; usa Revisar pendientes o carga solicitudes nuevas.','i');
+      renderPendingRequests();
+      return;
+    }
+    const text=`Destrabar Pending Requests\\n\\nEsto cancelará la tanda activa de Pending, PERO conservará los perfiles ya abiertos para NO repetirlos en un Focus nuevo.\\nNo borra revisiones ni pausas.\\n\\nActual: ${f.total} total · ${f.available} abribles · ${f.activeBlocked} en tanda activa · ${f.openedLegacy} abiertos previos.\\n\\n¿Cancelar solo la tanda activa?`;
     if(!confirm(text))return;
-    if(activeFocusBatch&&activeFocusBatch.kind==='pending')clearActiveFocusBatch();
-    pendingOpenedSet.clear();
-    savePendingOpened();
+    clearActiveFocusBatch();
+    // The Chrome-open intent ledger is never cleared or rewritten.
     renderPendingRequests();
     renderModuleDashboard?.();
-    msg('Pending destrabado: tanda activa cancelada y abiertos previos reiniciados.','s');
+    msg('Tanda Pending cancelada. Perfiles abiertos previamente conservados: el próximo Focus no los repetirá.','s');
     return;
   }
 
