@@ -53,6 +53,18 @@ const {chromium}=require("playwright");
       JSON.stringify(snapshot)+"; "+error.message);
   });
   assert(await modal.isVisible(),"Switch Account must open a chooser, not sign out");
+  // An unrelated bootstrap reload can arrive AFTER the user's click, before
+  // the chooser is fully displayed. Recover only that explicit READ-ONLY
+  // chooser request; never automatically switch or discard the local review.
+  await page.evaluate(()=>{window.igcSyncSwitchAccount();location.reload()});
+  await page.locator("#igcLoginChooser").waitFor({state:"visible",timeout:15000});
+  assert.equal(await page.locator("#igcLoginChooser").count(),1,
+    "Cold-start reload restores exactly one read-only chooser");
+  assert.equal(await page.evaluate(()=>
+    JSON.parse(localStorage.getItem("igc_v12027_supabase_session")).user.email),
+    "first@example.test","Restoring a chooser must not choose a different account");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("ig_v13_done")),
+    '["review-stays-local"]',"Restored chooser preserves prior review state");
   // A legitimate startup synchronization can be in progress when the chooser
   // is opened. The chooser is read-only; selecting an account is not permitted
   // until both the action robot and account sync report safe admission.
@@ -116,6 +128,16 @@ const {chromium}=require("playwright");
     '["review-stays-local"]',"Late guard veto preserves local review history");
   await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await racedChooser.getByText("Cancelar",{exact:true}).click();
+  // Cancel means cancel: even a subsequent reload must NOT resurrect the
+  // chooser or replay any pending account switch.
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().code!==undefined,
+    null,{timeout:15000});
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("#igcLoginChooser").count(),0,
+    "An explicitly dismissed chooser must not reappear after reload");
+  await page.evaluate(()=>showPage("sync"));
+  await page.locator("#igcSyncSignedIn").waitFor({state:"visible"});
   // Simulate a token refresh failure on a remembered but expired session.
   // Async failure must also keep the chooser; no phantom logout or change.
   await page.evaluate(()=>{
@@ -220,6 +242,21 @@ const {chromium}=require("playwright");
   assert(await activeChooser.isVisible(),"A vetoed choice must leave the chooser readable");
   await page.evaluate(()=>{window.igcAutoSwitchGuard=()=>true});
   await activeChooser.getByText("Cancelar",{exact:true}).click();
+  // An explicitly expired/malformed chooser intent cannot resurrect
+  // stale dialogs on a later restart. Only recent user intent is recoverable.
+  await page.evaluate(()=>{
+    sessionStorage.setItem("igc_v120_login_chooser_intent_v1",
+      JSON.stringify({owner:"second@example.test",at:Date.now()-60000,read_only:true}));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>window.igcSyncSwitchState?.().code!==undefined,
+    null,{timeout:15000});
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("#igcLoginChooser").count(),0,
+    "Expired chooser intent must not silently re-open");
+  assert.equal(await page.evaluate(()=>
+    sessionStorage.getItem("igc_v120_login_chooser_intent_v1")),null,
+    "Expired intent should be removed");
   // Repeat cold-start reloads after the legitimate account change. Both
   // sessions and local history must survive, with no phantom logout or
   // intermittent missing chooser while initialization/sync is settling.
