@@ -14975,6 +14975,11 @@ window.igcSyncSwitchAccount=function(userInitiated=true){
  },dialog);
  close.style.textAlign='center';
  document.body.appendChild(dialog);
+ dialog.addEventListener('cancel',()=>{
+   // Escape's cancel event precedes its async close event. Clear BEFORE
+   // browser/app navigation; otherwise the dismissed dialog can resurrect.
+   clearAccountChooserIntent();
+ });
  dialog.addEventListener('close',()=>{
    clearAccountChooserIntent();dialog.remove();
  },{once:true});
