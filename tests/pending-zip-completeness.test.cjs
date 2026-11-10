@@ -174,6 +174,75 @@ ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
      {title:"unparseable!",string_list_data:[{value:"bad/name"}]}
     ]}},text:"{}"}],"bad.zip"),/Se conservaron los Pending anteriores/);
  assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+ // Invalid native Pending structure used to fall back to a generic
+ // parser and promote arbitrary profile metadata as outgoing requests.
+ const beforeMalformedSaves=saved.length;
+ const corruptSent=value=>({
+   entry:{name:"connections/followers_and_following/pending_follow_requests.json"},
+   file:{name:"pending_follow_requests.json",size:60},
+   payload:{format:"json",category:"pending_follow_requests",
+     data:{relationships_follow_requests_sent:value,
+       recent_follow_requests:[{string_list_data:[{value:"not.sent"}]}]}},
+   text:"{}"
+ });
+ for(const malformed of [null,{string_list_data:[{value:"fake.profile"}]},
+                          "fake.profile",42]){
+   await assert.rejects(()=>ctx.parseZipPending(
+     [corruptSent(malformed)],"corrupt-canonical.zip"),
+     /relationships_follow_requests_sent inválido.*Se conservaron los Pending anteriores/);
+   assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+   assert.equal(saved.length,beforeMalformedSaves,
+     "A fake Pending identity must never overwrite saved owner data");
+ }
+ // A file named pending_follow_requests can contain unrelated categories.
+ // Recent, following and blocked are NOT evidence of outgoing requests.
+ for(const wrongSection of [
+   {recent_follow_requests:[{string_list_data:[{value:"recent.only"}]}]},
+   {relationships_following:[{string_list_data:[{value:"already.followed"}]}]},
+   {blocked_profiles:[{string_list_data:[{value:"blocked.only"}]}]}
+ ]){
+   await assert.rejects(()=>ctx.parseZipPending([{
+     entry:{name:"pending_follow_requests_2.json"},
+     file:{name:"pending_follow_requests_2.json",size:120},
+     payload:{format:"json",category:"pending_follow_requests",data:wrongSection},
+     text:JSON.stringify(wrongSection)
+   }],"wrong-section.zip"),
+   /otra sección de Instagram.*Se conservaron los Pending anteriores/);
+   assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+   assert.equal(saved.length,beforeMalformedSaves);
+ }
+ // Generic profile extractors accept titles/names without sent-request
+ // proof. The ZIP Pending importer must never call them as a fallback.
+ let genericCalls=0;
+ ctx.extractFromJSON=()=>{genericCalls++;return [{username:"metadata.only"}]};
+ await assert.rejects(()=>ctx.parseZipPending([{
+   entry:{name:"pending_follow_requests.json"},
+   file:{name:"pending_follow_requests.json",size:70},
+   payload:{format:"json",category:"pending_follow_requests",
+     data:{name:"metadata.only"}},
+   text:'{"name":"metadata.only"}'
+ }],"metadata.zip"),/Se conservaron los Pending anteriores/);
+ assert.equal(genericCalls,0);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+ assert.equal(saved.length,beforeMalformedSaves);
+ // Legitimate legacy root string_list_data remains supported.
+ assert.equal(await ctx.parseZipPending([{
+   entry:{name:"pending_follow_requests_legacy.json"},
+   file:{name:"pending_follow_requests_legacy.json",size:110},
+   payload:{format:"json",category:"pending_follow_requests",
+     data:[{string_list_data:[{value:"legacy.sent",timestamp:1700000910}]}]},
+   text:"[]"
+ }],"legacy-sent.zip"),1);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),["legacy.sent"]);
+ // Restore 725 verified source rows for subsequent snapshot-preservation tests.
+ assert.equal(await ctx.parseZipPending([{
+   entry:{name:"pending_follow_requests.json"},
+   file:{name:"pending_follow_requests.json",size:180000},
+   payload:{format:"json",category:"pending_follow_requests",data:completePayload},
+   text:JSON.stringify(completePayload)
+ }],"valid-again.zip"),725);
+ assert.deepEqual(ctx.pendingRequestsRaw.map(x=>x.username),original);
+
  // A partial export without pending_follow_requests must retain saved prior ZIP
  // rather than silently rendering 0 or claiming an empty outgoing request list.
  const savedBefore=saved.length;
