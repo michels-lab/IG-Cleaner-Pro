@@ -766,6 +766,11 @@ class IsolatedWorkspaceTests(unittest.TestCase):
             "uncertain.one": {"status": "profile_unavailable",
                               "click_intent": {"phase": "relationship_control",
                                                "outcome_recorded": True}},
+            # A legacy no-action label WITH a saved possible click is yellow
+            # in Windows Review, never a confirmed no-click terminal state.
+            "uncertain.legacy": {"status": "already_not_following",
+                                 "click_intent": {"phase": "unfollow_menu",
+                                                  "outcome_recorded": True}},
         })
         _atomic_json(journal_b, {
             "green.ok": {"status": "review", "issue": "target_ambiguous"}
@@ -809,6 +814,15 @@ class IsolatedWorkspaceTests(unittest.TestCase):
                     s.split("=", 1)[1] for s in args
                     if s.startswith("--user-data-dir="))).resolve(),
                     self.sessions.directory(OWNER, A).resolve())
+
+                # Yellow legacy no-action with possible click must remain
+                # available for manual inspection (but NEVER auto replay).
+                launched.reset_mock()
+                legacy = self.manager.open_review_one(
+                    request(A, "uncertain.legacy"))
+                self.assertFalse(legacy["relationship_action"])
+                self.assertEqual(legacy["username"], "uncertain.legacy")
+                launched.assert_called_once()
 
                 # A current, truly untouched saved member is still eligible.
                 launched.reset_mock()
