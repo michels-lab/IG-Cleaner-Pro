@@ -329,6 +329,14 @@ class ActionChromeAccountIsolationTests(unittest.TestCase):
                         "username":"some.target"})
             with ChromeLaneLease(sessions.directory(OWNER,A)):
                 pass  # Failed Popen did not leak the OS Chrome lane lock.
+            # Popen may fail after Chrome already received a navigation
+            # request. Fail closed: the separate READ-ONLY visit intent stays
+            # durable, without fabricating a relationship-changing action.
+            manual = robot._manual_review_visits_file_for(OWNER, A, "cancel")
+            self.assertIn("some.target", manual.read_text(encoding="utf-8"))
+            self.assertIn(
+                "some.target", robot._visited_usernames(OWNER, A, "cancel", {}))
+            self.assertFalse(robot._base_for(OWNER, A, "cancel").exists())
 
     def test_wrong_live_instagram_identity_blocks_before_click_in_scoped_chrome(self):
         with TemporaryDirectory() as tmp:
