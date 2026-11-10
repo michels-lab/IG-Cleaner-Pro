@@ -1845,6 +1845,7 @@ class ActionRobot:
         self.historical_seen = set()
         self.historical_not_following_seen = set()
         self.continuing_batch = False
+        self._new_batch_manual_visit_gate = False
         self.active_batch_id = ""
         self.cancel_requested = False
         self.cancel_batch_id = ""
@@ -3152,6 +3153,14 @@ class ActionRobot:
                 if not resume:
                     self.continuing_batch = pending_entry is not None
                     self.skipped.clear()
+                # start() checked the manual ledger under the action WAL
+                # lease, but owner sign-in may take minutes. A short manual
+                # Review launch may race BEFORE the worker owns Chrome. The
+                # worker must re-read those visits AFTER acquiring its Chrome
+                # lease and login proof, before any target navigation.
+                self._new_batch_manual_visit_gate = (
+                    not resume and pending_entry is None
+                    and task in ("unfollow", "cancel"))
                 self.active_batch_id = next_batch_id
                 self.open_review_tabs = []
                 self.current_wait = None
@@ -3466,6 +3475,28 @@ class ActionRobot:
                             "during sign-in. No profile action was attempted. "
                             "Keep the original journal and inspect Issues before retrying.")
                     return
+                if self._new_batch_manual_visit_gate:
+                    try:
+                        new_manual_visits = self._manual_review_visits(
+                            self.owner, self.account, self.task)
+                    except ValueError:
+                        with self.lock:
+                            self.status = "blocked"
+                            self.message = (
+                                "Manual Review navigation history changed during "
+                                "Instagram sign-in. No target was opened or clicked.")
+                        return
+                    collided = sorted(set(self.targets) & set(new_manual_visits))
+                    if collided:
+                        with self.lock:
+                            self.status = "blocked"
+                            self.message = (
+                                "A manual Review opened " + str(len(collided)) +
+                                " selected profile(s) after this NEW action batch "
+                                "started. Do not revisit: @" +
+                                ", @".join(collided[:5]) +
+                                ". Inspect saved visits before approving another wave.")
+                        return
                 path = self._base()
                 visits_file, rests_file = history_path(path), batch_path(path)
                 visits = load_history(visits_file)
