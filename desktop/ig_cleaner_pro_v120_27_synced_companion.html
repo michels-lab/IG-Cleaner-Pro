@@ -13312,15 +13312,42 @@ async function parseZipPending(items,zipName=''){
   let all=[];
   for(const item of items||[]){
     let rows=[];
-    if(typeof window.igcParseDetected==='function')rows=window.igcParseDetected(item.payload,item.text,item.entry.name)||[];
-    // The sent-request section is authoritative for outgoing Pending.
-    // A generic relationship extractor can mistakenly promote metadata/title
-    // fields into fake usernames; only use that compatibility fallback for
-    // genuinely unknown legacy JSON layouts, never this known section.
-    const canonicalSent=item.payload?.data?.relationships_follow_requests_sent;
-    if(!rows.length && item.payload?.format==='json' &&
-        !Array.isArray(canonicalSent) && typeof extractFromJSON==='function')
-      rows=extractFromJSON(item.payload.data,item.entry.name)||[];
+    const sourceData=item.payload?.data;
+    const canonicalSent=sourceData&&!Array.isArray(sourceData)&&
+      typeof sourceData==='object'?
+      sourceData.relationships_follow_requests_sent:undefined;
+    const declaresSent=sourceData&&!Array.isArray(sourceData)&&
+      typeof sourceData==='object'&&
+      Object.prototype.hasOwnProperty.call(sourceData,'relationships_follow_requests_sent');
+    // The filename does NOT prove the contents describe outgoing requests.
+    // A corrupt canonical container (object/null/string instead of an array)
+    // previously fell into extractFromJSON() and promoted arbitrary profile
+    // metadata into fake Pending rows. Reject before parsing ANY shard.
+    if(item.payload?.format==='json'&&declaresSent&&!Array.isArray(canonicalSent))
+      throw new Error('El archivo Pending '+
+        basename(item.entry?.name||item.file?.name||'')+
+        ' tiene relationships_follow_requests_sent inválido (se requiere una lista). '+
+        'No se importó ninguna parte del ZIP. Se conservaron los Pending anteriores.');
+    // Some legacy exports have no canonical sent key. Never interpret
+    // following/recent/blocked sections as unaccepted outgoing requests just
+    // because their filename says pending_follow_requests.json.
+    if(item.payload?.format==='json'&&!declaresSent&&
+       sourceData&&!Array.isArray(sourceData)&&typeof sourceData==='object'&&
+       Object.keys(sourceData).some(key=>[
+         'relationships_following','relationships_followers','followers',
+         'following','recent_follow_requests','recently_unfollowed_profiles',
+         'blocked_profiles','close_friends','pending_received_requests'
+       ].includes(key)))
+      throw new Error('El archivo Pending '+
+        basename(item.entry?.name||item.file?.name||'')+
+        ' contiene otra sección de Instagram, no solicitudes enviadas verificadas. '+
+        'No se importó ninguna parte del ZIP. Se conservaron los Pending anteriores.');
+    if(typeof window.igcParseDetected==='function')
+      rows=window.igcParseDetected(item.payload,item.text,item.entry.name)||[];
+    // Deliberately NO generic extractFromJSON fallback: it accepts unrelated
+    // names, titles and profile URLs as handles without proving an outgoing
+    // request. Legitimate legacy rows still use parseDetected's strict
+    // string_list_data/label_values Pending parser or HTML parser.
     rows=(rows||[]).map(r=>({username:r.username,href:r.href||profileUrl(r.username,''),name:r.name||'',url:r.url||'',timestamp:r.timestamp||0,source:item.entry.name,fbid:r.fbid||''}));
     // A ZIP can contain multiple Pending shards. Never publish just the
     // successful first shard if a later nonempty shard is unreadable. A
