@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.71**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126), 12 SHA-256-tracked assets. The next reserved development version **v120.72 is not authorized** for publication and is NOT published; any future version requires a separate authorized normal FINAL after installed Windows public+Developer, production-signed Android public+Developer, rendered visual QA, SHA-256 integrity and updater validation. No RC or beta. Windows v120.71 now supports two detachable Instagram workspaces, distinct persistent manual Chrome login sessions, and owner-scoped guarded Followers/Following read-only scan controls. These are NOT two simultaneous automatic Unfollow/Cancel robots; owner's real Instagram dual-session and full-list acceptance remain open.
+Current published stable: **v120.71**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126), 12 SHA-256-tracked assets. The next reserved development version **v120.72 is authorized for governed FINAL publication** only after exact-source gates pass. It is NOT published yet; the owner explicitly requested post-publication hands-on PC review on 2026-11-10 while all live Instagram and physical owner acceptance checks remain UNVERIFIED. Official Windows public+Developer, production-signed Android public+Developer, rendered visual QA, SHA-256 integrity and updater validation remain mandatory. No RC or beta. Windows v120.71 now supports two detachable Instagram workspaces, distinct persistent manual Chrome login sessions, and owner-scoped guarded Followers/Following read-only scan controls. These are NOT two simultaneous automatic Unfollow/Cancel robots; owner's real Instagram dual-session and full-list acceptance remain open.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.72**, not yet authorized or published; publication requires separate owner authorization and complete exact-source NORMAL FINAL safety gates. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
+The next reserved release target is **v120.72**, explicitly authorized by the owner for release before their physical PC review, but not yet published. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
 
 Authority: `release/distribution-manifest.json`.
 
