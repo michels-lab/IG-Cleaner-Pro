@@ -3782,7 +3782,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="focuslab-note">Import your file <b>pending_follow_requests.json</b>. This workspace covers only pending follow requests, prioritizing older requests and suspicious profiles. Focus 20/30/40 opens profile tabs and requires review confirmation; the fixed panel tracks progress. It also compares Pending with imported Following and Followers to flag requests that may have been accepted.</div>
 <div class="pending-upload-card">
 <div class="upload" onclick="document.getElementById('pendingInput').click()"><b>📨 Pending follow requests</b><small>Instagram file: pending_follow_requests.json</small><div class="filelist" id="pendingFilesLabel">No file</div></div>
-<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Process pending</button><button class="btn" onclick="renderPendingRequests()">Refresh</button><button class="btn" onclick="recoverSectionActiveBatch('pending')">Recover current batch</button><button class="btn" onclick="clearPendingOpened()">Reset opened, unreviewed</button></div>
+<div class="focuslab-actions"><button class="btn primary" onclick="processPendingFiles()">Process pending</button><button class="btn" onclick="renderPendingRequests()">Refresh</button><button class="btn" onclick="recoverSectionActiveBatch('pending')">Recover current batch</button><button class="btn" onclick="unlockModule('pending')" title="Cancela solo la tanda activa; conserva los perfiles ya abiertos para evitar repetirlos.">Destrabar tanda · sin repetir</button><button class="btn" onclick="clearPendingOpened()" title="Reinicio manual excepcional: puede hacer que se vuelvan a abrir perfiles no revisados.">Reset opened, unreviewed</button></div>
 </div>
 <input accept=".json,.html,.txt" id="pendingInput" multiple="" onchange="v113UploadChanged(\'pendingInput\',\'pendingFilesLabel\')" type="file"/>
 <div class="focuslab-kpi-row" id="pendingStats"><div class="focuslab-kpi"><b>0</b><span>pending</span></div><div class="focuslab-kpi"><b>0</b><span>not opened</span></div><div class="focuslab-kpi"><b>0</b><span>opened</span></div><div class="focuslab-kpi"><b>0</b><span>medium/high risk</span></div><div class="focuslab-kpi"><b>0</b><span>old requests</span></div></div>
@@ -9583,14 +9583,25 @@ function viewAvailableFocus(kind){
 function unlockModule(kind){
   const f=focusFunnelData(kind);
   if(kind==='pending'){
-    const text=`Destrabar Pending Requests\\n\\nEsto cancelará la tanda activa de Pending si existe y reiniciará “abiertos no revisados”.\\nNo borra revisiones guardadas ni pausas.\\n\\nActual: ${f.total} total · ${f.available} abribles · ${f.activeBlocked} en tanda activa · ${f.openedLegacy} abiertos previos.\\n\\n¿Continuar?`;
+    // A user clicking "Destrabar" expects the frozen active cohort to be
+    // released, NOT the durable no-repeat marks from previous Chrome opens.
+    // Erasing pendingOpenedSet here silently made a brand-new Focus reopen
+    // users the owner had already inspected. Keep any destructive reset
+    // available ONLY via the separately labeled clearPendingOpened() action.
+    const hasPendingBatch=!!(activeFocusBatch&&
+      activeFocusBatch.kind==='pending'&&activeFocusBatch.rows?.length);
+    if(!hasPendingBatch){
+      msg('No hay tanda activa de Pending que destrabar. Se conservaron los perfiles ya abiertos; usa Revisar pendientes o carga solicitudes nuevas.','i');
+      renderPendingRequests();
+      return;
+    }
+    const text=`Destrabar Pending Requests\\n\\nEsto cancelará la tanda activa de Pending, PERO conservará los perfiles ya abiertos para NO repetirlos en un Focus nuevo.\\nNo borra revisiones ni pausas.\\n\\nActual: ${f.total} total · ${f.available} abribles · ${f.activeBlocked} en tanda activa · ${f.openedLegacy} abiertos previos.\\n\\n¿Cancelar solo la tanda activa?`;
     if(!confirm(text))return;
-    if(activeFocusBatch&&activeFocusBatch.kind==='pending')clearActiveFocusBatch();
-    pendingOpenedSet.clear();
-    savePendingOpened();
+    clearActiveFocusBatch();
+    // The Chrome-open intent ledger is never cleared or rewritten.
     renderPendingRequests();
     renderModuleDashboard?.();
-    msg('Pending destrabado: tanda activa cancelada y abiertos previos reiniciados.','s');
+    msg('Tanda Pending cancelada. Perfiles abiertos previamente conservados: el próximo Focus no los repetirá.','s');
     return;
   }
 
@@ -10376,8 +10387,8 @@ function pendingFocusRiskN(n){const primary=pendingCandidateRows().filter(r=>['a
 function clearPendingOpened(){
   const hasActive=activeFocusBatch&&activeFocusBatch.kind==='pending'&&activeFocusBatch.rows?.length;
   const text=hasActive
-    ? '¿Reiniciar abiertos de Pending Requests y cancelar la tanda activa pendiente? Esto destraba los focos; no borra revisiones guardadas.'
-    : '¿Reiniciar el estado de abiertos de Pending Requests?';
+    ? '¿REINICIAR historial de abiertos Pending y cancelar tanda activa? Los perfiles abiertos sin revisar podrán volver a salir en nuevos Focus. Para evitar repeticiones, usa «Destrabar tanda · sin repetir» en su lugar. No borra revisiones confirmadas.'
+    : '¿REINICIAR historial de abiertos Pending? Los perfiles abiertos sin revisar podrán volver a salir en nuevos Focus. Si solo quieres destrabar una tanda, usa «Destrabar tanda · sin repetir».';
   if(!confirm(text))return;
   pendingOpenedSet.clear();
   savePendingOpened();
