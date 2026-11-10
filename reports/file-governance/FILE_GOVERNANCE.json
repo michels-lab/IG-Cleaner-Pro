@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9b64a59cef7a905ac9353a364081f53097f19b49424764e2a42007efbdb0f386",
-  "evidence_fingerprint": "6dc13fe1635ddae4bf1eca007c13902b91a2d03ea4371472d13cb534ef32703e",
+  "inventory_fingerprint": "7e4667f2a1b090d73fbc8801dea5586a0f76ff25eef05d7436b49cc247db406a",
+  "evidence_fingerprint": "0fbbb35ea4f753753292c736c6f1a6a4d9586bc9c6fdb1bcdd04402c883aae2e",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2325,7 +2325,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "958d99829b360e3e3f98067cb098c7820f887373"
+      "blob": "cf6e6532933808fa2dbab9dbd06e7f430f5ef565"
     },
     {
       "path": "tests/test_dual_chrome_sessions.py",
@@ -2717,7 +2717,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7e8fb9418f98945e4c0c7128fc5774f802b62921"
+      "blob": "207c63a7491133f34928e677817f8441f899615a"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -3004,11 +3004,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "bf6bd84d5766150a",
+      "id": "c1cb19e0d24322e5",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "7 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_dual_action_archived_history.py, tests/test_windows_ci_exitcode_gate.py, tools/dual_action_windows_ui.py, tools/dual_action_workspaces.py",
+      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, tests/dual-action-windows-panel-browser.test.cjs, tests/test_dual_action_archived_history.py, tests/test_dual_action_workspaces.py, tests/test_windows_ci_exitcode_gate.py, tools/dual_action_windows_ui.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
