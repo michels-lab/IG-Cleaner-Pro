@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "aa94a044d51614e34b832b583fda03c336f4850d4f33f097b8e92b15afd7f7ac",
+  "inventory_fingerprint": "017f7f2c91a7b5c21e2b340bc32d41ec610f938f10c5a3de46321109b8052544",
   "evidence_fingerprint": "53dc618b4318bed983e765889219985566bf9fe48e3878951cacb913c4ec239d",
   "files": [
     {
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "7a0a88b5b22c2f3600191c95b254ea59e0e2ef1f"
+      "blob": "50dd32088b30553cf98c7c80f57ec06b5fee2a06"
     },
     {
       "path": "AGENTS.md",
@@ -253,21 +253,21 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "5ffe6e02b5651ec6485eae6ecb88240428fb810a"
+      "blob": "4876c14549a2342b85564341d57e723b70fd031a"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "50061949a05a5d5ff1186b2c64d98c6af3c10ef5"
+      "blob": "d548e7dab24e400ff48968f33c77ad448146b3f1"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "344aeafa1dcaeaa1796e19420f1a86a2c99aa1aa"
+      "blob": "46cd909818163136d36e422b2f48182f983fec89"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "7826800719715ae3119f9db15dacf897f8539a97"
+      "blob": "84843209de7a17a3b32f11f79d6d1421f9e1d486"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1541,7 +1541,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "b34cf9c8cf3f9a9655ad6d370a4a98b78a10197e"
+      "blob": "b5529fee1d06cd079b0674331ae955c05f1c13bb"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1632,28 +1632,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "7ce8851e04ec40e35c774cf1ab9a2c2914f107bd"
+      "blob": "2a537a4e34352523a48e718af0de77d72f1a6692"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "9d7e07b799168b26919fef6002279b3525fbcd39"
+      "blob": "f3028018a8e6d9bcaf65282e6579e6bbfe629526"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f3f73af639479ccdf45369769462972572427b2e"
+      "blob": "38642518fd78a9649c63033449a7e83fe4d44460"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "46bdf8a03ccd99fc39cca86025901f76e688e29a"
+      "blob": "45ce55453ccf41ba57be9ca72887b3cfb0cb9125"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2556,7 +2556,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e86b1a3ad39e3dc4e928c94d104c7a1a882ea40e"
+      "blob": "7231fa1f9854f2d3cd12cf34d34023b6785a6765"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -2850,7 +2850,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7a2aed0f1a8f5b0d608ef4717b85685580b6402c"
+      "blob": "8db4e1cf8ebdac6d83dfeb893a7f4f2903b88b4f"
     },
     {
       "path": "tools/repository_file_auditor.py",
