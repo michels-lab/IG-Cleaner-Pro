@@ -24,6 +24,7 @@ const {pathToFileURL}=require('node:url'),{chromium}=require('playwright');
   await advanced.locator('summary').click();assert.equal(await advanced.evaluate(x=>x.open),true);
   assert(await page.locator('#igcDualRobotTarget').isVisible());
   assert(await page.getByRole('button',{name:'Stop both robots'}).isVisible());
+  await rail.evaluate(e=>{e.scrollTop=0}); // Ignore the scroll from opening controls below navigation.
   const after=await page.locator('#tab-moduleDashboard').boundingBox();
   assert(Math.abs(home.y-after.y)<2,'Expanding advanced robots must not shift navigation');
   await advanced.locator('summary').click();assert.equal(await advanced.evaluate(x=>x.open),false);
