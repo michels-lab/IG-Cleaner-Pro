@@ -57,6 +57,8 @@ jobs:
         run: node tests/desktop-contract.test.cjs
       - name: Verify multi-Instagram isolated account storage and scoped REST behavior
         run: node tests/multi-instagram-contract.test.cjs
+      - name: Keep main navigation above secondary-account controls
+        run: node tests/dual-workspace-sidebar-contract.test.cjs
       - name: Verify JWT expiry, proactive refresh and cross-owner session safety
         run: node tests/auth-session-refresh.test.cjs
       - name: Test Switch Account with remembered logins and preserved owner history
