@@ -1,3 +1,10 @@
+## v120.73 — Owner-requested stable release for corrected second-account sidebar (2026-11-11)
+
+- **Fix integrated in main:** [PR #357](https://github.com/michels-lab/IG-Cleaner-Pro/pull/357), commit `035eee43e2c6446bf40984cc8d3654a4b75e8415`. The second-account area no longer buries primary navigation: Home, Review, Mutuals, Followers, Pending, Automations and data views appear first.
+- **Discoverability:** compact profile selector + Open as tab / Detach to window remain visible; advanced read-only Chrome robot controls move to an accessible collapsed section below primary nav.
+- **Regression tests:** independent Chromium compact and wide viewport layout check, plus all other Desktop source contracts, Windows preview, Android UI/runtime and signed publisher gates before publication.
+- **Owner acceptance:** explicit publication request for PC review after release, not acceptance of live Instagram Unfollow/Cancel or simultaneous account-changing robots; retain current account journal, protected lists, and review history. No RC or beta.
+
 ## v120.72 — Owner-requested release for post-publication PC testing (2026-11-10)
 
 - **Authorization:** owner expressly requested publishing v120.72 now, to review on their own PC afterward. This is NOT an owner's acceptance of completed behavior; live Instagram checks, simultaneous two-account robot actions, physical Windows/Android tests and P0 issue closure remain pending.

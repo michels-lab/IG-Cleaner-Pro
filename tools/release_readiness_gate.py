@@ -44,7 +44,7 @@ def owner_device_review_override_active(readiness: dict, tag: str) -> bool:
         return False
     if (override.get("release_tag") != tag
             or readiness.get("next_version") != tag
-            or override.get("source") != "explicit-owner-chat-instruction-2026-11-10"
+            or override.get("source") != "explicit-owner-chat-instruction-2026-11-11"
             or override.get("physical_tests_deferred") is not True
             or override.get("automated_publisher_gates_required") is not True):
         raise ReleaseBlocked("Owner post-publication review override must be explicit, exact-tag and scope-limited.")

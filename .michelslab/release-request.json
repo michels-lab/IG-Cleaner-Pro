@@ -1,20 +1,23 @@
 {
-  "version": "120.72",
-  "tag": "v120.72",
+  "version": "120.73",
+  "tag": "v120.73",
   "authorized": true,
-  "authorization_source": "Owner's explicit 2026-11-10 instruction to publish now and personally review on PC afterward; human physical account/device acceptance deferred, not claimed.",
+  "authorization_source": "Owner's explicit 2026-11-11 instruction DALE RELEASE for the PR #357 secondary account sidebar fix; publication for subsequent hands-on user PC review, without claiming unverified live Instagram actions.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
   "status": "authorized",
-  "previous_stable_release": "v120.71",
-  "owner_acceptance_note": "The owner explicitly requested v120.72 release before their own Windows PC validation. All real-world Instagram account, exact target, two-worker and physical-device checks are STILL UNVERIFIED; do not claim P0 closed or owner acceptance. This is an owner-requested post-publication hands-on trial, not certification of the completed product. All automated official Windows public/Developer, Android production signing & co-install, rendered UI, checksum and updater gates must pass before any release can be posted. No RC/beta or change to robot approval rules.",
-  "requested_at": "2026-11-10",
-  "release_note": "v120.72 owner-requested stable delivery for physical PC evaluation. Pending unlock retains Chrome-opened history and cancels only current batch, avoiding unintended repeat profiles. Known limitations: no independently verified live Instagram Unfollow/Cancel or two simultaneous automated account-action robots. The owner will test on their own PC after publication; backup before upgrading and use a small explicitly approved batch.",
-  "explicit_owner_post_publication_review": {
-    "approved_to_publish_before_physical_test": true,
-    "requested_at": "2026-11-10",
-    "statement": "yo si puedo perra, tu me obedeces y yo lo reviso despues en mi pc",
-    "unverified_features_remain_open": true
+  "previous_stable_release": "v120.72",
+  "requested_at": "2026-11-11",
+  "candidate_main_sha": "05c57670247d4089c9ec2ec9bc46bf795392a464",
+  "owner_acceptance_note": "Explicit owner request to ship v120.73 with #357 UI fix. No early physical-account acceptance is claimed; unverified real Instagram tests, dual relationship-changing bots and open P0 issues remain unverified/open. Require exact-source governed Windows public/Developer installer/runtime, production-signed Android public+Developer co-install, desktop+Android rendered UI, SHA256 assets and updater checks. No RC, beta or pre-release.",
+  "release_note": "GRANADA v120.73: fixes overgrown second-account sidebar reported on installed v120.72; restores Home/Review/Mutuals/Followers/Pending/Automations navigation and moves second-account controls below it. Always-visible second-account selector and Open as tab / Detach to window; expand Chrome and robot controls only as needed. No robot logic or account data migrations. User will validate on PC after release.",
+  "previous_publication": {
+    "tag": "v120.72",
+    "run": 42910331197,
+    "commit": "7822ce52dc8c895c548f57c4277dbb78761ae463",
+    "published_at": "2026-11-10T22:10:18Z",
+    "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.72",
+    "asset_count": 12
   }
 }
