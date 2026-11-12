@@ -57,6 +57,17 @@ const e=shard('following_2.json',users.slice(0,5),'following');
 const f=shard('blocked_profiles_1.json',users.slice(0,5),'blocked_profiles');
 const official=shard('pending_follow_requests.json',
  {relationships_follow_requests_sent:users.slice(0,2)});
+const translated=shard("pending_follow_requests_3.json",[
+ {timestamp:1794258000,label_values:[
+  {label:"Nombre",value:"Cuenta de prueba"},{label:"Nombre de usuario",value:"testespanol_1"},
+  {label:"URL",value:""}]},
+ {timestamp:1794258001,label_values:[
+  {label:"Name",value:"Test Account"},{label:"Username",value:"testenglish_2"},
+  {label:"URL",value:""}]}
+]);
+assert.equal(ctx.zipCategoryFor(translated),"pending_follow_requests");
+assert.equal(ctx.pendingUnreadableEntries(translated.payload.data,"translated.json"),0);
+
 assert.equal(ctx.zipCategoryFor(a),'pending_follow_requests');
 assert.equal(ctx.zipCategoryFor(b),'pending_follow_requests');
 assert.equal(ctx.zipCategoryFor(official),'pending_follow_requests');
@@ -74,6 +85,9 @@ assert.equal(groups.pending_follow_requests.length,2);
 assert.equal(groups.followers.length,1);
 assert.equal(groups.recent_follow_requests.length,1);
 (async()=>{
+ const countTranslated=await ctx.parseZipPending([translated],"bilingual.zip");
+ assert.equal(countTranslated,2);
+ assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username).sort(),["testenglish_2","testespanol_1"]);
  const count=await ctx.parseZipPending(groups.pending_follow_requests,'two-shards.zip');
  assert.equal(count,725,'All distinct requests from both shards must be imported');
  assert.equal(ctx.pendingRequestsRaw.length,725);

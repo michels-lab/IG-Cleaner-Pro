@@ -75,6 +75,39 @@ const labelPayload={relationships_follow_requests_sent:[{
 }]};
 assert.equal(ctx.extractPendingRequestsFromJSON(labelPayload,"pending_follow_requests.json")[0].username,"label.one",
  "Legacy label_values remains backward compatible");
+
+const spanishPayload={relationships_follow_requests_sent:[{
+ label_values:[{label:"URL",value:""},{label:"Nombre",value:"Solo nombre visible"},
+  {label:"Nombre de usuario",value:"cuenta.espanola_07"}],timestamp:1794258000
+}]};
+assert.equal(ctx.extractPendingRequestsFromJSON(spanishPayload,"pending_follow_requests.json")[0].username,
+ "cuenta.espanola_07","Spanish label_values must resolve the actual @username even without URL");
+const englishPayload={relationships_follow_requests_sent:[{
+ label_values:[{label:"URL",value:""},{label:"Name",value:"Visible Name"},
+  {label:"Username",value:"english.account_08"}],timestamp:1794258001
+}]};
+assert.equal(ctx.extractPendingRequestsFromJSON(englishPayload,"pending_follow_requests.json")[0].username,
+ "english.account_08","English label_values stays compatible");
+const mixedLanguages={relationships_follow_requests_sent:[
+ ...spanishPayload.relationships_follow_requests_sent,...englishPayload.relationships_follow_requests_sent]};
+assert.equal(ctx.pendingUnreadableEntries(mixedLanguages,"pending_follow_requests.json"),0);
+assert.equal(ctx.extractPendingRequestsFromJSON({relationships_follow_requests_sent:[{
+ label_values:[{label:"Nombre",value:"DisplaynameOnly"},{label:"URL",value:""}]
+}]},"pending_follow_requests.json").length,0,"Display names alone must never become Pending handles");
+// TOP-LEVEL array format, structurally identical to the private export.
+// Synthetic 668 records only; no private Instagram handles are committed.
+const spanishArray668=Array.from({length:668},(_,i)=>({
+ timestamp:1794258000-i,label_values:[
+  {label:"URL",value:i%20===0?"https://www.instagram.com/example"+String(i).padStart(4,"0")+"/":""},
+  {label:"Nombre",value:"Fictitious name "+i},
+  {label:"Nombre de usuario",value:"example"+String(i).padStart(4,"0")}
+ ]
+}));
+assert.equal(ctx.extractPendingRequestsFromJSON(spanishArray668,"pending_follow_requests.json").length,668);
+assert.equal(ctx.pendingUnreadableEntries(spanishArray668,"pending_follow_requests.json"),0);
+assert.equal(ctx.extractPendingRequestsFromJSON(spanishArray668,"pending_follow_requests.json")[0].username,
+ "example0000");
+
 // Mixed relationship JSON MUST NOT promote recent/blocked/following into outgoing
 // requests, even when those sections contain perfectly valid usernames.
 const mixed={relationships_follow_requests_sent:[requests[0]],
@@ -109,6 +142,17 @@ assert.equal(ctx.parseHTMLUsers(
 ctx.igcParseDetected=(detected,text,source)=>ctx.extractPendingRequestsFromJSON(detected.data,source);
 ctx.pendingRequestsRaw=[{username:"old.saved",timestamp:1}];
 (async()=>{
+ const spanishItem={
+  entry:{name:"connections/followers_and_following/pending_follow_requests.json"},
+  file:{name:"pending_follow_requests.json",size:56000},
+  payload:{format:"json",category:"pending_follow_requests",data:spanishArray668},
+  text:JSON.stringify(spanishArray668)
+ };
+ const spanishImported=await ctx.parseZipPending([spanishItem],"synthetic-spanish.zip");
+ assert.equal(spanishImported,668,"ZIP path must import every Spanish username");
+ assert.equal(ctx.pendingRequestsRaw.length,668);
+ assert.equal(new Set(ctx.pendingRequestsRaw.map(row=>row.username)).size,668);
+ assert.match(element("pendingFilesLabel").textContent,/668 usuarios únicos/);
  const imported=await ctx.parseZipPending([{
   entry:{name:"connections/followers_and_following/pending_follow_requests.json"},
   file:{name:"pending_follow_requests.json",size:180000},payload:{format:"json",category:"pending_follow_requests",data:completePayload},
