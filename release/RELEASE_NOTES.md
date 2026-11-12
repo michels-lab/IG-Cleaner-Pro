@@ -1,3 +1,10 @@
+## v120.74 — Pending Spanish/English Instagram ZIP fix (2026-11-12)
+
+- **Fix:** [PR #358](https://github.com/michels-lab/IG-Cleaner-Pro/pull/358) in main: native Instagram Pending `label_values` recognizes Spanish `Nombre de usuario` / `Nombre` as well as English `Username` / `Name`. Blank URL is allowed when the explicit username is valid.
+- **Completeness:** synthetic 668-account top-level Pending array fixture and mixed-language tests verify all identifiable requests can import without missing rows; preserve strict category isolation and fail atomically on unverified identities.
+- **Privacy:** personal user Instagram ZIP/FBIDs and handles were not committed. No real unfollows, cancellations or profile network calls performed by tests.
+- **Release:** owner explicitly authorized shipping stable v120.74 before hands-on Instagram/PC review. All official automated publisher signing, installed Windows public+Developer, Android co-install, rendered UI, checksums, and update-feed gates are mandatory. Unverified P0 features and physical account acceptance remain open. No RC/beta.
+
 ## v120.73 — Owner-requested stable release for corrected second-account sidebar (2026-11-11)
 
 - **Fix integrated in main:** [PR #357](https://github.com/michels-lab/IG-Cleaner-Pro/pull/357), commit `035eee43e2c6446bf40984cc8d3654a4b75e8415`. The second-account area no longer buries primary navigation: Home, Review, Mutuals, Followers, Pending, Automations and data views appear first.

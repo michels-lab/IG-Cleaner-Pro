@@ -31,15 +31,15 @@
     173,
     176
   ],
-  "next_version": "v120.73",
-  "notes": "Owner explicitly requested publication of v120.73 on 2026-11-11 to test the corrected sidebar on their Windows PC. Only this tag has the explicit post-publication physical-review override. Current unverified product-critical acceptance, open issues and product-completion hold remain unchanged. Official automated release workflow gates MUST pass; no fake Instagram or device acceptance.",
+  "next_version": "v120.74",
+  "notes": "Owner explicitly requested stable v120.74 on 2026-11-12 after PR #358 fixes real Pending JSON export Spanish and English label_values with synthetic 668-row regressions. Physical Instagram account acceptance remains deferred, all incomplete critical acceptance and open P0 issues retain their original status. Exact-source official automated packaging, signing, desktop/Android visual, Windows native and checksum gates remain mandatory. Only this tag explicitly authorized.",
   "owner_device_review_release_override": {
     "authorized": true,
-    "release_tag": "v120.73",
-    "source": "explicit-owner-chat-instruction-2026-11-11",
+    "release_tag": "v120.74",
+    "source": "explicit-owner-chat-instruction-2026-11-12",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "DALE RELEASE",
-    "disclosure": "This is explicitly requested distribution for post-publication PC evaluation. It is not certification of real Instagram actions/complete dual robots or physical phone tests; all formal automated publisher checks must still succeed."
+    "owner_direct_quote": "dale release",
+    "disclosure": "Owner requested release for hands-on review afterward, NOT certification of live Instagram Pending or any relationship-changing dual robots. Do not mark unverified P0, account or device acceptance as complete. Publisher must pass automated official gates."
   }
 }

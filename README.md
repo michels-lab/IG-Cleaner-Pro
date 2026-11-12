@@ -1,10 +1,10 @@
 # Instagram Cleaner Pro
 
-## Owner-authorized release v120.73 — 2026-11-11
+## Owner-authorized release v120.74 — 2026-11-12
 
-The owner explicitly requested a new stable v120.73 release after reviewing the installed v120.72 screenshot and integrating [PR #357](https://github.com/michels-lab/IG-Cleaner-Pro/pull/357). Their physical Windows/Instagram acceptance happens AFTER publication; that is not proof of complete product behavior. The normal official publisher still requires exact-source Windows and Android public/Developer runtime, production signing, rendered UI, SHA-256 and updater checks; no RC/beta, fake success, silent account mutations, or closure of remaining P0 issues. The owner-directed one-tag post-publication acceptance exception is tracked in `release/release-readiness.json`; no standing release approval for future versions.
+The owner expressly requested the next stable release of InstaCleaner after integrating [PR #358](https://github.com/michels-lab/IG-Cleaner-Pro/pull/358): native Pending JSON imports accept English `Username` and Spanish `Nombre de usuario` regardless of absent URL. Source tests use synthetic 668-entry export data; no private user ZIP or account information committed. Owner will test physical account behavior on their PC after release; this is NOT a completed-product acceptance or authorization to close unresolved P0 issues. The governed publisher still requires exact-source Windows/Android public+Developer install/runtime, production Android signing, real rendered UI, SHA-256, update feed. No RC, beta or silent Instagram account actions.
 
-Open P0 work still includes #164, #172, #173 and #176, plus any other blocking issues in the readiness file. These are not resolved by green CI or a GitHub release.
+Open P0 issues, incomplete real-world account verification and safety journal checks remain open as recorded in `release/release-readiness.json`; the tag-scoped owner review exception allows only this explicitly requested distribution, not future tags.
 
 ## Operación Granada — auditoría de aplicación y plugins (2026-10-21)
 
@@ -14,13 +14,13 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 ## Current release
 
-**v120.72 — official stable GitHub release, published November 10, 2026 (UTC).** [Download official v120.72 and its 12 SHA-256-tracked assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.72) · [successful publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/42910331197) · exact tagged commit `7822ce52dc8c895c548f57c4277dbb78761ae463`. Windows public/Developer installers and production-signed Android public/Developer APKs passed automated official release gates; live owner Instagram results remain unverified.
+**v120.73 — official stable GitHub release, published November 11, 2026 (UTC).** [Download official v120.73 and all 12 SHA-256-tracked assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.73) · [successful official publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43106023945) · tagged source `c0b6bc6af0185d4ad980eec4e651df202691ad25`. Automated installed Windows public/Developer and signed Android public/Developer packages passed the official publication checks; real Instagram owner acceptance is not claimed.
 
 **New in v120.71:** Windows/Desktop has **two independently pinned InstaCleaner account tabs/windows** (open in tab / detach to window) and can request **two isolated persistent Chrome windows** for manual login to different Instagram accounts. Each owner/account Chrome login uses a different user-data folder, separate from exported robot data. The read-only Followers/Following bulk scanner offers owner-bound Recomendado/Más pausado/Personalizado safety controls and mandatory cooldown. **This is NOT two concurrent automated Unfollow/Cancel robots**: relationship-changing workers remain serial, and complete results with the owner's actual Instagram logins still need physical acceptance.
 
-**Current published stable: v120.72. Next reserved version: v120.73, not published.**
+**Current published stable: v120.73. Next reserved version: v120.74, not published.**
 
-v120.73 is expressly owner-authorized for governed FINAL publication subject to required automated checks; live Instagram acceptance will be reviewed afterward. No RC or beta.
+v120.74 is expressly owner-authorized for governed FINAL publication subject to required automated checks; real Instagram acceptance will be reviewed afterward. No RC or beta.
 
 **Previous official release:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published October 27, 2026 (UTC), official publisher 40555013922.
 

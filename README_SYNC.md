@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.72**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.72), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/42910331197), 12 SHA-256-tracked assets. The next reserved development version **v120.73 is authorized for governed FINAL publication** only after exact-source gates pass. It is NOT yet published; the owner has requested to test the newly compact second-account sidebar on their PC afterward. Windows/Android public+Developer, production signing, real rendered UI, SHA-256 and updater checks remain mandatory. No RC or beta. Unverified Instagram two-account action robots and full owner-account checks remain open.
+Current published stable: **v120.73**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.73), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43106023945), 12 SHA-256-tracked assets. The next reserved version **v120.74 is owner-authorized for governed FINAL publication** with PR #358 bilingual Pending JSON. It is NOT published yet; the owner explicitly requested physical Windows PC and Instagram review AFTER publication, not acceptance of real-account behavior. Official Windows public+Developer, Android production-signed public+Developer, real rendered UI, integrity, and update feed gates remain mandatory. No RC/beta; unresolved owner dual-action automation validation remains open.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.73**, explicitly authorized by the owner on 2026-11-11 for release before physical PC review, but not yet published. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
+The next reserved release target is **v120.74**, explicitly authorized by the owner on 2026-11-12 for release before physical PC review, but not yet published. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
 
 Authority: `release/distribution-manifest.json`.
 
