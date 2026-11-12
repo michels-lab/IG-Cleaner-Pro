@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "017f7f2c91a7b5c21e2b340bc32d41ec610f938f10c5a3de46321109b8052544",
+  "inventory_fingerprint": "1330660092691d1e8ade5dfc9bb6c9b019ee12e2aa5915acdc3bbf7be39afc39",
   "evidence_fingerprint": "53dc618b4318bed983e765889219985566bf9fe48e3878951cacb913c4ec239d",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "84843209de7a17a3b32f11f79d6d1421f9e1d486"
+      "blob": "2ec3004e5ee4c6366a1af294b4edac3c1c067f0d"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2073,14 +2073,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bea2cd96ece79559b2453e5d2aaad243fe6a6689"
+      "blob": "966c876302104c00d4b5f3f2dbc213159fd833fc"
     },
     {
       "path": "tests/pending-zip-shards-runtime.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "37d504aa7ed9e48749b86f2fb1303213cdbc4f82"
+      "blob": "25cdce5a110faf48ef70c68bd89f1d0e13e6984f"
     },
     {
       "path": "tests/premium-visual-contract.py",
