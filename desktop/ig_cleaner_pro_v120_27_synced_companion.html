@@ -9163,7 +9163,23 @@ function isPendingReviewed(row){return !!pendingReviewedAt(row.username)}
 function pendingSnoozeUntil(row){return pendingSnoozeMap?.[row.username]||0}
 function isPendingSnoozed(row){const t=pendingSnoozeUntil(row);return t&&t>Date.now()}
 function clearExpiredPendingSnoozes(){let changed=false;Object.keys(pendingSnoozeMap||{}).forEach(k=>{if(pendingSnoozeMap[k]&&pendingSnoozeMap[k]<=Date.now()){delete pendingSnoozeMap[k];changed=true}});if(changed)savePendingSnoozeMap()}
-function pendingLabelMap(item){const m={};(item.label_values||[]).forEach(v=>{if(v&&typeof v==='object'){m[String(v.label||'').toLowerCase().trim()]=v.value||''}});return m}
+function pendingLabelMap(item){
+  // Instagram translates the same native Pending JSON labels by locale.
+  // Display names alone are NOT verified Instagram usernames.
+  const aliases={
+    'username':'username','user name':'username','nombre de usuario':'username',
+    'name':'name','nombre':'name',
+    'url':'url','link':'url','enlace':'url'
+  },m={};
+  (item.label_values||[]).forEach(v=>{
+    if(!v||typeof v!=='object')return;
+    const label=String(v.label||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .trim().toLowerCase().replace(/\s+/g,' ');
+    const key=aliases[label],value=String(v.value??'').trim();
+    if(key&&value&&!m[key])m[key]=value;
+  });
+  return m;
+}
 function extractPendingRequestsFromJSON(data,source){
   // Native Pending JSON may use label_values or string_list_data.
   // Only accept verified username or Instagram-profile URL evidence.
@@ -9210,7 +9226,7 @@ function extractPendingRequestsFromJSON(data,source){
   else walk(data);
   return dedupePending(out);
 }
-function extractPendingRequestsFromRaw(text,source){let out=[];try{out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source))}catch{}const raw=decodeText(text);const re=/"label"\s*:\s*"Username"[\s\S]{0,120}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;while((m=re.exec(raw))!==null){const username=cleanUsername(m[1]);if(username)out.push({username,href:profileUrl(username,''),name:'',url:'',timestamp:0,source,fbid:''})}return dedupePending(out)}
+function extractPendingRequestsFromRaw(text,source){let out=[];try{out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source))}catch{}const raw=decodeText(text);const re=/"label"\s*:\s*"(?:Username|Nombre de usuario)"[\s\S]{0,120}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;while((m=re.exec(raw))!==null){const username=cleanUsername(m[1]);if(username)out.push({username,href:profileUrl(username,''),name:'',url:'',timestamp:0,source,fbid:''})}return dedupePending(out)}
 function dedupePending(list){const map=new Map();(list||[]).forEach(x=>{if(!x||!x.username)return;const old=map.get(x.username);if(!old||(x.timestamp||0)>(old.timestamp||0))map.set(x.username,x)});return [...map.values()].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)||a.username.localeCompare(b.username))}
 // Native Pending exports declare the actual number of sent requests. Counting
 // unique parsed handles ALONE is not enough: a partly unreadable shard would
@@ -12733,7 +12749,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     // Compatibilidad legacy con TXT/JSON extraño.
     let out=[];
     try{if(typeof extractPendingRequestsFromJSON==='function')out=out.concat(extractPendingRequestsFromJSON(JSON.parse(text),source)||[])}catch{}
-    const raw=decodeText(text), re=/"label"\s*:\s*"Username"[\s\S]{0,160}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;
+    const raw=decodeText(text), re=/"label"\s*:\s*"(?:Username|Nombre de usuario)"[\s\S]{0,160}?"value"\s*:\s*"([A-Za-z0-9._]{1,30})"/g;let m;
     while((m=re.exec(raw))!==null){const username=cleanUsername(m[1]);if(username)out.push({username,href:profileUrl(username,''),name:'',url:'',timestamp:0,source,fbid:''})}
     return dedupePending(out);
   };
