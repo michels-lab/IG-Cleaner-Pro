@@ -88,6 +88,9 @@ assert.equal(groups.recent_follow_requests.length,1);
  const countTranslated=await ctx.parseZipPending([translated],"bilingual.zip");
  assert.equal(countTranslated,2);
  assert.deepEqual(Array.from(ctx.pendingRequestsRaw,x=>x.username).sort(),["testenglish_2","testespanol_1"]);
+ // Restore fixture baseline before the existing one-save atomic ZIP regression.
+ ctx.pendingRequestsRaw=[{username:'saved.before',timestamp:1}];
+ saved.length=0;
  const count=await ctx.parseZipPending(groups.pending_follow_requests,'two-shards.zip');
  assert.equal(count,725,'All distinct requests from both shards must be imported');
  assert.equal(ctx.pendingRequestsRaw.length,725);
