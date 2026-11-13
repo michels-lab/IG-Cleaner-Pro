@@ -89,6 +89,19 @@ const snapshot=(x,name,source,capturedAt)=>{
  assert.equal(old.ctx.followingRaw[0].username,"fresh.import",
    "Two independent Instagram sessions must never mutate each other's local lists");
 
+ // A verified empty Pending export is a real import, not an absent input:
+ // syncing it must remove older Pending accounts instead of resurrecting them.
+ const empty=harness("third");
+ empty.remote.set("following",snapshot(empty,"following",["old"],ago(90000)));
+ empty.remote.set("pending",snapshot(empty,"pending",["stale.pending"],ago(90000)));
+ empty.ctx.pendingRequestsRaw=[];
+ empty.ctx.window.igcMarkLocalSnapshotsDirty(["pending"]);
+ assert.equal((await empty.ctx.pushListSnapshots()).lists,1,
+   "Explicit empty Pending import must upload rather than silently skip");
+ assert.equal(empty.remote.get("pending").item_count,0);
+ await empty.ctx.pullListSnapshots();
+ assert.equal(empty.ctx.pendingRequestsRaw.length,0);
+
  // Production imports must mark origin only after a successful parse, not on view refresh.
  assert(html.includes("window.igcMarkLocalSnapshotsDirty?.(['following','followers'])"));
  assert(html.includes("window.igcMarkLocalSnapshotsDirty?.(['pending'])"));
