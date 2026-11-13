@@ -2918,7 +2918,7 @@ window.IGC_INSTAGRAM_PROFILES={
     ? 'Following '+Number(selected.following_count||0).toLocaleString('es-MX')
        +' · Followers '+Number(selected.followers_count||0).toLocaleString('es-MX')
        +' · Pending '+Number(selected.pending_count||0).toLocaleString('es-MX')
-       +' · Revisiones '+Number(selected.review_count||0).toLocaleString('es-MX')
+       +' · Revisiones históricas en nube '+Number(selected.review_count||0).toLocaleString('es-MX')
     : 'Abre Cuenta y sincroniza para consultar los datos';
    const when=selected?.last_sync_at?' · Snapshot '+String(selected.last_sync_at).slice(0,10):'';
    info.textContent=metrics+when;
@@ -10151,7 +10151,7 @@ function renderReviewRealtimePanel(){
   const noFollow=rows.filter(r=>!r.followsBack&&!r.relationGood).length;
   const activeCount=activeFocusBatch?.kind==='main'?(typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch).length:(activeFocusBatch.rows?.length||0)):0;
   const available=typeof allMainFocusOpenableRows==='function'?allMainFocusOpenableRows().length:0;
-  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'pendientes'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:available,label:'abribles'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
+  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'siguiendo sin revisar'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:available,label:'abribles'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
 }
 function renderPendingRealtimePanel(){
   const el=document.getElementById('pendingRealtimePanel');
@@ -14600,7 +14600,8 @@ function localStateRows(){
 // rows that were omitted by an API limit.
 let completeProfileStateCache=null;
 async function readCompleteProfileState(fields='*'){
-  if(completeProfileStateCache&&Date.now()-completeProfileStateCache.at<4000)
+  if(completeProfileStateCache&&Date.now()-completeProfileStateCache.at<4000&&
+     (completeProfileStateCache.fields==='*'||fields!=='*'))
     return completeProfileStateCache.rows;
   const all=[],seen=new Set(),pageSize=1000;
   for(let offset=0;offset<=250000;offset+=pageSize){
@@ -14620,7 +14621,7 @@ async function readCompleteProfileState(fields='*'){
       // Fail closed on truncated pages, while preserving all local decisions.
       if(account&&Number.isInteger(expected)&&expected>=0&&all.length<expected)
         throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
-      completeProfileStateCache={at:Date.now(),rows:all};
+      completeProfileStateCache={at:Date.now(),rows:all,fields};
       return all;
     }
   }
