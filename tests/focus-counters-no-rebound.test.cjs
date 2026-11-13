@@ -60,4 +60,28 @@ assert.deepEqual(counts(),{main:1,recheck:3,double:3,reviewed:2},
 scoped.first.push({username:"fresh",followsBack:false,relationGood:false});
 assert.deepEqual(counts(),{main:2,recheck:4,double:4,reviewed:2},
   "A genuine new import may legitimately increase availability");
+// Realistic 30-person batch: confirmations must be idempotent, and rapid account
+// switching/re-import must not reintroduce reviewed candidates into normal Focus.
+const batch=Array.from({length:30},(_,i)=>({username:"batch."+i,followsBack:false,relationGood:false}));
+scoped.first.push(...batch);
+const beforeBatch=counts();
+for(const r of batch)done.first.add(r.username);
+assert.equal(counts().main,beforeBatch.main-30,
+  "Thirty confirmed eligible reviews must remove exactly thirty normal Focus candidates");
+assert.equal(counts().recheck,beforeBatch.recheck,
+  "Recheck intentionally includes reviewed profiles");
+assert.equal(counts().reviewed,beforeBatch.reviewed+30,
+  "Thirty confirmed reviews must be counted once");
+for(let i=0;i<8;i++){
+  active="second";
+  assert.deepEqual(counts(),{main:0,recheck:1,double:1,reviewed:1});
+  active="first";
+  assert.equal(counts().main,beforeBatch.main-30,
+    "Fast account switching must not restore reviewed Focus candidates");
+}
+scoped.first=[...scoped.first.map(r=>({...r}))]; // ZIP re-import returns fresh row objects.
+ctx.V113.cache=null;
+assert.equal(counts().main,beforeBatch.main-30,
+  "Fresh ZIP row objects and cache invalidation cannot override completed reviews");
+assert.equal(counts().reviewed,beforeBatch.reviewed+30);
 console.log("PASS: Focus counter is live, consistent with actual openable rows and isolated between accounts");
