@@ -10937,7 +10937,7 @@ function showExtraFocusModal(kind,rows,label){
   const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`:`Se abrieron ${rows.length} seguidores que sigues. La app abrirá los perfiles y este cuadro se queda aquí para que al regresar confirmes si SÍ pudiste revisarlos o si NO pudiste revisar todavía.`;
   const t=document.getElementById('extraFocusTitle');if(t)t.textContent=title;
   const p=document.getElementById('extraFocusText');if(p)p.innerHTML=text;
-  const d=document.getElementById('extraFocusDecision');if(d)d.value=kind==='pending'?'still_pending':'reviewed';
+  const d=document.getElementById('extraFocusDecision');if(d)d.value='reviewed'; // Always start a NEW batch in Reviewed, never a stale Pending choice.
   const warn=document.getElementById('focusConfirmWarning');if(warn)warn.style.display=['pending','mutual'].includes(kind)?'block':'none';
   const nr=document.getElementById('extraFocusNotReviewedBtn');if(nr)nr.style.display=['pending','mutual'].includes(kind)?'inline-flex':'none';
   const list=document.getElementById('extraFocusList');
@@ -11799,7 +11799,7 @@ function showSafeFocusPopup(kind,rows,label){
   const text=`Requested ${rows.length} profile tabs for ${kind}. Chrome may block repeated popups, especially after multiple batches. If any tab did not open, use the direct Open link beside that username below. Save the decision only after actually reviewing profiles.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
-  const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
+  const decision=document.getElementById('safeFocusDecision');if(decision)decision.value='reviewed'; // Reset every batch, including Pending Requests. Selection still requires explicit owner confirmation.
   const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   const list=document.getElementById('safeFocusList');
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
