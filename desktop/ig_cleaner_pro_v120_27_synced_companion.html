@@ -14412,11 +14412,12 @@ async function pushListSnapshots(){
   const rows=[],pendingMeta=[];
   for(const name of ['following','followers','pending']){
     const payload=listPayload(name);
-    if(!payload.length)continue;
     const contentHash=hash(JSON.stringify(payload));
     const prev=dataMeta?.[name]||{},cloud=known.get(name);
     const remoteAt=cloud?ms(cloud.captured_at||cloud.updated_at):0;
     const importedAt=prev.dirtyHash===contentHash?Number(prev.dirtyAt||0):0;
+    // A verified empty ZIP import must clear an older cloud list too.
+    if(!payload.length&&!importedAt)continue;
     // A matching cloud hash already reflects this dataset, even on a new device.
     if(cloud&&String(cloud.content_hash||'')===contentHash){
       dataMeta[name]={hash:contentHash,capturedAt:remoteAt,sourceDevice:cloud.source_device||'desktop',itemCount:payload.length};
