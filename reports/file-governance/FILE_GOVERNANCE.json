@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "025047460515a79d31d5c77f3503f089d3bbeae61d63d4d7dbb744ed312d3a27",
+  "inventory_fingerprint": "c57e18c6041fa8e416b085d4b909d4f68e00e68e55cfae77bb3f32b5fe622039",
   "evidence_fingerprint": "7b965bfbbe4c339c27335dbc74dcbe990292de8e95ecbdbe8bd4d0322dbd19f2",
   "files": [
     {
@@ -1849,7 +1849,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "27b4683ea888c159c6249ef5fea5149b4839812f"
+      "blob": "05af4e32c3a8404ad2874b6af779802d19390f05"
     },
     {
       "path": "tests/cloud-review-monotonic.test.cjs",
