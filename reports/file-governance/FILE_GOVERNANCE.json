@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "d652fd75a1baa3f07cf8c3ba2a274eee8c9f464e88fa5bb5d98116222dbf4bb6",
+  "inventory_fingerprint": "b36be9599b1e40bc335e7c3e4147fb1ef36b62b80797ba6f735e20b1885ad36e",
   "evidence_fingerprint": "490a2cffc0e211e79464474fed90ca335c55b97d572a48ded0cfd63df18ddce0",
   "files": [
     {
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "345cfb6f56544af457ea6025a4e8d0d3720241d5"
+      "blob": "b2e3c9116b46bd3428b813e91a977b97d798489b"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
