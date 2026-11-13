@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "a9bf8eb5c38bfcfa952ce8f3a0614f541468050b3055040f4df80fdf326c9465",
+  "inventory_fingerprint": "5759d47387b721c6ec11068c383ddc71577aefd72e2a4a9bdba19a7099de7ea6",
   "evidence_fingerprint": "7b965bfbbe4c339c27335dbc74dcbe990292de8e95ecbdbe8bd4d0322dbd19f2",
   "files": [
     {
@@ -2325,7 +2325,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b5df6e205a6c1ffb9946f77d9eee71e11778e803"
+      "blob": "c3d1a2d14da36e50d51850c05f46fad791870d29"
     },
     {
       "path": "tests/test_automation_warning_events.py",
