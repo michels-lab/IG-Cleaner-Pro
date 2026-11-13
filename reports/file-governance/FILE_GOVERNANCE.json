@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "ac88dfd3aa6ecac7e03fe673546e84111a192cb3218f84a52662206053df914c",
+  "inventory_fingerprint": "0e67720312448e314dae20b1bc33f7b0f0592f9c8ca362971e69225ae08bf586",
   "evidence_fingerprint": "2f9fd08a31b1e7f265751877abc48e4ce23f7aefe480dcfa229a71bf9d022219",
   "files": [
     {
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "fd1332dd9d396b946b38e9f99f72f7669a30948e"
+      "blob": "1193c06ccf18920154989b6e9177a4336c497e14"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "2516483ae486e75b872b833acc73b26d638b9759"
+      "blob": "668eda8258f4eea5125c39c9a4a3bb898d7dda57"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
