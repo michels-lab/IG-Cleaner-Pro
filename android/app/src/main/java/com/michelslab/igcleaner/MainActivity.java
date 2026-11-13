@@ -452,8 +452,9 @@ public final class MainActivity extends AppCompatActivity {
         JSONObject pendingReviewed = state.optJSONObject("pendingReviewedMeta");
         if (pendingReviewed == null) pendingReviewed = new JSONObject();
 
-        long snapshotUpdatedAt = state.optLong("_snapshotUpdatedAt", 0L);
-
+        // A workspace snapshot may be newer than a review yet contain stale
+        // or incomplete review metadata from another device. Merge by each
+        // profile's reviewedAt, never by the snapshot's upload time.
         for (int i = 0; i < profileStates.length(); i++) {
             JSONObject row = profileStates.optJSONObject(i);
             if (row == null) continue;
@@ -461,11 +462,6 @@ public final class MainActivity extends AppCompatActivity {
             if (username.isBlank()) continue;
             long reviewedAt = parseInstant(row.optString("reviewed_at")).toEpochMilli();
             if (reviewedAt <= 0) continue;
-
-            // A complete Desktop workspace snapshot is authoritative for every
-            // profile state at or before its own timestamp. Only reviews that
-            // happened after that snapshot are overlaid from profile_state.
-            if (snapshotUpdatedAt > 0 && reviewedAt <= snapshotUpdatedAt) continue;
 
             String module = row.optString("module", "main");
 
@@ -483,9 +479,11 @@ public final class MainActivity extends AppCompatActivity {
             }
 
             JSONObject context = row.optJSONObject("context");
-            JSONObject rowContext = context == null ? null : context.optJSONObject("row");
+            JSONObject originalMeta = context == null ? null : context.optJSONObject("meta");
+            JSONObject rowContext = originalMeta != null ? originalMeta
+                    : (context == null ? null : context.optJSONObject("row"));
             JSONObject old = reviewedMeta.optJSONObject(username);
-            if (old != null && old.optLong("reviewedAt", 0) > reviewedAt) continue;
+            if (old != null && old.optLong("reviewedAt", 0) >= reviewedAt) continue;
 
             String mode = ("followers".equals(module) || "mutual".equals(module)) ? "followers" : "following";
             JSONObject meta = new JSONObject()
@@ -495,7 +493,13 @@ public final class MainActivity extends AppCompatActivity {
                     .put("reviewSource", "sync:" + row.optString("reviewed_device", "remote"));
 
             if (rowContext != null) {
-                meta.put("relation", rowContext.optString("relation", ""));
+                String relation = rowContext.optString("relation", "");
+                if ("not_follow".equals(relation)) relation = "No me sigue";
+                else if ("follower_only".equals(relation)) relation = "No lo sigo";
+                else if ("mutual".equals(relation)) {
+                    relation = "following".equals(mode) ? "Me sigue" : "Yo lo sigo";
+                }
+                meta.put("relation", relation);
                 meta.put("relationGood", rowContext.optBoolean("relationGood", false));
                 meta.put("followsBack", rowContext.optBoolean("followsBack", false));
                 meta.put("isFollower", rowContext.optBoolean("isFollower", false));
