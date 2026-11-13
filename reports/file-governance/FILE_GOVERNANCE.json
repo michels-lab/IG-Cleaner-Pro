@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "94eedc9f76c678834191ac190213e324ded915648df7b11bcf6f2bad38908631",
-  "evidence_fingerprint": "7c80fa9516da11e5f65f943281059cb5a3bfa79e444fcee219b4e7a94496e34f",
+  "inventory_fingerprint": "f322b8363a4580f3e842f26f54dfdcfcfa5887e330f249ba3b204a0fafc31001",
+  "evidence_fingerprint": "b4974d68673197844f771488ef47947e43ebc84d59dcf9376f14a337cc938127",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -344,7 +344,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7d3c7835e092621a29e23912a6ebeaf20a27998d"
+      "blob": "ca519fcb47d0f1595e438e0b860d289c0ddf6f65"
     },
     {
       "path": "android/app/src/main/java/com/michelslab/igcleaner/ProfileAdapter.java",
@@ -3060,11 +3060,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "450ec7e62891399d",
+      "id": "f2826d471f8a1ee3",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "34 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "35 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
