@@ -1,3 +1,12 @@
+## v120.75 — Operation Granada Focus counters and multi-device sync (2026-11-12)
+
+- **Focus 30 / Recheck 30 / Double Check 30:** counters derive from live eligibility and a consistent snapshot per render. Recheck intentionally retains reviewed candidates.
+- **Review persistence:** timestamp-monotonic Supabase updates, original review metadata restoration, Android per-profile merging, and owner/profile-scoped state.
+- **Lists and ZIPs:** reject stale relationship snapshots at the server, preserve genuine import timestamps, support verified empty Pending ZIP and Advanced Android WebView imports without publishing cached older data.
+- **Android A → B → A:** discard older in-flight workspace results before updating memory or cache; verify active owner and Instagram profile.
+- **Regression evidence:** automated 918 profiles / 484 reviewed / 434 normal Focus available; 30 confirmations persist across A→B→A. Separate desktop, native Android and cloud list regression tests.
+- **Acceptance scope:** user explicitly authorized stable publication for later hands-on PC/Android review; live Instagram Unfollow/Cancel and physical account data not verified. Issue #360 remains open. No RC/beta; publisher must enforce signing, installed UI/installer, checksum and update-feed gates.
+
 ## v120.74 — Pending Spanish/English Instagram ZIP fix (2026-11-12)
 
 - **Fix:** [PR #358](https://github.com/michels-lab/IG-Cleaner-Pro/pull/358) in main: native Instagram Pending `label_values` recognizes Spanish `Nombre de usuario` / `Nombre` as well as English `Username` / `Name`. Blank URL is allowed when the explicit username is valid.
