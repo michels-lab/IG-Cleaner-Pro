@@ -14346,7 +14346,16 @@ window.igcPrivacyDeleteCloudData=async function(){
 };
 function iso(v){return new Date(Number(v||Date.now())).toISOString()}
 function ms(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:0}
-function currentDevice(){let d={};try{d=JSON.parse(localStorage.getItem('igc_v12026_device_identity')||'{}')||{}}catch{}return {id:d.id||'desktop',type:d.type||'desktop',label:d.label||'Desktop'}}
+function currentDevice(){
+  let d={};try{d=JSON.parse(localStorage.getItem('igc_v12026_device_identity')||'{}')||{}}catch{}
+  // The Android WebView can contain an old Desktop identity in its local cache.
+  // The native bridge is authoritative for the current physical device.
+  if(window.AndroidBridge && typeof window.AndroidBridge.getInstagramOwnerEmail==='function'){
+    let nativeId='';try{nativeId=String(window.AndroidBridge.getDeviceId?.()||'')}catch{}
+    return {id:nativeId||d.id||'android',type:'android',label:'Android'};
+  }
+  return {id:d.id||'desktop',type:d.type||'desktop',label:d.label||'Desktop'};
+}
 function eventToDb(e){return {id:e.id,event_at:iso(e.ts),username:e.username||null,action:e.action,device_id:e.deviceId||'unknown',device_type:e.deviceType||'other',device_label:e.deviceLabel||'',module:e.module||'unknown',batch_id:e.batchId||null,batch_label:e.batchLabel||'',batch_size:Number(e.batchSize||0),decision:e.decision||'',origin_event_id:e.originEventId||null,meta:e.meta||{}}}
 function eventFromDb(r){return {id:r.id,ts:ms(r.event_at),username:r.username||'',action:r.action,deviceId:r.device_id,deviceType:r.device_type,deviceLabel:r.device_label,module:r.module,batchId:r.batch_id||'',batchLabel:r.batch_label||'',batchSize:r.batch_size||0,decision:r.decision||'',originEventId:r.origin_event_id||'',meta:r.meta||{}}}
 async function pushEvents(){const arr=(window.igcAuditGetEvents?.()||[]).map(eventToDb);if(!arr.length)return 0;for(let i=0;i<arr.length;i+=500)await rest('audit_events?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr.slice(i,i+500))});S.stats.eventsUp=arr.length;return arr.length}
@@ -14406,7 +14415,6 @@ window.igcMarkLocalSnapshotsDirty=function(kinds){
 };
 async function pushListSnapshots(){
   const d=currentDevice();
-  if(d.type!=='desktop')return {lists:0,profiles:0};
   const remote=await rest('list_snapshots?select=list_name,content_hash,captured_at,updated_at',{method:'GET'});
   const known=new Map((remote||[]).map(row=>[row.list_name,row]));
   const rows=[],pendingMeta=[];
@@ -14416,6 +14424,10 @@ async function pushListSnapshots(){
     const prev=dataMeta?.[name]||{},cloud=known.get(name);
     const remoteAt=cloud?ms(cloud.captured_at||cloud.updated_at):0;
     const importedAt=prev.dirtyHash===contentHash?Number(prev.dirtyAt||0):0;
+    // Android's native screens consume cloud lists; only a verified import
+    // from the Advanced WebView may publish them. Never republish the device's
+    // cache (including on first login) or restore an obsolete list.
+    if(d.type!=='desktop'&&!importedAt)continue;
     // A verified empty ZIP import must clear an older cloud list too.
     if(!payload.length&&!importedAt)continue;
     // A matching cloud hash already reflects this dataset, even on a new device.
