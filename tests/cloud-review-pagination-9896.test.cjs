@@ -23,7 +23,7 @@ const fixtures=Array.from({length:9896},(_,i)=>{
     context:{row:{...snapshot},meta:{mode:module==="main"?"following":"followers",...snapshot}}
   };
 });
-function harness(cutPage=-1){
+function harness(cutPage=-1,serverCap=1000){
   const doneSet=new Set(),reviewedMeta={},protectedSet=new Set();
   const pendingReviewedMeta={},pendingOpenedSet=new Set(),storage=new Map();
   let calls=0,writes=0;
@@ -47,7 +47,7 @@ function harness(cutPage=-1){
     const offset=Number(new URLSearchParams(q.split("?")[1]).get("offset"));
     assert.equal(limit,1000);
     calls++;
-    return offset===cutPage?[]:fixtures.slice(offset,offset+1000);
+    return offset===cutPage?[]:fixtures.slice(offset,offset+Math.min(limit,serverCap));
   };
   vm.createContext(ctx);
   vm.runInContext(cut("let completeProfileStateCache=null;","async function pushWorkspaceState(){"),ctx);
@@ -73,6 +73,12 @@ function harness(cutPage=-1){
   await assert.rejects(truncated.ctx.pullProfileState(),/Sync incompleto/);
   assert.equal(truncated.doneSet.size,0,"Incomplete download may not partially apply records");
   assert.equal(truncated.ctx.S.stats.statesDown,undefined);
+
+  // If an installation lowers the API max_rows limit, the cloud count guard
+  // refuses to treat a short page as a complete profile history.
+  const capped=harness(-1,500);
+  await assert.rejects(capped.ctx.pullProfileState(),/Sync incompleto/);
+  assert.equal(capped.doneSet.size,0);
 
   // A slim preflight GET cannot masquerade as fully hydrated review payloads.
   const slim=harness();
