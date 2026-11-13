@@ -45,8 +45,10 @@ class NativeWorkspaceRaceRegression(unittest.TestCase):
         self.assertIn("syncedFollowing = new JSONArray()", self.profile_change)
         self.assertIn("syncedFollowers = new JSONArray()", self.profile_change)
         self.assertIn("syncedWorkspaceState = new JSONObject()", self.profile_change)
+        # First setInstagramProfile handles label refresh for the same account.
+        # Only the second invocation changes the underlying Instagram scope.
         self.assertLess(self.profile_change.index("++workspaceSyncGeneration"),
-                        self.profile_change.index("api.setInstagramProfile(key, label)"))
+                        self.profile_change.rindex("api.setInstagramProfile(key, label)"))
 
 
 if __name__ == "__main__":
