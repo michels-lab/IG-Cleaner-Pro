@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 432,
-  "classified_files_total": 428,
+  "tracked_files_total": 433,
+  "classified_files_total": 429,
   "docs_content_inspected": 107,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 130,
+    "test": 131,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "883893e527a0a7abe395f47460aa955ffe0d352141f2d3378a5b73251149f410",
-  "evidence_fingerprint": "b8e8f11464d68465b53aa809935e9abcb78b241133f512ec5966f161407b68e4",
+  "inventory_fingerprint": "8765abc0c27c2e18ae2d848037d6de086610dab7b0e1fa83c8deb7c688fbaf1c",
+  "evidence_fingerprint": "21d945859a28cd68a59c0715aa82feda419e2fb9f7400cd82f20db0bc81a2da5",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1859,6 +1859,13 @@
       "blob": "b6c2f70bb55a69f47b667df2614e973cb78ac602"
     },
     {
+      "path": "tests/cloud-review-pagination-9896.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "1e1c119937ba5ed11d620625cd4d97067794f941"
+    },
+    {
       "path": "tests/desktop-contract.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3102,11 +3109,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "6590c03aae4aab3b",
+      "id": "a17d5dad40307252",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "41 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java",
+      "observation": "42 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
