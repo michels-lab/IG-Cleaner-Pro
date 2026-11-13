@@ -14537,7 +14537,26 @@ function localStateRows(){
   }
   return [...byKey.values()];
 }
-async function pushProfileState(){const rows=localStateRows();if(!rows.length)return 0;for(let i=0;i<rows.length;i+=500)await rest('profile_state?on_conflict=user_id,username,module',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows.slice(i,i+500))});return rows.length}
+async function pushProfileState(){
+  const rows=localStateRows();
+  if(!rows.length)return 0;
+  // Before publishing an offline device, compare the cloud's review timestamps.
+  // A late/stale upload must not replace a more recent decision (also guarded
+  // by the database BEFORE UPDATE trigger for concurrent device races).
+  const remote=await rest('profile_state?select=username,module,reviewed_at&limit=20000',{method:'GET'});
+  const latest=new Map();
+  for(const row of remote||[]){
+    const key=String(row.username||'').toLowerCase()+'|'+String(row.module||'');
+    latest.set(key,Math.max(latest.get(key)||0,ms(row.reviewed_at)));
+  }
+  const changed=rows.filter(row=>ms(row.reviewed_at)>(latest.get(String(row.username||'').toLowerCase()+'|'+row.module)||0));
+  for(let i=0;i<changed.length;i+=500){
+    await rest('profile_state?on_conflict=user_id,username,module',{method:'POST',
+      headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(changed.slice(i,i+500))});
+  }
+  return changed.length;
+}
 async function pushWorkspaceState(){
   const d=currentDevice();
   if(d.type!=='desktop')return 0;
@@ -14574,13 +14593,26 @@ function applyOneState(r){
     pendingOpenedSet?.add?.(u);
     return true;
   }
-  const ctx=r.context?.row||r.context?.context?.row||{};
   const mode=(r.module==='followers'||r.module==='mutual')?'followers':'following';
   const cur=Number(reviewedMeta?.[u]?.reviewedAt||0);
   if(at<=cur)return false;
+  // Uploaded Desktop legacy state includes the *actual* original review
+  // metadata. rowContext() has generic English relation codes instead of
+  // the Spanish values used by buildRowsForMode(), so using its row blindly
+  // makes freshly synced reviews look unreviewed in the UI.
+  const snapshot=r.context?.row||r.context?.context?.row||{};
+  const original=r.context?.meta||{};
+  const source={...snapshot,...original};
+  const rel=String(source.relation||'');
+  const relation=rel==='not_follow'?'No me sigue':
+    rel==='follower_only'?'No lo sigo':
+    rel==='mutual'?(mode==='following'?'Me sigue':'Yo lo sigo'):rel;
   doneSet.add(u);
   if(r.protected)protectedSet.add(u);
-  reviewedMeta[u]={mode,relation:ctx.relation||'',relationGood:!!ctx.relationGood,followsBack:!!ctx.followsBack,isFollower:!!ctx.isFollower,iFollow:mode==='following'?true:!!ctx.iFollow,dateMain:Number(ctx.dateMain||0),reviewedAt:at,reviewReason:decision,reviewSource:`sync:${device}`};
+  reviewedMeta[u]={mode,relation,relationGood:!!source.relationGood,
+    followsBack:!!source.followsBack,isFollower:!!source.isFollower,
+    iFollow:mode==='following'?true:!!source.iFollow,dateMain:Number(source.dateMain||0),
+    reviewedAt:at,reviewReason:decision,reviewSource:`sync:${device}`};
   return true;
 }
 async function pullProfileState(){
