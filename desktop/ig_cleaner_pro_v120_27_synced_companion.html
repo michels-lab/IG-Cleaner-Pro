@@ -14359,7 +14359,28 @@ function currentDevice(){
 function eventToDb(e){return {id:e.id,event_at:iso(e.ts),username:e.username||null,action:e.action,device_id:e.deviceId||'unknown',device_type:e.deviceType||'other',device_label:e.deviceLabel||'',module:e.module||'unknown',batch_id:e.batchId||null,batch_label:e.batchLabel||'',batch_size:Number(e.batchSize||0),decision:e.decision||'',origin_event_id:e.originEventId||null,meta:e.meta||{}}}
 function eventFromDb(r){return {id:r.id,ts:ms(r.event_at),username:r.username||'',action:r.action,deviceId:r.device_id,deviceType:r.device_type,deviceLabel:r.device_label,module:r.module,batchId:r.batch_id||'',batchLabel:r.batch_label||'',batchSize:r.batch_size||0,decision:r.decision||'',originEventId:r.origin_event_id||'',meta:r.meta||{}}}
 async function pushEvents(){const arr=(window.igcAuditGetEvents?.()||[]).map(eventToDb);if(!arr.length)return 0;for(let i=0;i<arr.length;i+=500)await rest('audit_events?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr.slice(i,i+500))});S.stats.eventsUp=arr.length;return arr.length}
-async function pullEvents(){const rows=await rest('audit_events?select=*&order=event_at.desc&limit=10000',{method:'GET'});const ev=(rows||[]).map(eventFromDb);await window.igcAuditMergeRemoteEvents?.(ev);S.stats.eventsDown=ev.length;return ev.length}
+async function pullEvents(){
+  // Audit history is also capped by the server regardless of a larger limit.
+  // Do not drop older opens/reviews from the owner's persisted timeline.
+  const rows=[],seen=new Set(),pageSize=1000;
+  for(let offset=0;offset<=250000;offset+=pageSize){
+    const page=await rest('audit_events?select=*&order=event_at.desc,id.asc&limit='+
+      pageSize+'&offset='+offset,{method:'GET'});
+    if(!Array.isArray(page))throw Error('Sync incompleto: página de historial inválida');
+    for(const item of page){
+      const id=String(item.id||'');
+      if(!id||seen.has(id))throw Error('Sync incompleto: historial repetido o sin identificador');
+      seen.add(id);rows.push(item);
+    }
+    if(page.length<pageSize){
+      const ev=rows.map(eventFromDb);
+      await window.igcAuditMergeRemoteEvents?.(ev);
+      S.stats.eventsDown=ev.length;
+      return ev.length;
+    }
+  }
+  throw Error('Sync incompleto: límite de paginación de historial');
+}
 function rowContext(username,kind){const u=String(username||'').toLowerCase();const fr=(followingMap&&followingMap.get)?followingMap.get(u):null,rr=(followersMap&&followersMap.get)?followersMap.get(u):null,pr=(pendingRequestsRaw||[]).find(x=>String(x.username||'').toLowerCase()===u)||null;let row;if(kind==='pending')row={...(pr||{}),username:u,dateMain:pr?.timestamp||0};else if(kind==='main')row={username:u,dateMain:fr?.timestamp||0,dateOther:rr?.timestamp||0,iFollow:true,isFollower:!!rr,followsBack:!!rr,relationGood:!!rr,relation:rr?'mutual':'not_follow'};else row={username:u,dateMain:rr?.timestamp||0,dateOther:fr?.timestamp||0,iFollow:!!fr,isFollower:true,followsBack:true,relationGood:kind==='mutual',relation:fr?'mutual':'follower_only'};let context='';try{context=focusContextText?.(row,kind)||''}catch{}return {kind,context,row:{relation:row.relation||'',relationGood:!!row.relationGood,followsBack:!!row.followsBack,isFollower:!!row.isFollower,iFollow:!!row.iFollow,dateMain:Number(row.dateMain||0),dateOther:Number(row.dateOther||0)}}}
 function hash(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
 
