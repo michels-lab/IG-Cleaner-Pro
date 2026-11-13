@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "0e67720312448e314dae20b1bc33f7b0f0592f9c8ca362971e69225ae08bf586",
+  "inventory_fingerprint": "e8f2cedb060e61316edbdd3131d57748b517de1b4ba0c0841dd93f71e3d1e079",
   "evidence_fingerprint": "2f9fd08a31b1e7f265751877abc48e4ce23f7aefe480dcfa229a71bf9d022219",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "668eda8258f4eea5125c39c9a4a3bb898d7dda57"
+      "blob": "cc8a7c4fa8a829ed681281b79bc88f9e1e84454c"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1555,7 +1555,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "fe74260bda96ce2a4274ce5946bbcc568650c36b"
+      "blob": "da38451a65acf067666288b068388d0da9612841"
     },
     {
       "path": "packaging/chrome-extension/README.md",
