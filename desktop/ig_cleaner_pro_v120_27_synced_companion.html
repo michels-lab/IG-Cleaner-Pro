@@ -14872,6 +14872,9 @@ window.igcQueueStateSync=function(reason='state'){
       await ensureAuth();
       await refreshInstagramAccounts();
       normalizeLegacyReviewState();
+      // Merge newer cloud reviews before publishing the full workspace.
+      // Otherwise a stale device can overwrite Android's primary snapshot.
+      await pullProfileState();
       const pushed=await pushProfileState();
       await pushWorkspaceState();
       S.lastSync=Date.now();
