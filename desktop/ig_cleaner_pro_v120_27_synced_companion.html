@@ -5401,6 +5401,8 @@ async function processFiles(){
 
     applyFilters();
 
+    // This is a real user import, unlike an old persisted list restored on startup.
+    window.igcMarkLocalSnapshotsDirty?.(['following','followers']);
     // Lo esencial ya terminó: ahora sí pregunta a qué pestaña quieres ir.
     try{autoCleanGarbageStates(false);}catch(e){console.warn('auto-clean falló',e)}
     showPostProcessNavPopup();
@@ -9344,6 +9346,7 @@ async function processPendingFiles(){
   pendingRequestsRaw=imported;
   pendingTableLimit=300;
   savePendingRequests();
+  window.igcMarkLocalSnapshotsDirty?.(['pending']);
   const filter=document.getElementById('pendingInternalFilter');
   if(filter)filter.value='all';
   const risk=document.getElementById('pendingRiskFilter');
@@ -13586,6 +13589,12 @@ async function applyZipCore(groups,zipName,expectedScope=null){
   const extrasCount=extras.reduce((n,x)=>n+x.count,0);
   const importedFollowing=newFollowing===null?0:followingRaw.length;
   const importedFollowers=newFollowers===null?0:followersRaw.length;
+  // Only list kinds genuinely present in this ZIP receive a fresh import clock.
+  window.igcMarkLocalSnapshotsDirty?.([
+    ...(newFollowing!==null?['following']:[]),
+    ...(newFollowers!==null?['followers']:[]),
+    ...(groups.pending_follow_requests?.length?['pending']:[])
+  ]);
   logAction('import',`Export ZIP importado: ${importedFollowing} following · ${importedFollowers} followers · ${pendingCount} pending`,{count:importedFollowing+importedFollowers+pendingCount+extrasCount,source:'instagram zip',file:zipName,following:importedFollowing,followers:importedFollowers,pending:pendingCount,extras:extrasCount});
   return {following:importedFollowing,followers:importedFollowers,pending:pendingCount,extras,
           preservedFollowing:newFollowing===null, preservedFollowers:newFollowers===null};
@@ -14385,22 +14394,48 @@ function renderSyncedLists(changed){
   try{renderModuleDashboard?.()}catch{}
   try{renderSectionRealtimePanels?.()}catch{}
 }
+// Only explicit successful user imports are allowed to replace existing cloud
+// snapshots. Simply opening an older device must NEVER republish its stale lists.
+window.igcMarkLocalSnapshotsDirty=function(kinds){
+  const at=Date.now();
+  for(const name of kinds||[]){
+    if(!['following','followers','pending'].includes(name))continue;
+    dataMeta[name]={...(dataMeta[name]||{}),dirtyHash:hash(JSON.stringify(listPayload(name))),dirtyAt:at};
+  }
+  saveDataMeta();
+};
 async function pushListSnapshots(){
   const d=currentDevice();
   if(d.type!=='desktop')return {lists:0,profiles:0};
+  const remote=await rest('list_snapshots?select=list_name,content_hash,captured_at,updated_at',{method:'GET'});
+  const known=new Map((remote||[]).map(row=>[row.list_name,row]));
   const rows=[],pendingMeta=[];
   for(const name of ['following','followers','pending']){
     const payload=listPayload(name);
     if(!payload.length)continue;
     const contentHash=hash(JSON.stringify(payload));
-    if(dataMeta?.[name]?.hash===contentHash)continue;
-    const capturedAt=new Date().toISOString();
-    rows.push({list_name:name,payload,item_count:payload.length,source_device:d.type,content_hash:contentHash,captured_at:capturedAt,updated_at:capturedAt});
+    const prev=dataMeta?.[name]||{},cloud=known.get(name);
+    const remoteAt=cloud?ms(cloud.captured_at||cloud.updated_at):0;
+    const importedAt=prev.dirtyHash===contentHash?Number(prev.dirtyAt||0):0;
+    // A matching cloud hash already reflects this dataset, even on a new device.
+    if(cloud&&String(cloud.content_hash||'')===contentHash){
+      dataMeta[name]={hash:contentHash,capturedAt:remoteAt,sourceDevice:cloud.source_device||'desktop',itemCount:payload.length};
+      continue;
+    }
+    // A remote snapshot is authoritative unless an explicit newer local import
+    // exists. This also covers first login with old lists but no sync metadata.
+    if(cloud&&(!importedAt||importedAt<=remoteAt))continue;
+    const capturedAt=new Date(importedAt||Date.now()).toISOString();
+    rows.push({list_name:name,payload,item_count:payload.length,source_device:d.type,
+      content_hash:contentHash,captured_at:capturedAt,updated_at:capturedAt});
     pendingMeta.push([name,{hash:contentHash,capturedAt:Date.parse(capturedAt),sourceDevice:d.type,itemCount:payload.length}]);
   }
-  if(!rows.length)return {lists:0,profiles:0};
-  await rest('list_snapshots?on_conflict=user_id,list_name',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
-  pendingMeta.forEach(([name,meta])=>dataMeta[name]=meta);saveDataMeta();
+  if(rows.length){
+    await rest('list_snapshots?on_conflict=user_id,list_name',{method:'POST',
+      headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+    pendingMeta.forEach(([name,meta])=>dataMeta[name]=meta);
+  }
+  saveDataMeta();
   return {lists:rows.length,profiles:rows.reduce((n,r)=>n+r.item_count,0)};
 }
 async function pullListSnapshots(){
@@ -14412,8 +14447,11 @@ async function pullListSnapshots(){
     const payload=Array.isArray(r.payload)?r.payload:[];
     profiles+=Number(r.item_count||payload.length||0);
     const current=listPayload(name),currentHash=hash(JSON.stringify(current));
-    const remoteAt=ms(r.captured_at||r.updated_at),localAt=Number(dataMeta?.[name]?.capturedAt||0);
-    if(current.length&&localAt>remoteAt)continue;
+    const remoteAt=ms(r.captured_at||r.updated_at);
+    const meta=dataMeta?.[name]||{},localAt=Number(meta.capturedAt||0);
+    const importAt=meta.dirtyHash===currentHash?Number(meta.dirtyAt||0):0;
+    // Do not replace an explicit unsynced local import with an older cloud copy.
+    if(current.length&&Math.max(localAt,importAt)>remoteAt)continue;
     if(currentHash!==String(r.content_hash||'')){
       if(applySnapshot(name,payload))changed.add(name);
     }
