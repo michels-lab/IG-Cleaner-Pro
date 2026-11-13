@@ -156,6 +156,7 @@ jobs:
           node tests/focus-counters-no-rebound.test.cjs
           node tests/focus-aba-persistence-918.test.cjs
           node tests/cloud-review-monotonic.test.cjs
+          node tests/cloud-review-pagination-9896.test.cjs
           node tests/cloud-list-snapshot-freshness.test.cjs
           node tests/native-webview-device-sync.test.cjs
           node tests/pending-zip-completeness.test.cjs
