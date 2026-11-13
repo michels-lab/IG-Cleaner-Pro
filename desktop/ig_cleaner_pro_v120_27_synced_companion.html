@@ -8085,7 +8085,15 @@ function openAllSelectedTabs(){
     return;
   }
   if(rows.length>50 && !confirm(`You are about to open ${rows.length} selected tabs. Continue?`))return;
+  const kind=currentMode==='following'?'main':'followers';
+  const already=rows.filter(r=>isPreviouslyHandledForNormalFocus(r,kind));
+  // Only the EXPLICIT 'Open all selected' path may re-open reviewed/visited
+  // profiles, with an additional count-based confirmation, never implicitly.
+  if(already.length && !confirm(`Recheck explícito: ${already.length} de ${rows.length} perfiles ya estaban revisados o abiertos. ¿Reabrirlos?`))return;
   const ctx={source:'todo seleccionado',label:'todo seleccionado'};
+  const before=new Set(already.map(r=>r.username));
+  recordRowsHistory(rows.filter(r=>!before.has(r.username)),'open',{kind,label:'manual all selected'});
+  recordRowsHistory(already,'reopen',{kind,label:'manual all selected'});
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   sessionStats.opened+=rows.length; sessionStats.openBatches+=1; forceLiveRefresh(`${rows.length} pestañas seleccionadas abiertas`);
   const counts=actionSummaryCounts(rows);

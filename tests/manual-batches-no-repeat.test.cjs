@@ -72,4 +72,8 @@ for(const kind of ["main","mutual","followers","pending"]){
 }
 assert(src.includes("function openRecheckNotFollowingN("),
  "Explicit Recheck must still exist");
+assert(src.includes("Recheck explícito: \${already.length} de \${rows.length}"),
+ "Open all selected must warn about already reviewed profiles before explicit re-open");
+assert(src.includes("recordRowsHistory(already,'reopen',{kind,label:'manual all selected'})"),
+ "Explicit re-open still records the visit in the scoped journal");
 console.log("PASS: Review, Mutuals, Followers, Pending ordinary batches never repeat handled profiles; explicit Recheck preserved");
