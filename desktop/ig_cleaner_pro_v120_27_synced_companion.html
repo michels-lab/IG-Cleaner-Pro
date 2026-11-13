@@ -14594,13 +14594,44 @@ function localStateRows(){
   }
   return [...byKey.values()];
 }
+// A PostgREST server can cap returned rows (often 1,000) even when a larger
+// limit is requested. Read EVERY scoped review page before reconciling. Never
+// treat the first page as the entire history or publish stale decisions over
+// rows that were omitted by an API limit.
+let completeProfileStateCache=null;
+async function readCompleteProfileState(fields='*'){
+  if(completeProfileStateCache&&Date.now()-completeProfileStateCache.at<4000)
+    return completeProfileStateCache.rows;
+  const all=[],seen=new Set(),pageSize=1000;
+  for(let offset=0;offset<=250000;offset+=pageSize){
+    const page=await rest('profile_state?select='+fields+
+      '&order=username.asc,module.asc&limit='+pageSize+'&offset='+offset,{method:'GET'});
+    if(!Array.isArray(page))throw Error('Sync incompleto: la nube no devolvió una página válida de revisiones');
+    for(const item of page){
+      const key=String(item.username||'').toLowerCase()+'|'+String(item.module||'');
+      if(seen.has(key))throw Error('Sync incompleto: páginas de revisiones repetidas durante la descarga');
+      seen.add(key);all.push(item);
+    }
+    if(page.length<pageSize){
+      const registry=window.IGC_INSTAGRAM_PROFILES;
+      const account=registry?.accounts?.find(x=>x.account_key===registry.active);
+      const expected=Number(account?.review_count);
+      // The account summary is a database COUNT over this exact workspace.
+      // Fail closed on truncated pages, while preserving all local decisions.
+      if(account&&Number.isInteger(expected)&&expected>=0&&all.length<expected)
+        throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
+      completeProfileStateCache={at:Date.now(),rows:all};
+      return all;
+    }
+  }
+  throw Error('Sync incompleto: límite de seguridad de paginación de revisiones');
+}
 async function pushProfileState(){
   const rows=localStateRows();
   if(!rows.length)return 0;
-  // Before publishing an offline device, compare the cloud's review timestamps.
-  // A late/stale upload must not replace a more recent decision (also guarded
-  // by the database BEFORE UPDATE trigger for concurrent device races).
-  const remote=await rest('profile_state?select=username,module,reviewed_at&limit=20000',{method:'GET'});
+  // The previous single GET silently saw only the newest API page. A complete
+  // comparison is mandatory to prevent redundant old-state replays.
+  const remote=await readCompleteProfileState('username,module,reviewed_at');
   const latest=new Map();
   for(const row of remote||[]){
     const key=String(row.username||'').toLowerCase()+'|'+String(row.module||'');
@@ -14612,6 +14643,7 @@ async function pushProfileState(){
       headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify(changed.slice(i,i+500))});
   }
+  if(changed.length)completeProfileStateCache=null;
   return changed.length;
 }
 async function pushWorkspaceState(){
@@ -14673,7 +14705,7 @@ function applyOneState(r){
   return true;
 }
 async function pullProfileState(){
-  const rows=await rest('profile_state?select=*&order=reviewed_at.desc&limit=20000',{method:'GET'});
+  const rows=await readCompleteProfileState('*');
   let changed=0;
   for(const r of rows||[])if(applyOneState(r))changed++;
   if(changed){
