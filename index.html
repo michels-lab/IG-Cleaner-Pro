@@ -10848,6 +10848,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
     const now=Date.now();
     // Always recompute dashboard counters from current review state. A timed cache
     // can redraw stale Reviewed counts after a confirmed batch or account switch.
+    if(!force && V113.inRender && V113.cache)return V113.cache;
 
     const following=safe(()=>withTempMode('following',()=>buildRowsForMode('following')),[]);
     const pending=safe(()=>typeof pendingRows==='function'?pendingRows():[],[]);
@@ -10933,16 +10934,21 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
     return '';
   }
   function renderFocusCounts(force=false){
-    cache(force);
-    document.querySelectorAll('button.workflow-card[data-focus-card]').forEach(btn=>{
-      let host=btn.querySelector('.v113-focus-host');
-      if(!host){
-        host=document.createElement('div');
-        host.className='v113-focus-host';
-        btn.appendChild(host);
-      }
-      host.innerHTML=stateFor(btn.dataset.focusCard);
-    });
+    // Single coherent snapshot for every card in this synchronous render,
+    // never a two-second cache that survives a completed review or account switch.
+    V113.inRender=true;
+    try{
+      cache(true);
+      document.querySelectorAll('button.workflow-card[data-focus-card]').forEach(btn=>{
+        let host=btn.querySelector('.v113-focus-host');
+        if(!host){
+          host=document.createElement('div');
+          host.className='v113-focus-host';
+          btn.appendChild(host);
+        }
+        host.innerHTML=stateFor(btn.dataset.focusCard);
+      });
+    }finally{V113.inRender=false}
   }
   function renderCritical(){
     const badge=q('v113CriticalBadge'), grid=q('v113CriticalGrid'), plan=q('v113CriticalPlan');
