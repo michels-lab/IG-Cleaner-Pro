@@ -1772,6 +1772,11 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
+        public String getDeviceId() {
+            return deviceId;
+        }
+
+        @JavascriptInterface
         public String getInstagramProfile() {
             return api.getInstagramProfile();
         }
