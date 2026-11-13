@@ -12066,7 +12066,8 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     });  }
   function cache(force=false){
     const now=Date.now();
-    if(!force && V113.cache && (now-V113.cacheAt)<V113.cacheMs)return V113.cache;
+    // Always recompute dashboard counters from current review state. A timed cache
+    // can redraw stale Reviewed counts after a confirmed batch or account switch.
 
     const following=safe(()=>withTempMode('following',()=>buildRowsForMode('following')),[]);
     const pending=safe(()=>typeof pendingRows==='function'?pendingRows():[],[]);
@@ -12079,7 +12080,10 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
       return true;
     }));
 
-    V113.cache={following:uniq(following),pending:uniq(pending),mutual:uniq(mutual),noMeSigue,noMeSiguePend:noMeSigue.filter(r=>!isDoneValidForMode(r,'following'))};
+    // Normal Focus MUST report precisely the same eligible pool as its opener.
+    // Recheck deliberately includes previously reviewed profiles.
+    const mainEligible=uniq(following.filter(r=>safe(()=>isMainFocusOpenable(r),false)));
+    V113.cache={following:uniq(following),pending:uniq(pending),mutual:uniq(mutual),noMeSigue,mainEligible,noMeSiguePend:noMeSigue.filter(r=>!isDoneValidForMode(r,'following'))};
     V113.cacheAt=now;
     return V113.cache;
   }
@@ -12092,7 +12096,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   }
   function rowsFor(kind){
     const c=cache(false);
-    if(kind==='main')return c.noMeSiguePend;
+    if(kind==='main')return c.mainEligible;
     if(kind==='recheck'||kind==='double')return c.noMeSigue;
     if(kind==='pendingRecommended')return safe(()=>pendingSmartCandidates(),c.pending.filter(r=>!r.reviewed&&!r.snoozed));
     if(kind==='pendingFocus30')return safe(()=>pendingCandidateRows(),c.pending.filter(r=>!r.reviewed&&!r.snoozed));
