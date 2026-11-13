@@ -82,6 +82,9 @@ public final class MainActivity extends AppCompatActivity {
     private String deviceId;
     private String currentScreen = "workspace";
     private String workspaceTargetPage = "";
+    // Each native sync gets a distinct generation. Returning A -> B -> A
+    // must never accept the delayed response from the *first* A request.
+    private volatile long workspaceSyncGeneration = 0L;
 
     private MaterialToolbar toolbar;
     private BottomNavigationView bottomNav;
@@ -389,6 +392,8 @@ public final class MainActivity extends AppCompatActivity {
         if (workspaceSyncProgress != null) workspaceSyncProgress.setVisibility(View.VISIBLE);
 
         final String loadingInstagram = api.getInstagramProfile();
+        final String loadingOwner = api.getEmail().trim().toLowerCase(Locale.ROOT);
+        final long requestGeneration = ++workspaceSyncGeneration;
         runAsync(() -> {
             try {
                 touchDevice();
@@ -422,21 +427,31 @@ public final class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                if (!loadingInstagram.equals(api.getInstagramProfile())) return;
-                syncedReviewStateAvailable = reviewAvailable;
-                syncedFollowing = following;
-                syncedFollowers = followers;
-                syncedPending = pending;
-                syncedWorkspaceState = state;
-                saveWorkspaceCache();
-
+                // Final handoff and cache writes happen together on the UI thread,
+                // where profile switches also run. Never let an old request
+                // overwrite the current Instagram/owner workspace, including A-B-A.
+                final JSONArray readyFollowing = following;
+                final JSONArray readyFollowers = followers;
+                final JSONArray readyPending = pending;
+                final JSONObject readyState = state;
+                final boolean readyReviews = reviewAvailable;
                 mainHandler.post(() -> {
+                    if (requestGeneration != workspaceSyncGeneration ||
+                            !loadingInstagram.equals(api.getInstagramProfile()) ||
+                            !loadingOwner.equalsIgnoreCase(api.getEmail())) return;
+                    syncedReviewStateAvailable = readyReviews;
+                    syncedFollowing = readyFollowing;
+                    syncedFollowers = readyFollowers;
+                    syncedPending = readyPending;
+                    syncedWorkspaceState = readyState;
+                    saveWorkspaceCache();
                     if (!"workspace".equals(currentScreen) || mobileWorkspaceView == null) return;
                     renderMobileWorkspace();
                     setGlobalStatus("SYNCED • " + DateFormat.getTimeFormat(this).format(new Date()));
                 });
             } finally {
                 mainHandler.post(() -> {
+                    if (requestGeneration != workspaceSyncGeneration) return;
                     if (workspaceSyncProgress != null) workspaceSyncProgress.setVisibility(View.GONE);
                     if (workspaceRefresh != null) workspaceRefresh.setRefreshing(false);
                 });
@@ -1162,6 +1177,7 @@ public final class MainActivity extends AppCompatActivity {
             if ("account_native".equals(currentScreen)) showNativeAccountScreen();
             return;
         }
+        ++workspaceSyncGeneration; // Cancel any in-flight result from the previous profile.
         api.setInstagramProfile(key, label);
         // Never display another Instagram profile's in-memory or cached rows.
         currentBatch = null;
