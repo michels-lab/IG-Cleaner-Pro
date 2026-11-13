@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9bc06218ab50f9d71e5dc5e372a7fb7a530672e73a1274808136233e2cfe5a63",
+  "inventory_fingerprint": "05b2f538993dbd307ee5ed9a9a4865e405ef44d52dff28038a70dc3ed8a877a7",
   "evidence_fingerprint": "d9e46913d92a099648f7ab5908b80a22e89ac5603507a6ef4ec7b8229b77ee57",
   "files": [
     {
@@ -344,7 +344,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ca519fcb47d0f1595e438e0b860d289c0ddf6f65"
+      "blob": "4367b3525a900c0de729cd7661132610732e4fe2"
     },
     {
       "path": "android/app/src/main/java/com/michelslab/igcleaner/ProfileAdapter.java",
