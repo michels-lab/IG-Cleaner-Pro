@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "3864a347ff328a3a8854436a0bb5709a45de597ec97d34eb800aa48653913adc",
+  "inventory_fingerprint": "b18e51836a0d9d5289464d7a7f0a875c286afb85850da89403845a8648973a3c",
   "evidence_fingerprint": "b8e8f11464d68465b53aa809935e9abcb78b241133f512ec5966f161407b68e4",
   "files": [
     {
@@ -2066,7 +2066,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3f02c103868a65abfbdd9d106db590993350bc46"
+      "blob": "b6d396bf3bdb655c931e6f4b250144e5aa27b704"
     },
     {
       "path": "tests/focus-default-reviewed.test.cjs",
