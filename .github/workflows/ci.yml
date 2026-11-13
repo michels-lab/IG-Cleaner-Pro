@@ -85,6 +85,8 @@ jobs:
         run: python3 tests/android-native-english-contract.py
       - name: Verify Android per-profile monotonic review overlay
         run: python3 -m unittest discover -s tests -p 'test_android_monotonic_reviews.py' -v
+      - name: Reject stale A-B-A Android workspace sync callbacks
+        run: python3 -m unittest discover -s tests -p 'test_android_workspace_sync_races.py' -v
       - name: Verify translated Desktop UI and privacy safeguards
         run: python3 tests/english-ui-contract.py
       - name: Verify Windows Profile Counts re-audit cycle, history and cross-owner isolation
