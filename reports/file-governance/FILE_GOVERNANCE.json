@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 424,
-  "classified_files_total": 420,
+  "tracked_files_total": 425,
+  "classified_files_total": 421,
   "docs_content_inspected": 107,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -12,7 +12,7 @@
     "bitacora": 1,
     "build_script": 6,
     "config": 70,
-    "database_migration": 5,
+    "database_migration": 6,
     "database_schema": 1,
     "document": 102,
     "index": 5,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "aaebf8dd44c0f4f21765d381e293338b3d6b1080b38d97f50ed3882e32ed42c9",
-  "evidence_fingerprint": "cd5de73e83527c17ce9272f5426e4eccb651f059ab4e1d075f80e16d5c134264",
+  "inventory_fingerprint": "691985294fb082c0c40d62d56648b57cee663f82bdc379e89592db839d19399e",
+  "evidence_fingerprint": "b58114cc3fe3dcca48715c1fc217c64b7599c48916402abbc1ead7729f3342c9",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1705,6 +1705,13 @@
       "blob": "4d2c4bb67558602eed45cb4da5706b2eadf03fff"
     },
     {
+      "path": "supabase/migrations/20261113004116_preserve_newest_review_timestamp_on_sync.sql",
+      "role": "database_migration",
+      "purpose": "ordered database schema migration; never discard automatically",
+      "certainty": "rule",
+      "blob": "ede3408b8104bdfb3e718deddd5008b96bddd81e"
+    },
+    {
       "path": "supabase/schema.sql",
       "role": "database_schema",
       "purpose": "database schema/query source; verify against live DB separately",
@@ -3046,11 +3053,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "b796899ac4159d47",
+      "id": "64e626cb123d6e1a",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "32 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "33 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
