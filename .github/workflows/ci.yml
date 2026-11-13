@@ -147,6 +147,7 @@ jobs:
           node tests/pending-focus-reimport.test.cjs
           node tests/pending-unlock-no-repeat.test.cjs
           node tests/focus-batch-priority.test.cjs
+          node tests/manual-batches-no-repeat.test.cjs
           node tests/pending-zip-completeness.test.cjs
           node tests/pending-zip-shards-runtime.test.cjs
           node tests/zip-crc-integrity.test.cjs

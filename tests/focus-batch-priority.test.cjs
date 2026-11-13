@@ -35,6 +35,7 @@ const ctx={
   followingRaw:[changed,critical,risk,normal,last,prohibited],
   followersRaw:[],pendingRequestsRaw:[sample("pending.one"),sample("pending.two")],
   doneSet:new Set(["changed.one"]),isDoneValidForMode:()=>false,
+  isPreviouslyHandledForNormalFocus:r=>r.username==="changed.one",
   calcPriority:r=>({score:r.score,level:r.priority}),
   allMainFocusOpenableRows:()=>current,
   pendingCandidateRows:()=>ctx.pendingRequestsRaw,pendingAnyFocusCandidates:()=>ctx.pendingRequestsRaw,
@@ -50,10 +51,10 @@ const ctx={
 };ctx.window=ctx;vm.createContext(ctx);
 vm.runInContext(script,ctx,{timeout:1500});
 
-const expected=["changed.one","critical.one","risk.one","normal.one","normal.two"];
+const expected=["critical.one","risk.one","normal.one","normal.two"];
 assert.deepEqual(Array.from(ctx.igcPrioritizedMainFocusPool().map(r=>r.username)),expected,
   "The first small priority tier must not suppress other eligible profiles");
-assert(!ctx.igcPrioritizedMainFocusPool().some(r=>r.username===prohibited.username),
+assert(!ctx.igcPrioritizedMainFocusPool().some(r=>["protected.one","changed.one"].includes(r.username)),
   "Prioritization may only draw from the existing eligible pool");
 
 ctx.igcPreviewNextFocus("main",5);
@@ -67,9 +68,9 @@ assert.deepEqual(Array.from(opens[0].users),expected);
 assert.equal(opens[0].opts.exact,true,"Frozen selection cannot silently replace profiles");
 
 ctx.igcPreviewNextFocus("main",10);
-assert.equal(saved()["main:10"].usernames.length,5,
+assert.equal(saved()["main:10"].usernames.length,4,
   "A partial batch must tell the truth when fewer than ten eligible profiles exist");
-assert.match(node("igcFocusPreviewOpen").textContent,/Abrir estos 5/);
+assert.match(node("igcFocusPreviewOpen").textContent,/Abrir estos 4/);
 
 ctx.igcPreviewNextFocus("pending",2);
 assert.deepEqual(Array.from(saved()["pending:2"].usernames),["pending.one","pending.two"],
@@ -83,9 +84,9 @@ const before=opens.length;
 assert.equal(ctx.igcTryOpenPreparedFocus("main",10),"stale");
 assert.equal(opens.length,before);
 assert.equal(node("igcFocusPreviewOpen").disabled,false);
-assert.equal(saved()["main:10"].usernames.length,6,
+assert.equal(saved()["main:10"].usernames.length,5,
   "The replacement batch must appear as a new visible preview");
 assert.equal(ctx.igcTryOpenPreparedFocus("main",10),"opened");
 assert.equal(opens.length,before+1);
-assert.equal(opens.at(-1).users.length,6);
+assert.equal(opens.at(-1).users.length,5);
 console.log("PASS: GRANADA Focus priority tiers fill eligible batches, share editor pool, retain frozen confirmation and stale import safety");

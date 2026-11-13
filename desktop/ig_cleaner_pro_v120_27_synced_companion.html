@@ -7384,29 +7384,50 @@ function confirmOpenedVerified(){
 // MODO FOCO 20/30/40 / BLOQUE RECOMENDADO ESTRICTO
 // =====================================================================
 
+// Only explicitly requested Recheck / Double Check can reopen a reviewed
+// or already-opened Instagram profile. A changed relation or expired review
+// badge NEVER erases the original owner's history.
+function isPreviouslyHandledForNormalFocus(row,kind='main'){
+  const username=String(row?.username||'').trim().toLowerCase();
+  if(!username)return true;
+  if(kind==='pending')return !!(
+    pendingOpenedSet.has(username) ||
+    (pendingReviewedMeta?.[username] && pendingReviewedMeta[username].reviewedAt));
+  if(doneSet.has(username)||reviewedMeta?.[username])return true;
+  const h=typeof profileHistoryOf==='function'?profileHistoryOf(username):null;
+  if(!h)return false;
+  const relevant=kind==='main'?['main','following','manual']:['followers','mutual'];
+  const events=Array.isArray(h.events)?h.events:[];
+  if(events.some(e=>['open','reopen','review'].includes(e?.event) &&
+      relevant.includes(String(e.details?.kind||e.details?.section||h.lastSection||''))))return true;
+  // Legacy history lacks event arrays; use the saved last section, not another
+  // Instagram module's unrelated open counter.
+  if(relevant.includes(String(h.lastSection||'')) &&
+     (Number(h.opened||0)>0||Number(h.reopened||0)>0||Number(h.reviewed||0)>0))
+    return true;
+  return false;
+}
 function isMainFocusOpenable(row){
-  if(!row)return false;
-  // Main focus = people I follow who do NOT follow me back right now.
-  if(row.followsBack || row.relationGood)return false;
+  if(!row||!row.username)return false;
+  if(row.followsBack || row.relationGood || row.htmlUnknown)return false;
   if(protectedSet.has(row.username))return false;
   if(isSnoozed(row))return false;
   if(isInActiveFocus(row,'main'))return false;
-
-  // Important: only a CURRENT VALID review blocks focus.
-  // Old reviews with changed relationship do NOT block focus.
-  if(isDoneValidForMode(row,'following'))return false;
-
+  if(isPreviouslyHandledForNormalFocus(row,'main'))return false;
   return true;
 }
 
 function mainFocusNoOpenReason(row){
   if(!row)return 'sin datos';
   if(row.followsBack || row.relationGood)return 'sí me sigue';
+  if(row.htmlUnknown)return 'relación sin verificar';
   if(protectedSet.has(row.username))return 'protegido';
   if(isSnoozed(row))return 'pausado';
   if(isInActiveFocus(row,'main'))return 'tanda activa';
-  if(isDoneValidForMode(row,'following'))return 'revisado vigente';
-  if(doneSet.has(row.username) && !isDoneValidForMode(row,'following'))return 'revisión vieja/cambió';
+  if(doneSet.has(row.username)||reviewedMeta?.[row.username])
+    return 'ya revisado · Recheck explícito';
+  if(isPreviouslyHandledForNormalFocus(row,'main'))
+    return 'abierto antes · Recheck explícito';
   return '';
 }
 
@@ -7433,7 +7454,7 @@ function currentFocusPool(){
   }
 
   // Focus pool is based on real account state, not visual filters.
-  // Every current NO ME SIGUE + not protected + not paused + not reviewed vigente is eligible.
+  // Ordinary Focus never recycles reviewed or opened profiles from historical cohorts.
   return allMainFocusOpenableRows();
 }
 
@@ -7445,10 +7466,6 @@ function candidateRowsForRecommended(){
   const base=currentFocusPool();
 
   const buckets=[
-    {
-      name:'No me siguen · cambió relación',
-      rows:base.filter(r=>doneSet.has(r.username) && !isDoneValidForMode(r,'following'))
-    },
     {
       name:'No me siguen · prioridad crítica/alta',
       rows:base.filter(r=>['critica','alta'].includes(calcPriority(r).level))
@@ -8030,25 +8047,27 @@ function undoLastVerificationBatch(){
 
 
 function openSelectedPendingTabs(){
-  let rows=filteredRows.filter(r=>selected.has(r.username) && !isDoneValid(r));
-
-  // Blindaje extra cuando estás en following + filtro no me siguen:
-  // evita abrir perfiles que sí te siguen por selección vieja o filtro extraño.
+  const kind=currentMode==='following'?'main':'followers';
+  // A normal "Open unreviewed" batch must not reopen older manual batches.
+  let rows=filteredRows.filter(r=>selected.has(r.username) &&
+    !protectedSet.has(r.username) && !isSnoozed(r) &&
+    !isInActiveFocus(r,kind) && !isPreviouslyHandledForNormalFocus(r,kind));
   const strictView=currentMode==='following' && document.getElementById('filterSelect')?.value==='not_following_back';
   if(strictView){
     const before=rows.length;
-    rows=rows.filter(r=>!r.followsBack && !r.relationGood);
+    rows=rows.filter(r=>!r.followsBack && !r.relationGood && !r.htmlUnknown);
     const removed=before-rows.length;
-    if(removed>0)msg(`Protection: ${removed} mutual profiles excluded before opening.`, 'w');
+    if(removed>0)msg(`Protection: ${removed} mutual/unknown profiles excluded before opening.`, 'w');
   }
-
   if(!rows.length){
-    msg('No visible selected unreviewed profiles to open.', 'w');
+    msg('No hay perfiles nuevos sin revisar para abrir. Recheck permite reabrirlos explícitamente.', 'w');
     return;
   }
   if(rows.length>50 && !confirm(`You are about to open ${rows.length} unreviewed tabs. Continue?`))return;
   const ctx=nextOpenContext||{source:'manual',label:'manual'};
   nextOpenContext=null;
+  // Journal an owner-approved OPEN ATTEMPT before popups; not a review.
+  recordRowsHistory(rows,'open',{kind,label:'manual unreviewed'});
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   sessionStats.opened+=rows.length; sessionStats.openBatches+=1; forceLiveRefresh(`${rows.length} pestañas no revisadas abiertas`);
   const counts=actionSummaryCounts(rows);
@@ -9479,7 +9498,9 @@ function pendingNoOpenReason(row){
   return '';
 }
 function isMutualOpenableForFocus(row){
-  return !!row && !row.done && !row.protected && !isSnoozed(row) && !isInActiveFocus(row,'mutual') && !tooRepeatedForNormalFocus(row);
+  return !!row && !row.done && !row.protected && !isSnoozed(row) &&
+    !isInActiveFocus(row,'mutual') && !isPreviouslyHandledForNormalFocus(row,'mutual') &&
+    !tooRepeatedForNormalFocus(row);
 }
 function mutualNoOpenReason(row){
   if(!row)return 'sin datos';
@@ -9487,6 +9508,7 @@ function mutualNoOpenReason(row){
   if(row.done)return 'revisado';
   if(row.protected)return 'protegido';
   if(isSnoozed(row))return 'pausado';
+  if(isPreviouslyHandledForNormalFocus(row,'mutual'))return 'revisado/abierto antes · Recheck';
   if(tooRepeatedForNormalFocus(row))return 'bloqueado historial';
   return '';
 }
@@ -10385,7 +10407,11 @@ function focusBatchFill(primaryRows, fallbackRows, n, kind){
       if(!r || !r.username)return;
       if(seen.has(r.username))return;
       if(activeBatchRowResolved(r,kind))return;
+      // No fallback tier is allowed to recycle old/manual/reviewed profiles.
       if(kind==='pending'&&!isPendingOpenableForFocus(r))return;
+      if(kind==='main'&&!isMainFocusOpenable(r))return;
+      if(kind==='followers'&&!isFollowerOpenableForFocus(r))return;
+      if(kind==='mutual'&&!isMutualOpenableForFocus(r))return;
       seen.add(r.username);
       if(!target || out.length<target)out.push(r);
     });
@@ -10401,7 +10427,7 @@ function pendingAnyFocusCandidates(){
 
 function followersMutualAnyFocusCandidates(){
   return followersMutualRows()
-    .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual'))
+    .filter(isMutualOpenableForFocus)
     .sort(igcMutualFocusSort);
 }
 
@@ -10429,7 +10455,8 @@ function followersFocusN(n){const prepared=igcTryOpenPreparedFocus('followers',n
 function followersFocusRiskN(n){const rows=followersFocusCandidates().filter(r=>['alto','medio'].includes(r.riskLevel)).slice(0,n);if(!rows.length){msg(`Followers que no sigues · Riesgo ${n}: no hay perfiles disponibles.`,'w');return false}const opened=openConfirmedFocusRows(rows,`followers que no sigo riesgo ${n}`,'followers',n);renderFollowersAllWorkspace?.();renderFollowersRealtimePanel?.();return opened}
 function followersFocusFansRiskN(n){return followersFocusN(n)}
 function isFollowerOpenableForFocus(row){
-  return !!row && !row.done && !row.protected && !isSnoozed(row) && !isInActiveFocus(row,'followers');
+  return !!row && !row.done && !row.protected && !isSnoozed(row) &&
+    !isInActiveFocus(row,'followers') && !isPreviouslyHandledForNormalFocus(row,'followers');
 }
 function followersNoOpenReason(row){
   if(!row)return 'sin datos';
@@ -10437,6 +10464,7 @@ function followersNoOpenReason(row){
   if(row.done)return 'revisado';
   if(row.protected)return 'protegido';
   if(isSnoozed(row))return 'pausado';
+  if(isPreviouslyHandledForNormalFocus(row,'followers'))return 'revisado/abierto antes · Recheck';
   return '';
 }
 function followersReviewedTodayCount(){const start=todayStartTsMs();return followersAnalysisRows().filter(r=>!r.iFollow).filter(r=>normalizeEventMs(reviewedAtTsForMode(r,'followers'))>=start).length}
@@ -10586,7 +10614,7 @@ function followersMutualRows(){
 }
 function followersMutualCandidates(){
   return followersMutualRows()
-    .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual')&&!tooRepeatedForNormalFocus(r))
+    .filter(isMutualOpenableForFocus)
     .sort(igcMutualFocusSort);
 }
 function followersMutualFocusN(n){
@@ -10599,7 +10627,7 @@ function followersMutualFocusN(n){
 }
 function followersMutualRiskN(n){
   const primary=followersMutualRows()
-    .filter(r=>!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual')&&['alto','medio'].includes(r.riskLevel))
+    .filter(r=>isMutualOpenableForFocus(r)&&['alto','medio'].includes(r.riskLevel))
     .sort(igcMutualFocusSort);
   const rows=focusBatchFill(primary,followersMutualAnyFocusCandidates(),n,'mutual');
   if(!rows.length){offerAlternativeFocus('mutual',n,`seguidores mutuos riesgo ${n}`);renderFollowersMutualTab();return;}
@@ -10853,10 +10881,11 @@ function igcConfirmBatchQuality(rows,kind='main',label=''){
   return confirm([`BATCH PREVIEW · ${label||kind}`,'',`${q.total} profiles`,`${q.confirmed} with verifiable relationships`,`${q.changes} with recent changes`,`${q.historical} with historical context`,`${q.unverifiable} unverifiable`,`${q.stable} stable relationships`,`${q.neverReviewed} never reviewed`,'',q.unverifiable?'Some profiles are UNVERIFIABLE; do not treat them as confirmed non-followbacks.':'No unverifiable profiles were detected in this batch.','','Open these tabs?'].join('\n'));
 }
 function igcNewChangeRows(kind='main'){
-  if(kind==='pending')return pendingRows().filter(r=>igcIsNewChange(r,'pending')&&!r.reviewed&&!r.snoozed&&!isInActiveFocus(r,'pending'));
-  if(kind==='mutual')return followersMutualRows().filter(r=>igcIsNewChange(r,'mutual')&&!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'mutual'));
-  if(kind==='followers')return followersAnalysisRows().filter(r=>!r.iFollow&&igcIsNewChange(r,'followers')&&!r.done&&!r.protected&&!isSnoozed(r)&&!isInActiveFocus(r,'followers'));
-  return withTempMode('following',()=>buildRowsForMode('following')).filter(r=>!r.followsBack&&!r.relationGood&&!r.htmlUnknown&&igcIsNewChange(r,'main')&&!isDoneValidForMode(r,'following')&&!protectedSet.has(r.username)&&!isSnoozed(r)&&!isInActiveFocus(r,'main'));
+  if(kind==='pending')return pendingRows().filter(r=>igcIsNewChange(r,'pending')&&isPendingOpenableForFocus(r));
+  if(kind==='mutual')return followersMutualRows().filter(r=>igcIsNewChange(r,'mutual')&&isMutualOpenableForFocus(r));
+  if(kind==='followers')return followersAnalysisRows().filter(r=>!r.iFollow&&igcIsNewChange(r,'followers')&&isFollowerOpenableForFocus(r));
+  return withTempMode('following',()=>buildRowsForMode('following'))
+    .filter(r=>igcIsNewChange(r,'main')&&isMainFocusOpenable(r));
 }
 function igcOpenNewChanges(kind='main',n=30){
   const rows=igcNewChangeRows(kind).slice(0,n),status=document.getElementById('igcNewChangesStatus');if(status)status.textContent=`Cambios disponibles · Review ${igcNewChangeRows('main').length} · Mutuals ${igcNewChangeRows('mutual').length} · Followers ${igcNewChangeRows('followers').length} · Pending nuevos ${igcNewChangeRows('pending').length}`;
@@ -13767,7 +13796,7 @@ function dedupe(list){const seen=new Set(),out=[];(list||[]).forEach(r=>{if(!r?.
 // The source is still allMainFocusOpenableRows(): do not reintroduce protected,
 // reviewed, snoozed, or partial-HTML-unverifiable profiles from raw lists.
 function prioritizeMainFocusRows(){
-  const eligible=dedupe(allMainFocusOpenableRows?.()||[]);
+  const eligible=dedupe(allMainFocusOpenableRows?.()||[]).filter(r=>!isPreviouslyHandledForNormalFocus(r,'main'));
   const byScore=(a,b)=>{
     let pa=0,pb=0;
     try{pa=calcPriority(a).score;pb=calcPriority(b).score}catch{}
@@ -13775,11 +13804,10 @@ function prioritizeMainFocusRows(){
       ((a.dateMain||0)-(b.dateMain||0))||
       a.username.localeCompare(b.username);
   };
-  const changed=eligible.filter(r=>doneSet.has(r.username)&&!isDoneValidForMode(r,'following'));
   const critical=eligible.filter(r=>{try{return ['critica','alta'].includes(calcPriority(r).level)}catch{return false}});
   const risky=eligible.filter(r=>['medio','alto'].includes(r.riskLevel));
   return dedupe([
-    ...changed.sort(byScore),...critical.sort(byScore),...risky.sort(byScore),
+    ...critical.sort(byScore),...risky.sort(byScore),
     ...eligible.sort(byScore)
   ]);
 }
