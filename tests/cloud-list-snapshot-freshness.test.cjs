@@ -13,12 +13,12 @@ function slice(start,end){
 }
 const row=username=>({username,href:"https://www.instagram.com/"+username+"/",timestamp:1234});
 const ago=ms=>new Date(Date.now()-ms).toISOString();
-function harness(account){
+function harness(account,deviceType='desktop'){
  const store=new Map(),remote=new Map(),writes=[],renders=[];
  const ctx={console,Date,Number,String,Math,JSON,Set,Map,Array,
   window:{},followingRaw:[row("old")],followersRaw:[],pendingRequestsRaw:[],
   followingMap:new Map(),followersMap:new Map(),dataMeta:{},S:{stats:{}},
-  currentDevice:()=>({type:"desktop",id:"test-device"}),
+  currentDevice:()=>({type:deviceType,id:"test-device"}),
   saveDataMeta:()=>store.set("meta",JSON.stringify(ctx.dataMeta)),
   renderSyncedLists:changed=>renders.push([...changed]),ms:s=>Date.parse(s)||0
  };
@@ -101,6 +101,30 @@ const snapshot=(x,name,source,capturedAt)=>{
  assert.equal(empty.remote.get("pending").item_count,0);
  await empty.ctx.pullListSnapshots();
  assert.equal(empty.ctx.pendingRequestsRaw.length,0);
+
+ // Native Android Advanced Workspace must never upload stale caches; only
+ // explicit imports may travel from Android to Desktop and back.
+ const android=harness("android-a","android");
+ android.remote.set("following",snapshot(android,"following",["cloud.following"],ago(60000)));
+ android.ctx.followingRaw=[row("old.android.cache")];
+ assert.equal((await android.ctx.pushListSnapshots()).lists,0,
+  "Android must not publish an old WebView cache merely because it differs");
+ await android.ctx.pullListSnapshots();
+ assert.deepEqual(android.ctx.followingRaw.map(r=>r.username),["cloud.following"]);
+ android.ctx.followingRaw=[row("new.android.zip")];
+ android.ctx.window.igcMarkLocalSnapshotsDirty(["following"]);
+ assert.equal((await android.ctx.pushListSnapshots()).lists,1,
+  "An explicitly verified Android ZIP import must reach the cloud");
+ assert.equal(android.remote.get("following").source_device,"android");
+ assert.equal((await android.ctx.pushListSnapshots()).lists,0,
+  "Android must not republish a previously synced import");
+ assert.equal(android.remote.get("following").item_count,1);
+ android.ctx.pendingRequestsRaw=[];
+ android.remote.set("pending",snapshot(android,"pending",["old.unaccepted"],ago(90000)));
+ android.ctx.window.igcMarkLocalSnapshotsDirty(["pending"]);
+ assert.equal((await android.ctx.pushListSnapshots()).lists,1);
+ assert.equal(android.remote.get("pending").item_count,0,
+  "A verified empty Android Pending ZIP must clear older cloud Pending");
 
  // Production imports must mark origin only after a successful parse, not on view refresh.
  assert(html.includes("window.igcMarkLocalSnapshotsDirty?.(['following','followers'])"));
