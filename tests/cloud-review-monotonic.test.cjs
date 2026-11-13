@@ -20,7 +20,8 @@ const protectedSet=new Set();
 const pendingReviewedMeta={};
 const pendingOpenedSet=new Set();
 const ctx={console,Date,Math,Set,Map,JSON,Object,String,Number,ms,
-   doneSet,reviewedMeta,protectedSet,pendingReviewedMeta,pendingOpenedSet};
+   doneSet,reviewedMeta,protectedSet,pendingReviewedMeta,pendingOpenedSet,
+   window:{IGC_INSTAGRAM_PROFILES:{active:'legacy',accounts:[{account_key:'legacy',review_count:3}]}}};
 vm.createContext(ctx);
 vm.runInContext(cut("function applyOneState(r){","async function pullProfileState(){"),ctx);
 const fresh={username:"newuser",module:"main",reviewed_at:remoteAt,
@@ -63,7 +64,7 @@ ctx.rest=async(path,options)=>{
  writes.push(...JSON.parse(options.body));
  return null;
 };
-vm.runInContext(cut("async function pushProfileState(){","async function pushWorkspaceState(){"),ctx);
+vm.runInContext(cut("let completeProfileStateCache=null;","async function pushWorkspaceState(){"),ctx);
 (async()=>{
   assert.equal(await ctx.pushProfileState(),1);
   assert.deepEqual(writes.map(x=>x.username),["newuser"],
