@@ -60,7 +60,7 @@ const snapshot=(x,name,source,capturedAt)=>{
 
  // A new explicit manual import is legitimate and must update the cloud.
  old.ctx.followingRaw=[row("fresh.import")];
- old.ctx.igcMarkLocalSnapshotsDirty(["following"]);
+ old.ctx.window.igcMarkLocalSnapshotsDirty(["following"]);
  assert(old.ctx.dataMeta.following.dirtyAt>0);
  assert.equal((await old.ctx.pushListSnapshots()).lists,1);
  assert.deepEqual(old.writes.map(x=>x.list_name),["following"]);
@@ -72,7 +72,7 @@ const snapshot=(x,name,source,capturedAt)=>{
  const stale=harness("first");
  stale.remote.set("following",snapshot(stale,"following",["new.remote"],new Date(Date.now()+100000).toISOString()));
  stale.ctx.followingRaw=[row("stale.local")];
- stale.ctx.igcMarkLocalSnapshotsDirty(["following"]);
+ stale.ctx.window.igcMarkLocalSnapshotsDirty(["following"]);
  assert.equal((await stale.ctx.pushListSnapshots()).lists,0);
  await stale.ctx.pullListSnapshots();
  assert.deepEqual(stale.ctx.followingRaw.map(r=>r.username),["new.remote"]);
@@ -80,7 +80,7 @@ const snapshot=(x,name,source,capturedAt)=>{
  // A Pending-only ZIP import must not change following/followers timestamps.
  const pending=harness("second");
  pending.ctx.pendingRequestsRaw=[row("pending.new")];
- pending.ctx.igcMarkLocalSnapshotsDirty(["pending"]);
+ pending.ctx.window.igcMarkLocalSnapshotsDirty(["pending"]);
  assert(pending.ctx.dataMeta.pending.dirtyAt>0);
  assert.equal(pending.ctx.dataMeta.following,undefined);
  assert.equal((await pending.ctx.pushListSnapshots()).lists,2,
