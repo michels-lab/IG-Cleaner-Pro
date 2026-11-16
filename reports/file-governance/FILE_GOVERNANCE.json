@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "fa7341c1bf3fef6af56e5d62864558fad8b8da6ae9baa8dd36ff51df1eb9fbc7",
+  "inventory_fingerprint": "54cca5304d850237ef7a386f7ef3333842561fcd025a0c05e26ed944d03c9281",
   "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
@@ -253,14 +253,14 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "cb613c26cc82c024076741c6d0a0a0f4fc076bce"
+      "blob": "a69d010b3ae5d578ed9f13bc212061630d7fd495"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "91ff1589675edc9d97947e766b2be6b603103597"
+      "blob": "0cca5d80c0dffd05b32be060ab3dba8664c4db5b"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -2661,7 +2661,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "04f01b6614ee01cb3b3b72a1d0bb46bd83d484a5"
+      "blob": "8f1fe38f2739e16867591b356cddf95dee500f1b"
     },
     {
       "path": "tests/test_robot_interlock.py",
