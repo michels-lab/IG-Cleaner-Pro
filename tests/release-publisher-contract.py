@@ -63,7 +63,7 @@ for token in (
     'tests/owner-unfollow-transport.test.cjs',
     'test_native_desktop.py',
     'EXECUTABLE-SHA256.txt',
-    'tests/test_android_signed_coinstall_runtime.py',
+    'test_android_signed_coinstall_runtime.py',
     'script: bash tools/verify_production_android_coinstall.sh',
     'sudo chmod 666 /dev/kvm',
     '(cd dist && sha256sum --check SHA256SUMS.txt)',
