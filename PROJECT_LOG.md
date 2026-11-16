@@ -1,3 +1,10 @@
+## 2026-11-15 — GRANADA: no ofrecer como reutilizable un perfil cuya visita ya se reservó (source only)
+
+- **Causa reproducible en código:** `ActionRobot.attempted_history` construía `reusable_usernames` desde `original_targets` comprobando el journal de clics y visitas manuales, pero omitía el ledger duradero `*-target-visits.json`. Un cierre entre reservar la navegación y guardar un resultado deja el usuario en `visited_usernames` sin `journal[username]`: el backend rechaza la nueva acción, mientras la lista de UI todavía lo ofrecía para otro lote.
+- **Corrección:** usa una única lectura del ledger canónico (`_visited_usernames`) también para filtrar `reusable_usernames`. Se mantienen las excepciones históricas de **cero clic comprobado** con entrada de journal válida y las exclusiones de cuentas protegidas y navegación manual. La respuesta sigue siendo solo lectura; no se borra, reescribe ni completa ningún WAL o visita.
+- **Regresión negativa:** `tests/test_action_batch_history.py::ActionBatchHistoryTests.test_archived_reusable_excludes_reserved_navigation_without_action_wal` reproduce reserva sin journal, fallo seguro de primera interacción, clic incierto, protegido, apertura manual, nuevo intacto, cuenta/tarea separadas y conservación byte a byte del historial.
+- **Estado:** cambio en rama de fuente; ejecutar CI sobre SHA de PR y validar interfaz Windows instalada antes de merge/publicación. **No se afirma** verificación física de Chrome ni resultado real de Unfollow/Cancel Pending. Estable publicada `v120.76` sin modificar; `v120.77` no autorizada, ninguna RC/Developer Edition.
+
 ## 2026-11-09 — GRANADA P0: corregir CI Windows falsamente verde tras fallar pruebas de robots
 
 - **Prueba real del fallo:** la ejecución integrada Windows #1317, commit `65218336`, reportó éxito del instalador, pero el registro de `test_dual_action_workspaces.py` contenía **dos FAIL**: se esperaba `ValueError` para un WAL corrupto y `review_one` devolvía la vista vacía. El bloque PowerShell corría `test_dual_action_coordinator.py` después y sólo comprobaba `$LASTEXITCODE` del último comando; por eso una segunda suite exitosa ocultaba la falla.
