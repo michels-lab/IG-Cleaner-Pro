@@ -1,3 +1,12 @@
+## v120.76 — Granada: complete review history + stable-only distribution (2026-11-15)
+
+- **Cloud review restore:** page by actual returned count, with terminal empty-page verification, scoped account isolation and complete-count consistency; never overwrite newer owner reviews with stale decisions.
+- **Action timeline:** retrieve all audit events across bounded PostgREST pages without treating a short server-capped page as end of history.
+- **Truthful counters:** show cloud history across Review/Followers/Pending separately from valid current Following reviews and explicitly distinguish Instagram workspaces from profiles in lists.
+- **Regressions:** 9,896 synthetic review and 4,017 audit events across 1,000/500-row API caps, stale/duplicate/truncated reply protection, Focus A-B-A consistency. [CI success](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43788671286).
+- **Stable only:** Developer APK and Windows Developer Setup discontinued by owner's instruction; use only stable signed Android APK and normal Windows Setup, retain emulator app-start, installed Windows tests, visual QA and SHA-256.
+- **Acceptance:** release authorized for owner to review locally; live signed-in Instagram Unfollow/Cancel, two-account robot actions and physical Windows/Android acceptance remain unverified. No RC and no disclosure of personal exports. Issue #360 remains open.
+
 ## v120.75 — Operation Granada Focus counters and multi-device sync (2026-11-12)
 
 - **Focus 30 / Recheck 30 / Double Check 30:** counters derive from live eligibility and a consistent snapshot per render. Recheck intentionally retains reviewed candidates.
