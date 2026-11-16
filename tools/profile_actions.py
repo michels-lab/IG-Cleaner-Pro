@@ -2437,6 +2437,10 @@ class ActionRobot:
                 raise ValueError("Invalid saved cohort; preserve it for manual inspection.")
             journal = _read_json(self._base_for(owner, account, task), {})
             protected = set(_read_json(self._protection_file_for(owner, account), []))
+            # A reserved browser navigation is visited even if its action
+            # journal is still empty after Chrome/process interruption.
+            visited = set(self._visited_usernames(owner, account, task, journal))
+            manual_visits = self._manual_review_visits(owner, account, task)
             historical = pending.get("original_targets") or targets
             carried = pending.get("carryover_targets") or []
             # Include earlier unacted carryovers so every original name stays
@@ -2445,11 +2449,12 @@ class ActionRobot:
             lineage = list(dict.fromkeys([*historical, *targets, *carried]))
             reusable = [
                 username for username in lineage
-                if valid_username(username) == username
-                and username not in protected
-                and (username not in journal or (
-                    not _invalid_saved_action_record(journal[username]) and
-                    _preclick_no_action(journal[username])))
+                if isinstance(username, str) and valid_username(username) == username
+                and username not in protected and username not in manual_visits
+                and (username not in visited or (
+                    username in journal
+                    and not _invalid_saved_action_record(journal[username])
+                    and _preclick_no_action(journal[username])))
             ]
             recorded = sum(username in journal for username in lineage)
             pending["deferred_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
