@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.74**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.74), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43302278098), 12 SHA-256-tracked assets. The next reserved development version **v120.75 is authorized for governed FINAL publication** only after exact-source gates pass. This candidate includes Granada #360 Focus counter, multi-Instagram stale-state and native Android ZIP/cloud sync corrections. It is NOT published yet; the owner explicitly requested physical Windows PC and Instagram review AFTER publication, not acceptance of real-account behavior. Official Windows public+Developer, Android production-signed public+Developer, real rendered UI, integrity, and update feed gates remain mandatory. No RC/beta; unresolved owner dual-action automation validation remains open.
+Current published stable: **v120.75**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.75), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43526034218), 12 SHA-256-tracked historical assets. The next reserved development version **v120.76 is authorized for governed FINAL publication** only after exact-source gates pass. The stable-only candidate restores complete paginated review and action history, clarifies historic/current counters, and preserves per-account review state. It is NOT published yet. Developer Editions were cancelled and are not required or distributed; the official signed stable Android APK, installed Windows Setup, rendered UI, integrity and update feed remain mandatory. Real Instagram Unfollow/Cancel and physical two-account acceptance remain open.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.75**, explicitly authorized by the owner on 2026-11-12 for release before physical PC review, but not yet published. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
+The next reserved release target is **v120.76**, explicitly authorized by the owner on 2026-11-15 for release before physical PC review, but not yet published. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
 
 Authority: `release/distribution-manifest.json`.
 
