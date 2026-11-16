@@ -24,8 +24,8 @@ REQUIRED_ACCEPTANCE = {
     "real_owner_unfollow_exact_target_verified_and_journaled",
     "real_owner_cancel_pending_exact_target_verified_and_journaled",
     "batches_protected_history_and_no_repeat_regressions_verified",
-    "physical_windows_public_developer_update_backup_acceptance",
-    "android_public_developer_acceptance",
+    "physical_windows_stable_update_backup_acceptance",
+    "android_stable_acceptance",
 }
 
 
@@ -44,7 +44,7 @@ def owner_device_review_override_active(readiness: dict, tag: str) -> bool:
         return False
     if (override.get("release_tag") != tag
             or readiness.get("next_version") != tag
-            or override.get("source") != "explicit-owner-chat-instruction-2026-11-12"
+            or override.get("source") != "explicit-owner-chat-instruction-2026-11-15"
             or override.get("physical_tests_deferred") is not True
             or override.get("automated_publisher_gates_required") is not True):
         raise ReleaseBlocked("Owner post-publication review override must be explicit, exact-tag and scope-limited.")
