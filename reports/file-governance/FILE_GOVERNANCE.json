@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "6c2a9dba68616b018ea0b35280ca1477e7758d0e9113847590c7210afbed7a6c",
+  "inventory_fingerprint": "ca0dce765b200525e785ad9f8521ad6ea2209fdbb96e41ed2566660269118507",
   "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
@@ -2206,7 +2206,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f6e42537e8a818f4a0f4ea78140f432ba3bdd096"
+      "blob": "d2848e7ffc386acb837dc896dccd14b318ec330b"
     },
     {
       "path": "tests/release_artifact_policy.py",
