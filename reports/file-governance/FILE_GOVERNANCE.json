@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "4420f6908688b4b8c558f3b8aad7791f4f45e619b64c39d40ebcafc7964caf7d",
-  "evidence_fingerprint": "4d0632ff7b8eefdec0d05ff310b4a6f2c9b7df59b3c135bd0ca96f31fdc50b58",
+  "inventory_fingerprint": "043e4d7b36a6ffe962854b9624804c85ae0797bfd6fbf87dcb08dbdeff41aa16",
+  "evidence_fingerprint": "80ba005b2a9c9dc1b21fcc27efe44eb3ff1ac3aa59d2f20e5c7c416a2e5d7fdf",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -3039,7 +3039,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "cdba747ccd32bb19630a07343774746af81064b6"
+      "blob": "5ab5165e8a4aa7f79a746ac7c4e038ffd2b98704"
     },
     {
       "path": "tools/visual_release_gate.py",
@@ -3130,11 +3130,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "0240965a02c30c8b",
+      "id": "a577a4f14cc28daf",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "45 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
+      "observation": "46 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
