@@ -751,14 +751,51 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
 
         def _send(self, code, data):
             payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
-            self._header(code)
+            # Explicit HTTP framing avoids clients mistaking a closing local
+            # socket for a missing/retried action response.
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Access-Control-Allow-Origin", "null")
+            self.send_header("Access-Control-Allow-Headers", "X-IGC-Bridge-Token, Content-Type")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
             self.wfile.write(payload)
+
+        def _drain_rejected_post_body(self):
+            """Finish a SMALL denied POST before replying with JSON 403.
+
+            On Windows, closing the loopback socket with unread request bytes
+            may send TCP RST and hide the intentional 403 from the client.
+            Never accept a missing/invalid token or read an unbounded payload.
+            """
+            if self.command != "POST":
+                return
+            declared = self.headers.get("Content-Length", "")
+            if not declared.isascii() or not declared.isdecimal():
+                return
+            size = int(declared)
+            if not 0 < size <= 65536:
+                return
+            previous = self.connection.gettimeout()
+            try:
+                self.connection.settimeout(1.0)
+                self.rfile.read(size)
+            except (OSError, TimeoutError):
+                # Deny regardless of malformed or interrupted body.
+                pass
+            finally:
+                self.connection.settimeout(previous)
 
         def _authorized(self):
             if self.headers.get("Origin") not in (None, "null"):
+                self._drain_rejected_post_body()
                 self._send(403, {"error": "Only the local Insta Cleaner app is allowed."})
                 return False
             if not secrets.compare_digest(self.headers.get("X-IGC-Bridge-Token", ""), token):
+                self._drain_rejected_post_body()
                 self._send(403, {"error": "Invalid local access token."})
                 return False
             return True
