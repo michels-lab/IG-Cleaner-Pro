@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "b30d34cdd75b05f05eeb7cce864363b948a4bafaf3890bebe0cb1771873c199d",
-  "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
+  "finding_total": 8,
+  "inventory_fingerprint": "d3c168394117f71fc5e0749cebffa4bdd55c0272b1084e77ba2e5c4983be6784",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -246,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "5df7b7da3a0c349711e964ecf758fb348141bcee"
+      "blob": "4c1b65b5d9df68a833c089f58aeace719e25f3af"
     },
     {
       "path": "README.md",
@@ -2248,7 +2247,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "56ed69413450946120c0725c91a68c9e05f22d2c"
+      "blob": "f09504d7ea1258bbd42556730ade8497d93b3c71"
     },
     {
       "path": "tests/test_action_chrome_profiles.py",
@@ -2906,7 +2905,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "75daab15a2d9520c192585eb360487c56b44af62"
+      "blob": "bc470bddca816a331ca91df89a07ee92ba725bbc"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3127,15 +3126,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "81f4b89c9f0f04bc",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "49 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
