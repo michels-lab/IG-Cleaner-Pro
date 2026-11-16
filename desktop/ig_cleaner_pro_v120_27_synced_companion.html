@@ -2918,7 +2918,7 @@ window.IGC_INSTAGRAM_PROFILES={
     ? 'Following '+Number(selected.following_count||0).toLocaleString('es-MX')
        +' · Followers '+Number(selected.followers_count||0).toLocaleString('es-MX')
        +' · Pending '+Number(selected.pending_count||0).toLocaleString('es-MX')
-       +' · Revisiones históricas en nube '+Number(selected.review_count||0).toLocaleString('es-MX')
+       +' · Historial de revisiones (todas las secciones) '+Number(selected.review_count||0).toLocaleString('es-MX')
     : 'Abre Cuenta y sincroniza para consultar los datos';
    const when=selected?.last_sync_at?' · Snapshot '+String(selected.last_sync_at).slice(0,10):'';
    info.textContent=metrics+when;
@@ -10151,7 +10151,7 @@ function renderReviewRealtimePanel(){
   const noFollow=rows.filter(r=>!r.followsBack&&!r.relationGood).length;
   const activeCount=activeFocusBatch?.kind==='main'?(typeof activeBatchPendingRows==='function'?activeBatchPendingRows(activeFocusBatch).length:(activeFocusBatch.rows?.length||0)):0;
   const available=typeof allMainFocusOpenableRows==='function'?allMainFocusOpenableRows().length:0;
-  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'siguiendo sin revisar'},{value:reviewed,label:'revisados'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:available,label:'abribles'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
+  host.innerHTML=`${igcStandardActivityTop('review','Review')}<div class="igc-secondary-live"><div class="igc-secondary-live-title">Estado actual</div>${igcSidebarStats([{value:pending,label:'por revisar en Following'},{value:reviewed,label:'revisados vigentes'},{value:activeCount,label:'en tanda activa'},{value:protectedCount,label:'protegidos'},{value:available,label:'abribles'},{value:noFollow,label:'no me siguen'}])}</div>${igcSidebarActiveBatch('main')}`;
 }
 function renderPendingRealtimePanel(){
   const el=document.getElementById('pendingRealtimePanel');
@@ -14825,7 +14825,7 @@ async function refreshInstagramAccounts(){
  }
  registry._verified=true;
  registry.setAccounts(profiles);
- registry.setCloudStatus(profiles.length+' perfil(es) cargados desde tu cuenta. Si esperabas más, comprueba que en PC y Android estés usando el mismo correo.','success');
+ registry.setCloudStatus(profiles.length+' espacio(s) de Instagram registrados (incluyendo Datos anteriores cuando existe). Son cuentas de trabajo, no personas de tus listas.','success');
  instagramRegistryLoaded=true;
  return true;
 }
@@ -14969,7 +14969,12 @@ async function syncNow(manual=true){
   renderAuthUi();status("Developer Edition: account sign-in enabled; production cloud synchronization disabled.",'warn');
   return;
  }
- cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';status(`Sync completo · ${lists.profiles} perfiles disponibles · ${lists.changed} lista(s) actualizadas aquí · ${st.changed} revisiones remotas · ${batches} Focus publicados.`,'ok')}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+ cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';
+const currentReviews=withTempMode('following',()=>buildRowsForMode('following').filter(r=>isDoneValidForMode(r,'following')).length);
+const historyLabel=st.rows.toLocaleString('es-MX'),currentLabel=currentReviews.toLocaleString('es-MX');
+status(`Sync completo · ${lists.profiles} registros en listas · ${historyLabel} revisiones históricas descargadas (todas las secciones) · ${currentLabel} revisiones vigentes en Following · ${batches} Focus publicados.`,'ok');
+window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Historial de nube: '+historyLabel+' registros de revisión entre Review, Followers y Pending; Following actual: '+currentLabel+' revisiones vigentes. Los totales históricos NO son personas actualmente revisadas.','success');
+try{renderReviewRealtimePanel?.();renderAlwaysAccountSummary?.()}catch{}}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
