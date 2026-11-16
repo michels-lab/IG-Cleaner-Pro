@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "d8cd61ba69d8282c615c3db0f847871b0e8544041efe7e25ea25e3fdd1fd9984",
+  "inventory_fingerprint": "526b08589d887822a73e10add361d727150ffdd8727eca20a69768d288760e32",
   "evidence_fingerprint": "ea4e1e35d683986268289a2650e1a174a7f71e05817e156b2c775ecde9087ff3",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "12e0cdda0bfec298e22afd96079cd98d561a5fd7"
+      "blob": "f5c347971a4937418ac0f0abbbcd55c4b936f449"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
