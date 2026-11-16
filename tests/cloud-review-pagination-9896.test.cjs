@@ -63,7 +63,7 @@ function harness(cutPage=-1,serverCap=1000){
   assert.equal(Object.keys(a.pendingReviewedMeta).length,1183);
   assert.equal(a.reviewedMeta.fictional07492.relation,"No me sigue");
   assert(a.storage.has("meta"),"Hydrated review state must persist locally");
-  assert.equal(a.counts().calls,10);
+  assert.equal(a.counts().calls,11,"An empty terminal page must confirm the end of history");
   assert.equal(await a.ctx.pushProfileState(),0,
     "Cloud reviews must not be republished as if 8896 rows were missing");
   assert.equal(a.counts().writes,0);
@@ -74,18 +74,18 @@ function harness(cutPage=-1,serverCap=1000){
   assert.equal(truncated.doneSet.size,0,"Incomplete download may not partially apply records");
   assert.equal(truncated.ctx.S.stats.statesDown,undefined);
 
-  // If an installation lowers the API max_rows limit, the cloud count guard
-  // refuses to treat a short page as a complete profile history.
+  // A smaller server cap must still recover every review instead of treating a short page as EOF.
   const capped=harness(-1,500);
-  await assert.rejects(capped.ctx.pullProfileState(),/Sync incompleto/);
-  assert.equal(capped.doneSet.size,0);
+  assert.equal((await capped.ctx.pullProfileState()).rows,9896);
+  assert.equal(capped.doneSet.size,8713);
+  assert.equal(capped.counts().calls,21);
 
   // A slim preflight GET cannot masquerade as fully hydrated review payloads.
   const slim=harness();
   await slim.ctx.readCompleteProfileState("username,module,reviewed_at");
   const full=await slim.ctx.pullProfileState();
   assert.equal(full.rows,9896);
-  assert(slim.counts().calls>10,"A full hydration must replace any cached slim response");
+  assert(slim.counts().calls>11,"A full hydration must replace any cached slim response");
   assert.equal(slim.reviewedMeta.fictional07492.relation,"No me sigue");
-  console.log("PASS: complete 9896-row reviews; safe truncated-page refusal; full hydration after slim cache");
+  console.log("PASS: complete 9896 reviews even with 500-row cap; truncated-page refusal; full hydration after slim cache");
 })().catch(e=>{console.error(e);process.exitCode=1});
