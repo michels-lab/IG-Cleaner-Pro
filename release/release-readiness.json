@@ -31,15 +31,17 @@
     173,
     176
   ],
-  "next_version": "v120.76",
-  "notes": "Owner authorized stable-only v120.76 on 2026-11-15 to test corrected review/audit synchronization. Issue #360 and real Instagram/Windows/Android two-account acceptance remain open. Keep release_hold true; exact-tag owner device-review exception only. Signed stable Android, installed Windows public Setup, exact-SHA visual QA, checksums and update-feed gates required. Developer Editions explicitly cancelled; no developer asset or QA dependency.",
+  "next_version": "v120.77",
+  "notes": "The owner-authorized v120.76 stable-only release was successfully published on 2026-11-16 UTC via run 43790329261 with 9 public assets and all 4 release jobs SUCCESS. Release permission for v120.76 is consumed; v120.77 is reserved WITHOUT authorization. Keep release_hold true until a NEW explicit owner request or real physical acceptance. Real Instagram/Windows/Android two-account tests and issue #360 remain open. No Developer editions or RC.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.76",
     "source": "explicit-owner-chat-instruction-2026-11-15",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "owner_direct_quote": "dale release",
-    "disclosure": "Owner approved publishing stable-only v120.76 for subsequent physical checking; this does not certify live actions or close unresolved P0s. No Developer editions, RC, beta or skipped signed Android/Windows installation checks."
+    "disclosure": "Consumed: stable v120.76 published 2026-11-16 UTC. This owner approval must not authorize v120.77 or subsequent releases. Real signed-in Instagram acceptance remains open.",
+    "consumed_by_release": "v120.76",
+    "consumed_run": 43790329261
   }
 }
