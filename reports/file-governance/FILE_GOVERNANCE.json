@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "31cae28ba7104f545e1078472f0f4ddf81d5cb80af927fd200e4ea4a1166d189",
+  "inventory_fingerprint": "b30d34cdd75b05f05eeb7cce864363b948a4bafaf3890bebe0cb1771873c199d",
   "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
@@ -253,14 +253,14 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "a69d010b3ae5d578ed9f13bc212061630d7fd495"
+      "blob": "4a7e3e08fb90904c1d917c64458b8593dc23ee45"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "0cca5d80c0dffd05b32be060ab3dba8664c4db5b"
+      "blob": "6709c020b2367c48eb0d8e5d02a1b220aede7fb6"
     },
     {
       "path": "android/app/build.gradle.kts",
