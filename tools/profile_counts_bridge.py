@@ -737,7 +737,7 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
         dual_chrome_sessions, collector, collector.data_dir, actions)
         if not developer_mode else None)
     class Handler(BaseHTTPRequestHandler):
-        def _header(self, code, content_type="application/json"):
+        def _header(self, code, content_type="application/json", content_length=None):
             self.send_response(code)
             self.send_header("Content-Type", content_type + "; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
@@ -747,21 +747,15 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
             self.send_header("Access-Control-Allow-Headers", "X-IGC-Bridge-Token, Content-Type")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Private-Network", "true")
+            if content_length is not None:
+                self.send_header("Content-Length", str(content_length))
             self.end_headers()
 
         def _send(self, code, data):
             payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
-            # Explicit HTTP framing avoids clients mistaking a closing local
-            # socket for a missing/retried action response.
-            self.send_response(code)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Access-Control-Allow-Origin", "null")
-            self.send_header("Access-Control-Allow-Headers", "X-IGC-Bridge-Token, Content-Type")
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-            self.send_header("Access-Control-Allow-Private-Network", "true")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
+            # Explicit framing avoids treating a denied loopback POST as a
+            # missing/retryable action response when the socket closes.
+            self._header(code, content_length=len(payload))
             self.wfile.write(payload)
 
         def _drain_rejected_post_body(self):
