@@ -106,46 +106,6 @@ jobs:
             --manifest "$EVIDENCE_DIR/michelslab-manifest.json" \
             --source-sha "$GITHUB_SHA" --platforms desktop --surfaces home,about
 
-  android-developer-qa:
-    # Product's separate Developer APK is a required FINAL stable artifact.
-    # It must actually launch and complete account/annotations/export checks
-    # on a real emulator, not merely compile with a disposable CI signer.
-    needs: release-request-gate
-    if: needs.release-request-gate.outputs.publish == 'true'
-    name: Install Android Developer APK; account, notes, JSON acceptance
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-      - name: Validate separately governed Developer package and signing contract
-        run: python3 tests/developer-release-contract.py
-      - name: Enable emulator KVM
-        run: |
-          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
-      - name: Install BOTH public and Developer APKs, click real Account and export real note
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          target: google_apis
-          profile: pixel_6
-          script: bash tools/run_android_developer_ui.sh
-      - name: Preserve privacy-safe native Developer test evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ig-cleaner-final-stable-developer-android-${{ github.sha }}
-          path: artifacts/android-developer/
-          retention-days: 30
-          if-no-files-found: warn
-
   windows-robot:
     needs: release-request-gate
     if: needs.release-request-gate.outputs.publish == 'true'
@@ -287,17 +247,6 @@ jobs:
           ./tools/build_windows_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version
           ./tools/test_windows_installer_wizard.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Screenshot artifacts/IG-Cleaner-Pro-Installer-EULA.png
           ./tools/test_windows_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Version $version
-      - name: Build, install, launch and uninstall independent Developer Windows Setup
-        shell: pwsh
-        run: |
-          $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
-          python -m unittest discover -s tests -p 'test_developer_audit.py' -v
-          python -m unittest discover -s tests -p 'test_developer_live_probe.py' -v
-          node tests/developer-annotations-contract.test.cjs
-          if ($LASTEXITCODE -ne 0) { throw "Developer consent/chat tests failed." }
-          ./tools/build_windows_developer_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version
-          ./tools/test_windows_developer_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v$version.exe" -Version $version
-          if ($LASTEXITCODE -ne 0) { throw "Independent Developer Windows install test failed." }
       - name: Retain Windows installer diagnostics even on failed QA
         if: always()
         uses: actions/upload-artifact@v4
@@ -305,7 +254,6 @@ jobs:
           name: ig-cleaner-installer-diagnostics-${{ github.sha }}
           path: |
             artifacts/IG-Cleaner-Pro-Installer-InstallLog.txt
-            artifacts/IG-Cleaner-Pro-Developer-Installer-InstallLog.txt
           retention-days: 14
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
@@ -321,20 +269,17 @@ jobs:
             artifacts/IG-Cleaner-Pro-Automatic-Robot-Windows-v*.zip
             artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe
             artifacts/IG-Cleaner-Pro-Windows-Setup-v*.exe.sha256
-            artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v*.exe
-            artifacts/IG-Cleaner-Pro-Windows-Developer-Setup-v*.exe.sha256
           retention-days: 14
           if-no-files-found: error
 
   publish:
-    needs: [release-request-gate, rendered-ui-qa, windows-robot, android-developer-qa]
-    if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success' && needs.windows-robot.result == 'success' && needs.android-developer-qa.result == 'success'
+    needs: [release-request-gate, rendered-ui-qa, windows-robot]
+    if: needs.release-request-gate.outputs.publish == 'true' && needs.rendered-ui-qa.result == 'success' && needs.windows-robot.result == 'success'
     runs-on: ubuntu-latest
     env:
       IGC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.IGC_ANDROID_KEYSTORE_PASSWORD }}
       IGC_ANDROID_KEY_ALIAS: ${{ secrets.IGC_ANDROID_KEY_ALIAS }}
       IGC_ANDROID_KEY_PASSWORD: ${{ secrets.IGC_ANDROID_KEY_PASSWORD }}
-      IGC_ANDROID_SIGNED_DEVELOPER_REQUIRED: "true"
     steps:
       - uses: actions/checkout@v4
 
@@ -369,20 +314,14 @@ jobs:
           assert policy["githubPrerelease"] is False
           assert policy["explicitManualPublishRequired"] is True
           assert policy["stableGithubReleaseIncludesLatestValidatedAndroidApk"] is True
-          assert policy["requireDeveloperTwinAssets"] is True
-          assert policy["requireDeveloperAndroidProductionSigning"] is True
-          assert policy["requireDeveloperWindowsIndependentInstallTest"] is True
-          assert manifest["channels"]["androidDeveloper"]["packageId"] == "com.michelslab.igcleaner.developer"
-          assert manifest["channels"]["androidDeveloper"]["signRequired"] is True
+          assert policy["requireDeveloperTwinAssets"] is False
+          assert policy["requireDeveloperAndroidProductionSigning"] is False
+          assert policy["requireDeveloperWindowsIndependentInstallTest"] is False
           assert signing["packageId"] == "com.michelslab.igcleaner"
 
           desktop=manifest["channels"]["desktop"]["artifactTemplate"].replace("{version}",version)
           android=manifest["channels"]["android"]["artifactTemplate"].replace("{version}",version)
           desktop_html=manifest["channels"]["desktop"]["primaryArtifactTemplate"].replace("{version}",version)
-          android_dev=manifest["channels"]["androidDeveloper"]["artifactTemplate"].replace("{version}",version)
-          windows_dev=manifest["channels"]["windowsDeveloper"]["artifactTemplate"].replace("{version}",version)
-          assert android_dev == f"IG-Cleaner-Pro-Android-Developer-v{version}.apk"
-          assert windows_dev == f"IG-Cleaner-Pro-Windows-Developer-Setup-v{version}.exe"
           assert desktop_html == f"IG-Cleaner-Pro-Desktop-v{version}.html"
           assert manifest["channels"]["desktop"]["standaloneOffline"] is True
           expected_code=int(version.replace(".",""))
@@ -393,8 +332,6 @@ jobs:
           assert f'versionName = "{version}"' in gradle
           assert f"versionCode = {expected_code}" in gradle
           assert 'applicationIdSuffix = ".beta"' in gradle
-          assert 'applicationIdSuffix = ".developer"' in gradle
-          assert 'developerPublicationRequested' in gradle
           assert "Production Android signing is required" in gradle
 
           html=pathlib.Path("desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
@@ -413,8 +350,6 @@ jobs:
               f.write(f"desktop_artifact={desktop}\n")
               f.write(f"desktop_html_artifact={desktop_html}\n")
               f.write(f"android_artifact={android}\n")
-              f.write(f"android_developer_artifact={android_dev}\n")
-              f.write(f"windows_developer_artifact={windows_dev}\n")
           PY
 
       - name: Run release contracts
@@ -466,8 +401,8 @@ jobs:
           ACTUAL="$(keytool -list -v -keystore "$IGC_ANDROID_KEYSTORE_PATH" -storepass "$IGC_ANDROID_KEYSTORE_PASSWORD" -alias "$IGC_ANDROID_KEY_ALIAS" | awk -F'SHA256: ' '/SHA256:/{gsub(/:/,"",$2); print $2; exit}')"
           test "$ACTUAL" = "$EXPECTED"
 
-      - name: Build both production-signed Android public and Developer APKs
-        run: gradle -p android :app:assembleRelease :app:assembleDeveloper
+      - name: Build production-signed Android stable APK
+        run: gradle -p android :app:assembleRelease
 
       - name: Verify signed Android package
         env:
@@ -490,39 +425,22 @@ jobs:
           ACTUAL="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/apksigner.txt | tr '[:upper:]' '[:lower:]')"
           test "$ACTUAL" = "$EXPECTED"
 
-          # Developer must be signed by the SAME persistent identity while
-          # retaining a separate package, application data and displayed name.
-          DEV_APK="android/app/build/outputs/apk/developer/app-developer.apk"
-          test -s "$DEV_APK"
-          "$APKSIGNER" verify --verbose --print-certs "$DEV_APK" | tee /tmp/dev-apksigner.txt
-          "$AAPT" dump badging "$DEV_APK" | tee /tmp/dev-badging.txt
-          grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/dev-badging.txt
-          grep -q "versionCode='${{ steps.release.outputs.version_code }}'" /tmp/dev-badging.txt
-          grep -q "versionName='${{ steps.release.outputs.version }}-developer'" /tmp/dev-badging.txt
-          DEV_CERT="$(awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' /tmp/dev-apksigner.txt | tr '[:upper:]' '[:lower:]')"
-          test "$DEV_CERT" = "$ACTUAL"
-          # aapt package IDs are authoritative: separate app, separate storage.
-          ! grep -q "package: name='com.michelslab.igcleaner'" /tmp/dev-badging.txt
-          ! grep -q "package: name='com.michelslab.igcleaner.developer'" /tmp/badging.txt
-          unzip -p "$DEV_APK" assets/ig_cleaner_pro_v120_27_synced_companion.html > /tmp/igc-developer-release-embedded.html
-          grep -q 'igcDevSaveNote' /tmp/igc-developer-release-embedded.html
-
       - name: Reject unproven signed Android launch (offline adversarial fixture)
         run: |
           python3 tests/release-publisher-contract.py
           python3 -m unittest discover -s tests -p 'test_android_signed_coinstall_runtime.py' -v
 
-      - name: Enable Android emulator hardware acceleration for signed coexistence
+      - name: Enable Android emulator hardware acceleration for signed stable installation
         run: |
           if [ -e /dev/kvm ]; then
             sudo chmod 666 /dev/kvm
             test -r /dev/kvm && test -w /dev/kvm
-            echo 'KVM device enabled for real signed Android installation and foreground proof.'
+            echo 'KVM device enabled for real signed Android stable installation and foreground proof.'
           else
             echo '::warning::No /dev/kvm on runner; continuing with slower real emulator and all unchanged fail-closed checks.'
           fi
 
-      - name: Prove both production-signed Android packages install side by side
+      - name: Prove production-signed Android stable APK installs and launches
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -544,7 +462,6 @@ jobs:
           cp branding/ig-cleaner-pro/official-app-icon-1024.png "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-logo.png"
           cp docs/PRIVACY.md "dist/Instagram-Cleaner-Pro-v${{ steps.release.outputs.version }}-PRIVACY.md"
           cp android/app/build/outputs/apk/release/app-release.apk "dist/${{ steps.release.outputs.android_artifact }}"
-          cp android/app/build/outputs/apk/developer/app-developer.apk "dist/${{ steps.release.outputs.android_developer_artifact }}"
           (cd package && zip -r "../dist/${{ steps.release.outputs.desktop_artifact }}" .)
           python3 tools/build_standalone_desktop_html.py \
             --source package/IG-Cleaner-Pro.html \
@@ -596,7 +513,7 @@ jobs:
           print(f"Verified integrated Windows EXE ZIP v{version}: {path}")
           PY
           # Check per-installer SHA-256 digests before publishing.
-          python3 - "$SETUP" "$DEV_SETUP" <<'PY'
+          python3 - "$SETUP" <<'PY'
           import hashlib, pathlib, sys
           for name in sys.argv[1:]:
               p=pathlib.Path(name)
@@ -614,8 +531,6 @@ jobs:
           test -f "dist/${{ steps.release.outputs.desktop_html_artifact }}"
           test "$(grep -o 'data:image/' "dist/${{ steps.release.outputs.desktop_html_artifact }}" | wc -l)" -ge 3
           test -f "dist/${{ steps.release.outputs.android_artifact }}"
-          test -s "dist/${{ steps.release.outputs.android_developer_artifact }}"
-          test -s "dist/${{ steps.release.outputs.windows_developer_artifact }}"
           (cd dist && sha256sum --check SHA256SUMS.txt)
 
       - name: Build release notes
@@ -682,7 +597,5 @@ jobs:
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.desktop_html_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Automatic-Robot-Windows-v${{ steps.release.outputs.version }}.zip"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "IG-Cleaner-Pro-Windows-Setup-v${{ steps.release.outputs.version }}.exe"
-          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.android_developer_artifact }}"
-          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "${{ steps.release.outputs.windows_developer_artifact }}"
           gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx "SHA256SUMS.txt"
           gh release view "$TAG" --json tagName,isPrerelease,isDraft,url
