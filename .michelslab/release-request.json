@@ -1,12 +1,12 @@
 {
   "version": "120.76",
   "tag": "v120.76",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly wrote 'dale release' on 2026-11-15 to publish stable InstaCleaner v120.76 with Granada sync/history corrections. Previous v120.75 installed screenshot exposed mislabelled historical counters and partial sync. Physical real-Instagram tests deferred, not declared accepted. Developer Editions permanently discontinued.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.75",
   "requested_at": "2026-11-15",
   "candidate_main_sha": "0214768ed7650dc3a97dde4eb459dced84cb98f5",
@@ -19,5 +19,10 @@
     "published_at": "2026-11-13T23:28:16Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.75",
     "asset_count": 12
-  }
+  },
+  "published_run": 43790329261,
+  "published_commit": "4aa6b8d8332e6756926c2e4d074947aa38b48791",
+  "published_at": "2026-11-16T02:18:18Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.76",
+  "publication_note": "FINAL stable-only v120.76 published with 9 GitHub assets, all four governed publisher jobs passed. User's manual Android/Windows two-account testing remains unverified. Owner's release authorization is now consumed; v120.77 not authorized. No Developer assets."
 }
