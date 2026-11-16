@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "865843aa8857521d00b17fad4a4327ea8ae8f35358927b0ced219442f4e438d2",
-  "evidence_fingerprint": "ea4e1e35d683986268289a2650e1a174a7f71e05817e156b2c775ecde9087ff3",
+  "inventory_fingerprint": "6c2a9dba68616b018ea0b35280ca1477e7758d0e9113847590c7210afbed7a6c",
+  "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1912,7 +1912,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "4bbbb830aca135598df7a0a0f7038195a7883ead"
+      "blob": "706519efc4c91411d9fca7613ba6df3e4e16aa1c"
     },
     {
       "path": "tests/dual-action-batch-completion-browser.test.cjs",
@@ -2206,7 +2206,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "1019d4010ae34ef35ac6f5e2f61d6a7c1a9eb241"
+      "blob": "f6e42537e8a818f4a0f4ea78140f432ba3bdd096"
     },
     {
       "path": "tests/release_artifact_policy.py",
@@ -3130,11 +3130,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "f3c7d0d16e9ed4e9",
+      "id": "81f4b89c9f0f04bc",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "47 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
+      "observation": "49 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
