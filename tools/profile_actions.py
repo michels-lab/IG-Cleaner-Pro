@@ -1951,6 +1951,11 @@ class ActionRobot:
             # never offer one manually inspected and reserved in the
             # durable per-owner/account/task visit sidecar (#351).
             manual_visits = self._manual_review_visits(owner, account, task)
+            # Use the SAME canonical visit ledger as new-cohort admission.
+            # An interrupted pre-navigation reservation with NO action WAL is
+            # still visited, never a fresh profile for a recycled cohort.
+            visited = self._visited_usernames(owner, account, task, journal)
+        visited_set = set(visited)
         reusable = []
         for entry in cohorts:
             if not isinstance(entry, dict): continue
@@ -1964,11 +1969,11 @@ class ActionRobot:
                 if not isinstance(user, str) or valid_username(user) != user:
                     continue
                 if (user not in protected and user not in manual_visits and
-                        (user not in journal or
-                         (not _invalid_saved_action_record(journal[user]) and
+                        (user not in visited_set or
+                         (user in journal and
+                          not _invalid_saved_action_record(journal[user]) and
                           _preclick_no_action(journal[user])))):
                     reusable.append(user)
-        visited = self._visited_usernames(owner, account, task, journal)
         attempted = sorted(user for user, record in journal.items()
             if valid_username(user) == user and
             (_invalid_saved_action_record(record) or
