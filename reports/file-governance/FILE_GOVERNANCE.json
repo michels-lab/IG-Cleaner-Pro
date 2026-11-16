@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "54cca5304d850237ef7a386f7ef3333842561fcd025a0c05e26ed944d03c9281",
+  "inventory_fingerprint": "f2edbdee57a75056ca45dd71cb37357a0adef69932fb8ef90711d89b02f25f68",
   "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
@@ -1653,14 +1653,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "2ef30d732d4b1841a91132f873b37bc943d483d0"
+      "blob": "40c2c2a532378e2d03e8e9e710abd83deb91f270"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "23034b574692ee747f314755b122ae03b2020c49"
+      "blob": "6f936034cc64de39aa95be894c1a9915ad4708db"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
