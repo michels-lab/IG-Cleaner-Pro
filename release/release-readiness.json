@@ -15,8 +15,8 @@
     "real_owner_unfollow_exact_target_verified_and_journaled": false,
     "real_owner_cancel_pending_exact_target_verified_and_journaled": false,
     "batches_protected_history_and_no_repeat_regressions_verified": false,
-    "physical_windows_public_developer_update_backup_acceptance": false,
-    "android_public_developer_acceptance": false
+    "physical_windows_stable_update_backup_acceptance": false,
+    "android_stable_acceptance": false
   },
   "required_closed_issues": [
     73,
@@ -31,15 +31,15 @@
     173,
     176
   ],
-  "next_version": "v120.75",
-  "notes": "User directly authorized v120.75 stable for postpublication physical review on 2026-11-12. Operation Granada #360 fixes have automated tests. P0 issue and real two-account/Instagram/Android/Windows acceptance remain open, release_hold remains true, only exact-tag owner review exception active. Official publisher QA, signing and checksums mandatory.",
+  "next_version": "v120.76",
+  "notes": "Owner authorized stable-only v120.76 on 2026-11-15 to test corrected review/audit synchronization. Issue #360 and real Instagram/Windows/Android two-account acceptance remain open. Keep release_hold true; exact-tag owner device-review exception only. Signed stable Android, installed Windows public Setup, exact-SHA visual QA, checksums and update-feed gates required. Developer Editions explicitly cancelled; no developer asset or QA dependency.",
   "owner_device_review_release_override": {
     "authorized": true,
-    "release_tag": "v120.75",
-    "source": "explicit-owner-chat-instruction-2026-11-12",
+    "release_tag": "v120.76",
+    "source": "explicit-owner-chat-instruction-2026-11-15",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "dale relwease",
-    "disclosure": "User requested a stable build for later physical testing, not completed product acceptance. Keep unfinished P0 issues open; all official automated production-signing, Windows/Android installation, visual, integrity and update-feed gates mandatory."
+    "owner_direct_quote": "dale release",
+    "disclosure": "Owner approved publishing stable-only v120.76 for subsequent physical checking; this does not certify live actions or close unresolved P0s. No Developer editions, RC, beta or skipped signed Android/Windows installation checks."
   }
 }
