@@ -20,7 +20,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **Current published stable: v120.76. Next reserved version: v120.77, not published.**
 
-v120.76 is published, its one-time authorization is consumed. v120.77 is reserved but not authorized. Live Instagram acceptance remains open; no RC, beta or Developer editions.
+v120.76 is published, its one-time authorization is consumed. v120.77 is reserved and carries a NEW single-use owner authorization for a governed FINAL stable release only after exact-source installed Windows, signed Android, screenshots, SHA-256 and updater checks pass. v120.77 is NOT yet published. Live Instagram acceptance remains open; no RC, beta or Developer editions.
 
 **Previous official release:** [v120.70](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.70), published October 27, 2026 (UTC), official publisher 40555013922.
 

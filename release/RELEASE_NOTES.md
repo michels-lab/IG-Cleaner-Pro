@@ -1,3 +1,13 @@
+## v120.77 — Granada: no-repeat saved action history + owner-device review (2026-11-15)
+
+- **Action batch reuse:** previously reserved target Chrome visits are excluded from both the historical `reusable_usernames` list and the handoff when cancelling/setting aside an unfinished batch, even if Chrome terminated before an action result was saved (merged PR #361).
+- **Manual review:** a read-only profile opening no longer leaks into a new Cancel Pending batch; independent account/task history, protected profiles and uncertain-click WAL remain protected.
+- **Local Windows API reliability:** a denied loopback POST now fully frames its JSON 403 and safely drains bounded small unauthorized payloads before closing. This prevents Windows TCP reset from masking the intended rejection; a regression checks wrong token/origin, long bodies and subsequent authorized archive access.
+- **Safe evidence:** proven *no-click* retries remain identifiable within the original persisted cohort, but a possibly clicked target is never promoted to OK or automatically repeated.
+- **Regression:** two new offline Python suites cover reserved-navigation crashes, positive no-click evidence, owner/account/task isolation, preserved original saved WAL and protected profiles. Exact-source Windows installed and signed Android validation remains a publication prerequisite.
+- **Distribution:** stable-only native Windows Setup and production-signed Android APK, standalone Desktop HTML, per-asset SHA-256 verification and updater checks; no Developer Edition or RC.
+- **Owner acceptance:** Michel requested a stable installer to verify personally. This is NOT proof that signed-in Instagram Unfollow, Cancel Pending, two concurrent robots, physical Android/Windows acceptance, or P0 Focus counter rebound (#360) are resolved. Those issues stay open.
+
 ## v120.76 — Granada: complete review history + stable-only distribution (2026-11-15)
 
 - **Cloud review restore:** page by actual returned count, with terminal empty-page verification, scoped account isolation and complete-count consistency; never overwrite newer owner reviews with stale decisions.
