@@ -1177,6 +1177,118 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 fresh.start(scope)
                 self.assertEqual(fresh.targets, ["fresh.one"])
 
+    def test_archived_reusable_excludes_reserved_navigation_without_action_wal(self):
+        """A crashed visit must never reappear as a reusable target in UI.
+
+        Negative regression: old code inspected only the click journal here,
+        although fresh action admission already respected the visit ledger.
+        Explicit proven pre-click misses remain reusable; manual visits,
+        protected accounts and ambiguous clicks never become candidates.
+        """
+        from profile_actions import _atomic_json, MISSING_RELATIONSHIP_CONTROL
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = self._action(root)
+            owner, account, task = "owner1", "ig_account_1", "unfollow"
+            members = ["reserved.only", "safe.noclick", "fresh.unopened",
+                       "manual.opened", "confirmed.done", "uncertain.clicked",
+                       "protected.member"]
+            _atomic_json(robot._review_batches_file_for(owner, account, task), [{
+                "id": "old-archived", "original_targets": members,
+                "targets": members, "deferred_at": "2026-11-15T20:00:00Z"
+            }])
+            robot.owner, robot.account, robot.task = owner, account, task
+            robot.active_batch_id = "old-archived"
+            robot._reserve_target_visit("reserved.only")
+            robot._reserve_target_visit("safe.noclick")
+            _atomic_json(robot._base_for(owner, account, task), {
+                "safe.noclick": {
+                    "status": "review", "issue": "profile_load_timeout",
+                    "message": MISSING_RELATIONSHIP_CONTROL +
+                               " Waiting timed out: Following. No action clicked."
+                },
+                "confirmed.done": {"status": "ok"},
+                "uncertain.clicked": {"status": "review",
+                                      "message": "Outcome after click is uncertain."}
+            })
+            _atomic_json(robot._manual_review_visits_file_for(owner, account, task), {
+                "manual.opened": {"state": "navigation_requested_not_relationship_action"}
+            })
+            _atomic_json(robot._protection_file_for(owner, account),
+                         ["protected.member"])
+            visits_file = robot._target_visits_file_for(owner, account, task)
+            visits_before = visits_file.read_bytes()
+            journal_file = robot._base_for(owner, account, task)
+            journal_before = journal_file.read_bytes()
+
+            cold = self._action(root)
+            result = cold.attempted_history({"owner": owner, "account": account,
+                                             "task": task})
+            self.assertEqual(result["reusable_usernames"],
+                             ["safe.noclick", "fresh.unopened"])
+            self.assertIn("reserved.only", result["visited_usernames"])
+            self.assertNotIn("reserved.only", result["attempted_usernames"],
+                             "No relationship click may be inferred from navigation")
+            self.assertEqual(visits_file.read_bytes(), visits_before)
+            self.assertEqual(journal_file.read_bytes(), journal_before)
+            # Scope remains exact; neither other Instagram account nor the
+            # other task inherits this history.
+            for changes in ({"account": "other_account"}, {"task": "cancel"}):
+                other = {**{"owner": owner, "account": account, "task": task},
+                         **changes}
+                self.assertEqual(cold.attempted_history(other)["reusable_usernames"], [])
+
+    def test_set_aside_handoff_excludes_crashed_and_manual_visits(self):
+        """A new batch handoff cannot offer a visited target as untouched."""
+        from profile_actions import _atomic_json, MISSING_RELATIONSHIP_CONTROL
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            robot = self._action(root)
+            members = ["reserved.crash", "fresh.unopened", "safe.preclick",
+                       "manual.opened", "protected.member", "uncertain.clicked"]
+            request = self._request(members, task="cancel")
+            with patch("profile_actions.threading.Thread") as worker:
+                worker.return_value.is_alive.return_value = False
+                robot.start(request)
+                cohort = robot.batch_review(request)["batch"]
+                robot._reserve_target_visit("reserved.crash")
+                robot._reserve_target_visit("safe.preclick")
+                _atomic_json(robot._base(), {
+                    "safe.preclick": {
+                        "status": "review", "issue": "profile_load_timeout",
+                        "message": MISSING_RELATIONSHIP_CONTROL +
+                                   " Waiting timed out: Following. No action clicked."
+                    },
+                    "uncertain.clicked": {
+                        "status": "review", "message": "Uncertain click outcome."
+                    }
+                })
+                _atomic_json(robot._manual_review_visits_file_for(
+                    "owner1", "ig_account_1", "cancel"), {
+                        "manual.opened": {
+                            "state": "navigation_requested_not_relationship_action"
+                        }
+                    })
+                _atomic_json(robot._protection_file_for("owner1", "ig_account_1"),
+                             ["protected.member"])
+                visit_file = robot._target_visits_file_for(
+                    "owner1", "ig_account_1", "cancel")
+                original_visits = visit_file.read_bytes()
+                original_actions = robot._base().read_bytes()
+                response = robot.set_aside_incomplete_batch({
+                    **request, "batch_id": cohort["id"], "desired_batch_size": 20,
+                    "confirmation": "new-batch:" + cohort["id"] + ":20"
+                })
+                self.assertEqual(response["reusable_usernames"],
+                                 ["fresh.unopened", "safe.preclick"])
+                self.assertEqual(response["previous_action_records"], 2)
+                self.assertEqual(visit_file.read_bytes(), original_visits,
+                                 "Saved visit reservations are never erased")
+                self.assertEqual(robot._base().read_bytes(), original_actions,
+                                 "The click WAL is never rewritten by batch handoff")
+                self.assertFalse(response["marked_reviewed"])
+                self.assertFalse(worker.return_value.start.call_count > 1)
+
     def test_new_cohort_blocks_crashed_navigation_without_false_unfollow(self):
         from profile_actions import _atomic_json
         with TemporaryDirectory() as temporary:
