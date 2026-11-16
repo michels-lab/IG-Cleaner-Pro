@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "2a29c3b225715144a740a9039352007a6be4d6fbbc06a5290861dbb88b2015c0",
+  "inventory_fingerprint": "4420f6908688b4b8c558f3b8aad7791f4f45e619b64c39d40ebcafc7964caf7d",
   "evidence_fingerprint": "4d0632ff7b8eefdec0d05ff310b4a6f2c9b7df59b3c135bd0ca96f31fdc50b58",
   "files": [
     {
@@ -148,7 +148,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "6b103a8a1070400017d1c7fe8f2953879ab64ebe"
+      "blob": "3332a1e76d637833677438652ddef6e00b96de36"
     },
     {
       "path": ".gitignore",
