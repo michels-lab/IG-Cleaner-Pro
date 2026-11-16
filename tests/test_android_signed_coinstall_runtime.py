@@ -1,7 +1,7 @@
 """Offline adversarial tests for the mandatory FINAL signed Android emulator gate.
 
 A fake adb is intentionally used ONLY for unit tests. The real release workflow
-must additionally install BOTH production-signed APKs in a real emulator.
+must additionally install the production-signed stable APK in a real emulator.
 """
 import json
 import os
@@ -30,15 +30,16 @@ def save():
 if args == ["shell", "getprop", "sys.boot_completed"]:
     print("0" if scenario == "not_booted" else "1")
 elif args[:2] == ["install", "-r"]:
-    if scenario == "developer_install_fails" and "developer" in args[-1]:
+    if scenario == "stable_install_fails":
         print("Failure [INSTALL_FAILED]")
         save()
         sys.exit(1)
     print("Success")
 elif args == ["shell", "pm", "list", "packages"]:
-    print("package:com.michelslab.igcleaner")
-    if scenario != "developer_missing":
-        print("package:com.michelslab.igcleaner.developer")
+    if scenario != "stable_missing":
+        print("package:com.michelslab.igcleaner")
+    if scenario == "stable_missing":
+        print("package:com.not-our-app")
 elif args[:3] == ["shell", "am", "start"] and len(args) == 5 and args[3] == "-n":
     if scenario == "am_error":
         print("Error: Activity class does not exist")
@@ -51,7 +52,7 @@ elif args == ["shell", "dumpsys", "activity", "activities"]:
     state["probes"] += 1
     if scenario == "never_resumed" or state["probes"] < 3:
         print("topResumedActivity=ActivityRecord{launcher/Other}")
-    elif scenario == "wrong_foreground" and state["current"].endswith(".developer"):
+    elif scenario == "wrong_foreground":
         print("topResumedActivity=ActivityRecord{com.fake/.MainActivity}")
     else:
         print("topResumedActivity=ActivityRecord{u0 " + state["current"] + "/.MainActivity t42}")
@@ -76,7 +77,6 @@ class SignedCoInstallGateTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         for rel in (
             "android/app/build/outputs/apk/release/app-release.apk",
-            "android/app/build/outputs/apk/developer/app-developer.apk",
         ):
             file = self.root / rel
             file.parent.mkdir(parents=True, exist_ok=True)
@@ -103,20 +103,17 @@ class SignedCoInstallGateTest(unittest.TestCase):
             timeout=25,
         )
 
-    def test_delayed_both_foreground_launches_and_postlaunch_coexistence(self):
+    def test_delayed_stable_foreground_launch_and_postlaunch_package(self):
         run = self.run_gate("pass")
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
         self.assertIn("public Android MainActivity foreground", run.stdout)
-        self.assertIn("Developer Android MainActivity foreground", run.stdout)
         state = json.loads((self.root / "state.json").read_text())
         starts = [cmd[-1] for cmd in state["commands"] if cmd[:3] == ["shell", "am", "start"]]
         self.assertEqual(starts, [
             "com.michelslab.igcleaner/.MainActivity",
-            "com.michelslab.igcleaner.developer/com.michelslab.igcleaner.MainActivity",
         ])
         self.assertNotIn("-W", json.dumps(state["commands"]))
-        for pkg in ("com.michelslab.igcleaner", "com.michelslab.igcleaner.developer"):
-            self.assertIn(["shell", "pm", "path", pkg], state["commands"])
+        self.assertIn(["shell", "pm", "path", "com.michelslab.igcleaner"], state["commands"])
 
     def test_never_accepts_installed_but_wrong_foreground_or_missing_process(self):
         for scenario in ("never_resumed", "wrong_foreground", "no_process"):
@@ -124,10 +121,10 @@ class SignedCoInstallGateTest(unittest.TestCase):
                 (self.root / "state.json").unlink(missing_ok=True)
                 run = self.run_gate(scenario)
                 self.assertNotEqual(run.returncode, 0)
-                self.assertNotIn("stable public + Developer", run.stdout)
+                self.assertNotIn("PASS: production-signed stable", run.stdout)
 
     def test_refuses_missing_boot_package_and_failed_install(self):
-        for scenario in ("not_booted", "developer_missing", "developer_install_fails",
+        for scenario in ("not_booted", "stable_missing", "stable_install_fails",
                          "missing_postlaunch_package", "am_error"):
             with self.subTest(scenario=scenario):
                 (self.root / "state.json").unlink(missing_ok=True)
@@ -135,7 +132,7 @@ class SignedCoInstallGateTest(unittest.TestCase):
                 self.assertNotEqual(run.returncode, 0)
 
     def test_missing_apk_fails_without_any_adb(self):
-        (self.root / "android/app/build/outputs/apk/developer/app-developer.apk").unlink()
+        (self.root / "android/app/build/outputs/apk/release/app-release.apk").unlink()
         run = self.run_gate("pass")
         self.assertNotEqual(run.returncode, 0)
         self.assertFalse((self.root / "state.json").exists())
