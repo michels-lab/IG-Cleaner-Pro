@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "d3c168394117f71fc5e0749cebffa4bdd55c0272b1084e77ba2e5c4983be6784",
+  "inventory_fingerprint": "6a8e0906cbf35c5b99f3959b9bef92b618e0d20365e0b12fccf5677b95a7a4bb",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "379352df87ccc62cf478f2b3b53e5adc904632da"
+      "blob": "f3559290289f95b36162c7014096033168ac45e7"
     },
     {
       "path": "AGENTS.md",
@@ -245,28 +245,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "4c1b65b5d9df68a833c089f58aeace719e25f3af"
+      "blob": "7de08bed243c8f3cbcb30bcaa1d35561a00d1d4f"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "4a7e3e08fb90904c1d917c64458b8593dc23ee45"
+      "blob": "b34b063e3de4597d107d04a081136a685b97edb5"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "6709c020b2367c48eb0d8e5d02a1b220aede7fb6"
+      "blob": "ee5ba53a4c8db7f2b39b031d7fcb12fc0a4dc202"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "b7b77ff273e40fd8b4b335014095bd3a325dbdbe"
+      "blob": "8d3d4b2e27f2865e9668722394ae0e7d2b98048d"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "f5c347971a4937418ac0f0abbbcd55c4b936f449"
+      "blob": "8b3b5ec6cf589c09f4afb61bdfdc224b698705ee"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1638,28 +1638,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a1d67e9ad51a38e5ad00b490deac5326af22b397"
+      "blob": "4b8e77c4c127f90f465751bebffb81670e53815f"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "946c45a0d1c198b7df3bd3e62cdff26391768c83"
+      "blob": "bcd65759d48e5b13eaa4f8a4b40e47b09bb12c63"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "40c2c2a532378e2d03e8e9e710abd83deb91f270"
+      "blob": "b37d596b2acee7ce5923c5cb9286f3bdeb7ab588"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "6f936034cc64de39aa95be894c1a9915ad4708db"
+      "blob": "188e3fe2126e04f8e4d201f91b39f68706bf4f55"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2415,7 +2415,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "144c3e3097117bdc1cae87e80efaf8857ca3f5d4"
+      "blob": "e49acf623b141807e2995e1fed5a5985679f1345"
     },
     {
       "path": "tests/test_dual_action_coordinator.py",
@@ -2660,7 +2660,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8f1fe38f2739e16867591b356cddf95dee500f1b"
+      "blob": "99c716da70e383032fdd8dcff23eab0588108c65"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -2919,7 +2919,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3f01b3280799b7e5ecb5c29acbd2612e8c4e35a5"
+      "blob": "be669ec2d816b7d6578c8d08038e00113b772c99"
     },
     {
       "path": "tools/profile_counts_instagram.py",
