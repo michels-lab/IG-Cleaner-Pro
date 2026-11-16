@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "6bbee83de82d0f09f73f544dd52170afd6a13c17ca3c226fa30beeafe14b55f0",
+  "inventory_fingerprint": "865843aa8857521d00b17fad4a4327ea8ae8f35358927b0ced219442f4e438d2",
   "evidence_fingerprint": "ea4e1e35d683986268289a2650e1a174a7f71e05817e156b2c775ecde9087ff3",
   "files": [
     {
@@ -1660,7 +1660,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "d77a34ffbbfcf1cac987e7fc16e91c37078629d3"
+      "blob": "23034b574692ee747f314755b122ae03b2020c49"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2661,7 +2661,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "2e82d24d808adfac097a036433a6a2ea38c7c79c"
+      "blob": "04f01b6614ee01cb3b3b72a1d0bb46bd83d484a5"
     },
     {
       "path": "tests/test_robot_interlock.py",
