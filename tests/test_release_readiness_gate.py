@@ -25,17 +25,22 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         }
         self.closed={n:"closed" for n in self.valid["required_closed_issues"]}
 
-    def test_current_repo_hold_and_consumed_release_cannot_be_reused(self):
+    def test_owner_instruction_is_exact_tag_device_review_only(self):
         self.assertTrue(self.current["release_hold"])
         self.assertFalse(self.current["owner_final_acceptance"]["approved"])
         override=self.current["owner_device_review_release_override"]
-        self.assertFalse(override["authorized"],"Published owner instruction must be consumed")
-        self.assertEqual(override["release_tag"],"v120.76")
-        for tag in ("v120.76","v120.77"):
+        self.assertTrue(override["authorized"],"New owner direction applies to v120.77 only")
+        self.assertEqual(override["release_tag"],"v120.77")
+        self.assertTrue(override["physical_tests_deferred"])
+        self.assertTrue(override["automated_publisher_gates_required"])
+        self.assertFalse(self.current["owner_device_review_release_override_history"][-1]["authorized"])
+        self.assertEqual(self.current["owner_device_review_release_override_history"][-1]["release_tag"],"v120.76")
+        check_readiness(self.current,"v120.77",{})
+        for tag in ("v120.76","v120.78"):
             with self.subTest(tag=tag),self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current,tag,{})
         attempt=deepcopy(self.current)
-        attempt["owner_device_review_release_override"]["authorized"]=True
+        attempt["owner_device_review_release_override"]["authorized"]=False
         with self.assertRaises(ReleaseBlocked):
             check_readiness(attempt,"v120.77",{})
         self.assertTrue(any(not value for value in self.current["critical_acceptance"].values()))
