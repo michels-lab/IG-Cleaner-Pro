@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "24de91b9a53982999248e1d4ce0e4bdb7b9b0a83fe9ceeded4cae92085fcf437",
+  "inventory_fingerprint": "dbd5ee91dcd65eaeb379fb34b47283df875d94bb6fb44e0097d1dd97dc13801e",
   "evidence_fingerprint": "5be6703850c2df8449c2acf21696603504bd42f7fbf365e571df7c920a209155",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "a3fbfe55bc9a1816624d42bd9f0455216b778dbb"
+      "blob": "12e0cdda0bfec298e22afd96079cd98d561a5fd7"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1849,7 +1849,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9ef29de6c22791825e9f1e29e4276537764abfc5"
+      "blob": "c65ce8fbcfb66cea408a09097b863f266e1058d3"
     },
     {
       "path": "tests/cloud-list-snapshot-freshness.test.cjs",
@@ -1863,7 +1863,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b6c2f70bb55a69f47b667df2614e973cb78ac602"
+      "blob": "e93953f1ec8406f4732d445e8b8ae7572e699bf6"
     },
     {
       "path": "tests/cloud-review-pagination-9896.test.cjs",
