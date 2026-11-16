@@ -32,16 +32,27 @@
     176
   ],
   "next_version": "v120.77",
-  "notes": "The owner-authorized v120.76 stable-only release was successfully published on 2026-11-16 UTC via run 43790329261 with 9 public assets and all 4 release jobs SUCCESS. Release permission for v120.76 is consumed; v120.77 is reserved WITHOUT authorization. Keep release_hold true until a NEW explicit owner request or real physical acceptance. Real Instagram/Windows/Android two-account tests and issue #360 remain open. No Developer editions or RC.",
+  "notes": "New exact-tag owner-directed v120.77 device-review authorization (2026-11-15 local); previous v120.76 request consumed. Product-wide hold remains true, physical two-account owner acceptance and #360 remain OPEN; only exact signed/installed publisher may distribute v120.77 if all mandatory checks pass.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.76",
+    "authorized": true,
+    "release_tag": "v120.77",
     "source": "explicit-owner-chat-instruction-2026-11-15",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "dale release",
-    "disclosure": "Consumed: stable v120.76 published 2026-11-16 UTC. This owner approval must not authorize v120.77 or subsequent releases. Real signed-in Instagram acceptance remains open.",
-    "consumed_by_release": "v120.76",
-    "consumed_run": 43790329261
-  }
+    "owner_direct_quote": "continua con op granada todo lo que puedas y despues dale release para yo verificar que sirve",
+    "disclosure": "Authorizes only immutable normal stable v120.77 installers for later owner physical testing. Does not certify real Instagram Unfollow, Cancel Pending, 2-account operation, Focus counters or close any P0. Automated official exact-SHA Windows installer, Android signed install, UI evidence, integrity/updater gates stay mandatory. No RC/Developer editions."
+  },
+  "owner_device_review_release_override_history": [
+    {
+      "authorized": false,
+      "release_tag": "v120.76",
+      "source": "explicit-owner-chat-instruction-2026-11-15",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "owner_direct_quote": "dale release",
+      "disclosure": "Consumed: stable v120.76 published 2026-11-16 UTC. This owner approval must not authorize v120.77 or subsequent releases. Real signed-in Instagram acceptance remains open.",
+      "consumed_by_release": "v120.76",
+      "consumed_run": 43790329261
+    }
+  ]
 }
