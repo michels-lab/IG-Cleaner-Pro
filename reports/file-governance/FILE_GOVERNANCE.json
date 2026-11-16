@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "f2edbdee57a75056ca45dd71cb37357a0adef69932fb8ef90711d89b02f25f68",
+  "inventory_fingerprint": "31cae28ba7104f545e1078472f0f4ddf81d5cb80af927fd200e4ea4a1166d189",
   "evidence_fingerprint": "88d72622db4bca48782ead04928c2ffc671ecf9216d6c96ea9a2b39389856585",
   "files": [
     {
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "7dcb857f1f7544baa68df39cffac4db22e61cb76"
+      "blob": "379352df87ccc62cf478f2b3b53e5adc904632da"
     },
     {
       "path": "AGENTS.md",
@@ -1548,7 +1548,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "0369c3812468877654c0bb05253c5151a3ab28ee"
+      "blob": "5288d97f77b17c67a32763925ba5768b1b254222"
     },
     {
       "path": "docs/product-reviews/README.md",
