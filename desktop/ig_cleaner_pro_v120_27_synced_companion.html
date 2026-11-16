@@ -14360,24 +14360,25 @@ function eventToDb(e){return {id:e.id,event_at:iso(e.ts),username:e.username||nu
 function eventFromDb(r){return {id:r.id,ts:ms(r.event_at),username:r.username||'',action:r.action,deviceId:r.device_id,deviceType:r.device_type,deviceLabel:r.device_label,module:r.module,batchId:r.batch_id||'',batchLabel:r.batch_label||'',batchSize:r.batch_size||0,decision:r.decision||'',originEventId:r.origin_event_id||'',meta:r.meta||{}}}
 async function pushEvents(){const arr=(window.igcAuditGetEvents?.()||[]).map(eventToDb);if(!arr.length)return 0;for(let i=0;i<arr.length;i+=500)await rest('audit_events?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr.slice(i,i+500))});S.stats.eventsUp=arr.length;return arr.length}
 async function pullEvents(){
-  // Audit history is also capped by the server regardless of a larger limit.
-  // Do not drop older opens/reviews from the owner's persisted timeline.
+  // PostgREST may enforce a smaller per-page cap than the requested limit.
+  // Advance by ACTUAL rows, not 1,000, and only commit after an empty final page.
   const rows=[],seen=new Set(),pageSize=1000;
-  for(let offset=0;offset<=250000;offset+=pageSize){
+  for(let offset=0;offset<=250000;){
     const page=await rest('audit_events?select=*&order=event_at.desc,id.asc&limit='+
       pageSize+'&offset='+offset,{method:'GET'});
     if(!Array.isArray(page))throw Error('Sync incompleto: página de historial inválida');
-    for(const item of page){
-      const id=String(item.id||'');
-      if(!id||seen.has(id))throw Error('Sync incompleto: historial repetido o sin identificador');
-      seen.add(id);rows.push(item);
-    }
-    if(page.length<pageSize){
+    if(page.length===0){
       const ev=rows.map(eventFromDb);
       await window.igcAuditMergeRemoteEvents?.(ev);
       S.stats.eventsDown=ev.length;
       return ev.length;
     }
+    for(const item of page){
+      const id=String(item.id||'');
+      if(!id||seen.has(id))throw Error('Sync incompleto: historial repetido o sin identificador');
+      seen.add(id);rows.push(item);
+    }
+    offset+=page.length;
   }
   throw Error('Sync incompleto: límite de paginación de historial');
 }
@@ -14625,26 +14626,27 @@ async function readCompleteProfileState(fields='*'){
      (completeProfileStateCache.fields==='*'||fields!=='*'))
     return completeProfileStateCache.rows;
   const all=[],seen=new Set(),pageSize=1000;
-  for(let offset=0;offset<=250000;offset+=pageSize){
+  for(let offset=0;offset<=250000;){
     const page=await rest('profile_state?select='+fields+
       '&order=username.asc,module.asc&limit='+pageSize+'&offset='+offset,{method:'GET'});
     if(!Array.isArray(page))throw Error('Sync incompleto: la nube no devolvió una página válida de revisiones');
+    if(page.length===0){
+      const registry=window.IGC_INSTAGRAM_PROFILES;
+      const account=registry?.accounts?.find(x=>x.account_key===registry.active);
+      const expected=Number(account?.review_count);
+      // A complete profile snapshot must match the scoped, authoritative DB
+      // count. Reject races, truncated pages and stale response fragments.
+      if(account&&Number.isInteger(expected)&&expected>=0&&all.length!==expected)
+        throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
+      completeProfileStateCache={at:Date.now(),rows:all,fields};
+      return all;
+    }
     for(const item of page){
       const key=String(item.username||'').toLowerCase()+'|'+String(item.module||'');
       if(seen.has(key))throw Error('Sync incompleto: páginas de revisiones repetidas durante la descarga');
       seen.add(key);all.push(item);
     }
-    if(page.length<pageSize){
-      const registry=window.IGC_INSTAGRAM_PROFILES;
-      const account=registry?.accounts?.find(x=>x.account_key===registry.active);
-      const expected=Number(account?.review_count);
-      // The account summary is a database COUNT over this exact workspace.
-      // Fail closed on truncated pages, while preserving all local decisions.
-      if(account&&Number.isInteger(expected)&&expected>=0&&all.length<expected)
-        throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
-      completeProfileStateCache={at:Date.now(),rows:all,fields};
-      return all;
-    }
+    offset+=page.length;
   }
   throw Error('Sync incompleto: límite de seguridad de paginación de revisiones');
 }
