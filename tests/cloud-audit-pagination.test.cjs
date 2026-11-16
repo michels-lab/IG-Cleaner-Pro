@@ -18,7 +18,7 @@ const fixtures=Array.from({length:4017},(_,i)=>({
  module:"main",batch_id:null,batch_label:"",batch_size:0,decision:"",
  origin_event_id:null,meta:{}
 }));
-function makeHarness(broken=false,duplicate=false){
+function makeHarness(broken=false,duplicate=false,serverCap=1000){
  const merged=[];let pages=0;
  const ctx={console,Date,Number,String,Math,JSON,Array,
   S:{stats:{}},ms:s=>Date.parse(s)||0,
@@ -31,7 +31,7 @@ function makeHarness(broken=false,duplicate=false){
   assert.equal(limit,1000);
   pages++;
   if(broken&&offset===1000)return null;
-  const p=fixtures.slice(offset,offset+1000);
+  const p=fixtures.slice(offset,offset+Math.min(limit,serverCap));
   if(duplicate&&offset===1000)p[0]={...p[0],id:fixtures[0].id};
   return p;
  };
@@ -44,12 +44,16 @@ function makeHarness(broken=false,duplicate=false){
  assert.equal(await full.ctx.pullEvents(),4017);
  assert.equal(full.ctx.S.stats.eventsDown,4017);
  assert.equal(full.merged.length,4017);
- assert.equal(full.pages(),5);
+ assert.equal(full.pages(),6);
+ const capped=makeHarness(false,false,500);
+ assert.equal(await capped.ctx.pullEvents(),4017);
+ assert.equal(capped.merged.length,4017);
+ assert.equal(capped.pages(),10);
  const failed=makeHarness(true);
  await assert.rejects(failed.ctx.pullEvents(),/Sync incompleto/);
  assert.equal(failed.merged.length,0);
  const repeated=makeHarness(false,true);
  await assert.rejects(repeated.ctx.pullEvents(),/Sync incompleto/);
  assert.equal(repeated.merged.length,0);
- console.log("PASS: complete 4017 audit entries; truncated/duplicate page cannot partially merge");
+ console.log("PASS: 4017 audit entries under 1000/500-row API caps; invalid/duplicate pages fail before merge");
 })().catch(e=>{console.error(e);process.exitCode=1});
