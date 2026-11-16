@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "f4e272d9b6a2a81f84ba3229b7390fbaece1cc7368d96dfd9402094c4ceb06e6",
-  "evidence_fingerprint": "f454eaab9bb83e6d4500eeb26fc32e10e2d00f98c8c017b9f2b616049735455c",
+  "inventory_fingerprint": "2a29c3b225715144a740a9039352007a6be4d6fbbc06a5290861dbb88b2015c0",
+  "evidence_fingerprint": "4d0632ff7b8eefdec0d05ff310b4a6f2c9b7df59b3c135bd0ca96f31fdc50b58",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -148,7 +148,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "3ec42c30b9506ba3777f43c1378ff3f25f346072"
+      "blob": "6b103a8a1070400017d1c7fe8f2953879ab64ebe"
     },
     {
       "path": ".gitignore",
@@ -3130,11 +3130,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "2a7562b13a5b29db",
+      "id": "0240965a02c30c8b",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "44 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/release-request.json, android/app/build.gradle.kts, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java",
+      "observation": "45 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/desktop-rendered-ui.yml, .github/workflows/profile-counts-windows-preview.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
