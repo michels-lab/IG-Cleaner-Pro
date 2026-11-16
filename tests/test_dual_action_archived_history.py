@@ -281,10 +281,10 @@ class ArchivedHistoryTests(unittest.TestCase):
         url = "http://127.0.0.1:" + str(server.server_port) + (
             "/api/actions/dual-action-workspaces/archived-one")
 
-        def send(body, token="z"*32):
+        def send(body, token="z"*32, origin="null"):
             req = urllib.request.Request(
                 url, data=json.dumps(body).encode(), method="POST",
-                headers={"X-IGC-Bridge-Token": token, "Origin": "null",
+                headers={"X-IGC-Bridge-Token": token, "Origin": origin,
                          "Content-Type": "application/json"})
             try:
                 with urllib.request.urlopen(req, timeout=5) as resp:
@@ -292,7 +292,15 @@ class ArchivedHistoryTests(unittest.TestCase):
             except urllib.error.HTTPError as exc:
                 return exc.code, json.load(exc)
         try:
-            self.assertNotEqual(send(request(), "wrong")[0], 200)
+            # Regression: Windows can RST an unauthenticated POST when the
+            # local server closes with unread request bytes (WinError 10053).
+            # Demand a complete JSON 403, even with a nontrivial body, and
+            # prove authorized requests still work afterward.
+            for denied_body in (request(), {**request(), "filler": "." * 8192}):
+                status, denied = send(denied_body, "wrong")
+                self.assertEqual(status, 403)
+                self.assertEqual(denied["error"], "Invalid local access token.")
+            self.assertEqual(send(request(), origin="https://evil.example")[0], 403)
             self.assertEqual(send({**request(), "confirmation": "wrong"})[0], 400)
             status, data = send(request())
             self.assertEqual(status, 200)
