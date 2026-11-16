@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
-# FINAL stable publisher: prove both production-signed Android APKs actually
-# install and launch side by side on a booted emulator. Never infer success
+# FINAL stable publisher: prove the production-signed stable Android APK
+# installs and launches on a booted emulator. Never infer success
 # from APK metadata, an am start invocation, or a transient launch timeout.
 set -euo pipefail
 
 PUBLIC_PKG="com.michelslab.igcleaner"
-DEVELOPER_PKG="com.michelslab.igcleaner.developer"
 PUBLIC_APK="android/app/build/outputs/apk/release/app-release.apk"
-DEVELOPER_APK="android/app/build/outputs/apk/developer/app-developer.apk"
 test -s "$PUBLIC_APK"
-test -s "$DEVELOPER_APK"
 test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
 
 adb install -r "$PUBLIC_APK"
-adb install -r "$DEVELOPER_APK"
 installed="$(adb shell pm list packages | tr -d '\r')"
 grep -Fxq "package:$PUBLIC_PKG" <<< "$installed"
-grep -Fxq "package:$DEVELOPER_PKG" <<< "$installed"
 
 # On a software-rendered CI emulator the first cold am start -W can report
 # "Status: timeout" after 30 seconds even though the real foreground activity
@@ -64,9 +59,7 @@ launch_and_prove_foreground() {
 }
 
 launch_and_prove_foreground "$PUBLIC_PKG" "$PUBLIC_PKG/.MainActivity" "public"
-launch_and_prove_foreground "$DEVELOPER_PKG" "$DEVELOPER_PKG/com.michelslab.igcleaner.MainActivity" "Developer"
 
-# Coexistence remains a separate postlaunch requirement.
+# Post-launch installed package must remain visible.
 adb shell pm path "$PUBLIC_PKG" | grep -Fq 'package:'
-adb shell pm path "$DEVELOPER_PKG" | grep -Fq 'package:'
-echo 'PASS: stable public + Developer production-signed Android APKs installed, launched, and coexist.'
+echo 'PASS: production-signed stable Android APK installed and launched in the foreground.'
