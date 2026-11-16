@@ -54,6 +54,8 @@ ctx.localStateRows=()=>local;
 ctx.rest=async(path,options)=>{
  if(options.method==="GET"){
   assert(path.startsWith("profile_state?select=username,module,reviewed_at"));
+  const offset=Number(new URLSearchParams(path.split("?")[1]).get("offset"));
+  if(offset>0)return [];
   return [
     {username:"previous",module:"main",reviewed_at:remoteAt},
     {username:"newuser",module:"main",reviewed_at:olderAt},
