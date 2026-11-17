@@ -4673,6 +4673,24 @@ function renderActiveBatchDock(){
   });
   return;
 }
+// Report only sizes and the browser's error class. Never print account data,
+// usernames, history payloads, tokens, or raw localStorage values in diagnostics.
+function igcFocusStorageDiagnostic(error,batch){
+  const code=String(error?.name||'StorageError').replace(/[^A-Za-z]/g,'').slice(0,40)||'StorageError';
+  let batchKiB='desconocido',totalMiB='desconocido';
+  try{batchKiB=(JSON.stringify(igcEncodeActiveFocusBatch(batch)).length*2/1024).toFixed(1)+' KiB'}catch{}
+  try{
+    if(typeof localStorage.length==='number'&&typeof localStorage.key==='function'){
+      let chars=0;
+      for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        chars+=String(key||'').length+String(localStorage.getItem(key)||'').length;
+      }
+      totalMiB=(chars*2/1048576).toFixed(2)+' MiB';
+    }
+  }catch{}
+  return code+' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimado)';
+}
 function setActiveFocusBatch(kind,rows,label){
   const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
@@ -4681,6 +4699,7 @@ function setActiveFocusBatch(kind,rows,label){
   // must never silently turn a failed open into a saved 'open' history event.
   try{saveActiveFocusBatch()}catch(e){
     console.error('Focus: cannot persist active batch',e);
+    try{if(typeof window!=='undefined')window.igcLastFocusStorageError=igcFocusStorageDiagnostic(e,activeFocusBatch)}catch{}
     activeFocusBatch=previous;
     activeExtraReviewBatch=previousExtra;
     try{msg('Error de almacenamiento: no se pudo guardar la tanda. No abrí perfiles ni alteré revisiones; exporta respaldo.','e')}catch{}
@@ -12223,7 +12242,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     const title=document.getElementById('safeFocusTitle');
     if(title)title.textContent='Focus pausado · almacenamiento';
     const details=document.getElementById('safeFocusText');
-    if(details)details.textContent='No se pudo guardar esta tanda en el navegador. NO abrí perfiles ni marqué revisiones. Exporta un respaldo de tus datos y libera espacio de almacenamiento para volver a intentar. No borres los datos de IG Cleaner.';
+    if(details)details.textContent='No se pudo guardar esta tanda en el navegador. NO abrí perfiles ni marqué revisiones. Exporta un respaldo de tus datos y libera espacio de almacenamiento para volver a intentar. No borres los datos de IG Cleaner.'+(window.igcLastFocusStorageError?' Diagnóstico: '+window.igcLastFocusStorageError:'');
     const button=document.getElementById('safeFocusConfirmBtn');
     if(button){button.disabled=true;button.title='No se puede confirmar una tanda que no quedó guardada';}
     const list=document.getElementById('safeFocusList');
