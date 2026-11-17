@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "23fbd300e5e2728b668a50d7d3b8e2658d29044de2b0f9b2a2d531ae17a69080",
-  "evidence_fingerprint": "052aee3d8afe365e878d4c52afebfea5b56600e0f9b0810767282a4c60a70933",
+  "inventory_fingerprint": "87e21ad5f35bbfe33b94cfe98a184eb71371f032353d727da216c2cb42a67160",
+  "evidence_fingerprint": "f88acbd75fb99d0210c6c727e5f4e357f7f16e5e2026060173a0c8cdcbd0ab51",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2136,7 +2136,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9c64f08ce1241c3103623c0f4c11a0f6020b966d"
+      "blob": "1742724bfa4400ff9f974b1e5191f45057c7870f"
     },
     {
       "path": "tests/focus-history-compaction.test.cjs",
@@ -3207,11 +3207,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "c561afe41176ea51",
+      "id": "fde10f0e50c8da36",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-failed-attempt-requeue.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
