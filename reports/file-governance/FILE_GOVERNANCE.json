@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "61e3a081d8d8b82eba473da3a3adce59d426be6bd0bdb50b59a6a1e39709de9e",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "28a97665cfb8ddf1e9734ab4e22aeacbd0432ba06c25731d287b5e068f5b0b31",
+  "evidence_fingerprint": "a011126b4c49b8d6435a17f9a2ed60f3d089dea425eb0feabf97c14ae1fc542a",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b20f4db1540bc24657a77e8d1648db2800467e6d"
+      "blob": "4c834090e97c833d0e3fe5e5bf30ff1c61cddc57"
     },
     {
       "path": "AGENTS.md",
@@ -252,7 +253,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "e91142fa859bb7c61e66bad2eb4159020ea092b7"
+      "blob": "a4edc32c6b7740d5085c5ac0c0601b04e793ecb0"
     },
     {
       "path": "README_SYNC.md",
@@ -266,7 +267,7 @@
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "3a8848d4524cba70d38742d93e08fa0c8848e12f"
+      "blob": "3ed9fe1ce9a4786ef4e3c247c55c5d15481d3da9"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "be1f5eface5e85d96f0719069d8fa48fe03aac3d"
+      "blob": "38ffc138c294655736fdeb0f531efebb33868957"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1659,28 +1660,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "441cc9775bfc74c9f8a29fbac346a07156521c35"
+      "blob": "329fd79855a1462f2b8179f7f09adc8d0d67b0c7"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "7a1b7dc60e289d84379618bc3b6314e98e5bb8e8"
+      "blob": "0c168dfff8c5e0e413a3164c75fc4b67457c4554"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "596e91af358911907b155c689a88e54a7ec3f82d"
+      "blob": "b5c3a241c374fcbdf09692a6acbe2eaf5ef7839e"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "13f5922c3092ffee8b6fe2099d389d174572d546"
+      "blob": "0209e9678b38a06fa6cb8969155c96b4d432a80c"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3210,6 +3211,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "c55d2048a57e3677",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "6 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, release/release-readiness.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
