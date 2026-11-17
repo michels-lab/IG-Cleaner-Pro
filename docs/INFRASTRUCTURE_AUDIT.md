@@ -1,3 +1,9 @@
+## 2026-11-17 — Official FINAL v120.78 publication receipt and release authorization consumption
+
+- Current stable **[v120.78](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78)**, 2026-11-17T21:06:55Z, tag/source `1c75831c59b457171c113978a6acb282d915d71c`. Exact [governed publisher 44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647) 4/4 SUCCESS; nine public assets with GitHub SHA-256 digests and SHA256SUMS. Production-signed Android with installed/launch proof, Windows Setup installed/uninstalled, Desktop+Android Home/About screenshot checks. No RC, Developer or Authenticode claim.
+- Prior owner request "op granada y release" authorized only v120.78 for subsequent physical evaluation; that authorization **consumed** in release request. Manifest moved currentStableRelease to v120.78, nextRelease v120.79 reserved **unauthorized**, full product release_hold=true and final acceptance false. [Exact published asset hashes](GRANADA_V12078_FINAL_RECEIPT_2026-11-17.md).
+- The live user browser and actual Instagram APIs/actions have not been verified. [P0 #360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360) remains open for post-confirmation rebounding and A→B→A state, alongside dual-session Unfollow/Cancel real-account acceptance. Safeguard existing site origin and reviewed data via Vault backup.
+
 ## 2026-11-17 — Final stable v120.78 staged (owner-directed, exact-tag)
 
 - Owner explicitly requested **"op granada y release"** for InstaCleaner Pro. Existing v120.77 one-time permission consumed; new release readiness exception records exact v120.78 only, while release_hold=true, owner acceptance false, open #360 and unverified real two-account Instagram actions remain unchanged.
