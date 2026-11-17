@@ -1,3 +1,11 @@
+## 2026-11-17 — Granada P0: no borrar revisiones antiguas al cancelar un Recheck
+
+- **Diagnóstico confirmado en fuente:** `markSafeFocusNotReviewed()` borraba `pendingReviewedMeta` de Pending normal y eliminaba `doneSet`/`reviewedMeta` en Followers/Mutuals, aunque esos perfiles podían tener una decisión válida de una tanda anterior. Un reintento inconcluso no debe deshacer una revisión confirmada.
+- **Corrección:** commit [`450a859f`](https://github.com/michels-lab/IG-Cleaner-Pro/commit/450a859f537c1cea4577ba7a81c22d5d11d03a24) conserva siempre revisiones previas y solo registra `unconfirmed` para la nueva tentativa; en Pending libera solo aperturas no revisadas, no el histórico confirmado. Fallo al guardar historial revierte el evento en memoria y conserva la tanda; error al guardar Pending restaura la reserva en memoria.
+- **Regresiones:** [`c97e1f82`](https://github.com/michels-lab/IG-Cleaner-Pro/commit/c97e1f82020ac0e1a2a7363eebe6e937a2bf374d) añade escenarios para Pending, Pending Double Check, Following, Followers, Mutuals, cuotas insuficientes e historial previo; pruebas antiguas adaptadas sin cambiar su intención ([`5d2e3005`](https://github.com/michels-lab/IG-Cleaner-Pro/commit/5d2e30052606f9f335ad10f9a46807bc04744b92), [`4fafa6de`](https://github.com/michels-lab/IG-Cleaner-Pro/commit/4fafa6de616f535c0aa28a13a10775f8136cee45)). CI conectado en [`9932676c`](https://github.com/michels-lab/IG-Cleaner-Pro/commit/9932676c91212709696c04db4e32531fdace7b96).
+- **QA:** [CI exact-commit](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44201283993) Desktop `SUCCESS`; Android/RLS seguían en ejecución al escribir este registro. La auditoría anterior de visuales de recuperación (`1d74a4e6`) había pasado. Aceptación física Instagram, rebotes #360 y almacenamiento #371 siguen sin comprobarse en sesión real.
+- **Distribución:** ningún release nuevo; el último público sigue siendo v120.78. La reparación solo está en `main`, sin RC/Developer ni cambios de datos del usuario.
+
 ## 2026-11-17 — Operación Granada: recuperación explícita de Focus tras bloqueo de almacenamiento
 
 - El propietario reportó «Focus pausado · almacenamiento» y «Sin abrir · guardado fallido» sin pestañas. Una tentativa fallida no es una revisión.
