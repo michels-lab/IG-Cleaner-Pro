@@ -1,3 +1,9 @@
+## 2026-11-17 — Final stable v120.78 staged (owner-directed, exact-tag)
+
+- Owner explicitly requested **"op granada y release"** for InstaCleaner Pro. Existing v120.77 one-time permission consumed; new release readiness exception records exact v120.78 only, while release_hold=true, owner acceptance false, open #360 and unverified real two-account Instagram actions remain unchanged.
+- Version alignment: Desktop UI/About, Android stable versionCode 12078/versionName 120.78 with persistent production certificate fingerprint, release metadata and immutable published-artifact templates. Official generic governed publisher remains the only publisher. No Developer/RC.
+- Publish gate: verified exact SHA CI/visual installed Android and Desktop, signed stable Android install/start, Windows integrated setup installed start/Chromium flows, SHA-256, feed. The repo's CI evidence does **not** prove the owner's real Instagram environment. Latest published remains v120.77 until official release occurs.
+
 ## 2026-11-17 — Focus 30 ghost/open-intent cohort: localStorage and visible Reviewed fail-closed
 
 - Reported v120.77 standalone HTML: Focus 30 preview with 30 verifiable candidates; acceptance reduced the *available* counter without Chrome tabs or Reviewed dialog, then a reload restored the count. Separate Instagram account in a different browser functioned. Underlying v120.77 code set `activeFocusBatch` before durable history/storage writes; synchronous storage failure could leave an ephemeral 30-profile reservation and prevent the remaining UI. Exact client error unverified.

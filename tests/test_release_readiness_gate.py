@@ -25,27 +25,40 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         }
         self.closed={n:"closed" for n in self.valid["required_closed_issues"]}
 
-    def test_published_device_review_authorization_is_consumed(self):
+    def test_exact_tag_owner_review_authority_is_new_and_previous_consumed(self):
         self.assertTrue(self.current["release_hold"])
         self.assertFalse(self.current["owner_final_acceptance"]["approved"])
         self.assertEqual(self.current["next_version"], "v120.78")
         override = self.current["owner_device_review_release_override"]
-        self.assertFalse(override["authorized"],
-                         "Published owner instruction must never authorize v120.78")
-        self.assertEqual(override["release_tag"], "v120.77")
-        self.assertEqual(override["consumed_by_release"], "v120.77")
-        self.assertEqual(override["consumed_run"], 43811216485)
+        self.assertTrue(override["authorized"])
+        self.assertEqual(override["release_tag"], "v120.78")
+        self.assertEqual(override["source"], "explicit-owner-chat-instruction-2026-11-17")
+        self.assertEqual(override["owner_direct_quote"], "op granada y release")
+        self.assertEqual(override["previous_published_release"], "v120.77")
         self.assertTrue(override["physical_tests_deferred"])
         self.assertTrue(override["automated_publisher_gates_required"])
-        self.assertFalse(self.current["owner_device_review_release_override_history"][-1]["authorized"])
-        self.assertEqual(self.current["owner_device_review_release_override_history"][-1]["release_tag"], "v120.76")
-        for tag in ("v120.76", "v120.77", "v120.78"):
+        # Only the exact requested tag bypasses final-owner physical acceptance,
+        # not automatic installer, signing, checksums or visual publisher gates.
+        check_readiness(self.current, "v120.78", {})
+        for tag in ("v120.76", "v120.77", "v120.79"):
             with self.subTest(tag=tag), self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current, tag, {})
-        attempt = deepcopy(self.current)
-        attempt["owner_device_review_release_override"]["authorized"] = True
-        with self.assertRaises(ReleaseBlocked):
-            check_readiness(attempt, "v120.78", {})
+        history=self.current["owner_device_review_release_override_history"]
+        self.assertFalse(history[-1]["authorized"])
+        self.assertEqual(history[-1]["release_tag"], "v120.77")
+        self.assertEqual(history[-1]["consumed_by_release"], "v120.77")
+        self.assertEqual(history[-1]["consumed_run"], 43811216485)
+        for mutation in (
+          {"source":"explicit-owner-chat-instruction-2026-11-15"},
+          {"authorized":False},
+          {"release_tag":"v120.77"},
+          {"physical_tests_deferred":False},
+          {"automated_publisher_gates_required":False},
+        ):
+            case=deepcopy(self.current)
+            case["owner_device_review_release_override"].update(mutation)
+            with self.subTest(mutation=mutation),self.assertRaises(ReleaseBlocked):
+                check_readiness(case,"v120.78",{})
         self.assertTrue(any(not value for value in self.current["critical_acceptance"].values()))
 
     def test_green_ci_does_not_override_owner_hold(self):

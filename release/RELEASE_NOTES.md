@@ -1,3 +1,13 @@
+## v120.78 — Granada: Focus 30 persistent cohort repair and safe Reviewed recovery (2026-11-17)
+
+- **User-reported incident (standalone v120.77):** Focus 30 presented 30 verifiable candidates; accepting could open no Instagram tabs and show no Reviewed confirmation, while the available count temporarily decreased and regenerated on reload. Root-cause code path: in-memory activeFocusBatch set before writing history; synchronous storage failures could prevent subsequent tab/dialog rendering. Exact owner's browser error unverified.
+- **Persistent opening state:** persist the active unconfirmed cohort before optional history writes; revert immediately if browser storage rejects the cohort. Never decrement eligible counts with a purely transient cohort, auto-mark Reviewed, reset existing history or silently recycle previously reviewed profiles.
+- **Review and recovery:** display Reviewed/recovery with a direct per-account Open link before any Chrome tab request, handling tab exceptions individually. A user-explicit "Could not review" releases only unconfirmed attempts for another Focus, and a failed write during release rolls back history and retains the active cohort.
+- **All focus paths:** regular Focus, Recheck, Double Check, Pending second-review, and historical launchers reject failed persistence before opening tabs or advancing no-repeat cycles. Three negative Node regressions are wired into CI.
+- **Pending Double Check:** backup/restore of second-review seen-set is monotonic and per-account, without resetting prior saved reviews; 30+15 cycle and no-repeat guarantees remain in effect.
+- **Version/builds:** official FINAL stable only, Windows Setup + standalone HTML + ZIP + production-signed Android APK, exact-commit installed UI and checksums are mandatory. No RC or Developer binary.
+- **Acceptance boundary:** the owner explicitly asked to publish v120.78 for physical Windows/Android/browser testing afterward. Automated CI is not validation of real Instagram Unfollow, Cancel Pending, simultaneous two-account robot actions or cross-device sync. Issue #360 remains open for post-confirmation rebound and live two-account acceptance. Do not delete browser site data; export full backup before moving between v120.77 and v120.78 files.
+
 ## v120.77 — Granada: no-repeat saved action history + owner-device review (2026-11-15)
 
 - **Action batch reuse:** previously reserved target Chrome visits are excluded from both the historical `reusable_usernames` list and the handoff when cancelling/setting aside an unfinished batch, even if Chrome terminated before an action result was saved (merged PR #361).

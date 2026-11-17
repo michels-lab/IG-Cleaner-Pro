@@ -32,17 +32,16 @@
     176
   ],
   "next_version": "v120.78",
-  "notes": "Official stable-only v120.77 published on 2026-11-16 UTC via run 43811216485, tag 7326d329, 9 SHA-256-tracked assets and 4/4 governed publisher jobs SUCCESS. The owner's exact-tag device-review authorization has been consumed. v120.78 reserved WITHOUT authorization. Original release_hold=true remains in force for further versions; physical Instagram Unfollow/Cancel and two-account Android/Windows testing, Focus P0 #360 remain open.",
+  "notes": "v120.77 is current published stable; owner explicitly requested 'op granada y release' on 2026-11-17 for v120.78, with one-time post-publication device-review exception and unchanged release_hold=true. Source Focus fix #366 + #367 integrated. Live Instagram dual-account and #360 remain unverified; no false acceptance. Full official publisher checks mandatory.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.77",
-    "source": "explicit-owner-chat-instruction-2026-11-15",
+    "authorized": true,
+    "release_tag": "v120.78",
+    "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "continua con op granada todo lo que puedas y despues dale release para yo verificar que sirve",
-    "disclosure": "Consumed by successful official v120.77 stable GitHub release on 2026-11-16 UTC; this is not authorization for v120.78 or product-wide acceptance. No physical signed-in Instagram action test was performed in CI.",
-    "consumed_by_release": "v120.77",
-    "consumed_run": 43811216485
+    "owner_direct_quote": "op granada y release",
+    "disclosure": "One-time owner-directed FINAL stable v120.78 publication to permit installed real-account review after publish. No approval of live Instagram operations, #360, dual-account robot automation, physical Windows/Android or cross-device acceptance. Automated exact-commit production-signed Android, installed Windows, rendered UI, checksums and update verification remain mandatory. No RC/Developer.",
+    "previous_published_release": "v120.77"
   },
   "owner_device_review_release_override_history": [
     {
@@ -55,6 +54,17 @@
       "disclosure": "Consumed: stable v120.76 published 2026-11-16 UTC. This owner approval must not authorize v120.77 or subsequent releases. Real signed-in Instagram acceptance remains open.",
       "consumed_by_release": "v120.76",
       "consumed_run": 43790329261
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.77",
+      "source": "explicit-owner-chat-instruction-2026-11-15",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "owner_direct_quote": "continua con op granada todo lo que puedas y despues dale release para yo verificar que sirve",
+      "disclosure": "Consumed by official stable v120.77 release on 2026-11-16 UTC; not reusable for v120.78.",
+      "consumed_by_release": "v120.77",
+      "consumed_run": 43811216485
     }
   ]
 }

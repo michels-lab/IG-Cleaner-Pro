@@ -1,5 +1,8 @@
 # Instagram Cleaner Pro
 
+> **17 nov 2026 · publicación oficial en preparación:** el propietario solicitó **v120.78 estable**, con la corrección de Focus 30 de [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366). **La descarga oficial actual continúa siendo v120.77 hasta que GitHub publique y verifique la nueva versión.** Las cuentas reales, la sincronización física y el P0 #360 aún requieren pruebas posteriores; sin RC ni Developer.
+
+
 > **Arreglo de código posterior al release (17 nov 2026):** [GRANADA Focus 30: contador baja sin abrir perfiles y se regenera al recargar](docs/GRANADA_FOCUS_PHANTOM_BATCH_2026-11-17.md). PR #366 integrada y 9/9 pruebas del head de implementación aprobaron. **No está incluido en el HTML de la versión publicada v120.77.** Issue #360 sigue abierto para otros rebotes y pruebas con cuentas reales; v120.78 no se ha publicado.
 
 
