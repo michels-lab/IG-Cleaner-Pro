@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 445,
-  "classified_files_total": 441,
+  "tracked_files_total": 447,
+  "classified_files_total": 443,
   "docs_content_inspected": 111,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 139,
+    "test": 141,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "c0a14d8b6180e01486672c7e9960ec4773cdca0bfe8ecc2ad5f63c5a8168ddc5",
-  "evidence_fingerprint": "49addc382ee855c4eb322a1cd61e52567ab2d1f852430a9fb66179cf68652c37",
+  "inventory_fingerprint": "144644663bda2f9923eade31bdbb3ca07aabcdf030ff9d14b82aed1bc467d327",
+  "evidence_fingerprint": "840859f69ebac72cbafd9f6d9a77106305a9a30a733835d55a12af0589d7b64b",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "514a86a439734dcd36c1d0385bbda5e5f0be026d"
+      "blob": "7ccab9e3c9dfb45138f31617e46e181eab9d5caa"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "46390e743c84b7a373d322582630374c66f53e98"
+      "blob": "9f908a2b5f9b711192e90c77acb318509280051f"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2139,11 +2139,25 @@
       "blob": "9c64f08ce1241c3103623c0f4c11a0f6020b966d"
     },
     {
+      "path": "tests/focus-history-compaction.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c0259a0b33c827f318f4ef3616bb7a354324c424"
+    },
+    {
       "path": "tests/focus-storage-all-modes.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "2dbe84b1a6e8de31df7019c2f00e1ad04650b582"
+    },
+    {
+      "path": "tests/focus-storage-diagnostic.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c86844f358deb838710d52bc0c02f9667daa3c6b"
     },
     {
       "path": "tests/live-relationships-browser.test.cjs",
@@ -3193,11 +3207,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "421fa658dfedc37e",
+      "id": "270aa592fda576f4",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "4 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-compact-persistence.test.cjs, tests/focus-confirmation-storage-popup-regression.test.cjs",
+      "observation": "6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-compact-persistence.test.cjs, tests/focus-confirmation-storage-popup-regression.test.cjs, tests/focus-history-compaction.test.cjs, tests/focus-storage-diagnostic.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

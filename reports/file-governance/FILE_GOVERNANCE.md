@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 445; classified: 441; readable documents: 111; above read cap: 1; findings: 9.
+Tracked: 447; classified: 443; readable documents: 111; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -22,7 +22,7 @@ Tracked: 445; classified: 441; readable documents: 111; above read cap: 1; findi
 | index | 5 |
 | installer_metadata | 1 |
 | source | 55 |
-| test | 139 |
+| test | 141 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -37,7 +37,7 @@ Tracked: 445; classified: 441; readable documents: 111; above read cap: 1; findi
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 4 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-compact-persistence.test.cjs, tests/focus-confirmation-storage-popup-regression.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 421fa658dfedc37e)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-compact-persistence.test.cjs, tests/focus-confirmation-storage-popup-regression.test.cjs, tests/focus-history-compaction.test.cjs, tests/focus-storage-diagnostic.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 270aa592fda576f4)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
