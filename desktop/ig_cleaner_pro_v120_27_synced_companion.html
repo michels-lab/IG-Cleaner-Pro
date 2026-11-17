@@ -4652,11 +4652,23 @@ function renderActiveBatchDock(){
   return;
 }
 function setActiveFocusBatch(kind,rows,label){
+  const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
-  recordRowsHistory(activeFocusBatch.rows,'open',{kind,label});
   activeExtraReviewBatch=activeFocusBatch;
-  saveActiveFocusBatch();
-  renderActiveBatchDock();
+  // Persist the unconfirmed cohort FIRST. An exhausted browser storage quota
+  // must never silently turn a failed open into a saved 'open' history event.
+  try{saveActiveFocusBatch()}catch(e){
+    console.error('Focus: cannot persist active batch',e);
+    activeFocusBatch=previous;
+    activeExtraReviewBatch=previousExtra;
+    return false;
+  }
+  // History is secondary evidence; failure must not hide the confirmation UI.
+  try{recordRowsHistory(activeFocusBatch.rows,'open',{kind,label})}
+  catch(e){console.error('Focus: open history not persisted',e);
+    try{msg('Aviso: no pude guardar el historial de aperturas. Exporta un respaldo de datos antes de continuar.','w')}catch{}}
+  try{renderActiveBatchDock()}catch(e){console.error('Focus: batch dock render failed',e)}
+  return true;
 }
 function clearActiveFocusBatch(){
   activeFocusBatch=null;
@@ -11920,7 +11932,7 @@ function resetDoubleCheckCycle(show=true){
 </select>
 </div>
 </div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Safe confirmation:</b> Review opened tabs before saving. Nothing is marked until you confirm.</div><div class="safe-focus-actions">
-<button class="btn primary" onclick="confirmSafeFocusReviewed()">✅ I reviewed / save decision</button>
+<button class="btn primary" id="safeFocusConfirmBtn" onclick="confirmSafeFocusReviewed()">✅ I reviewed / save decision</button>
 <button class="btn" onclick="reopenSafeFocusBatch()">🔁 Reopen profiles</button>
 <button class="btn orange" onclick="markSafeFocusNotReviewed()">❌ Couldn't review yet</button>
 <button class="btn orange" onclick="snoozeSafeFocusBatch(7)">⏸ Pause for 7 days</button>
@@ -11942,6 +11954,7 @@ function showSafeFocusPopup(kind,rows,label){
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value='reviewed'; // Reset every batch, including Pending Requests. Selection still requires explicit owner confirmation.
+  const confirmBtn=document.getElementById('safeFocusConfirmBtn');if(confirmBtn){confirmBtn.disabled=false;confirmBtn.title='';}
   const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   const list=document.getElementById('safeFocusList');
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
@@ -12082,7 +12095,23 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   }
   if(!opts?.skipQuality && !igcConfirmBatchQuality(rows,kind,label)){msg('Tanda cancelada antes de abrir perfiles.','i');return false;}
 
-  setActiveFocusBatch(kind,rows,label);
+  // If storage is full (common after many reviewed batches), don't silently
+  // abort after the owner accepts BATCH PREVIEW. Never lose confirmed reviews
+  // or silently count tabs as opened without a restorable active cohort.
+  if(setActiveFocusBatch(kind,rows,label)===false){
+    const popup=document.getElementById('safeFocusPopup');
+    if(popup){popup.style.display='flex';popup.classList.add('show');}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Focus pausado · almacenamiento';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='No se pudo guardar esta tanda en el navegador. NO abrí perfiles ni marqué revisiones. Exporta un respaldo de tus datos y libera espacio de almacenamiento para volver a intentar. No borres los datos de IG Cleaner.';
+    const button=document.getElementById('safeFocusConfirmBtn');
+    if(button){button.disabled=true;button.title='No se puede confirmar una tanda que no quedó guardada';}
+    const list=document.getElementById('safeFocusList');
+    if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><b>@${esc(r.username)}</b><span>Sin abrir · guardado fallido</span></div>`).join('');
+    msg('Focus pausado: el navegador no permitió guardar la tanda. No abrí perfiles ni borré tus revisiones; exporta respaldo.','e');
+    return false;
+  }
   // Pending 'opened' means an owner-approved OPEN ATTEMPT, not a review or
   // confirmed cancellation. Persist before Chrome pops up any target tab so
   // an app reload cannot silently recycle the same list. The explicit
@@ -12092,15 +12121,27 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     savePendingOpened();
   }
 
-  // Los focos SIEMPRE abren perfiles. No son selección.
-  // Browser popup policy can block a second/third 20–40-tab burst. We cannot
-  // infer success from window.open(...,noopener), which returns null even for
-  // successful openings. Preserve direct user-gesture links in the review
-  // popup and NEVER mark these profiles reviewed from a popup attempt.
-  rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
-
-  // La confirmación SIEMPRE queda activa.
-  showSafeFocusPopup(kind,rows,label);
+  // Owner's Reviewed/recovery panel FIRST: it must be visible even when
+  // Chrome blocks a popup or throws while requesting the next profile.
+  // A direct link remains available per username, with no auto-review.
+  try{showSafeFocusPopup(kind,rows,label)}catch(e){
+    console.error('Focus: review dialog render failed',e);
+    const popup=document.getElementById('safeFocusPopup');
+    if(popup){popup.style.display='flex';popup.classList.add('show');}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Review · apertura con recuperación';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='La presentación avanzada falló; usa los enlaces directos y confirma solo lo que realmente revisaste.';
+    const list=document.getElementById('safeFocusList');
+    if(list)list.innerHTML=rows.map(r=>`<div class="safe-focus-row"><b>@${esc(r.username)}</b><a class="link" target="_blank" rel="noopener" href="${esc(r.href)}">Abrir</a></div>`).join('');
+  }
+  // A failed tab request must not interrupt subsequent profiles or hide Review.
+  // window.open(...,'noopener') can return null after a SUCCESSFUL open, so
+  // never infer whether any account was visited from that return value.
+  let rejected=0;
+  rows.forEach(r=>{try{window.open(r.href,'_blank','noopener,noreferrer')}
+    catch(e){rejected++;console.error('Focus: browser rejected profile tab',e)}});
+  if(rejected)msg(`El navegador rechazó ${rejected} solicitud(es) de pestañas. En Reviewed usa el enlace Abrir junto a cada cuenta; no confirmes cuentas que no revisaste.`,'w');
 
   const expected=target||rows.length;
   logAction('focus',`${label}: ${rows.length} tabs requested; browser may block popups`,
