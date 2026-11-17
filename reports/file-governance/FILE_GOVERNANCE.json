@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 443,
-  "classified_files_total": 439,
-  "docs_content_inspected": 110,
+  "tracked_files_total": 444,
+  "classified_files_total": 440,
+  "docs_content_inspected": 111,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 105,
+    "document": 106,
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "e15f2e17c4a070ae1fd459681afb976708dbf32a903e85703633a32bd8212284",
+  "inventory_fingerprint": "23193a39cc9cff903da52b2da369418803972efe5d71e86850bbb56b70d1c922",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "c5601f343fd892b51ac9bb4753cd39c83972008f"
+      "blob": "b20f4db1540bc24657a77e8d1648db2800467e6d"
     },
     {
       "path": "AGENTS.md",
@@ -245,21 +245,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "4ce5bee494fc3636f06c829bdfc0282a0ef868cf"
+      "blob": "b13f86aca577b95bc18a442fffdf6ab3f4d575b9"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "632f3caedcfdc26014434be71f9182d5ccd80e34"
+      "blob": "e91142fa859bb7c61e66bad2eb4159020ea092b7"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "5fc0f4c4b02f7f2d54e75e6432ba02f8528da948"
+      "blob": "578dc428032652c1e74d01159c6d4b703e01d89d"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a80b70b83f8b66ad0cb86006f6a5932b871e0066"
+      "blob": "20913e63df504eb00e152cb10ac4d59d4a0e8fd4"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1473,6 +1473,13 @@
       "blob": "415330092e3cd48885f9ea58f0126a551e0103f7"
     },
     {
+      "path": "docs/GRANADA_V12078_FINAL_RECEIPT_2026-11-17.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "9e6d8e2dc3d057eef62266315a2457a22a794c49"
+    },
+    {
       "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1512,7 +1519,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "f012099eb0eca9f51b8c29a9fb02234075451480"
+      "blob": "efc3818bac961c80e7851847d058c6650254046e"
     },
     {
       "path": "docs/INSTACLEANER_V12070_LIVE_SCAN_QUICKSTART.md",
@@ -1561,7 +1568,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "0d62c42b43c42a3ed118b55126c3a96798f146df"
+      "blob": "1c3337a618d00d2575e667f92497a13f6bf5347a"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1652,7 +1659,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "54df5c8195bff17375112b79ae84c6ae1c6fed31"
+      "blob": "441cc9775bfc74c9f8a29fbac346a07156521c35"
     },
     {
       "path": "release/android-signing.json",
@@ -1666,14 +1673,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "5458892dde5f0cb1092e3264a6aef563b5e500c2"
+      "blob": "596e91af358911907b155c689a88e54a7ec3f82d"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "1d88fcf0b3267e4bffa9ccfa8919a745672087e4"
+      "blob": "13f5922c3092ffee8b6fe2099d389d174572d546"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2709,7 +2716,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "01584e28909098bc4bd0db42be1d62552fffeb60"
+      "blob": "96cb655b2e4777ade115ffbb000272f2df5baa31"
     },
     {
       "path": "tests/test_robot_interlock.py",
