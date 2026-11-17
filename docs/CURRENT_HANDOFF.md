@@ -1,3 +1,10 @@
+## 2026-11-17 — Granada: PR #366 integrada, Focus 30 sin pestañas / contador regenerado
+
+- **Código integrado:** [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366), merge SHA `bc75385c0d1a78e2e64124b698b2aa69b6057341`; CI 9/9 SUCCESS en head `91a5a8bc31577ba6de6375baf9211be50dd54dbb`. El bug de v120.77 podía bajar el contador por `activeFocusBatch` temporal antes de guardar el historial; si fallaba escribir el estado, no abría Instagram ni Reviewed, y el contador regresaba tras reload.
+- **Protecciones integradas:** persistencia atómica de cohorte previa al historial, Reviewed visible antes de peticiones Chrome, error legible, rollback en reintentos no revisados, y guard de éxito antes de abrir o avanzar Focus/Recheck/Double Check/Pending.
+- **Seguimiento detallado:** [docs/GRANADA_FOCUS_PHANTOM_BATCH_2026-11-17.md](GRANADA_FOCUS_PHANTOM_BATCH_2026-11-17.md). El fallo del localStorage del usuario es hipótesis consistente; falta consola/QA en su navegador. **Issue #360 continúa abierta**.
+- **Distribución:** última FINAL sigue [v120.77](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77); el arreglo NO está en ese HTML. Próximo v120.78 no autorizado/publicado; release_hold y aceptación real pendientes.
+
 ## 2026-11-15 local / 2026-11-16 UTC — CURRENT v120.77 officially published; next v120.78 NOT authorized
 
 - Latest official stable: [v120.77](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77), exact tag `7326d3293fabc606ddf336cfedc35c324b63795e`, official [publisher 43811216485](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43811216485) **SUCCESS on 4/4 governed jobs**, 9 SHA-256-verified stable-only assets (Windows Setup, production-signed stable APK, standalone HTML/ZIP). No Developer Edition/RC.
