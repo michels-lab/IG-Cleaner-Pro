@@ -157,6 +157,7 @@ jobs:
           node tests/focus-default-reviewed.test.cjs
           node tests/focus-confirmation-storage-popup-regression.test.cjs
           node tests/focus-failed-attempt-requeue.test.cjs
+          node tests/focus-storage-all-modes.test.cjs
           node tests/focus-counters-no-rebound.test.cjs
           node tests/focus-aba-persistence-918.test.cjs
           node tests/cloud-review-monotonic.test.cjs
