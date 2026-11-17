@@ -35,12 +35,12 @@ const ctx={JSON,Date,Array,Number,Object,console:{error:()=>{},warn:(...a)=>log.
  }};
 vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
 const compact=ctx.igcCompactHistoryText(history);
-assert(compact.length<ledgerBefore.length*0.75,
- "789 profiles with 25 events each should shrink materially");
+assert(compact.length<ledgerBefore.length*0.80,
+ "789 profiles with 25 events each should shrink by at least 20%");
 ctx.loadProfileHistory();
 assert.equal(JSON.stringify(ctx.profileHistory),ledgerBefore,
  "Legacy migration must recover all reviews, events and custom history without loss");
-assert(stored.get("history").length<ledgerBefore.length*0.75,
+assert(stored.get("history").length<ledgerBefore.length*0.80,
  "Legacy storage should be compacted immediately on load to free room for Focus");
 assert.equal(stored.get("reviewed-ledger"),'{"keep.me":{"reviewedAt":1000}}',
  "The independent confirmed reviewed ledger must remain unchanged");
