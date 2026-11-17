@@ -3845,12 +3845,16 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <div class="action-group-label">Actions and export</div>
 <button class="btn" onclick="viewAvailableFocus('pending')">🎯 View eligible for Focus</button>
 <button class="btn orange" onclick="viewBlockedFocus('pending')">🧩 View blocked</button>
+<button class="btn primary" onclick="igcPendingDoubleCheckAll()">🧿 Pending Double Check 30</button>
+<button class="btn" onclick="igcPendingDoubleCheckSelected()">🧿 Double Check seleccionados</button>
+<button class="btn" onclick="igcPendingDoubleResetCycle()">↻ Reiniciar ciclo Pending</button>
+<div class="focuslab-note" id="pendingDoubleCheckStats" role="status" aria-live="polite">Pending Double Check: revisión independiente.</div>
 <button class="btn green" onclick="markDetectedAcceptedPending()">✅ Review detected approvals</button>
 <button class="btn" onclick="exportPendingCSV()">⬇ Export pending</button>
 <button class="btn" onclick="exportPendingDecisionsCSV()">⬇ Export decisions</button>
 <button class="btn" onclick="exportPendingCrosscheckCSV()">⬇ Export comparison</button>
 </div>
-<div class="focuslab-mini-table"><table><thead><tr><th>Status</th><th>Reviewed</th><th>Decision</th><th>Review date</th><th>Username</th><th>Profile</th><th>Name</th><th>Requested on</th><th>Current cross-check</th><th>Risk</th><th>Reasons</th></tr></thead><tbody id="pendingTableBody"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Import pending_follow_requests.json to begin.</td></tr></tbody></table></div><div id="pendingTablePager" class="focuslab-actions" role="status" aria-live="polite"></div>
+<div class="focuslab-mini-table"><table><thead><tr><th>Double Check</th><th>Status</th><th>Reviewed</th><th>Decision</th><th>Review date</th><th>Username</th><th>Profile</th><th>Name</th><th>Requested on</th><th>Current cross-check</th><th>Risk</th><th>Reasons</th></tr></thead><tbody id="pendingTableBody"><tr><td colspan="12" style="text-align:center;color:var(--muted);padding:26px">Import pending_follow_requests.json to begin.</td></tr></tbody></table></div><div id="pendingTablePager" class="focuslab-actions" role="status" aria-live="polite"></div>
 </div>
 </div><div class="maintenance-panel">
 <div class="title">🧽 Mantenimiento inteligente</div>
@@ -10382,13 +10386,13 @@ function pendingSmartBatch(n){
 
 let pendingTableLimit=300;
 function pendingShowMore(){pendingTableLimit+=300;renderPendingRequests()}
-function renderPendingRequests(){renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>Unreviewed</span></div><div class="focuslab-kpi"><b>${Math.min(shown,pendingTableLimit)}</b><span>visibles de ${shown} filtrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;const pager=document.getElementById('pendingTablePager');if(pager){const visible=Math.min(rows.length,pendingTableLimit);pager.innerHTML=rows.length>visible
+function renderPendingRequests(){window.igcPendingDoubleRenderStatus?.();renderPendingSessionPanel();renderPendingRealtimePanel();renderActiveBatchDock();const allRows=pendingRows();const rows=pendingFilteredRows();const total=allRows.length,opened=allRows.filter(r=>r.opened).length,reviewed=allRows.filter(r=>r.reviewed).length,snoozed=allRows.filter(r=>r.snoozed).length,unopened=allRows.filter(r=>!r.opened&&!r.reviewed&&!r.snoozed).length,risky=allRows.filter(r=>['medio','alto'].includes(r.riskLevel)&&!r.reviewed&&!r.snoozed).length,old=allRows.filter(r=>pendingAgeDays(r)>=90&&!r.reviewed&&!r.snoozed).length,shown=rows.length,detectedAccepted=allRows.filter(r=>pendingCrossStatus(r).inFollowing&&!r.reviewed).length;const el=document.getElementById('pendingStats');if(el)el.innerHTML=`<div class="focuslab-kpi"><b>${total}</b><span>pending</span></div><div class="focuslab-kpi"><b>${unopened}</b><span>Unreviewed</span></div><div class="focuslab-kpi"><b>${Math.min(shown,pendingTableLimit)}</b><span>visibles de ${shown} filtrados</span></div><div class="focuslab-kpi"><b>${detectedAccepted}</b><span>aceptados detectados</span></div><div class="focuslab-kpi"><b>${snoozed}</b><span>pausados</span></div>`;const body=document.getElementById('pendingTableBody');if(!body)return;const pager=document.getElementById('pendingTablePager');if(pager){const visible=Math.min(rows.length,pendingTableLimit);pager.innerHTML=rows.length>visible
   ? '<span>'+visible+' de '+rows.length+' solicitudes filtradas visibles</span> <button class="btn" onclick="pendingShowMore()">Mostrar siguientes '+Math.min(300,rows.length-visible)+'</button>'
   : (rows.length?'<span>'+visible+' de '+rows.length+' solicitudes filtradas visibles</span>':'');
 }if(!rows.length){body.innerHTML=allRows.length
-  ? `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">Hay ${allRows.length} Pending cargados, pero ninguno coincide con los filtros actuales. Cambia la vista a “Todos”.</td></tr>`
-  : '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:26px">No hay Pending cargados. Importa el ZIP completo de Instagram o usa la carga manual.</td></tr>';return}body.innerHTML=rows.slice(0,pendingTableLimit).map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const blockReason=pendingNoOpenReason(r);
-    const status=r.reviewed?'revisado':(r.snoozed?'pausado':(isInActiveFocus(r,'pending')?'abierto sin confirmar':(r.opened?'abierto':'sin abrir')));const revBadge=r.reviewed?'<span class="badge bgreen">Sí</span>':'<span class="badge bblue">No</span>';const decisionBadge=r.reviewed?`<span class="badge bpurple">${esc(r.reviewLabel)}</span>`:'<span class="muted">—</span>';const revDate=r.reviewDate?new Date(r.reviewDate).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}):'—';return`<tr class="${r.reviewed?'done':''}"><td><span class="focuslab-status ${isInActiveFocus(r,'pending')?'status-unconfirmed':(r.reviewed||r.snoozed||r.opened?'opened':'pending')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td><td>${revBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(revDate)}</span></td><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td>${esc(r.name||'—')}</td><td><span class="date">${esc(formatDateFromTs(r.timestamp)||'sin fecha')}</span></td><td>${pendingCrossBadge(r)}</td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td></tr>`}).join('')}
+  ? `<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:26px">Hay ${allRows.length} Pending cargados, pero ninguno coincide con los filtros actuales. Cambia la vista a “Todos”.</td></tr>`
+  : '<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:26px">No hay Pending cargados. Importa el ZIP completo de Instagram o usa la carga manual.</td></tr>';return}body.innerHTML=rows.slice(0,pendingTableLimit).map(r=>{const cls=r.riskLevel==='alto'?'bred':r.riskLevel==='medio'?'borange':'bblue';const blockReason=pendingNoOpenReason(r);
+    const status=r.reviewed?'revisado':(r.snoozed?'pausado':(isInActiveFocus(r,'pending')?'abierto sin confirmar':(r.opened?'abierto':'sin abrir')));const revBadge=r.reviewed?'<span class="badge bgreen">Sí</span>':'<span class="badge bblue">No</span>';const decisionBadge=r.reviewed?`<span class="badge bpurple">${esc(r.reviewLabel)}</span>`:'<span class="muted">—</span>';const revDate=r.reviewDate?new Date(r.reviewDate).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}):'—';return`<tr class="${r.reviewed?'done':''}"><td>${r.reviewed&&!r.snoozed?'<label><input type="checkbox" aria-label="Seleccionar para Pending Double Check @'+esc(r.username)+'" '+(igcPendingDoubleSelected.has(r.username)?'checked':'')+' '+(igcPendingDoubleSeen().has(r.username)?'disabled':'')+' onchange="igcPendingDoubleToggleSelected(\''+encodeURIComponent(r.username)+'\',this.checked)">Seleccionar</label> '+(igcPendingDoubleSeen().has(r.username)?'<span class="muted">Ya en ciclo</span>':'<button type="button" class="btn" onclick="igcPendingDoubleCheckOne(\''+encodeURIComponent(r.username)+'\')">Revisar otra vez</button>'):'—'}</td><td><span class="focuslab-status ${isInActiveFocus(r,'pending')?'status-unconfirmed':(r.reviewed||r.snoozed||r.opened?'opened':'pending')}">${esc(status)}</span>${blockReason?`<span class="block-reason-badge ${blockReason==='tanda activa'?'hot':''}">${esc(blockReason)}</span>`:''}</td><td>${revBadge}</td><td>${decisionBadge}</td><td><span class="date">${esc(revDate)}</span></td><td><div class="username">@${esc(r.username)}</div></td><td><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></td><td>${esc(r.name||'—')}</td><td><span class="date">${esc(formatDateFromTs(r.timestamp)||'sin fecha')}</span></td><td>${pendingCrossBadge(r)}</td><td><span class="badge ${cls}">${r.riskLevel} · ${r.riskScore}</span></td><td><div class="reason">${esc(r.riskReasons.join(' · '))}</div></td></tr>`}).join('')}
 function pendingOldestFirstSort(a,b){
   const ta=a.timestamp||0, tb=b.timestamp||0;
   if(ta && tb && ta!==tb)return ta-tb;
@@ -10403,6 +10407,114 @@ function followerOldestFirstSort(a,b){
   if(!ta && tb)return 1;
   return b.riskScore-a.riskScore || a.username.localeCompare(b.username);
 }
+
+/* Pending Double Check: a new per-Instagram cycle; never erase reviewed status. */
+const IGC_PENDING_DOUBLE_SEEN='igc_pending_double_check_seen_v1';
+var igcPendingDoubleSelected=new Set(),igcPendingDoubleAccount='';
+function igcPendingDoubleEnsureAccount(){
+  const account=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+  if(account!==igcPendingDoubleAccount){igcPendingDoubleSelected.clear();igcPendingDoubleAccount=account;}
+}
+function igcPendingDoubleSeen(){
+  try{const raw=JSON.parse(localStorage.getItem(IGC_PENDING_DOUBLE_SEEN)||'[]');
+    return new Set((Array.isArray(raw)?raw:[]).map(cleanUsername).filter(Boolean));
+  }catch{return new Set();}
+}
+function igcPendingDoubleSaveSeen(set){localStorage.setItem(IGC_PENDING_DOUBLE_SEEN,JSON.stringify([...set]));}
+function igcPendingDoubleRows(includeSeen=false){
+  igcPendingDoubleEnsureAccount();
+  const seen=igcPendingDoubleSeen();
+  return pendingRows().filter(r=>r&&r.username&&r.reviewed&&!r.snoozed&&
+    (includeSeen||!seen.has(r.username))).sort(pendingOldestFirstSort);
+}
+function igcPendingDoubleRenderStatus(){
+  igcPendingDoubleEnsureAccount();
+  const el=document.getElementById('pendingDoubleCheckStats');if(!el)return;
+  const all=igcPendingDoubleRows(true).length,remaining=igcPendingDoubleRows(false).length;
+  const selected=igcPendingDoubleRows(false).filter(r=>igcPendingDoubleSelected.has(r.username)).length;
+  el.textContent='Pending revisados: '+all+' · Sin pasar por este ciclo: '+remaining+
+    ' · Ya incluidos: '+(all-remaining)+' · Seleccionados: '+selected+
+    '. Las decisiones originales se conservan.';
+}
+window.igcPendingDoubleRenderStatus=igcPendingDoubleRenderStatus;
+function igcPendingDoubleToggleSelected(username,checked){
+  igcPendingDoubleEnsureAccount();
+  username=cleanUsername(username);
+  if(!igcPendingDoubleRows(false).some(r=>r.username===username)){
+    igcPendingDoubleSelected.delete(username);igcPendingDoubleRenderStatus();return false;
+  }
+  if(checked)igcPendingDoubleSelected.add(username);else igcPendingDoubleSelected.delete(username);
+  igcPendingDoubleRenderStatus();return true;
+}
+function igcPendingDoubleStart(rows,label){
+  igcPendingDoubleEnsureAccount();
+  if(activeFocusBatch?.rows?.length){
+    msg('Primero confirma o cancela la tanda activa. No reemplazaré una tanda sin confirmar.','w');return false;
+  }
+  const seen=igcPendingDoubleSeen(),allowed=new Map(igcPendingDoubleRows(false).map(r=>[r.username,r]));
+  const chosen=[],added=new Set();
+  for(const input of rows||[]){
+    const username=cleanUsername(input?.username);
+    if(username&&!added.has(username)&&allowed.has(username)){
+      chosen.push(allowed.get(username));added.add(username);
+    }
+    if(chosen.length>=30)break;
+  }
+  if(!chosen.length){
+    msg('No quedan solicitudes revisadas para este ciclo. Puedes reiniciarlo sin borrar decisiones.','i');
+    igcPendingDoubleRenderStatus();return false;
+  }
+  if(!igcConfirmBatchQuality(chosen,'pending',label)){
+    msg('Segunda revisión cancelada sin cambios de estado.','i');return false;
+  }
+  setActiveFocusBatch('pending',chosen,label);
+  activeFocusBatch.reviewMode='double';
+  activeExtraReviewBatch=activeFocusBatch;
+  saveActiveFocusBatch();
+  // Store attempts before opening any tabs; popup success is not assumed.
+  chosen.forEach(r=>{seen.add(r.username);igcPendingDoubleSelected.delete(r.username);});
+  igcPendingDoubleSaveSeen(seen);
+  chosen.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
+  showSafeFocusPopup('pending',chosen,label);
+  logAction('focus','Pending Double Check: '+chosen.length+' pestañas solicitadas',
+    {count:chosen.length,source:'pending_double_check'});
+  renderPendingRequests();renderModuleDashboard?.();
+  msg('Pending Double Check: '+chosen.length+' perfiles solicitados. Confirma la decisión tras revisarlos, o usa el enlace directo si Chrome bloqueó pestañas.','i');
+  return true;
+}
+function igcPendingDoubleCheckOne(username){
+  username=cleanUsername(username);
+  const row=igcPendingDoubleRows(false).find(r=>r.username===username);
+  if(!row){msg('Perfil no disponible para esta segunda ronda; revisa el contador o reinicia el ciclo.','w');return false;}
+  return igcPendingDoubleStart([row],'pending double check individual');
+}
+function igcPendingDoubleCheckSelected(){
+  igcPendingDoubleEnsureAccount();
+  const rows=igcPendingDoubleRows(false).filter(r=>igcPendingDoubleSelected.has(r.username));
+  if(!rows.length){msg('Selecciona primero solicitudes revisadas que no aparezcan en el ciclo.','w');return false;}
+  return igcPendingDoubleStart(rows,'pending double check seleccionados');
+}
+function igcPendingDoubleCheckAll(){
+  const rows=igcPendingDoubleRows(false);
+  if(!rows.length){msg('Ciclo completo. Reinícialo para una nueva segunda vuelta.','i');return false;}
+  return igcPendingDoubleStart(rows,'pending double check 30');
+}
+function igcPendingDoubleResetCycle(){
+  if(activeFocusBatch?.kind==='pending'&&activeFocusBatch.reviewMode==='double'){
+    msg('Termina o cancela la tanda Double Check activa antes de reiniciar.','w');return false;
+  }
+  const count=igcPendingDoubleSeen().size;
+  if(!confirm('¿Reiniciar Pending Double Check? '+count+
+    ' perfiles de esta segunda ronda podrán abrirse otra vez. No se borran revisiones ni decisiones.'))return false;
+  localStorage.removeItem(IGC_PENDING_DOUBLE_SEEN);
+  igcPendingDoubleSelected.clear();
+  logAction('pending_double_reset','Ciclo Pending Double Check reiniciado',
+    {count,source:'pending_double_check'});
+  renderPendingRequests();renderModuleDashboard?.();
+  msg('Ciclo reiniciado sin borrar tus revisiones originales.','s');
+  return true;
+}
+
 function pendingCandidateRows(){return pendingRows().filter(isPendingOpenableForFocus).sort(pendingOldestFirstSort)}
 function openFocusRows(rows,label,type='focus',popupKind=''){
   if(!rows.length){msg('No hay perfiles para abrir en este foco.','w');return false}
