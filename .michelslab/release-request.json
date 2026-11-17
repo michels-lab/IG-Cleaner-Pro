@@ -1,12 +1,12 @@
 {
   "version": "120.77",
   "tag": "v120.77",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly wrote 'continua con op granada todo lo que puedas y despues dale release para yo verificar que sirve' on 2026-11-15 (America/Monterrey). One-time stable v120.77 signed Windows/Android publication so owner can perform physical testing after publication; not final Instagram functional acceptance. No Developer or RC.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.76",
   "requested_at": "2026-11-15",
   "candidate_main_sha": "eef1d6ed23bb97d547d24151ad83a986841aef05",
@@ -19,5 +19,10 @@
     "published_at": "2026-11-16T02:18:18Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.76",
     "asset_count": 9
-  }
+  },
+  "published_run": 43811216485,
+  "published_commit": "7326d3293fabc606ddf336cfedc35c324b63795e",
+  "published_at": "2026-11-16T05:45:01Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77",
+  "publication_note": "Official FINAL stable-only v120.77 GitHub release published with 9 SHA256-verified assets and all 4 official publisher jobs SUCCESS. Owner physical two-account Instagram Unfollow/Cancel, Windows/Android and #360 acceptance remain UNVERIFIED. Owner single-use authorization CONSUMED; v120.78 NOT authorized. No RC or Developer assets."
 }
