@@ -1,5 +1,8 @@
 # Instagram Cleaner Pro
 
+> **Arreglo de código posterior al release (17 nov 2026):** [GRANADA Focus 30: contador baja sin abrir perfiles y se regenera al recargar](docs/GRANADA_FOCUS_PHANTOM_BATCH_2026-11-17.md). PR #366 integrada y 9/9 pruebas del head de implementación aprobaron. **No está incluido en el HTML de la versión publicada v120.77.** Issue #360 sigue abierto para otros rebotes y pruebas con cuentas reales; v120.78 no se ha publicado.
+
+
 ## Published stable v120.77 — 2026-11-15 (local) / 2026-11-16 UTC
 
 **Normal FINAL v120.77 is published** with 9 SHA-256-verified GitHub assets and all four official release jobs successful, including installed Windows Setup, production-signed stable Android install/launch and rendered Home/About evidence. This update prevents saved Chrome target visits after a crash or manual Review from being offered as unvisited in fresh Unfollow/Cancel batches (PR #361), and fixes Windows loopback JSON 403 framing on denied requests (PR #362).
