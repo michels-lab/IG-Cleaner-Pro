@@ -4751,11 +4751,14 @@ function cancelActiveFocusBatch(){
   if(!activeFocusBatch||!activeFocusBatch.rows?.length){forceClearStuckFocusBatch();return;}
   if(!confirm('Cancel this active batch? No profile will be marked reviewed, and the profiles can appear in future Focus batches.'))return;
   const kind=activeFocusBatch.kind, count=activeFocusBatch.rows.length;
+  const pendingDouble=kind==='pending'&&activeFocusBatch.reviewMode==='double';
   clearActiveFocusBatch();
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
   renderModuleDashboard?.();
-  msg(`Batch canceled: ${count} profiles from ${kind==='pending'?'Pending':'Mutual followers'} are available again.`,'w');
+  if(pendingDouble)msg('Pending Double Check cancelado: '+count+
+    ' perfiles conservan sus revisiones; no volverán al mismo ciclo sin reiniciarlo.','i');
+  else msg(`Batch canceled: ${count} profiles from ${kind==='pending'?'Pending':'Mutual followers'} are available again.`,'w');
 }
 setInterval(renderActiveBatchDock,60000);
 
