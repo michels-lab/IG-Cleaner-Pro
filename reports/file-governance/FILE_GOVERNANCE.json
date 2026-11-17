@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 437,
-  "classified_files_total": 433,
-  "docs_content_inspected": 108,
+  "tracked_files_total": 439,
+  "classified_files_total": 435,
+  "docs_content_inspected": 109,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 103,
+    "document": 104,
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 134,
+    "test": 135,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "196336d1c07558ea8b50111a0f4a242ab2d8ee6075c23c07c159bc528f4347c9",
+  "inventory_fingerprint": "80a40d757f7c99136db8f04e11a553e9b0446d0f527de637905011bbeb495542",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "2c441b3f3197901d75cd1a727a2155c025cfff39"
+      "blob": "a738046ab8fa023a3ce286b2522de01e802bbd9e"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -217,7 +217,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "f3559290289f95b36162c7014096033168ac45e7"
+      "blob": "bc8afb2dc64b067b56c46868ecd567f3e6ff8eeb"
     },
     {
       "path": "AGENTS.md",
@@ -245,21 +245,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "4a943428b2c096b904bd503f0c72cf843e842a4a"
+      "blob": "dbf2dbb82a0b4ba649ab7dc9c58e68e1c92d826d"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "b34b063e3de4597d107d04a081136a685b97edb5"
+      "blob": "4000c7f42354c432394ede9d956b4aa1f903adae"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "ee5ba53a4c8db7f2b39b031d7fcb12fc0a4dc202"
+      "blob": "841df0b35a22a014cdefddaefa9d043f3405d934"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "3d830ccad16df132101dd68a49d6a2931c1489e1"
+      "blob": "d141a1f9845e87fa690d708271c2a4a7d0c437c3"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "974263a9796748536c9601f403f578a13eb64f7a"
+      "blob": "0cf60369c63d9e37004672d80667fcf3d6afb3d0"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1459,6 +1459,13 @@
       "blob": "0b2d263fb92a154e5330f9f35f2784d587bcf388"
     },
     {
+      "path": "docs/GRANADA_V12077_FINAL_RECEIPT_2026-11-15.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "415330092e3cd48885f9ea58f0126a551e0103f7"
+    },
+    {
       "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1547,7 +1554,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "5288d97f77b17c67a32763925ba5768b1b254222"
+      "blob": "0d62c42b43c42a3ed118b55126c3a96798f146df"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1652,14 +1659,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b37d596b2acee7ce5923c5cb9286f3bdeb7ab588"
+      "blob": "e62c2d3122a673d61cef2eea3cdaa9753b317374"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "188e3fe2126e04f8e4d201f91b39f68706bf4f55"
+      "blob": "d44172690d6b8406bcedab99af1ad9cabf019676"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2136,6 +2143,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "dcf36be8b17be8841faf2d6795113f6c4f029398"
+    },
+    {
+      "path": "tests/pending-double-check-backup.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "92121d190416b8a32903bd9cf7fcb121080f5dac"
     },
     {
       "path": "tests/pending-double-check.test.cjs",
@@ -2667,7 +2681,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "99c716da70e383032fdd8dcff23eab0588108c65"
+      "blob": "d5d4f2c6316cf6c416dae7cd3ee4362e1669d137"
     },
     {
       "path": "tests/test_robot_interlock.py",
