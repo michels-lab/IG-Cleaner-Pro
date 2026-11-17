@@ -4539,7 +4539,7 @@ let batchHistory=[];
 let actionLog=[];
 let dailyGoal=0;
 let lastLiveAction='No actions yet.';
-let reviewedMeta={}, profileHistory={}, guidedSession100=null;
+let reviewedMeta={}, profileHistory={}, igcProfileHistoryLoadError=false, guidedSession100=null;
 let oldFollowersRaw=[], compareLost=[], compareGained=[], compareStayed=[];
 let internalSnapshot=null, snapLostFollowers=[], snapGainedFollowers=[], snapNewFollowing=[], snapRemovedFollowing=[];
 let lastZipRelationSnapshot=null, zipRelationDelta=null;
@@ -4880,12 +4880,16 @@ function igcCompactHistoryText(history){
   const plain=JSON.stringify(history||{}),packed=JSON.stringify(igcPackProfileHistory(history||{}));
   return packed.length<plain.length?packed:plain;
 }
-function saveProfileHistory(){localStorage.setItem(LS_PROFILE_HISTORY,igcCompactHistoryText(profileHistory));}
+function saveProfileHistory(){
+  if(igcProfileHistoryLoadError)throw Error('Cannot overwrite unreadable saved profile history; restore a backup first');
+  localStorage.setItem(LS_PROFILE_HISTORY,igcCompactHistoryText(profileHistory));
+}
 function loadProfileHistory(){
   try{
     const raw=localStorage.getItem(LS_PROFILE_HISTORY)||'{}';
     const persisted=JSON.parse(raw);
     profileHistory=igcUnpackProfileHistory(persisted);
+    igcProfileHistoryLoadError=false;
     if(!persisted?.__igcHistoryCompact){
       const compact=igcCompactHistoryText(profileHistory);
       if(compact.length<raw.length){
@@ -4893,7 +4897,11 @@ function loadProfileHistory(){
         catch(e){console.warn('Focus history compaction deferred: browser storage write failed',e?.name||e)}
       }
     }
-  }catch(e){console.error('Focus: history storage could not be loaded',e);profileHistory={}}
+  }catch(e){
+    igcProfileHistoryLoadError=true;
+    console.error('Focus: history storage could not be loaded; writes blocked to prevent losing confirmed history',e);
+    profileHistory={};
+  }
 }
 function saveGuidedSession100(){if(guidedSession100)localStorage.setItem(LS_GUIDED_SESSION_100,JSON.stringify(guidedSession100));else localStorage.removeItem(LS_GUIDED_SESSION_100)}
 function loadGuidedSession100(){try{guidedSession100=JSON.parse(localStorage.getItem(LS_GUIDED_SESSION_100)||'null')}catch{guidedSession100=null}}
