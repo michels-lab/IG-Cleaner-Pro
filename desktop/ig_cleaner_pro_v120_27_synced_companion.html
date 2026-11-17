@@ -11995,8 +11995,22 @@ function markSafeFocusNotReviewed(){
     saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('mutual_not_reviewed',`Seguidores que sigo no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers_mutual'});buildRows();applyFilters();renderFollowersMutualTab();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} seguidores que sigo volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
   }
   if(b.kind==='main'){
+    // Owner explicitly chose "Couldn't review yet". Make this release durable
+    // before clearing the active cohort, and roll back in-memory history if
+    // browser quota prevents saving: no phantom availability after reload.
+    const historyBefore=(b.rows||[]).map(r=>[
+      r.username,profileHistory?.[r.username]?JSON.stringify(profileHistory[r.username]):null
+    ]);
     b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',{kind:'main',label:b.label}));
-    saveProfileHistory();
+    try{saveProfileHistory()}catch(e){
+      historyBefore.forEach(([u,snapshot])=>{
+        if(snapshot!==null)profileHistory[u]=JSON.parse(snapshot);
+        else delete profileHistory[u];
+      });
+      console.error('Focus: cannot save unconfirmed retry history',e);
+      msg('Error de almacenamiento: no pude guardar el reintento. Conservé la tanda activa y tus revisiones; exporta respaldo antes de volver a intentar.','e');
+      return;
+    }
     logAction('main_not_reviewed',`Seguidos no me siguen no revisados: ${b.rows.length}`,{count:b.rows.length,source:'session_100_main'});
     buildRows();applyFilters();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();
     msg(`No se marcaron como revisados. Los ${b.rows.length} seguidos volverán a salir en sesiones futuras.`,'w');
