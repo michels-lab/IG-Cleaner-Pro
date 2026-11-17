@@ -1,3 +1,10 @@
+## 2026-11-17 — CURRENT official FINAL v120.78 published; v120.79 not authorized
+
+- [Stable v120.78](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78), exact tag/source SHA `1c75831c59b457171c113978a6acb282d915d71c`, official [publisher #44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647): 4/4 jobs success, 9 SHA-256 verified assets, installed Windows Setup, production-signed Android stable installed/started, Desktop/Android rendered visual exact-source checks. No Developer/RC.
+- [Full release receipt](GRANADA_V12078_FINAL_RECEIPT_2026-11-17.md). One-time owner's "op granada y release" authorization v120.78 CONSUMED. Release request authorized=false/published; v120.79 reserved WITHOUT authorization, original release_hold=true and owner acceptance false.
+- [PR #366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366) fixes v120.77 Focus 30 phantom drop/no Chrome tabs/no Reviewed under storage exceptions; content ships in v120.78. **Owner testing remains**: exact browser file context / 789 Reviewed preservation, real dual Instagram A→B→A state, live account actions, full async #360 rebound; keep P0 #360 and robot acceptance open.
+- Retain release source and public binaries immutable; future improvements should target v120.79 only with separate owner authorization. Do not erase user browser localStorage; backup/export before changing standalone HTML path/browser.
+
 ## 2026-11-17 — v120.78 one-time owner-authorized FINAL stable publication staging
 
 - User: **"op granada y release"**. Exact tag v120.78 and one-time post-publication device-review exception; current release v120.77 until official publisher succeeds. Owner release_hold=true and owner_final_acceptance.approved=false retained.
