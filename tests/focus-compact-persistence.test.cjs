@@ -35,13 +35,13 @@ ctx.saveActiveFocusBatch();
 assert.equal(JSON.parse(storage.get("focus-test")).storageFormat,2);
 ctx.activeFocusBatch=null;
 ctx.loadActiveFocusBatch();
-assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),cohort,
+assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),JSON.parse(JSON.stringify(cohort)),
  "Compact save/reload must restore every safeBatchRow field losslessly");
 assert(!storage.has("reviewed")&&!storage.has("pending"),
  "Focus persistence must not write review or pending ledgers");
 // Legacy v120.78 records still load, without destructive migration or changes.
 storage.set("focus-test",oldString);ctx.activeFocusBatch=null;ctx.loadActiveFocusBatch();
-assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),cohort);
+assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),JSON.parse(JSON.stringify(cohort)));
 ctx.saveActiveFocusBatch();
 assert.equal(JSON.parse(storage.get("focus-test")).storageFormat,2);
 // A quota too small even for compact storage must fail closed without overwriting history.
