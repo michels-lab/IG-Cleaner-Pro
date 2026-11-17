@@ -35,7 +35,7 @@ ctx.reviewedMeta={};
 // Legacy opened rows without events remain blocked from normal Focus.
 assert.equal(run([]),true);
 
-const unconfirmedStart=html.indexOf("function markSafeFocusNotReviewed(");
+const unconfirmedStart=html.indexOf("function igcPersistUnconfirmedAttempt(");
 const unconfirmedEnd=html.indexOf("function confirmSafeFocusReviewed(",unconfirmedStart);
 assert(unconfirmedStart!==-1&&unconfirmedEnd>unconfirmedStart);
 const unconfirmedSource=html.slice(unconfirmedStart,unconfirmedEnd);
