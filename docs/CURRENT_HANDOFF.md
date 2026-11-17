@@ -1,3 +1,9 @@
+## 2026-11-17 — v120.78 one-time owner-authorized FINAL stable publication staging
+
+- User: **"op granada y release"**. Exact tag v120.78 and one-time post-publication device-review exception; current release v120.77 until official publisher succeeds. Owner release_hold=true and owner_final_acceptance.approved=false retained.
+- Version source and Android production identity aligned to v120.78. Owner specifically needs to verify Focus 30 phantom availability drop/no Chrome tab/no Reviewed bug repaired in [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366); subsequent #360 async/cross-account rebound is separate and still OPEN. No RC/Developer.
+- Official release mandatory installed Windows Setup/real offline Chromium, Android stable signed production fingerprint, Home/About visuals, checksums, updater release feed. **Do not claim published until authoritative tag/assets and publisher success verified**. Owner real Instagram sessions remain untested in CI.
+
 ## 2026-11-17 — Granada: PR #366 integrada, Focus 30 sin pestañas / contador regenerado
 
 - **Código integrado:** [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366), merge SHA `bc75385c0d1a78e2e64124b698b2aa69b6057341`; CI 9/9 SUCCESS en head `91a5a8bc31577ba6de6375baf9211be50dd54dbb`. El bug de v120.77 podía bajar el contador por `activeFocusBatch` temporal antes de guardar el historial; si fallaba escribir el estado, no abría Instagram ni Reviewed, y el contador regresaba tras reload.
