@@ -33,7 +33,7 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     console:{error(e){trace.push("error:"+String(e?.message||e))}},
     Date,Number,Math,JSON,Set,Array,String,
     document:{getElementById:node},
-    activeFocusBatch:null,activeExtraReviewBatch:null,
+    activeFocusBatch:null,activeExtraReviewBatch:null,igcFailedFocusBatch:null,currentMode:'following',
     safeBatchRow:x=>({...x}),recordRowsHistory(){if(storageUnavailable||historyQuota)throw Error("QuotaExceededError")},
     saveActiveFocusBatch(){if(storageUnavailable)throw Error("QuotaExceededError")},
     renderActiveBatchDock(){},
@@ -48,7 +48,7 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     msg(txt){messages.push(String(txt))},
     logAction(){},forceLiveRefresh(){},
     pendingOpenedSet:new Set(),savePendingOpened(){},
-    window:{open(){trace.push("window.open");if(openThrows)throw Error("BrowserDenied")}},
+    window:{IGC_INSTAGRAM_PROFILES:{active:'first'},open(){trace.push("window.open");if(openThrows)throw Error("BrowserDenied")}},
     lastPendingBatch:[],lastMutualBatch:[]
   };
   vm.createContext(ctx);
@@ -69,6 +69,12 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     "Remaining count must not decrease on an unpersisted focus batch and regenerate on reload");
   assert.equal(x.node("safeFocusConfirmBtn").disabled,true,
     "A batch which cannot be persisted must never be marked Reviewed");
+  assert.equal(x.node("safeFocusReopenBtn").disabled,true,
+    "Reopen is disabled before durable storage exists");
+  assert.equal(x.node("safeFocusNotReviewedBtn").disabled,true,
+    "Could not review must not mutate an unrelated existing cohort");
+  assert.equal(x.node("safeFocusRetryStorageBtn").style.display,'block',
+    "Visible retry action must replace misleading review actions");
   assert(x.messages.some(m=>/almacenamiento|storage/i.test(m)),
     "Explain the failure visibly instead of appearing unresponsive");
 }
@@ -85,8 +91,19 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   assert.equal(x.trace.filter(t=>t==="window.open").length,0);
   assert.equal(x.node("safeFocusConfirmBtn").disabled,true,
     "Blocked storage must disable Reviewed for the failed batch");
+  // An account or module switch cannot open stale rows from the prior account.
+  x.ctx.window.IGC_INSTAGRAM_PROFILES.active='second';
+  assert.equal(x.ctx.igcRetryFailedFocus(),false);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,0);
+  x.ctx.window.IGC_INSTAGRAM_PROFILES.active='first';
+  x.ctx.currentMode='followers';
+  assert.equal(x.ctx.igcRetryFailedFocus(),false);
+  x.ctx.currentMode='following';
+  // A retry while storage is still full must remain blocked, not open tabs.
+  assert.equal(x.ctx.igcRetryFailedFocus(),false);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,0);
   x.setStorageUnavailable(false);
-  assert.equal(x.ctx.openConfirmedFocusRows(batch,"foco 30","main",30),true,
+  assert.equal(x.ctx.igcRetryFailedFocus(),true,
     "Explicit retry after restoring storage should open the saved cohort");
   assert.equal(x.ctx.activeFocusBatch.rows.length,30);
   assert.equal(x.trace.filter(t=>t==="window.open").length,30,
@@ -94,6 +111,10 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   assert.equal(x.node("safeFocusPopup").style.display,"flex");
   assert.equal(x.node("safeFocusConfirmBtn").disabled,false,
     "Only the successfully persisted retry can be confirmed Reviewed");
+  assert.equal(x.node("safeFocusRetryStorageBtn").style.display,'none',
+    "Successful retry returns to the normal review interface");
+  assert.equal(x.ctx.igcFailedFocusBatch,null,
+    "A confirmed durable open clears the transient failed cohort");
 }
 // When large per-profile history no longer fits but active batch does, the
 // owner must still see the live batch and a visible warning rather than nothing.
