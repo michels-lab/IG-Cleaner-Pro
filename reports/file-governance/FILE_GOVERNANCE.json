@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "9af65e23696c6964da930c59b4add9797830f66edccb3407a9d48fcf47c9ec24",
-  "evidence_fingerprint": "dcffc9475e7425c8ce02efa867901d9348ec643546c23d4fe01abb2d051bf3ec",
+  "inventory_fingerprint": "b2ae268ccd4ae07a3a25493c74fc663944c7c9a33bd2d2d2a7f544d03f47eeb1",
+  "evidence_fingerprint": "e9938819c3b9a4b5382c4923d05e9f1ae73d218310a499838bffcde863753676",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "515ed327867034bab304c44c9456d33dfc918a48"
+      "blob": "10cd57603a4aa02e293d25723acf5ef9b32ce755"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -3186,11 +3186,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "731ae227cc373b1f",
+      "id": "011de4147304e111",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/focus-confirmation-storage-popup-regression.test.cjs",
+      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-confirmation-storage-popup-regression.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
