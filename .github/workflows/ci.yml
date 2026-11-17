@@ -155,6 +155,7 @@ jobs:
           node tests/focus-batch-priority.test.cjs
           node tests/manual-batches-no-repeat.test.cjs
           node tests/focus-default-reviewed.test.cjs
+          node tests/focus-confirmation-storage-popup-regression.test.cjs
           node tests/focus-counters-no-rebound.test.cjs
           node tests/focus-aba-persistence-918.test.cjs
           node tests/cloud-review-monotonic.test.cjs
