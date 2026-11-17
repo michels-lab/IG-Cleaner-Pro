@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "144644663bda2f9923eade31bdbb3ca07aabcdf030ff9d14b82aed1bc467d327",
+  "inventory_fingerprint": "bc7b3793d70d3dc5b1c7c8cd44c293ceb23adbf5b15403d7b453921cce43e4de",
   "evidence_fingerprint": "840859f69ebac72cbafd9f6d9a77106305a9a30a733835d55a12af0589d7b64b",
   "files": [
     {
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "7ccab9e3c9dfb45138f31617e46e181eab9d5caa"
+      "blob": "bd9628c536a86b8c0d3c01823cf8f05cd9e9e5aa"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -2108,7 +2108,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e72abf7f8de4b8d54b8f6a7f27a2476e0d731597"
+      "blob": "469eacd3928edca25e6c9200bce048129576fd00"
     },
     {
       "path": "tests/focus-confirmation-storage-popup-regression.test.cjs",
