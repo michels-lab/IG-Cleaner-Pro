@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 436,
-  "classified_files_total": 432,
+  "tracked_files_total": 437,
+  "classified_files_total": 433,
   "docs_content_inspected": 108,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 133,
+    "test": 134,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 8
   },
   "finding_total": 8,
-  "inventory_fingerprint": "6a8e0906cbf35c5b99f3959b9bef92b618e0d20365e0b12fccf5677b95a7a4bb",
+  "inventory_fingerprint": "196336d1c07558ea8b50111a0f4a242ab2d8ee6075c23c07c159bc528f4347c9",
   "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
@@ -98,14 +98,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "788918029ccb35d0ae5262bb44b428ffe42afeeb"
+      "blob": "2c441b3f3197901d75cd1a727a2155c025cfff39"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "13ea610f3bc73d59d22aa70d2fa861cefdc292db"
+      "blob": "8f28ce5db508e48c9dcb81a8af3d0da8e4eeec23"
     },
     {
       "path": ".github/workflows/file-governance-audit.yml",
@@ -245,7 +245,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "7de08bed243c8f3cbcb30bcaa1d35561a00d1d4f"
+      "blob": "4a943428b2c096b904bd503f0c72cf843e842a4a"
     },
     {
       "path": "README.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "8b3b5ec6cf589c09f4afb61bdfdc224b698705ee"
+      "blob": "3d830ccad16df132101dd68a49d6a2931c1489e1"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2136,6 +2136,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "dcf36be8b17be8841faf2d6795113f6c4f029398"
+    },
+    {
+      "path": "tests/pending-double-check.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "940c4ce049afbf7fb2500156b6248f2fb1f57cb5"
     },
     {
       "path": "tests/pending-focus-reimport.test.cjs",
