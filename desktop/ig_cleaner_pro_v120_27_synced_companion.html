@@ -4661,6 +4661,7 @@ function setActiveFocusBatch(kind,rows,label){
     console.error('Focus: cannot persist active batch',e);
     activeFocusBatch=previous;
     activeExtraReviewBatch=previousExtra;
+    try{msg('Error de almacenamiento: no se pudo guardar la tanda. No abrí perfiles ni alteré revisiones; exporta respaldo.','e')}catch{}
     return false;
   }
   // History is secondary evidence; failure must not hide the confirmation UI.
@@ -7620,10 +7621,9 @@ function openDoubleCheckNoMeSigueN(n=30){
     return;
   }
 
+  if(setActiveFocusBatch('main',rows,`double check no me siguen ${n}`)===false)return false;
   rows.forEach(r=>seen.add(r.username));
   saveDoubleCheckSeen(seen);
-
-  setActiveFocusBatch('main',rows,`double check no me siguen ${n}`);
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`double check no me siguen ${n}`);
 
@@ -7690,7 +7690,7 @@ function openRecheckNotFollowingN(n=30){
     return;
   }
 
-  setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`);
+  if(setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`)===false)return false;
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`revisión nueva no me siguen ${n}`);
   logAction('focus',`revisión nueva no me siguen ${n}: ${rows.length} perfiles abiertos`,{count:rows.length,source:'recheck_not_following',requested:n});
@@ -10507,7 +10507,7 @@ function igcPendingDoubleStart(rows,label){
   if(!igcConfirmBatchQuality(chosen,'pending',label)){
     msg('Segunda revisión cancelada sin cambios de estado.','i');return false;
   }
-  setActiveFocusBatch('pending',chosen,label);
+  if(setActiveFocusBatch('pending',chosen,label)===false)return false;
   activeFocusBatch.reviewMode='double';
   activeExtraReviewBatch=activeFocusBatch;
   saveActiveFocusBatch();
@@ -11431,7 +11431,7 @@ function launchReopenFocusBatch(rows,label,n=30,source='recheck_not_following'){
   const target=Number(n||rows.length)||rows.length;
   const finalRows=rows.slice(0,target);
 
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
   // Siempre mostrar confirmación después de abrir, incluyendo recheck/double check.
@@ -11627,7 +11627,7 @@ function launchRecheckFocusBatchV95(rows,label,n=30,source='recheck_not_followin
   const finalRows=rows.slice(0,target);
 
   // Keep active batch so the confirmation buttons know what to save.
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
 
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
@@ -11833,7 +11833,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
   }
 
   const label=mode==='double'?`double check no me siguen ${n}`:`revisar de nuevo no me siguen ${n}`;
-  setActiveFocusBatch('main',rows,label);
+  if(setActiveFocusBatch('main',rows,label)===false)return false;
   activeExtraReviewBatch=activeFocusBatch;
 
   // Abrir inmediatamente dentro del click.
@@ -11951,7 +11951,7 @@ function closeSafeFocusPopup(){const p=document.getElementById('safeFocusPopup')
 function showSafeFocusPopup(kind,rows,label){
   const unresolved=(rows||[]).filter(r=>!activeBatchRowResolved(r,kind));
   if(!unresolved.length){clearActiveFocusBatch();closeSafeFocusPopup();msg('Esta tanda ya estaba resuelta; limpié el popup atorado.','s');return;}
-  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){setActiveFocusBatch(kind,unresolved,label);}
+  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){if(setActiveFocusBatch(kind,unresolved,label)===false)return false;}
   activeExtraReviewBatch=activeFocusBatch||{kind,rows:[...unresolved],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
