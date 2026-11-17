@@ -12109,7 +12109,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     if(button){button.disabled=true;button.title='No se puede confirmar una tanda que no quedó guardada';}
     const list=document.getElementById('safeFocusList');
     if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><b>@${esc(r.username)}</b><span>Sin abrir · guardado fallido</span></div>`).join('');
-    msg('Focus pausado: el navegador no permitió guardar la tanda. No abrí perfiles ni borré tus revisiones; exporta respaldo.','e');
+    msg('Focus pausado por error de almacenamiento: el navegador no permitió guardar la tanda. No abrí perfiles ni borré tus revisiones; exporta respaldo.','e');
     return false;
   }
   // Pending 'opened' means an owner-approved OPEN ATTEMPT, not a review or
