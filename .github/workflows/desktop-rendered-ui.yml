@@ -28,7 +28,7 @@ concurrency:
 jobs:
   desktop-chromium-render:
     name: Launch distributable HTML; screenshot Home and About
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
