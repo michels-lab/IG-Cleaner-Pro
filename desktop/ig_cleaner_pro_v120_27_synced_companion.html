@@ -4611,8 +4611,9 @@ function igcEncodeActiveFocusBatch(batch){
 function igcDecodeActiveFocusBatch(saved){
   if(!saved||!Array.isArray(saved.rows))return saved;
   if(saved.storageFormat!==2)return saved;
-  return {...saved,rows:saved.rows.map(values=>{
-    if(!Array.isArray(values))throw Error('Invalid compact Focus row');
+  const {storageFormat,...cohort}=saved;
+  return {...cohort,rows:saved.rows.map(values=>{
+    if(!Array.isArray(values)||values.length!==IGC_FOCUS_ROW_FIELDS.length)throw Error('Invalid compact Focus row');
     const row={};
     IGC_FOCUS_ROW_FIELDS.forEach((field,index)=>{if(values[index]!==null&&values[index]!==undefined)row[field]=values[index]});
     if(typeof row.username!=='string'||!row.username)throw Error('Invalid Focus username');
