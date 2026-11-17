@@ -8229,6 +8229,8 @@ function exportFullBackup(){
     pendingOpened:Array.from(pendingOpenedSet),
     pendingReviewedMeta,
     pendingSnoozeMap,
+    // Per-Instagram second-pass cohort. Never lose this no-repeat ledger on backup.
+    pendingDoubleCheckSeen:[...igcPendingDoubleSeen()],
     activeFocusBatch,
     profileHistory,
     guidedSession100,
@@ -8276,6 +8278,15 @@ function importFullBackup(input){
       if(Array.isArray(data.pendingOpened)){pendingOpenedSet=new Set(data.pendingOpened);savePendingOpened();}
       if(data.pendingReviewedMeta&&typeof data.pendingReviewedMeta==='object'){pendingReviewedMeta=data.pendingReviewedMeta;savePendingReviewedMeta();}
       if(data.pendingSnoozeMap&&typeof data.pendingSnoozeMap==='object'){pendingSnoozeMap=data.pendingSnoozeMap;savePendingSnoozeMap();}
+      if(Array.isArray(data.pendingDoubleCheckSeen)){
+        // Import only the SAME Instagram account (checked above), and UNION
+        // old visit attempts with the current cycle. A stale backup may not
+        // silently reopen previously inspected requests or erase newer marks.
+        const combined=new Set([...igcPendingDoubleSeen(),
+          ...data.pendingDoubleCheckSeen.map(cleanUsername).filter(Boolean)]);
+        igcPendingDoubleSaveSeen(combined);
+        igcPendingDoubleSelected.clear();
+      }
       if(data.activeFocusBatch&&typeof data.activeFocusBatch==='object'){activeFocusBatch=data.activeFocusBatch;saveActiveFocusBatch();}
       if(data.profileHistory&&typeof data.profileHistory==='object'){profileHistory=data.profileHistory;saveProfileHistory();}
       if(data.guidedSession100&&typeof data.guidedSession100==='object'){guidedSession100=data.guidedSession100;saveGuidedSession100();}
@@ -8288,6 +8299,7 @@ function importFullBackup(input){
       }
       saveConfig();
       buildRows();applyFilters();renderBackupStats();renderActionLog();
+      renderPendingRequests?.();
       logAction('import','Se importó respaldo completo',{source:'respaldo'});
       msg('Respaldo importado.','s');
     }catch(e){msg('No pude importar el respaldo: '+e.message,'e')}
@@ -8322,6 +8334,9 @@ function clearLocalProgress(){
   if(!confirm('Delete protected profiles, reviews and saved settings?'))return;
   protectedSet.clear();doneSet.clear();
   reviewedMeta={};actionLog=[];snoozeMap={};dailyGoal=0;pendingRequestsRaw=[];pendingOpenedSet=new Set();pendingReviewedMeta={};pendingSnoozeMap={};activeFocusBatch=null;profileHistory={};guidedSession100=null;internalSnapshot=null;snapLostFollowers=[];snapGainedFollowers=[];snapNewFollowing=[];snapRemovedFollowing=[];localStorage.removeItem(LS_PROT);localStorage.removeItem(LS_DONE);localStorage.removeItem(LS_REVIEW_META);localStorage.removeItem(LS_ACTION_LOG);localStorage.removeItem(LS_SNOOZE);localStorage.removeItem(LS_DAILY_GOAL);localStorage.removeItem(LS_PENDING_REQUESTS);localStorage.removeItem(LS_PENDING_OPENED);localStorage.removeItem(LS_PENDING_REVIEW_META);localStorage.removeItem(LS_PENDING_SNOOZE);localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);localStorage.removeItem(LS_PROFILE_HISTORY);localStorage.removeItem(LS_GUIDED_SESSION_100);localStorage.removeItem(LS_INTERNAL_SNAPSHOT);localStorage.removeItem(LS_CONFIG);
+  // Explicit all-progress reset must also remove the independent second-pass cycle.
+  localStorage.removeItem(IGC_PENDING_DOUBLE_SEEN);
+  igcPendingDoubleSelected.clear();
   applyFilters();renderBackupStats();msg('Progreso local borrado.','w');
 }
 

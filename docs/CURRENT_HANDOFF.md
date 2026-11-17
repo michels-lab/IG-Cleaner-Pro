@@ -1,3 +1,9 @@
+## 2026-11-15 local / 2026-11-16 UTC — CURRENT v120.77 officially published; next v120.78 NOT authorized
+
+- Latest official stable: [v120.77](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77), exact tag `7326d3293fabc606ddf336cfedc35c324b63795e`, official [publisher 43811216485](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43811216485) **SUCCESS on 4/4 governed jobs**, 9 SHA-256-verified stable-only assets (Windows Setup, production-signed stable APK, standalone HTML/ZIP). No Developer Edition/RC.
+- PR #361 merged no-repeat durable Chrome navigation history; PR #362 merged v120.77 native Windows HTTP 403 correction and distribution. Owner authorized v120.77 to test official stable binaries on real devices, **not** to assert verified actual Instagram actions. P0 #360 and real Unfollow/Cancel/two-account owner acceptance remain OPEN.
+- Source of release receipts and exact public hashes: [GRANADA v120.77 FINAL receipt](GRANADA_V12077_FINAL_RECEIPT_2026-11-15.md). Post-publish reconciliation consumes `v120.77` authorization, reserves **v120.78 unauthorized**, retains `release_hold=true`, `owner_final_acceptance.approved=false` and historical logs. Do not republish a prior tag.
+
 ## 2026-10-28 — v120.71 official FINAL, verified and current
 
 - Published release: [v120.71](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.71) (12 assets, `prerelease=false`, exact tagged commit `74a91104dd2f2f29c88b8abadbff76a6f3bfd466`). [Governed publisher 40608318126](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/40608318126) passed 5/5 required jobs. `v120.72` is reserved only, NOT authorized for publication.
