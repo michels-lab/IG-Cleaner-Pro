@@ -34,4 +34,40 @@ assert.equal(run([ev("open"),ev("unconfirmed")]),true);
 ctx.reviewedMeta={};
 // Legacy opened rows without events remain blocked from normal Focus.
 assert.equal(run([]),true);
+
+const unconfirmedStart=html.indexOf("function markSafeFocusNotReviewed(");
+const unconfirmedEnd=html.indexOf("function confirmSafeFocusReviewed(",unconfirmedStart);
+assert(unconfirmedStart!==-1&&unconfirmedEnd>unconfirmedStart);
+const unconfirmedSource=html.slice(unconfirmedStart,unconfirmedEnd);
+function checkRetrySaveFailure(fail){
+ let closed=false;
+ const messages=[],user="pending.alpha",prior={username:user,opened:1,events:[{event:"open",details:{kind:"main"}}]};
+ const batch={kind:"main",rows:[{username:user}],label:"foco 30",openedAt:Date.now()};
+ const q={
+  profileHistory:{[user]:JSON.parse(JSON.stringify(prior))},
+  activeExtraReviewBatch:batch,activeFocusBatch:batch,Date,JSON,console:{error(){}},
+  recordProfileHistory(u,event,details){q.profileHistory[u].events.push({event,details})},
+  saveProfileHistory(){if(fail)throw Error("QuotaExceededError")},
+  msg:m=>messages.push(String(m)),
+  logAction(){},buildRows(){},applyFilters(){},renderModuleDashboard(){},
+  clearActiveFocusBatch(){closed=true;q.activeExtraReviewBatch=null;q.activeFocusBatch=null},
+  closeSafeFocusPopup(){},maybeContinueGuidedSession(){}
+ };
+ vm.createContext(q);vm.runInContext(unconfirmedSource,q);
+ assert.doesNotThrow(()=>q.markSafeFocusNotReviewed());
+ return {closed,messages,prior,history:q.profileHistory[user],batch:q.activeFocusBatch};
+}
+{
+ const failure=checkRetrySaveFailure(true);
+ assert.equal(failure.closed,false,"If requeue cannot persist, keep batch recoverable");
+ assert.deepEqual(failure.history,failure.prior,"Rollback in-memory unconfirmed event on failed save");
+ assert(failure.batch,"Do not discard unconfirmed batch when save failed");
+ assert(failure.messages.some(m=>/almacenamiento|guardar|storage/i.test(m)),"Explain storage issue to owner");
+}
+{
+ const success=checkRetrySaveFailure(false);
+ assert.equal(success.closed,true,"Persisted explicit owner release clears batch");
+ assert.equal(success.history.events.at(-1).event,"unconfirmed");
+}
+
 console.log("PASS: a failed owner-confirmed Focus attempt can be retried without recycling reviewed or unrelated profiles");
