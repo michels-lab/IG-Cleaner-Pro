@@ -31,17 +31,19 @@
     173,
     176
   ],
-  "next_version": "v120.78",
-  "notes": "v120.77 is current published stable; owner explicitly requested 'op granada y release' on 2026-11-17 for v120.78, with one-time post-publication device-review exception and unchanged release_hold=true. Source Focus fix #366 + #367 integrated. Live Instagram dual-account and #360 remain unverified; no false acceptance. Full official publisher checks mandatory.",
+  "next_version": "v120.79",
+  "notes": "Owner-requested official stable v120.78 published 2026-11-17T21:06:55Z, publisher run 44174641647, 9 SHA-256 assets, 4/4 jobs success. Prior one-time exact-tag owner device-review authorization consumed. v120.79 reserved WITHOUT authorization. Existing release_hold=true, owner_final_acceptance=false and P0 #360 remain; physical owner Instagram verification not performed by CI.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.78",
     "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "owner_direct_quote": "op granada y release",
-    "disclosure": "One-time owner-directed FINAL stable v120.78 publication to permit installed real-account review after publish. No approval of live Instagram operations, #360, dual-account robot automation, physical Windows/Android or cross-device acceptance. Automated exact-commit production-signed Android, installed Windows, rendered UI, checksums and update verification remain mandatory. No RC/Developer.",
-    "previous_published_release": "v120.77"
+    "disclosure": "CONSUMED: single-use stable v120.78 owner-device-review authorization fully used by official run 44174641647, tagged source 1c75831c59b457171c113978a6acb282d915d71c. No implied authorization for v120.79; P0 #360 and real account acceptance still open.",
+    "previous_published_release": "v120.77",
+    "consumed_by_release": "v120.78",
+    "consumed_run": 44174641647
   },
   "owner_device_review_release_override_history": [
     {
