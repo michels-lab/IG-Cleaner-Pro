@@ -42,7 +42,7 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     igcBatchQuality:rs=>({total:rs.length,confirmed:rs.length,changes:0,historical:0,unverifiable:0,stable:0}),
     esc:String,clearActiveFocusBatch(){ctx.activeFocusBatch=null;ctx.activeExtraReviewBatch=null},
     closeSafeFocusPopup(){node("safeFocusPopup").style.display="none"},
-    allMainFocusOpenableRows:()=>rows,focusBatchFill:r=>r,
+    allMainFocusOpenableRows:()=>rows.filter(r=>!ctx.activeFocusBatch?.rows?.some(x=>x.username===r.username)),focusBatchFill:r=>r,
     igcConfirmBatchQuality(){trace.push("quality");return true},
     msg(txt){messages.push(String(txt))},
     logAction(){},forceLiveRefresh(){},
@@ -62,6 +62,10 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     "Do not visit accounts when the active unconfirmed batch cannot be persisted");
   assert.equal(x.node("safeFocusPopup").style.display,"flex",
     "Show the review/recovery panel even if localStorage is full");
+  assert.equal(x.ctx.activeFocusBatch,null,"No phantom in-memory cohort after persistence failure");
+  assert.equal(x.ctx.activeExtraReviewBatch,null,"The unpersisted batch must be fully rolled back");
+  assert.equal(x.ctx.allMainFocusOpenableRows().length,2,
+    "Remaining count must not decrease on an unpersisted focus batch and regenerate on reload");
   assert.equal(x.node("safeFocusConfirmBtn").disabled,true,
     "A batch which cannot be persisted must never be marked Reviewed");
   assert(x.messages.some(m=>/almacenamiento|storage/i.test(m)),
