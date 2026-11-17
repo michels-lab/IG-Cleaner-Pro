@@ -17,6 +17,7 @@ const src=[
 new vm.Script(src);
 function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   const trace=[],messages=[],nodes=new Map();
+  let storageUnavailable=quota;
   const node=id=>{
     if(!nodes.has(id))nodes.set(id,{
       id,textContent:"",innerHTML:"",value:"",disabled:false,style:{display:"none"},
@@ -33,8 +34,8 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     Date,Number,Math,JSON,Set,Array,String,
     document:{getElementById:node},
     activeFocusBatch:null,activeExtraReviewBatch:null,
-    safeBatchRow:x=>({...x}),recordRowsHistory(){if(quota||historyQuota)throw Error("QuotaExceededError")},
-    saveActiveFocusBatch(){if(quota)throw Error("QuotaExceededError")},
+    safeBatchRow:x=>({...x}),recordRowsHistory(){if(storageUnavailable||historyQuota)throw Error("QuotaExceededError")},
+    saveActiveFocusBatch(){if(storageUnavailable)throw Error("QuotaExceededError")},
     renderActiveBatchDock(){},
     activeBatchRowResolved:()=>false,
     igcWhyOpened:()=>"",igcProfileHistoryText:()=>"",igcReviewChangeInfo:()=>({text:"",changed:false}),
@@ -52,7 +53,7 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   };
   vm.createContext(ctx);
   vm.runInContext(src,ctx,{timeout:2000});
-  return {ctx,rows,trace,messages,node};
+  return {ctx,rows,trace,messages,node,setStorageUnavailable:value=>{storageUnavailable=Boolean(value)}};
 }
 // Quota failure must be explicit, not silently stop after owner accepts the dialog.
 {
@@ -70,6 +71,29 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     "A batch which cannot be persisted must never be marked Reviewed");
   assert(x.messages.some(m=>/almacenamiento|storage/i.test(m)),
     "Explain the failure visibly instead of appearing unresponsive");
+}
+// A failed 30-person save must not consume candidates, and repairing storage
+// must allow an explicit new attempt without a refresh or a phantom reservation.
+{
+  const x=scenario({quota:true});
+  const batch=Array.from({length:30},(_,i)=>({
+    username:"retry."+i,href:"https://www.instagram.com/retry."+i+"/",
+    followsBack:false,relationGood:false
+  }));
+  assert.doesNotThrow(()=>x.ctx.openConfirmedFocusRows(batch,"foco 30","main",30));
+  assert.equal(x.ctx.activeFocusBatch,null);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,0);
+  assert.equal(x.node("safeFocusConfirmBtn").disabled,true,
+    "Blocked storage must disable Reviewed for the failed batch");
+  x.setStorageUnavailable(false);
+  assert.equal(x.ctx.openConfirmedFocusRows(batch,"foco 30","main",30),true,
+    "Explicit retry after restoring storage should open the saved cohort");
+  assert.equal(x.ctx.activeFocusBatch.rows.length,30);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,30,
+    "Retry should open each requested profile exactly once");
+  assert.equal(x.node("safeFocusPopup").style.display,"flex");
+  assert.equal(x.node("safeFocusConfirmBtn").disabled,false,
+    "Only the successfully persisted retry can be confirmed Reviewed");
 }
 // When large per-profile history no longer fits but active batch does, the
 // owner must still see the live batch and a visible warning rather than nothing.
