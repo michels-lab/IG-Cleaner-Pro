@@ -1,3 +1,10 @@
+## 2026-11-17 — GRANADA: Pending Double Check full-backup and monotonic no-repeat recovery
+
+- **Bug encontrado:** `exportFullBackup()` omitía `igc_pending_double_check_seen_v1`; restaurar o migrar el estado podía presentar de nuevo perfiles previamente inspeccionados en la segunda ronda, pese a conservar `pendingReviewedMeta` y la navegación guardada.
+- **Corrección real:** respaldos completos incluyen `pendingDoubleCheckSeen`. Su importación valida el Instagram activo como ya exige el importador, combina el ledger respaldado con el ledger local más reciente (UNIÓN; nunca rebobina), descarta entradas inválidas, conserva respaldos anteriores sin este campo y actualiza el contador de Pending. El borrado local explícito también reinicia este ciclo, como corresponde al borrado de todo el progreso.
+- **Pruebas:** nuevo `tests/pending-double-check-backup.test.cjs` conectado al job Desktop de CI: 45 visitas, lotes 30+15, restauración idempotente, respaldo anterior, valor corrupto, dos cuentas aisladas, conservación de historial previo y limpieza explícita.
+- **Publicación:** v120.77 es el último release oficial; el código de Double Check de #364 y este respaldo NO están en un instalador publicado. v120.78 continúa reservada SIN autorización. Los P0 #360 y aceptación de robots con cuentas reales siguen abiertos.
+
 ## 2026-11-15 local / 2026-11-16 UTC — v120.77 GRANADA FINAL officially published
 
 - **OFFICIAL PUBLISHED stable:** [v120.77](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77), tag SHA `7326d3293fabc606ddf336cfedc35c324b63795e`, published 2026-11-16T05:45:01Z. [Governed official publisher 43811216485](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/43811216485) **4/4 required jobs SUCCESS** on the exact tag: permission, native installed Windows Setup/Chromium, rendered Android+Desktop Home/About evidence, production-signed stable Android installed/started, immutable 9-asset checksum-verified publication. No RC/beta/Developer artifacts.
