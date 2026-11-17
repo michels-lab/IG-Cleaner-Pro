@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "3054137f371943c29cdd154292ba3494d06175067f9cbf7ba0337fae1cd6e461",
-  "evidence_fingerprint": "40c750d28856443b72a047095a27cc54c5c1627d8c794498bfa2e3bfd5fc3dcd",
+  "inventory_fingerprint": "5ca7e6ec81b5e175f0c2484eae3c8b05633c56a4882c7d01355f78cd03110663",
+  "evidence_fingerprint": "8741daa3955cf0139e477c9392b971b8f6b537551720448ef5801a6b1b030481",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "bd9628c536a86b8c0d3c01823cf8f05cd9e9e5aa"
+      "blob": "f4b314120c8488250d1bc616d281b5f4cf2f6798"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -2220,7 +2220,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "940c4ce049afbf7fb2500156b6248f2fb1f57cb5"
+      "blob": "f8df93875dcf3de336ebb4cbcac17be76cc40be8"
     },
     {
       "path": "tests/pending-focus-reimport.test.cjs",
@@ -3214,11 +3214,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "f7b55b8d83d54dab",
+      "id": "d8b1ec4e044349bc",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "3 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-failed-attempt-requeue.test.cjs, tests/focus-unconfirmed-keeps-prior-reviews.test.cjs",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-failed-attempt-requeue.test.cjs, tests/focus-unconfirmed-keeps-prior-reviews.test.cjs, tests/pending-double-check.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
