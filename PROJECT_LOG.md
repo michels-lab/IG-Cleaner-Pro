@@ -1,3 +1,10 @@
+## 2026-11-17 — Operación Granada: recuperación explícita de Focus tras bloqueo de almacenamiento
+
+- El propietario reportó «Focus pausado · almacenamiento» y «Sin abrir · guardado fallido» sin pestañas. Una tentativa fallida no es una revisión.
+- Código de lote e historial compactos y migración reversible (`27e5d762`, `e9b1c352`), diagnóstico privado (`9c61ab56`), protección ante historial ilegible (`69cc55ab`). [CI verde 3450a638](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44197985712).
+- Recuperación explícita: botón Reintentar guardar y abrir, deshabilitados Reviewed/Reopen/Can't review/Snooze mientras el guardado falla; reintento solo con la misma cuenta, sección y cohorte, sin otro lote activo y sin abrir pestañas antes de persistir. Código `7cc0a0f1`, tests `1d74a4e6`; [CI](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44199379873) con contrato Desktop PASS, Android/RLS aún en ejecución cuando se registró.
+- Issue [#371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371) abierto; QA Instagram real, rebotes [#360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360), Chrome/Windows/Android físicos sin validar. Último release público v120.78; v120.79 no publicado. No borrar datos del navegador; exportar respaldo.
+
 ## 2026-11-17 — InstaCleaner Pro v120.78 FINAL stable published (source and owner QA distinguished)
 
 - **Official stable v120.78 published:** [GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78) at 2026-11-17T21:06:55Z, immutable tag/source SHA `1c75831c59b457171c113978a6acb282d915d71c`. [Governed publisher #44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647) finished **4/4 SUCCESS**. Nine released assets with SHA-256 digests, production-signed stable Android APK, standalone HTML/ZIP, Windows native Setup/robot ZIP; no RC, beta or Developer binaries.
