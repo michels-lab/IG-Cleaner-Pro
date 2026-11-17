@@ -15,7 +15,7 @@ const src=[
   section("function openConfirmedFocusRows(","\n</script>")
 ].join("\n");
 new vm.Script(src);
-function scenario({quota=false,openThrows=false}={}){
+function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   const trace=[],messages=[],nodes=new Map();
   const node=id=>{
     if(!nodes.has(id))nodes.set(id,{
@@ -33,7 +33,7 @@ function scenario({quota=false,openThrows=false}={}){
     Date,Number,Math,JSON,Set,Array,String,
     document:{getElementById:node},
     activeFocusBatch:null,activeExtraReviewBatch:null,
-    safeBatchRow:x=>({...x}),recordRowsHistory(){if(quota)throw Error("QuotaExceededError")},
+    safeBatchRow:x=>({...x}),recordRowsHistory(){if(quota||historyQuota)throw Error("QuotaExceededError")},
     saveActiveFocusBatch(){if(quota)throw Error("QuotaExceededError")},
     renderActiveBatchDock(){},
     activeBatchRowResolved:()=>false,
@@ -66,6 +66,17 @@ function scenario({quota=false,openThrows=false}={}){
     "A batch which cannot be persisted must never be marked Reviewed");
   assert(x.messages.some(m=>/almacenamiento|storage/i.test(m)),
     "Explain the failure visibly instead of appearing unresponsive");
+}
+// When large per-profile history no longer fits but active batch does, the
+// owner must still see the live batch and a visible warning rather than nothing.
+{
+  const x=scenario({historyQuota:true});
+  assert.equal(x.ctx.openConfirmedFocusRows(x.rows,"foco 30","main",30),true);
+  assert.equal(x.node("safeFocusPopup").style.display,"flex");
+  assert.equal(x.trace.filter(t=>t==="window.open").length,2);
+  assert.equal(x.ctx.activeFocusBatch.rows.length,2);
+  assert(x.messages.some(m=>/historial/i.test(m)),
+    "History quota failures must be disclosed without suppressing Reviewed");
 }
 // Browser rejects every tab: Reviewed/recovery modal still visible, no automatic review.
 {
