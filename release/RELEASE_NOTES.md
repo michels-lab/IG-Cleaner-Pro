@@ -1,3 +1,13 @@
+## v120.79 — Focus storage, retry and historical decision integrity (release requested 2026-11-17)
+
+**Staging only:** Owner-authorized FINAL stable subject to exact-source publisher gates. No claim of real logged-in Instagram acceptance.
+
+- Compact Focus active cohorts and historical events reduce browser storage pressure while retaining legacy backups and event metadata.
+- Quota failures show redacted diagnostics and explicit retry for exactly the same account/section/cohort; no tabs or Reviewed before storage succeeds.
+- «Couldn't review yet» and Pending Double Check now preserve older Reviewed, Done, Pending decisions and protect against failed writes.
+- Automated regressions cover 30-profile batches, 789-profile histories, A/B account isolation and storage failures.
+- Physical Instagram Focus, counter persistence, Windows Unfollow/Cancel and cross-device acceptance remain pending. Export backup before moving the standalone HTML between paths/browsers.
+
 ## v120.78 — Granada: Focus 30 persistent cohort repair and safe Reviewed recovery (2026-11-17)
 
 **Publication verified:** official [v120.78 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78), tag `1c75831c59b457171c113978a6acb282d915d71c`, [publisher 44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647) 4/4 SUCCESS, 9 SHA-256 verified public stable-only assets. [Full receipt](../docs/GRANADA_V12078_FINAL_RECEIPT_2026-11-17.md). The one-time release authorization is now consumed, next v120.79 not authorized; owner's real-account physical acceptance remains pending.

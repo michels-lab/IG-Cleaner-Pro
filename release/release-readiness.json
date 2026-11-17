@@ -32,18 +32,16 @@
     176
   ],
   "next_version": "v120.79",
-  "notes": "Official FINAL v120.78 published 2026-11-17 UTC through successful governed publisher run 44174641647, exact tag 1c75831c and 9 SHA256-verified stable-only assets; one-time device-review override now consumed. v120.79 reserved WITHOUT authorization. release_hold=true, physical real Instagram and P0 #360 acceptance unverified.",
+  "notes": "One official stable v120.79 authorized by owner on 2026-11-17 for post-publication live-account evaluation. All real-world acceptance remains open; exact-commit UI, installed Windows, signed Android launch, SHA256 assets and updater still mandatory. Never publish RC or Developer edition.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.78",
+    "authorized": true,
+    "release_tag": "v120.79",
     "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "owner_direct_quote": "op granada y release",
-    "disclosure": "Consumed: stable v120.78 officially published 2026-11-17 UTC. This specific owner instruction must not authorize v120.79 or claim completion of P0 #360 or device acceptance.",
-    "previous_published_release": "v120.77",
-    "consumed_by_release": "v120.78",
-    "consumed_run": 44174641647
+    "disclosure": "One-time owner-requested stable release for physical browser verification of Focus storage, Reviewed/Pending preservation and counter persistence. No proof of live Instagram actions; full automated publisher gates required. Original release_hold and owner_final_acceptance stay unchanged.",
+    "previous_published_release": "v120.78"
   },
   "owner_device_review_release_override_history": [
     {
@@ -67,6 +65,18 @@
       "disclosure": "Consumed by official stable v120.77 release on 2026-11-16 UTC; not reusable for v120.78.",
       "consumed_by_release": "v120.77",
       "consumed_run": 43811216485
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.78",
+      "source": "explicit-owner-chat-instruction-2026-11-17",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "owner_direct_quote": "op granada y release",
+      "disclosure": "Consumed: stable v120.78 officially published 2026-11-17 UTC. This specific owner instruction must not authorize v120.79 or claim completion of P0 #360 or device acceptance.",
+      "previous_published_release": "v120.77",
+      "consumed_by_release": "v120.78",
+      "consumed_run": 44174641647
     }
   ]
 }
