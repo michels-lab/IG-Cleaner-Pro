@@ -60,7 +60,7 @@ function checkRetrySaveFailure(fail){
 {
  const failure=checkRetrySaveFailure(true);
  assert.equal(failure.closed,false,"If requeue cannot persist, keep batch recoverable");
- assert.deepEqual(failure.history,failure.prior,"Rollback in-memory unconfirmed event on failed save");
+ assert.equal(JSON.stringify(failure.history),JSON.stringify(failure.prior),"Rollback in-memory unconfirmed event on failed save");
  assert(failure.batch,"Do not discard unconfirmed batch when save failed");
  assert(failure.messages.some(m=>/almacenamiento|guardar|storage/i.test(m)),"Explain storage issue to owner");
 }
