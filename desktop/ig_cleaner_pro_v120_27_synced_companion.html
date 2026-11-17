@@ -7428,8 +7428,14 @@ function isPreviouslyHandledForNormalFocus(row,kind='main'){
   if(!h)return false;
   const relevant=kind==='main'?['main','following','manual']:['followers','mutual'];
   const events=Array.isArray(h.events)?h.events:[];
-  if(events.some(e=>['open','reopen','review'].includes(e?.event) &&
-      relevant.includes(String(e.details?.kind||e.details?.section||h.lastSection||''))))return true;
+  const scopedEvents=events.filter(e=>['open','reopen','review','unconfirmed'].includes(e?.event) &&
+      relevant.includes(String(e.details?.kind||e.details?.section||h.lastSection||'')));
+  // A genuine owner "Couldn't review yet" releases ONLY that unconfirmed
+  // attempt back to Focus. The old open event remains as historical evidence,
+  // but is not a review and must not permanently consume an unvisited profile.
+  // Saved reviewedMeta/doneSet above always wins and cannot be reopened.
+  if(scopedEvents.length && scopedEvents[scopedEvents.length-1].event==='unconfirmed')return false;
+  if(scopedEvents.some(e=>['open','reopen','review'].includes(e.event)))return true;
   // Legacy history lacks event arrays; use the saved last section, not another
   // Instagram module's unrelated open counter.
   if(relevant.includes(String(h.lastSection||'')) &&
