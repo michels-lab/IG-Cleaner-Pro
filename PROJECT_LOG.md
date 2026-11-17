@@ -1,3 +1,11 @@
+## 2026-11-17 — Owner-directed Operación Granada: stable v120.78 publication authorization
+
+- Owner requested **"op granada y release"** after integrated PR #366 and docs PR #367. **Exact-version one-time** final stable v120.78 publication only; not product completion or owner acceptance.
+- Release version synchronized in Desktop HTML/About, Android Gradle/versionName/versionCode, production signing metadata and manifest artifact names. Persistent Android signer fingerprint retained; no new secrets or Developer edition.
+- Release request now authorizes one normal v120.78 publisher; release readiness carries matching new owner post-publication device-review exception with release_hold=true, unfinished critical acceptance false and open P0 issues retained. The old v120.77 authorization remains consumed in history; no standing permission.
+- Official publisher must pass exact-SHA Windows installer + real offline Chromium, Android signed production install/launch, rendered visual Home/About, SHA-256 integrity and update feed. **NOT YET PUBLISHED at staging**; current stable v120.77 until GitHub release evidence confirms otherwise.
+- Product changes: Focus 30 no-tabs/rebounding counter root-cause correction [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366) (9/9 source checks), Pending Double Check state/backup, protections for all Focus/Recheck/Double Check variants. Owner physical testing and full P0 #360 remain open.
+
 ## 2026-11-17 — Operación Granada: Fusionado el arreglo del Focus 30 que descontaba perfiles sin abrir pestañas
 
 - **Resultado real:** PR [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366) integrada, commit de main `bc75385c0d1a78e2e64124b698b2aa69b6057341`; 9/9 jobs de CI de la versión fuente `91a5a8bc31577ba6de6375baf9211be50dd54dbb` SUCCESS.
