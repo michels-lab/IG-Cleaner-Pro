@@ -4661,8 +4661,13 @@ function activeBatchRowResolved(row,kind){
   const u=row?.username;
   if(!u)return true;
   if(kind==='pending'){
-    const reviewed=!!(pendingReviewedMeta&&pendingReviewedMeta[u]&&pendingReviewedMeta[u].reviewedAt);
+    const meta=pendingReviewedMeta?.[u];
+    const reviewed=!!meta?.reviewedAt;
     const snoozed=!!(pendingSnoozeMap&&pendingSnoozeMap[u]&&pendingSnoozeMap[u]>Date.now());
+    // Prior reviews never resolve a newly opened second-review batch.
+    if(activeFocusBatch?.kind==='pending' && activeFocusBatch?.reviewMode==='double'){
+      return snoozed || (reviewed && Number(meta.reviewedAt)>Number(activeFocusBatch.openedAt));
+    }
     return reviewed||snoozed;
   }
   if(kind==='mutual' || kind==='followers'){
@@ -11798,7 +11803,7 @@ function showSafeFocusPopup(kind,rows,label){
   activeExtraReviewBatch=activeFocusBatch||{kind,rows:[...unresolved],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
-  const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
+  const title=kind==='pending'?(activeFocusBatch?.reviewMode==='double'?'Pending Double Check · segunda revisión':'Revisión de pending requests'):(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
   const text=`Requested ${rows.length} profile tabs for ${kind}. Chrome may block repeated popups, especially after multiple batches. If any tab did not open, use the direct Open link beside that username below. Save the decision only after actually reviewing profiles.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
@@ -11812,6 +11817,19 @@ function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
   if(b.kind==='pending'){
+    if(b.reviewMode==='double'){
+      // Failed second review does NOT undo a previously confirmed decision.
+      b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',
+        {kind:'pending',label:b.label,mode:'double_check'}));
+      saveProfileHistory();
+      logAction('pending_double_unconfirmed',
+        'Pending Double Check sin nueva decisión: '+b.rows.length,
+        {count:b.rows.length,source:'pending_double_check'});
+      clearActiveFocusBatch();closeSafeFocusPopup();
+      renderPendingRequests();renderModuleDashboard();
+      msg('Double Check sin confirmar: conservé todas las revisiones anteriores.','i');
+      return;
+    }
     b.rows.forEach(r=>{pendingOpenedSet.delete(r.username);if(pendingReviewedMeta&&pendingReviewedMeta[r.username])delete pendingReviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'pending',label:b.label})});
     savePendingOpened();savePendingReviewedMeta();saveProfileHistory();logAction('pending_not_reviewed',`Pending no revisados: ${b.rows.length}`,{count:b.rows.length,source:'pending'});renderPendingRequests();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} pending volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
   }
@@ -11843,7 +11861,22 @@ function confirmSafeFocusReviewed(){
   closeExtraFocusModal();
   closeFocusDialogAfterDecision?.();
   if(b.kind==='pending'){
-    b.rows.forEach(r=>{pendingReviewedMeta[r.username]={reviewedAt:now,decision,label:b.label,riskScore:r.riskScore,riskLevel:r.riskLevel,riskReasons:r.riskReasons||[]};pendingOpenedSet.add(r.username)});
+    b.rows.forEach(r=>{
+      const previous=pendingReviewedMeta[r.username]||{};
+      const archived=b.reviewMode==='double' && previous.reviewedAt
+        ? (Array.isArray(previous.previousReviews)?previous.previousReviews:[]).concat([{
+            reviewedAt:previous.reviewedAt,decision:previous.decision,
+            label:previous.label||'',riskScore:previous.riskScore||0
+          }]).slice(-25)
+        : (Array.isArray(previous.previousReviews)?previous.previousReviews:[]);
+      pendingReviewedMeta[r.username]={reviewedAt:now,decision,label:b.label,
+        riskScore:r.riskScore,riskLevel:r.riskLevel,riskReasons:r.riskReasons||[],
+        ...(archived.length?{previousReviews:archived}:{}),
+        ...(b.reviewMode==='double'?{reviewSource:'pending_double_check'}:{})};
+      pendingOpenedSet.add(r.username);
+      if(b.reviewMode==='double')recordProfileHistory(r.username,'review',
+        {kind:'pending',decision,label:b.label,mode:'double_check'});
+    });
     savePendingReviewedMeta();savePendingOpened();saveProfileHistory();logAction('verify',`Pending marcado: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'pending',decision});renderPendingRequests();
   }else if(b.kind==='followers'){
     b.rows.forEach(r=>{const prev=currentMode;currentMode='followers';const meta=makeReviewMeta(r,decision,'followers_focus');meta.mode='followers';currentMode=prev;reviewedMeta[r.username]=meta;doneSet.add(r.username);if(['keep','suspicious_keep'].includes(decision))protectedSet.add(r.username);recordProfileHistory(r.username,'review',{kind:'followers',decision,label:b.label})});
