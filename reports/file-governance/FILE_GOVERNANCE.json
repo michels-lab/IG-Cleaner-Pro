@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 439,
-  "classified_files_total": 435,
+  "tracked_files_total": 442,
+  "classified_files_total": 438,
   "docs_content_inspected": 109,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,17 +18,18 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 135,
+    "test": 138,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "80a40d757f7c99136db8f04e11a553e9b0446d0f527de637905011bbeb495542",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "8f79956ec27dfcc0d46e403f28f327838b76f8b43b8aee1ad9be0c08448e480d",
+  "evidence_fingerprint": "86360ae1eae4a3142283e7999fcf823958b3ad3fe3fec66a88b9b984d4d50f59",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -98,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a738046ab8fa023a3ce286b2522de01e802bbd9e"
+      "blob": "5740ffa44d224a1e29ea9c8eb02beee412b22347"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -854,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "d141a1f9845e87fa690d708271c2a4a7d0c437c3"
+      "blob": "37e60d0d49e9568bd92384fbaa9cc493709291b5"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2089,6 +2090,13 @@
       "blob": "18022bbe3f72fb752dcbd80f5cce6e95fa9e7523"
     },
     {
+      "path": "tests/focus-confirmation-storage-popup-regression.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "04767afa547125e05f345476d6f81c3e599fa893"
+    },
+    {
       "path": "tests/focus-counters-no-rebound.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2101,6 +2109,20 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "5ee6777ad0bca6e5ee9c5166406a9075f7adcce8"
+    },
+    {
+      "path": "tests/focus-failed-attempt-requeue.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9c64f08ce1241c3103623c0f4c11a0f6020b966d"
+    },
+    {
+      "path": "tests/focus-storage-all-modes.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "2dbe84b1a6e8de31df7019c2f00e1ad04650b582"
     },
     {
       "path": "tests/live-relationships-browser.test.cjs",
@@ -3147,6 +3169,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "31a65b91c43cd0a3",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-confirmation-storage-popup-regression.test.cjs, tests/focus-failed-attempt-requeue.test.cjs, tests/focus-storage-all-modes.test.cjs",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
