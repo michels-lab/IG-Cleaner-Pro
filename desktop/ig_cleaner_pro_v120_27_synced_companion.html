@@ -4599,12 +4599,33 @@ function safeBatchRow(row){
     relationGood:!!row.relationGood
   };
 }
+// Compact only the active, unconfirmed cohort. The reviewed/pending ledgers
+// stay untouched. Arrays retain every safeBatchRow field without repeated keys.
+// Older plain-object cohorts remain readable for non-destructive upgrades.
+const IGC_FOCUS_ROW_FIELDS=['username','href','name','relation','riskScore','riskLevel','riskReasons','timestamp','dateMain','dateOther','iFollow','isFollower','followsBack','relationGood'];
+function igcEncodeActiveFocusBatch(batch){
+  if(!batch)return null;
+  return {...batch,storageFormat:2,
+    rows:(batch.rows||[]).map(row=>IGC_FOCUS_ROW_FIELDS.map(field=>row[field]===undefined?null:row[field]))};
+}
+function igcDecodeActiveFocusBatch(saved){
+  if(!saved||!Array.isArray(saved.rows))return saved;
+  if(saved.storageFormat!==2)return saved;
+  return {...saved,rows:saved.rows.map(values=>{
+    if(!Array.isArray(values))throw Error('Invalid compact Focus row');
+    const row={};
+    IGC_FOCUS_ROW_FIELDS.forEach((field,index)=>{if(values[index]!==null&&values[index]!==undefined)row[field]=values[index]});
+    if(typeof row.username!=='string'||!row.username)throw Error('Invalid Focus username');
+    return safeBatchRow(row);
+  })};
+}
 function saveActiveFocusBatch(){
-  if(activeFocusBatch)localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,JSON.stringify(activeFocusBatch));
+  if(activeFocusBatch)localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch)));
   else localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);
 }
 function loadActiveFocusBatch(){
-  try{activeFocusBatch=JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null')}catch{activeFocusBatch=null}
+  try{activeFocusBatch=igcDecodeActiveFocusBatch(JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null'))}
+  catch(e){console.error('Focus: saved cohort could not be decoded',e);activeFocusBatch=null}
   if(activeFocusBatch&&(!Array.isArray(activeFocusBatch.rows)||!activeFocusBatch.rows.length))activeFocusBatch=null;
 }
 function activeBatchUserSet(kind){
