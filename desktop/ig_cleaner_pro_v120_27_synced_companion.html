@@ -4652,11 +4652,24 @@ function renderActiveBatchDock(){
   return;
 }
 function setActiveFocusBatch(kind,rows,label){
+  const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
-  recordRowsHistory(activeFocusBatch.rows,'open',{kind,label});
   activeExtraReviewBatch=activeFocusBatch;
-  saveActiveFocusBatch();
-  renderActiveBatchDock();
+  // Persist the unconfirmed cohort FIRST. An exhausted browser storage quota
+  // must never silently turn a failed open into a saved 'open' history event.
+  try{saveActiveFocusBatch()}catch(e){
+    console.error('Focus: cannot persist active batch',e);
+    activeFocusBatch=previous;
+    activeExtraReviewBatch=previousExtra;
+    try{msg('Error de almacenamiento: no se pudo guardar la tanda. No abrí perfiles ni alteré revisiones; exporta respaldo.','e')}catch{}
+    return false;
+  }
+  // History is secondary evidence; failure must not hide the confirmation UI.
+  try{recordRowsHistory(activeFocusBatch.rows,'open',{kind,label})}
+  catch(e){console.error('Focus: open history not persisted',e);
+    try{msg('Aviso: no pude guardar el historial de aperturas. Exporta un respaldo de datos antes de continuar.','w')}catch{}}
+  try{renderActiveBatchDock()}catch(e){console.error('Focus: batch dock render failed',e)}
+  return true;
 }
 function clearActiveFocusBatch(){
   activeFocusBatch=null;
@@ -7416,8 +7429,14 @@ function isPreviouslyHandledForNormalFocus(row,kind='main'){
   if(!h)return false;
   const relevant=kind==='main'?['main','following','manual']:['followers','mutual'];
   const events=Array.isArray(h.events)?h.events:[];
-  if(events.some(e=>['open','reopen','review'].includes(e?.event) &&
-      relevant.includes(String(e.details?.kind||e.details?.section||h.lastSection||''))))return true;
+  const scopedEvents=events.filter(e=>['open','reopen','review','unconfirmed'].includes(e?.event) &&
+      relevant.includes(String(e.details?.kind||e.details?.section||h.lastSection||'')));
+  // A genuine owner "Couldn't review yet" releases ONLY that unconfirmed
+  // attempt back to Focus. The old open event remains as historical evidence,
+  // but is not a review and must not permanently consume an unvisited profile.
+  // Saved reviewedMeta/doneSet above always wins and cannot be reopened.
+  if(scopedEvents.length && scopedEvents[scopedEvents.length-1].event==='unconfirmed')return false;
+  if(scopedEvents.some(e=>['open','reopen','review'].includes(e.event)))return true;
   // Legacy history lacks event arrays; use the saved last section, not another
   // Instagram module's unrelated open counter.
   if(relevant.includes(String(h.lastSection||'')) &&
@@ -7602,10 +7621,9 @@ function openDoubleCheckNoMeSigueN(n=30){
     return;
   }
 
+  if(setActiveFocusBatch('main',rows,`double check no me siguen ${n}`)===false)return false;
   rows.forEach(r=>seen.add(r.username));
   saveDoubleCheckSeen(seen);
-
-  setActiveFocusBatch('main',rows,`double check no me siguen ${n}`);
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`double check no me siguen ${n}`);
 
@@ -7672,7 +7690,7 @@ function openRecheckNotFollowingN(n=30){
     return;
   }
 
-  setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`);
+  if(setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`)===false)return false;
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`revisión nueva no me siguen ${n}`);
   logAction('focus',`revisión nueva no me siguen ${n}: ${rows.length} perfiles abiertos`,{count:rows.length,source:'recheck_not_following',requested:n});
@@ -10489,7 +10507,7 @@ function igcPendingDoubleStart(rows,label){
   if(!igcConfirmBatchQuality(chosen,'pending',label)){
     msg('Segunda revisión cancelada sin cambios de estado.','i');return false;
   }
-  setActiveFocusBatch('pending',chosen,label);
+  if(setActiveFocusBatch('pending',chosen,label)===false)return false;
   activeFocusBatch.reviewMode='double';
   activeExtraReviewBatch=activeFocusBatch;
   saveActiveFocusBatch();
@@ -11413,7 +11431,7 @@ function launchReopenFocusBatch(rows,label,n=30,source='recheck_not_following'){
   const target=Number(n||rows.length)||rows.length;
   const finalRows=rows.slice(0,target);
 
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
   // Siempre mostrar confirmación después de abrir, incluyendo recheck/double check.
@@ -11609,7 +11627,7 @@ function launchRecheckFocusBatchV95(rows,label,n=30,source='recheck_not_followin
   const finalRows=rows.slice(0,target);
 
   // Keep active batch so the confirmation buttons know what to save.
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
 
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
@@ -11815,7 +11833,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
   }
 
   const label=mode==='double'?`double check no me siguen ${n}`:`revisar de nuevo no me siguen ${n}`;
-  setActiveFocusBatch('main',rows,label);
+  if(setActiveFocusBatch('main',rows,label)===false)return false;
   activeExtraReviewBatch=activeFocusBatch;
 
   // Abrir inmediatamente dentro del click.
@@ -11920,7 +11938,7 @@ function resetDoubleCheckCycle(show=true){
 </select>
 </div>
 </div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Safe confirmation:</b> Review opened tabs before saving. Nothing is marked until you confirm.</div><div class="safe-focus-actions">
-<button class="btn primary" onclick="confirmSafeFocusReviewed()">✅ I reviewed / save decision</button>
+<button class="btn primary" id="safeFocusConfirmBtn" onclick="confirmSafeFocusReviewed()">✅ I reviewed / save decision</button>
 <button class="btn" onclick="reopenSafeFocusBatch()">🔁 Reopen profiles</button>
 <button class="btn orange" onclick="markSafeFocusNotReviewed()">❌ Couldn't review yet</button>
 <button class="btn orange" onclick="snoozeSafeFocusBatch(7)">⏸ Pause for 7 days</button>
@@ -11933,7 +11951,7 @@ function closeSafeFocusPopup(){const p=document.getElementById('safeFocusPopup')
 function showSafeFocusPopup(kind,rows,label){
   const unresolved=(rows||[]).filter(r=>!activeBatchRowResolved(r,kind));
   if(!unresolved.length){clearActiveFocusBatch();closeSafeFocusPopup();msg('Esta tanda ya estaba resuelta; limpié el popup atorado.','s');return;}
-  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){setActiveFocusBatch(kind,unresolved,label);}
+  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){if(setActiveFocusBatch(kind,unresolved,label)===false)return false;}
   activeExtraReviewBatch=activeFocusBatch||{kind,rows:[...unresolved],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
@@ -11942,6 +11960,7 @@ function showSafeFocusPopup(kind,rows,label){
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value='reviewed'; // Reset every batch, including Pending Requests. Selection still requires explicit owner confirmation.
+  const confirmBtn=document.getElementById('safeFocusConfirmBtn');if(confirmBtn){confirmBtn.disabled=false;confirmBtn.title='';}
   const preview=document.getElementById('safeConfirmPreview');if(preview){const q=igcBatchQuality(rows,kind);preview.innerHTML=`<b>Calidad de la tanda:</b> ${q.confirmed}/${q.total} verificables · ${q.changes} cambios nuevos · ${q.historical} históricos · ${q.unverifiable} unverifiable · ${q.stable} estables.`;}
   const list=document.getElementById('safeFocusList');
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
@@ -11976,8 +11995,22 @@ function markSafeFocusNotReviewed(){
     saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('mutual_not_reviewed',`Seguidores que sigo no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers_mutual'});buildRows();applyFilters();renderFollowersMutualTab();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} seguidores que sigo volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
   }
   if(b.kind==='main'){
+    // Owner explicitly chose "Couldn't review yet". Make this release durable
+    // before clearing the active cohort, and roll back in-memory history if
+    // browser quota prevents saving: no phantom availability after reload.
+    const historyBefore=(b.rows||[]).map(r=>[
+      r.username,profileHistory?.[r.username]?JSON.stringify(profileHistory[r.username]):null
+    ]);
     b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',{kind:'main',label:b.label}));
-    saveProfileHistory();
+    try{saveProfileHistory()}catch(e){
+      historyBefore.forEach(([u,snapshot])=>{
+        if(snapshot!==null)profileHistory[u]=JSON.parse(snapshot);
+        else delete profileHistory[u];
+      });
+      console.error('Focus: cannot save unconfirmed retry history',e);
+      msg('Error de almacenamiento: no pude guardar el reintento. Conservé la tanda activa y tus revisiones; exporta respaldo antes de volver a intentar.','e');
+      return;
+    }
     logAction('main_not_reviewed',`Seguidos no me siguen no revisados: ${b.rows.length}`,{count:b.rows.length,source:'session_100_main'});
     buildRows();applyFilters();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();
     msg(`No se marcaron como revisados. Los ${b.rows.length} seguidos volverán a salir en sesiones futuras.`,'w');
@@ -12082,7 +12115,23 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   }
   if(!opts?.skipQuality && !igcConfirmBatchQuality(rows,kind,label)){msg('Tanda cancelada antes de abrir perfiles.','i');return false;}
 
-  setActiveFocusBatch(kind,rows,label);
+  // If storage is full (common after many reviewed batches), don't silently
+  // abort after the owner accepts BATCH PREVIEW. Never lose confirmed reviews
+  // or silently count tabs as opened without a restorable active cohort.
+  if(setActiveFocusBatch(kind,rows,label)===false){
+    const popup=document.getElementById('safeFocusPopup');
+    if(popup){popup.style.display='flex';popup.classList.add('show');}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Focus pausado · almacenamiento';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='No se pudo guardar esta tanda en el navegador. NO abrí perfiles ni marqué revisiones. Exporta un respaldo de tus datos y libera espacio de almacenamiento para volver a intentar. No borres los datos de IG Cleaner.';
+    const button=document.getElementById('safeFocusConfirmBtn');
+    if(button){button.disabled=true;button.title='No se puede confirmar una tanda que no quedó guardada';}
+    const list=document.getElementById('safeFocusList');
+    if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><b>@${esc(r.username)}</b><span>Sin abrir · guardado fallido</span></div>`).join('');
+    msg('Focus pausado por error de almacenamiento: el navegador no permitió guardar la tanda. No abrí perfiles ni borré tus revisiones; exporta respaldo.','e');
+    return false;
+  }
   // Pending 'opened' means an owner-approved OPEN ATTEMPT, not a review or
   // confirmed cancellation. Persist before Chrome pops up any target tab so
   // an app reload cannot silently recycle the same list. The explicit
@@ -12092,15 +12141,27 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     savePendingOpened();
   }
 
-  // Los focos SIEMPRE abren perfiles. No son selección.
-  // Browser popup policy can block a second/third 20–40-tab burst. We cannot
-  // infer success from window.open(...,noopener), which returns null even for
-  // successful openings. Preserve direct user-gesture links in the review
-  // popup and NEVER mark these profiles reviewed from a popup attempt.
-  rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
-
-  // La confirmación SIEMPRE queda activa.
-  showSafeFocusPopup(kind,rows,label);
+  // Owner's Reviewed/recovery panel FIRST: it must be visible even when
+  // Chrome blocks a popup or throws while requesting the next profile.
+  // A direct link remains available per username, with no auto-review.
+  try{showSafeFocusPopup(kind,rows,label)}catch(e){
+    console.error('Focus: review dialog render failed',e);
+    const popup=document.getElementById('safeFocusPopup');
+    if(popup){popup.style.display='flex';popup.classList.add('show');}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Review · apertura con recuperación';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='La presentación avanzada falló; usa los enlaces directos y confirma solo lo que realmente revisaste.';
+    const list=document.getElementById('safeFocusList');
+    if(list)list.innerHTML=rows.map(r=>`<div class="safe-focus-row"><b>@${esc(r.username)}</b><a class="link" target="_blank" rel="noopener" href="${esc(r.href)}">Abrir</a></div>`).join('');
+  }
+  // A failed tab request must not interrupt subsequent profiles or hide Review.
+  // window.open(...,'noopener') can return null after a SUCCESSFUL open, so
+  // never infer whether any account was visited from that return value.
+  let rejected=0;
+  rows.forEach(r=>{try{window.open(r.href,'_blank','noopener,noreferrer')}
+    catch(e){rejected++;console.error('Focus: browser rejected profile tab',e)}});
+  if(rejected)msg(`El navegador rechazó ${rejected} solicitud(es) de pestañas. En Reviewed usa el enlace Abrir junto a cada cuenta; no confirmes cuentas que no revisaste.`,'w');
 
   const expected=target||rows.length;
   logAction('focus',`${label}: ${rows.length} tabs requested; browser may block popups`,
