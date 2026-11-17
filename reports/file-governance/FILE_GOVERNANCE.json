@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "773d1a88f807e61343d87cfa703038ad25afdb4dd6132d800f8f959099e31824",
+  "inventory_fingerprint": "f3096dfd356f625381a048d9615daf22ade7332550732194aa6ac3d0618d0ec5",
   "evidence_fingerprint": "840859f69ebac72cbafd9f6d9a77106305a9a30a733835d55a12af0589d7b64b",
   "files": [
     {
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "fb92d209085a869b943a6fa4fefe64f36d4beb1e"
+      "blob": "98f22f3388cf583f15cba5781b83f6830da93024"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -2143,7 +2143,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "00319bfbe6ea6f342562b853cfde247fbb99b248"
+      "blob": "b82bb9a4a71705f33726cbed0fc638fca2c0f9b7"
     },
     {
       "path": "tests/focus-storage-all-modes.test.cjs",
