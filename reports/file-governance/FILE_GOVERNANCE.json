@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "d0df7b2f50e2347ebbf5cee0d0318b48b66b11ce1b0b74ac4cb87ff6cde2623b",
-  "evidence_fingerprint": "a011126b4c49b8d6435a17f9a2ed60f3d089dea425eb0feabf97c14ae1fc542a",
+  "inventory_fingerprint": "0d968a5cfc9192f1e512d343def06a786b0832a8012e3a3b08d5c6b41bfc72d9",
+  "evidence_fingerprint": "23b525502d3542d83dc2df561ac4c37e50e4ccd0c77be8bdc0be392f00b4ae01",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -260,7 +260,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "578dc428032652c1e74d01159c6d4b703e01d89d"
+      "blob": "ba44f3565908d771d027ba3657310b8af8c8621a"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -2745,7 +2745,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "96cb655b2e4777ade115ffbb000272f2df5baa31"
+      "blob": "a08198ba2da8424f1eddc1fbf61d75969722f510"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3214,11 +3214,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "c55d2048a57e3677",
+      "id": "c201ffa435db6657",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "6 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, release/release-readiness.json",
+      "observation": "7 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, release/release-readiness.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "d0df7b2f50e2347ebbf5cee0d0318b48b66b11ce1b0b74ac4cb87ff6cde2623b",
-  "evidence_fingerprint": "a011126b4c49b8d6435a17f9a2ed60f3d089dea425eb0feabf97c14ae1fc542a",
+  "inventory_fingerprint": "0d968a5cfc9192f1e512d343def06a786b0832a8012e3a3b08d5c6b41bfc72d9",
+  "evidence_fingerprint": "23b525502d3542d83dc2df561ac4c37e50e4ccd0c77be8bdc0be392f00b4ae01",
   "untracked_audited": false,
   "ignored_audited": false,
   "binary_contents_audited": false,
