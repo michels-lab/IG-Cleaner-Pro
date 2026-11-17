@@ -1439,3 +1439,9 @@ Automatic evidence deltas, pending human triage. No deletion authority.
 
 - All tracked 444; findings 8; inventory 23193a39cc9c; evidence 187980a041d8. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
 - Finding changes: 0 NEW; 0 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 1 new paths, 0 removed paths, 0 reclassified paths.
+
+## 2026-11-17 22:49 UTC
+
+- All tracked 444; findings 9; inventory 9af65e23696c; evidence dcffc9475e74. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
+- Finding changes: 1 NEW; 0 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 0 new paths, 0 removed paths, 0 reclassified paths.
+- NEW — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID 731ae227cc373b1f).
