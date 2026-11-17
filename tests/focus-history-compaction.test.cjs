@@ -27,7 +27,7 @@ const stored=new Map([["history",ledgerBefore],["reviewed-ledger",'{"keep.me":{"
 let failWrites=false;
 const log=[];
 const ctx={JSON,Date,Array,Number,Object,console:{error:()=>{},warn:(...a)=>log.push(a)},
- LS_PROFILE_HISTORY:"history",profileHistory:{},
+ LS_PROFILE_HISTORY:"history",profileHistory:{},igcProfileHistoryLoadError:false,
  localStorage:{
   getItem:key=>stored.get(key)||null,
   setItem(key,value){if(failWrites)throw Error("QuotaExceededError");stored.set(key,value)},
@@ -61,4 +61,11 @@ failWrites=false;stored.set("history",'{"__igcHistoryCompact":2,"rows":[["broken
 ctx.loadProfileHistory();
 assert.equal(stored.get("history"),'{"__igcHistoryCompact":2,"rows":[["broken",9]]}',
  "Invalid history must not be destructively rewritten");
+assert.equal(ctx.igcProfileHistoryLoadError,true,"Invalid saved data must disable profileHistory writes");
+assert.throws(()=>ctx.saveProfileHistory(),/Cannot overwrite unreadable saved profile history/,
+ "A later action cannot replace unreadable storage with an empty history");
+assert.equal(stored.get("history"),'{"__igcHistoryCompact":2,"rows":[["broken",9]]}');
+stored.set("history",ledgerBefore);ctx.loadProfileHistory();
+assert.equal(ctx.igcProfileHistoryLoadError,false,"Restoring a valid backup should unblock writes");
+assert.doesNotThrow(()=>ctx.saveProfileHistory());
 console.log("PASS: 789 reviewed profiles, 25 events each, legacy migration, failed writes and protected ledgers");
