@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 447,
-  "classified_files_total": 443,
+  "tracked_files_total": 448,
+  "classified_files_total": 444,
   "docs_content_inspected": 111,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 141,
+    "test": 142,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "87e21ad5f35bbfe33b94cfe98a184eb71371f032353d727da216c2cb42a67160",
-  "evidence_fingerprint": "f88acbd75fb99d0210c6c727e5f4e357f7f16e5e2026060173a0c8cdcbd0ab51",
+  "inventory_fingerprint": "3054137f371943c29cdd154292ba3494d06175067f9cbf7ba0337fae1cd6e461",
+  "evidence_fingerprint": "40c750d28856443b72a047095a27cc54c5c1627d8c794498bfa2e3bfd5fc3dcd",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2160,6 +2160,13 @@
       "blob": "c86844f358deb838710d52bc0c02f9667daa3c6b"
     },
     {
+      "path": "tests/focus-unconfirmed-keeps-prior-reviews.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9c5f9339b296dde25e15d031fab10d511005463a"
+    },
+    {
       "path": "tests/live-relationships-browser.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3207,11 +3214,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "fde10f0e50c8da36",
+      "id": "f7b55b8d83d54dab",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-failed-attempt-requeue.test.cjs",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-failed-attempt-requeue.test.cjs, tests/focus-unconfirmed-keeps-prior-reviews.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
