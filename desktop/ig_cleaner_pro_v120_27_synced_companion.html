@@ -12123,53 +12123,86 @@ function igcRetryFailedFocus(){
   return openConfirmedFocusRows(failed.rows,failed.label,failed.kind,failed.rows.length,{exact:true});
 }
 function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
+// "Couldn't review yet" is a new attempt result, NEVER an undo operation.
+// The same username may have valid earlier Reviewed/Pending decisions that
+// Recheck or Double Check intentionally include.
+function igcPersistUnconfirmedAttempt(batch,kind,extra={}){
+  const snapshots=(batch.rows||[]).map(row=>[
+    row.username,profileHistory?.[row.username]?JSON.stringify(profileHistory[row.username]):null
+  ]);
+  (batch.rows||[]).forEach(row=>recordProfileHistory(row.username,'unconfirmed',
+    {kind,label:batch.label,...extra}));
+  try{saveProfileHistory();return true}catch(e){
+    snapshots.forEach(([username,old])=>{
+      if(old===null)delete profileHistory[username];
+      else profileHistory[username]=JSON.parse(old);
+    });
+    console.error('Focus: cannot persist unconfirmed attempt',e);
+    msg('Error de almacenamiento: no pude guardar el reintento. Conservé la tanda activa y las revisiones anteriores; exporta respaldo.','e');
+    return false;
+  }
+}
 function markSafeFocusNotReviewed(){
-  const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
+  const b=activeExtraReviewBatch||activeFocusBatch;
+  if(!b||!b.rows||!b.rows.length){
+    forceClearStuckFocusBatch();
+    msg('No hay tanda activa real; limpié el estado atorado.','w');
+    return;
+  }
   if(b.kind==='pending'){
-    if(b.reviewMode==='double'){
-      // Failed second review does NOT undo a previously confirmed decision.
-      b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',
-        {kind:'pending',label:b.label,mode:'double_check'}));
-      saveProfileHistory();
-      logAction('pending_double_unconfirmed',
-        'Pending Double Check sin nueva decisión: '+b.rows.length,
+    const isDouble=b.reviewMode==='double';
+    if(!igcPersistUnconfirmedAttempt(b,'pending',isDouble?{mode:'double_check'}:{}))return;
+    if(isDouble){
+      // An inconclusive second review must keep every prior Pending decision.
+      logAction('pending_double_unconfirmed','Pending Double Check sin nueva decisión: '+b.rows.length,
         {count:b.rows.length,source:'pending_double_check'});
       clearActiveFocusBatch();closeSafeFocusPopup();
       renderPendingRequests();renderModuleDashboard();
-      msg('Double Check sin confirmar: conservé todas las revisiones anteriores.','i');
+      msg('Double Check sin confirmar: conservé las revisiones anteriores.','i');
       return;
     }
-    b.rows.forEach(r=>{pendingOpenedSet.delete(r.username);if(pendingReviewedMeta&&pendingReviewedMeta[r.username])delete pendingReviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'pending',label:b.label})});
-    savePendingOpened();savePendingReviewedMeta();saveProfileHistory();logAction('pending_not_reviewed',`Pending no revisados: ${b.rows.length}`,{count:b.rows.length,source:'pending'});renderPendingRequests();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} pending volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
+    // Only newly opened, UNREVIEWED pending attempts may be released. Do
+    // not erase confirmed reviews or a prior opened ledger for those rows.
+    const openedBefore=new Set(pendingOpenedSet);
+    b.rows.forEach(row=>{
+      if(!pendingReviewedMeta?.[row.username]?.reviewedAt)pendingOpenedSet.delete(row.username);
+    });
+    try{savePendingOpened()}catch(e){
+      pendingOpenedSet=openedBefore;
+      console.error('Focus: cannot persist Pending retry',e);
+      msg('Error de almacenamiento: no pude liberar Pending; mantengo la tanda y tus decisiones anteriores.','e');
+      return;
+    }
+    logAction('pending_not_reviewed','Pending no revisados: '+b.rows.length,
+      {count:b.rows.length,source:'pending'});
+    renderPendingRequests();renderModuleDashboard();
+    clearActiveFocusBatch();closeSafeFocusPopup();
+    msg('No se guardaron revisiones nuevas. Conservé las decisiones Pending anteriores.','w');
+    maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');
+    return;
   }
-  if(b.kind==='followers'){
-    b.rows.forEach(r=>{doneSet.delete(r.username);if(reviewedMeta&&reviewedMeta[r.username]?.reviewSource==='followers_focus')delete reviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'followers',label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('followers_not_reviewed',`Followers no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers'});buildRows();applyFilters();renderFollowersAllWorkspace?.();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} followers volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
-  }
-  if(b.kind==='mutual'){
-    b.rows.forEach(r=>{doneSet.delete(r.username);if(reviewedMeta&&reviewedMeta[r.username]?.reviewSource==='followers_mutual_focus')delete reviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'mutual',label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('mutual_not_reviewed',`Seguidores que sigo no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers_mutual'});buildRows();applyFilters();renderFollowersMutualTab();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} seguidores que sigo volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
+  if(b.kind==='followers'||b.kind==='mutual'){
+    // Recheck may include previously confirmed users. Never delete Done or
+    // Reviewed metadata just because the newest attempt was inconclusive.
+    if(!igcPersistUnconfirmedAttempt(b,b.kind))return;
+    logAction(b.kind+'_not_reviewed','Sin nueva revisión: '+b.rows.length,
+      {count:b.rows.length,source:b.kind});
+    buildRows();applyFilters();
+    if(b.kind==='followers')renderFollowersAllWorkspace?.();
+    else renderFollowersMutualTab();
+    renderModuleDashboard();
+    clearActiveFocusBatch();closeSafeFocusPopup();
+    msg('Tanda no confirmada: se mantuvieron las revisiones anteriores.','w');
+    maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');
+    return;
   }
   if(b.kind==='main'){
-    // Owner explicitly chose "Couldn't review yet". Make this release durable
-    // before clearing the active cohort, and roll back in-memory history if
-    // browser quota prevents saving: no phantom availability after reload.
-    const historyBefore=(b.rows||[]).map(r=>[
-      r.username,profileHistory?.[r.username]?JSON.stringify(profileHistory[r.username]):null
-    ]);
-    b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',{kind:'main',label:b.label}));
-    try{saveProfileHistory()}catch(e){
-      historyBefore.forEach(([u,snapshot])=>{
-        if(snapshot!==null)profileHistory[u]=JSON.parse(snapshot);
-        else delete profileHistory[u];
-      });
-      console.error('Focus: cannot save unconfirmed retry history',e);
-      msg('Error de almacenamiento: no pude guardar el reintento. Conservé la tanda activa y tus revisiones; exporta respaldo antes de volver a intentar.','e');
-      return;
-    }
-    logAction('main_not_reviewed',`Seguidos no me siguen no revisados: ${b.rows.length}`,{count:b.rows.length,source:'session_100_main'});
-    buildRows();applyFilters();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();
-    msg(`No se marcaron como revisados. Los ${b.rows.length} seguidos volverán a salir en sesiones futuras.`,'w');
+    if(!igcPersistUnconfirmedAttempt(b,'main'))return;
+    logAction('main_not_reviewed','Seguidos no me siguen no revisados: '+b.rows.length,
+      {count:b.rows.length,source:'session_100_main'});
+    buildRows();applyFilters();renderModuleDashboard();
+    clearActiveFocusBatch();closeSafeFocusPopup();
+    msg('No hubo revisiones nuevas; los intentos no confirmados se podrán reintentar.','w');
     maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');
     return;
   }
