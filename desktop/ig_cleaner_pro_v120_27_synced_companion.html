@@ -4525,6 +4525,7 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 let followingRaw=[], followersRaw=[], followingMap=new Map(), followersMap=new Map();
 let pendingRequestsRaw=[], pendingOpenedSet=new Set();
 let pendingReviewedMeta={}, pendingSnoozeMap={}, lastPendingBatch=[], lastMutualBatch=[], activeExtraReviewBatch=null, activeFocusBatch=null;
+let igcFailedFocusBatch=null; // Only a transient retry suggestion, never counted as saved/opened.
 let currentMode='following';
 let allRows=[], filteredRows=[], currentPage=1, pageSize=100;
 let selected=new Set(), protectedSet=new Set(), doneSet=new Set();
@@ -12065,10 +12066,11 @@ function resetDoubleCheckCycle(show=true){
 </div>
 </div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Safe confirmation:</b> Review opened tabs before saving. Nothing is marked until you confirm.</div><div class="safe-focus-actions">
 <button class="btn primary" id="safeFocusConfirmBtn" onclick="confirmSafeFocusReviewed()">✅ I reviewed / save decision</button>
-<button class="btn" onclick="reopenSafeFocusBatch()">🔁 Reopen profiles</button>
-<button class="btn orange" onclick="markSafeFocusNotReviewed()">❌ Couldn't review yet</button>
-<button class="btn orange" onclick="snoozeSafeFocusBatch(7)">⏸ Pause for 7 days</button>
-<button class="btn orange" onclick="snoozeSafeFocusBatch(30)">⏸ Pause for 30 days</button>
+<button class="btn" id="safeFocusReopenBtn" onclick="reopenSafeFocusBatch()">🔁 Reopen profiles</button>
+<button class="btn primary" id="safeFocusRetryStorageBtn" onclick="igcRetryFailedFocus()" style="display:none">↻ Reintentar guardar y abrir</button>
+<button class="btn orange" id="safeFocusNotReviewedBtn" onclick="markSafeFocusNotReviewed()">❌ Couldn't review yet</button>
+<button class="btn orange" id="safeFocusSnooze7Btn" onclick="snoozeSafeFocusBatch(7)">⏸ Pause for 7 days</button>
+<button class="btn orange" id="safeFocusSnooze30Btn" onclick="snoozeSafeFocusBatch(30)">⏸ Pause for 30 days</button>
 <button class="btn red" onclick="closeSafeFocusPopup()">Close without marking</button>
 </div></div><div class="safe-focus-list" id="safeFocusList"></div></div></div>
 </div>
@@ -12091,6 +12093,34 @@ function showSafeFocusPopup(kind,rows,label){
   const list=document.getElementById('safeFocusList');
   if(list)list.innerHTML=(rows||[]).map(r=>{const why=igcWhyOpened(r,kind,label),hist=igcProfileHistoryText(r,kind),rev=igcReviewChangeInfo(r,kind),stable=igcStableRelationInfo(r,kind);return `<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small class="igc-focus-context">${focusContextHtml(r,kind)}</small>${why?`<small class="igc-focus-why"><b>Por qué abrió:</b> ${esc(why)}</small>`:''}<small class="igc-profile-history">${esc(hist)}</small>${rev.text?`<small class="igc-review-change-line ${rev.changed?'changed':stable.stable?'stable':''}">${esc(rev.text)}</small>`:''}</div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`}).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
+  igcSetFocusRecoveryUI(false);
+}
+function igcSetFocusRecoveryUI(failed){
+  for(const id of ['safeFocusReopenBtn','safeFocusNotReviewedBtn','safeFocusSnooze7Btn','safeFocusSnooze30Btn','safeFocusDecision']){
+    const element=document.getElementById(id);
+    if(element)element.disabled=!!failed;
+  }
+  const confirmButton=document.getElementById('safeFocusConfirmBtn');
+  if(confirmButton)confirmButton.disabled=!!failed;
+  const retry=document.getElementById('safeFocusRetryStorageBtn');
+  if(retry){retry.style.display=failed?'block':'none';retry.disabled=!failed;}
+}
+function igcRetryFailedFocus(){
+  const failed=igcFailedFocusBatch;
+  if(!failed||!failed.rows?.length){msg('No hay una tanda fallida para reintentar.','w');return false;}
+  const account=window.IGC_INSTAGRAM_PROFILES?.active||'legacy';
+  if(account!==failed.account||currentMode!==failed.mode){
+    msg('Cambió la cuenta o sección. Inicia un Focus nuevo para evitar mezclar perfiles.','w');
+    return false;
+  }
+  if(activeFocusBatch?.rows?.length){
+    msg('Hay otra tanda activa; resuélvela antes de reintentar.','w');
+    return false;
+  }
+  // The explicit click happens only after the owner had time to free storage.
+  // Exactly the same selected rows are proposed; never replace with fresh names.
+  // openConfirmedFocusRows persists the cohort before any Chrome tab request.
+  return openConfirmedFocusRows(failed.rows,failed.label,failed.kind,failed.rows.length,{exact:true});
 }
 function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
 function markSafeFocusNotReviewed(){
@@ -12245,6 +12275,14 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   // abort after the owner accepts BATCH PREVIEW. Never lose confirmed reviews
   // or silently count tabs as opened without a restorable active cohort.
   if(setActiveFocusBatch(kind,rows,label)===false){
+    igcFailedFocusBatch={
+      kind,label,rows:rows.map(safeBatchRow),
+      account:window.IGC_INSTAGRAM_PROFILES?.active||'legacy',
+      mode:currentMode
+    };
+    igcSetFocusRecoveryUI(true);
+    const preview=document.getElementById('safeConfirmPreview');
+    if(preview)preview.textContent='Sin perfiles abiertos ni revisiones nuevas. Libera espacio, exporta respaldo y utiliza Reintentar guardar y abrir.';
     const popup=document.getElementById('safeFocusPopup');
     if(popup){popup.style.display='flex';popup.classList.add('show');}
     const title=document.getElementById('safeFocusTitle');
@@ -12258,6 +12296,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     msg('Focus pausado por error de almacenamiento: el navegador no permitió guardar la tanda. No abrí perfiles ni borré tus revisiones; exporta respaldo.','e');
     return false;
   }
+  igcFailedFocusBatch=null;
   // Pending 'opened' means an owner-approved OPEN ATTEMPT, not a review or
   // confirmed cancellation. Persist before Chrome pops up any target tab so
   // an app reload cannot silently recycle the same list. The explicit
