@@ -1,3 +1,12 @@
+## 2026-11-17 — Operación Granada: Fusionado el arreglo del Focus 30 que descontaba perfiles sin abrir pestañas
+
+- **Resultado real:** PR [#366](https://github.com/michels-lab/IG-Cleaner-Pro/pull/366) integrada, commit de main `bc75385c0d1a78e2e64124b698b2aa69b6057341`; 9/9 jobs de CI de la versión fuente `91a5a8bc31577ba6de6375baf9211be50dd54dbb` SUCCESS.
+- **Reproducción:** en el standalone v120.77 la vista previa de Focus 30 mostraba 30 elegibles, al aceptar no abría ventanas ni Reviewed, bajaban los disponibles y el número volvía tras refrescar. Otra cuenta en otro navegador no presentaba el fallo.
+- **Causa en el código:** `activeFocusBatch` se asignaba en memoria antes del guardado del historial; una excepción de persistencia abortaba antes de abrir ventanas o el diálogo. El error exacto de la sesión local sigue pendiente de la consola del navegador.
+- **Correcciones:** guardar primero cohorte recuperable, rollback si falla persistencia, mostrar Reviewed antes de pedir pestañas, contener errores por pestaña, reencolar solo intentos expresamente no revisados con rollback si falla guardar, y proteger las rutas Focus/Recheck/Double Check contra avances de ciclos sin persistencia.
+- **Regresiones:** `tests/focus-confirmation-storage-popup-regression.test.cjs`, `focus-failed-attempt-requeue.test.cjs` y `focus-storage-all-modes.test.cjs`. Recibo completo: [Granada Focus phantom batch](docs/GRANADA_FOCUS_PHANTOM_BATCH_2026-11-17.md).
+- **Sin release:** última FINAL v120.77 conserva el defecto; v120.78 sigue NO PUBLICADA. **P0 #360 permanece abierto** para rebotes posconfirmación / sincronización y QA físico de dos cuentas.
+
 ## 2026-11-17 — GRANADA: Pending Double Check full-backup and monotonic no-repeat recovery
 
 - **Bug encontrado:** `exportFullBackup()` omitía `igc_pending_double_check_seen_v1`; restaurar o migrar el estado podía presentar de nuevo perfiles previamente inspeccionados en la segunda ronda, pese a conservar `pendingReviewedMeta` y la navegación guardada.
