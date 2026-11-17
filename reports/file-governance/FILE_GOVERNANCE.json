@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 444,
-  "classified_files_total": 440,
+  "tracked_files_total": 445,
+  "classified_files_total": 441,
   "docs_content_inspected": 111,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -18,7 +18,7 @@
     "index": 5,
     "installer_metadata": 1,
     "source": 55,
-    "test": 138,
+    "test": 139,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "b2ae268ccd4ae07a3a25493c74fc663944c7c9a33bd2d2d2a7f544d03f47eeb1",
-  "evidence_fingerprint": "e9938819c3b9a4b5382c4923d05e9f1ae73d218310a499838bffcde863753676",
+  "inventory_fingerprint": "a526aad204be3e6593c28393b1a9eb95c475fa617576141bfbc49b9390e79fca",
+  "evidence_fingerprint": "41b46b57f9d3833d8149a2fcf00962ec434ef6a07d20a08897002742479f070e",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2104,6 +2104,13 @@
       "blob": "18022bbe3f72fb752dcbd80f5cce6e95fa9e7523"
     },
     {
+      "path": "tests/focus-compact-persistence.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "e72abf7f8de4b8d54b8f6a7f27a2476e0d731597"
+    },
+    {
       "path": "tests/focus-confirmation-storage-popup-regression.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3186,11 +3193,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "011de4147304e111",
+      "id": "7b62a57d2c573599",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-confirmation-storage-popup-regression.test.cjs",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-compact-persistence.test.cjs, tests/focus-confirmation-storage-popup-regression.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
