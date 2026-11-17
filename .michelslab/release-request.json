@@ -1,12 +1,12 @@
 {
   "version": "120.78",
   "tag": "v120.78",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly requested 'op granada y release' on 2026-11-17 (America/Monterrey) for InstaCleaner Pro. Exactly one final stable v120.78 release to permit owner to verify Focus 30, history counters, Windows setup and Android installed on their actual sessions after publication. Not product-wide final Instagram acceptance. Never RC/Developer.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.77",
   "requested_at": "2026-11-17",
   "owner_acceptance_note": "Exact-tag owner-device-review exception only with release_hold=true and owner_final_acceptance=false. Required before publish: exact-source Windows installed startup and Chromium tests, Android production-keystore signed install/launch, desktop+Android Home/About runtime screenshots, SHA-256 verification, update feed integrity. Owner will test real-account Focus 30 manually after publication. Do not claim real logged-in Instagram Unfollow/Cancel, concurrent dual robots, cross-device physical sync, or full resolution of P0 #360.",
@@ -18,5 +18,10 @@
     "published_at": "2026-11-16T05:45:01Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.77",
     "asset_count": 9
-  }
+  },
+  "published_run": 44174641647,
+  "published_commit": "1c75831c59b457171c113978a6acb282d915d71c",
+  "published_at": "2026-11-17T21:06:55Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78",
+  "publication_note": "Official FINAL stable-only v120.78 published with 9 SHA256-verified assets. Governed release run 44174641647 4/4 jobs success. One-time owner permission CONSUMED. Physical Instagram multi-account Focus/Unfollow/Cancel, Android/Windows cross-device sync and P0 #360 remain unverified. v120.79 NOT authorized; no RC/Developer."
 }
