@@ -3809,6 +3809,10 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 <b>⚠ Risk 30</b>
 <span>Open only medium- and high-risk pending requests to inspect uncertain cases first.</span>
 </button>
+<button class="workflow-card focus" data-focus-card="pendingDouble" onclick="igcPendingDoubleCheckAll()">
+<b>🧿 Pending Double Check 30</b>
+<span>Revisit previously reviewed pending requests in distinct batches of 30. Keep earlier decisions and history until you explicitly confirm a second review.</span>
+</button>
 <button class="workflow-card info" data-focus-card="pendingBlocked" onclick="viewBlockedFocus('pending')">
 <b>🧩 View blocked</b>
 <span>Show pending requests excluded from Focus and why.</span>
@@ -12249,6 +12253,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
     if(kind==='recheck'||kind==='double')return c.noMeSigue;
     if(kind==='pendingRecommended')return safe(()=>pendingSmartCandidates(),c.pending.filter(r=>!r.reviewed&&!r.snoozed));
     if(kind==='pendingFocus30')return safe(()=>pendingCandidateRows(),c.pending.filter(r=>!r.reviewed&&!r.snoozed));
+    if(kind==='pendingDouble')return safe(()=>igcPendingDoubleRows(false),[]);
     if(kind==='pendingRisk30')return safe(()=>pendingCandidateRows().filter(r=>['alto','medio'].includes(r.riskLevel)),c.pending.filter(r=>!r.reviewed&&!r.snoozed&&['alto','medio'].includes(r.riskLevel)));
     if(kind==='mutualRecommended')return safe(()=>followersMutualSmartCandidates(),c.mutual.filter(r=>!r.done&&!r.protected&&!isSnoozed(r)));
     if(kind==='mutualFocus30')return safe(()=>followersMutualCandidates(),c.mutual.filter(r=>!r.done&&!r.protected&&!isSnoozed(r)));
@@ -12264,6 +12269,15 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
         tag('tabla',c.noMeSigue.length),
         tag('popup',popupOk?'OK':'falta',popupOk?'ok':'bad')
       ].join(' '));
+    }
+    if(kind==='pendingDouble'){
+      const rows=rowsFor(kind),reviewed=c.pending.filter(r=>r.reviewed&&!r.snoozed).length;
+      return state('segunda revisión',rows.length,Math.min(30,rows.length),
+        rows.length?'ok':'bad',[
+          tag('revisados',reviewed),
+          tag('ya en ciclo',Math.max(0,reviewed-rows.length)),
+          tag('tabla',c.pending.length)
+        ].join(' '));
     }
     if(['pendingRecommended','pendingFocus30','pendingRisk30'].includes(kind)){
       const rows=rowsFor(kind);
