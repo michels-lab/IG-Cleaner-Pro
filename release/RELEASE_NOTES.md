@@ -1,4 +1,6 @@
-## v120.78 — Granada: Focus 30 persistent cohort repair and safe Reviewed recovery (2026-11-17)
+## v120.78 — Granada: Focus 30 persistent cohort repair and safe Reviewed recovery (FINAL published 2026-11-17)
+
+- **Official FINAL stable:** [v120.78](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78), exact tagged source `1c75831c59b457171c113978a6acb282d915d71c`, governed [publisher 44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647) 4/4 SUCCESS with nine SHA-256-verified assets. One-time authorization consumed; v120.79 reserved but unauthorized. Owner live Instagram acceptance and P0 #360 remain open.
 
 - **User-reported incident (standalone v120.77):** Focus 30 presented 30 verifiable candidates; accepting could open no Instagram tabs and show no Reviewed confirmation, while the available count temporarily decreased and regenerated on reload. Root-cause code path: in-memory activeFocusBatch set before writing history; synchronous storage failures could prevent subsequent tab/dialog rendering. Exact owner's browser error unverified.
 - **Persistent opening state:** persist the active unconfirmed cohort before optional history writes; revert immediately if browser storage rejects the cohort. Never decrement eligible counts with a purely transient cohort, auto-mark Reviewed, reset existing history or silently recycle previously reviewed profiles.
