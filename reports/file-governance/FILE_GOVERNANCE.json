@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "28a97665cfb8ddf1e9734ab4e22aeacbd0432ba06c25731d287b5e068f5b0b31",
+  "inventory_fingerprint": "d0df7b2f50e2347ebbf5cee0d0318b48b66b11ce1b0b74ac4cb87ff6cde2623b",
   "evidence_fingerprint": "a011126b4c49b8d6435a17f9a2ed60f3d089dea425eb0feabf97c14ae1fc542a",
   "files": [
     {
@@ -253,7 +253,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "a4edc32c6b7740d5085c5ac0c0601b04e793ecb0"
+      "blob": "db3bb435a30955f222bd96d57513174b6a1541d3"
     },
     {
       "path": "README_SYNC.md",
