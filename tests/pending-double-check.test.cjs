@@ -53,7 +53,7 @@ const ctx={
  showSafeFocusPopup:()=>assert.equal(ctx.activeBatchRowResolved(ctx.activeFocusBatch.rows[0],"pending"),false,
   "Original review cannot auto-close a second review"),
  logAction:(type,message,details)=>events.push({type,message,details}),
- renderPendingRequests:()=>{},renderModuleDashboard:()=>{},
+ renderPendingRequests:()=>{},renderModuleDashboard:()=>{},renderFollowersMutualTab:()=>{},
  closeSafeFocusPopup:()=>{},closeExtraFocusModal:()=>{},closeFocusDialogAfterDecision:()=>{},
  savePendingReviewedMeta:()=>{},savePendingOpened:()=>{},saveProfileHistory:()=>{},
  recordProfileHistory:(u,event,details)=>events.push({u,event,details}),
