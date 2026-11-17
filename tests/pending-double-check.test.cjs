@@ -79,7 +79,8 @@ assert.equal(JSON.parse(store.get("A::active")).reviewMode,"double","Batch recov
 assert.equal(ctx.igcPendingDoubleCheckAll(),false);
 assert.equal(ctx.igcPendingDoubleRows().length,15);
 const snapshot=JSON.stringify(metadata.A), openedLedger=[...ctx.pendingOpenedSet];
-vm.runInContext(extract("function markSafeFocusNotReviewed(){","function confirmSafeFocusReviewed(){"),ctx);
+ctx.profileHistory={};
+vm.runInContext(extract("function igcPersistUnconfirmedAttempt(","function confirmSafeFocusReviewed(){"),ctx);
 ctx.markSafeFocusNotReviewed();
 assert.equal(JSON.stringify(metadata.A),snapshot,"Unconfirmed second round cannot erase review");
 assert.deepEqual([...ctx.pendingOpenedSet],openedLedger,"Unconfirmed second round cannot erase opened ledger");
