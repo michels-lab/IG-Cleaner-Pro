@@ -42,6 +42,7 @@ const ctx={
  pendingSnoozeMap:{},pendingOpenedSet:new Set(data.A),
  document:{getElementById:id=>({value:"still_pending"})},
  msg:(message,level)=>messages.push({message,level}),
+ pendingDecisionLabel:decision=>String(decision),
  confirm:()=>allow,
  igcConfirmBatchQuality:()=>{qualityChecks++;return allow},
  setActiveFocusBatch(kind,rows,label){
