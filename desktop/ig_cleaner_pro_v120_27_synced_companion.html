@@ -4797,8 +4797,85 @@ function cancelActiveFocusBatch(){
 }
 setInterval(renderActiveBatchDock,60000);
 
-function saveProfileHistory(){localStorage.setItem(LS_PROFILE_HISTORY,JSON.stringify(profileHistory||{}));}
-function loadProfileHistory(){try{profileHistory=JSON.parse(localStorage.getItem(LS_PROFILE_HISTORY)||'{}')||{}}catch{profileHistory={}}}
+// History is separate from Review/Protected/Pending decision ledgers. Compact
+// redundant property names without discarding events, decisions or unknown
+// metadata. Older backups and localStorage records remain fully readable.
+function igcHistoryFieldNames(){
+  return ['username','opened','reopened','reviewed','unconfirmed','snoozed','lastOpened','lastReviewed','lastDecision','lastSection','events'];
+}
+function igcPackHistoryEvents(events){
+  if(!Array.isArray(events))return events;
+  return events.map(ev=>{
+    if(ev&&typeof ev==='object'&&!Array.isArray(ev)&&Object.keys(ev).length===3
+      &&Object.prototype.hasOwnProperty.call(ev,'ts')
+      &&Object.prototype.hasOwnProperty.call(ev,'event')
+      &&Object.prototype.hasOwnProperty.call(ev,'details'))return [0,ev.ts,ev.event,ev.details];
+    return [1,ev];
+  });
+}
+function igcUnpackHistoryEvents(events){
+  if(!Array.isArray(events))return events;
+  return events.map(ev=>{
+    if(!Array.isArray(ev)||!ev.length)throw Error('Invalid compact history event');
+    if(ev[0]===0&&ev.length===4)return {ts:ev[1],event:ev[2],details:ev[3]};
+    if(ev[0]===1&&ev.length===2)return ev[1];
+    throw Error('Invalid compact history event tag');
+  });
+}
+function igcPackProfileHistory(history){
+  const fields=igcHistoryFieldNames();
+  return {__igcHistoryCompact:2,rows:Object.entries(history||{}).map(([user,entry])=>{
+    if(!entry||typeof entry!=='object'||Array.isArray(entry))return [user,-1,entry];
+    let mask=0;
+    const values=fields.map((field,i)=>{
+      if(!Object.prototype.hasOwnProperty.call(entry,field))return null;
+      mask|=(1<<i);
+      return field==='events'?igcPackHistoryEvents(entry[field]):entry[field];
+    });
+    const extras={};
+    for(const [key,value] of Object.entries(entry))if(!fields.includes(key))extras[key]=value;
+    return [user,mask,...values,extras];
+  })};
+}
+function igcUnpackProfileHistory(saved){
+  if(!saved||saved.__igcHistoryCompact!==2)return saved||{};
+  if(!Array.isArray(saved.rows))throw Error('Invalid compact profile history');
+  const fields=igcHistoryFieldNames(),result={};
+  for(const record of saved.rows){
+    if(!Array.isArray(record)||typeof record[0]!=='string')throw Error('Invalid compact profile history row');
+    const [username,mask]=record;
+    if(mask===-1&&record.length===3){Object.defineProperty(result,username,{value:record[2],enumerable:true,writable:true,configurable:true});continue;}
+    if(!Number.isInteger(mask)||mask<0||mask>=1<<fields.length||record.length!==fields.length+3)throw Error('Invalid compact profile history fields');
+    const entry={};
+    fields.forEach((field,index)=>{
+      if(mask&(1<<index))entry[field]=field==='events'?igcUnpackHistoryEvents(record[index+2]):record[index+2];
+    });
+    const extras=record[fields.length+2];
+    if(!extras||typeof extras!=='object'||Array.isArray(extras))throw Error('Invalid compact profile history extras');
+    for(const [key,value] of Object.entries(extras))Object.defineProperty(entry,key,{value,enumerable:true,writable:true,configurable:true});
+    Object.defineProperty(result,username,{value:entry,enumerable:true,writable:true,configurable:true});
+  }
+  return result;
+}
+function igcCompactHistoryText(history){
+  const plain=JSON.stringify(history||{}),packed=JSON.stringify(igcPackProfileHistory(history||{}));
+  return packed.length<plain.length?packed:plain;
+}
+function saveProfileHistory(){localStorage.setItem(LS_PROFILE_HISTORY,igcCompactHistoryText(profileHistory));}
+function loadProfileHistory(){
+  try{
+    const raw=localStorage.getItem(LS_PROFILE_HISTORY)||'{}';
+    const persisted=JSON.parse(raw);
+    profileHistory=igcUnpackProfileHistory(persisted);
+    if(!persisted?.__igcHistoryCompact){
+      const compact=igcCompactHistoryText(profileHistory);
+      if(compact.length<raw.length){
+        try{localStorage.setItem(LS_PROFILE_HISTORY,compact)}
+        catch(e){console.warn('Focus history compaction deferred: browser storage write failed',e?.name||e)}
+      }
+    }
+  }catch(e){console.error('Focus: history storage could not be loaded',e);profileHistory={}}
+}
 function saveGuidedSession100(){if(guidedSession100)localStorage.setItem(LS_GUIDED_SESSION_100,JSON.stringify(guidedSession100));else localStorage.removeItem(LS_GUIDED_SESSION_100)}
 function loadGuidedSession100(){try{guidedSession100=JSON.parse(localStorage.getItem(LS_GUIDED_SESSION_100)||'null')}catch{guidedSession100=null}}
 function ensureProfileHistory(username){
