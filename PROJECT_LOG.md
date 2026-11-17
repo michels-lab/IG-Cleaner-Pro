@@ -1,3 +1,10 @@
+## 2026-11-17 — v120.78 FINAL stable officially published (post-release reconciliation)
+
+- **Official release:** [v120.78](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78), 2026-11-17T21:06:55Z, tagged source `1c75831c59b457171c113978a6acb282d915d71c`, **9 GitHub SHA-256 assets**, no RC/Developer. Governed [publisher #44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647) completed **4/4 SUCCESS** (authorization, UI, Windows installed Setup, production-signed stable Android APK). [Full official receipt](docs/GRANADA_V12078_FINAL_RECEIPT_2026-11-17.md).
+- **Code:** Focus phantom-count recovery #366 and multi-module fail-closed history; version/release #368 merged after 10/10 checks. No user account credentials or real Instagram actions were used in tests.
+- **One-time permission consumed:** release request `authorized=false/status=published`, readiness `owner_device_review_release_override.authorized=false` consumed v120.78, current stable v120.78, next v120.79 **reserved, NOT authorized**. Keep `release_hold=true`, physical acceptance FALSE.
+- **Unverified:** owner v120.77 Chrome Focus 30 failure, saved 789 reviews, two real Instagram accounts, live Unfollow/Cancel and physical Android/Windows synchronization. Issue [#360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360) remains OPEN. Backup full Vault data, preserve browser origin and do not delete site storage.
+
 ## 2026-11-17 — Owner-directed Operación Granada: stable v120.78 publication authorization
 
 - Owner requested **"op granada y release"** after integrated PR #366 and docs PR #367. **Exact-version one-time** final stable v120.78 publication only; not product completion or owner acceptance.
