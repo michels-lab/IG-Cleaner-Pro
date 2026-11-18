@@ -1,3 +1,11 @@
+## 2026-11-17 — Operación Granada: Automations action-history casefold reconciliation (source PR)
+
+- Issue #298: read-only Windows Automations statistics used the *first* saved action journal row for a case-insensitive username. Distinct legacy JSON keys (e.g. `Example.User` and `example.user`) with different statuses/timestamps could hide a later verified action or show an obsolete OK; previous regression tested only identical duplicate rows.
+- `tools/automation_activity_ui.py` now chooses the latest dated outcome per owner-selected account/task/casefolded username, preserves warning event timestamps across all variants, de-duplicates warnings, and fails closed on equal-timestamp conflicting status/origin. Original WAL, local reviews, Instagram sessions and live actions remain untouched.
+- Negative production-function regression expanded in `tests/automation-warning-events.test.cjs`: reverse insertion order, repeated rows, prior Review+blocked events, newer Review, equal-time ambiguous origin, same-handle distinct Unfollow vs Cancel.
+- Audit: [docs/audits/2026-11-17-automation-history-casefold-reconciliation.md](docs/audits/2026-11-17-automation-history-casefold-reconciliation.md). Branch `granada/automation-history-casefold-reconciliation-20261117`. CI/installed Windows evidence and exact merged SHA pending verification; no fabricated Chrome/Instagram acceptance.
+- Official stable at branch creation: v120.78. Independent v120.79 official publisher was already in progress on an earlier exact source SHA; DO NOT assume this fix is included in v120.79 or modify the release request/hold.
+
 ## 2026-11-17 — Granada P0: no borrar revisiones antiguas al cancelar un Recheck
 
 - **Diagnóstico confirmado en fuente:** `markSafeFocusNotReviewed()` borraba `pendingReviewedMeta` de Pending normal y eliminaba `doneSet`/`reviewedMeta` en Followers/Mutuals, aunque esos perfiles podían tener una decisión válida de una tanda anterior. Un reintento inconcluso no debe deshacer una revisión confirmada.
