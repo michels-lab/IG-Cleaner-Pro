@@ -14882,14 +14882,24 @@ function localStateRows(){
 // treat the first page as the entire history or publish stale decisions over
 // rows that were omitted by an API limit.
 let completeProfileStateCache=null;
-async function readCompleteProfileState(fields='*'){
-  if(completeProfileStateCache&&Date.now()-completeProfileStateCache.at<4000&&
-     (completeProfileStateCache.fields==='*'||fields!=='*'))
+async function readCompleteProfileState(fields='*',options={}){
+  // The same 4-second cache must never cross either the signed-in owner or
+  // Instagram workspace. Reconciliation asks for fresh rows because another
+  // device can confirm reviews while this page is still open.
+  const owner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const account=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+  const sameScope=()=>owner===(typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||''))&&
+    account===String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+  if(!options.fresh&&completeProfileStateCache&&
+     completeProfileStateCache.owner===owner&&completeProfileStateCache.account===account&&
+     Date.now()-completeProfileStateCache.at<4000&&
+     (completeProfileStateCache.fields==='*'||completeProfileStateCache.fields===fields))
     return completeProfileStateCache.rows;
   const all=[],seen=new Set(),pageSize=1000;
   for(let offset=0;offset<=250000;){
     const page=await rest('profile_state?select='+fields+
       '&order=username.asc,module.asc&limit='+pageSize+'&offset='+offset,{method:'GET'});
+    if(!sameScope())throw Error('Sync detenido: cambió la cuenta o el perfil de Instagram durante la descarga de revisiones');
     if(!Array.isArray(page))throw Error('Sync incompleto: la nube no devolvió una página válida de revisiones');
     if(page.length===0){
       const registry=window.IGC_INSTAGRAM_PROFILES;
@@ -14899,7 +14909,7 @@ async function readCompleteProfileState(fields='*'){
       // count. Reject races, truncated pages and stale response fragments.
       if(account&&Number.isInteger(expected)&&expected>=0&&all.length!==expected)
         throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
-      completeProfileStateCache={at:Date.now(),rows:all,fields};
+      completeProfileStateCache={at:Date.now(),rows:all,fields,owner,account};
       return all;
     }
     for(const item of page){
@@ -14916,7 +14926,7 @@ async function pushProfileState(){
   if(!rows.length)return 0;
   // The previous single GET silently saw only the newest API page. A complete
   // comparison is mandatory to prevent redundant old-state replays.
-  const remote=await readCompleteProfileState('username,module,reviewed_at');
+  const remote=await readCompleteProfileState('username,module,reviewed_at',{fresh:true});
   const latest=new Map();
   for(const row of remote||[]){
     const key=String(row.username||'').toLowerCase()+'|'+String(row.module||'');
@@ -14990,17 +15000,57 @@ function applyOneState(r){
   return true;
 }
 async function pullProfileState(){
-  const rows=await readCompleteProfileState('*');
+  const rows=await readCompleteProfileState('*',{fresh:true});
+  // Cloud reconciliation must never create phantom Reviewed changes in RAM
+  // if the browser refuses a durable write. Save the exact prior identity-
+  // scoped state and restore it on any failed multi-key localStorage commit.
+  const before={
+    done:new Set(doneSet||[]),protected:new Set(protectedSet||[]),
+    reviewed:{...(reviewedMeta||{})},pending:{...(pendingReviewedMeta||{})},
+    opened:new Set(pendingOpenedSet||[])
+  };
   let changed=0;
-  for(const r of rows||[])if(applyOneState(r))changed++;
+  try{
+    for(const r of rows||[])if(applyOneState(r))changed++;
+    if(changed){
+      const entries=[
+        [LS_DONE,JSON.stringify([...doneSet])],
+        [LS_PROT,JSON.stringify([...protectedSet])],
+        [LS_REVIEW_META,JSON.stringify(reviewedMeta)],
+        [LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta)],
+        [LS_PENDING_OPENED,JSON.stringify([...pendingOpenedSet])]
+      ];
+      const previous=entries.map(([key])=>[key,localStorage.getItem(key)]);
+      const written=[];
+      try{
+        for(const [key,value] of entries){
+          localStorage.setItem(key,value);
+          written.push(key);
+        }
+      }catch(error){
+        const old=new Map(previous);
+        const rollbackErrors=[];
+        for(const key of written.reverse()){
+          try{
+            const prior=old.get(key);
+            if(prior===null)localStorage.removeItem(key);
+            else localStorage.setItem(key,prior);
+          }catch(recoveryError){rollbackErrors.push(String(recoveryError?.name||'StorageError'))}
+        }
+        throw Error('No se guardaron las revisiones sincronizadas en este navegador. Las revisiones locales siguen disponibles. '+(rollbackErrors.length?'Algunas claves requieren recuperación desde respaldo. ':'')+'Error: '+String(error?.name||'StorageError'));
+      }
+    }
+  }catch(error){
+    doneSet.clear();for(const user of before.done)doneSet.add(user);
+    protectedSet.clear();for(const user of before.protected)protectedSet.add(user);
+    for(const key of Object.keys(reviewedMeta||{}))delete reviewedMeta[key];
+    Object.assign(reviewedMeta,before.reviewed);
+    for(const key of Object.keys(pendingReviewedMeta||{}))delete pendingReviewedMeta[key];
+    Object.assign(pendingReviewedMeta,before.pending);
+    pendingOpenedSet.clear();for(const user of before.opened)pendingOpenedSet.add(user);
+    throw error;
+  }
   if(changed){
-    try{
-      localStorage.setItem(LS_DONE,JSON.stringify([...(doneSet||new Set())]));
-      localStorage.setItem(LS_PROT,JSON.stringify([...(protectedSet||new Set())]));
-      localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta||{}));
-      localStorage.setItem(LS_PENDING_REVIEW_META,JSON.stringify(pendingReviewedMeta||{}));
-      localStorage.setItem(LS_PENDING_OPENED,JSON.stringify([...(pendingOpenedSet||new Set())]));
-    }catch{}
     try{buildRows?.();applyFilters?.();renderAll?.();renderPendingRequests?.();renderFollowersMutualTab?.();renderFollowersAllWorkspace?.()}catch{}
   }
   S.stats.statesDown=(rows||[]).length;

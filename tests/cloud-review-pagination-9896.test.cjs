@@ -31,7 +31,8 @@ function harness(cutPage=-1,serverCap=1000){
     doneSet,reviewedMeta,protectedSet,pendingReviewedMeta,pendingOpenedSet,
     LS_DONE:"done",LS_PROT:"protected",LS_REVIEW_META:"meta",
     LS_PENDING_REVIEW_META:"pendingmeta",LS_PENDING_OPENED:"pendingOpened",
-    localStorage:{setItem:(key,value)=>storage.set(key,value)},
+    localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,
+      setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},
     S:{stats:{}},ms:value=>Date.parse(value)||0,
     window:{IGC_INSTAGRAM_PROFILES:{
       active:"legacy",accounts:[{account_key:"legacy",review_count:fixtures.length}]
