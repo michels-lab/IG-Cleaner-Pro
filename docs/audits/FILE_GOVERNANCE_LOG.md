@@ -1628,3 +1628,15 @@ Automatic evidence deltas, pending human triage. No deletion authority.
 - All tracked 456; findings 8; inventory 4f1a897e8c11; evidence 187980a041d8. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
 - Finding changes: 0 NEW; 1 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 0 new paths, 0 removed paths, 0 reclassified paths.
 - NO_LONGER_DETECTED — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID c201ffa435db6657).
+
+## 2026-11-18 18:52 UTC
+
+- All tracked 452; findings 1; inventory b665baf7125a; evidence ef6aced8d951. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
+- Finding changes: 0 NEW; 7 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 3 new paths, 7 removed paths, 0 reclassified paths.
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 00254bef602c0fb9).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 0e4b57a9618c4cbe).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 1d69634be3d31378).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 8032832fed0ae6fc).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID 90d3ae715cce769a).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID d6a887cd4cf4669d).
+- NO_LONGER_DETECTED — BROKEN_RELATIVE_LINK at `docs/CURRENT_HANDOFF.md` (ID df925d8ba69bac5a).

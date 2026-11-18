@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 456,
-  "classified_files_total": 452,
+  "tracked_files_total": 452,
+  "classified_files_total": 448,
   "docs_content_inspected": 116,
-  "large_docs_skipped": 1,
+  "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
     "agent": 9,
@@ -14,21 +14,21 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 111,
+    "document": 112,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 144,
+    "test": 139,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "4f1a897e8c11dcb047e8f3eead8196df47d05169e464cf15a0368a6501662687",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 1,
+  "inventory_fingerprint": "b665baf7125aa5ba259915e840fbb39242a51f4f13973da3b390e84c14e8bf0a",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -98,14 +98,14 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "ad8422a7b55f74ec89fa00de73c2172f129629da"
+      "blob": "e065a96206fcb6698fe6e45d4da7e734b607b453"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "8f28ce5db508e48c9dcb81a8af3d0da8e4eeec23"
+      "blob": "b7874fae931d5a4590134c94eb50c85e7ba7001a"
     },
     {
       "path": ".github/workflows/file-governance-audit.yml",
@@ -126,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0787a50b8c9940e7611d0223c09ea425f39e02a1"
+      "blob": "0e78111dcc5c6026c8fbfa04cc871edd3af703bd"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -245,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "780de69ef2ef6648037839932305f9abc07b319c"
+      "blob": "13cf713b284c35e623e22dfb86a1c6c69b8d879c"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "a61e18abfa5159cc56c555f898b226fa0a965398"
+      "blob": "75858c71cd8cfa9faaafb01bab86969fa88d26f3"
     },
     {
       "path": "README_SYNC.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "ace354aee2a43ebdb1c298c6a2b8792bfd005b3e"
+      "blob": "61303c1aeefaa70f2f6fa5eee1ca6e7cc229549a"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "93612a591aadb689c17c49325f492c4c8da0804f"
+      "blob": "80c7f78ab1529389be9e00e8f0c60bcc17c5a0dd"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1606,6 +1606,13 @@
       "blob": "5811574429c903c7bc5360e3f949710e815396a2"
     },
     {
+      "path": "docs/audits/2026-11-18-automations-origin-integrity.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "47ec28f85294072acc34782706ac1dd76a62a2b2"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -1848,14 +1855,14 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "02c8cc65add77eefe68ae518a0bb62fd7c993747"
+      "blob": "8b1bb4726d0513a4d5689183ff8e6984eb6669cc"
     },
     {
       "path": "tests/automation-warning-events.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d595343754e58e08becff79d02d667fcc3a8e2fe"
+      "blob": "b19cd65a535ba825e343dbd5c5f76521d2a057ce"
     },
     {
       "path": "tests/automations-cold-start.test.cjs",
@@ -1953,7 +1960,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "5ea63a5cbab759246f3ad71f0844cc10ca7877a1"
+      "blob": "fa158aa6421d468ec2d2043167945a0331582a69"
     },
     {
       "path": "tests/developer-annotations-contract.test.cjs",
@@ -1970,46 +1977,18 @@
       "blob": "706519efc4c91411d9fca7613ba6df3e4e16aa1c"
     },
     {
-      "path": "tests/dual-action-batch-completion-browser.test.cjs",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "e74aadc55a9e435c020607e07667c4b18f8073be"
-    },
-    {
-      "path": "tests/dual-action-new-batch-browser.test.cjs",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "e4f2db2b749b0ad4bd15191b6520c159a4c81daa"
-    },
-    {
-      "path": "tests/dual-action-parallel-windows-browser.test.cjs",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "dee73accee2c8b4dbc445e41484e939b61e6f66d"
-    },
-    {
-      "path": "tests/dual-action-windows-panel-browser.test.cjs",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "7b6ca23258682847098df5f6d2ce5ed336ebfbc8"
-    },
-    {
       "path": "tests/dual-workspace-sidebar-browser.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "3bdb1dcfe88dec9c11986e5923cd7f0e2acad5e8"
+      "blob": "a2e99428af32a35f4be7e7b78f513bd21b4e0ad5"
     },
     {
       "path": "tests/dual-workspace-sidebar-contract.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "295b5f54a6d7e0edb358815663344376f0fc2184"
+      "blob": "edeeb21a9eec730f60564727fd031ed04aa2f9e0"
     },
     {
       "path": "tests/english-ui-contract.py",
@@ -2303,7 +2282,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ae61ef021497d356dc9ed1ac3499b925a048b0ec"
+      "blob": "6c4aa3824ff888ec9af2258682c14e96cb8e6473"
     },
     {
       "path": "tests/profile-counts-indexeddb-browser.cjs",
@@ -2558,13 +2537,6 @@
       "blob": "378f3d6d6ed26ad43c6302869bd82be29539aa43"
     },
     {
-      "path": "tests/test_dual_action_windows_ui.py",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "bc262b9bdb4d10c12ff46238c71b5d5f07a5ce59"
-    },
-    {
       "path": "tests/test_dual_action_worker_lease_adapter.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2709,7 +2681,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ebf055899d4284256aa44200d2c14b36df3941b7"
+      "blob": "0ff735b3b88587daaa58573fbc1f3023b860dd54"
     },
     {
       "path": "tests/test_profile_actions_chromium.py",
@@ -2817,18 +2789,18 @@
       "blob": "20c7af849de83b69e489c497b94be41d6ba3b219"
     },
     {
+      "path": "tests/test_windows_single_window_layout.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ace65fd5262edf9d28a9ad34cfb9af6a07aee017"
+    },
+    {
       "path": "tests/test_windows_updater.py",
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "31cdf70827b442c3cd9b0107d03af748b6aeae90"
-    },
-    {
-      "path": "tests/two-workspaces-windows-browser.test.cjs",
-      "role": "test",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "4810a45cde3aa6c3ed9f392036c075d3682caf4b"
     },
     {
       "path": "tests/windows-automations-owner-contract.py",
@@ -2842,7 +2814,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d193f8b69ec1a903e8ecba85545b31e26ba45d14"
+      "blob": "818a3906167bcd8f975a813270f9a59912664c62"
     },
     {
       "path": "tests/windows-updater-ui.test.cjs",
@@ -2884,7 +2856,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "140563ebfec72062097c83476f2e53681cb3ea8f"
+      "blob": "e73cfe40bd63a6f2beec48bced9f36b318abb8d6"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -2964,13 +2936,6 @@
       "blob": "0207bf1990a267329cbdccbceb3631cf53f8db22"
     },
     {
-      "path": "tools/dual_action_windows_ui.py",
-      "role": "source",
-      "purpose": "code/test implementation",
-      "certainty": "rule",
-      "blob": "cd7fa6f0fc54872e137944e4768950d4a7250bc9"
-    },
-    {
       "path": "tools/dual_action_workspaces.py",
       "role": "source",
       "purpose": "code/test implementation",
@@ -2996,7 +2961,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ddb70fe0109c782a9d32a956248f8a9186f5ac9b"
+      "blob": "fb94c32471285b34d6e9e4d2b2e3307f8d0ddf20"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -3193,72 +3158,16 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "fa614cd74eb61fd59044b26b65baf4c342bf1291"
+    },
+    {
+      "path": "tools/windows_workspace_picker.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "92c3e98d3d94fc7f4a38c3eb1ba416bbd97d4568"
     }
   ],
   "findings": [
-    {
-      "id": "1d69634be3d31378",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_ANDROID_VISUAL_DUPLICATE_FIX_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "00254bef602c0fb9",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_UNAVAILABLE_PROFILE_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "90d3ae715cce769a",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_V12066_FINAL_RECEIPT_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "0e4b57a9618c4cbe",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_REVIEW_RECOVERY_AND_COLORS_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "8032832fed0ae6fc",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_V12065_FINAL_RECEIPT_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "d6a887cd4cf4669d",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "df925d8ba69bac5a",
-      "code": "BROKEN_RELATIVE_LINK",
-      "severity": "confirmed",
-      "path": "docs/CURRENT_HANDOFF.md",
-      "observation": "Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md",
-      "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
     {
       "id": "5c362704fd56e07f",
       "code": "BROKEN_RELATIVE_LINK",
