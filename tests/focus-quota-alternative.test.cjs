@@ -67,3 +67,94 @@ storage.set("focus-cohort",previous);ctx.loadActiveFocusBatch();
 assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),original,
  "Recoverable previous v3 storage must still reload after malformed data was repaired");
 console.log("PASS: 30 Focus profiles, lossless quota fallback, reviewed/Pending preservation, storage denial and invalid data fail-closed");
+
+
+// Pruning a recovered cohort must be transactional too: the UI must NOT
+// discard rows in memory when the saved cohort could not be updated.
+const pruneStart=html.indexOf("function pruneResolvedActiveFocusBatch(");
+const pruneEnd=html.indexOf("function forceClearStuckFocusBatch(",pruneStart);
+assert(pruneStart>=0&&pruneEnd>pruneStart,"Production Focus prune function missing");
+let failPruneWrite=true,failPruneRemove=false;
+const durable=new Map([["focus-cohort","previous durable cohort"]]);
+const initialPrune={kind:"main",rows:[{username:"done"},{username:"untouched"}]};
+const pruneCtx={
+ console,
+ LS_ACTIVE_FOCUS_BATCH:"focus-cohort",
+ activeFocusBatch:initialPrune,
+ activeExtraReviewBatch:initialPrune,
+ activeBatchRowResolved:row=>row.username==="done",
+ localStorage:{
+   removeItem(key){if(failPruneRemove)throw Error("Storage denied");durable.delete(key)}
+ },
+ saveActiveFocusBatch(){
+   if(failPruneWrite)throw Error("QuotaExceededError");
+   durable.set("focus-cohort",JSON.stringify(pruneCtx.activeFocusBatch));
+ }
+};
+vm.createContext(pruneCtx);
+vm.runInContext(html.slice(pruneStart,pruneEnd),pruneCtx);
+assert.equal(pruneCtx.pruneResolvedActiveFocusBatch(),false,
+ "Durable pruning must roll back after rejected storage write");
+assert.equal(pruneCtx.activeFocusBatch,initialPrune,
+ "Failed prune must keep the exact previous in-memory cohort");
+assert.equal(pruneCtx.activeExtraReviewBatch,initialPrune,
+ "Failed prune must not make recovery display a different cohort");
+assert.equal(durable.get("focus-cohort"),"previous durable cohort",
+ "Failed write cannot erase the older saved cohort");
+failPruneWrite=false;
+assert.equal(pruneCtx.pruneResolvedActiveFocusBatch(),true);
+assert.deepEqual([...pruneCtx.activeFocusBatch.rows].map(r=>r.username),["untouched"]);
+assert.deepEqual(JSON.parse(durable.get("focus-cohort")).rows.map(r=>r.username),["untouched"]);
+pruneCtx.activeBatchRowResolved=()=>true;
+const savedAfterPrune=pruneCtx.activeFocusBatch;
+failPruneRemove=true;
+assert.equal(pruneCtx.pruneResolvedActiveFocusBatch(),false,
+ "Storage removal denial must not claim the cohort was cleared");
+assert.equal(pruneCtx.activeFocusBatch,savedAfterPrune);
+assert.equal(pruneCtx.activeExtraReviewBatch,savedAfterPrune);
+assert(durable.has("focus-cohort"));
+failPruneRemove=false;
+assert.equal(pruneCtx.pruneResolvedActiveFocusBatch(),true);
+assert.equal(pruneCtx.activeFocusBatch,null);
+assert.equal(pruneCtx.activeExtraReviewBatch,null);
+assert(!durable.has("focus-cohort"),"Resolved persisted cohort must be removed");
+console.log("PASS: Focus recovered-cohort pruning is durable on both write and remove failures");
+
+
+// A user/robot decision clearing a cohort has the same durability contract:
+// one successful disk deletion, THEN the two in-memory references are cleared.
+const clearStart=html.indexOf("function clearActiveFocusBatch(");
+const clearEnd=html.indexOf("function activeBatchRowResolved(",clearStart);
+assert(clearStart>=0&&clearEnd>clearStart,"Production Focus clear function missing");
+let failClear=true,clearAttempts=0,renderCount=0;
+const clearSaved=new Map([["focus-cohort","must survive failed delete"]]);
+const originalClear={kind:"pending",rows:[{username:"still-unreviewed"}]};
+const clearCtx={
+ LS_ACTIVE_FOCUS_BATCH:"focus-cohort",
+ activeFocusBatch:originalClear,
+ activeExtraReviewBatch:originalClear,
+ localStorage:{
+   removeItem(key){
+     clearAttempts++;
+     if(failClear)throw Error("SecurityError");
+     clearSaved.delete(key);
+   }
+ },
+ renderActiveBatchDock(){renderCount++}
+};
+vm.createContext(clearCtx);
+vm.runInContext(html.slice(clearStart,clearEnd),clearCtx);
+assert.throws(()=>clearCtx.clearActiveFocusBatch(),/SecurityError/,
+ "A rejected delete must be reported rather than hiding a still-persisted batch");
+assert.equal(clearCtx.activeFocusBatch,originalClear);
+assert.equal(clearCtx.activeExtraReviewBatch,originalClear);
+assert(clearSaved.has("focus-cohort"));
+assert.equal(renderCount,0,"Do not redraw an uncommitted batch deletion");
+failClear=false;
+clearCtx.clearActiveFocusBatch();
+assert.equal(clearAttempts,2,"Each clear attempt performs exactly one storage delete");
+assert.equal(clearCtx.activeFocusBatch,null);
+assert.equal(clearCtx.activeExtraReviewBatch,null);
+assert(!clearSaved.has("focus-cohort"));
+assert.equal(renderCount,1);
+console.log("PASS: Focus clearing waits for durable deletion and never silently drops the prior cohort");
