@@ -90,4 +90,44 @@ assert.equal(multiTask.unfollow,1);
 assert.equal(multiTask.cancel,1);
 assert.equal(multiTask.warning,3,'Separate Unfollow and Cancel warnings each count by exact task and timestamp');
 
-console.log('Automations: warning event history, exact timestamps, no-click, duplicate casefold + local-midnight parity PASS');
+// GRANADA regression: toggling robot/unknown provenance is not allowed to
+// inflate successes, relabel legacy OK as robot or erase warnings by origin.
+// Keep this origin-filter fixture independent of the earlierCase/newerCase
+// warning-event scenario: inheriting archived robot warnings here would
+// correctly count them, invalidating a zero-robot-warning assertion.
+const confirmedRobot={...newerCase,warning_events:[]};
+const oldUnknown={...newerCase,username:'old.history',origin:'unknown',warning_events:[]};
+const unknownWarning={...newerCase,username:'unknown.warning',
+ status:'review',origin:'unknown',at:'2026-11-09T06:11:00Z',
+ warning_events:[{status:'blocked',at:'2026-11-09T06:00:00Z',origin:'unknown'}]};
+const scopedOrigins=[confirmedRobot,oldUnknown,unknownWarning];
+const allOrigins=fns.summarize(scopedOrigins,'h1',now,'all');
+assert.equal(allOrigins.verified,1);
+assert.equal(allOrigins.legacy_unknown,1);
+assert.equal(allOrigins.warning,2);
+const robotOnly=fns.summarize(scopedOrigins,'h1',now,'robot');
+assert.equal(robotOnly.verified,1);
+assert.equal(robotOnly.legacy_unknown,0,'Legacy unknown origin cannot be claimed as robot');
+assert.equal(robotOnly.warning,0,'Unknown warning events cannot be called robot warnings');
+const unknownOnly=fns.summarize(scopedOrigins,'h1',now,'unknown');
+assert.equal(unknownOnly.verified,0,'Unknown historical OK cannot be counted as confirmed robot');
+assert.equal(unknownOnly.legacy_unknown,1);
+assert.equal(unknownOnly.warning,2);
+// Crucial ordering: prove cross-origin conflicts on the FULL journal before
+// applying the requested visible origin. Otherwise a robot-only filter could
+// silently remove a same-time contradictory unknown result and invent an OK.
+const crossOriginConflict=[newerCase,{...newerCase,origin:'unknown'}];
+assert.equal(fns.summarize(crossOriginConflict,'h1',now,'robot').verified,0);
+assert.equal(fns.summarize(crossOriginConflict,'h1',now,'unknown').legacy_unknown,0);
+assert.equal(fns.reconciledOutcomes(crossOriginConflict)[0].conflict,true);
+const oldWarningOnRobot={...newerCase,username:'mixed.warnings',
+ warning_events:[{status:'review',at:'2026-11-09T06:00:00Z',origin:'unknown'}]};
+assert.equal(fns.summarize([oldWarningOnRobot],'h1',now,'robot').warning,0);
+assert.equal(fns.summarize([oldWarningOnRobot],'h1',now,'unknown').warning,1,
+ 'Historical warning provenance is preserved separately from current action origin');
+assert(src.includes("origin.id='igcActOrigin'"),
+ 'Production Windows activity panel must expose a working origin selector');
+assert(src.includes("origin.addEventListener('change',()=>render(latest))"),
+ 'Origin selector must recompute period tiles and journal without a reload');
+
+console.log('Automations: warning event history, exact timestamps, no-click, duplicate casefold + local-midnight parity + provenance-filter fail-closed PASS');

@@ -22,8 +22,9 @@ import secrets
 
 from profile_counts_bridge import Collector, build_server
 from windows_updater import WindowsUpdater, numeric_version
-from dual_action_windows_ui import DUAL_ACTION_PANEL
 from automation_activity_ui import AUTOMATION_ACTIVITY_PANEL
+from windows_workspace_picker import (chrome_workspace_path, instance_mutex_name,
+                                      ui_document_path, select_workspace)
 
 
 APP_NAME = "Insta Cleaner Pro"
@@ -53,20 +54,20 @@ def bundled_html() -> Path:
     return base / "ui" / BUNDLED_HTML
 
 
-def prepare_html(source: Path, destination: Path, *, dual_action_panel=False) -> Path:
-    """Copy on content change, adding a native-only panel without touching saved data."""
+def prepare_html(source: Path, destination: Path, *, automation_activity=False) -> Path:
+    """Copy on content change, adding only the single-account activity view."""
     if not source.is_file():
         raise FileNotFoundError("El ejecutable no incluye la interfaz de Insta Cleaner.")
     incoming = source.read_bytes()
     if len(incoming) < 100_000:
         raise ValueError("La interfaz incluida está incompleta.")
-    if dual_action_panel:
-        # Inject only into the Windows LOCAL copy, not the Android/web source.
+    if automation_activity:
+        # One statistics/history disclosure for this window's account only.
         marker = b"</body>"
         position = incoming.rfind(marker)
-        if position < 0 or b"igcDualActionWorkspacePanel" in incoming:
-            raise ValueError("La interfaz no permite agregar los robots dobles con seguridad.")
-        incoming = incoming[:position] + (DUAL_ACTION_PANEL + AUTOMATION_ACTIVITY_PANEL).encode("utf-8") + incoming[position:]
+        if position < 0 or b"igcAutomationActivityPanel" in incoming:
+            raise ValueError("The Windows activity panel cannot be inserted safely.")
+        incoming = incoming[:position] + AUTOMATION_ACTIVITY_PANEL.encode("utf-8") + incoming[position:]
     if destination.is_file() and hashlib.sha256(destination.read_bytes()).digest() == hashlib.sha256(incoming).digest():
         return destination
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -104,8 +105,8 @@ def chrome_app_args(executable: Path, page: Path, workspace: Path, port: int, to
             "--app=" + url]
 
 
-def acquire_single_instance(*, developer=False):
-    """Prevent reopening a second window with a dead port/token for the same profile."""
+def acquire_single_instance(*, developer=False, workspace='primary'):
+    """Block duplicate launches of ONE account slot; allow both slots simultaneously."""
     if sys.platform != "win32":
         return None
     import ctypes
@@ -114,12 +115,12 @@ def acquire_single_instance(*, developer=False):
     kernel32.CreateMutexW.restype = ctypes.c_void_p
     kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
     kernel32.CloseHandle.restype = ctypes.c_bool
-    handle = kernel32.CreateMutexW(None, False, "Local\\MichelsLab_InstaCleanerPro_Developer" if developer else "Local\\MichelsLab_InstaCleanerPro_Desktop")
+    handle = kernel32.CreateMutexW(None, False, instance_mutex_name(workspace, developer=developer))
     if not handle:
         raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
     if ctypes.get_last_error() == 183:
         kernel32.CloseHandle(handle)
-        raise RuntimeError("Insta Cleaner Pro ya está abierto. Usa la ventana existente.")
+        raise RuntimeError("Esa cuenta ya tiene una ventana abierta. Elige la otra cuenta al iniciar.")
     return handle
 
 
@@ -179,6 +180,8 @@ def main(argv=None) -> int:
     parser.add_argument("--healthcheck", action="store_true")
     parser.add_argument("--developer", action="store_true",
                         help="Launch isolated Developer Edition; diagnostics are read-only by default, with separately consented live action tests.")
+    parser.add_argument("--workspace", choices=("primary", "secondary"),
+                        help="Choose an isolated window directly; otherwise Windows asks at startup.")
     parser.add_argument("--smoke-startup", action="store_true",
                         help="Initialize the installed UI and local controller without Instagram.")
     args = parser.parse_args(argv)
@@ -189,13 +192,14 @@ def main(argv=None) -> int:
             # startup path. No sign-in, network calls, browser automation, or
             # destructive workspace resets. Used by silent Setup acceptance.
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML, dual_action_panel=not args.developer)
+            page = prepare_html(source, ui_document_path(home, args.workspace or "primary", BUNDLED_HTML),
+                                automation_activity=not args.developer)
             if page.stat().st_size < 100_000:
                 raise RuntimeError("The installed interface is incomplete.")
             browser = chrome_path()
             if not browser.is_file():
                 raise FileNotFoundError("Chrome is required for the Windows app.")
-            chrome_workspace = home / "workspace-browser"
+            chrome_workspace = chrome_workspace_path(home, args.workspace or "primary")
             chrome_workspace.mkdir(parents=True, exist_ok=True)
             legacy = Path.home() / ".ig-cleaner-pro"
             manager = (None if args.developer else
@@ -227,12 +231,16 @@ def main(argv=None) -> int:
             print("PASS: UI embebida, controlador Playwright y servidor local disponibles.")
             return 0
 
-        mutex = acquire_single_instance(developer=args.developer)
+        workspace = args.workspace or (select_workspace() if sys.platform == "win32" else "primary")
+        if workspace is None:
+            return 0  # Explicit Cancel; do not start backend, browser or robot.
+        mutex = acquire_single_instance(developer=args.developer, workspace=workspace)
         try:
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML, dual_action_panel=not args.developer)
+            page = prepare_html(source, ui_document_path(home, workspace, BUNDLED_HTML),
+                                automation_activity=not args.developer)
             browser = chrome_path()
-            chrome_workspace = home / "workspace-browser"
+            chrome_workspace = chrome_workspace_path(home, workspace)
             chrome_workspace.mkdir(parents=True, exist_ok=True)
             # Keep existing result and Instagram session paths, so an upgrade
             # retains earlier robot results and the signed-in Instagram browser.

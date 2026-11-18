@@ -84,10 +84,15 @@ const {chromium}=require("playwright");
   await page.evaluate(()=>{
    followingRaw=[{username:"public.user"}]; // Use existing imported Following list.
    showPage("automations");
+   window.igcAutomationNavigate("analysis");
    window.igcCountsRender();
   });
+  assert.equal(await page.locator("#igcAutomationTabAnalysis").getAttribute("aria-selected"),"true",
+   "Profile Counts fixtures must explicitly select Analyze rather than exposing every robot");
+  assert(!await page.locator("#igcActionRobotSection").isVisible(),
+   "Read-only analysis never duplicates or exposes Unfollow action controls");
   assert(await page.locator("#page-automations #igcCountsRobotActions").isVisible(),
-   "Pacing, Pause and Resume controls must be visible");
+   "Pacing, Pause and Resume controls must be visible in Analyze");
   assert(await page.locator("#page-automations #igcCountsResume").isVisible());
   assert(await page.locator("#page-profileStats #igcCountsRobotActions").count()===0,
    "Insights must not contain robot controls");

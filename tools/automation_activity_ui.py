@@ -1,4 +1,4 @@
-"""Native Windows Automations statistics sidebar; read-only canonical action journal.
+"""Native Windows Automations History view; read-only canonical action journal.
 
 No new storage, no Instagram requests and no relationship clicks. Source data comes
 from the existing token-protected /api/actions/history endpoint for each named
@@ -7,63 +7,41 @@ owner / Instagram workspace / task.
 
 AUTOMATION_ACTIVITY_PANEL = r"""
 <style>
-#igcAutomationActivityLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,310px);
-  grid-template-areas:"center activity" "dual activity";align-items:start;gap:14px;min-width:0}
-#igcAutomationActivityLayout>#igcAutomationCommandCenter{grid-area:center;min-width:0}
-#igcAutomationActivityLayout>#igcDualActionWorkspacePanel{grid-area:dual;min-width:0}
-#igcAutomationActivityPanel{grid-area:activity;position:sticky;top:14px;max-height:calc(100vh - 28px);
-  overflow:auto;box-sizing:border-box;min-width:0;padding:15px;border:1px solid #354b60;
-  border-radius:15px;color:#e7edf5;background:linear-gradient(160deg,#142237,#111922);
-  font:inherit;box-shadow:0 14px 30px #0003}
-#igcAutomationActivityPanel h3{font-size:16px;margin:0;color:#f0f6ff}
-#igcAutomationActivityPanel .igc-act-muted{font-size:11px;line-height:1.5;color:#a5b5c9;margin:5px 0 10px}
+#igcAutomationActivitySection{width:100%;box-sizing:border-box}
+#igcAutomationActivityPanel{width:100%;box-sizing:border-box;min-width:0;padding:20px;border:1px solid #354b60;
+ border-radius:16px;color:#e7edf5;background:linear-gradient(155deg,#142237,#101b2c);font:inherit}
+#igcAutomationActivityPanel h3{font-size:18px;margin:0 0 8px;color:#f0f6ff}
+#igcAutomationActivityPanel .igc-act-muted{font-size:12px;line-height:1.5;color:#a5b5c9;margin:7px 0 12px}
 #igcAutomationActivityPanel label{font-size:12px;color:#b4c9db;display:block;margin:9px 0 5px}
-#igcAutomationActivityPanel select,#igcAutomationActivityPanel button{width:100%;box-sizing:border-box;
-  background:#1c3044;border:1px solid #466179;border-radius:9px;color:#f1f6fd;
-  padding:8px;font:inherit;font-size:12px}
+#igcAutomationActivityPanel select,#igcAutomationActivityPanel button{max-width:100%;box-sizing:border-box;
+ background:#1c3044;border:1px solid #466179;border-radius:9px;color:#f1f6fd;padding:9px;font:inherit;font-size:12px}
 #igcAutomationActivityPanel button{cursor:pointer;margin:10px 0 4px}
 #igcAutomationActivityPanel button:disabled{opacity:.5}
-#igcAutomationActivityPanel .igc-act-windows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-#igcAutomationActivityPanel .igc-act-window{background:#17283a;border:1px solid #334d63;
-  border-radius:10px;padding:10px;min-width:0}
+#igcAutomationActivityPanel .igc-act-windows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#igcAutomationActivityPanel .igc-act-window{background:#17283a;border:1px solid #334d63;border-radius:10px;padding:11px;min-width:0}
 #igcAutomationActivityPanel .igc-act-window span{display:block;color:#b7c9da;font-size:11px}
-#igcAutomationActivityPanel .igc-act-window strong{font-size:21px;color:#f6f9ff;line-height:1.6;font-variant-numeric:tabular-nums}
-#igcAutomationActivityPanel .igc-act-window small{font-size:10px;color:#9baec2}
-#igcAutomationActivityPanel .igc-act-section{border-top:1px solid #34465a;padding-top:9px;margin-top:10px}
-#igcAutomationActivityPanel .igc-act-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-size:12px;line-height:1.9}
+#igcAutomationActivityPanel .igc-act-window strong{font-size:22px;color:#f6f9ff;line-height:1.6;font-variant-numeric:tabular-nums}
+#igcAutomationActivityPanel .igc-act-window.igc-act-primary{background:rgba(66,114,172,.17);border-color:rgba(116,188,239,.33)}
+#igcAutomationActivityPanel .igc-act-section{border-top:1px solid #34465a;padding-top:11px;margin-top:14px}
+#igcAutomationActivityPanel .igc-act-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.9}
 #igcAutomationActivityPanel .igc-act-row b{font-variant-numeric:tabular-nums}
 #igcAutomationActivityPanel .igc-act-ok{color:#70d9a0}
 #igcAutomationActivityPanel .igc-act-warning{color:#eec470}
 #igcAutomationActivityPanel .igc-act-status{font-size:11px;color:#b4c7d8;overflow-wrap:anywhere}
-#igcAutomationActivityPanel .igc-act-head{display:flex;align-items:center;justify-content:space-between;gap:7px}
-#igcAutomationActivityPanel .igc-act-head button{margin:0;width:auto;min-width:72px;padding:6px}
-#igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr) 175px}
-#igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel{max-height:75px;padding:10px}
-#igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel > :not(.igc-act-head){display:none}
-@media(max-width:980px){
- #igcAutomationActivityLayout.igc-act-collapsed{grid-template-columns:minmax(0,1fr)}
- #igcAutomationActivityLayout.igc-act-collapsed #igcAutomationActivityPanel{max-height:75px}
-}
-#igcAutomationActivityPanel .igc-act-window.igc-act-primary{
- background:linear-gradient(140deg,rgba(66,114,172,.21),rgba(18,36,55,.78));
- border-color:rgba(116,188,239,.33)}
-#igcAutomationActivityPanel .igc-act-history{display:grid;gap:6px;max-height:210px;overflow-y:auto;margin:7px 0 10px}
-#igcAutomationActivityPanel .igc-act-history-row{padding:7px 9px;background:rgba(0,0,0,.13);
- border:1px solid #33495f;border-radius:9px;font-size:11px;color:#dee8f4}
+#igcAutomationActivityPanel .igc-act-history{display:grid;gap:6px;max-height:360px;overflow:auto;margin:7px 0 10px}
+#igcAutomationActivityPanel .igc-act-history-row{padding:9px;background:rgba(0,0,0,.13);border:1px solid #33495f;border-radius:9px;font-size:11px;color:#dee8f4}
 #igcAutomationActivityPanel .igc-act-history-row small{display:block;color:#95adc0;font-size:10px;margin-top:4px}
 #igcAutomationActivityPanel .igc-act-history-head{font-size:12px;color:#f0f5fd;font-weight:700;margin:0 0 4px}
-#igcAutomationActivityPanel .igc-act-last{background:rgba(80,125,181,.1);border:1px solid #36516a;
- border-radius:10px;padding:9px;margin:8px 0 12px;font-size:12px;color:#e9f1fa}
+#igcAutomationActivityPanel .igc-act-last{background:rgba(80,125,181,.1);border:1px solid #36516a;border-radius:10px;padding:9px;margin:10px 0 12px;font-size:12px;color:#e9f1fa}
 #igcAutomationActivityPanel .igc-act-last small{display:block;font-size:10px;margin-top:3px;color:#a2b6c9}
-#igcAutomationActivityPanel .igc-act-batch{background:#131f30;border:1px solid #35516b;border-radius:10px;
- padding:9px 10px;margin-top:10px;display:grid;gap:5px;font-size:11px;color:#a8bcd0}
-#igcAutomationActivityPanel .igc-act-batch strong{font-size:12px;color:#edf5ff}
-@media(max-width:980px){
- #igcAutomationActivityLayout{grid-template-columns:minmax(0,1fr);
-   grid-template-areas:"activity" "center" "dual"}
- #igcAutomationActivityPanel{position:static;max-height:none}
-}
+#igcAutomationActivityPanel .igc-act-batch{background:#131f30;border:1px solid #35516b;border-radius:10px;padding:10px;margin-top:12px;display:grid;gap:6px;font-size:11px;color:#a8bcd0}
+#igcAutomationActivityPanel .igc-act-batch strong{font-size:13px;color:#edf5ff}
+#igcAutomationActivityPanel #igcActMorePeriods{border-top:1px solid #33495f;margin-top:13px;padding-top:8px}
+#igcAutomationActivityPanel #igcActMorePeriods>summary{cursor:pointer;padding:8px 0;font-size:12px;font-weight:700;color:#8bcaff}
+#igcAutomationActivityPanel #igcActMorePeriods .igc-act-windows{margin-top:9px}
+#igcAutomationActivityPanel #igcActOrigin,#igcAutomationActivityPanel #igcActTask{width:min(100%,340px)}
+#igcAutomationActivityPanel #igcActAccount{display:none}
+@media(max-width:600px){#igcAutomationActivityPanel{padding:12px}#igcAutomationActivityPanel .igc-act-windows{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script id="igc-automation-activity">
 (function(){
@@ -159,12 +137,13 @@ function reconciledOutcomes(records){
  // Aggregation runs for every period tile: avoid a redundant O(n log n) sort.
  return [...groups.values()];
 }
-function summarize(records,id,now){
+function summarize(records,id,now,originFilter='all'){
  const lower=cutoff(id,now),upper=now.getTime();
  const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
    legacy_unknown:0};
  const warningEvents=new Set();
- function recordWarning(key,status,at){
+ function recordWarning(key,status,at,origin){
+   if(originFilter!=='all'&&origin!==originFilter)return;
    if(!['review','error','blocked'].includes(status))return;
    const when=dateValue(at);
    if(!Number.isFinite(when)||when<lower||when>upper)return;
@@ -176,13 +155,16 @@ function summarize(records,id,now){
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   recordWarning(key,r.status,r.at);
+   recordWarning(key,r.status,r.at,r.origin);
    for(const past of (Array.isArray(r.warning_events)?r.warning_events:[])){
-     if(past)recordWarning(key,past.status,past.at);
+     if(past)recordWarning(key,past.status,past.at,past.origin);
    }
  }
  for(const group of reconciledOutcomes(records)){
    if(group.conflict||group.at<lower||group.at>upper)continue;
+   // Filter AFTER canonical reconciliation: hiding a contradictory unknown
+   // row must never turn its same-time robot twin into a false verified OK.
+   if(originFilter!=='all'&&group.record.origin!==originFilter)continue;
    const category=classify(group.record);
    if(category==='warning')continue; // Already counted at its own event time.
    if(Object.prototype.hasOwnProperty.call(out,category)){
@@ -329,11 +311,14 @@ function clearValues(){
  const b=$('igcActBatch');if(b)b.textContent='—';
  clearJournalValues();
 }
-function renderHistory(records){
+function renderHistory(records,originFilter='all'){
  const list=$('igcActHistory'),last=$('igcActLast');
  if(!list||!last)return;
  // Use identical canonical reconciliation as the period counters.
- const entries=reconciledOutcomes(records).sort((x,y)=>y.at-x.at).slice(0,15);
+ const entries=reconciledOutcomes(records)
+   // Keep contradictory latest provenance visible as Review in either view.
+   .filter(x=>originFilter==='all'||x.conflict||x.record.origin===originFilter)
+   .sort((x,y)=>y.at-x.at).slice(0,15);
  list.replaceChildren();
  if(!entries.length){
    const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
@@ -373,6 +358,7 @@ function render(records){
  if(!dataReady)return;
  const selected=$('igcActTask')?.value||'all';
  const scoped=selected==='all'?records:records.filter(r=>r.task===selected);
+ const originFilter=$('igcActOrigin')?.value||'all';
  // A damaged task WAL is unknown, not zero. Combined counters are LOWER
  // BOUNDS; task-specific numbers remain exact only for healthy sources.
  const incomplete=selected==='all'?unavailableTasks.length>0:
@@ -383,7 +369,7 @@ function render(records){
  const display=n=>missingOnly?'—':incomplete?'≥'+n:String(n);
  const now=new Date();
  for(const [key] of PERIODS){
-   const out=summarize(scoped,key,now);
+   const out=summarize(scoped,key,now,originFilter);
    const el=$('igcActCount_'+key);
    if(el)el.textContent=display(out.verified);
  }
@@ -393,9 +379,9 @@ function render(records){
      (selected==='cancel'?'Cancel Pending':'Unfollow')+'.';
    if(list)list.replaceChildren(node('p','igc-act-muted',
      'La lectura de esta tarea falló. No se presume cero ni se borran acciones de la otra tarea.'));
- }else renderHistory(scoped);
+ }else renderHistory(scoped,originFilter);
  const period=$('igcActBreakdownPeriod')?.value||'today';
- const data=summarize(scoped,period,now);
+ const data=summarize(scoped,period,now,originFilter);
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable','legacy_unknown']){
    const el=$('igcActMetric_'+key);if(el)el.textContent=display(data[key]);
  }
@@ -470,30 +456,27 @@ async function refresh(){
  }
 }
 function mount(){
- const center=$('igcAutomationCommandCenter');
- if(!center)return false;
+ const page=$('page-automations');const flow=page?.querySelector('.igc-page-flow');
+ if(!flow||!$('igcAutomationCommandCenter'))return false;
  if($('igcAutomationActivityPanel'))return true;
- const layout=node('div');layout.id='igcAutomationActivityLayout';
- center.parentNode.insertBefore(layout,center);layout.append(center);
- const dual=$('igcDualActionWorkspacePanel');
- if(dual)layout.append(dual);
+ // Replace the standalone HTML's explanatory History placeholder in the
+ // installed Windows view. Never create a second History panel.
+ let sectionRoot=$('igcAutomationActivitySection');
+ if(!sectionRoot){
+  sectionRoot=node('section');sectionRoot.id='igcAutomationActivitySection';
+  sectionRoot.className='igc-robot-section';sectionRoot.hidden=true;
+  flow.append(sectionRoot);
+ }
+ sectionRoot.replaceChildren();
  const panel=node('aside');panel.id='igcAutomationActivityPanel';
  panel.setAttribute('aria-label','Estadísticas de acciones automáticas');
  const head=node('div','igc-act-head');
- const title=node('h3',null,'Automation Activity');head.append(title);
- const toggle=node('button',null,'Contraer');toggle.type='button';toggle.id='igcActToggle';
- toggle.setAttribute('aria-expanded','true');
- toggle.setAttribute('aria-label','Contraer o expandir estadísticas de Automations');
- toggle.addEventListener('click',()=>{
-   const compact=layout.classList.toggle('igc-act-collapsed');
-   toggle.textContent=compact?'Expandir':'Contraer';
-   title.textContent=compact?'Activity':'Automation Activity';
-   toggle.setAttribute('aria-expanded',String(!compact));
- });
- head.append(toggle);panel.append(head);
+ head.append(node('h3',null,'Activity & History · current account'));
+ panel.append(head);
  panel.append(node('p','igc-act-muted','Actividad confirmada por cuenta · misma lógica de periodos diarios y móviles.'));
- const label=node('label',null,'Cuenta de Instagram');label.htmlFor='igcActAccount';panel.append(label);
- const select=node('select');select.id='igcActAccount';
+ // The page already has a primary Instagram account picker. Do not present
+ // a second, conflicting account selector in the History workspace.
+ const select=node('select');select.id='igcActAccount';select.hidden=true;
  select.addEventListener('change',()=>{latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
  const taskLabel=node('label',null,'Tipo de acción');taskLabel.htmlFor='igcActTask';panel.append(taskLabel);
  const task=node('select');task.id='igcActTask';
@@ -502,14 +485,26 @@ function mount(){
    const opt=node('option',null,label);opt.value=value;task.append(opt);
  }
  task.addEventListener('change',()=>render(latest));panel.append(task);
- const grid=node('div','igc-act-windows');
- for(const [key,name] of PERIODS){
-   const primary=['session','today','d7'].includes(key);
-  const item=node('div','igc-act-window'+(primary?' igc-act-primary':'')),caption=node('span',null,name);
-   const count=node('strong',null,'—');count.id='igcActCount_'+key;
-   item.append(caption,count);grid.append(item);
+ const originLabel=node('label',null,'Procedencia de las acciones');originLabel.htmlFor='igcActOrigin';panel.append(originLabel);
+ const origin=node('select');origin.id='igcActOrigin';
+ for(const [value,name] of [['all','Robot y registros históricos'],
+    ['robot','Solo robot verificado'],['unknown','Origen histórico sin comprobar']]){
+   const opt=node('option',null,name);opt.value=value;origin.append(opt);
  }
- panel.append(grid);
+ origin.addEventListener('change',()=>render(latest));panel.append(origin);
+ panel.append(node('p','igc-act-muted',
+   'Esta vista consulta el diario local del robot. No atribuye acciones manuales a un robot ni adivina el origen de entradas antiguas.'));
+ const grid=node('div','igc-act-windows');
+ const extra=node('details');extra.id='igcActMorePeriods';
+ extra.append(node('summary',null,'More periods · 1h / 2h / 3h / calendar'));
+ const extraGrid=node('div','igc-act-windows');
+ for(const [key,name] of PERIODS){
+  const primary=['session','today','d7'].includes(key);
+  const item=node('div','igc-act-window'+(primary?' igc-act-primary':'')),caption=node('span',null,name);
+  const count=node('strong',null,'—');count.id='igcActCount_'+key;
+  item.append(caption,count);(primary?grid:extraGrid).append(item);
+ }
+ panel.append(grid);extra.append(extraGrid);panel.append(extra);
  const batch=node('div','igc-act-batch');
  const batchTitle=node('strong',null,'—');batchTitle.id='igcActBatchTitle';
  const batchBody=node('div',null,'—');batchBody.id='igcActBatch';
@@ -536,12 +531,13 @@ function mount(){
  history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
  historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
-  'Actividad explícita del robot, no sumada al historial manual. Cada OK verificado cuenta una sola vez; las advertencias anteriores se cuentan por fecha de evento aunque después haya OK. Los OK antiguos sin origen identificado siguen separados.'));
+  'Diario de acciones del robot, no sumado al historial manual. Filtrar por procedencia no revalida entradas contradictorias. Cada OK de origen robot se cuenta una sola vez; advertencias anteriores conservan su fecha. Los OK antiguos sin origen identificado permanecen separados.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
  refreshButton.id='igcActRefresh';refreshButton.addEventListener('click',refresh);panel.append(refreshButton);
  const status=node('div','igc-act-status','Consulta de solo lectura; no inicia robots.');
  status.id='igcActStatus';status.setAttribute('role','status');panel.append(status);
- layout.append(panel);
+ sectionRoot.append(panel);
+ window.igcAutomationActivityRefresh=refresh;
  refresh();
  return true;
 }

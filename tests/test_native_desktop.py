@@ -58,11 +58,17 @@ class DesktopAppTests(unittest.TestCase):
     def test_second_windows_instance_cannot_claim_same_workspace(self):
         if sys.platform != "win32":
             self.skipTest("Windows named mutex")
-        handle = native.acquire_single_instance()
+        handle = native.acquire_single_instance(workspace="primary")
+        second = None
         try:
-            with self.assertRaisesRegex(RuntimeError, "ya está abierto"):
-                native.acquire_single_instance()
+            with self.assertRaisesRegex(RuntimeError, "ventana abierta"):
+                native.acquire_single_instance(workspace="primary")
+            second = native.acquire_single_instance(workspace="secondary")
+            self.assertIsNotNone(second, "A second independent account window is allowed.")
+            with self.assertRaisesRegex(RuntimeError, "ventana abierta"):
+                native.acquire_single_instance(workspace="secondary")
         finally:
+            native.release_single_instance(second)
             native.release_single_instance(handle)
 
     def test_app_same_server_as_actions_and_counts(self):
@@ -150,7 +156,7 @@ class DesktopAppTests(unittest.TestCase):
                   patch.object(native, "chrome_path", return_value=chrome),
                   patch.object(native, "stop_safely", wraps=native.stop_safely) as stop,
                   patch.object(native.subprocess, "Popen", return_value=FakeProcess()) as launch):
-                result = native.main([])
+                result = native.main(['--workspace', 'primary'])
             self.assertEqual(result, 0)
             self.assertEqual(launch.call_count, 1)
             self.assertTrue(launch.call_args.args[0][-1].startswith("--app=file:"))
@@ -165,6 +171,10 @@ class DesktopAppTests(unittest.TestCase):
         self.assertNotIn("IGCleanerProfileCounts.exe --healthcheck", readme)
         self.assertIn("InstaCleanerPro.exe --healthcheck", readme)
         self.assertIn("InstaCleanerPro.exe", html)
+        self.assertNotIn('id="igcDualSecondary"', html)
+        self.assertNotIn('class="igc-dual-workspace"', html)
+        self.assertIn('id="igcAutomationTabActions"', html)
+        self.assertIn('id="igcAutomationTabHistory"', html)
 
 
 

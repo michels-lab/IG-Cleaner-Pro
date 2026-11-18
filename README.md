@@ -10,6 +10,14 @@
 
 **v120.80 authorization consumed. Next reserved v120.81 is not authorized or published.**
 
+## Post-v120.80 GRANADA source work (not yet released)
+
+The Windows Automations activity panel now has a source-branch **robot-confirmed versus unknown legacy-origin filter**. It applies the same period tiles and journal view while preserving contradictory same-time records as unresolved instead of inventing successes. [Implementation audit](docs/audits/2026-11-18-automations-origin-integrity.md) · [Owner issue #298](https://github.com/michels-lab/IG-Cleaner-Pro/issues/298). **Source only: not in published v120.80, with no new stable release and no real-user Windows proof.** Manual+robot combined totals are not claimed.
+
+## Next-source Granada: independent Windows account windows (not in v120.80)
+
+The owner rejected the duplicated **Cuenta 1/Cuenta 2** in-window panels. In [source PR #376](https://github.com/michels-lab/IG-Cleaner-Pro/pull/376), the Windows launcher asks **Cuenta principal / Segunda cuenta**, retaining the original login/browser/file origin for the first and allocating a separate Chrome profile and UI document for the second. The in-app dual-account sidebar, tab-cloning and huge double-robot panel have been removed at source. Automations is organized as **Analyze / Actions / Review / History**; single-account History shows compact verified counters and details on demand. This code is **NOT** in the official v120.80 binaries. [Owner issue #377](https://github.com/michels-lab/IG-Cleaner-Pro/issues/377) · [root-cause and test boundaries](docs/audits/2026-11-18-automations-origin-integrity.md). Installed two-window physical acceptance is open.
+
 ## Pending Android vs HTML (shipped source fix; physical owner verification pending)
 
 Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. A source-only fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, loads **complete paginated Android review history** instead of treating a server-capped page as the full history, and labels Android Pending numbers by cache/cloud provenance and import age. **Shipped in v120.80; physical Instagram data reconciliation still unverified.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
