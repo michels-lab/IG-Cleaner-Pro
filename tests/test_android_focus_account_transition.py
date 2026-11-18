@@ -31,7 +31,7 @@ class NativeFocusTransitionRegression(unittest.TestCase):
                          SOURCE.index("private void resetAfterAccountChange()")]
         self.assertIn("api.prepareAnotherAccount();", account)
         self.assertIn("api.activateRememberedAccount(selected);", account)
-        self.assertEqual(account.count("postAccountTransitionAndWait(() -> {"), 2)
+        self.assertEqual(account.count("postAccountTransitionAndWait(() -> {"), 3)
         self.assertIn('runAsync(() -> {\n                api.logout();', account)
         self.assertNotIn("            api.logout();\n            resetAfterAccountChange();", account)
         reset = SOURCE[SOURCE.index("private void resetAfterAccountChange()"):
