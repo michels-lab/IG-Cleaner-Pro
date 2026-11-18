@@ -656,14 +656,13 @@ public final class MainActivity extends AppCompatActivity {
         return "legacy".equals(api.getInstagramProfile()) ? owner : owner + "_" + api.getInstagramProfile();
     }
 
-    private int countPendingUnresolved(JSONObject pendingReviewed, JSONObject pendingSnooze) {
+    private int countPendingUnresolved(Map<String, JSONObject> pendingRows,
+                                       JSONObject pendingReviewed, JSONObject pendingSnooze) {
         int unresolved = 0;
         long now = System.currentTimeMillis();
-        for (int i = 0; i < syncedPending.length(); i++) {
-            JSONObject p = syncedPending.optJSONObject(i);
-            if (p == null) continue;
-            String username = p.optString("username", "").toLowerCase(Locale.ROOT);
-            if (username.isBlank()) continue;
+        // A legacy cloud snapshot may contain repeated usernames. Never count
+        // one relationship twice or reopen it twice during Pending Focus.
+        for (String username : pendingRows.keySet()) {
             JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
             long snoozeUntil = pendingSnooze == null ? 0 : pendingSnooze.optLong(username, 0);
             boolean resolved = meta != null && meta.optLong("reviewedAt", 0) > 0;
@@ -677,6 +676,7 @@ public final class MainActivity extends AppCompatActivity {
 
         Map<String, JSONObject> followingMapNative = jsonArrayByUsername(syncedFollowing);
         Map<String, JSONObject> followersMapNative = jsonArrayByUsername(syncedFollowers);
+        Map<String, JSONObject> pendingMapNative = jsonArrayByUsername(syncedPending);
         Set<String> done = jsonStringSet(syncedWorkspaceState.optJSONArray("done"));
         Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
         JSONObject snooze = syncedWorkspaceState.optJSONObject("snooze");
@@ -692,7 +692,7 @@ public final class MainActivity extends AppCompatActivity {
                 unresolvedReview++;
             }
         }
-        int unresolvedPending = countPendingUnresolved(pendingReviewed, pendingSnooze);
+        int unresolvedPending = countPendingUnresolved(pendingMapNative, pendingReviewed, pendingSnooze);
 
         boolean home = "home".equals(workspaceSection);
         homeKpis.setVisibility(home ? View.VISIBLE : View.GONE);
@@ -776,11 +776,9 @@ public final class MainActivity extends AppCompatActivity {
             kpiSecondaryLabel.setText("FOLLOWER ONLY");
         } else {
             long now = System.currentTimeMillis();
-            for (int i = 0; i < syncedPending.length(); i++) {
-                JSONObject p = syncedPending.optJSONObject(i);
-                if (p == null) continue;
-                String username = p.optString("username", "").toLowerCase(Locale.ROOT);
-                if (username.isBlank()) continue;
+            for (Map.Entry<String, JSONObject> entry : pendingMapNative.entrySet()) {
+                String username = entry.getKey();
+                JSONObject p = entry.getValue();
                 JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
                 long snoozeUntil = pendingSnooze == null ? 0 : pendingSnooze.optLong(username, 0);
                 boolean resolved = meta != null && meta.optLong("reviewedAt", 0) > 0;
@@ -790,7 +788,7 @@ public final class MainActivity extends AppCompatActivity {
                 }
             }
             main = unresolvedPending;
-            total = syncedPending.length();
+            total = pendingMapNative.size();
             workspaceSectionTitle.setText("Requests");
             workspaceSectionSubtitle.setText(pendingSourceExplanation());
             kpiMainLabel.setText("SAVED PENDING");
@@ -809,7 +807,7 @@ public final class MainActivity extends AppCompatActivity {
         }
         mobileWorkspaceSubtitle.setText(syncedFollowing.length() + " following · " +
                 syncedFollowers.length() + " followers · " +
-                (pendingSnapshotPresent ? syncedPending.length() + " saved requests" : "no Pending import") +
+                (pendingSnapshotPresent ? pendingMapNative.size() + " saved requests" : "no Pending import") +
                 (pendingSnapshotCached ? " · phone cache" : " · cloud snapshot"));
         workspaceAdapter.submit(rows);
     }
@@ -2551,11 +2549,10 @@ public final class MainActivity extends AppCompatActivity {
                         "Follower you don't follow back", true, false, following, followers));
             }
         } else if ("pending".equals(module)) {
-            for (int i = 0; i < syncedPending.length(); i++) {
-                JSONObject source = syncedPending.optJSONObject(i);
-                if (source == null) continue;
-                String username = source.optString("username", "").toLowerCase(Locale.ROOT);
-                if (username.isBlank() || excluded.contains(username)) continue;
+            for (Map.Entry<String, JSONObject> entry : jsonArrayByUsername(syncedPending).entrySet()) {
+                String username = entry.getKey();
+                JSONObject source = entry.getValue();
+                if (excluded.contains(username)) continue;
                 JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
                 long snoozeUntil = pendingSnooze == null ? 0L : pendingSnooze.optLong(username, 0L);
                 boolean reviewed = meta != null && meta.optLong("reviewedAt", 0L) > 0L;
