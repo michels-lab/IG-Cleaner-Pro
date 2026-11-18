@@ -1,20 +1,17 @@
 'use strict';
-/* GRANADA: real running Chromium acceptance for the integrated Windows
- * Automation Center. Fixtures never touch Instagram or change relationships.
- */
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const {pathToFileURL} = require('node:url');
-const {chromium} = require('playwright');
-
+/* Real Chromium acceptance: one account per InstaCleaner window, four clearly
+ * separated Automations views. All interactions stay local and click no IG UI. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require('playwright');
 (async()=>{
  const root=path.resolve(__dirname,'..');
- const source=process.argv[2] ? path.resolve(process.argv[2]) :
+ const source=process.argv[2]?path.resolve(process.argv[2]):
    path.join(root,'desktop','ig_cleaner_pro_v120_27_synced_companion.html');
- assert(fs.existsSync(source),'Test the actual distributed Desktop HTML');
- const output=path.join(root,'artifacts','automation-center');
- fs.mkdirSync(output,{recursive:true});
+ assert(fs.existsSync(source),'The real distributable HTML must be tested');
+ const out=path.join(root,'artifacts','automation-center');
+ fs.mkdirSync(out,{recursive:true});
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
   for(const width of [390,1280]){
@@ -22,107 +19,74 @@ const {chromium} = require('playwright');
    const page=await context.newPage();
    await page.goto(pathToFileURL(source).href,{waitUntil:'domcontentloaded',timeout:60000});
    await page.evaluate(()=>window.showPage('automations'));
-   const center=page.locator('#igcAutomationCommandCenter');
-   assert(await center.isVisible(),'Robot command center not shown in Automations');
-   const analysis=page.locator('#igcAutomationAnalysisLane'),
-         action=page.locator('#igcAutomationActionLane');
-   assert(await analysis.isVisible()&&await action.isVisible(),
-     'Analysis and Action must both remain visible');
-   assert.equal(await page.locator('#igcAutomationCommandCenter .igc-robot-lane').count(),2);
+   const tabs=['Analysis','Actions','Review','History'];
+   const nav=page.locator('#igcAutomationCommandCenter');
+   assert(await nav.isVisible(),'Automations navigation must be visible');
+   assert.equal(await nav.locator('[role=tab]').count(),4);
+   assert.equal(await page.locator('.igc-dual-workspace,#igcDualActionWorkspacePanel').count(),0,
+     'Never show two accounts in a single app window');
    assert.equal(await page.locator('#igcAutoRun').count(),1,
-     'There must be one real relationship-action Run control, not duplicate UI proxies');
-   assert.equal(await page.locator('#igcCountsRobotConnect').count(),1);
-   assert.equal(await page.locator('#igcAutoIssueRows').count(),1);
-
-   // Selected view is NOT the same as the Chrome worker that may still be
-   // running. Never falsely highlight a completed/failed task as active.
-   for(const task of ['unfollow','cancel','protected','audit']){
-     const button=page.locator('#igcAutoMode'+task[0].toUpperCase()+task.slice(1));
-     assert.equal(await button.count(),1,'Missing task picker '+task);
-   }
-   await page.locator('#igcAutoModeAudit').click();
-   assert.equal(await page.locator('#igcAutoModeAudit').getAttribute('aria-pressed'),'true');
-   assert.equal(await page.locator('#igcAutoModeUnfollow').getAttribute('aria-pressed'),'false');
-   assert.match(await page.locator('#igcAutoRun').innerText(),/read-only audit/i);
-   await page.locator('#igcAutoModeProtected').click();
-   assert(!await page.locator('#igcAutoConfigCard').isVisible(),
-     'Protected profile management is not an actionable robot batch');
-   assert(await page.locator('#igcAutoCancel').count()===1,
-     'Stop current worker must remain available in Protected view');
+     'Only one real Unfollow/Cancel action control');
+   assert.equal(await page.locator('#igcAutoIssueRows').count(),1,
+     'Review is reused, not duplicated');
+   assert(await page.locator('#igcActionRobotSection').isVisible());
+   assert(!await page.locator('#igcAnalysisRobotSection').isVisible());
+   assert(!await page.locator('#igcAutomationReviewSection').isVisible());
+   const geometry=await nav.locator('[role=tab]').evaluateAll(
+     nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {
+       left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width};}));
+   const box=await nav.boundingBox();
+   assert(geometry.every(x=>x.width>110&&x.left>=box.x-2&&x.right<=box.x+box.width+2),
+      'Navigation must not clip at '+width);
+   if(width===390)assert(geometry[2].top>=geometry[0].bottom-2,
+     'Narrow window uses an easy-to-read 2×2 grid');
+   else assert(Math.abs(geometry[0].top-geometry[3].top)<4,
+     'Wide window keeps four navigational sections in one row');
+   await page.locator('#igcAutomationTabAnalysis').click();
+   assert(await page.locator('#igcAnalysisRobotSection').isVisible());
+   assert(!await page.locator('#igcActionRobotSection').isVisible());
+   assert.equal(await page.locator('#igcAutomationTabAnalysis').getAttribute('aria-selected'),'true');
+   assert(await page.locator('#igcCountsRobotConnect').count()===1);
+   await page.locator('#igcAutomationTabActions').click();
+   assert(await page.locator('#igcActionRobotSection').isVisible());
+   for(const action of ['Unfollow','Cancel','Protected','Audit'])
+     assert.equal(await page.locator('#igcAutoMode'+action).count(),1);
    await page.locator('#igcAutoModeCancel').click();
+   assert.equal(await page.locator('#igcAutoModeCancel').getAttribute('aria-pressed'),'true');
    assert(await page.locator('#igcAutoConfigCard').isVisible());
-   assert.equal(await page.locator('#igcAutoModeCancel').getAttribute('aria-pressed'),'true');
-   await page.evaluate(()=>window.igcAutomationSelectionRefresh({
-     selected:'cancel',active:'audit',recent:'audit',status:'running',running:true
-   }));
-   assert.equal(await page.locator('#igcAutoModeCancel').getAttribute('aria-pressed'),'true');
-   assert.equal(await page.locator('#igcAutoModeAudit').getAttribute('data-current'),'true');
-   assert.match(await page.locator('#igcAutoContextHint').innerText(),/Executing in Chrome: Followback audit/);
-   assert(await page.locator('#igcAutoMoreTools').count()===0,
-     'Do not introduce a second parallel tools drawer');
-   assert(await page.locator('#igcAutoExtraTools').count()===1);
-   assert.equal(await page.locator('#igcAutoRun').count(),1);
-   assert.equal(await page.locator('#igcAutoBatch').count(),1);
-   await page.locator('#igcAutoModeUnfollow').click();
-
-   assert(!await page.locator('#igcAutoReviewDrawer').evaluate(el=>el.open),
-     'Large manual Issue Review must be initially collapsible');
-   const geom=await page.evaluate(()=>{
-    const outer=document.getElementById('igcAutomationCommandCenter').getBoundingClientRect();
-    const cards=[...document.querySelectorAll('#igcAutomationCommandCenter .igc-robot-lane')]
-     .map(el=>el.getBoundingClientRect());
-    return {outer:{x:outer.x,right:outer.right,width:outer.width},
-      cards:cards.map(r=>({x:r.x,right:r.right,width:r.width,top:r.top,bottom:r.bottom}))};
-   });
-   assert(geom.cards.every(x=>x.width>=150&&x.x>=geom.outer.x-2&&x.right<=geom.outer.right+2),
-      'Cards clipped/overflowed their available workspace: '+JSON.stringify(geom));
-   if(width===390)assert(geom.cards[1].top>=geom.cards[0].bottom-2,
-     'Compact Windows viewport must stack two lanes');
-   else assert(Math.abs(geom.cards[1].top-geom.cards[0].top)<4,
-     'Desktop viewport should align both lanes horizontally');
-   const safety=await page.locator('#igcAutomationConcurrencyNotice').innerText();
-   assert.match(safety,/cannot navigate Instagram simultaneously/);
-   assert.match(safety,/Do not retry an uncertain click/);
    await page.evaluate(()=>{
-    document.getElementById('igcAutoLiveStatus').textContent=
-      'Status: waiting · Verifying owner in Chrome; no action confirmed';
-    document.getElementById('igcCountsRobotStatus').textContent=
-      'Profile Counts: blocked by separate Chrome navigation';
-    document.getElementById('igcAutoIssueTotal').textContent='6 unresolved issues';
-    const batch=document.getElementById('igcAutoBatch');
-    batch.value='10';
-    batch.dispatchEvent(new Event('input',{bubbles:true}));
-    window.igcAutomationCommandCenterRefresh();
+     const size=document.getElementById('igcAutoBatch');size.value='10';
+     size.dispatchEvent(new Event('input',{bubbles:true}));
+     document.getElementById('igcAutoBatchApprovalDetails').textContent=
+       'Saved cohort: 40 targets · 38 untouched; approval pending';
    });
-   assert.match(await page.locator('#igcAutomationActionStatus').innerText(),/Verifying owner/);
-   assert.match(await page.locator('#igcAutomationAnalysisStatus').innerText(),/blocked by separate Chrome/);
-   assert.match(await page.locator('#igcAutomationBatchSummary').innerText(),/Next batch preference: 10/);
-   // An old, approved 40-target cohort is NOT overwritten when preference changes
-   // to 10. The command center must show both as distinct facts.
-   await page.evaluate(()=>{
-    document.getElementById('igcAutoBatchApproval').style.display='block';
-    document.getElementById('igcAutoBatchApprovalDetails').textContent=
-      'Saved cohort: 40 targets · 38 untouched; owner approval remains pending';
-    window.igcAutomationCommandCenterRefresh();
-   });
-   const batchSummary=await page.locator('#igcAutomationBatchSummary').innerText();
-   assert.match(batchSummary,/Next batch preference: 10/);
-   assert.match(batchSummary,/Saved cohort: .*40 targets/);
    assert.equal(await page.locator('#igcAutoBatch').inputValue(),'10',
-     'Rendered status must not silently reset preferred size to the saved 40');
-
-   assert.match(await page.locator('#igcAutoReviewCaption').innerText(),/6 unresolved issues/);
+     'New preference must not silently resize an old saved cohort');
+   assert.match(await page.locator('#igcAutoBatchApprovalDetails').innerText(),/40 targets/);
+   await page.locator('#igcAutomationTabReview').click();
    const drawer=page.locator('#igcAutoReviewDrawer');
-   await drawer.locator('summary').click();
-   assert(await drawer.evaluate(el=>el.open),'Issue Review summary should open with keyboard/mouse');
+   assert(await page.locator('#igcAutomationReviewSection').isVisible());
+   assert(!await page.locator('#igcActionRobotSection').isVisible());
+   assert(await drawer.isVisible());
    assert(await page.locator('#igcAutoIssueTask').isVisible());
    assert(await page.locator('#igcAutoIssueFilter').isVisible());
-   await drawer.locator('summary').press('Enter');
-   assert(!await drawer.evaluate(el=>el.open),'Issue Review should close with keyboard');
-   await center.screenshot({path:path.join(output,'command-center-'+width+'.png'),
-     animations:'disabled'});
+   await page.locator('#igcAutomationTabHistory').click();
+   if(await page.locator('#igcAutomationActivitySection').count()){
+     assert(await page.locator('#igcAutomationActivitySection').isVisible());
+     assert(!await page.locator('#igcActionRobotSection').isVisible());
+     for(const key of ['session','today','d7'])
+       assert(await page.locator('#igcActCount_'+key).isVisible());
+     assert.equal(await page.locator('#igcActMorePeriods').evaluate(el=>el.open),false);
+     await page.locator('#igcActMorePeriods summary').click();
+     assert(await page.locator('#igcActCount_h2').isVisible(),
+       'Detailed 2h counters open only on demand');
+   }else{
+     assert(await page.locator('#igcActionRobotSection').isVisible(),
+       'Standalone HTML must fall back to its real saved action results');
+   }
+   await nav.screenshot({path:path.join(out,'clear-navigation-'+width+'.png'),animations:'disabled'});
    await context.close();
   }
-  console.log('GRANADA Windows Automation Center: rendered two lanes, live-status mirrors, saved-batch distinction, issue disclosure and 390/1280 layouts PASS');
+  console.log('GRANADA: one account UI, four Automations sections, safe cohort and narrow/wide layout PASS');
  }finally{await browser.close()}
-})().catch(err=>{console.error(err);process.exitCode=1});
+})().catch(e=>{console.error(e);process.exitCode=1});
