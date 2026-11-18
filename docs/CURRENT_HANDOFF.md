@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: fresh cloud Review/Pending reconciliation, isolated owners (source-only)
+
+- Found that `readCompleteProfileState()` reused a four-second history cache across unrelated owner/Instagram account scopes and the same cached rows for pull/push reconciliation. This could obscure newer Android decisions and allow a stale push preflight, contributing to Focus #360 risk.
+- Reader now binds cache entries to exact owner and Instagram slot, refuses delayed pages after a scope change, and forces fresh server reads when pulling or comparing review writes. Cloud pull additionally rolls back the five Reviewed/Pending localStorage keys and canonical in-memory collections if any durable write fails, instead of showing phantom results. CI-wired `tests/cloud-review-scope-cache.test.cjs` and `tests/cloud-review-storage-rollback.test.cjs`. [Audit](audits/2026-11-18-cloud-review-freshness.md).
+- Does not claim complete #360 resolution or real owner-device acceptance. Official stable remains v120.80; v120.81 remains reserved and unauthorized. No credentials, existing history, or Instagram action engines modified.
+
 ## 2026-11-18 — GRANADA: Focus recovered-cohort pruning atomicity (source-only)
 
 - Fixed source bug: recovery pruning could shorten `activeFocusBatch.rows` in memory before browser storage confirmed the write; a failed save made reload restore apparent missing targets. Full-clear path also discarded in-memory cohort before a failed persistent removal.

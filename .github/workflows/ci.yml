@@ -168,6 +168,8 @@ jobs:
           node tests/focus-counters-no-rebound.test.cjs
           node tests/focus-aba-persistence-918.test.cjs
           node tests/cloud-review-monotonic.test.cjs
+          node tests/cloud-review-scope-cache.test.cjs
+          node tests/cloud-review-storage-rollback.test.cjs
           node tests/cloud-review-pagination-9896.test.cjs
           node tests/cloud-audit-pagination.test.cjs
           node tests/review-current-vs-historical.test.cjs
