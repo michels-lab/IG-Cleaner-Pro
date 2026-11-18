@@ -88,6 +88,6 @@ const multiTask=fns.summarize([earlierCase,newerCase,sameHandleOtherTask],'today
 assert.equal(multiTask.verified,2,'Separate Unfollow and Cancel journals stay independent');
 assert.equal(multiTask.unfollow,1);
 assert.equal(multiTask.cancel,1);
-assert.equal(multiTask.warning,2,'Historical warning events retain their own timestamps');
+assert.equal(multiTask.warning,3,'Separate Unfollow and Cancel warnings each count by exact task and timestamp');
 
 console.log('Automations: warning event history, exact timestamps, no-click, duplicate casefold + local-midnight parity PASS');
