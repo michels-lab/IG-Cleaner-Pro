@@ -129,6 +129,7 @@ public final class MainActivity extends AppCompatActivity {
     private TextView homeMutualCount;
     private TextView homeFollowerCount;
     private TextView homePendingCount;
+    private TextView homePendingLabel;
     private View homeKpis;
     private View sectionKpis;
     private View reviewTabsScroll;
@@ -138,6 +139,12 @@ public final class MainActivity extends AppCompatActivity {
     private JSONArray syncedFollowing = new JSONArray();
     private JSONArray syncedFollowers = new JSONArray();
     private JSONArray syncedPending = new JSONArray();
+    // Pending is an imported/synchronized export, never a live Instagram check.
+    // Preserve provenance across cold launches to distinguish a stale cached 52
+    // from an authoritative newer, explicitly imported empty list.
+    private boolean pendingSnapshotPresent = false;
+    private boolean pendingSnapshotCached = false;
+    private long pendingSnapshotCapturedAt = 0L;
     private JSONObject syncedWorkspaceState = new JSONObject();
     private boolean syncedReviewStateAvailable = false;
     private String workspaceSection = "home";
@@ -319,6 +326,7 @@ public final class MainActivity extends AppCompatActivity {
         homeMutualCount = mobileWorkspaceView.findViewById(R.id.homeMutualCount);
         homeFollowerCount = mobileWorkspaceView.findViewById(R.id.homeFollowerCount);
         homePendingCount = mobileWorkspaceView.findViewById(R.id.homePendingCount);
+        homePendingLabel = mobileWorkspaceView.findViewById(R.id.homePendingLabel);
         homeKpis = mobileWorkspaceView.findViewById(R.id.homeKpis);
         sectionKpis = mobileWorkspaceView.findViewById(R.id.sectionKpis);
         reviewTabsScroll = mobileWorkspaceView.findViewById(R.id.reviewTabsScroll);
@@ -397,7 +405,7 @@ public final class MainActivity extends AppCompatActivity {
         runAsync(() -> {
             try {
                 touchDevice();
-                JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+                JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
                 JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
                 JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
 
@@ -414,6 +422,8 @@ public final class MainActivity extends AppCompatActivity {
                 JSONArray following = new JSONArray();
                 JSONArray followers = new JSONArray();
                 JSONArray pending = new JSONArray();
+                boolean pendingPresent = false;
+                long pendingCapturedAt = 0L;
 
                 for (int i = 0; i < snapshots.length(); i++) {
                     JSONObject snap = snapshots.optJSONObject(i);
@@ -423,7 +433,13 @@ public final class MainActivity extends AppCompatActivity {
                     switch (snap.optString("list_name")) {
                         case "following" -> following = payload;
                         case "followers" -> followers = payload;
-                        case "pending" -> pending = payload;
+                        case "pending" -> {
+                            pending = payload;
+                            pendingPresent = true;
+                            String captured = snap.optString("captured_at", "");
+                            if (captured.isBlank()) captured = snap.optString("updated_at", "");
+                            pendingCapturedAt = parseInstant(captured).toEpochMilli();
+                        }
                     }
                 }
 
@@ -433,6 +449,8 @@ public final class MainActivity extends AppCompatActivity {
                 final JSONArray readyFollowing = following;
                 final JSONArray readyFollowers = followers;
                 final JSONArray readyPending = pending;
+                final boolean readyPendingPresent = pendingPresent;
+                final long readyPendingCapturedAt = pendingCapturedAt;
                 final JSONObject readyState = state;
                 final boolean readyReviews = reviewAvailable;
                 mainHandler.post(() -> {
@@ -443,6 +461,9 @@ public final class MainActivity extends AppCompatActivity {
                     syncedFollowing = readyFollowing;
                     syncedFollowers = readyFollowers;
                     syncedPending = readyPending;
+                    pendingSnapshotPresent = readyPendingPresent;
+                    pendingSnapshotCapturedAt = readyPendingCapturedAt;
+                    pendingSnapshotCached = false;
                     syncedWorkspaceState = readyState;
                     saveWorkspaceCache();
                     if (!"workspace".equals(currentScreen) || mobileWorkspaceView == null) return;
@@ -547,6 +568,9 @@ public final class MainActivity extends AppCompatActivity {
             syncedFollowing = new JSONArray(following);
             syncedFollowers = new JSONArray(followers);
             syncedPending = pending.isBlank() ? new JSONArray() : new JSONArray(pending);
+            pendingSnapshotPresent = cache.getBoolean("pending_present_" + suffix, !pending.isBlank());
+            pendingSnapshotCapturedAt = cache.getLong("pending_captured_at_" + suffix, 0L);
+            pendingSnapshotCached = true;
             syncedWorkspaceState = state.isBlank() ? new JSONObject() : new JSONObject(state);
             syncedReviewStateAvailable = cache.getBoolean("review_state_available_" + suffix, false);
             return true;
@@ -562,6 +586,8 @@ public final class MainActivity extends AppCompatActivity {
                     .putString("following_" + suffix, syncedFollowing.toString())
                     .putString("followers_" + suffix, syncedFollowers.toString())
                     .putString("pending_" + suffix, syncedPending.toString())
+                    .putBoolean("pending_present_" + suffix, pendingSnapshotPresent)
+                    .putLong("pending_captured_at_" + suffix, pendingSnapshotCapturedAt)
                     .putString("state_" + suffix, syncedWorkspaceState.toString())
                     .putBoolean("review_state_available_" + suffix, syncedReviewStateAvailable)
                     .putLong("updated_" + suffix, System.currentTimeMillis())
@@ -582,6 +608,8 @@ public final class MainActivity extends AppCompatActivity {
                 .remove("following_" + suffix)
                 .remove("followers_" + suffix)
                 .remove("pending_" + suffix)
+                .remove("pending_present_" + suffix)
+                .remove("pending_captured_at_" + suffix)
                 .remove("state_" + suffix)
                 .remove("review_state_available_" + suffix)
                 .remove("updated_" + suffix)
@@ -643,7 +671,10 @@ public final class MainActivity extends AppCompatActivity {
         homeReviewLabel.setText(syncedReviewStateAvailable ? "REVIEW PENDING" : "REVIEW STATE");
         homeMutualCount.setText(String.valueOf(mutuals));
         homeFollowerCount.setText(String.valueOf(followersMapNative.size()));
-        homePendingCount.setText(String.valueOf(unresolvedPending));
+        homePendingCount.setText(pendingSnapshotPresent ? String.valueOf(unresolvedPending) : "—");
+        if (homePendingLabel != null)
+            homePendingLabel.setText(!pendingSnapshotPresent ? "NO REQUEST DATA" :
+                    pendingSnapshotCached ? "CACHED REQUESTS" : "SAVED REQUESTS");
 
         List<WorkspaceProfileAdapter.Row> rows = new ArrayList<>();
         int main = 0;
@@ -727,9 +758,9 @@ public final class MainActivity extends AppCompatActivity {
             main = unresolvedPending;
             total = syncedPending.length();
             workspaceSectionTitle.setText("Requests");
-            workspaceSectionSubtitle.setText("Sent follow requests still waiting for review.");
-            kpiMainLabel.setText("PENDING");
-            kpiSecondaryLabel.setText("RAW TOTAL");
+            workspaceSectionSubtitle.setText(pendingSourceExplanation());
+            kpiMainLabel.setText("SAVED PENDING");
+            kpiSecondaryLabel.setText("IMPORTED");
         }
 
         if (!home) {
@@ -737,8 +768,21 @@ public final class MainActivity extends AppCompatActivity {
             kpiSecondary.setText(String.valueOf(total));
         }
         mobileWorkspaceSubtitle.setText(syncedFollowing.length() + " following · " +
-                syncedFollowers.length() + " followers · " + syncedPending.length() + " requests");
+                syncedFollowers.length() + " followers · " +
+                (pendingSnapshotPresent ? syncedPending.length() + " saved requests" : "no Pending import") +
+                (pendingSnapshotCached ? " · phone cache" : " · cloud snapshot"));
         workspaceAdapter.submit(rows);
+    }
+
+    private String pendingSourceExplanation() {
+        if (!pendingSnapshotPresent)
+            return "No Pending export was synchronized for this Instagram profile. This does not mean zero requests.";
+        String origin = pendingSnapshotCached ? "Phone cache" : "Cloud snapshot";
+        String date = pendingSnapshotCapturedAt > 0
+                ? " · imported " + DateFormat.getMediumDateFormat(this)
+                        .format(new Date(pendingSnapshotCapturedAt))
+                : " · import date unknown";
+        return origin + date + ". Saved sent-request records needing review, NOT a live Instagram count.";
     }
 
     private boolean isNativeFollowingResolved(String username, JSONObject source,
@@ -1188,6 +1232,9 @@ public final class MainActivity extends AppCompatActivity {
         syncedFollowing = new JSONArray();
         syncedFollowers = new JSONArray();
         syncedPending = new JSONArray();
+        pendingSnapshotPresent = false;
+        pendingSnapshotCached = false;
+        pendingSnapshotCapturedAt = 0L;
         syncedWorkspaceState = new JSONObject();
         syncedReviewStateAvailable = false;
         setGlobalStatus("INSTAGRAM • " + label + " · cargando datos independientes");
@@ -1428,6 +1475,9 @@ public final class MainActivity extends AppCompatActivity {
         syncedFollowing = new JSONArray();
         syncedFollowers = new JSONArray();
         syncedPending = new JSONArray();
+        pendingSnapshotPresent = false;
+        pendingSnapshotCached = false;
+        pendingSnapshotCapturedAt = 0L;
         syncedWorkspaceState = new JSONObject();
         syncedReviewStateAvailable = false;
         currentBatch = null;
@@ -2348,7 +2398,7 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void refreshFocusSourceData() throws Exception {
-        JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+        JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
         JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
         JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
 
@@ -2365,6 +2415,8 @@ public final class MainActivity extends AppCompatActivity {
         JSONArray following = new JSONArray();
         JSONArray followers = new JSONArray();
         JSONArray pending = new JSONArray();
+        boolean pendingPresent = false;
+        long pendingCapturedAt = 0L;
         for (int i = 0; i < snapshots.length(); i++) {
             JSONObject snap = snapshots.optJSONObject(i);
             if (snap == null) continue;
@@ -2373,13 +2425,22 @@ public final class MainActivity extends AppCompatActivity {
             switch (snap.optString("list_name")) {
                 case "following" -> following = payload;
                 case "followers" -> followers = payload;
-                case "pending" -> pending = payload;
+                case "pending" -> {
+                    pending = payload;
+                    pendingPresent = true;
+                    String captured = snap.optString("captured_at", "");
+                    if (captured.isBlank()) captured = snap.optString("updated_at", "");
+                    pendingCapturedAt = parseInstant(captured).toEpochMilli();
+                }
             }
         }
 
         syncedFollowing = following;
         syncedFollowers = followers;
         syncedPending = pending;
+        pendingSnapshotPresent = pendingPresent;
+        pendingSnapshotCapturedAt = pendingCapturedAt;
+        pendingSnapshotCached = false;
         syncedWorkspaceState = state;
         saveWorkspaceCache();
     }
