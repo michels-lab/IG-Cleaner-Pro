@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: atomic local Reviewed confirmation on browser quota failure (source-only)
+
+- Fixed production `saveReviewedState()`: a successful DONE write followed by failed REVIEW_META previously persisted inconsistent Reviewed metadata and queued cloud sync early. Now the old DONE value is restored on second-write failure and canonical RAM collections revert; no cloud sync before both keys save successfully.
+- Added CI-wired `tests/local-reviewed-atomic.test.cjs` and [audit](audits/2026-11-18-local-reviewed-save-atomic.md) with quota rejection and safe retry.
+- Fail-closed source correction, not owner physical verification or complete #360/#371 closure. No old history/cookies deleted; no release authorized.
+
 ## 2026-11-18 — GRANADA: fresh cloud Review/Pending reconciliation, isolated owners (source-only)
 
 - Found that `readCompleteProfileState()` reused a four-second history cache across unrelated owner/Instagram account scopes and the same cached rows for pull/push reconciliation. This could obscure newer Android decisions and allow a stale push preflight, contributing to Focus #360 risk.
