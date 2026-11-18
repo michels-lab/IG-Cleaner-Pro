@@ -1,3 +1,11 @@
+## 2026-11-17 local / 2026-11-18 UTC — FINAL v120.80 published and single-use authority consumed
+
+- [Official v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), immutable tagged commit `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`. [Governed publisher #44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) **4/4 SUCCESS**; 9 GitHub SHA-256 recorded public FINAL stable assets, including installed Windows Setup, production-signed Android APK installed/started, exact-commit rendered UI, Desktop standalone HTML.
+- PR #374 Focus owner/profile A→B→A isolation merged (7/7), PR #373 Pending HTML explicit zero vs Android stale 52, review pagination, provenance, unique profile counts merged (11/11); PR #375 candidate version and authorized publication merged with **12/12** exact-source checks. Real user Instagram data was not touched.
+- Release request now **published/authorized=false**, lastPublishedRun 44235048175, readiness exception v120.80 **consumed**, `release_hold=true` and `owner_final_acceptance.approved=false`. Next `v120.81` is reserved **NOT AUTHORIZED**. No RC, beta or public Developer Edition.
+- **Owner acceptance remains pending** for signed-in Instagram Focus/rebound (#360), Android/HTML Pending A/B provenance (#24), real Unfollow/Cancel, simultaneous two-owner action robots and physical Android/Windows behavior. Installed automated QA is not real-account proof. Back up Vault before changing standalone HTML path/browser.
+- Detailed [immutable FINAL v120.80 evidence and SHA-256 receipt](docs/GRANADA_V12080_FINAL_RECEIPT_2026-11-17.md). Do not republish tag or reset owners' browser history.
+
 ## 2026-11-17 — P0 Android 52 Pending vs HTML 0 · preserve verified empty imports
 
 - Owner observed 52 Pending on Android but 0 in HTML and believes HTML is right. **Not a real-account verification:** Android reads cloud/cached snapshots; standalone HTML can have separate local imported Pending and may show 0 due to missing import or filter.
