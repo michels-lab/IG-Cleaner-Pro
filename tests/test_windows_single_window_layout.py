@@ -89,6 +89,40 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                 next(x for x in cmds[1] if x.startswith("--user-data-dir=")),
             )
 
+    def test_shared_legacy_journal_stays_owner_account_scoped_across_two_windows(self):
+        # Two app frontends share the legacy canonical action journal deliberately.
+        # Isolation comes from the owner+account digest, while the one shared
+        # OS lock prevents racing old/new Windows action workers.
+        from profile_counts_bridge import Collector
+        from profile_actions import ActionRobot
+        from robot_interlock import ActionLease, ActionSessionBusy
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            canonical=root / "profile-counts"
+            a=Collector(canonical, root / "instagram-browser")
+            b=Collector(canonical, root / "instagram-browser")
+            a.owner="owner_42";a.account="ig_first_1234567"
+            b.owner="owner_42";b.account="ig_second_123456"
+            self.assertNotEqual(a.result_path(),b.result_path())
+            actions_a=ActionRobot(a,canonical,root / "first-actions")
+            actions_b=ActionRobot(b,canonical,root / "second-actions")
+            self.assertNotEqual(
+                actions_a._base_for(a.owner,a.account,"unfollow"),
+                actions_b._base_for(b.owner,b.account,"unfollow"))
+            self.assertEqual(
+                actions_a._base_for(a.owner,a.account,"unfollow"),
+                actions_b._base_for(a.owner,a.account,"unfollow"),
+                "Same exact account must read the previous canonical WAL")
+            lease=ActionLease(canonical).acquire()
+            try:
+                with self.assertRaises(ActionSessionBusy):
+                    ActionLease(canonical).acquire()
+            finally:
+                lease.release()
+            # No stored data or account journal is erased by this comparison.
+            self.assertFalse(a.result_path().exists())
+            self.assertFalse(b.result_path().exists())
+
     def test_native_html_contains_only_one_current_workspace(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
