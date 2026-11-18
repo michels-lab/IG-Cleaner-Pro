@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 452,
-  "classified_files_total": 448,
-  "docs_content_inspected": 116,
+  "tracked_files_total": 453,
+  "classified_files_total": 449,
+  "docs_content_inspected": 117,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 112,
+    "document": 113,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "b665baf7125aa5ba259915e840fbb39242a51f4f13973da3b390e84c14e8bf0a",
+  "inventory_fingerprint": "8379f2c49fe3a7ce881db15c45b7a91e24d9a38b166e1e7911e6329bcd20e27d",
   "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "untracked_audited": false,
   "ignored_audited": false,
