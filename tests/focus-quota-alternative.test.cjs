@@ -103,7 +103,7 @@ assert.equal(durable.get("focus-cohort"),"previous durable cohort",
  "Failed write cannot erase the older saved cohort");
 failPruneWrite=false;
 assert.equal(pruneCtx.pruneResolvedActiveFocusBatch(),true);
-assert.deepEqual(pruneCtx.activeFocusBatch.rows.map(r=>r.username),["untouched"]);
+assert.deepEqual([...pruneCtx.activeFocusBatch.rows].map(r=>r.username),["untouched"]);
 assert.deepEqual(JSON.parse(durable.get("focus-cohort")).rows.map(r=>r.username),["untouched"]);
 pruneCtx.activeBatchRowResolved=()=>true;
 const savedAfterPrune=pruneCtx.activeFocusBatch;
