@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: transactional manual Reviewed confirmations (source-only)
+
+- Remaining #360 local durability hazard: `saveReviewedState()` mutated in-memory `doneSet`/`reviewedMeta` before separately persisting two keys. A second-key quota failure caused partial disk state and false on-screen success.
+- `saveReviewedState(mutate)` now protects both keys with saved snapshots, rolls back disk and canonical in-memory structures on failure, and returns true only once both are durable. All six manual, undo and automated approval call sites refuse to advance UI or counters on rejected writes. New CI-wired `tests/manual-reviewed-atomic-storage.test.cjs` with 30-profile fail/retry fixture. [Audit](audits/2026-11-18-manual-reviewed-atomic.md).
+- No users, cookies or existing history deleted. Real owner device acceptance still needed. Official v120.80 remains the published stable; v120.81 not authorized.
+
 ## 2026-11-18 — GRANADA: fresh cloud Review/Pending reconciliation, isolated owners (source-only)
 
 - Found that `readCompleteProfileState()` reused a four-second history cache across unrelated owner/Instagram account scopes and the same cached rows for pull/push reconciliation. This could obscure newer Android decisions and allow a stale push preflight, contributing to Focus #360 risk.
