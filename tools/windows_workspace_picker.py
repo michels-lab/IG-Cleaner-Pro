@@ -82,8 +82,8 @@ def select_workspace() -> str | None:
         ]
 
     buttons = (TaskDialogButton * 2)(
-        TaskDialogButton(101, "Cuenta principal\\nConserva tu sesión anterior"),
-        TaskDialogButton(102, "Segunda cuenta\\nAbre una sesión totalmente independiente"),
+        TaskDialogButton(101, "Cuenta principal\nConserva tu sesión anterior"),
+        TaskDialogButton(102, "Segunda cuenta\nAbre una sesión totalmente independiente"),
     )
     config = TaskDialogConfig()
     config.cbSize = ctypes.sizeof(TaskDialogConfig)
