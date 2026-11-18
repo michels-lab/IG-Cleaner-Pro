@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA Automations origin filter, development only
+
+- Isolated branch `granada/automations-origin-integrity-20261118` adds explicit robot vs historical-unknown provenance selection to Windows Automations activity periods, breakdown and journal, plus conflicting same-time origin negative regression in `tests/automation-warning-events.test.cjs`.
+- No new persistence, Instagram Chrome traffic or click. Canonical all-origin reconciliation is done BEFORE filtering; an ambiguous old WAL row cannot be promoted into a verified robot OK. Existing action history is untouched. [Scope/audit](audits/2026-11-18-automations-origin-integrity.md) · issue #298.
+- Exact-head PR CI, installed Windows screenshots and owner manual-vs-robot comparison are separate gates. Stable v120.80 immutable, v120.81 reserved unauthorized; #360/#371 and physical Unfollow/Cancel remain open.
+
 ## 2026-11-17 local / 2026-11-18 UTC — InstaCleaner FINAL v120.80 PUBLISHED
 
 - Official [FINAL v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), immutable source `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`, [governed publisher #44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) **4/4 SUCCESS**, 9 SHA-256-verifiable assets. Installed Windows Setup/upgrade/uninstall and production-signed stable Android APK installed/started; exact-source rendered Desktop and Android visual evidence green.
