@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 450,
-  "classified_files_total": 446,
-  "docs_content_inspected": 111,
+  "tracked_files_total": 451,
+  "classified_files_total": 447,
+  "docs_content_inspected": 112,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 106,
+    "document": 107,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "600b7bc95572de68561b0d7646897e895b4188cf06c91865ad4bdb0581003869",
-  "evidence_fingerprint": "e46b58f96fe98a038712de49939d6ec77870b40e0e923d53a389a6a8ef79c25b",
+  "inventory_fingerprint": "e6c565812387d7d7a58fb9d686bdfab257e58ec43faa83cd8c82c3e4eaa5ae9c",
+  "evidence_fingerprint": "8521e59dbc199d710da2c9060f7b959faffb326c7db1e6820492ab74506d562c",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "ba0fae29e35cff03b6cb8bbe27da50deddbba177"
+      "blob": "8dcdf0ef4db5ef61019d6440a1738464af9f9d53"
     },
     {
       "path": "AGENTS.md",
@@ -246,21 +246,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "f26a4cfa7a4f74c7c61b251676042322c24da988"
+      "blob": "c38c38a25bf16a4fa30b030f482f73774da9128b"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "db3bb435a30955f222bd96d57513174b6a1541d3"
+      "blob": "eaf659251729d19438965b307f325049d262d6f8"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "ba44f3565908d771d027ba3657310b8af8c8621a"
+      "blob": "713638cace51f5172bae90b35208f152343775bd"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "20913e63df504eb00e152cb10ac4d59d4a0e8fd4"
+      "blob": "4b334a23246ccf8e0e9a717550c2281df02e0444"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1481,6 +1481,13 @@
       "blob": "9e6d8e2dc3d057eef62266315a2457a22a794c49"
     },
     {
+      "path": "docs/GRANADA_V12079_FINAL_RECEIPT_2026-11-17.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "7a0fabbe5d7044fcb1bd39e605cc1171ac7dd3e4"
+    },
+    {
       "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1569,7 +1576,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "1c3337a618d00d2575e667f92497a13f6bf5347a"
+      "blob": "06f4822adeba114f6eaea241578583d4cc778979"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -1660,7 +1667,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "329fd79855a1462f2b8179f7f09adc8d0d67b0c7"
+      "blob": "55ac9ce46e568adc3faaad0908d73444135ac274"
     },
     {
       "path": "release/android-signing.json",
@@ -1674,14 +1681,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "b5c3a241c374fcbdf09692a6acbe2eaf5ef7839e"
+      "blob": "95625ce6434b4b08ad6ae20405f953eee1398644"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "0209e9678b38a06fa6cb8969155c96b4d432a80c"
+      "blob": "78f79035b2117a618dfa3bf3ac3879eb8db294d9"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2745,7 +2752,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a08198ba2da8424f1eddc1fbf61d75969722f510"
+      "blob": "0f118a2a379324c7d0952afde8b132a5b9a5e7d6"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3228,11 +3235,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "c1518849b8b30320",
+      "id": "e820db17f733ebce",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/android-about-visual.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/test_release_readiness_gate.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

@@ -31,17 +31,19 @@
     173,
     176
   ],
-  "next_version": "v120.79",
-  "notes": "One official stable v120.79 authorized by owner on 2026-11-17 for post-publication live-account evaluation. All real-world acceptance remains open; exact-commit UI, installed Windows, signed Android launch, SHA256 assets and updater still mandatory. Never publish RC or Developer edition.",
+  "next_version": "v120.80",
+  "notes": "Official FINAL stable v120.79 published 2026-11-18 UTC, governed publisher 44204338029 SUCCESS; one-time owner device-review override consumed. v120.80 reserved WITHOUT authorization. release_hold=true, owner_final_acceptance=false and physical Instagram/Android/Windows two-account acceptance remain open.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.79",
     "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "owner_direct_quote": "op granada y release",
-    "disclosure": "One-time owner-requested stable release for physical browser verification of Focus storage, Reviewed/Pending preservation and counter persistence. No proof of live Instagram actions; full automated publisher gates required. Original release_hold and owner_final_acceptance stay unchanged.",
-    "previous_published_release": "v120.78"
+    "disclosure": "Consumed: stable v120.79 officially published November 18 UTC with 9 verified assets, 4/4 official jobs SUCCESS. This one-time instruction does not authorize v120.80 or imply real Instagram acceptance.",
+    "previous_published_release": "v120.78",
+    "consumed_by_release": "v120.79",
+    "consumed_run": 44204338029
   },
   "owner_device_review_release_override_history": [
     {

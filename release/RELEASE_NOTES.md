@@ -1,6 +1,6 @@
-## v120.79 — Focus storage, retry and historical decision integrity (release requested 2026-11-17)
+## v120.79 — Focus storage, retry and historical decision integrity (FINAL published 2026-11-18 UTC)
 
-**Staging only:** Owner-authorized FINAL stable subject to exact-source publisher gates. No claim of real logged-in Instagram acceptance.
+**Publication verified:** official [v120.79 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79), immutable tagged source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [governed publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) **4/4 SUCCESS**, 9 SHA-256 verified stable assets: signed Android installed/started, Windows Setup installed/started, exact-source Desktop/Android visual proof and immutable release validation. Owner real Instagram acceptance remains pending; one-time authorization consumed, next v120.80 not authorized.
 
 - Compact Focus active cohorts and historical events reduce browser storage pressure while retaining legacy backups and event metadata.
 - Quota failures show redacted diagnostics and explicit retry for exactly the same account/section/cohort; no tabs or Reviewed before storage succeeds.
