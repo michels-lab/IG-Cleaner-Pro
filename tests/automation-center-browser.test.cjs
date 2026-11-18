@@ -71,7 +71,7 @@ const {chromium}=require('playwright');
    assert(await page.locator('#igcAutoIssueTask').isVisible());
    assert(await page.locator('#igcAutoIssueFilter').isVisible());
    await page.locator('#igcAutomationTabHistory').click();
-   if(await page.locator('#igcAutomationActivitySection').count()){
+   if(await page.locator('#igcAutomationActivityPanel').count()){
      assert(await page.locator('#igcAutomationActivitySection').isVisible());
      assert(!await page.locator('#igcActionRobotSection').isVisible());
      for(const key of ['session','today','d7'])
@@ -81,8 +81,11 @@ const {chromium}=require('playwright');
      assert(await page.locator('#igcActCount_h2').isVisible(),
        'Detailed 2h counters open only on demand');
    }else{
-     assert(await page.locator('#igcActionRobotSection').isVisible(),
-       'Standalone HTML must fall back to its real saved action results');
+     assert(await page.locator('#igcAutomationActivitySection').isVisible());
+     assert(!await page.locator('#igcActionRobotSection').isVisible(),
+       'Standalone History must not misleadingly jump back into Actions');
+     assert.match(await page.locator('#igcAutomationActivitySection').innerText(),
+       /installed Windows app/);
    }
    await nav.screenshot({path:path.join(out,'clear-navigation-'+width+'.png'),animations:'disabled'});
    await context.close();
