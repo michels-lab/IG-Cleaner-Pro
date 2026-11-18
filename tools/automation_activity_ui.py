@@ -159,12 +159,13 @@ function reconciledOutcomes(records){
  // Aggregation runs for every period tile: avoid a redundant O(n log n) sort.
  return [...groups.values()];
 }
-function summarize(records,id,now){
+function summarize(records,id,now,originFilter='all'){
  const lower=cutoff(id,now),upper=now.getTime();
  const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
    legacy_unknown:0};
  const warningEvents=new Set();
- function recordWarning(key,status,at){
+ function recordWarning(key,status,at,origin){
+   if(originFilter!=='all'&&origin!==originFilter)return;
    if(!['review','error','blocked'].includes(status))return;
    const when=dateValue(at);
    if(!Number.isFinite(when)||when<lower||when>upper)return;
@@ -176,13 +177,16 @@ function summarize(records,id,now){
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   recordWarning(key,r.status,r.at);
+   recordWarning(key,r.status,r.at,r.origin);
    for(const past of (Array.isArray(r.warning_events)?r.warning_events:[])){
-     if(past)recordWarning(key,past.status,past.at);
+     if(past)recordWarning(key,past.status,past.at,past.origin);
    }
  }
  for(const group of reconciledOutcomes(records)){
    if(group.conflict||group.at<lower||group.at>upper)continue;
+   // Filter AFTER canonical reconciliation: hiding a contradictory unknown
+   // row must never turn its same-time robot twin into a false verified OK.
+   if(originFilter!=='all'&&group.record.origin!==originFilter)continue;
    const category=classify(group.record);
    if(category==='warning')continue; // Already counted at its own event time.
    if(Object.prototype.hasOwnProperty.call(out,category)){
@@ -329,11 +333,14 @@ function clearValues(){
  const b=$('igcActBatch');if(b)b.textContent='—';
  clearJournalValues();
 }
-function renderHistory(records){
+function renderHistory(records,originFilter='all'){
  const list=$('igcActHistory'),last=$('igcActLast');
  if(!list||!last)return;
  // Use identical canonical reconciliation as the period counters.
- const entries=reconciledOutcomes(records).sort((x,y)=>y.at-x.at).slice(0,15);
+ const entries=reconciledOutcomes(records)
+   // Keep contradictory latest provenance visible as Review in either view.
+   .filter(x=>originFilter==='all'||x.conflict||x.record.origin===originFilter)
+   .sort((x,y)=>y.at-x.at).slice(0,15);
  list.replaceChildren();
  if(!entries.length){
    const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
@@ -373,6 +380,7 @@ function render(records){
  if(!dataReady)return;
  const selected=$('igcActTask')?.value||'all';
  const scoped=selected==='all'?records:records.filter(r=>r.task===selected);
+ const originFilter=$('igcActOrigin')?.value||'all';
  // A damaged task WAL is unknown, not zero. Combined counters are LOWER
  // BOUNDS; task-specific numbers remain exact only for healthy sources.
  const incomplete=selected==='all'?unavailableTasks.length>0:
@@ -383,7 +391,7 @@ function render(records){
  const display=n=>missingOnly?'—':incomplete?'≥'+n:String(n);
  const now=new Date();
  for(const [key] of PERIODS){
-   const out=summarize(scoped,key,now);
+   const out=summarize(scoped,key,now,originFilter);
    const el=$('igcActCount_'+key);
    if(el)el.textContent=display(out.verified);
  }
@@ -393,9 +401,9 @@ function render(records){
      (selected==='cancel'?'Cancel Pending':'Unfollow')+'.';
    if(list)list.replaceChildren(node('p','igc-act-muted',
      'La lectura de esta tarea falló. No se presume cero ni se borran acciones de la otra tarea.'));
- }else renderHistory(scoped);
+ }else renderHistory(scoped,originFilter);
  const period=$('igcActBreakdownPeriod')?.value||'today';
- const data=summarize(scoped,period,now);
+ const data=summarize(scoped,period,now,originFilter);
  for(const key of ['verified','unfollow','cancel','warning','no_action','unavailable','legacy_unknown']){
    const el=$('igcActMetric_'+key);if(el)el.textContent=display(data[key]);
  }
@@ -502,6 +510,15 @@ function mount(){
    const opt=node('option',null,label);opt.value=value;task.append(opt);
  }
  task.addEventListener('change',()=>render(latest));panel.append(task);
+ const originLabel=node('label',null,'Procedencia de las acciones');originLabel.htmlFor='igcActOrigin';panel.append(originLabel);
+ const origin=node('select');origin.id='igcActOrigin';
+ for(const [value,name] of [['all','Robot y registros históricos'],
+    ['robot','Solo robot verificado'],['unknown','Origen histórico sin comprobar']]){
+   const opt=node('option',null,name);opt.value=value;origin.append(opt);
+ }
+ origin.addEventListener('change',()=>render(latest));panel.append(origin);
+ panel.append(node('p','igc-act-muted',
+   'Esta vista consulta el diario local del robot. No atribuye acciones manuales a un robot ni adivina el origen de entradas antiguas.'));
  const grid=node('div','igc-act-windows');
  for(const [key,name] of PERIODS){
    const primary=['session','today','d7'].includes(key);
@@ -536,7 +553,7 @@ function mount(){
  history.setAttribute('aria-label','Últimos 15 resultados guardados del robot');
  historySection.append(history);panel.append(historySection);
  panel.append(node('p','igc-act-muted',
-  'Actividad explícita del robot, no sumada al historial manual. Cada OK verificado cuenta una sola vez; las advertencias anteriores se cuentan por fecha de evento aunque después haya OK. Los OK antiguos sin origen identificado siguen separados.'));
+  'Diario de acciones del robot, no sumado al historial manual. Filtrar por procedencia no revalida entradas contradictorias. Cada OK de origen robot se cuenta una sola vez; advertencias anteriores conservan su fecha. Los OK antiguos sin origen identificado permanecen separados.'));
  const refreshButton=node('button',null,'Actualizar estadísticas');refreshButton.type='button';
  refreshButton.id='igcActRefresh';refreshButton.addEventListener('click',refresh);panel.append(refreshButton);
  const status=node('div','igc-act-status','Consulta de solo lectura; no inicia robots.');
