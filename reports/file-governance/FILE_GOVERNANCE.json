@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 459,
-  "classified_files_total": 455,
-  "docs_content_inspected": 120,
+  "tracked_files_total": 461,
+  "classified_files_total": 457,
+  "docs_content_inspected": 121,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 116,
+    "document": 117,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 142,
+    "test": 143,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "d222e338661f5cc7931de6ef4c916c87ccdbad2923c89f3c3f69e7e23972fd20",
-  "evidence_fingerprint": "558be47187fdd22b05ebe5b1aca94d7746cae49470d89fc38c0a90383e692d4d",
+  "inventory_fingerprint": "2b4e55994060aaac3b6398c6d0e7b7b89d43fc9ff4abf4ad7e68a6fa114cae97",
+  "evidence_fingerprint": "78dbce5470298177e94ce1e86aab50a325ade38ae4b7f9d5607a0933738366f8",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "a05b0112819ee4fd23e105e62220c208dc1d0d69"
+      "blob": "0f7f4b6200b67c258f902b30378d9d8413b4255d"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "91874e0cf5035da27ed29ce43381fb9e20a0df9b"
+      "blob": "bfa9ae9fe14233e5ea4f308893d90184f90211a8"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "6309ab19a8d0df148fc64f0bb94102dc752f71ef"
+      "blob": "b174b61401df75660d474730ceb8d948667072a9"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1635,6 +1635,13 @@
       "blob": "31971d9f6240b6555ff5be26c6e8c75099af37cc"
     },
     {
+      "path": "docs/audits/2026-11-18-manual-reviewed-atomic.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "5a8b349c448859cc2e310aa7470791dba8822d66"
+    },
+    {
       "path": "docs/audits/2026-11-18-two-windows-installer-ux.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1905,7 +1912,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "93c8b94dd6d3316925d70244aa265fe023a8fcc4"
+      "blob": "dbf2f8947475cee7d61e515bd5c31a5c48d21e7f"
     },
     {
       "path": "tests/automations-issues.test.cjs",
@@ -2242,6 +2249,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "5f4128f95a4bd81918e5bf8d0babd5cbb4593284"
+    },
+    {
+      "path": "tests/manual-reviewed-atomic-storage.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "621b53d54777d345c8c2df65383b5460a5ba116b"
     },
     {
       "path": "tests/multi-instagram-contract.test.cjs",
@@ -3228,11 +3242,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "1d4d6f0ccd25c1b1",
+      "id": "b5e8b78dc7e0ac94",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/cloud-review-pagination-9896.test.cjs, tests/cloud-review-scope-cache.test.cjs, tests/cloud-review-storage-rollback.test.cjs, tests/focus-quota-alternative.test.cjs",
+      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/cloud-review-pagination-9896.test.cjs, tests/cloud-review-scope-cache.test.cjs, tests/cloud-review-storage-rollback.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
