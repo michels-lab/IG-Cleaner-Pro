@@ -1153,12 +1153,10 @@ public final class MainActivity extends AppCompatActivity {
                             throw new IllegalStateException("Cambiaste de Instagram. Vuelve a confirmar.");
                         api.deleteInstagramProfile(key, username);
                         clearWorkspaceCacheForProfile(key);
-                        mainHandler.post(() -> {
-                            api.setInstagramProfile("legacy", "Datos anteriores");
-                            setGlobalStatus("INSTAGRAM • Datos anteriores");
-                            if (bottomNav.getSelectedItemId() != R.id.navHome)
-                                bottomNav.setSelectedItemId(R.id.navHome);
-                            else showMobileWorkspaceScreen("home");
+                        // A confirmed profile deletion changes active scope.
+                        // Commit it on UI before any subsequent IO job can run.
+                        postAccountTransitionAndWait(() -> {
+                            applyInstagramProfileChange("legacy", "Datos anteriores");
                             Snackbar.make(content, label + " deleted. Legacy data is intact.",
                                     Snackbar.LENGTH_LONG).show();
                         });
