@@ -73,6 +73,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class MainActivity extends AppCompatActivity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -1165,9 +1167,30 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void changeInstagramProfile(String key, String label) {
-        // Serialize the account switch behind in-flight native network writes.
-        // Otherwise a Focus operation prepared for A could finish under B.
-        io.execute(() -> mainHandler.post(() -> applyInstagramProfileChange(key, label)));
+        // The switch is not complete until the UI thread actually applies it.
+        // A plain mainHandler.post() lets the next queued IO task start under A
+        // before the UI callback switches to B (or back to A).
+        io.execute(() -> {
+            try {
+                postAccountTransitionAndWait(() -> applyInstagramProfileChange(key, label));
+            } catch (Exception error) {
+                mainHandler.post(() -> setGlobalStatus("INSTAGRAM • switch failed safely"));
+            }
+        });
+    }
+
+    private void postAccountTransitionAndWait(Runnable transition) throws Exception {
+        // All native Focus, sync and session changes use the same IO lane.
+        // Wait only on the worker thread; the UI thread must remain responsive.
+        CountDownLatch applied = new CountDownLatch(1);
+        AtomicReference<RuntimeException> failure = new AtomicReference<>();
+        if (!mainHandler.post(() -> {
+            try { transition.run(); }
+            catch (RuntimeException error) { failure.set(error); }
+            finally { applied.countDown(); }
+        })) throw new IllegalStateException("Account transition UI is unavailable");
+        applied.await();
+        if (failure.get() != null) throw failure.get();
     }
 
     private void applyInstagramProfileChange(String key, String label) {
@@ -1381,7 +1404,7 @@ public final class MainActivity extends AppCompatActivity {
                             // only Sign out removes the selected remembered login.
                             runAsync(() -> {
                                 api.prepareAnotherAccount();
-                                mainHandler.post(() -> {
+                                postAccountTransitionAndWait(() -> {
                                     resetAfterAccountChange();
                                     setGlobalStatus("SIGN IN • add another account");
                                     showNativeAccountScreen();
@@ -1398,7 +1421,7 @@ public final class MainActivity extends AppCompatActivity {
                         runAsync(() -> {
                             try {
                                 api.activateRememberedAccount(selected);
-                                mainHandler.post(() -> {
+                                postAccountTransitionAndWait(() -> {
                                     resetAfterAccountChange();
                                     setGlobalStatus("CONNECTED • " + api.getEmail());
                                     showNativeAccountScreen();
@@ -1413,15 +1436,23 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         logout.setOnClickListener(v -> {
-            // Sign out forgets the CURRENT login only, unlike account switching.
-            api.logout();
-            resetAfterAccountChange();
-            setGlobalStatus("SIGNED OUT • remembered accounts preserved");
-            showNativeAccountScreen();
+            // Logout must not invalidate the token while a native Focus write
+            // is using it. Queue behind the IO lane, then finish UI handoff.
+            logout.setEnabled(false);
+            setGlobalStatus("SIGNING OUT • finishing current operation");
+            runAsync(() -> {
+                api.logout();
+                postAccountTransitionAndWait(() -> {
+                    resetAfterAccountChange();
+                    setGlobalStatus("SIGNED OUT • remembered accounts preserved");
+                    showNativeAccountScreen();
+                });
+            }, true);
         });
     }
 
     private void resetAfterAccountChange() {
+        ++workspaceSyncGeneration; // Discard old-owner Home async completions.
         disposeWorkspaceWebView();
         // Invalidate in-memory values; owner-specific cached exports, review
         // history and cloud tables are never deleted by account switching.
@@ -1791,12 +1822,24 @@ public final class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void syncSession(String sessionJson) {
-            api.adoptWebSession(sessionJson);
-            mainHandler.post(() -> {
-                if (api.hasSession()) {
-                    setGlobalStatus("Account connected · shared session");
+            // JavaScriptInterface runs off the UI thread; never rotate native
+            // owner/session tokens in parallel with Focus's IO mutations.
+            io.execute(() -> {
+                String oldOwner = api.getEmail();
+                api.adoptWebSession(sessionJson);
+                if (!oldOwner.equalsIgnoreCase(api.getEmail())) {
+                    try {
+                        postAccountTransitionAndWait(() -> {
+                            resetAfterAccountChange();
+                            setGlobalStatus(api.hasSession()
+                                    ? "Account connected · shared session" : "Signed out");
+                        });
+                    } catch (Exception ignored) {
+                        mainHandler.post(() -> setGlobalStatus("Session handoff failed safely"));
+                    }
                 } else {
-                    setGlobalStatus("Signed out");
+                    mainHandler.post(() -> setGlobalStatus(api.hasSession()
+                            ? "Account connected · shared session" : "Signed out"));
                 }
             });
         }
@@ -1904,7 +1947,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void loadBatches() {
         setGlobalStatus("Buscando Focus…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
             JSONObject doubleCycle = fetchDoubleCheckCycle();
@@ -2140,7 +2183,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void createFocusBatch(String module, int requestedSize) {
         setGlobalStatus("PREPARING • " + focusModuleLabel(module) + " " + requestedSize);
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
 
@@ -2230,7 +2273,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void createDoubleCheckBatch(boolean restartCycle) {
         setGlobalStatus("Double Check · preparando siguiente tanda…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
             if (!syncedReviewStateAvailable)
@@ -2570,7 +2613,7 @@ public final class MainActivity extends AppCompatActivity {
         clearFocusState();
         setGlobalStatus("Cargando " + batch.optString("label", "Focus") + "…");
 
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String currentStatus = batch.optString("status", "prepared");
             if ("prepared".equals(currentStatus)) {
                 String now = Instant.now().toString();
@@ -2692,7 +2735,7 @@ public final class MainActivity extends AppCompatActivity {
         JSONObject item = row.payload instanceof JSONObject ? (JSONObject) row.payload : itemByUsername.get(row.username);
         boolean preserveReviewed = remotelyReviewed.contains(row.username);
 
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String now = Instant.now().toString();
             String batchId = encode(currentBatch.optString("id"));
             String username = encode(row.username);
@@ -2745,7 +2788,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void finalizeBatch(String decision) {
         setGlobalStatus("Saving review…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String now = Instant.now().toString();
             String batchId = currentBatch.optString("id");
             String module = currentBatch.optString("module", "review");
@@ -3139,6 +3182,17 @@ public final class MainActivity extends AppCompatActivity {
             return "Connection problem. Your cached lists are still available.";
         }
         return raw;
+    }
+
+    private void runFocusScopedAsync(Task task, boolean reportError) {
+        final String owner = api.getEmail();
+        final String instagram = api.getInstagramProfile();
+        runAsync(() -> {
+            if (!api.hasSession() || !owner.equalsIgnoreCase(api.getEmail())
+                    || !instagram.equals(api.getInstagramProfile()))
+                throw new IllegalStateException("Cuenta cambiada. Focus anterior cancelado sin modificar otra cuenta.");
+            task.run();
+        }, reportError);
     }
 
     private void runAsync(Task task, boolean reportError) {
