@@ -14,7 +14,7 @@ assert(begin >= 0 && end > begin, 'Use real production period and summary functi
 const sessionStart = Date.parse('2026-11-09T05:50:00Z');
 const context = {Date, Number, Math, String, Object, Set, sessionStart,
  HANDLE:/^[a-z0-9._]{1,30}$/i};
-const fns = vm.runInNewContext(src.slice(begin,end) + '\n({summarize,cutoff})', context, {timeout:2500});
+const fns = vm.runInNewContext(src.slice(begin,end) + '\n({summarize,cutoff,reconciledOutcomes})', context, {timeout:2500});
 const now = new Date('2026-11-09T06:15:00Z'); // 00:15 Nov 9 Monterrey
 
 const current = {
@@ -70,12 +70,19 @@ for(const records of [[earlierCase,newerCase],[newerCase,earlierCase],
 const latestReview={...earlierCase,status:'review',at:'2026-11-09T06:12:00Z'};
 assert.equal(fns.summarize([newerCase,latestReview],'h1',now).verified,0,
   'A newer Review supersedes an older positive outcome');
+const newest=fns.reconciledOutcomes([earlierCase,newerCase,earlierCase]);
+assert.equal(newest.length,1,'The timeline displays one row per casefolded Instagram identity');
+assert.equal(newest[0].record.status,'ok','The activity timeline uses the latest outcome');
+assert.equal(newest[0].at,Date.parse(newerCase.at));
 const conflicting={...newerCase,origin:'unknown'};
 for(const pair of [[newerCase,conflicting],[conflicting,newerCase]]){
  const actual=fns.summarize(pair,'h1',now);
  assert.equal(actual.verified,0,'Equal-time contradictory provenance must fail closed');
  assert.equal(actual.legacy_unknown,0,'Do not arbitrarily select a conflicting saved row');
 }
+const collision=fns.reconciledOutcomes([newerCase,conflicting]);
+assert.equal(collision.length,1);
+assert.equal(collision[0].conflict,true,'History must visibly flag contradictory latest proof');
 const sameHandleOtherTask={...newerCase,task:'cancel'};
 const multiTask=fns.summarize([earlierCase,newerCase,sameHandleOtherTask],'today',now);
 assert.equal(multiTask.verified,2,'Separate Unfollow and Cancel journals stay independent');
