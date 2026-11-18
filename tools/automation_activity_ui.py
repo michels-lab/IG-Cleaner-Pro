@@ -140,36 +140,54 @@ function classify(record){
  if(state==='profile_unavailable')return 'unavailable';
  return 'unconfirmed';
 }
+function reconciledOutcomes(records){
+ // The same reconciliation powers headline totals AND the visible journal.
+ // Never let a timestamp tie with contradictory status/origin appear as OK.
+ const groups=new Map();
+ for(const r of records){
+   if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
+   const key=r.task+':'+r.username.toLowerCase(),at=dateValue(r.at);
+   if(!Number.isFinite(at))continue;
+   const saved=groups.get(key);
+   if(!saved||at>saved.at){
+     groups.set(key,{key,at,record:r,conflict:false});
+   }else if(at===saved.at&&(saved.record.status!==r.status||
+                             saved.record.origin!==r.origin)){
+     saved.conflict=true;
+   }
+ }
+ // Aggregation runs for every period tile: avoid a redundant O(n log n) sort.
+ return [...groups.values()];
+}
 function summarize(records,id,now){
- const lower=cutoff(id,now), upper=now.getTime();
+ const lower=cutoff(id,now),upper=now.getTime();
  const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
    legacy_unknown:0};
- const unique=new Set(),warningEvents=new Set();
+ const warningEvents=new Set();
+ function recordWarning(key,status,at){
+   if(!['review','error','blocked'].includes(status))return;
+   const when=dateValue(at);
+   if(!Number.isFinite(when)||when<lower||when>upper)return;
+   const eventKey=key+':'+status+':'+at;
+   if(warningEvents.has(eventKey))return;
+   warningEvents.add(eventKey);
+   out.warning++;
+ }
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   if(unique.has(key))continue;unique.add(key);
-   const t=dateValue(r.at),category=classify(r);
-   // A later OK is a single confirmed action. A prior failed/review attempt
-   // remains a warning at ITS own event time, never another verified click.
-   if(Number.isFinite(t)&&t>=lower&&t<=upper&&
-      Object.prototype.hasOwnProperty.call(out,category)){
-     if(category==='warning'){
-       warningEvents.add(key+':'+r.status+':'+r.at);
-       out.warning++;
-     }else{
-       out[category]++;
-       if(category==='verified')out[r.task]++;
-     }
-   }
+   recordWarning(key,r.status,r.at);
    for(const past of (Array.isArray(r.warning_events)?r.warning_events:[])){
-     if(!past||!['review','error','blocked'].includes(past.status))continue;
-     const when=dateValue(past.at);
-     if(!Number.isFinite(when)||when<lower||when>upper)continue;
-     const eventKey=key+':'+past.status+':'+past.at;
-     if(warningEvents.has(eventKey))continue;
-     warningEvents.add(eventKey);
-     out.warning++;
+     if(past)recordWarning(key,past.status,past.at);
+   }
+ }
+ for(const group of reconciledOutcomes(records)){
+   if(group.conflict||group.at<lower||group.at>upper)continue;
+   const category=classify(group.record);
+   if(category==='warning')continue; // Already counted at its own event time.
+   if(Object.prototype.hasOwnProperty.call(out,category)){
+     out[category]++;
+     if(category==='verified')out[group.record.task]++;
    }
  }
  return out;
@@ -314,16 +332,8 @@ function clearValues(){
 function renderHistory(records){
  const list=$('igcActHistory'),last=$('igcActLast');
  if(!list||!last)return;
- const ordered=records.filter(r=>r&&['unfollow','cancel'].includes(r.task)&&
-   HANDLE.test(r.username||'')&&Number.isFinite(dateValue(r.at)))
-   .sort((a,b)=>dateValue(b.at)-dateValue(a.at));
- const seen=new Set(),entries=[];
- for(const r of ordered){
-   const key=r.task+':'+r.username.toLowerCase();
-   if(seen.has(key))continue;
-   seen.add(key);entries.push(r);
-   if(entries.length===15)break;
- }
+ // Use identical canonical reconciliation as the period counters.
+ const entries=reconciledOutcomes(records).sort((x,y)=>y.at-x.at).slice(0,15);
  list.replaceChildren();
  if(!entries.length){
    const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
@@ -335,20 +345,27 @@ function renderHistory(records){
      'El historial está vacío o no tiene fechas verificables.'));
    return;
  }
- function name(r){return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username}
- function desc(r){const k=classify(r);return k==='verified'?'OK confirmado':
-   k==='warning'?'⚠ Review / advertencia':k==='legacy_unknown'?
-   'OK histórico · origen sin registrar':k==='no_action'?'Ya resuelto · sin clic':
-   k==='unavailable'?'No disponible':'No confirmado'}
+ function name(entry){
+   const r=entry.record;
+   return (r.task==='unfollow'?'Unfollow':'Cancel Pending')+' · @'+r.username;
+ }
+ function desc(entry){
+   if(entry.conflict)return 'REVIEW · historial contradictorio, sin OK verificable';
+   const k=classify(entry.record);
+   return k==='verified'?'OK confirmado':
+     k==='warning'?'⚠ Review / advertencia':k==='legacy_unknown'?
+     'OK histórico · origen sin registrar':k==='no_action'?'Ya resuelto · sin clic':
+     k==='unavailable'?'No disponible':'No confirmado';
+ }
  const newest=entries[0];last.replaceChildren();
  last.append(node('div',null,(unavailableTasks.length>0&&
    $('igcActTask')?.value==='all'?'Último registro verificable (parcial)':'Último registro')+
    ' · '+name(newest)),
-   node('small',null,desc(newest)+' · '+new Date(dateValue(newest.at)).toLocaleString()));
+   node('small',null,desc(newest)+' · '+new Date(newest.at).toLocaleString()));
  for(const entry of entries){
    const row=node('div','igc-act-history-row');
    row.append(node('div',null,name(entry)+' · '+desc(entry)),
-     node('small',null,new Date(dateValue(entry.at)).toLocaleString()));
+     node('small',null,new Date(entry.at).toLocaleString()));
    list.append(row);
  }
 }

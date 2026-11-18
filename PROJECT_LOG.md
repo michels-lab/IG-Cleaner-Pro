@@ -6,6 +6,14 @@
 - Offline regressions: `tests/cloud-list-snapshot-freshness.test.cjs` adds exact 52 cloud vs newer explicit 0 HTML and missing-import guard; `tests/test_android_workspace_sync_races.py` checks Android source/cached markers, origin timestamps and A→B→A isolation. Exact-head CI, Android install/render and physical owner verification remain required, not assumed.
 - [Detailed audit](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md). Release verified at start: v120.79; this source branch is **NOT published** and does not authorize another release. Preserve Pending history, saved ZIP files, reviewed/protected data and prior cloud snapshots until a verified newer import.
 
+## 2026-11-17 — Operación Granada: Automations action-history casefold reconciliation (source PR)
+
+- Issue #298: read-only Windows Automations statistics used the *first* saved action journal row for a case-insensitive username. Distinct legacy JSON keys (e.g. `Example.User` and `example.user`) with different statuses/timestamps could hide a later verified action or show an obsolete OK; previous regression tested only identical duplicate rows.
+- `tools/automation_activity_ui.py` now chooses the latest dated outcome per owner-selected account/task/casefolded username, preserves warning event timestamps across all variants, de-duplicates warnings, and fails closed on equal-timestamp conflicting status/origin. Original WAL, local reviews, Instagram sessions and live actions remain untouched.
+- Negative production-function regression expanded in `tests/automation-warning-events.test.cjs`: reverse insertion order, repeated rows, prior Review+blocked events, newer Review, equal-time ambiguous origin, same-handle distinct Unfollow vs Cancel.
+- Audit: [docs/audits/2026-11-17-automation-history-casefold-reconciliation.md](docs/audits/2026-11-17-automation-history-casefold-reconciliation.md). Branch `granada/automation-history-casefold-reconciliation-20261117`. CI/installed Windows evidence and exact merged SHA pending verification; no fabricated Chrome/Instagram acceptance.
+- Official stable at branch creation: v120.78. Independent v120.79 official publisher was already in progress on an earlier exact source SHA; DO NOT assume this fix is included in v120.79 or modify the release request/hold.
+
 ## 2026-11-17 (Mexico) / 2026-11-18 UTC — FINAL stable v120.79 published
 
 - [Official v120.79 release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79): 9 SHA256-verified stable assets, exact tag source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) **4/4 SUCCESS**, installed Windows Setup, signed Android APK installed/launched, exact-source Desktop/Android screenshots and integrity.
