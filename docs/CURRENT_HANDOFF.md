@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: Focus recovered-cohort pruning atomicity (source-only)
+
+- Fixed source bug: recovery pruning could shorten `activeFocusBatch.rows` in memory before browser storage confirmed the write; a failed save made reload restore apparent missing targets. Full-clear path also discarded in-memory cohort before a failed persistent removal.
+- Both paths now preserve old in-memory and durable state when storage writes/removals fail. Existing Focus quota regression covers rejected writes, denied deletion, successful persisted prune, and successful deletion. [Audit](audits/2026-11-18-focus-prune-transaction.md).
+- Published stable remains v120.80; no automatic clicks, account data deletion, new version or release. #360 asynchronous list reloads and #371 completely exhausted browser remain open, as does owner physical acceptance.
+
 ## 2026-11-18 — GRANADA: fallback lossless para Focus bajo cuota (fuente, sin release)
 
 - Fix independiente de #371: al fallar la escritura normal v2 de tanda activa Focus por cuota, intentar formato v3 lossless (URL canónica con centinela y 4 booleanos empacados). En prueba directa: 4091 → 2510 caracteres (−38.6%) para 30 perfiles; se preservan todos los campos, enlaces personalizados/vacíos/ausentes. Nada se borra ni se marca Reviewed sin escritura confirmada.
