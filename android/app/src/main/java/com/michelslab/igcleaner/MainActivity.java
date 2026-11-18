@@ -764,8 +764,14 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         if (!home) {
-            kpiMain.setText(String.valueOf(main));
-            kpiSecondary.setText(String.valueOf(total));
+            if ("pending".equals(workspaceSection) && !pendingSnapshotPresent) {
+                // Missing Pending snapshot != verified zero Pending requests.
+                kpiMain.setText("—");
+                kpiSecondary.setText("—");
+            } else {
+                kpiMain.setText(String.valueOf(main));
+                kpiSecondary.setText(String.valueOf(total));
+            }
         }
         mobileWorkspaceSubtitle.setText(syncedFollowing.length() + " following · " +
                 syncedFollowers.length() + " followers · " +
