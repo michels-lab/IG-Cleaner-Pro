@@ -54,7 +54,7 @@ def bundled_html() -> Path:
     return base / "ui" / BUNDLED_HTML
 
 
-def prepare_html(source: Path, destination: Path, *, automation_activity=True) -> Path:
+def prepare_html(source: Path, destination: Path, *, automation_activity=False) -> Path:
     """Copy on content change, adding only the single-account activity view."""
     if not source.is_file():
         raise FileNotFoundError("El ejecutable no incluye la interfaz de Insta Cleaner.")
