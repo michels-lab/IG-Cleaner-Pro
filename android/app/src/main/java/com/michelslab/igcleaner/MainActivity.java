@@ -489,7 +489,8 @@ public final class MainActivity extends AppCompatActivity {
         final int maxRows = 250000;
         JSONArray complete = new JSONArray();
         Set<String> seen = new HashSet<>();
-        for (int offset = 0; offset <= maxRows; offset += pageSize) {
+        int offset = 0;
+        while (offset <= maxRows) {
             JSONArray page = api.get(
                     "profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context" +
                     "&order=username.asc,module.asc&limit=" + pageSize + "&offset=" + offset);
@@ -506,6 +507,9 @@ public final class MainActivity extends AppCompatActivity {
             // Stop only on an empty page. A full 1,000-row provider response
             // is never proof that it was the final page.
             if (page.length() == 0) return complete;
+            // A provider may cap each response below our requested pageSize.
+            // Advance by ACTUALLY returned rows, not by the request limit.
+            offset += page.length();
         }
         throw new IllegalStateException("Review history exceeds safe pagination limit; no cache changed");
     }
