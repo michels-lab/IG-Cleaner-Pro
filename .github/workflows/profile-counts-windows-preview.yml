@@ -56,17 +56,15 @@ on:
       - 'tests/test_dual_action_worker_lease_adapter.py'
       - 'tests/test_dual_manager_offline_integration.py'
       - 'tests/test_explicit_parallel_action_workspaces.py'
-      - 'tests/dual-action-parallel-windows-browser.test.cjs'
-      - 'tests/dual-action-batch-completion-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
       - 'tools/test_windows_developer_installer.ps1'
       - 'tools/ig_cleaner_desktop.py'
-      - 'tools/dual_action_windows_ui.py'
-      - 'tests/test_dual_action_windows_ui.py'
-      - 'tests/dual-action-windows-panel-browser.test.cjs'
-      - 'tests/dual-action-new-batch-browser.test.cjs'
+      - 'tools/windows_workspace_picker.py'
+      - 'tests/test_windows_single_window_layout.py'
+      - 'tests/automation-center-browser.test.cjs'
+      - 'tests/dual-workspace-sidebar-browser.test.cjs'
       - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
@@ -157,17 +155,15 @@ on:
       - 'tests/test_dual_action_worker_lease_adapter.py'
       - 'tests/test_dual_manager_offline_integration.py'
       - 'tests/test_explicit_parallel_action_workspaces.py'
-      - 'tests/dual-action-parallel-windows-browser.test.cjs'
-      - 'tests/dual-action-batch-completion-browser.test.cjs'
       - 'tools/developer_live_probe.py'
       - 'tests/test_developer_live_probe.py'
       - 'tools/build_windows_developer_installer.ps1'
       - 'tools/test_windows_developer_installer.ps1'
       - 'tools/ig_cleaner_desktop.py'
-      - 'tools/dual_action_windows_ui.py'
-      - 'tests/test_dual_action_windows_ui.py'
-      - 'tests/dual-action-windows-panel-browser.test.cjs'
-      - 'tests/dual-action-new-batch-browser.test.cjs'
+      - 'tools/windows_workspace_picker.py'
+      - 'tests/test_windows_single_window_layout.py'
+      - 'tests/automation-center-browser.test.cjs'
+      - 'tests/dual-workspace-sidebar-browser.test.cjs'
       - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
       - 'tools/developer_audit.py'
@@ -397,9 +393,8 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_native_desktop.py' -v
           if ($LASTEXITCODE -ne 0) { throw 'Integrated native desktop tests failed.' }
-          python -m unittest discover -s tests -p 'test_dual_action_windows_ui.py' -v
-          if ($LASTEXITCODE -ne 0) { throw 'Dual-account native Windows UI injection/consent failed.' }
-          if ($LASTEXITCODE -ne 0) { throw "Integrated desktop tests failed." }
+          python -m unittest discover -s tests -p 'test_windows_single_window_layout.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Two-window account selector and single-account UI contract failed.' }
       - name: Create self-contained Desktop app HTML
         shell: pwsh
         run: |
@@ -412,21 +407,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "IndexedDB migration and 250k-profile browser acceptance failed." }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw 'Actual Automations command center browser regression failed.' }
-          node tests/dual-action-windows-panel-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows live robot diagnostic/account isolation test failed.' }
-          node tests/dual-action-new-batch-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows new-batch consent test failed.' }
-          node tests/dual-action-parallel-windows-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows parallel opt-in test failed.' }
-          node tests/dual-action-batch-completion-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows saved-batch Review modal test failed.' }
-          if ($LASTEXITCODE -ne 0) { throw "Native Windows account-scoped completion Review modal or WAL no-auto-approval failed." }
-          if ($LASTEXITCODE -ne 0) { throw "Native Windows parallel opt-in and distinct-account action approvals failed." }
-          if ($LASTEXITCODE -ne 0) { throw "Native Windows new-batch consent and per-account preflight failed." }
-          if ($LASTEXITCODE -ne 0) { throw 'Native Windows dual-action cards/owner-provenance failed.' }
+          node tests/dual-workspace-sidebar-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone primary-account sidebar still displays redundant accounts.' }
+          python -c "import sys; from pathlib import Path; sys.path.insert(0,'tools'); from ig_cleaner_desktop import prepare_html; prepare_html(Path('artifacts/profile-counts-preview/IG-Cleaner-Pro.html'), Path('artifacts/profile-counts-preview/IG-Cleaner-Pro-Native.html'), automation_activity=True)"
+          if ($LASTEXITCODE -ne 0) { throw 'Native single-account History artifact preparation failed.' }
+          node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro-Native.html"
+          if ($LASTEXITCODE -ne 0) { throw 'Native four-section Automations and History rendered QA failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw 'Windows live relationship UI test failed.' }
-          if ($LASTEXITCODE -ne 0) { throw "Rendered Windows Analysis/Action command center acceptance failed." }
       - name: Build Windows executable with embedded Playwright driver
         shell: pwsh
         run: |
