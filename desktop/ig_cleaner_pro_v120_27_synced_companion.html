@@ -4376,8 +4376,40 @@ function igcEncodeActiveFocusBatch(batch){
   return {...batch,storageFormat:2,
     rows:(batch.rows||[]).map(row=>IGC_FOCUS_ROW_FIELDS.map(field=>row[field]===undefined?null:row[field]))};
 }
+// A second lossless encoding is attempted ONLY after the normal v2 save is
+// rejected for quota. A canonical URL is represented by an empty field, and
+// four boolean flags by one small integer. No confirmed state is rewritten.
+function igcEncodeFocusBatchQuota(batch){
+  if(!batch)return null;
+  return {...batch,storageFormat:3,rows:(batch.rows||[]).map(row=>{
+    const user=row.username;
+    const href=row.href;
+    const canonical='https://www.instagram.com/'+user+'/';
+    const flags=(row.iFollow?1:0)|(row.isFollower?2:0)|(row.followsBack?4:0)|(row.relationGood?8:0);
+    return [user,href===canonical?0:(href===undefined?null:(href===null?1:href)),row.name||'',row.relation||'',
+      row.riskScore||0,row.riskLevel||'',row.riskReasons||[],row.timestamp||0,
+      row.dateMain||0,row.dateOther||0,flags];
+  })};
+}
 function igcDecodeActiveFocusBatch(saved){
   if(!saved||!Array.isArray(saved.rows))return saved;
+  if(saved.storageFormat===3){
+    const {storageFormat,...cohort}=saved;
+    return {...cohort,rows:saved.rows.map(values=>{
+      if(!Array.isArray(values)||values.length!==11||
+         typeof values[0]!=='string'||!values[0]||
+         typeof values[10]!=='number'||!Number.isInteger(values[10])||
+         values[10]<0||values[10]>15)throw Error('Invalid quota-safe Focus row');
+      const [username,href,name,relation,riskScore,riskLevel,riskReasons,
+        timestamp,dateMain,dateOther,flags]=values;
+      if((typeof href!=='string'&&href!==0&&href!==1&&href!==null)||typeof name!=='string'||typeof relation!=='string')throw Error('Invalid quota-safe Focus fields');
+      return safeBatchRow({username,
+        href:href===0?'https://www.instagram.com/'+username+'/':(href===null?undefined:(href===1?null:href)),
+        name,relation,riskScore,riskLevel,riskReasons,timestamp,dateMain,dateOther,
+        iFollow:!!(flags&1),isFollower:!!(flags&2),
+        followsBack:!!(flags&4),relationGood:!!(flags&8)});
+    })};
+  }
   if(saved.storageFormat!==2)return saved;
   const {storageFormat,...cohort}=saved;
   return {...cohort,rows:saved.rows.map(values=>{
@@ -4389,8 +4421,18 @@ function igcDecodeActiveFocusBatch(saved){
   })};
 }
 function saveActiveFocusBatch(){
-  if(activeFocusBatch)localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch)));
-  else localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);
+  if(!activeFocusBatch){localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);return}
+  const usual=JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch));
+  try{localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,usual)}
+  catch(error){
+    // A SecurityError or broken storage engine must remain a hard failure.
+    // The alternate representation is only for exhausted storage quota.
+    if(!(/quota/i.test(String(error?.name||''))||
+         /quota/i.test(String(error?.message||''))))throw error;
+    const small=JSON.stringify(igcEncodeFocusBatchQuota(activeFocusBatch));
+    if(small.length>=usual.length)throw error;
+    localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,small);
+  }
 }
 function loadActiveFocusBatch(){
   try{activeFocusBatch=igcDecodeActiveFocusBatch(JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null'))}

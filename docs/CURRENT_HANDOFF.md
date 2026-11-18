@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: fallback lossless para Focus bajo cuota (fuente, sin release)
+
+- Fix independiente de #371: al fallar la escritura normal v2 de tanda activa Focus por cuota, intentar formato v3 lossless (URL canónica con centinela y 4 booleanos empacados). En prueba directa: 4091 → 2510 caracteres (−38.6%) para 30 perfiles; se preservan todos los campos, enlaces personalizados/vacíos/ausentes. Nada se borra ni se marca Reviewed sin escritura confirmada.
+- Falla de cuota total o SecurityError sigue bloqueando con diálogo de recuperación, sin pestañas ni resultados ficticios. Los históricos v2/legacy permanecen legibles. Prueba `tests/focus-quota-alternative.test.cjs` conectada a CI. [Auditoría](audits/2026-11-18-focus-quota-fallback.md).
+- Aceptación en navegador del usuario, reaparición de contadores #360 y dos ventanas reales #377 aún NO confirmadas. Stable oficial v120.80; v120.81 no autorizada.
+
 ## 2026-11-18 — GRANADA: installed two-slot persistence and Spanish keyboard Automations (source, unreleased)
 
 - Following merged PR [#376](https://github.com/michels-lab/IG-Cleaner-Pro/pull/376) at `f07b7168`, the new `granada/windows-two-slot-installer-a11y-20261118` branch closes an installer-acceptance blind spot. The installed Windows EXE smoke now covers **primary AND secondary** slots; verifies distinct persistent HTML origins and Chrome data folders with synthetic markers surviving upgrade/uninstall. This does not claim two physical simultaneous GUI windows.

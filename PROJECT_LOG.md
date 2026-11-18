@@ -1,3 +1,8 @@
+## 2026-11-18 — GRANADA Focus cuota almacenamiento (fuente)
+
+- Reproducción lógica #371: v2 compacto todavía puede exceder la cuota de localStorage. Nuevo fallback v3 **solo ante error de cuota**, reversible, conserva la representación entera de la tanda, flags y enlaces originales, sin modificar Reviewed/Pending/protegidos/historial. Con 30 perfiles, 4,091→2,510 caracteres, rond-trip exacto. Si no cabe, falla de forma explícita y no registra revisiones ni abre pestañas.
+- Nuevo test de near-quota, error de seguridad, segunda escritura fallida, datos previos intactos y cohort corrupta; CI obligatorio. [Análisis y límites](docs/audits/2026-11-18-focus-quota-fallback.md). No resolver #371 ni #360 físicamente hasta la prueba del navegador real. No release: v120.80 sigue estable y v120.81 reservada sin autorización.
+
 ## 2026-11-18 — GRANADA installed two-window slot persistence + Automations keyboard UX (source only)
 
 - Built on merged #376: primary and secondary windows have separate Chrome and file origins, but previous installer installed-smoke tested only primary. Add real installed EXE `--workspace secondary --smoke-startup`, verify separate UI/files and distinct Chrome directories, preserve both synthetic markers across in-place setup and uninstall. This is offline install/persistence evidence, **not** proof of two concurrently open physical GUI windows or genuine Instagram A/B logins.
