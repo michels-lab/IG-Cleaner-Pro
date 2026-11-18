@@ -459,9 +459,15 @@ function mount(){
  const page=$('page-automations');const flow=page?.querySelector('.igc-page-flow');
  if(!flow||!$('igcAutomationCommandCenter'))return false;
  if($('igcAutomationActivityPanel'))return true;
- const sectionRoot=node('section');sectionRoot.id='igcAutomationActivitySection';
- sectionRoot.className='igc-robot-section';sectionRoot.hidden=true;
- flow.append(sectionRoot);
+ // Replace the standalone HTML's explanatory History placeholder in the
+ // installed Windows view. Never create a second History panel.
+ let sectionRoot=$('igcAutomationActivitySection');
+ if(!sectionRoot){
+  sectionRoot=node('section');sectionRoot.id='igcAutomationActivitySection';
+  sectionRoot.className='igc-robot-section';sectionRoot.hidden=true;
+  flow.append(sectionRoot);
+ }
+ sectionRoot.replaceChildren();
  const panel=node('aside');panel.id='igcAutomationActivityPanel';
  panel.setAttribute('aria-label','Estadísticas de acciones automáticas');
  const head=node('div','igc-act-head');
