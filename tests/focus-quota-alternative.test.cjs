@@ -33,6 +33,8 @@ const batch={kind:"main",label:"Focus 30",openedAt:1234,status:"opened_unconfirm
 batch.rows[1].href=undefined;
 batch.rows[2].href='';
 batch.rows[3].href='https://www.instagram.com/member.3/?from=import';
+batch.rows[4].href=null;
+batch.rows[5].riskReasons='legacy-risk-note';
 const original=JSON.parse(JSON.stringify(batch));
 const regular=JSON.stringify(ctx.igcEncodeActiveFocusBatch(batch));
 const small=JSON.stringify(ctx.igcEncodeFocusBatchQuota(batch));
