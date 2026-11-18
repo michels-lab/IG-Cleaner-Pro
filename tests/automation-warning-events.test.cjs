@@ -92,11 +92,15 @@ assert.equal(multiTask.warning,3,'Separate Unfollow and Cancel warnings each cou
 
 // GRANADA regression: toggling robot/unknown provenance is not allowed to
 // inflate successes, relabel legacy OK as robot or erase warnings by origin.
-const oldUnknown={...newerCase,username:'old.history',origin:'unknown'};
+// Keep this origin-filter fixture independent of the earlierCase/newerCase
+// warning-event scenario: inheriting archived robot warnings here would
+// correctly count them, invalidating a zero-robot-warning assertion.
+const confirmedRobot={...newerCase,warning_events:[]};
+const oldUnknown={...newerCase,username:'old.history',origin:'unknown',warning_events:[]};
 const unknownWarning={...newerCase,username:'unknown.warning',
  status:'review',origin:'unknown',at:'2026-11-09T06:11:00Z',
  warning_events:[{status:'blocked',at:'2026-11-09T06:00:00Z',origin:'unknown'}]};
-const scopedOrigins=[newerCase,oldUnknown,unknownWarning];
+const scopedOrigins=[confirmedRobot,oldUnknown,unknownWarning];
 const allOrigins=fns.summarize(scopedOrigins,'h1',now,'all');
 assert.equal(allOrigins.verified,1);
 assert.equal(allOrigins.legacy_unknown,1);
