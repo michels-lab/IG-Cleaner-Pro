@@ -1452,8 +1452,15 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void resetAfterAccountChange() {
+        resetAfterAccountChange(false);
+    }
+
+    private void resetAfterAccountChange(boolean preserveActiveWebView) {
         ++workspaceSyncGeneration; // Discard old-owner Home async completions.
-        disposeWorkspaceWebView();
+        // A session adopted FROM the active embedded HTML must not destroy the
+        // very WebView completing its login flow. Native account switching
+        // still destroys the old WebView normally.
+        if (!preserveActiveWebView) disposeWorkspaceWebView();
         // Invalidate in-memory values; owner-specific cached exports, review
         // history and cloud tables are never deleted by account switching.
         syncedFollowing = new JSONArray();
@@ -1830,7 +1837,7 @@ public final class MainActivity extends AppCompatActivity {
                 if (!oldOwner.equalsIgnoreCase(api.getEmail())) {
                     try {
                         postAccountTransitionAndWait(() -> {
-                            resetAfterAccountChange();
+                            resetAfterAccountChange(true);
                             setGlobalStatus(api.hasSession()
                                     ? "Account connected · shared session" : "Signed out");
                         });
