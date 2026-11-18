@@ -407,7 +407,7 @@ public final class MainActivity extends AppCompatActivity {
                 touchDevice();
                 JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
                 JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
-                JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
+                JSONArray profileStates = loadCompleteProfileStates();
 
                 JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
                 boolean reviewAvailable = stateRow != null || profileStates.length() > 0;
@@ -478,6 +478,36 @@ public final class MainActivity extends AppCompatActivity {
                 });
             }
         }, true);
+    }
+
+    private JSONArray loadCompleteProfileStates() throws Exception {
+        // Supabase/PostgREST can cap a requested 20,000-row response to 1,000.
+        // A truncated page silently loses older Pending review decisions and
+        // can make already-reviewed users look unresolved on Android.
+        // The exact account-scoped query is serialized by the native IO lane.
+        final int pageSize = 1000;
+        final int maxRows = 250000;
+        JSONArray complete = new JSONArray();
+        Set<String> seen = new HashSet<>();
+        for (int offset = 0; offset <= maxRows; offset += pageSize) {
+            JSONArray page = api.get(
+                    "profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context" +
+                    "&order=username.asc,module.asc&limit=" + pageSize + "&offset=" + offset);
+            for (int i = 0; i < page.length(); i++) {
+                JSONObject item = page.optJSONObject(i);
+                if (item == null) throw new IllegalStateException("Invalid review history page");
+                String username = item.optString("username", "").trim().toLowerCase(Locale.ROOT);
+                String module = item.optString("module", "");
+                if (username.isBlank() || module.isBlank() ||
+                        !seen.add(username + "|" + module))
+                    throw new IllegalStateException("Incomplete or duplicated review history; no cache changed");
+                complete.put(item);
+            }
+            // Stop only on an empty page. A full 1,000-row provider response
+            // is never proof that it was the final page.
+            if (page.length() == 0) return complete;
+        }
+        throw new IllegalStateException("Review history exceeds safe pagination limit; no cache changed");
     }
 
     private void mergeRemoteProfileState(JSONObject state, JSONArray profileStates) throws Exception {
@@ -2406,7 +2436,7 @@ public final class MainActivity extends AppCompatActivity {
     private void refreshFocusSourceData() throws Exception {
         JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
         JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
-        JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
+        JSONArray profileStates = loadCompleteProfileStates();
 
         JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
         JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
