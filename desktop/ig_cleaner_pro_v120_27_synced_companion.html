@@ -18045,12 +18045,23 @@ function arrangeReview(){
  }
  section.append(drawer);drawer.open=true;
 }
+function ensureHistory(){
+ let section=get('igcAutomationActivitySection');
+ if(section)return section;
+ const flow=get('page-automations')?.querySelector('.igc-page-flow');
+ if(!flow)return null;
+ section=document.createElement('section');section.id='igcAutomationActivitySection';
+ section.className='igc-robot-section';section.hidden=true;
+ const title=document.createElement('h3');title.textContent='History · robot activity';
+ const message=document.createElement('p');message.className='note';
+ message.textContent='The saved Windows robot action journal is available when using the installed Windows app. This standalone HTML does not run local Instagram robots.';
+ section.append(title,message);flow.append(section);return section;
+}
 function navigate(area,scroll=false){
  if(!['analysis','actions','review','history'].includes(area))area='actions';
  arrangeReview();
  const sections={analysis:get('igcAnalysisRobotSection'),actions:get('igcActionRobotSection'),
-  review:get('igcAutomationReviewSection'),history:get('igcAutomationActivitySection')};
- if(area==='history'&&!sections.history)area='actions';
+  review:get('igcAutomationReviewSection'),history:ensureHistory()};
  for(const key of ['analysis','actions','review','history']){
   if(sections[key])sections[key].hidden=key!==area;
   const tab=get('igcAutomationTab'+key[0].toUpperCase()+key.slice(1));
