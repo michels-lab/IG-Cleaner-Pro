@@ -10,6 +10,10 @@
 
 **v120.79 authorization consumed. Next reserved v120.80 is not authorized or published.**
 
+## Pending Android vs HTML (source fix pending QA)
+
+Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. A source-only fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, and labels Android Pending numbers by cache/cloud provenance and import age. **Not yet shipped in v120.79.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
+
 ## Operación Granada — auditoría de aplicación y plugins (2026-10-21)
 
 [Ver auditoría y bitácora propias de este producto](docs/GRANADA_APP_PLUGIN_AUDIT_2026-10-21.md): evidencia de GitHub Actions, conectores ChatGPT aplicables, servicios existentes, costo cero adicional por defecto, pendientes reales y separación estricta de los demás productos. La documentación no prueba QA físico ni publica una versión.
