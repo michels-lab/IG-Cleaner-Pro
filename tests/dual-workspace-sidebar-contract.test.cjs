@@ -1,14 +1,26 @@
 'use strict';
-// Regression: optional second-account robot controls must not bury primary navigation.
-const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const src=fs.readFileSync(path.resolve(process.argv[2]||path.join(__dirname,'../desktop/ig_cleaner_pro_v120_27_synced_companion.html')),'utf8');
-const home=src.indexOf('id="tab-moduleDashboard"'),health=src.indexOf('id="tab-diag"');
-const panel=src.indexOf('<div class="igc-dual-workspace"'),foot=src.indexOf('<div class="igc-rail-bottom"');
-assert(home>=0&&health>home&&panel>health&&foot>panel,'Secondary-account tools must appear AFTER all navigation');
-const advancedStart=src.indexOf('<details id="igcDualAdvanced"',panel);
-const quick=src.slice(panel,advancedStart),advanced=src.slice(advancedStart,foot);
-assert(quick.includes('id="igcDualSecondary"')&&quick.includes('openOtherWorkspace(false)')&&quick.includes('openOtherWorkspace(true)'),'Profile selection and quick tab/window launch must remain visible');
-assert(advanced.startsWith('<details')&&!advanced.startsWith('<details open'),'Advanced robot controls must be collapsed by default');
-for(const item of ['id="igcDualRobotTarget"','id="igcDualRobotStatus"','id="igcDualStatus"','startDualReadOnlyRobotLanes()','refreshDualReadOnlyRobotLanes()','stopOneDualReadOnlyRobotLane()','restartOneDualReadOnlyRobotLane()','stopDualReadOnlyRobotLanes()','openTwoChromeSessions()'])
- assert(advanced.includes(item),'Missing protected dual robot control: '+item);
-console.log('GRANADA sidebar structure: nav-first, compact and complete PASS');
+/* Regression: the owner requested TWO actual WINDOWS, not two accounts in
+ * each app sidebar. Protect the real single-account layout from reappearing. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const src=fs.readFileSync(path.join(__dirname,'..','desktop',
+  'ig_cleaner_pro_v120_27_synced_companion.html'),'utf8');
+const rail=src.indexOf('class="igc-instagram-rail"');
+const bottom=src.indexOf('class="igc-rail-bottom"',rail);
+assert(rail>=0&&bottom>rail,'Primary Instagram profile picker remains in the rail');
+const section=src.slice(rail,bottom);
+assert(section.includes('id="igcInstagramIdentity"'),'One active account selector remains');
+for(const removed of ['igcDualSecondary','igcDualAdvanced','igcDualRobotTarget',
+  'igcDualStatus','igc-dual-workspace','openOtherWorkspace','startDualReadOnlyRobotLanes',
+  'stopDualReadOnlyRobotLanes','IGC_WINDOW_PROFILE_KEY']){
+ assert(!src.includes(removed), 'Rejected same-window dual-account feature returned: '+removed);
+}
+assert(src.includes('igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key)'),
+ 'Switching the ONE active Instagram profile still persists safely');
+for(const area of ['Analysis','Actions','Review','History']){
+ assert(src.includes('id="igcAutomationTab'+area+'"'),
+  'Automations must have a clearly labeled '+area+' view');
+}
+assert(src.includes("section.append(drawer);drawer.open=true"),
+ 'Review must reuse original saved-exception drawer, never clone it');
+console.log('GRANADA: single-account sidebar and four clear Automations sections PASS');
