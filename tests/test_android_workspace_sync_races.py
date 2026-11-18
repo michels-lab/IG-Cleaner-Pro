@@ -51,5 +51,58 @@ class NativeWorkspaceRaceRegression(unittest.TestCase):
                         self.profile_change.rindex("api.setInstagramProfile(key, label)"))
 
 
+    def test_pending_52_cloud_vs_zero_html_has_visible_provenance(self):
+        # Native Android must not present an imported/cloud copy as live Instagram.
+        self.assertIn('list_name,payload,item_count,captured_at,source_device,updated_at', self.sync)
+        self.assertIn('case "pending" -> {', self.sync)
+        self.assertIn('pendingCapturedAt = parseInstant(captured).toEpochMilli()', self.sync)
+        self.assertIn('pendingSnapshotPresent = readyPendingPresent', self.sync)
+        self.assertIn('pendingSnapshotCached = false', self.sync)
+        self.assertIn('pendingSnapshotCapturedAt = readyPendingCapturedAt', self.sync)
+        self.assertIn('pendingSourceExplanation()', SOURCE)
+        self.assertIn('NOT a live Instagram count', SOURCE)
+        self.assertIn('CACHED REQUESTS', SOURCE)
+        self.assertIn('SAVED REQUESTS', SOURCE)
+        self.assertIn('homePendingCount.setText(pendingSnapshotPresent ?', SOURCE)
+        self.assertIn('kpiMain.setText("—")', SOURCE)
+        self.assertIn('No Pending export was synchronized', SOURCE)
+        layout = (pathlib.Path(__file__).resolve().parents[1] /
+                  "android/app/src/main/res/layout/screen_mobile_workspace.xml").read_text(encoding="utf-8")
+        self.assertIn('android:id="@+id/homePendingLabel"', layout)
+
+    def test_cache_keeps_pending_history_but_never_claims_it_is_fresh(self):
+        load = SOURCE[SOURCE.index('private boolean loadWorkspaceCache()'):
+                      SOURCE.index('private void saveWorkspaceCache()')]
+        save = SOURCE[SOURCE.index('private void saveWorkspaceCache()'):
+                      SOURCE.index('private void clearWorkspaceCache()')]
+        clear = SOURCE[SOURCE.index('private void clearWorkspaceCacheForProfile('):
+                       SOURCE.index('private String cacheSuffix()', SOURCE.index('private void clearWorkspaceCacheForProfile('))]
+        for field in ['pending_present_', 'pending_captured_at_']:
+            self.assertIn(field, load)
+            self.assertIn(field, save)
+            self.assertIn(field, clear)
+        self.assertIn('pendingSnapshotCached = true;', load)
+        # A failed/offline fetch must keep the cached 52 distinguishable from cloud.
+        self.assertIn('boolean restored = loadWorkspaceCache()', SOURCE)
+        self.assertIn('renderMobileWorkspace();', SOURCE)
+        # Account A -> B -> A cannot reuse A's in-memory 52 while B loads.
+        self.assertIn('pendingSnapshotPresent = false;', self.profile_change)
+        self.assertIn('pendingSnapshotCapturedAt = 0L;', self.profile_change)
+        self.assertIn('pendingSnapshotCached = false;', self.profile_change)
+        reset = SOURCE[SOURCE.index('private void resetAfterAccountChange()'):
+                       SOURCE.index('private void showWorkspaceScreen(', SOURCE.index('private void resetAfterAccountChange()'))]
+        self.assertIn('pendingSnapshotPresent = false;', reset)
+        self.assertIn('pendingSnapshotCached = false;', reset)
+        self.assertIn('pendingSnapshotCapturedAt = 0L;', reset)
+
+    def test_focus_refresh_carries_same_pending_source_truth(self):
+        body = SOURCE[SOURCE.index('private void refreshFocusSourceData()'):
+                      SOURCE.index('private Set<String> activeFocusUsernames()', SOURCE.index('private void refreshFocusSourceData()'))]
+        self.assertIn('captured_at,source_device,updated_at', body)
+        self.assertIn('pendingSnapshotPresent = pendingPresent', body)
+        self.assertIn('pendingSnapshotCached = false', body)
+        self.assertIn('pendingSnapshotCapturedAt = pendingCapturedAt', body)
+
+
 if __name__ == "__main__":
     unittest.main()
