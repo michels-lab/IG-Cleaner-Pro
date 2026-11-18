@@ -191,6 +191,7 @@ const {chromium} = require("playwright");
       // verification is attempted and no robot action is authorized.
       await page.evaluate(() => {
         showPage('automations');
+        window.igcAutomationNavigate('analysis');
         document.getElementById('igcCountsAuthFallback').style.display='block';
         document.getElementById('igcActionAuthFallback').style.display='block';
         document.getElementById('igcCountsManualCSV').style.display='flex';
@@ -210,7 +211,7 @@ const {chromium} = require("playwright");
       await pendingManual.click();
       assert(await page.locator('#page-pendingRequests').isVisible(),
         'Manual recovery must navigate to Pending, not start an action robot');
-      await page.evaluate(() => showPage('automations'));
+      await page.evaluate(() => {showPage('automations');window.igcAutomationNavigate('analysis');});
       if (viewport.name === "wide") {
         // Exercise real account switches and reload persistence without a real
         // Instagram export or backend credentials. Same usernames must never
