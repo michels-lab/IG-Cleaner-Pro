@@ -1,3 +1,10 @@
+## 2026-11-17 (Mexico) / 2026-11-18 UTC — FINAL stable v120.79 published
+
+- [Official v120.79 release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79): 9 SHA256-verified stable assets, exact tag source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) **4/4 SUCCESS**, installed Windows Setup, signed Android APK installed/launched, exact-source Desktop/Android screenshots and integrity.
+- Fixed official Android screenshot artifact selection: cancelled-run 186-byte placeholder was rejected; unique complete artifact ID validated with exact SHA/APK/pixel hashes. Repeated publisher succeeded. See [full receipt](docs/GRANADA_V12079_FINAL_RECEIPT_2026-11-17.md).
+- Shipped Focus storage compaction, quota-safe retry and preserved historical Reviewed/Pending/Done on inconclusive rechecks. **Real Instagram acceptance not established**; P0 #360/#371 remain open, as do live Windows Unfollow/Cancel and physical Android/Windows sync.
+- Release authorization consumed; v120.80 is reserved without approval, release_hold=true and owner_final_acceptance=false remain.
+
 ## 2026-11-17 — Granada P0: no borrar revisiones antiguas al cancelar un Recheck
 
 - **Diagnóstico confirmado en fuente:** `markSafeFocusNotReviewed()` borraba `pendingReviewedMeta` de Pending normal y eliminaba `doneSet`/`reviewedMeta` en Followers/Mutuals, aunque esos perfiles podían tener una decisión válida de una tanda anterior. Un reintento inconcluso no debe deshacer una revisión confirmada.

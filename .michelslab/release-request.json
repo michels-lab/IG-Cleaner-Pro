@@ -1,12 +1,12 @@
 {
   "version": "120.79",
   "tag": "v120.79",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly requested 'op granada y release' on 2026-11-17 (America/Monterrey) for InstaCleaner Pro. Exactly one stable v120.79 publication so the owner can verify storage recovery and Reviewed/Pending preservation. No RC or Developer.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.78",
   "requested_at": "2026-11-17",
   "owner_acceptance_note": "Exact-tag v120.79 owner-device-review exception only. release_hold=true; owner_final_acceptance=false. Automated exact-commit Windows installed Chromium, Android production certificate signing + installed launch, Desktop/Android rendered UI, checksums and updater integrity are required. Owner must later test real-account Focus and history A-B-A. Do not claim real Instagram Unfollow/Cancel, simultaneous two robots or complete P0 #360.",
@@ -19,5 +19,10 @@
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78",
     "asset_count": 9
   },
-  "revalidation_attempt": "Owner-authorized v120.79 exact-source publisher retry after first run 44202580405 correctly blocked on duplicate empty/cancelled Android screenshot artifact. New gated selector rejects ambiguous artifacts, downloads unique complete artifact by ID; Android CI no longer uploads empty evidence on cancellation. No owner physical acceptance invented."
+  "revalidation_attempt": "Owner-authorized v120.79 exact-source publisher retry after first run 44202580405 correctly blocked on duplicate empty/cancelled Android screenshot artifact. New gated selector rejects ambiguous artifacts, downloads unique complete artifact by ID; Android CI no longer uploads empty evidence on cancellation. No owner physical acceptance invented.",
+  "published_run": 44204338029,
+  "published_commit": "b226cc7dbf4d3013959a303a05847ca03c6cd4e2",
+  "published_at": "2026-11-18T00:10:39Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79",
+  "publication_note": "Official FINAL stable v120.79 published with 9 SHA-256 tracked assets after 4/4 governed publisher jobs SUCCESS. Exact tagged source b226cc7d. Owner live Instagram Focus, Unfollow/Cancel, two-account browser and physical Android/Windows acceptance remain UNVERIFIED. Single-use authorization CONSUMED; next v120.80 not authorized. No RC/Developer."
 }

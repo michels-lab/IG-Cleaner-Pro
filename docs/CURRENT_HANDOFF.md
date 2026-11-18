@@ -1,3 +1,10 @@
+## 2026-11-17 local / 2026-11-18 UTC — InstaCleaner FINAL v120.79 PUBLISHED
+
+- Public official [v120.79](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79), source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) 4/4 SUCCESS and nine SHA256 assets. Windows Setup installed/started; signed production Android APK installed/launched; exact-source Desktop and Android screenshots verified.
+- Focus 30 safe storage retry, compact histories, monotonic previous Reviewed/Pending/Done decisions shipped. First publisher attempt stopped on duplicate cancelled Android artifact; repaired fail-closed by selecting unique full artifact ID and forbidding incomplete screenshot upload.
+- Owner physical Chrome storage/Focus/no-rebound, A→B→A history, Unfollow/Cancel and cross-platform synchronization remain unverified. Keep #360/#371 and robot P0 issues OPEN. No physical signoff invented.
+- One-time publication authority for v120.79 consumed; next v120.80 not authorized, release_hold=true, owner_final_acceptance=false. [Receipt](GRANADA_V12079_FINAL_RECEIPT_2026-11-17.md).
+
 ## 2026-11-17 — CURRENT official FINAL v120.78 published; v120.79 not authorized
 
 - [Stable v120.78](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.78), exact tag/source SHA `1c75831c59b457171c113978a6acb282d915d71c`, official [publisher #44174641647](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44174641647): 4/4 jobs success, 9 SHA-256 verified assets, installed Windows Setup, production-signed Android stable installed/started, Desktop/Android rendered visual exact-source checks. No Developer/RC.
