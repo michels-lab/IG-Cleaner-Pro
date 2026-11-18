@@ -136,6 +136,70 @@ async function testSwitchDuringFlight(){
  await assert.rejects(attempt,/Vuelve a entrar/);
  assert.equal(x.api.S.session,null,'The old response must not restore a signed-out owner');
 }
+async function testInstagramSwitchDuringFlight(){
+ let finish,started;
+ const entered=new Promise(resolve=>started=resolve);
+ const delayed=new Promise(resolve=>finish=resolve);
+ const x=harness(session({expires_at:epoch()+3600}),async(url)=>{
+  if(!url.includes('/rest/v1/'))throw Error('Unexpected request '+url);
+  const requestSlot=x.window.IGC_INSTAGRAM_PROFILES.active;
+  started();
+  await delayed;
+  return response(200,[{username:requestSlot}]);
+ });
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_a';
+ const request=x.api.rest('list_snapshots?select=*',{method:'GET'});
+ await entered;
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_b';
+ finish();
+ await assert.rejects(request,/perfil de Instagram cambió/,
+  'A response completed after the A->B switch must never be applied to B');
+ assert.equal(x.requests.length,1,'Old response must not trigger a second request');
+ assert.equal(x.entries.get('ig_v13_done'),'["saved_review"]',
+  'A-to-B switch must not alter saved historical reviews');
+ const fromB=await x.api.rest('list_snapshots?select=*',{method:'GET'});
+ assert.equal(fromB[0].username,'ig_account_b',
+  'New owner-approved B request uses fresh current scope and succeeds');
+ assert.equal(x.requests.length,2);
+}
+async function testInstagramABAWhileRequestPending(){
+ let finish,started;
+ const entered=new Promise(resolve=>started=resolve);
+ const delayed=new Promise(resolve=>finish=resolve);
+ const x=harness(session({expires_at:epoch()+3600}),async(url)=>{
+  if(!url.includes('/rest/v1/'))throw Error('Unexpected request '+url);
+  started();
+  await delayed;
+  return response(200,[{username:'stale-account-a'}]);
+ });
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_a';
+ x.window.IGC_INSTAGRAM_PROFILES.generation=0;
+ const request=x.api.rest('list_snapshots?select=*',{method:'GET'});
+ await entered;
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_b';
+ x.window.IGC_INSTAGRAM_PROFILES.generation++;
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_a';
+ x.window.IGC_INSTAGRAM_PROFILES.generation++;
+ finish();
+ await assert.rejects(request,/perfil de Instagram cambió/,
+  'A-to-B-to-A must reject stale results even if the account key returned to A');
+ assert.equal(x.entries.get('ig_v13_done'),'["saved_review"]');
+ assert.equal(x.requests.length,1);
+}
+async function testInstagramSwitchBeforeRetry(){
+ let refreshCount=0;
+ const x=harness(session({expires_at:epoch()+3600}),async(url)=>{
+  if(url.includes('refresh_token')){refreshCount++;return response(200,rotated());}
+  x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_b';
+  return response(401,{message:'JWT expired'});
+ });
+ x.window.IGC_INSTAGRAM_PROFILES.active='ig_account_a';
+ await assert.rejects(x.api.rest('profile_state?select=*',{method:'GET'}),
+  /perfil de Instagram cambió/,
+  'A 401 belonging to A must not trigger a token refresh/retry under B');
+ assert.equal(refreshCount,0);
+ assert.equal(x.requests.length,1);
+}
 (async()=>{
  await testProactive();
  await testConcurrent();
@@ -145,5 +209,8 @@ async function testSwitchDuringFlight(){
  await testTransientRefreshFailureKeepsSession();
  await testMissingRefreshTokenOffersLogin();
  await testSwitchDuringFlight();
+ await testInstagramSwitchDuringFlight();
+ await testInstagramSwitchBeforeRetry();
+ await testInstagramABAWhileRequestPending();
  console.log('PASS: shared Desktop/Android sync refresh, retries, RLS, cross-owner race and preserved offline data');
 })().catch(error=>{console.error(error);process.exitCode=1});

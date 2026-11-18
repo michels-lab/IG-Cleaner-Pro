@@ -2801,6 +2801,7 @@ var IGC_INSTAGRAM_OWNER=igcOwnerFingerprint();
 var IGC_INSTAGRAM_PROFILE_KEY='igc_multi_profile_active_'+IGC_INSTAGRAM_OWNER;
 var IGC_INSTAGRAM_REGISTRY_KEY='igc_multi_profile_registry_cache_'+IGC_INSTAGRAM_OWNER;
 var igcActiveInstagramProfile=igcRawProfileStorage.getItem(IGC_INSTAGRAM_PROFILE_KEY)||'legacy';
+var igcInstagramSwitchGeneration=0;
 if(!/^(legacy|ig_[a-z0-9_-]{8,64})$/.test(igcActiveInstagramProfile))igcActiveInstagramProfile='legacy';
 try {
  const nativeKey=window.AndroidBridge&&typeof window.AndroidBridge.getInstagramProfile==='function'?window.AndroidBridge.getInstagramProfile():null;
@@ -2833,6 +2834,7 @@ const indexedDB=new Proxy(window.indexedDB,{get:function(db,prop){
 }});
 window.IGC_INSTAGRAM_PROFILES={
  get active(){return igcActiveInstagramProfile},
+ get generation(){return igcInstagramSwitchGeneration},
  get owner(){return IGC_INSTAGRAM_OWNER},
  _verified:false,
  get verified(){return this._verified===true||this.active==='legacy'},
@@ -2903,6 +2905,9 @@ window.IGC_INSTAGRAM_PROFILES={
    alert('An automation is active or its status is unknown. Pause it and confirm it has stopped before switching Instagram profiles.');
    this.render();return;
   }
+  // Reject even A→B→A requests whose selected key happens to return to A
+  // before an asynchronous cloud response completes.
+  igcInstagramSwitchGeneration++;
   igcRawProfileStorage.setItem(IGC_INSTAGRAM_PROFILE_KEY,key);
   try{const account=this.accounts.find(a=>a.account_key===key);window.AndroidBridge?.selectInstagramProfile?.(key,account?.username?'@'+account.username:'Datos anteriores')}catch(_){}
   location.reload();
@@ -14535,20 +14540,32 @@ async function ensureAuth(){
 async function rest(path,opt={}){
  await ensureAuth();
  const originalOwner=sessionOwner(S.session);
+ const originalInstagram=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+ const originalGeneration=Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
  const usedAccess=S.session.access_token;
  const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);
  path=scoped.path;opt=scoped.opt;
+ // The underlying REST endpoint is chosen for exactly one Instagram slot.
+ // A late response/retry from A must never hydrate B after an A->B switch.
+ const assertSameWorkspace=()=>{
+  if(originalOwner!==sessionOwner(S.session)||
+     originalInstagram!==String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy')||
+     originalGeneration!==Number(window.IGC_INSTAGRAM_PROFILES?.generation||0))
+    throw new Error('La cuenta o el perfil de Instagram cambió durante la sincronización. Intenta otra vez.');
+ };
  const checked=async()=>{
+  assertSameWorkspace();
   const result=await jfetch('/rest/v1/'+path,opt);
-  if(originalOwner!==sessionOwner(S.session))throw new Error('La cuenta cambió durante la sincronización. Intenta otra vez.');
+  assertSameWorkspace();
   return result;
  };
  try{return await checked()}
  catch(error){
+  assertSameWorkspace();
   const message=String(error?.message||'');
   if(error?.status!==401&&!(error?.status===403&&/jwt expired|token.*expired/i.test(message)))throw error;
   if(!await refresh(usedAccess))throw new Error(S.needsReauth?AUTH_RECOVERY_MESSAGE:(S.lastRefreshError||AUTH_RECOVERY_MESSAGE));
-  if(originalOwner!==sessionOwner(S.session))throw new Error('La cuenta cambió durante la sincronización. Intenta otra vez.');
+  assertSameWorkspace();
   return checked();
  }
 }

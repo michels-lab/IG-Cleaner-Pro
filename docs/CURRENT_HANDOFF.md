@@ -4,6 +4,12 @@
 - `saveReviewedState(mutate)` now protects both keys with saved snapshots, rolls back disk and canonical in-memory structures on failure, and returns true only once both are durable. All six manual, undo and automated approval call sites refuse to advance UI or counters on rejected writes. New CI-wired `tests/manual-reviewed-atomic-storage.test.cjs` with 30-profile fail/retry fixture. [Audit](audits/2026-11-18-manual-reviewed-atomic.md).
 - No users, cookies or existing history deleted. Real owner device acceptance still needed. Official v120.80 remains the published stable; v120.81 not authorized.
 
+## 2026-11-18 — GRANADA: reject stale Instagram A→B cloud HTTP results (source-only)
+
+- `rest()` already checked signed-in app user but did not check that the Instagram workspace remained the same after awaiting an HTTP response. Added original Instagram slot AND switch-generation capture, checks before/after REST and before refresh/retry; delayed A results cannot hydrate B and A→B→A responses are rejected even when the account key returns to its original value.
+- Expanded existing CI `tests/auth-session-refresh.test.cjs` to cover delayed A→B response, fresh B request and no 401 retry under switched B. [Audit](audits/2026-11-18-inflight-instagram-rest-guard.md).
+- No histories/cookies/Instagram actions modified. CI and owner physical device acceptance required. Published stable v120.80 remains unchanged; reserved v120.81 unauthorized.
+
 ## 2026-11-18 — GRANADA: fresh cloud Review/Pending reconciliation, isolated owners (source-only)
 
 - Found that `readCompleteProfileState()` reused a four-second history cache across unrelated owner/Instagram account scopes and the same cached rows for pull/push reconciliation. This could obscure newer Android decisions and allow a stale push preflight, contributing to Focus #360 risk.

@@ -1,5 +1,9 @@
 # Instagram Cleaner Pro
 
+## GRANADA P0 — guard against stale Instagram cloud responses (source, unreleased)
+
+A cloud REST request is tied to its exact app owner, Instagram account and switch generation, so late A→B and A→B→A responses cannot hydrate the wrong workspace or refresh an obsolete request. This source update preserves the already merged atomic Reviewed confirmations ([#383](https://github.com/michels-lab/IG-Cleaner-Pro/pull/383)) and includes negative race regressions. See the [race-condition audit](docs/audits/2026-11-18-inflight-instagram-rest-guard.md). **Not in official stable v120.80**; exact-head CI and real owner A/B verification remain separate gates. Next v120.81 is reserved and unauthorised.
+
 ## Published FINAL stable v120.80 — November 18, 2026 UTC
 
 **Normal FINAL v120.80 is published** with [9 SHA-256-verified assets](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80). The [governed publisher run #44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) finished **4/4 jobs SUCCESS**, exact tagged source `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`: installed Windows Setup, signed production Android APK installed and launched, exact-source Desktop/Android Home/About screenshots, checksums and public artifact verification. No RC or Developer Edition.
