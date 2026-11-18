@@ -25,31 +25,42 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         }
         self.closed={n:"closed" for n in self.valid["required_closed_issues"]}
 
-    def test_v12079_publication_consumes_override_and_next_release_blocked(self):
-        self.assertTrue(self.current["release_hold"])
-        self.assertFalse(self.current["owner_final_acceptance"]["approved"])
-        self.assertEqual(self.current["next_version"], "v120.80")
-        override=self.current["owner_device_review_release_override"]
-        self.assertFalse(override["authorized"])
-        self.assertEqual(override["release_tag"], "v120.79")
-        self.assertEqual(override["source"], "explicit-owner-chat-instruction-2026-11-17")
-        self.assertEqual(override["consumed_by_release"], "v120.79")
-        self.assertEqual(override["consumed_run"], 44204338029)
-        self.assertTrue(override["physical_tests_deferred"])
-        self.assertTrue(override["automated_publisher_gates_required"])
-        history=self.current["owner_device_review_release_override_history"]
-        self.assertFalse(history[-1]["authorized"])
-        self.assertEqual(history[-1]["release_tag"], "v120.78")
-        self.assertEqual(history[-1]["consumed_by_release"], "v120.78")
-        self.assertEqual(history[-1]["consumed_run"], 44174641647)
-        for tag in ("v120.76","v120.77","v120.78","v120.79","v120.80"):
-            with self.subTest(tag=tag), self.assertRaises(ReleaseBlocked):
-                check_readiness(self.current,tag,{})
-        forgery=deepcopy(self.current)
-        forgery["owner_device_review_release_override"]["authorized"]=True
-        with self.assertRaises(ReleaseBlocked):
-            check_readiness(forgery,"v120.80",{})
-        self.assertTrue(any(not value for value in self.current["critical_acceptance"].values()))
+    def test_consumed_publication_history_and_explicit_next_release_override(self):
+        self.assertTrue(self.current['release_hold'])
+        self.assertFalse(self.current['owner_final_acceptance']['approved'])
+        next_tag = self.current['next_version']
+        override = self.current['owner_device_review_release_override']
+        history = self.current['owner_device_review_release_override_history']
+        consumed = [item for item in history if item.get('release_tag') == 'v120.79']
+        self.assertEqual(len(consumed), 1)
+        self.assertIs(consumed[0]['authorized'], False)
+        self.assertEqual(consumed[0]['consumed_by_release'], 'v120.79')
+        self.assertEqual(consumed[0]['consumed_run'], 44204338029)
+        self.assertTrue(override['physical_tests_deferred'])
+        self.assertTrue(override['automated_publisher_gates_required'])
+        self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-17')
+        request = json.loads((ROOT/'.michelslab/release-request.json').read_text(encoding='utf-8'))
+        active = request.get('authorized') is True and request.get('status') in ('requested', 'authorized')
+        if active:
+            self.assertEqual(request['tag'], next_tag)
+            self.assertTrue(override['authorized'])
+            self.assertEqual(override['release_tag'], next_tag)
+            self.assertEqual(override['owner_direct_quote'], 'op granada completa y release')
+            check_readiness(self.current, next_tag, {})
+            forged = deepcopy(self.current)
+            forged['owner_device_review_release_override']['release_tag'] = 'v120.77'
+            with self.assertRaises(ReleaseBlocked):
+                check_readiness(forged, next_tag, {})
+        else:
+            self.assertFalse(override['authorized'])
+            with self.assertRaises(ReleaseBlocked):
+                check_readiness(self.current, next_tag, {})
+        for old in ('v120.76', 'v120.77', 'v120.78', 'v120.79'):
+            if old == next_tag:
+                continue
+            with self.subTest(old_tag=old), self.assertRaises(ReleaseBlocked):
+                check_readiness(self.current, old, {})
+        self.assertTrue(any(not value for value in self.current['critical_acceptance'].values()))
 
     def test_green_ci_does_not_override_owner_hold(self):
         case=deepcopy(self.valid)

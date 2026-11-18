@@ -1,3 +1,14 @@
+## v120.80 — Granada Pending reconciliation + Focus account isolation (CANDIDATE, not published)
+
+**Owner-authorized candidate:** FINAL stable v120.80 for later physical verification, contingent on current exact-source Windows installed, Android production signing, real UI screenshots, checksums and official publisher success. Do not assert real Instagram acceptance.
+
+- Pending 52 Android vs 0 HTML (PR #373): explicit newer verified empty Pending replaces older cloud snapshot; absence of import is not an authoritative zero. Preserve raw backups and distinguish phone cache / saved cloud provenance.
+- Android Home/Requests/Focus count unique Pending usernames; complete paginated reviewed-state overlay prevents older Pending reviews from being lost to provider page caps.
+- Android native Focus (PR #374): IO-serialized owner/profile/session transitions; reject A→B→A stale tasks by generation; preserve embedded WebView login; safely finish post-deletion legacy switch.
+- Windows Setup QA has supervised, bounded build, EULA wizard, install/launch/uninstall; timeouts fail, never auto-pass.
+- No production Instagram rows, usernames, exports or account actions were inspected by offline CI. Focus rebound, signed-in Unfollow/Cancel, dual robots and real-device A/B history remain unverified.
+- Stable assets only. No RC, beta or public Developer Edition.
+
 ## v120.79 — Focus storage, retry and historical decision integrity (FINAL published 2026-11-18 UTC)
 
 **Publication verified:** official [v120.79 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79), immutable tagged source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [governed publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) **4/4 SUCCESS**, 9 SHA-256 verified stable assets: signed Android installed/started, Windows Setup installed/started, exact-source Desktop/Android visual proof and immutable release validation. Owner real Instagram acceptance remains pending; one-time authorization consumed, next v120.80 not authorized.

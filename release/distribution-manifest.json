@@ -4,7 +4,7 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "channels": {
     "desktop": {
-      "artifact": "IG-Cleaner-Pro-Desktop-v120.79.zip",
+      "artifact": "IG-Cleaner-Pro-Desktop-v120.80.zip",
       "entrypoint": "IG-Cleaner-Pro.html",
       "includes": [
         "assets/michel_duarte_avatar.jpg",
@@ -18,7 +18,7 @@
       "primaryFormat": "html",
       "standaloneOffline": true,
       "primaryArtifactTemplate": "IG-Cleaner-Pro-Desktop-v{version}.html",
-      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.79.html",
+      "primaryArtifact": "IG-Cleaner-Pro-Desktop-v120.80.html",
       "zipSecondary": true,
       "standaloneEmbeds": [
         "assets/michel_duarte_avatar.jpg",
@@ -27,7 +27,7 @@
       ]
     },
     "android": {
-      "artifact": "IG-Cleaner-Pro-Android-v120.79.apk",
+      "artifact": "IG-Cleaner-Pro-Android-v120.80.apk",
       "transport": "github-release",
       "signingMetadata": "release/android-signing.json",
       "stableArtifactRequiresPersistentSigning": true,
@@ -36,7 +36,7 @@
       "activeProductIcon": "android/app/src/main/res/drawable-nodpi/ig_official_app_icon.png"
     },
     "windowsRobot": {
-      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.79.exe",
+      "artifact": "IG-Cleaner-Pro-Windows-Setup-v120.80.exe",
       "artifactTemplate": "IG-Cleaner-Pro-Windows-Setup-v{version}.exe",
       "transport": "github-release",
       "runtime": "local-windows-chrome",

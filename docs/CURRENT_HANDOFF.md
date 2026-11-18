@@ -1,3 +1,10 @@
+## 2026-11-17 — v120.80 owner-requested FINAL stable candidate (NOT PUBLISHED)
+
+- Instruction: 'op granada completa y release'. One-time authorization only for v120.80 after exact-head installed Windows, signed Android, visual QA, checksum and official publisher success. Existing release_hold=true and owner_final_acceptance.approved=false remain.
+- PR #373: Pending 52 vs 0 provenance/freshness, complete Android review pagination, deduplicated Pending. PR #374: native Focus A-B-A session-owner transition barrier and stale operation rejection. Require green CI before integration.
+- Last official immutable stable: v120.79. A v120.80 tag and verified stable assets are not yet published; no future success is assumed.
+- Owner physical account A/B, Focus, Unfollow, Cancel Pending and two-robot acceptance remain OPEN; never equate automated offline tests to live Instagram proof.
+
 ## 2026-11-17 local / 2026-11-18 UTC — InstaCleaner FINAL v120.79 PUBLISHED
 
 - Public official [v120.79](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79), source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) 4/4 SUCCESS and nine SHA256 assets. Windows Setup installed/started; signed production Android APK installed/launched; exact-source Desktop and Android screenshots verified.

@@ -32,18 +32,16 @@
     176
   ],
   "next_version": "v120.80",
-  "notes": "Official FINAL stable v120.79 published 2026-11-18 UTC, governed publisher 44204338029 SUCCESS; one-time owner device-review override consumed. v120.80 reserved WITHOUT authorization. release_hold=true, owner_final_acceptance=false and physical Instagram/Android/Windows two-account acceptance remain open.",
+  "notes": "v120.80 owner-authorized post-publication physical review candidate only; release_hold=true and owner_final_acceptance=false remain. All automated publisher/installed/provenance requirements are mandatory. Do not mark published until official tag, 9 assets and 4/4 publisher evidence exists.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.79",
+    "authorized": true,
+    "release_tag": "v120.80",
     "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "op granada y release",
-    "disclosure": "Consumed: stable v120.79 officially published November 18 UTC with 9 verified assets, 4/4 official jobs SUCCESS. This one-time instruction does not authorize v120.80 or imply real Instagram acceptance.",
-    "previous_published_release": "v120.78",
-    "consumed_by_release": "v120.79",
-    "consumed_run": 44204338029
+    "owner_direct_quote": "op granada completa y release",
+    "disclosure": "Single-use authorization for normal FINAL v120.80 after merged source, exact-commit Android and Windows installed/runtime QA, production signing, visual proofs, SHA-256 and updater checks. Physical live Instagram/unfollow/two-account acceptance remains open; hold and owner_final_acceptance=false are not waived.",
+    "previous_published_release": "v120.79"
   },
   "owner_device_review_release_override_history": [
     {
@@ -79,6 +77,18 @@
       "previous_published_release": "v120.77",
       "consumed_by_release": "v120.78",
       "consumed_run": 44174641647
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.79",
+      "source": "explicit-owner-chat-instruction-2026-11-17",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "owner_direct_quote": "op granada y release",
+      "disclosure": "Consumed: stable v120.79 officially published November 18 UTC with 9 verified assets, 4/4 official jobs SUCCESS. This one-time instruction does not authorize v120.80 or imply real Instagram acceptance.",
+      "previous_published_release": "v120.78",
+      "consumed_by_release": "v120.79",
+      "consumed_run": 44204338029
     }
   ]
 }
