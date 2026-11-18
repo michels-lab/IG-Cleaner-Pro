@@ -107,6 +107,9 @@ const snapshot=(x,name,source,capturedAt)=>{
  // A read must not resurrect those 52 before the authorized empty upload.
  const divergent=harness("same-owner-same-instagram");
  const fiftyTwo=Array.from({length:52},(_,i)=>"old.pending."+i);
+ // Following is already published; the test must isolate the Pending upload.
+ // Otherwise the first-sync fixture legitimately writes Following AND Pending.
+ divergent.remote.set("following",snapshot(divergent,"following",["old"],ago(90000)));
  divergent.remote.set("pending",snapshot(divergent,"pending",fiftyTwo,ago(90000)));
  divergent.ctx.pendingRequestsRaw=[];
  divergent.ctx.window.igcMarkLocalSnapshotsDirty(["pending"]);
