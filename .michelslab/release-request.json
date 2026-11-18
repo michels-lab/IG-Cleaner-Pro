@@ -1,12 +1,12 @@
 {
   "version": "120.80",
   "tag": "v120.80",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly instructed 'op granada completa y release' on 2026-11-17 (America/Monterrey), scoped solely to InstaCleaner stable v120.80 conditional on exact-SHA mandatory build and distribution gates.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.79",
   "requested_at": "2026-11-17",
   "owner_acceptance_note": "Owner wants a stable build for subsequent physical Windows/Android testing. release_hold=true and owner_final_acceptance=false remain; real signed-in Instagram, Unfollow/Cancel, parallel owner sessions and P0 #360 physical behavior are unverified. Do not publish without mandatory exact-SHA real installed Windows Setup, production-signed Android, rendered screenshots, checksums and updater provenance.",
@@ -19,5 +19,9 @@
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79",
     "asset_count": 9
   },
-  "stage_note": "Conditional one-time owner release request. This branch must be integrated only after feature PR #373 and #374 CI and exact-head validation have passed. Authorization is not publication."
+  "published_run": 44235048175,
+  "published_commit": "e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b",
+  "published_at": "2026-11-18T04:21:23Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80",
+  "publication_note": "Official FINAL stable v120.80 published 2026-11-18 UTC after 4/4 governed jobs SUCCESS and 9 SHA256-tracked assets, exact tagged source e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b. Owner live Focus/Unfollow/Cancel/two-account/physical Android/Windows acceptance remains UNVERIFIED. One-time authorization consumed. Next v120.81 not authorized; no Developer Edition/RC."
 }
