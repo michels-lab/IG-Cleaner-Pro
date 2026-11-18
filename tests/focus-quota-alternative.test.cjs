@@ -17,7 +17,7 @@ const localStorage={
    storage.set(key,value);
  }
 };
-const ctx={JSON,Array,Set,Number,Math,Date,console,localStorage,
+const ctx={JSON,Array,Set,Number,Math,Date,console,localStorage,window:{},
  LS_ACTIVE_FOCUS_BATCH:"focus-cohort",activeFocusBatch:null};
 vm.createContext(ctx);vm.runInContext(html.slice(begin,end),ctx);
 const rows=Array.from({length:30},(_,i)=>({
@@ -51,14 +51,31 @@ assert.equal(storage.get("reviewed"),"R".repeat(12500));
 assert.equal(storage.get("pending"),"P".repeat(7000));
 const previous=storage.get("focus-cohort");
 cap=1;ctx.activeFocusBatch={...batch,openedAt:4567};
-assert.throws(()=>ctx.saveActiveFocusBatch(),/quota/i,
+let rejectedQuota;
+assert.throws(()=>ctx.saveActiveFocusBatch(),e=>{rejectedQuota=e;return /quota/i.test(String(e.name))},
  "A truly full browser must fail closed rather than invent a Focus review");
 assert.equal(storage.get("focus-cohort"),previous,"Failed save preserves older durable batch");
+// New failure-path regression must reveal the actual failed v3 payload, not
+// only the larger v2 estimation; reporting values/usernames is forbidden.
+const quotaReport=ctx.igcFocusStorageDiagnostic(rejectedQuota,ctx.activeFocusBatch);
+assert.match(quotaReport,/key focus-cohort/,"Report fixed failing storage key");
+assert.match(quotaReport,/format v3/,"Final rejected compact encoding must be identified");
+assert.match(quotaReport,/attempted [1-9][0-9]* bytes/,"Report exact attempted write size");
+assert(!quotaReport.includes("member.")&&!quotaReport.includes("https:"),
+ "Never export private usernames or stored URLs through the diagnostic");
+assert.equal(ctx.window.igcFocusWriteAttempt.format,"v3");
 errorKind="security";cap=Infinity;
-assert.throws(()=>ctx.saveActiveFocusBatch(),e=>e.name==="SecurityError",
+let rejectedSecurity;
+assert.throws(()=>ctx.saveActiveFocusBatch(),e=>{rejectedSecurity=e;return e.name==="SecurityError"},
  "SecurityError is never treated as quota or bypassed");
 assert.equal(storage.get("focus-cohort"),previous);
+const securityReport=ctx.igcFocusStorageDiagnostic(rejectedSecurity,ctx.activeFocusBatch);
+assert.match(securityReport,/format v2/,"Denied storage must never pretend fallback was tried");
+assert(!securityReport.includes("Browser storage denied"),"Raw provider messages may leak sensitive data");
 errorKind="quota";cap=Infinity;
+ctx.saveActiveFocusBatch();
+assert.equal(ctx.window.igcFocusWriteAttempt,null,"Successful retry clears stale diagnostics");
+assert.equal(ctx.window.igcLastFocusStorageError,"","Successful retry clears stale storage warning");
 storage.set("focus-cohort",JSON.stringify({...ctx.igcEncodeFocusBatchQuota(batch),rows:[["bad",0]]}));
 ctx.activeFocusBatch=null;
 ctx.loadActiveFocusBatch();

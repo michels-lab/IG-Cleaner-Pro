@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA #371 precise Focus storage attempt diagnostics (unreleased source)
+
+- A Focus storage failure could display the original v2 payload size even when compact v3 was the actual failed retry. Source now records the exact storage key, v2/v3 stage and attempted UTF-16 bytes in volatile non-sensitive diagnostic metadata before each write; the existing storage warning surfaces this redacted detail and successful save clears stale warnings.
+- CI-wired negative cases cover both-stage quota rejection, SecurityError v2-only, privacy redaction and subsequent safe retry; the established storage diagnostic test remains compatible. See [audit](audits/2026-11-18-focus-write-diagnostics.md). No raw owner data touched.
+- #371 full-quota recovery and real owner/browser Focus, #360 counter race and #377 real Windows A/B acceptance still OPEN. Stable v120.80 unchanged; next v120.81 not authorized, no release.
+
 ## 2026-11-18 — GRANADA: transactional manual Reviewed confirmations (source-only)
 
 - Remaining #360 local durability hazard: `saveReviewedState()` mutated in-memory `doneSet`/`reviewedMeta` before separately persisting two keys. A second-key quota failure caused partial disk state and false on-screen success.

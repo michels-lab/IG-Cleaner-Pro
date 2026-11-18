@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA #371 · exact failed Focus write diagnostics (source only)
+
+- Found source evidence gap: existing Focus storage warning always reported full v2 cohort size even when the actual final failed write was compact v3, without key or attempt bytes. Added only fixed key, format and attempted UTF-16 bytes as volatile metadata before each save; failed v3 and blocked v2 are distinct. No profile names, cookies, raw localStorage values or provider error messages are exported. Successful retry clears stale diagnostics.
+- CI-wired production-function negative fixtures extend `tests/focus-quota-alternative.test.cjs` for failed final v3 quota write, denied SecurityError without v3, privacy, previous cohort survival and retry; preserve original `tests/focus-storage-diagnostic.test.cjs` contract. [Audit](docs/audits/2026-11-18-focus-write-diagnostics.md).
+- This fixes observability, **not** a completely full browser; real owner Focus 30, counters #360, Android/browser sync and physical Windows two-window #377 remain open. Official stable v120.80 untouched; v120.81 not authorized.
+
 ## 2026-11-18 — GRANADA P0 REST A→B→A and Reviewed durability consolidation (source only)
 
 - Integrated [PR #383](https://github.com/michels-lab/IG-Cleaner-Pro/pull/383) into main at `cc26f5dc`: manual Reviewed confirmation uses a fail-closed two-key durable transaction before UI/session counters or cloud sync. Six exact-head checks succeeded; no real Instagram acceptance and no release claimed.
