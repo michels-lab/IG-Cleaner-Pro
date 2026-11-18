@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 452,
-  "classified_files_total": 448,
-  "docs_content_inspected": 113,
+  "tracked_files_total": 454,
+  "classified_files_total": 450,
+  "docs_content_inspected": 114,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 108,
+    "document": 109,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 143,
+    "test": 144,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "89ccac2676acf85dc78f1f2fdb11266e74726f28ea10001eb485e82f28faa98a",
-  "evidence_fingerprint": "3e6c9f9f460b3eb552a6032353e8ef9f8299b377fc17677e99a1a301fa8dcf58",
+  "inventory_fingerprint": "31341a33ec45ab04ca40162b8ae18de71e3c2fc0d2eb55f69b10c8a940cb8cd6",
+  "evidence_fingerprint": "3c88613abc973770c391ba1fddecfa913a177d78ce92500f9a07449f7d02d152",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f4b314120c8488250d1bc616d281b5f4cf2f6798"
+      "blob": "ad8422a7b55f74ec89fa00de73c2172f129629da"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -246,7 +246,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "d71c44bdb80ba0d213fe9c3a9a0ea6a5bb7cf9b7"
+      "blob": "7b870abbb0bd3e35a32a1106080fdb8d3007c7a4"
     },
     {
       "path": "README.md",
@@ -344,7 +344,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "750a2d2cf2bdb3657f8eb76b24d9be0176e71403"
+      "blob": "a1e86d1d5cb0bf4e13478986200286a3f79a79b6"
     },
     {
       "path": "android/app/src/main/java/com/michelslab/igcleaner/ProfileAdapter.java",
@@ -1586,6 +1586,13 @@
       "blob": "5e1c6caeeaca68892d2906a416724d845ed0f44f"
     },
     {
+      "path": "docs/audits/2026-11-17-native-android-focus-account-transition-barrier.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "adaae6767255a0a07bfea9f3dc358b2122f48843"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2426,6 +2433,13 @@
       "blob": "7ed61640a5a1ae905e6319f7e99b8d8f444c27c6"
     },
     {
+      "path": "tests/test_android_focus_account_transition.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "34134645ece9375e8ade81a5e425b0515e257bef"
+    },
+    {
       "path": "tests/test_android_monotonic_reviews.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3242,11 +3256,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "d520c17cfa02103c",
+      "id": "3b2dff6fdde3d675",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: tests/automation-warning-events.test.cjs, tools/automation_activity_ui.py",
+      "observation": "3 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java, tests/test_android_focus_account_transition.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
