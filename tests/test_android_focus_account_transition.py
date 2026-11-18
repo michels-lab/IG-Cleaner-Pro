@@ -62,7 +62,11 @@ class NativeFocusTransitionRegression(unittest.TestCase):
                         SOURCE.index("public void openNativeFocus()", SOURCE.index("public void syncSession(String sessionJson)"))]
         self.assertRegex(bridge, r"io\.execute\(\(\) -> \{[\s\S]*?api\.adoptWebSession\(sessionJson\)")
         self.assertIn("postAccountTransitionAndWait(() -> {", bridge)
-        self.assertIn("resetAfterAccountChange()", bridge)
+        self.assertIn("resetAfterAccountChange(true)", bridge,
+                      "A WebView-mediated login must not destroy the active WebView")
+        resets = SOURCE[SOURCE.index("private void resetAfterAccountChange()"):
+                        SOURCE.index("private void showWorkspaceScreen(")]
+        self.assertIn("if (!preserveActiveWebView) disposeWorkspaceWebView();", resets)
 
     def test_no_new_cloud_delete_or_real_instagram_actions(self):
         # This branch is strictly a sequencing/rejection change; new effects
