@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "98509038e00bbafce4cf940adf2906b4df7579c085125e000edc709c266573f7",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "3ddd11757e6b4f218ea0df5b81bed63091fc0c598d76bfd6cbd1c7b4c2a99a79",
+  "evidence_fingerprint": "23b525502d3542d83dc2df561ac4c37e50e4ccd0c77be8bdc0be392f00b4ae01",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -217,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "8dcdf0ef4db5ef61019d6440a1738464af9f9d53"
+      "blob": "f7783333c22be3c22a3ed8f791e51746272f2b12"
     },
     {
       "path": "AGENTS.md",
@@ -259,14 +260,14 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "713638cace51f5172bae90b35208f152343775bd"
+      "blob": "bc46b9e38a1e4028bb5e09c43e1572cfc72ab9bf"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "3ed9fe1ce9a4786ef4e3c247c55c5d15481d3da9"
+      "blob": "416af6b31faeea6ea46b56f52d145fc14d1ab028"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -854,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "2872ef748093056cb5ccfa9e32ac57a141c952ac"
+      "blob": "ace354aee2a43ebdb1c298c6a2b8792bfd005b3e"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "4b334a23246ccf8e0e9a717550c2281df02e0444"
+      "blob": "1273cd662e237e466fdc163e871d983c611901c7"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1687,28 +1688,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "55ac9ce46e568adc3faaad0908d73444135ac274"
+      "blob": "4e3f725042ba103752155ee41579037ce599a9b2"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "0c168dfff8c5e0e413a3164c75fc4b67457c4554"
+      "blob": "45864549177aec7703f9c5297c4169bfb4e4c90a"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "95625ce6434b4b08ad6ae20405f953eee1398644"
+      "blob": "61277b32880514310ebc9eafd35ef3a8d3e276a3"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "78f79035b2117a618dfa3bf3ac3879eb8db294d9"
+      "blob": "5e782dd52365dfdb4d28a4193e5eaf35c04008ff"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -2779,7 +2780,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0f118a2a379324c7d0952afde8b132a5b9a5e7d6"
+      "blob": "ec41ab1fe0fb140059795ff71c8445263289c2d7"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3259,6 +3260,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "c201ffa435db6657",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "7 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, release/release-readiness.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
