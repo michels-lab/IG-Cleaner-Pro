@@ -25,7 +25,7 @@ def ui_document_path(home: Path, workspace: str, filename: str = "IG-Cleaner-Pro
     """Keep the original file:// origin for account 1; isolate account 2."""
     if workspace not in WORKSPACES:
         raise ValueError("Invalid InstaCleaner window identity.")
-    if not filename or "/" in filename or "\\\\" in filename:
+    if filename in ("", ".", "..") or "/" in filename or "\\" in filename:
         raise ValueError("Invalid UI filename.")
     return Path(home) / filename if workspace == "primary" else (
         Path(home) / "second-window" / filename)
