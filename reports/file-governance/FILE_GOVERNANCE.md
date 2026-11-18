@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 456; classified: 452; readable documents: 119; above read cap: 2; findings: 2.
+Tracked: 459; classified: 455; readable documents: 120; above read cap: 2; findings: 2.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 456; classified: 452; readable documents: 119; above read cap: 2; findi
 | config | 70 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 115 |
+| document | 116 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
-| test | 140 |
+| test | 142 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -30,7 +30,7 @@ Tracked: 456; classified: 452; readable documents: 119; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-quota-alternative.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 8f1cf9c2e298a50b)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/cloud-review-pagination-9896.test.cjs, tests/cloud-review-scope-cache.test.cjs, tests/cloud-review-storage-rollback.test.cjs, tests/focus-quota-alternative.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 1d4d6f0ccd25c1b1)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

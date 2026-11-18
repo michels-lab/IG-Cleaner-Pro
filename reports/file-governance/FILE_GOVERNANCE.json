@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 456,
-  "classified_files_total": 452,
-  "docs_content_inspected": 119,
+  "tracked_files_total": 459,
+  "classified_files_total": 455,
+  "docs_content_inspected": 120,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 115,
+    "document": 116,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 140,
+    "test": 142,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "45141f5c6409f559881efa62c8b822f1eba5c6812f1670e8a59bc5d3432a8b78",
-  "evidence_fingerprint": "31ed680e034513928f44d3452d4b0309f71079e5452f2c4f0bf45a28f167a2b5",
+  "inventory_fingerprint": "d222e338661f5cc7931de6ef4c916c87ccdbad2923c89f3c3f69e7e23972fd20",
+  "evidence_fingerprint": "558be47187fdd22b05ebe5b1aca94d7746cae49470d89fc38c0a90383e692d4d",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "f77361e61b51d55307b7558840be59a3304eba2b"
+      "blob": "a05b0112819ee4fd23e105e62220c208dc1d0d69"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "753b12ce4245530360002e04aa1f13b9fba402b4"
+      "blob": "91874e0cf5035da27ed29ce43381fb9e20a0df9b"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "9d0ce9bada2c4eff5e01ceeffc5aa0fb06a853f6"
+      "blob": "6309ab19a8d0df148fc64f0bb94102dc752f71ef"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1614,6 +1614,13 @@
       "blob": "47ec28f85294072acc34782706ac1dd76a62a2b2"
     },
     {
+      "path": "docs/audits/2026-11-18-cloud-review-freshness.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "d89c31cf48c866eb2969670fe16fff9659fd313e"
+    },
+    {
       "path": "docs/audits/2026-11-18-focus-prune-transaction.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1961,7 +1968,21 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "860acbe65b4ffdb35b873fdd09ceb5b1914fbe68"
+      "blob": "ee3ee46146c2a56efd995cc25849534699e7a108"
+    },
+    {
+      "path": "tests/cloud-review-scope-cache.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "ff172ff22f967e9d3364aca33d921819d43b00bc"
+    },
+    {
+      "path": "tests/cloud-review-storage-rollback.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0b76bd7a8aca80cef81cc524ff8374e189a248c0"
     },
     {
       "path": "tests/desktop-contract.test.cjs",
@@ -3207,11 +3228,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "8f1cf9c2e298a50b",
+      "id": "1d4d6f0ccd25c1b1",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-quota-alternative.test.cjs",
+      "observation": "6 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/cloud-review-pagination-9896.test.cjs, tests/cloud-review-scope-cache.test.cjs, tests/cloud-review-storage-rollback.test.cjs, tests/focus-quota-alternative.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
