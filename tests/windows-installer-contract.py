@@ -82,7 +82,12 @@ assert 'release-request-gate:' in release and "request.get(\"authorized\") is Tr
 assert "windows-robot" in release
 launcher = (ROOT / "tools/ig_cleaner_desktop.py").read_text(encoding="utf-8")
 assert "--smoke-startup" in launcher
-assert 'home / BUNDLED_HTML' in launcher
+# Each native app window has its own file:// origin; the primary remains
+# the exact preexisting path and the second never writes to that file.
+assert 'ui_document_path(home, workspace, BUNDLED_HTML)' in launcher
+picker = (ROOT / "tools/windows_workspace_picker.py").read_text(encoding="utf-8")
+assert 'Path(home) / filename if workspace == "primary"' in picker
+assert 'Path(home) / "second-window" / filename' in picker
 assert 'legacy = Path.home() / ".ig-cleaner-pro"' in launcher
 smoke = (ROOT / "tools/test_windows_installer.ps1").read_text(encoding="utf-8")
 for token in ("--healthcheck", "--smoke-startup", "unins000.exe",
