@@ -24,7 +24,7 @@ from profile_counts_bridge import Collector, build_server
 from windows_updater import WindowsUpdater, numeric_version
 from automation_activity_ui import AUTOMATION_ACTIVITY_PANEL
 from windows_workspace_picker import (chrome_workspace_path, instance_mutex_name,
-                                      select_workspace)
+                                      ui_document_path, select_workspace)
 
 
 APP_NAME = "Insta Cleaner Pro"
@@ -192,7 +192,8 @@ def main(argv=None) -> int:
             # startup path. No sign-in, network calls, browser automation, or
             # destructive workspace resets. Used by silent Setup acceptance.
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML, automation_activity=not args.developer)
+            page = prepare_html(source, ui_document_path(home, args.workspace or "primary", BUNDLED_HTML),
+                                automation_activity=not args.developer)
             if page.stat().st_size < 100_000:
                 raise RuntimeError("The installed interface is incomplete.")
             browser = chrome_path()
@@ -236,7 +237,8 @@ def main(argv=None) -> int:
         mutex = acquire_single_instance(developer=args.developer, workspace=workspace)
         try:
             home = app_home() / "developer-edition" if args.developer else app_home()
-            page = prepare_html(source, home / BUNDLED_HTML, automation_activity=not args.developer)
+            page = prepare_html(source, ui_document_path(home, workspace, BUNDLED_HTML),
+                                automation_activity=not args.developer)
             browser = chrome_path()
             chrome_workspace = chrome_workspace_path(home, workspace)
             chrome_workspace.mkdir(parents=True, exist_ok=True)
