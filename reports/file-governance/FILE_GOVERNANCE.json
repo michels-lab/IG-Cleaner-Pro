@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 448,
-  "classified_files_total": 444,
+  "tracked_files_total": 450,
+  "classified_files_total": 446,
   "docs_content_inspected": 111,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
@@ -17,8 +17,8 @@
     "document": 106,
     "index": 5,
     "installer_metadata": 1,
-    "source": 55,
-    "test": 142,
+    "source": 56,
+    "test": 143,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 9,
-  "inventory_fingerprint": "0d968a5cfc9192f1e512d343def06a786b0832a8012e3a3b08d5c6b41bfc72d9",
-  "evidence_fingerprint": "23b525502d3542d83dc2df561ac4c37e50e4ccd0c77be8bdc0be392f00b4ae01",
+  "inventory_fingerprint": "600b7bc95572de68561b0d7646897e895b4188cf06c91865ad4bdb0581003869",
+  "evidence_fingerprint": "e46b58f96fe98a038712de49939d6ec77870b40e0e923d53a389a6a8ef79c25b",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -71,7 +71,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "864d93b7d5c2fa01cb256e1191334155431b22e8"
+      "blob": "f01592a8d35ee6e999e01b4a6bc0f51449a4691a"
     },
     {
       "path": ".github/workflows/android-companion.yml",
@@ -148,7 +148,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "3332a1e76d637833677438652ddef6e00b96de36"
+      "blob": "09a218d9e3385881d9f422e7c86e4e3788e542e5"
     },
     {
       "path": ".gitignore",
@@ -218,7 +218,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "4c834090e97c833d0e3fe5e5bf30ff1c61cddc57"
+      "blob": "ba0fae29e35cff03b6cb8bbe27da50deddbba177"
     },
     {
       "path": "AGENTS.md",
@@ -2755,6 +2755,13 @@
       "blob": "2146467a6d673dc97b130316d897bd7ae7fe1063"
     },
     {
+      "path": "tests/test_select_android_release_visual_artifact.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "9b802907aa129a87d9f90ae2d9e65f4f15a51812"
+    },
+    {
       "path": "tests/test_update_docs_contract.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3077,6 +3084,13 @@
       "blob": "0d6e33cf134ec31f1003d74949aec60763c81e6f"
     },
     {
+      "path": "tools/select_android_release_visual_artifact.py",
+      "role": "source",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "c3c60c68fb4f38321bb90cf35cc0c1fb4ce25b69"
+    },
+    {
       "path": "tools/test_repository_file_auditor.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3214,11 +3228,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "c201ffa435db6657",
+      "id": "c1518849b8b30320",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "7 implementation/config paths changed since this log's last commit; examples: .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json, release/distribution-manifest.json, release/release-readiness.json",
+      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/android-about-visual.yml, .github/workflows/release.yml, .michelslab/release-request.json, android/app/build.gradle.kts, desktop/ig_cleaner_pro_v120_27_synced_companion.html, release/android-signing.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
