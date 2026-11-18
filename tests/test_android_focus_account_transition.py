@@ -68,6 +68,16 @@ class NativeFocusTransitionRegression(unittest.TestCase):
                         SOURCE.index("private void showWorkspaceScreen(")]
         self.assertIn("if (!preserveActiveWebView) disposeWorkspaceWebView();", resets)
 
+    def test_confirmed_profile_deletion_commits_legacy_scope_before_next_job(self):
+        body = SOURCE[SOURCE.index("private void showFinalInstagramDeleteConfirmation("):
+                      SOURCE.index("private void changeInstagramProfile(")]
+        self.assertIn("api.deleteInstagramProfile(key, username);", body)
+        self.assertIn("postAccountTransitionAndWait(() -> {", body)
+        self.assertIn('applyInstagramProfileChange("legacy", "Datos anteriores")', body)
+        self.assertLess(body.index("api.deleteInstagramProfile(key, username);"),
+                        body.index("postAccountTransitionAndWait(() -> {"))
+        self.assertNotIn('mainHandler.post(() -> {\n                            api.setInstagramProfile("legacy"', body)
+
     def test_no_new_cloud_delete_or_real_instagram_actions(self):
         # This branch is strictly a sequencing/rejection change; new effects
         # must not be injected into auth and Focus transition helpers.
