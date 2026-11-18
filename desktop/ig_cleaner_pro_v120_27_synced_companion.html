@@ -5770,10 +5770,47 @@ function reviewChanged(row){
   return doneSet.has(row.username) && !isDoneValid(row);
 }
 
-function saveReviewedState(){
-  saveSet(LS_DONE,doneSet);
-  localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta));
+function saveReviewedState(mutate){
+  // A Reviewed confirmation is successful only after BOTH durable keys commit.
+  if(typeof mutate!=='function')throw Error('Reviewed update requires a mutation');
+  const beforeDone=new Set(doneSet||[]),beforeMeta={...(reviewedMeta||{})};
+  let oldDone,oldMeta;
+  try{
+    oldDone=localStorage.getItem(LS_DONE);
+    oldMeta=localStorage.getItem(LS_REVIEW_META);
+  }catch(error){
+    msg('No se pudo leer el historial Reviewed. No se modificó la revisión.','w');
+    return false;
+  }
+  let savedMeta=false,savedDone=false;
+  try{
+    mutate();
+    localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta));
+    savedMeta=true;
+    localStorage.setItem(LS_DONE,JSON.stringify([...doneSet]));
+    savedDone=true;
+  }catch(error){
+    let rollbackFailed=false;
+    try{
+      if(savedDone){
+        if(oldDone===null)localStorage.removeItem(LS_DONE);
+        else localStorage.setItem(LS_DONE,oldDone);
+      }
+      if(savedMeta){
+        if(oldMeta===null)localStorage.removeItem(LS_REVIEW_META);
+        else localStorage.setItem(LS_REVIEW_META,oldMeta);
+      }
+    }catch(recoveryError){rollbackFailed=true;console.warn('Reviewed rollback needs recovery',recoveryError)}
+    doneSet.clear();for(const user of beforeDone)doneSet.add(user);
+    for(const user of Object.keys(reviewedMeta||{}))delete reviewedMeta[user];
+    Object.assign(reviewedMeta,beforeMeta);
+    msg(rollbackFailed?
+      'Error al guardar Reviewed. Almacenamiento inconsistente: conserva un respaldo y reintenta la recuperación.':
+      'No se guardó Reviewed. El historial anterior está intacto; puedes reintentar.','w');
+    return false;
+  }
   window.igcQueueStateSync?.('review-state');
+  return true;
 }
 
 
@@ -7327,20 +7364,17 @@ function confirmOpenedVerified(){
 
   const reason=document.getElementById('verifyReasonSelect')?.value || '';
   let c=0, good=0, bad=0;
-  lastOpenedBatch.forEach(username=>{
-    const row=rowByUsername(username);
-    if(row){
-      const wasValid=isDoneValid(row);
-      doneSet.add(username);
-      reviewedMeta[username]=makeReviewMeta(row,reason,contextLabel(lastOpenedBatchMeta));
-      if(!wasValid){
-        c++;
-        good++; // verificado = resuelto/bueno para estadísticas de limpieza
+  if(!saveReviewedState(()=>{
+    lastOpenedBatch.forEach(username=>{
+      const row=rowByUsername(username);
+      if(row){
+        const wasValid=isDoneValid(row);
+        doneSet.add(username);
+        reviewedMeta[username]=makeReviewMeta(row,reason,contextLabel(lastOpenedBatchMeta));
+        if(!wasValid){c++;good++;}
       }
-    }
-  });
-
-  saveReviewedState();
+    });
+  }))return;
   sessionStats.reviewed+=c;
   sessionStats.reviewedGood=(sessionStats.reviewedGood||0)+good;
   sessionStats.reviewedBad=(sessionStats.reviewedBad||0)+bad;
@@ -8016,14 +8050,15 @@ function undoLastVerificationBatch(){
     return;
   }
   let c=0;
-  lastVerifiedBatchForUndo.forEach(username=>{
-    if(doneSet.has(username)){
-      doneSet.delete(username);
-      delete reviewedMeta[username];
-      c++;
-    }
-  });
-  saveReviewedState();
+  if(!saveReviewedState(()=>{
+    lastVerifiedBatchForUndo.forEach(username=>{
+      if(doneSet.has(username)){
+        doneSet.delete(username);
+        delete reviewedMeta[username];
+        c++;
+      }
+    });
+  }))return;
   lastVerifiedBatchForUndo=[];
   logAction('undo',`Se deshizo la última verificación: ${c} cuentas`,{count:c,source:'deshacer'});
   renderAll();
@@ -8098,37 +8133,37 @@ function rowByUsername(username){return allRows.find(r=>r.username===username)||
 
 function toggleDone(username,on){
   const row=rowByUsername(username);
-  if(on){
-    const wasValid=row?isDoneValid(row):doneSet.has(username);
-    doneSet.add(username);
-    if(row)reviewedMeta[username]=makeReviewMeta(row,document.getElementById('manualReviewReasonSelect')?.value || '','checkbox');
-    if(!wasValid){
-      sessionStats.reviewed+=1;
-      // Verificado = resuelto, por eso suma a bueno/resuelto aunque la relación real fuera "no me sigue".
-      sessionStats.reviewedGood=(sessionStats.reviewedGood||0)+1;
+  let earnedReview=false;
+  if(!saveReviewedState(()=>{
+    if(on){
+      const wasValid=row?isDoneValid(row):doneSet.has(username);
+      doneSet.add(username);
+      if(row)reviewedMeta[username]=makeReviewMeta(row,document.getElementById('manualReviewReasonSelect')?.value || '','checkbox');
+      earnedReview=!wasValid;
+    }else{
+      doneSet.delete(username);
+      delete reviewedMeta[username];
     }
-  }else{
-    doneSet.delete(username);
-    delete reviewedMeta[username];
+  }))return;
+  if(earnedReview){
+    sessionStats.reviewed+=1;
+    sessionStats.reviewedGood=(sessionStats.reviewedGood||0)+1;
   }
-  saveReviewedState();
   renderAll();
 }
 
 function markSelectedDone(){
   const reason=document.getElementById('manualReviewReasonSelect')?.value || '';
   let c=0, good=0, bad=0;
-  visibleSelectedRows().forEach(row=>{
-    const u=row.username;
-    const wasValid=isDoneValid(row);
-    doneSet.add(u);
-    reviewedMeta[u]=makeReviewMeta(row,reason,'manual');
-    if(!wasValid){
-      c++;
-      good++; // verificado = resuelto/bueno para estadísticas de limpieza
-    }
-  });
-  saveReviewedState();
+  if(!saveReviewedState(()=>{
+    visibleSelectedRows().forEach(row=>{
+      const u=row.username;
+      const wasValid=isDoneValid(row);
+      doneSet.add(u);
+      reviewedMeta[u]=makeReviewMeta(row,reason,'manual');
+      if(!wasValid){c++;good++;}
+    });
+  }))return;
   sessionStats.reviewed+=c;
   sessionStats.reviewedGood=(sessionStats.reviewedGood||0)+good;
   sessionStats.reviewedBad=(sessionStats.reviewedBad||0)+bad;
@@ -8141,8 +8176,9 @@ function markSelectedDone(){
 }
 
 function unmarkSelectedDone(){
-  visibleSelectedRows().forEach(row=>{doneSet.delete(row.username);delete reviewedMeta[row.username];});
-  saveReviewedState();
+  if(!saveReviewedState(()=>{
+    visibleSelectedRows().forEach(row=>{doneSet.delete(row.username);delete reviewedMeta[row.username];});
+  }))return;
   renderAll();
   msg('Marcas de verificado quitadas a los seleccionados visibles.','i');
 }
@@ -17935,15 +17971,17 @@ window.igcAutoApproveBatch=async function(){
   const names=result.approved_usernames||[];
   const now=Date.now();
   if(mode==="unfollow"){
-   for(const username of names){
-    const row=allRows.find(r=>r.username===username);
-    if(!row)continue;
-    const oldMode=currentMode;currentMode="following";
-    const meta=makeReviewMeta(row,"approved_automatic_batch","automation_batch_confirmed");
-    meta.mode="following";currentMode=oldMode;
-    reviewedMeta[username]=meta;doneSet.add(username);
-   }
-   saveReviewedState();renderAll();
+   if(!saveReviewedState(()=>{
+    for(const username of names){
+     const row=allRows.find(r=>r.username===username);
+     if(!row)continue;
+     const oldMode=currentMode;currentMode="following";
+     const meta=makeReviewMeta(row,"approved_automatic_batch","automation_batch_confirmed");
+     meta.mode="following";currentMode=oldMode;
+     reviewedMeta[username]=meta;doneSet.add(username);
+    }
+   })){setStatus("No se pudo guardar Reviewed después de confirmar en el servidor; el registro original permanece. Restaura el almacenamiento e inténtalo nuevamente.");return;}
+   renderAll();
   }else if(mode==="cancel"){
    for(const username of names){
     pendingReviewedMeta[username]={

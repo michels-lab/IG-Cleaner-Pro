@@ -67,9 +67,17 @@ const ctx={document,localStorage,
  currentMode:'following',makeReviewMeta:(row,reason,source)=>({mode:'following',
  relation:row.relation,relationGood:false,followsBack:false,isFollower:false,
  reviewedAt:Date.now(),reviewReason:reason,reviewSource:source}),
- saveReviewedState(){},renderAll(){},
+ LS_DONE:'done',LS_REVIEW_META:'reviewMeta',
+ msg(){},renderAll(){},
  fetch:mockFetch,setInterval(){},Error};
-vm.createContext(ctx);vm.runInContext(script[1],ctx);
+vm.createContext(ctx);
+// Exercise the real two-key Reviewed persistence contract rather than a no-op.
+const reviewedStart=source.indexOf('function saveReviewedState(mutate){');
+const reviewedEnd=source.indexOf('function clearHiddenSelection(){',reviewedStart);
+assert(reviewedStart>=0&&reviewedEnd>reviewedStart,
+  'Production transactional Reviewed persistence must be present');
+vm.runInContext(source.slice(reviewedStart,reviewedEnd),ctx);
+vm.runInContext(script[1],ctx);
 assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  'Unknown active robot status must block switching to another account');
 (async()=>{
@@ -218,6 +226,10 @@ assert.equal(ctx.window.igcAutoSwitchGuard(),false,
  const approved=calls.find(c=>c.type==='approve-batch');assert(approved);
  assert.equal(approved.data.confirmation,'reviewed:batch123');
  assert(ctx.doneSet.has('keep.me'),'Owner-confirmed verified profile must become reviewed');
+ assert(JSON.parse(store.get('done')||'[]').includes('keep.me'),
+   'Robot approval is successful only after Reviewed is durable');
+ assert(Object.prototype.hasOwnProperty.call(JSON.parse(store.get('reviewMeta')||'{}'),'keep.me'),
+   'Approval must persist metadata, not only the Reviewed badge');
  assert(!ctx.doneSet.has('skip.me'),'Unresolved result must remain not reviewed');
  assert.equal(elements.igcAutoBatchApproval.style.display,'none');
  await ctx.window.igcAutoRecheckHistory();

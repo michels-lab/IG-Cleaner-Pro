@@ -166,6 +166,7 @@ jobs:
           node tests/focus-history-compaction.test.cjs
           node tests/focus-storage-diagnostic.test.cjs
           node tests/focus-counters-no-rebound.test.cjs
+          node tests/manual-reviewed-atomic-storage.test.cjs
           node tests/focus-aba-persistence-918.test.cjs
           node tests/cloud-review-monotonic.test.cjs
           node tests/cloud-review-scope-cache.test.cjs
