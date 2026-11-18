@@ -28,6 +28,11 @@ const rows=Array.from({length:30},(_,i)=>({
  iFollow:true,isFollower:i%2===0,followsBack:i%3===0,relationGood:i%4===0
 }));
 const batch={kind:"main",label:"Focus 30",openedAt:1234,status:"opened_unconfirmed",rows:rows.map(r=>ctx.safeBatchRow(r))};
+// URL edge cases matter: never synthesize a link for an absent or empty
+// original href. A custom URL must not be replaced by a guess.
+batch.rows[1].href=undefined;
+batch.rows[2].href='';
+batch.rows[3].href='https://www.instagram.com/member.3/?from=import';
 const original=JSON.parse(JSON.stringify(batch));
 const regular=JSON.stringify(ctx.igcEncodeActiveFocusBatch(batch));
 const small=JSON.stringify(ctx.igcEncodeFocusBatchQuota(batch));
