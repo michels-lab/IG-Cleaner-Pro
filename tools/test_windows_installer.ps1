@@ -37,7 +37,8 @@ try {
   if ($devShortcut.Arguments -ne '--developer') { throw "Developer shortcut must launch --developer." }
   # Real installed binary, not a copied portable EXE.
   RunBounded $exe @('--healthcheck') 'Installed app binary' 75
-  RunBounded $exe @('--smoke-startup') 'Installed app startup path' 100
+  RunBounded $exe @('--smoke-startup') 'Installed primary startup path' 100
+  RunBounded $exe @('--smoke-startup','--workspace','secondary') 'Installed second-window startup path' 100
   RunBounded $exe @('--smoke-startup','--developer') 'Installed Developer Edition startup path' 100
   $devState = Join-Path $state "developer-edition"
   if (!(Test-Path (Join-Path $devState "IG-Cleaner-Pro.html"))) {
@@ -46,19 +47,55 @@ try {
   $ui = Join-Path $state "IG-Cleaner-Pro.html"
   if (!(Test-Path $ui)) { throw "Installed runtime did not prepare its persistent UI" }
   if ((Get-Item $ui).Length -lt 100000) { throw "Installed UI was incomplete" }
+  # The second launch must not reuse the first file:// origin or Chrome
+  # user-data-dir. Both locations persist across in-place upgrade/uninstall.
+  $secondUi = Join-Path $state 'second-window\IG-Cleaner-Pro.html'
+  $firstChrome = Join-Path $state 'workspace-browser'
+  $secondChrome = Join-Path $state 'workspace-browser-secondary'
+  foreach ($file in @($secondUi)) {
+    if (!(Test-Path -LiteralPath $file)) { throw "Second account entrypoint not created: $file" }
+    if ((Get-Item -LiteralPath $file).Length -lt 100000) { throw "Second account UI is incomplete: $file" }
+  }
+  if ($ui -eq $secondUi) { throw 'Two app windows must not share the HTML entrypoint.' }
+  if (!(Test-Path -LiteralPath $firstChrome) -or !(Test-Path -LiteralPath $secondChrome)) {
+    throw 'Two independent Chrome data directories were not created.'
+  }
+  $firstMarker = Join-Path $firstChrome 'installer-test-primary-do-not-delete.txt'
+  $secondMarker = Join-Path $secondChrome 'installer-test-secondary-do-not-delete.txt'
+  'keep-primary' | Set-Content -LiteralPath $firstMarker -Encoding utf8
+  'keep-secondary' | Set-Content -LiteralPath $secondMarker -Encoding utf8
+  $firstUiDigest = (Get-FileHash -LiteralPath $ui -Algorithm SHA256).Hash
+  $secondUiDigest = (Get-FileHash -LiteralPath $secondUi -Algorithm SHA256).Hash
+  if ($firstUiDigest -ne $secondUiDigest) { throw 'Different window slots received mismatched versioned interface bytes.' }
   if (!(Test-Path $marker)) { throw "Setup erased existing user data" }
   # Exercise the upgrade/reinstall path with the SAME stable AppId and folder.
   RunBounded $setup @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/DIR="'+$prefix+'"')) 'In-place upgrade'
-  if (!(Test-Path $exe) -or !(Test-Path $marker) -or !(Test-Path $ui)) {
-    throw "In-place setup replaced or lost the persisted workspace"
+  if (!(Test-Path $exe) -or !(Test-Path $marker) -or !(Test-Path $ui) -or
+      !(Test-Path $secondUi) -or !(Test-Path $firstMarker) -or !(Test-Path $secondMarker)) {
+    throw "In-place setup replaced or lost either persisted account"
+  }
+  if ((Get-FileHash -LiteralPath $ui -Algorithm SHA256).Hash -ne $firstUiDigest -or
+      (Get-FileHash -LiteralPath $secondUi -Algorithm SHA256).Hash -ne $secondUiDigest) {
+    throw 'In-place upgrade altered the saved UI origin or source bytes.'
   }
   RunBounded $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 'Uninstall' 120
   if (Test-Path $exe) { throw "Installed executable remained after uninstall" }
   if (!(Test-Path $marker)) { throw "Uninstall deleted local review/import data" }
+  if (!(Test-Path $ui) -or !(Test-Path $secondUi) -or
+      !(Test-Path $firstMarker) -or !(Test-Path $secondMarker)) {
+    throw 'Uninstall must not erase either account or its Chrome data.'
+  }
   if ($legacyWasPresent -and !(Test-Path $legacy)) { throw "Uninstall deleted legacy robot data" }
-  Write-Host "PASS: BUILD payload, INSTALL, installed HEALTHCHECK/STARTUP, START-MENU, IN-PLACE UPGRADE, UNINSTALL and data preservation. Instagram live session was NOT tested."
+  Write-Host "PASS: installed public app, BOTH account slots, unchanged profile data across upgrade/uninstall and isolated UI origins. Physical two-window Instagram acceptance is still open."
 }
 finally {
   if (Test-Path $marker) { Remove-Item $marker -Force }
+  # Only remove synthetic CI markers. Never clear Chrome profiles/history.
+  if (Get-Variable -Name firstMarker -ErrorAction SilentlyContinue) {
+    if (Test-Path -LiteralPath $firstMarker) { Remove-Item -LiteralPath $firstMarker -Force }
+  }
+  if (Get-Variable -Name secondMarker -ErrorAction SilentlyContinue) {
+    if (Test-Path -LiteralPath $secondMarker) { Remove-Item -LiteralPath $secondMarker -Force }
+  }
   if (Test-Path $log) { Copy-Item $log -Destination "artifacts/IG-Cleaner-Pro-Installer-InstallLog.txt" -Force }
 }
