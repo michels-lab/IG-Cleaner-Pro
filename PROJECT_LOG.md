@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA Windows Automations provenance integrity (development branch only)
+
+- Issue #298: existing Windows activity period tiles and result histories had no owner-facing origin selector; a combined view showed historical unknown-origin OK beside proven robot activity. Added robot/unknown/all source selector across period tiles, action breakdown and 15-entry journal; stated that manual actions are not invented or silently added. Existing browser actions, target WAL, protected sets and account isolation remain untouched.
+- Integrity: reconcile all canonical records before applying any provenance filter so a contradictory same-time `robot`/`unknown` pair remains unresolved instead of becoming a spurious OK. Archived warning events retain their recorded origin and timestamp. Negative assertions added to existing `tests/automation-warning-events.test.cjs` which already runs in CI.
+- Source branch: `granada/automations-origin-integrity-20261118`; [root-cause and acceptance audit](docs/audits/2026-11-18-automations-origin-integrity.md). No user account access or code publication; v120.80 is still latest official stable. CI exact head, installed Windows visual/manual comparison, owner physical Acceptance #298 and P0 Instagram #360 are OPEN until separately evidenced. v120.81 authorization not granted.
+
 ## 2026-11-17 local / 2026-11-18 UTC — FINAL v120.80 published and single-use authority consumed
 
 - [Official v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), immutable tagged commit `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`. [Governed publisher #44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) **4/4 SUCCESS**; 9 GitHub SHA-256 recorded public FINAL stable assets, including installed Windows Setup, production-signed Android APK installed/started, exact-commit rendered UI, Desktop standalone HTML.
