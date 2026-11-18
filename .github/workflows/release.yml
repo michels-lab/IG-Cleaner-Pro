@@ -60,8 +60,25 @@ jobs:
             sleep 20
           done
           test -n "$RUN_ID" || { echo "::error::No successful exact-commit Android UI render run"; exit 1; }
+          # Cancelled reruns can publish an empty artifact with the SAME name.
+          # Select exactly one complete artifact by ID, not a name-only download.
+          # The next step still validates the source SHA, APK hash and pixels.
+          python3 -m unittest discover -s tests -p 'test_select_android_release_visual_artifact.py' -v
+          ARTIFACT_NAME="ig-cleaner-real-android-about-${GITHUB_SHA}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" > /tmp/igc-android-artifacts.json
+          ARTIFACT_ID="$(python3 tools/select_android_release_visual_artifact.py --metadata /tmp/igc-android-artifacts.json --name "$ARTIFACT_NAME" --run "$RUN_ID")"
+          echo "Exact-run Android evidence artifact ID: $ARTIFACT_ID"
           mkdir -p visual-evidence
-          gh run download "$RUN_ID" --name "ig-cleaner-real-android-about-${GITHUB_SHA}" --dir visual-evidence
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            --output /tmp/igc-android-artifact.zip
+          unzip -tq /tmp/igc-android-artifact.zip >/dev/null
+          unzip -q /tmp/igc-android-artifact.zip -d visual-evidence
+          test -s visual-evidence/manifest.json
+          test -s visual-evidence/michelslab-manifest.json
+          test -s visual-evidence/app-debug.apk
       - name: Verify real About screenshots match candidate commit and APK
         run: |
           python3 -m pip install Pillow==11.3.0

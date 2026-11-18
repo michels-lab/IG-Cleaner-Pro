@@ -85,9 +85,9 @@ jobs:
       - name: Bind screenshot artifact to actual installed debug APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/visual/app-debug.apk
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: ig-cleaner-real-android-about-${{ github.sha }}
           path: artifacts/visual/
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
