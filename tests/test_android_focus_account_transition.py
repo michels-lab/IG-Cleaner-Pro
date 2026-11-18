@@ -64,8 +64,9 @@ class NativeFocusTransitionRegression(unittest.TestCase):
         self.assertIn("postAccountTransitionAndWait(() -> {", bridge)
         self.assertIn("resetAfterAccountChange(true)", bridge,
                       "A WebView-mediated login must not destroy the active WebView")
-        resets = SOURCE[SOURCE.index("private void resetAfterAccountChange()"):
-                        SOURCE.index("private void showWorkspaceScreen(")]
+        reset_start = SOURCE.index("private void resetAfterAccountChange()")
+        resets = SOURCE[reset_start:
+                        SOURCE.index("private void showWorkspaceScreen(", reset_start)]
         self.assertIn("if (!preserveActiveWebView) disposeWorkspaceWebView();", resets)
 
     def test_confirmed_profile_deletion_commits_legacy_scope_before_next_job(self):
