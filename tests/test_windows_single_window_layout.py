@@ -35,6 +35,32 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     picker.chrome_workspace_path(root, invalid)
 
+    def test_native_choice_maps_each_button_and_cancel_without_side_effects(self):
+        import ctypes
+        from unittest.mock import patch
+
+        class TaskDialogStub:
+            def __init__(self, selected):
+                self.selected = selected
+            def __call__(self, config, output, *_args):
+                self_config = config._obj
+                assert self_config.cButtons == 2
+                assert self_config.nDefaultButton == 101
+                assert "cuenta" in self_config.pszMainInstruction.lower()
+                ctypes.cast(output, ctypes.POINTER(ctypes.c_int)).contents.value = self.selected
+                return 0
+
+        class FakeLibrary:
+            def __init__(self, selected):
+                self.TaskDialogIndirect = TaskDialogStub(selected)
+
+        for selected, expected in ((101, "primary"), (102, "secondary"), (2, None)):
+            with self.subTest(button=selected):
+                with patch.object(picker.sys, "platform", "win32"), \\
+                     patch.object(ctypes, "WinDLL", return_value=FakeLibrary(selected),
+                                  create=True):
+                    self.assertEqual(picker.select_workspace(), expected)
+
     def test_named_mutex_guards_slots_independently(self):
         a = picker.instance_mutex_name("primary")
         b = picker.instance_mutex_name("secondary")
