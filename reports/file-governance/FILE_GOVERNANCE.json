@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 10,
-  "inventory_fingerprint": "6c7003094f0f6cac542c1cb577706a9371e6501c80702a560ca75070b72c806b",
+  "inventory_fingerprint": "dd49db8834c42b46175c4f223b3f5ae9bcaceb169be2b47e84f2480d95f26256",
   "evidence_fingerprint": "91cf7bc5b47592fcd8b709c3700a838f9f0759a39ebc69e9c8d3b39001045ba7",
   "files": [
     {
@@ -260,7 +260,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "bc46b9e38a1e4028bb5e09c43e1572cfc72ab9bf"
+      "blob": "e64d92da632c2836a5ac91cb316d3e002f60af91"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -1576,7 +1576,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "06f4822adeba114f6eaea241578583d4cc778979"
+      "blob": "c9002f15d8445704bb15a507ee4b9348e231d5d3"
     },
     {
       "path": "docs/audits/2026-11-17-automation-history-casefold-reconciliation.md",
@@ -1688,7 +1688,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "4e3f725042ba103752155ee41579037ce599a9b2"
+      "blob": "a89085236799f5cba2f9a6fc98e9bf042adc594c"
     },
     {
       "path": "release/android-signing.json",
