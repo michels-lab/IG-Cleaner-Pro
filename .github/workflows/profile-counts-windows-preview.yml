@@ -467,11 +467,25 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content release/android-signing.json -Raw | ConvertFrom-Json).versionName
-          ./tools/build_windows_installer.ps1 -PayloadDir artifacts/profile-counts-preview -Version $version -AllowCurrentStablePreview
-          if ($LASTEXITCODE -ne 0) { throw "Setup creation failed." }
-          ./tools/test_windows_installer_wizard.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Screenshot artifacts/IG-Cleaner-Pro-Installer-EULA.png
-          ./tools/test_windows_installer.ps1 -Installer "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe" -Version $version
-          if ($LASTEXITCODE -ne 0) { throw "Installed Windows runtime failed QA." }
+          # Run GUI/installer QA in supervised child PowerShell processes.
+          # A frozen UIAutomation wizard must fail explicitly, never leave a
+          # green-looking preview with an indefinitely in-progress install.
+          . ./tools/installer_process_guard.ps1
+          $pwsh = (Get-Command pwsh).Source
+          $installer = "artifacts/IG-Cleaner-Pro-Windows-Setup-v$version.exe"
+          Invoke-IgcBoundedProcess -Path $pwsh -Arguments @(
+            '-NoProfile','-NonInteractive','-File','tools/build_windows_installer.ps1',
+            '-PayloadDir','artifacts/profile-counts-preview','-Version',$version,
+            '-AllowCurrentStablePreview'
+          ) -Label 'Build Windows Setup' -TimeoutSeconds 600
+          Invoke-IgcBoundedProcess -Path $pwsh -Arguments @(
+            '-NoProfile','-NonInteractive','-File','tools/test_windows_installer_wizard.ps1',
+            '-Installer',$installer,'-Screenshot','artifacts/IG-Cleaner-Pro-Installer-EULA.png'
+          ) -Label 'Windows installer license-wizard UI acceptance' -TimeoutSeconds 240
+          Invoke-IgcBoundedProcess -Path $pwsh -Arguments @(
+            '-NoProfile','-NonInteractive','-File','tools/test_windows_installer.ps1',
+            '-Installer',$installer,'-Version',$version
+          ) -Label 'Installed Windows runtime, upgrade, uninstall and data preservation' -TimeoutSeconds 900
       - name: Build and smoke independent Developer Windows Setup
         shell: pwsh
         run: |

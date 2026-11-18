@@ -130,7 +130,7 @@
                 app:strokeWidth="1dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center_vertical" android:padding="14dp">
                     <TextView android:id="@+id/homePendingCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/ig_gold" android:textSize="21sp" android:textStyle="bold" android:fontFamily="monospace"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="REQUESTS" android:textAppearance="@style/TextAppearance.IGC.Micro"/>
+                    <TextView android:id="@+id/homePendingLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="SAVED REQUESTS" android:textAppearance="@style/TextAppearance.IGC.Micro"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
