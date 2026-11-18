@@ -141,35 +141,51 @@ function classify(record){
  return 'unconfirmed';
 }
 function summarize(records,id,now){
- const lower=cutoff(id,now), upper=now.getTime();
+ const lower=cutoff(id,now),upper=now.getTime();
  const out={verified:0,unfollow:0,cancel:0,warning:0,no_action:0,unavailable:0,
    legacy_unknown:0};
- const unique=new Set(),warningEvents=new Set();
+ // Legacy journals can hold the SAME Instagram handle with different casing.
+ // Selecting the first saved row depends on JSON insertion order and can
+ // suppress a later verified OK (or incorrectly resurrect an old OK).
+ // Select the newest dated outcome per task + casefolded handle, while
+ // retaining distinct dated Review/blocked/error events from EVERY row.
+ const groups=new Map(),warningEvents=new Set();
+ function recordWarning(key,status,at){
+   if(!['review','error','blocked'].includes(status))return;
+   const when=dateValue(at);
+   if(!Number.isFinite(when)||when<lower||when>upper)return;
+   const eventKey=key+':'+status+':'+at;
+   if(warningEvents.has(eventKey))return;
+   warningEvents.add(eventKey);
+   out.warning++;
+ }
  for(const r of records){
    if(!r||!['unfollow','cancel'].includes(r.task)||!HANDLE.test(r.username||''))continue;
    const key=r.task+':'+r.username.toLowerCase();
-   if(unique.has(key))continue;unique.add(key);
-   const t=dateValue(r.at),category=classify(r);
-   // A later OK is a single confirmed action. A prior failed/review attempt
-   // remains a warning at ITS own event time, never another verified click.
-   if(Number.isFinite(t)&&t>=lower&&t<=upper&&
-      Object.prototype.hasOwnProperty.call(out,category)){
-     if(category==='warning'){
-       warningEvents.add(key+':'+r.status+':'+r.at);
-       out.warning++;
-     }else{
-       out[category]++;
-       if(category==='verified')out[r.task]++;
+   if(!groups.has(key))groups.set(key,{latest:null,at:-Infinity,conflict:false});
+   const group=groups.get(key),t=dateValue(r.at);
+   if(Number.isFinite(t)){
+     if(t>group.at){
+       group.latest=r;group.at=t;group.conflict=false;
+     }else if(t===group.at&&group.latest&&
+       (group.latest.status!==r.status||group.latest.origin!==r.origin)){
+       // Equal-time conflicting evidence is ambiguous: never choose a
+       // verified click based only on which saved record came first.
+       group.conflict=true;
      }
    }
+   recordWarning(key,r.status,r.at);
    for(const past of (Array.isArray(r.warning_events)?r.warning_events:[])){
-     if(!past||!['review','error','blocked'].includes(past.status))continue;
-     const when=dateValue(past.at);
-     if(!Number.isFinite(when)||when<lower||when>upper)continue;
-     const eventKey=key+':'+past.status+':'+past.at;
-     if(warningEvents.has(eventKey))continue;
-     warningEvents.add(eventKey);
-     out.warning++;
+     if(past)recordWarning(key,past.status,past.at);
+   }
+ }
+ for(const group of groups.values()){
+   if(!group.latest||group.conflict||group.at<lower||group.at>upper)continue;
+   const category=classify(group.latest);
+   if(category==='warning')continue; // Included above at the event's own time.
+   if(Object.prototype.hasOwnProperty.call(out,category)){
+     out[category]++;
+     if(category==='verified')out[group.latest.task]++;
    }
  }
  return out;
