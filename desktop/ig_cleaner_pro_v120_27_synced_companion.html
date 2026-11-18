@@ -4523,10 +4523,12 @@ function setActiveFocusBatch(kind,rows,label){
   return true;
 }
 function clearActiveFocusBatch(){
+  // Commit the persistent delete before clearing the displayed cohort.
+  // The previous two-delete path could leave RAM empty after SecurityError
+  // while the old batch still existed on disk and would return on reload.
+  localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
-  try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
-  saveActiveFocusBatch();
   renderActiveBatchDock();
 }
 function activeBatchRowResolved(row,kind){
