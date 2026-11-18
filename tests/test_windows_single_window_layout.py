@@ -23,6 +23,12 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                              root / "workspace-browser-secondary")
             self.assertNotEqual(picker.chrome_workspace_path(root, "primary"),
                                 picker.chrome_workspace_path(root, "secondary"))
+            self.assertEqual(picker.ui_document_path(root, "primary"),
+                             root / "IG-Cleaner-Pro.html")
+            self.assertEqual(picker.ui_document_path(root, "secondary"),
+                             root / "second-window" / "IG-Cleaner-Pro.html")
+            self.assertNotEqual(picker.ui_document_path(root, "primary"),
+                                picker.ui_document_path(root, "secondary"))
             self.assertEqual((existing / "History").read_text(), "KEEP")
             self.assertFalse((root / "workspace-browser-secondary").exists())
             for invalid in ("", "third", "../primary", "PRIMARY"):
