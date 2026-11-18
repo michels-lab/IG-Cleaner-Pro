@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 454,
-  "classified_files_total": 450,
-  "docs_content_inspected": 114,
+  "tracked_files_total": 455,
+  "classified_files_total": 451,
+  "docs_content_inspected": 115,
   "large_docs_skipped": 1,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 109,
+    "document": 110,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 8
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "31341a33ec45ab04ca40162b8ae18de71e3c2fc0d2eb55f69b10c8a940cb8cd6",
-  "evidence_fingerprint": "3c88613abc973770c391ba1fddecfa913a177d78ce92500f9a07449f7d02d152",
+  "finding_total": 8,
+  "inventory_fingerprint": "98509038e00bbafce4cf940adf2906b4df7579c085125e000edc709c266573f7",
+  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -127,7 +126,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "3f17735793ab7e13ee58d206099c2e921b546a9a"
+      "blob": "0787a50b8c9940e7611d0223c09ea425f39e02a1"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -246,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "7b870abbb0bd3e35a32a1106080fdb8d3007c7a4"
+      "blob": "f912aa5396edec1872992a7f5b0a7d91497f50c9"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "eaf659251729d19438965b307f325049d262d6f8"
+      "blob": "a8c0e3efe6245dc1a3d17d88113251cbd6a4402b"
     },
     {
       "path": "README_SYNC.md",
@@ -344,7 +343,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "a1e86d1d5cb0bf4e13478986200286a3f79a79b6"
+      "blob": "c7e16d87c3b21320b0819aaeb05c7c85c626a4a6"
     },
     {
       "path": "android/app/src/main/java/com/michelslab/igcleaner/ProfileAdapter.java",
@@ -638,7 +637,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "2f6b8234ee034796e4a884ef311889078f18a4df"
+      "blob": "a0b264acc22c06fa27e0c629d80bfda2a69e3ecd"
     },
     {
       "path": "android/app/src/main/res/layout/screen_workspace.xml",
@@ -855,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "38ffc138c294655736fdeb0f531efebb33868957"
+      "blob": "2872ef748093056cb5ccfa9e32ac57a141c952ac"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1593,6 +1592,13 @@
       "blob": "adaae6767255a0a07bfea9f3dc358b2122f48843"
     },
     {
+      "path": "docs/audits/2026-11-17-pending-android-html-52-vs-zero.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "5811574429c903c7bc5360e3f949710e815396a2"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -1905,7 +1911,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "05af4e32c3a8404ad2874b6af779802d19390f05"
+      "blob": "3f996ed02ec250994bc3cded7a37bf4b50e7c3c5"
     },
     {
       "path": "tests/cloud-review-monotonic.test.cjs",
@@ -2472,7 +2478,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c3d1a2d14da36e50d51850c05f46fad791870d29"
+      "blob": "1cfb146cca4b04f4a0ee1e6319f9c79370aa316e"
     },
     {
       "path": "tests/test_automation_warning_events.py",
@@ -3253,15 +3259,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "3b2dff6fdde3d675",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "3 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, android/app/src/main/java/com/michelslab/igcleaner/MainActivity.java, tests/test_android_focus_account_transition.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
