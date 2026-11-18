@@ -49,13 +49,11 @@ jobs:
           node tests/desktop-standalone-smoke.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Verify actual Desktop Chromium file-to-localhost Profile Counts bridge
         run: node tests/profile-counts-browser-e2e.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
-      - name: Verify GRANADA Windows Analysis/Action command center in real Chromium
+      - name: Verify GRANADA four-section Automations navigation in real Chromium
         run: node tests/automation-center-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Read-only LIVE Followers/Following snapshot in real browser
         run: node tests/live-relationships-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
-      - name: Detach two Instagram workspaces into separate owner-bound Chromium windows
-        run: node tests/two-workspaces-windows-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
-      - name: Verify compact second-account sidebar in real Chromium
+      - name: Verify one Instagram account per workspace at compact and wide widths
         run: node tests/dual-workspace-sidebar-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
       - name: Click Switch Accounts and restore a separate saved login in Chromium
         run: node tests/auth-account-switch-browser.test.cjs artifacts/desktop-visual/IG-Cleaner-Pro-standalone-tested.html
