@@ -12,7 +12,7 @@
 
 ## Pending Android vs HTML (source fix pending QA)
 
-Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. A source-only fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, and labels Android Pending numbers by cache/cloud provenance and import age. **Not yet shipped in v120.79.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
+Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. A source-only fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, loads **complete paginated Android review history** instead of treating a server-capped page as the full history, and labels Android Pending numbers by cache/cloud provenance and import age. **Not yet shipped in v120.79.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
 
 ## Operación Granada — auditoría de aplicación y plugins (2026-10-21)
 
