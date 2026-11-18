@@ -4386,7 +4386,7 @@ function igcEncodeFocusBatchQuota(batch){
     const href=row.href;
     const canonical='https://www.instagram.com/'+user+'/';
     const flags=(row.iFollow?1:0)|(row.isFollower?2:0)|(row.followsBack?4:0)|(row.relationGood?8:0);
-    return [user,href===canonical?0:(href===undefined?null:href),row.name||'',row.relation||'',
+    return [user,href===canonical?0:(href===undefined?null:(href===null?1:href)),row.name||'',row.relation||'',
       row.riskScore||0,row.riskLevel||'',row.riskReasons||[],row.timestamp||0,
       row.dateMain||0,row.dateOther||0,flags];
   })};
@@ -4402,10 +4402,9 @@ function igcDecodeActiveFocusBatch(saved){
          values[10]<0||values[10]>15)throw Error('Invalid quota-safe Focus row');
       const [username,href,name,relation,riskScore,riskLevel,riskReasons,
         timestamp,dateMain,dateOther,flags]=values;
-      if((typeof href!=='string'&&href!==0&&href!==null)||typeof name!=='string'||typeof relation!=='string'||
-         !Array.isArray(riskReasons))throw Error('Invalid quota-safe Focus fields');
+      if((typeof href!=='string'&&href!==0&&href!==1&&href!==null)||typeof name!=='string'||typeof relation!=='string')throw Error('Invalid quota-safe Focus fields');
       return safeBatchRow({username,
-        href:href===0?'https://www.instagram.com/'+username+'/':(href===null?undefined:href),
+        href:href===0?'https://www.instagram.com/'+username+'/':(href===null?undefined:(href===1?null:href)),
         name,relation,riskScore,riskLevel,riskReasons,timestamp,dateMain,dateOther,
         iFollow:!!(flags&1),isFollower:!!(flags&2),
         followsBack:!!(flags&4),relationGood:!!(flags&8)});
