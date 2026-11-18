@@ -126,5 +126,27 @@ class NativeWorkspaceRaceRegression(unittest.TestCase):
                       'Focus and Home must not disagree about Pending reviews')
 
 
+    def test_legacy_duplicate_pending_usernames_have_one_counter_and_focus_target(self):
+        # Legacy cloud snapshots may hold duplicate names/case variants;
+        # raw rows are preserved for backup, but all decisions are per username.
+        count = SOURCE[SOURCE.index('private int countPendingUnresolved('):
+                       SOURCE.index('private void renderMobileWorkspace()')]
+        render = SOURCE[SOURCE.index('private void renderMobileWorkspace()'):
+                        SOURCE.index('private String pendingSourceExplanation()')]
+        focus = SOURCE[SOURCE.index('private List<JSONObject> buildNativeFocusCandidates(')
+                       if 'private List<JSONObject> buildNativeFocusCandidates(' in SOURCE
+                       else SOURCE.index('} else if ("pending".equals(module)) {',
+                                             SOURCE.index('private void refreshFocusSourceData()')):]
+        self.assertIn('for (String username : pendingRows.keySet())', count)
+        self.assertIn('Map<String, JSONObject> pendingMapNative = jsonArrayByUsername(syncedPending)', render)
+        self.assertIn('countPendingUnresolved(pendingMapNative, pendingReviewed, pendingSnooze)', render)
+        self.assertIn('for (Map.Entry<String, JSONObject> entry : pendingMapNative.entrySet())', render)
+        self.assertIn('total = pendingMapNative.size()', render)
+        self.assertIn('pendingMapNative.size() + " saved requests"', render)
+        self.assertIn('jsonArrayByUsername(syncedPending).entrySet()', focus)
+        self.assertNotIn('for (int i = 0; i < syncedPending.length(); i++)', SOURCE,
+                         'Every Pending UI and Focus enumeration must deduplicate')
+
+
 if __name__ == "__main__":
     unittest.main()
