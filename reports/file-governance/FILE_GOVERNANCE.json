@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 453,
-  "classified_files_total": 449,
-  "docs_content_inspected": 117,
+  "tracked_files_total": 455,
+  "classified_files_total": 451,
+  "docs_content_inspected": 118,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 113,
+    "document": 114,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 139,
+    "test": 140,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "8379f2c49fe3a7ce881db15c45b7a91e24d9a38b166e1e7911e6329bcd20e27d",
+  "inventory_fingerprint": "5183931f8ba09bd4694c81b4cf03716ee0a848f4408e6e37cd696efe505d5031",
   "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "e065a96206fcb6698fe6e45d4da7e734b607b453"
+      "blob": "f77361e61b51d55307b7558840be59a3304eba2b"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -245,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "4b407704eddfa61635fe7c07ab996dfa74bcb1e9"
+      "blob": "a290c681bff77992aa71adcbb9dc877a09e863b1"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "f077cc9468f60afc4b7f3aea696904c1823d4b18"
+      "blob": "33164f73de995786f6593c53a170889d74ecd158"
     },
     {
       "path": "README_SYNC.md",
@@ -854,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "deb3acadd6e8af9116c199935252691dcacce235"
+      "blob": "9b7d0822397d74a4cc3e7fba17e3ed1d26da5fc0"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -882,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a49d783d8743d87abfda217e4a72bc0aeb286040"
+      "blob": "361fa4ddd32aa965b9de02081366bcc79bc02430"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1613,6 +1613,13 @@
       "blob": "47ec28f85294072acc34782706ac1dd76a62a2b2"
     },
     {
+      "path": "docs/audits/2026-11-18-focus-quota-fallback.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "31971d9f6240b6555ff5be26c6e8c75099af37cc"
+    },
+    {
       "path": "docs/audits/2026-11-18-two-windows-installer-ux.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2164,6 +2171,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "b82bb9a4a71705f33726cbed0fc638fca2c0f9b7"
+    },
+    {
+      "path": "tests/focus-quota-alternative.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a1f8c646b6ec4d1817b339a55c9218b471e0d275"
     },
     {
       "path": "tests/focus-storage-all-modes.test.cjs",
