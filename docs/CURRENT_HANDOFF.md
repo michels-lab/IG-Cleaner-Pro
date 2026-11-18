@@ -1,4 +1,11 @@
-## 2026-11-17 — v120.80 owner-requested FINAL stable candidate (NOT PUBLISHED)
+## 2026-11-17 local / 2026-11-18 UTC — InstaCleaner FINAL v120.80 PUBLISHED
+
+- Official [FINAL v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), immutable source `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`, [governed publisher #44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) **4/4 SUCCESS**, 9 SHA-256-verifiable assets. Installed Windows Setup/upgrade/uninstall and production-signed stable Android APK installed/started; exact-source rendered Desktop and Android visual evidence green.
+- Source PR #373 and #374 merged and verified: Android 52 Pending vs newer explicitly imported empty HTML, correct provenance, complete paginated review history, unique Pending usernames, and Focus account A→B→A / sign-out / WebView transition isolation. Raw owner data not inspected or deleted.
+- Owner tests remain open: real Instagram account Focus, counters after reload, Pending actual value, Windows Unfollow/Cancel, two Chrome accounts and Android/Windows cross-device acceptance (#24, #360). Do not equate CI with verified real Instagram actions.
+- Single-use authorization consumed in release-request/readiness, `release_hold=true`, `owner_final_acceptance.approved=false`; NEXT v120.81 reserved **NOT AUTHORIZED**. Do not republish any v120.80 tag or issue RC/Developer build. [Final receipt](GRANADA_V12080_FINAL_RECEIPT_2026-11-17.md).
+
+## 2026-11-17 — Historical v120.80 staging (superseded by final publication above)
 
 - Instruction: 'op granada completa y release'. One-time authorization only for v120.80 after exact-head installed Windows, signed Android, visual QA, checksum and official publisher success. Existing release_hold=true and owner_final_acceptance.approved=false remain.
 - PR #373: Pending 52 vs 0 provenance/freshness, complete Android review pagination, deduplicated Pending. PR #374: native Focus A-B-A session-owner transition barrier and stale operation rejection. Require green CI before integration.
