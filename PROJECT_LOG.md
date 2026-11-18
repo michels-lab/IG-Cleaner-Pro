@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA P0 REST A→B→A and Reviewed durability consolidation (source only)
+
+- Integrated [PR #383](https://github.com/michels-lab/IG-Cleaner-Pro/pull/383) into main at `cc26f5dc`: manual Reviewed confirmation uses a fail-closed two-key durable transaction before UI/session counters or cloud sync. Six exact-head checks succeeded; no real Instagram acceptance and no release claimed.
+- Reconciling [PR #382](https://github.com/michels-lab/IG-Cleaner-Pro/pull/382) on top of the atomic Reviewed code in an isolated clean branch: stamp cloud REST calls with app owner, Instagram slot and switch generation; late A→B→A or old-account JWT retries fail closed. Regression tests for race and persistent original histories; [audit](docs/audits/2026-11-18-inflight-instagram-rest-guard.md).
+- Existing #360/#371/#377 remain open until physical browser and dual-account acceptance. Release stable v120.80 unchanged; reserved v120.81 not authorized. No account cookies or historical decisions deleted.
+
 ## 2026-11-18 — GRANADA Focus cuota almacenamiento (fuente)
 
 - Reproducción lógica #371: v2 compacto todavía puede exceder la cuota de localStorage. Nuevo fallback v3 **solo ante error de cuota**, reversible, conserva la representación entera de la tanda, flags y enlaces originales, sin modificar Reviewed/Pending/protegidos/historial. Con 30 perfiles, 4,091→2,510 caracteres, rond-trip exacto. Si no cabe, falla de forma explícita y no registra revisiones ni abre pestañas.

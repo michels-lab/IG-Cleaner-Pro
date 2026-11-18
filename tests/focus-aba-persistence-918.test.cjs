@@ -87,6 +87,8 @@ assert.deepEqual(totals(),{main:60,recheck:120,doubleCheck:120,reviewed:60},
 identity.switch(A);load(A,aRows);
 assert.deepEqual(totals(),{main:404,recheck:918,doubleCheck:918,reviewed:514});
 assert.equal(reloads,4);
+assert.equal(identity.generation,4,
+ "Each real A-B-A switch must increment the in-flight request invalidation generation");
 const aKey="igc_profile__"+ctx.IGC_INSTAGRAM_OWNER+"__"+A+"__ig_v13_done";
 const bKey="igc_profile__"+ctx.IGC_INSTAGRAM_OWNER+"__"+B+"__ig_v13_done";
 assert.equal(JSON.parse(rawMap.get(aKey)).length,514);
