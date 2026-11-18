@@ -71,6 +71,28 @@ class DesktopAppTests(unittest.TestCase):
             native.release_single_instance(second)
             native.release_single_instance(handle)
 
+    def test_cancelling_account_chooser_starts_no_server_chrome_or_user_data(self):
+        # Native dialog Cancel is a true no-op: no local action controller,
+        # no Chrome tab, no accidental identity migration or workspaces.
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with (patch.object(native.sys, "platform", "win32"),
+                  patch.object(native, "bundled_html", return_value=root / "bundle.html"),
+                  patch.object(native, "select_workspace", return_value=None) as picker,
+                  patch.object(native, "prepare_html") as prepare,
+                  patch.object(native, "acquire_single_instance") as mutex,
+                  patch.object(native, "build_server") as backend,
+                  patch.object(native, "chrome_path") as browser,
+                  patch.object(native.subprocess, "Popen") as spawn):
+                self.assertEqual(native.main([]), 0)
+                picker.assert_called_once_with()
+                prepare.assert_not_called()
+                mutex.assert_not_called()
+                backend.assert_not_called()
+                browser.assert_not_called()
+                spawn.assert_not_called()
+                self.assertEqual(list(root.iterdir()), [])
+
     def test_app_same_server_as_actions_and_counts(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -23,6 +23,15 @@ const {chromium}=require('playwright');
    const nav=page.locator('#igcAutomationCommandCenter');
    assert(await nav.isVisible(),'Automations navigation must be visible');
    assert.equal(await nav.locator('[role=tab]').count(),4);
+   for(const [name,caption] of [['Analysis','Analizar'],['Actions','Acciones'],
+      ['Review','Revisar'],['History','Historial']]){
+     const element=page.locator('#igcAutomationTab'+name);
+     assert((await element.innerText()).includes(caption),
+       'Navigation needs an understandable Spanish section name: '+caption);
+     const controlled=await element.getAttribute('aria-controls');
+     assert(controlled&&await page.locator('#'+controlled).count()===1,
+       'Each tab must identify exactly one existing content panel');
+   }
    assert.equal(await page.locator('.igc-dual-workspace,#igcDualActionWorkspacePanel').count(),0,
      'Never show two accounts in a single app window');
    assert.equal(await page.locator('#igcAutoRun').count(),1,
@@ -46,7 +55,21 @@ const {chromium}=require('playwright');
    assert(await page.locator('#igcAnalysisRobotSection').isVisible());
    assert(!await page.locator('#igcActionRobotSection').isVisible());
    assert.equal(await page.locator('#igcAutomationTabAnalysis').getAttribute('aria-selected'),'true');
+   assert.equal(await page.locator('#igcAnalysisRobotSection').getAttribute('role'),'tabpanel');
+   assert.equal(await page.locator('#igcAnalysisRobotSection').getAttribute('aria-labelledby'),'igcAutomationTabAnalysis');
    assert(await page.locator('#igcCountsRobotConnect').count()===1);
+   // Keyboard-only navigation must switch a single visible panel without
+   // initiating an Unfollow, Cancel, or account/browser action.
+   await page.locator('#igcAutomationTabAnalysis').focus();
+   await page.keyboard.press('ArrowRight');
+   assert.equal(await page.locator('#igcAutomationTabActions').getAttribute('aria-selected'),'true');
+   assert(await page.locator('#igcActionRobotSection').isVisible());
+   await page.keyboard.press('End');
+   assert.equal(await page.locator('#igcAutomationTabHistory').getAttribute('aria-selected'),'true');
+   assert(await page.locator('#igcAutomationActivitySection').isVisible());
+   await page.keyboard.press('Home');
+   assert.equal(await page.locator('#igcAutomationTabAnalysis').getAttribute('aria-selected'),'true');
+   assert(await page.locator('#igcAnalysisRobotSection').isVisible());
    await page.locator('#igcAutomationTabActions').click();
    assert(await page.locator('#igcActionRobotSection').isVisible());
    for(const action of ['Unfollow','Cancel','Protected','Audit'])

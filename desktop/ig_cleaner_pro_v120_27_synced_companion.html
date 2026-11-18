@@ -3756,11 +3756,11 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 #page-automations .igc-robot-review > .panel{margin:0!important;border:0;border-radius:0}
 @media(max-width:650px){#page-automations .igc-automation-nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-<div id="igcAutomationCommandCenter" class="igc-automation-nav" role="tablist" aria-label="Automations sections">
-<button type="button" id="igcAutomationTabAnalysis" role="tab" aria-selected="false" onclick="igcAutomationNavigate('analysis')">Analyze<span>Read-only checks</span></button>
-<button type="button" id="igcAutomationTabActions" role="tab" aria-selected="true" onclick="igcAutomationNavigate('actions')">Actions<span>Unfollow · Cancel</span></button>
-<button type="button" id="igcAutomationTabReview" role="tab" aria-selected="false" onclick="igcAutomationNavigate('review')">Review<span>Unresolved profiles</span></button>
-<button type="button" id="igcAutomationTabHistory" role="tab" aria-selected="false" onclick="igcAutomationNavigate('history')">History<span>Activity &amp; results</span></button>
+<div id="igcAutomationCommandCenter" class="igc-automation-nav" role="tablist" aria-label="Secciones de automatizaciones">
+<button type="button" id="igcAutomationTabAnalysis" role="tab" aria-controls="igcAnalysisRobotSection" aria-selected="false" onclick="igcAutomationNavigate('analysis')">Analizar<span>Lecturas sin cambios</span></button>
+<button type="button" id="igcAutomationTabActions" role="tab" aria-controls="igcActionRobotSection" aria-selected="true" onclick="igcAutomationNavigate('actions')">Acciones<span>Dejar de seguir · Cancelar</span></button>
+<button type="button" id="igcAutomationTabReview" role="tab" aria-controls="igcAutomationReviewSection" aria-selected="false" onclick="igcAutomationNavigate('review')">Revisar<span>Pendientes y errores</span></button>
+<button type="button" id="igcAutomationTabHistory" role="tab" aria-controls="igcAutomationActivitySection" aria-selected="false" onclick="igcAutomationNavigate('history')">Historial<span>Resultados y actividad</span></button>
 </div>
 <p class="note igc-robot-safety" id="igcAutomationConcurrencyNotice"><strong>Browser session safety:</strong> Profile Counts and relationship-changing robots cannot navigate Instagram simultaneously in the current Windows runtime. Finish or pause one before starting the other. Local-only analysis and saved results remain available. Do not retry an uncertain click.</p>
 <section class="igc-robot-section" id="igcActionRobotSection" aria-labelledby="igcActionLaneTitle">
@@ -18063,7 +18063,11 @@ function navigate(area,scroll=false){
  const sections={analysis:get('igcAnalysisRobotSection'),actions:get('igcActionRobotSection'),
   review:get('igcAutomationReviewSection'),history:ensureHistory()};
  for(const key of ['analysis','actions','review','history']){
-  if(sections[key])sections[key].hidden=key!==area;
+  if(sections[key]){
+   sections[key].hidden=key!==area;
+   sections[key].setAttribute('role','tabpanel');
+   sections[key].setAttribute('aria-labelledby','igcAutomationTab'+key[0].toUpperCase()+key.slice(1));
+  }
   const tab=get('igcAutomationTab'+key[0].toUpperCase()+key.slice(1));
   if(tab){tab.setAttribute('aria-selected',String(key===area));tab.tabIndex=key===area?0:-1}
  }
@@ -18071,6 +18075,25 @@ function navigate(area,scroll=false){
  if(area==='history')window.igcAutomationActivityRefresh?.();
 }
 window.igcAutomationNavigate=area=>navigate(area,true);
+// Roving tab stops: keyboard users can reach every section without cycling
+// through hidden controls. No robot starts from these navigation shortcuts.
+const automationTabs=get('igcAutomationCommandCenter');
+automationTabs?.addEventListener('keydown',event=>{
+ const tab=event.target.closest?.('[role="tab"]');
+ if(!tab||!automationTabs.contains(tab))return;
+ const order=['analysis','actions','review','history'];
+ const current=order.findIndex(key=>tab.id==='igcAutomationTab'+key[0].toUpperCase()+key.slice(1));
+ if(current<0)return;
+ let next=current;
+ if(event.key==='ArrowRight'||event.key==='ArrowDown')next=(current+1)%order.length;
+ else if(event.key==='ArrowLeft'||event.key==='ArrowUp')next=(current-1+order.length)%order.length;
+ else if(event.key==='Home')next=0;
+ else if(event.key==='End')next=order.length-1;
+ else return;
+ event.preventDefault();
+ navigate(order[next]);
+ get('igcAutomationTab'+order[next][0].toUpperCase()+order[next].slice(1))?.focus();
+});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>navigate('actions'),{once:true});
 else navigate('actions');
 })();

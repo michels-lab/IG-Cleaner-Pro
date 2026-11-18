@@ -10,6 +10,10 @@
 
 **v120.80 authorization consumed. Next reserved v120.81 is not authorized or published.**
 
+## Upcoming Granada — both installed Windows account slots and clearer Automations (unreleased)
+
+After merging [#376](https://github.com/michels-lab/IG-Cleaner-Pro/pull/376), source work now checks that the **installed** Windows app initializes both the original and second account slot without sharing a Chrome profile or HTML file origin. Installer upgrade and uninstall must preserve saved data for both. Automations uses the clearly labeled tabs **Analizar / Acciones / Revisar / Historial**, with arrow-key, Home/End and screen-reader tab controls. See the [implementation and acceptance audit](docs/audits/2026-11-18-two-windows-installer-ux.md) and [owner issue #377](https://github.com/michels-lab/IG-Cleaner-Pro/issues/377). **Not present in published v120.80.** Physical simultaneously open Windows and signed-in Instagram A/B acceptance remain open; no release authorization for v120.81.
+
 ## Post-v120.80 GRANADA source work (not yet released)
 
 The Windows Automations activity panel now has a source-branch **robot-confirmed versus unknown legacy-origin filter**. It applies the same period tiles and journal view while preserving contradictory same-time records as unresolved instead of inventing successes. [Implementation audit](docs/audits/2026-11-18-automations-origin-integrity.md) · [Owner issue #298](https://github.com/michels-lab/IG-Cleaner-Pro/issues/298). **Source only: not in published v120.80, with no new stable release and no real-user Windows proof.** Manual+robot combined totals are not claimed.

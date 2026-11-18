@@ -98,6 +98,21 @@ for token in ("--healthcheck", "--smoke-startup", "unins000.exe",
     else:
         assert token in smoke, f"Windows install test missing: {token}"
 
+# The installed Windows acceptance MUST exercise both account slots, not
+# merely prove that the secondary option exists in Python unit tests.
+for token in (
+    "'--smoke-startup','--workspace','secondary'",
+    "'second-window\\IG-Cleaner-Pro.html'",
+    "'workspace-browser-secondary'",
+    "'installer-test-primary-do-not-delete.txt'",
+    "'installer-test-secondary-do-not-delete.txt'",
+    "In-place setup replaced or lost either persisted account",
+    "Uninstall must not erase either account or its Chrome data",
+):
+    assert token in smoke, f"Installed two-account persistence test omitted: {token}"
+assert "if ($firstUiDigest -ne $secondUiDigest)" in smoke
+assert "Get-FileHash -LiteralPath $secondUi" in smoke
+
 # Enforce real bounded subprocesses rather than misleading RunBounded -Wait.
 guard = (ROOT / "tools/installer_process_guard.ps1").read_text(encoding="utf-8")
 guard_tests = (ROOT / "tests/test_installer_process_guard.ps1").read_text(encoding="utf-8")
