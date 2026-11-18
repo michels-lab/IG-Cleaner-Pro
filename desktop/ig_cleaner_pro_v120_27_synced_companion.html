@@ -14903,12 +14903,14 @@ async function readCompleteProfileState(fields='*',options={}){
     if(!Array.isArray(page))throw Error('Sync incompleto: la nube no devolvió una página válida de revisiones');
     if(page.length===0){
       const registry=window.IGC_INSTAGRAM_PROFILES;
-      const account=registry?.accounts?.find(x=>x.account_key===registry.active);
-      const expected=Number(account?.review_count);
+      const registeredAccount=registry?.accounts?.find(x=>x.account_key===registry.active);
+      const expected=Number(registeredAccount?.review_count);
       // A complete profile snapshot must match the scoped, authoritative DB
       // count. Reject races, truncated pages and stale response fragments.
-      if(account&&Number.isInteger(expected)&&expected>=0&&all.length!==expected)
+      if(registeredAccount&&Number.isInteger(expected)&&expected>=0&&all.length!==expected)
         throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
+      // Cache the account KEY captured before pagination, not the registered
+      // account OBJECT. Shadowing this local used to disable every cache hit.
       completeProfileStateCache={at:Date.now(),rows:all,fields,owner,account};
       return all;
     }
