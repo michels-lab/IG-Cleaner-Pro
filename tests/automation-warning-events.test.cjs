@@ -52,4 +52,35 @@ const pending={task:'cancel',username:'in.review',status:'review',
   origin:'robot',at:'2026-11-09T06:08:00Z',
   warning_events:[{status:'review',at:'2026-11-09T06:08:00Z',origin:'robot'}]};
 assert.equal(fns.summarize([pending],'h1',now).warning,1);
-console.log('Automations: warning event history, exact timestamps, no-click, duplicate + local-midnight parity PASS');
+// Regression: legacy journals may have both "Example.User" and "example.user"
+// keys. Insertion order must never decide whether a real later OK is visible.
+const earlierCase={task:'unfollow',username:'Example.User',status:'review',
+  origin:'robot',at:'2026-11-09T06:01:00Z',
+  warning_events:[{status:'blocked',at:'2026-11-09T06:00:00Z',origin:'robot'}]};
+const newerCase={task:'unfollow',username:'example.user',status:'ok',
+  origin:'robot',at:'2026-11-09T06:10:00Z',
+  warning_events:[{status:'blocked',at:'2026-11-09T06:00:00Z',origin:'robot'}]};
+for(const records of [[earlierCase,newerCase],[newerCase,earlierCase],
+  [earlierCase,newerCase,earlierCase,newerCase]]){
+ const actual=fns.summarize(records,'h1',now);
+ assert.equal(actual.verified,1,'Newest verified outcome wins regardless of saved key order');
+ assert.equal(actual.unfollow,1,'Do not double-count case variants as separate users');
+ assert.equal(actual.warning,2,'Prior Review and shared blocked event remain distinct');
+}
+const latestReview={...earlierCase,status:'review',at:'2026-11-09T06:12:00Z'};
+assert.equal(fns.summarize([newerCase,latestReview],'h1',now).verified,0,
+  'A newer Review supersedes an older positive outcome');
+const conflicting={...newerCase,origin:'unknown'};
+for(const pair of [[newerCase,conflicting],[conflicting,newerCase]]){
+ const actual=fns.summarize(pair,'h1',now);
+ assert.equal(actual.verified,0,'Equal-time contradictory provenance must fail closed');
+ assert.equal(actual.legacy_unknown,0,'Do not arbitrarily select a conflicting saved row');
+}
+const sameHandleOtherTask={...newerCase,task:'cancel'};
+const multiTask=fns.summarize([earlierCase,newerCase,sameHandleOtherTask],'today',now);
+assert.equal(multiTask.verified,2,'Separate Unfollow and Cancel journals stay independent');
+assert.equal(multiTask.unfollow,1);
+assert.equal(multiTask.cancel,1);
+assert.equal(multiTask.warning,2,'Historical warning events retain their own timestamps');
+
+console.log('Automations: warning event history, exact timestamps, no-click, duplicate casefold + local-midnight parity PASS');
