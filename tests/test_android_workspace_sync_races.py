@@ -104,5 +104,27 @@ class NativeWorkspaceRaceRegression(unittest.TestCase):
         self.assertIn('pendingSnapshotCapturedAt = pendingCapturedAt', body)
 
 
+    def test_pending_review_history_fetch_is_complete_beyond_provider_page_cap(self):
+        # Negative regression: a single limit=20000 query can return only
+        # the newest server-capped 1000 rows, losing older Pending decisions.
+        start = SOURCE.index('private JSONArray loadCompleteProfileStates()')
+        end = SOURCE.index('private void mergeRemoteProfileState(', start)
+        method = SOURCE[start:end]
+        self.assertIn('loadCompleteProfileStates()', self.sync)
+        self.assertNotIn('limit=20000', self.sync)
+        self.assertIn('&order=username.asc,module.asc&limit=', method)
+        self.assertIn('&offset=', method)
+        self.assertIn('offset += page.length()', method,
+                      'Advance by actual rows returned; provider may cap below 1000')
+        self.assertIn('if (page.length() == 0) return complete;', method)
+        self.assertIn('!seen.add(username + "|" + module)', method,
+                      'Duplicate/truncated pages cannot silently create false Pending')
+        self.assertIn('throw new IllegalStateException', method)
+        focus_start = SOURCE.index('private void refreshFocusSourceData()')
+        focus_end = SOURCE.index('private Set<String> activeFocusUsernames()', focus_start)
+        self.assertIn('loadCompleteProfileStates()', SOURCE[focus_start:focus_end],
+                      'Focus and Home must not disagree about Pending reviews')
+
+
 if __name__ == "__main__":
     unittest.main()
