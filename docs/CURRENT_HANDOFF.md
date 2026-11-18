@@ -1,7 +1,7 @@
 ## 2026-11-18 — GRANADA: Focus recovered-cohort pruning atomicity (source-only)
 
 - Fixed source bug: recovery pruning could shorten `activeFocusBatch.rows` in memory before browser storage confirmed the write; a failed save made reload restore apparent missing targets. Full-clear path also discarded in-memory cohort before a failed persistent removal.
-- Both paths now preserve old in-memory and durable state when storage writes/removals fail. Existing Focus quota regression covers rejected writes, denied deletion, successful persisted prune, and successful deletion. [Audit](audits/2026-11-18-focus-prune-transaction.md).
+- Both prune paths and explicit `clearActiveFocusBatch()` now preserve old in-memory and durable state when storage writes/removals fail. The latter now attempts deletion exactly once before clearing RAM. Existing Focus quota regression covers rejected writes, denied deletion, successful persisted prune, and successful deletion. [Audit](audits/2026-11-18-focus-prune-transaction.md).
 - Published stable remains v120.80; no automatic clicks, account data deletion, new version or release. #360 asynchronous list reloads and #371 completely exhausted browser remain open, as does owner physical acceptance.
 
 ## 2026-11-18 — GRANADA: fallback lossless para Focus bajo cuota (fuente, sin release)
