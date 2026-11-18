@@ -20,6 +20,12 @@ const localStorage={
 const ctx={JSON,Array,Set,Number,Math,Date,console,localStorage,window:{},
  LS_ACTIVE_FOCUS_BATCH:"focus-cohort",activeFocusBatch:null};
 vm.createContext(ctx);vm.runInContext(html.slice(begin,end),ctx);
+// The diagnostic helper is defined *after* activeBatchUserSet in production.
+// Load that real function separately, rather than pretending it is in the codec slice.
+const diagStart=html.indexOf("function igcFocusStorageDiagnostic(");
+const diagEnd=html.indexOf("function setActiveFocusBatch(",diagStart);
+assert(diagStart>=0&&diagEnd>diagStart,"Production Focus diagnostic source missing");
+vm.runInContext(html.slice(diagStart,diagEnd),ctx);
 const rows=Array.from({length:30},(_,i)=>({
  username:"member."+i,
  href:"https://www.instagram.com/member."+i+"/",
