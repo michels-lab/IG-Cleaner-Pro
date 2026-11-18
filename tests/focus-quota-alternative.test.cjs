@@ -88,7 +88,7 @@ const pruneCtx={
  },
  saveActiveFocusBatch(){
    if(failPruneWrite)throw Error("QuotaExceededError");
-   durable.set("focus-cohort",JSON.stringify(this.activeFocusBatch));
+   durable.set("focus-cohort",JSON.stringify(pruneCtx.activeFocusBatch));
  }
 };
 vm.createContext(pruneCtx);
