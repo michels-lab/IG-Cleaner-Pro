@@ -23,8 +23,8 @@ def chrome_workspace_path(home: Path, workspace: str) -> Path:
 def instance_mutex_name(workspace: str, *, developer: bool = False) -> str:
     if workspace not in WORKSPACES:
         raise ValueError("Invalid InstaCleaner window identity.")
-    prefix = "Local\\\\MichelsLab_InstaCleanerPro_Developer" if developer else (
-        "Local\\\\MichelsLab_InstaCleanerPro_Desktop")
+    prefix = "Local\\MichelsLab_InstaCleanerPro_Developer" if developer else (
+        "Local\\MichelsLab_InstaCleanerPro_Desktop")
     return prefix + ("_SecondWindow" if workspace == "secondary" else "")
 
 
