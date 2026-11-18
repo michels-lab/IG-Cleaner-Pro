@@ -6,6 +6,13 @@
 - Offline regressions: `tests/cloud-list-snapshot-freshness.test.cjs` adds exact 52 cloud vs newer explicit 0 HTML and missing-import guard; `tests/test_android_workspace_sync_races.py` checks Android source/cached markers, origin timestamps and A→B→A isolation. Exact-head CI, Android install/render and physical owner verification remain required, not assumed.
 - [Detailed audit](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md). Release verified at start: v120.79; this source branch is **NOT published** and does not authorize another release. Preserve Pending history, saved ZIP files, reviewed/protected data and prior cloud snapshots until a verified newer import.
 
+## 2026-11-17 — P0 Granada: native Focus account-transition barrier (PR #374)
+
+- Source-level race discovered: queued Instagram profile switch posted to UI without waiting, allowing a later native IO/Focus job to begin before the account change became effective. Sign out directly rotated auth from UI, and WebView session adoption was not serialized with IO.
+- Corrected with IO-thread-only UI handoff latch, serialized logout and WebView auth adoption, owner reset generation bump, and owner/account/generation snapshot verification at all six native Focus entrypoints; A→B→A stale work fails without issuing another Focus operation.
+- New production-source regression `tests/test_android_focus_account_transition.py`, detailed audit `docs/audits/2026-11-17-native-android-focus-account-transition-barrier.md`. Physical signed-in two-account Focus acceptance and exact-commit CI are separate requirements, not claimed.
+- Work remains on isolated PR #374; published stable still v120.79. Pending Android 52 vs HTML 0 remains separately under PR #373, without release authorization. No client cloud rows, Instagram sessions or user backups modified.
+
 ## 2026-11-17 — Operación Granada: Automations action-history casefold reconciliation (source PR)
 
 - Issue #298: read-only Windows Automations statistics used the *first* saved action journal row for a case-insensitive username. Distinct legacy JSON keys (e.g. `Example.User` and `example.user`) with different statuses/timestamps could hide a later verified action or show an obsolete OK; previous regression tested only identical duplicate rows.

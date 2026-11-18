@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 451; classified: 447; readable documents: 112; above read cap: 1; findings: 9.
+Tracked: 452; classified: 448; readable documents: 113; above read cap: 1; findings: 9.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 451; classified: 447; readable documents: 112; above read cap: 1; findi
 | config | 70 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 107 |
+| document | 108 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
@@ -37,7 +37,7 @@ Tracked: 451; classified: 447; readable documents: 112; above read cap: 1; findi
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_V12064_FINAL_RECEIPT_2026-10-26.md. Next: Fix link or restore target (ID d6a887cd4cf4669d)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** docs/CURRENT_HANDOFF.md: Missing: docs/docs/GRANADA_NO_REPEAT_NEW_BATCH_2026-10-26.md. Next: Fix link or restore target (ID df925d8ba69bac5a)
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: tests/test_release_readiness_gate.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID e820db17f733ebce)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: tests/automation-warning-events.test.cjs, tools/automation_activity_ui.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID d520c17cfa02103c)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
