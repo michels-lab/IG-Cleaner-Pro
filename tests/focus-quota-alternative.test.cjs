@@ -119,3 +119,42 @@ assert.equal(pruneCtx.activeFocusBatch,null);
 assert.equal(pruneCtx.activeExtraReviewBatch,null);
 assert(!durable.has("focus-cohort"),"Resolved persisted cohort must be removed");
 console.log("PASS: Focus recovered-cohort pruning is durable on both write and remove failures");
+
+
+// A user/robot decision clearing a cohort has the same durability contract:
+// one successful disk deletion, THEN the two in-memory references are cleared.
+const clearStart=html.indexOf("function clearActiveFocusBatch(");
+const clearEnd=html.indexOf("function activeBatchRowResolved(",clearStart);
+assert(clearStart>=0&&clearEnd>clearStart,"Production Focus clear function missing");
+let failClear=true,clearAttempts=0,renderCount=0;
+const clearSaved=new Map([["focus-cohort","must survive failed delete"]]);
+const originalClear={kind:"pending",rows:[{username:"still-unreviewed"}]};
+const clearCtx={
+ LS_ACTIVE_FOCUS_BATCH:"focus-cohort",
+ activeFocusBatch:originalClear,
+ activeExtraReviewBatch:originalClear,
+ localStorage:{
+   removeItem(key){
+     clearAttempts++;
+     if(failClear)throw Error("SecurityError");
+     clearSaved.delete(key);
+   }
+ },
+ renderActiveBatchDock(){renderCount++}
+};
+vm.createContext(clearCtx);
+vm.runInContext(html.slice(clearStart,clearEnd),clearCtx);
+assert.throws(()=>clearCtx.clearActiveFocusBatch(),/SecurityError/,
+ "A rejected delete must be reported rather than hiding a still-persisted batch");
+assert.equal(clearCtx.activeFocusBatch,originalClear);
+assert.equal(clearCtx.activeExtraReviewBatch,originalClear);
+assert(clearSaved.has("focus-cohort"));
+assert.equal(renderCount,0,"Do not redraw an uncommitted batch deletion");
+failClear=false;
+clearCtx.clearActiveFocusBatch();
+assert.equal(clearAttempts,2,"Each clear attempt performs exactly one storage delete");
+assert.equal(clearCtx.activeFocusBatch,null);
+assert.equal(clearCtx.activeExtraReviewBatch,null);
+assert(!clearSaved.has("focus-cohort"));
+assert.equal(renderCount,1);
+console.log("PASS: Focus clearing waits for durable deletion and never silently drops the prior cohort");
