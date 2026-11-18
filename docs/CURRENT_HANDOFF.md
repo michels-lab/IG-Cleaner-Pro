@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA: installed two-slot persistence and Spanish keyboard Automations (source, unreleased)
+
+- Following merged PR [#376](https://github.com/michels-lab/IG-Cleaner-Pro/pull/376) at `f07b7168`, the new `granada/windows-two-slot-installer-a11y-20261118` branch closes an installer-acceptance blind spot. The installed Windows EXE smoke now covers **primary AND secondary** slots; verifies distinct persistent HTML origins and Chrome data folders with synthetic markers surviving upgrade/uninstall. This does not claim two physical simultaneous GUI windows.
+- Automations top sections now have clear Spanish names and subtitles (Analizar, Acciones, Revisar, Historial), ARIA panel linkage, and keyboard arrows/Home/End; action engines, approvals and original Review drawer remain unchanged. Browser regression verifies labels, tab destinations and keyboard-only navigation. Native Cancel test verifies no Chrome/server/data writes.
+- Audit: [two Windows slot and navigation acceptance](audits/2026-11-18-two-windows-installer-ux.md), issue #377. Until exact-head CI and future owner physical session acceptance, this is source-only. Official stable remains **v120.80**; v120.81 reserved, unauthorized, not published. No Developer/RC release requested.
+
 ## 2026-11-18 — OWNER CORRECTION: one Windows account per separate app window, Automations UX source
 
 - Owner screenshot rejects same-window Cuenta 1/Cuenta 2, massive third stats column and extra sidebar second-account widget. Desired: reopen native app, choose account window at launch, two independent app/Chrome sessions. [Issue #377](https://github.com/michels-lab/IG-Cleaner-Pro/issues/377).
