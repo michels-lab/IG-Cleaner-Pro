@@ -17,10 +17,10 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         self.valid=deepcopy(self.current)
         self.valid.pop("owner_device_review_release_override",None)
         self.valid["release_hold"]=False
-        self.valid["next_version"]="v120.79"
+        self.valid["next_version"]=self.current["next_version"]
         self.valid["critical_acceptance"]={name:True for name in REQUIRED_ACCEPTANCE}
         self.valid["owner_final_acceptance"]={
-          "approved":True,"release_tag":"v120.79",
+          "approved":True,"release_tag":self.current["next_version"],
           "evidence":"owner-provided explicit post-install real-world sign-off"
         }
         self.closed={n:"closed" for n in self.valid["required_closed_issues"]}
