@@ -1,3 +1,10 @@
+## 2026-11-18 — GRANADA installed two-window slot persistence + Automations keyboard UX (source only)
+
+- Built on merged #376: primary and secondary windows have separate Chrome and file origins, but previous installer installed-smoke tested only primary. Add real installed EXE `--workspace secondary --smoke-startup`, verify separate UI/files and distinct Chrome directories, preserve both synthetic markers across in-place setup and uninstall. This is offline install/persistence evidence, **not** proof of two concurrently open physical GUI windows or genuine Instagram A/B logins.
+- The four Automations sections are now visibly named **Analizar / Acciones / Revisar / Historial**, with descriptive subtitles, accessible linked tabpanels, roving tabindex and keyboard navigation (arrows/Home/End). No new robot buttons, no repeated two-account panes, no action or data logic changes. Owner can still use only one task workspace at a time.
+- Additional native regression: chooser Cancel performs no Chrome spawn, mutex, file write or backend start. Exact-head Windows installer and desktop Chromium checks required. [Full audit](docs/audits/2026-11-18-two-windows-installer-ux.md) · issue #377.
+- Release: existing immutable stable v120.80; reserved v120.81 unauthorized. Physical owner actual two windows and cross-account Focus/Unfollow/Cancel Pending remains OPEN.
+
 ## 2026-11-18 — owner-rejected same-window dual accounts, native account picker and Automations rebuild (SOURCE)
 
 - Screenshot from owner's v120.80 installed Windows: multiple overlapping account layouts. Previous implementation's `igc-dual-workspace` rail, injected `DUAL_ACTION_PANEL` and singleton launcher were at odds with user's **two separate app windows** requirement.
