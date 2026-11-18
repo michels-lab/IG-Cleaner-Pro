@@ -156,7 +156,8 @@ function reconciledOutcomes(records){
      saved.conflict=true;
    }
  }
- return [...groups.values()].sort((x,y)=>y.at-x.at);
+ // Aggregation runs for every period tile: avoid a redundant O(n log n) sort.
+ return [...groups.values()];
 }
 function summarize(records,id,now){
  const lower=cutoff(id,now),upper=now.getTime();
@@ -332,7 +333,7 @@ function renderHistory(records){
  const list=$('igcActHistory'),last=$('igcActLast');
  if(!list||!last)return;
  // Use identical canonical reconciliation as the period counters.
- const entries=reconciledOutcomes(records).slice(0,15);
+ const entries=reconciledOutcomes(records).sort((x,y)=>y.at-x.at).slice(0,15);
  list.replaceChildren();
  if(!entries.length){
    const partial=unavailableTasks.length>0&&$('igcActTask')?.value==='all';
