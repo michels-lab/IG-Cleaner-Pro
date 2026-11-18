@@ -1,3 +1,9 @@
+## 2026-11-18 — OWNER CORRECTION: one Windows account per separate app window, Automations UX source
+
+- Owner screenshot rejects same-window Cuenta 1/Cuenta 2, massive third stats column and extra sidebar second-account widget. Desired: reopen native app, choose account window at launch, two independent app/Chrome sessions. [Issue #377](https://github.com/michels-lab/IG-Cleaner-Pro/issues/377).
+- PR #376 source expanded: original Desktop HTML rail/tab cloning and legacy two-card panel removed from code; native Windows `TaskDialogIndirect` selects primary/secondary, primary retains original Chrome profile/UI file origin and mutex, secondary gets independent user-data-dir/UI file path/mutex. Four-section Automations Analyze / Actions / Review / History; original single action worker and original Review data preserved, History compact.
+- New source tests cover per-slot paths/mutex/no dual panel; browser test replaces obsolete feature's cases; Windows integrated preview modified to test standalone + injected native History. Pending exact-source CI, installed Windows two real windows, physical chooser and owner Instagram actions. **Do not publish** v120.81 without gates; current official v120.80 remains immutable. [Audit](audits/2026-11-18-automations-origin-integrity.md).
+
 ## 2026-11-18 — GRANADA Automations origin filter, development only
 
 - Isolated branch `granada/automations-origin-integrity-20261118` adds explicit robot vs historical-unknown provenance selection to Windows Automations activity periods, breakdown and journal, plus conflicting same-time origin negative regression in `tests/automation-warning-events.test.cjs`.
