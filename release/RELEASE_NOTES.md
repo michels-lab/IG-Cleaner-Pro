@@ -1,6 +1,6 @@
-## v120.80 — Granada Pending reconciliation + Focus account isolation (CANDIDATE, not published)
+## v120.80 — Granada Pending reconciliation + Focus account isolation (FINAL published 2026-11-18 UTC)
 
-**Owner-authorized candidate:** FINAL stable v120.80 for later physical verification, contingent on current exact-source Windows installed, Android production signing, real UI screenshots, checksums and official publisher success. Do not assert real Instagram acceptance.
+**Publication verified:** official [v120.80 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), immutable tagged source `e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b`, [governed publisher 44235048175](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175) **4/4 SUCCESS**, 9 SHA-256-verified stable-only assets. Installed Windows Setup, production-signed Android stable APK installation and launch, rendered Desktop and Android screenshots and bundle integrity verified. Owner physical signed-in Instagram acceptance remains pending. Single-use v120.80 authorization consumed; v120.81 reserved without authorization.
 
 - Pending 52 Android vs 0 HTML (PR #373): explicit newer verified empty Pending replaces older cloud snapshot; absence of import is not an authoritative zero. Preserve raw backups and distinguish phone cache / saved cloud provenance.
 - Android Home/Requests/Focus count unique Pending usernames; complete paginated reviewed-state overlay prevents older Pending reviews from being lost to provider page caps.
