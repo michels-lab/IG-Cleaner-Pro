@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8
+    "BROKEN_RELATIVE_LINK": 8,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 8,
-  "inventory_fingerprint": "d3f34188d84236e49cee5907342bf51e3e536c7939cc2c4fa451cd033e211636",
-  "evidence_fingerprint": "187980a041d840b34addd7af02379f587d74eea853699b43ff42586472fdb246",
+  "finding_total": 9,
+  "inventory_fingerprint": "e6c565812387d7d7a58fb9d686bdfab257e58ec43faa83cd8c82c3e4eaa5ae9c",
+  "evidence_fingerprint": "8521e59dbc199d710da2c9060f7b959faffb326c7db1e6820492ab74506d562c",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -2751,7 +2752,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "33e47af9c0015646bacc759c082a16619664428f"
+      "blob": "0f118a2a379324c7d0952afde8b132a5b9a5e7d6"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3231,6 +3232,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "e820db17f733ebce",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/test_release_readiness_gate.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
