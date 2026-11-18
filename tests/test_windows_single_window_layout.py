@@ -56,9 +56,9 @@ class WindowsIndependentWindowTests(unittest.TestCase):
 
         for selected, expected in ((101, "primary"), (102, "secondary"), (2, None)):
             with self.subTest(button=selected):
-                with patch.object(picker.sys, "platform", "win32"), \\
+                with (patch.object(picker.sys, "platform", "win32"),
                      patch.object(ctypes, "WinDLL", return_value=FakeLibrary(selected),
-                                  create=True):
+                                  create=True)):
                     self.assertEqual(picker.select_workspace(), expected)
 
     def test_named_mutex_guards_slots_independently(self):
