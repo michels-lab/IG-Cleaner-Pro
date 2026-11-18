@@ -31,17 +31,19 @@
     173,
     176
   ],
-  "next_version": "v120.80",
-  "notes": "v120.80 owner-authorized post-publication physical review candidate only; release_hold=true and owner_final_acceptance=false remain. All automated publisher/installed/provenance requirements are mandatory. Do not mark published until official tag, 9 assets and 4/4 publisher evidence exists.",
+  "next_version": "v120.81",
+  "notes": "Official stable v120.80 published from e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b; publisher 44235048175 4/4 SUCCESS, nine assets. One-time owner device-review exception consumed; v120.81 reserved WITHOUT authorization. release_hold=true, owner_final_acceptance=false, critical owner physical acceptance remains open.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.80",
     "source": "explicit-owner-chat-instruction-2026-11-17",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "owner_direct_quote": "op granada completa y release",
-    "disclosure": "Single-use authorization for normal FINAL v120.80 after merged source, exact-commit Android and Windows installed/runtime QA, production signing, visual proofs, SHA-256 and updater checks. Physical live Instagram/unfollow/two-account acceptance remains open; hold and owner_final_acceptance=false are not waived.",
-    "previous_published_release": "v120.79"
+    "disclosure": "Consumed by official FINAL v120.80 publication 2026-11-18T04:21:23Z; nine verified assets and 4/4 governed jobs. Physical owner account behavior still unverified; not reusable for v120.81.",
+    "previous_published_release": "v120.79",
+    "consumed_by_release": "v120.80",
+    "consumed_run": 44235048175
   },
   "owner_device_review_release_override_history": [
     {
