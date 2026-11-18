@@ -24,12 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 8,
+    "BROKEN_RELATIVE_LINK": 9,
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 9,
-  "inventory_fingerprint": "4e94de2fdc2405f5a7188f4f352ce7822a22aad06132417e64dc7f7fdf6fc880",
-  "evidence_fingerprint": "23b525502d3542d83dc2df561ac4c37e50e4ccd0c77be8bdc0be392f00b4ae01",
+  "finding_total": 10,
+  "inventory_fingerprint": "6c7003094f0f6cac542c1cb577706a9371e6501c80702a560ca75070b72c806b",
+  "evidence_fingerprint": "91cf7bc5b47592fcd8b709c3700a838f9f0759a39ebc69e9c8d3b39001045ba7",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -253,7 +253,7 @@
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "a8c0e3efe6245dc1a3d17d88113251cbd6a4402b"
+      "blob": "a61e18abfa5159cc56c555f898b226fa0a965398"
     },
     {
       "path": "README_SYNC.md",
@@ -1702,14 +1702,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "61277b32880514310ebc9eafd35ef3a8d3e276a3"
+      "blob": "4daae86479bd32a7b39804c2d9c475fa9497eedc"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "5e782dd52365dfdb4d28a4193e5eaf35c04008ff"
+      "blob": "5014742de3164c378821b75928bd0fa6c17f73f4"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3190,6 +3190,15 @@
     }
   ],
   "findings": [
+    {
+      "id": "5b1021b868eaf0f7",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "README.md",
+      "observation": "Missing: docs/GRANADA_V12080_FINAL_RECEIPT_2026-11-17.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
     {
       "id": "1d69634be3d31378",
       "code": "BROKEN_RELATIVE_LINK",
