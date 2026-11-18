@@ -73,6 +73,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class MainActivity extends AppCompatActivity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -129,6 +131,7 @@ public final class MainActivity extends AppCompatActivity {
     private TextView homeMutualCount;
     private TextView homeFollowerCount;
     private TextView homePendingCount;
+    private TextView homePendingLabel;
     private View homeKpis;
     private View sectionKpis;
     private View reviewTabsScroll;
@@ -138,6 +141,12 @@ public final class MainActivity extends AppCompatActivity {
     private JSONArray syncedFollowing = new JSONArray();
     private JSONArray syncedFollowers = new JSONArray();
     private JSONArray syncedPending = new JSONArray();
+    // Pending is an imported/synchronized export, never a live Instagram check.
+    // Preserve provenance across cold launches to distinguish a stale cached 52
+    // from an authoritative newer, explicitly imported empty list.
+    private boolean pendingSnapshotPresent = false;
+    private boolean pendingSnapshotCached = false;
+    private long pendingSnapshotCapturedAt = 0L;
     private JSONObject syncedWorkspaceState = new JSONObject();
     private boolean syncedReviewStateAvailable = false;
     private String workspaceSection = "home";
@@ -319,6 +328,7 @@ public final class MainActivity extends AppCompatActivity {
         homeMutualCount = mobileWorkspaceView.findViewById(R.id.homeMutualCount);
         homeFollowerCount = mobileWorkspaceView.findViewById(R.id.homeFollowerCount);
         homePendingCount = mobileWorkspaceView.findViewById(R.id.homePendingCount);
+        homePendingLabel = mobileWorkspaceView.findViewById(R.id.homePendingLabel);
         homeKpis = mobileWorkspaceView.findViewById(R.id.homeKpis);
         sectionKpis = mobileWorkspaceView.findViewById(R.id.sectionKpis);
         reviewTabsScroll = mobileWorkspaceView.findViewById(R.id.reviewTabsScroll);
@@ -397,9 +407,9 @@ public final class MainActivity extends AppCompatActivity {
         runAsync(() -> {
             try {
                 touchDevice();
-                JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+                JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
                 JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
-                JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
+                JSONArray profileStates = loadCompleteProfileStates();
 
                 JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
                 boolean reviewAvailable = stateRow != null || profileStates.length() > 0;
@@ -414,6 +424,8 @@ public final class MainActivity extends AppCompatActivity {
                 JSONArray following = new JSONArray();
                 JSONArray followers = new JSONArray();
                 JSONArray pending = new JSONArray();
+                boolean pendingPresent = false;
+                long pendingCapturedAt = 0L;
 
                 for (int i = 0; i < snapshots.length(); i++) {
                     JSONObject snap = snapshots.optJSONObject(i);
@@ -423,7 +435,13 @@ public final class MainActivity extends AppCompatActivity {
                     switch (snap.optString("list_name")) {
                         case "following" -> following = payload;
                         case "followers" -> followers = payload;
-                        case "pending" -> pending = payload;
+                        case "pending" -> {
+                            pending = payload;
+                            pendingPresent = true;
+                            String captured = snap.optString("captured_at", "");
+                            if (captured.isBlank()) captured = snap.optString("updated_at", "");
+                            pendingCapturedAt = parseInstant(captured).toEpochMilli();
+                        }
                     }
                 }
 
@@ -433,6 +451,8 @@ public final class MainActivity extends AppCompatActivity {
                 final JSONArray readyFollowing = following;
                 final JSONArray readyFollowers = followers;
                 final JSONArray readyPending = pending;
+                final boolean readyPendingPresent = pendingPresent;
+                final long readyPendingCapturedAt = pendingCapturedAt;
                 final JSONObject readyState = state;
                 final boolean readyReviews = reviewAvailable;
                 mainHandler.post(() -> {
@@ -443,6 +463,9 @@ public final class MainActivity extends AppCompatActivity {
                     syncedFollowing = readyFollowing;
                     syncedFollowers = readyFollowers;
                     syncedPending = readyPending;
+                    pendingSnapshotPresent = readyPendingPresent;
+                    pendingSnapshotCapturedAt = readyPendingCapturedAt;
+                    pendingSnapshotCached = false;
                     syncedWorkspaceState = readyState;
                     saveWorkspaceCache();
                     if (!"workspace".equals(currentScreen) || mobileWorkspaceView == null) return;
@@ -457,6 +480,40 @@ public final class MainActivity extends AppCompatActivity {
                 });
             }
         }, true);
+    }
+
+    private JSONArray loadCompleteProfileStates() throws Exception {
+        // Supabase/PostgREST can cap a requested 20,000-row response to 1,000.
+        // A truncated page silently loses older Pending review decisions and
+        // can make already-reviewed users look unresolved on Android.
+        // The exact account-scoped query is serialized by the native IO lane.
+        final int pageSize = 1000;
+        final int maxRows = 250000;
+        JSONArray complete = new JSONArray();
+        Set<String> seen = new HashSet<>();
+        int offset = 0;
+        while (offset <= maxRows) {
+            JSONArray page = api.get(
+                    "profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context" +
+                    "&order=username.asc,module.asc&limit=" + pageSize + "&offset=" + offset);
+            for (int i = 0; i < page.length(); i++) {
+                JSONObject item = page.optJSONObject(i);
+                if (item == null) throw new IllegalStateException("Invalid review history page");
+                String username = item.optString("username", "").trim().toLowerCase(Locale.ROOT);
+                String module = item.optString("module", "");
+                if (username.isBlank() || module.isBlank() ||
+                        !seen.add(username + "|" + module))
+                    throw new IllegalStateException("Incomplete or duplicated review history; no cache changed");
+                complete.put(item);
+            }
+            // Stop only on an empty page. A full 1,000-row provider response
+            // is never proof that it was the final page.
+            if (page.length() == 0) return complete;
+            // A provider may cap each response below our requested pageSize.
+            // Advance by ACTUALLY returned rows, not by the request limit.
+            offset += page.length();
+        }
+        throw new IllegalStateException("Review history exceeds safe pagination limit; no cache changed");
     }
 
     private void mergeRemoteProfileState(JSONObject state, JSONArray profileStates) throws Exception {
@@ -547,6 +604,9 @@ public final class MainActivity extends AppCompatActivity {
             syncedFollowing = new JSONArray(following);
             syncedFollowers = new JSONArray(followers);
             syncedPending = pending.isBlank() ? new JSONArray() : new JSONArray(pending);
+            pendingSnapshotPresent = cache.getBoolean("pending_present_" + suffix, !pending.isBlank());
+            pendingSnapshotCapturedAt = cache.getLong("pending_captured_at_" + suffix, 0L);
+            pendingSnapshotCached = true;
             syncedWorkspaceState = state.isBlank() ? new JSONObject() : new JSONObject(state);
             syncedReviewStateAvailable = cache.getBoolean("review_state_available_" + suffix, false);
             return true;
@@ -562,6 +622,8 @@ public final class MainActivity extends AppCompatActivity {
                     .putString("following_" + suffix, syncedFollowing.toString())
                     .putString("followers_" + suffix, syncedFollowers.toString())
                     .putString("pending_" + suffix, syncedPending.toString())
+                    .putBoolean("pending_present_" + suffix, pendingSnapshotPresent)
+                    .putLong("pending_captured_at_" + suffix, pendingSnapshotCapturedAt)
                     .putString("state_" + suffix, syncedWorkspaceState.toString())
                     .putBoolean("review_state_available_" + suffix, syncedReviewStateAvailable)
                     .putLong("updated_" + suffix, System.currentTimeMillis())
@@ -582,6 +644,8 @@ public final class MainActivity extends AppCompatActivity {
                 .remove("following_" + suffix)
                 .remove("followers_" + suffix)
                 .remove("pending_" + suffix)
+                .remove("pending_present_" + suffix)
+                .remove("pending_captured_at_" + suffix)
                 .remove("state_" + suffix)
                 .remove("review_state_available_" + suffix)
                 .remove("updated_" + suffix)
@@ -594,14 +658,13 @@ public final class MainActivity extends AppCompatActivity {
         return "legacy".equals(api.getInstagramProfile()) ? owner : owner + "_" + api.getInstagramProfile();
     }
 
-    private int countPendingUnresolved(JSONObject pendingReviewed, JSONObject pendingSnooze) {
+    private int countPendingUnresolved(Map<String, JSONObject> pendingRows,
+                                       JSONObject pendingReviewed, JSONObject pendingSnooze) {
         int unresolved = 0;
         long now = System.currentTimeMillis();
-        for (int i = 0; i < syncedPending.length(); i++) {
-            JSONObject p = syncedPending.optJSONObject(i);
-            if (p == null) continue;
-            String username = p.optString("username", "").toLowerCase(Locale.ROOT);
-            if (username.isBlank()) continue;
+        // A legacy cloud snapshot may contain repeated usernames. Never count
+        // one relationship twice or reopen it twice during Pending Focus.
+        for (String username : pendingRows.keySet()) {
             JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
             long snoozeUntil = pendingSnooze == null ? 0 : pendingSnooze.optLong(username, 0);
             boolean resolved = meta != null && meta.optLong("reviewedAt", 0) > 0;
@@ -615,6 +678,7 @@ public final class MainActivity extends AppCompatActivity {
 
         Map<String, JSONObject> followingMapNative = jsonArrayByUsername(syncedFollowing);
         Map<String, JSONObject> followersMapNative = jsonArrayByUsername(syncedFollowers);
+        Map<String, JSONObject> pendingMapNative = jsonArrayByUsername(syncedPending);
         Set<String> done = jsonStringSet(syncedWorkspaceState.optJSONArray("done"));
         Set<String> protectedUsers = jsonStringSet(syncedWorkspaceState.optJSONArray("protected"));
         JSONObject snooze = syncedWorkspaceState.optJSONObject("snooze");
@@ -630,7 +694,7 @@ public final class MainActivity extends AppCompatActivity {
                 unresolvedReview++;
             }
         }
-        int unresolvedPending = countPendingUnresolved(pendingReviewed, pendingSnooze);
+        int unresolvedPending = countPendingUnresolved(pendingMapNative, pendingReviewed, pendingSnooze);
 
         boolean home = "home".equals(workspaceSection);
         homeKpis.setVisibility(home ? View.VISIBLE : View.GONE);
@@ -643,7 +707,10 @@ public final class MainActivity extends AppCompatActivity {
         homeReviewLabel.setText(syncedReviewStateAvailable ? "REVIEW PENDING" : "REVIEW STATE");
         homeMutualCount.setText(String.valueOf(mutuals));
         homeFollowerCount.setText(String.valueOf(followersMapNative.size()));
-        homePendingCount.setText(String.valueOf(unresolvedPending));
+        homePendingCount.setText(pendingSnapshotPresent ? String.valueOf(unresolvedPending) : "—");
+        if (homePendingLabel != null)
+            homePendingLabel.setText(!pendingSnapshotPresent ? "NO REQUEST DATA" :
+                    pendingSnapshotCached ? "CACHED REQUESTS" : "SAVED REQUESTS");
 
         List<WorkspaceProfileAdapter.Row> rows = new ArrayList<>();
         int main = 0;
@@ -711,11 +778,9 @@ public final class MainActivity extends AppCompatActivity {
             kpiSecondaryLabel.setText("FOLLOWER ONLY");
         } else {
             long now = System.currentTimeMillis();
-            for (int i = 0; i < syncedPending.length(); i++) {
-                JSONObject p = syncedPending.optJSONObject(i);
-                if (p == null) continue;
-                String username = p.optString("username", "").toLowerCase(Locale.ROOT);
-                if (username.isBlank()) continue;
+            for (Map.Entry<String, JSONObject> entry : pendingMapNative.entrySet()) {
+                String username = entry.getKey();
+                JSONObject p = entry.getValue();
                 JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
                 long snoozeUntil = pendingSnooze == null ? 0 : pendingSnooze.optLong(username, 0);
                 boolean resolved = meta != null && meta.optLong("reviewedAt", 0) > 0;
@@ -725,20 +790,39 @@ public final class MainActivity extends AppCompatActivity {
                 }
             }
             main = unresolvedPending;
-            total = syncedPending.length();
+            total = pendingMapNative.size();
             workspaceSectionTitle.setText("Requests");
-            workspaceSectionSubtitle.setText("Sent follow requests still waiting for review.");
-            kpiMainLabel.setText("PENDING");
-            kpiSecondaryLabel.setText("RAW TOTAL");
+            workspaceSectionSubtitle.setText(pendingSourceExplanation());
+            kpiMainLabel.setText("SAVED PENDING");
+            kpiSecondaryLabel.setText("IMPORTED");
         }
 
         if (!home) {
-            kpiMain.setText(String.valueOf(main));
-            kpiSecondary.setText(String.valueOf(total));
+            if ("pending".equals(workspaceSection) && !pendingSnapshotPresent) {
+                // Missing Pending snapshot != verified zero Pending requests.
+                kpiMain.setText("—");
+                kpiSecondary.setText("—");
+            } else {
+                kpiMain.setText(String.valueOf(main));
+                kpiSecondary.setText(String.valueOf(total));
+            }
         }
         mobileWorkspaceSubtitle.setText(syncedFollowing.length() + " following · " +
-                syncedFollowers.length() + " followers · " + syncedPending.length() + " requests");
+                syncedFollowers.length() + " followers · " +
+                (pendingSnapshotPresent ? pendingMapNative.size() + " saved requests" : "no Pending import") +
+                (pendingSnapshotCached ? " · phone cache" : " · cloud snapshot"));
         workspaceAdapter.submit(rows);
+    }
+
+    private String pendingSourceExplanation() {
+        if (!pendingSnapshotPresent)
+            return "No Pending export was synchronized for this Instagram profile. This does not mean zero requests.";
+        String origin = pendingSnapshotCached ? "Phone cache" : "Cloud snapshot";
+        String date = pendingSnapshotCapturedAt > 0
+                ? " · imported " + DateFormat.getMediumDateFormat(this)
+                        .format(new Date(pendingSnapshotCapturedAt))
+                : " · import date unknown";
+        return origin + date + ". Saved sent-request records needing review, NOT a live Instagram count.";
     }
 
     private boolean isNativeFollowingResolved(String username, JSONObject source,
@@ -1151,12 +1235,10 @@ public final class MainActivity extends AppCompatActivity {
                             throw new IllegalStateException("Cambiaste de Instagram. Vuelve a confirmar.");
                         api.deleteInstagramProfile(key, username);
                         clearWorkspaceCacheForProfile(key);
-                        mainHandler.post(() -> {
-                            api.setInstagramProfile("legacy", "Datos anteriores");
-                            setGlobalStatus("INSTAGRAM • Datos anteriores");
-                            if (bottomNav.getSelectedItemId() != R.id.navHome)
-                                bottomNav.setSelectedItemId(R.id.navHome);
-                            else showMobileWorkspaceScreen("home");
+                        // A confirmed profile deletion changes active scope.
+                        // Commit it on UI before any subsequent IO job can run.
+                        postAccountTransitionAndWait(() -> {
+                            applyInstagramProfileChange("legacy", "Datos anteriores");
                             Snackbar.make(content, label + " deleted. Legacy data is intact.",
                                     Snackbar.LENGTH_LONG).show();
                         });
@@ -1165,9 +1247,30 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void changeInstagramProfile(String key, String label) {
-        // Serialize the account switch behind in-flight native network writes.
-        // Otherwise a Focus operation prepared for A could finish under B.
-        io.execute(() -> mainHandler.post(() -> applyInstagramProfileChange(key, label)));
+        // The switch is not complete until the UI thread actually applies it.
+        // A plain mainHandler.post() lets the next queued IO task start under A
+        // before the UI callback switches to B (or back to A).
+        io.execute(() -> {
+            try {
+                postAccountTransitionAndWait(() -> applyInstagramProfileChange(key, label));
+            } catch (Exception error) {
+                mainHandler.post(() -> setGlobalStatus("INSTAGRAM • switch failed safely"));
+            }
+        });
+    }
+
+    private void postAccountTransitionAndWait(Runnable transition) throws Exception {
+        // All native Focus, sync and session changes use the same IO lane.
+        // Wait only on the worker thread; the UI thread must remain responsive.
+        CountDownLatch applied = new CountDownLatch(1);
+        AtomicReference<RuntimeException> failure = new AtomicReference<>();
+        if (!mainHandler.post(() -> {
+            try { transition.run(); }
+            catch (RuntimeException error) { failure.set(error); }
+            finally { applied.countDown(); }
+        })) throw new IllegalStateException("Account transition UI is unavailable");
+        applied.await();
+        if (failure.get() != null) throw failure.get();
     }
 
     private void applyInstagramProfileChange(String key, String label) {
@@ -1188,6 +1291,9 @@ public final class MainActivity extends AppCompatActivity {
         syncedFollowing = new JSONArray();
         syncedFollowers = new JSONArray();
         syncedPending = new JSONArray();
+        pendingSnapshotPresent = false;
+        pendingSnapshotCached = false;
+        pendingSnapshotCapturedAt = 0L;
         syncedWorkspaceState = new JSONObject();
         syncedReviewStateAvailable = false;
         setGlobalStatus("INSTAGRAM • " + label + " · cargando datos independientes");
@@ -1381,7 +1487,7 @@ public final class MainActivity extends AppCompatActivity {
                             // only Sign out removes the selected remembered login.
                             runAsync(() -> {
                                 api.prepareAnotherAccount();
-                                mainHandler.post(() -> {
+                                postAccountTransitionAndWait(() -> {
                                     resetAfterAccountChange();
                                     setGlobalStatus("SIGN IN • add another account");
                                     showNativeAccountScreen();
@@ -1398,7 +1504,7 @@ public final class MainActivity extends AppCompatActivity {
                         runAsync(() -> {
                             try {
                                 api.activateRememberedAccount(selected);
-                                mainHandler.post(() -> {
+                                postAccountTransitionAndWait(() -> {
                                     resetAfterAccountChange();
                                     setGlobalStatus("CONNECTED • " + api.getEmail());
                                     showNativeAccountScreen();
@@ -1413,21 +1519,39 @@ public final class MainActivity extends AppCompatActivity {
         });
 
         logout.setOnClickListener(v -> {
-            // Sign out forgets the CURRENT login only, unlike account switching.
-            api.logout();
-            resetAfterAccountChange();
-            setGlobalStatus("SIGNED OUT • remembered accounts preserved");
-            showNativeAccountScreen();
+            // Logout must not invalidate the token while a native Focus write
+            // is using it. Queue behind the IO lane, then finish UI handoff.
+            logout.setEnabled(false);
+            setGlobalStatus("SIGNING OUT • finishing current operation");
+            runAsync(() -> {
+                api.logout();
+                postAccountTransitionAndWait(() -> {
+                    resetAfterAccountChange();
+                    setGlobalStatus("SIGNED OUT • remembered accounts preserved");
+                    showNativeAccountScreen();
+                });
+            }, true);
         });
     }
 
     private void resetAfterAccountChange() {
-        disposeWorkspaceWebView();
+        resetAfterAccountChange(false);
+    }
+
+    private void resetAfterAccountChange(boolean preserveActiveWebView) {
+        ++workspaceSyncGeneration; // Discard old-owner Home async completions.
+        // A session adopted FROM the active embedded HTML must not destroy the
+        // very WebView completing its login flow. Native account switching
+        // still destroys the old WebView normally.
+        if (!preserveActiveWebView) disposeWorkspaceWebView();
         // Invalidate in-memory values; owner-specific cached exports, review
         // history and cloud tables are never deleted by account switching.
         syncedFollowing = new JSONArray();
         syncedFollowers = new JSONArray();
         syncedPending = new JSONArray();
+        pendingSnapshotPresent = false;
+        pendingSnapshotCached = false;
+        pendingSnapshotCapturedAt = 0L;
         syncedWorkspaceState = new JSONObject();
         syncedReviewStateAvailable = false;
         currentBatch = null;
@@ -1791,12 +1915,24 @@ public final class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void syncSession(String sessionJson) {
-            api.adoptWebSession(sessionJson);
-            mainHandler.post(() -> {
-                if (api.hasSession()) {
-                    setGlobalStatus("Account connected · shared session");
+            // JavaScriptInterface runs off the UI thread; never rotate native
+            // owner/session tokens in parallel with Focus's IO mutations.
+            io.execute(() -> {
+                String oldOwner = api.getEmail();
+                api.adoptWebSession(sessionJson);
+                if (!oldOwner.equalsIgnoreCase(api.getEmail())) {
+                    try {
+                        postAccountTransitionAndWait(() -> {
+                            resetAfterAccountChange(true);
+                            setGlobalStatus(api.hasSession()
+                                    ? "Account connected · shared session" : "Signed out");
+                        });
+                    } catch (Exception ignored) {
+                        mainHandler.post(() -> setGlobalStatus("Session handoff failed safely"));
+                    }
                 } else {
-                    setGlobalStatus("Signed out");
+                    mainHandler.post(() -> setGlobalStatus(api.hasSession()
+                            ? "Account connected · shared session" : "Signed out"));
                 }
             });
         }
@@ -1904,7 +2040,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void loadBatches() {
         setGlobalStatus("Buscando Focus…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
             JSONObject doubleCycle = fetchDoubleCheckCycle();
@@ -2140,7 +2276,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void createFocusBatch(String module, int requestedSize) {
         setGlobalStatus("PREPARING • " + focusModuleLabel(module) + " " + requestedSize);
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
 
@@ -2230,7 +2366,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void createDoubleCheckBatch(boolean restartCycle) {
         setGlobalStatus("Double Check · preparando siguiente tanda…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             touchDevice();
             refreshFocusSourceData();
             if (!syncedReviewStateAvailable)
@@ -2348,9 +2484,9 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void refreshFocusSourceData() throws Exception {
-        JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,updated_at");
+        JSONArray snapshots = api.get("list_snapshots?select=list_name,payload,item_count,captured_at,source_device,updated_at");
         JSONArray stateRows = api.get("workspace_state?select=payload,updated_at&state_key=eq.primary&limit=1");
-        JSONArray profileStates = api.get("profile_state?select=username,module,reviewed_at,reviewed_device,decision,protected,context&order=reviewed_at.desc&limit=20000");
+        JSONArray profileStates = loadCompleteProfileStates();
 
         JSONObject stateRow = stateRows.length() > 0 ? stateRows.optJSONObject(0) : null;
         JSONObject state = stateRow == null ? null : stateRow.optJSONObject("payload");
@@ -2365,6 +2501,8 @@ public final class MainActivity extends AppCompatActivity {
         JSONArray following = new JSONArray();
         JSONArray followers = new JSONArray();
         JSONArray pending = new JSONArray();
+        boolean pendingPresent = false;
+        long pendingCapturedAt = 0L;
         for (int i = 0; i < snapshots.length(); i++) {
             JSONObject snap = snapshots.optJSONObject(i);
             if (snap == null) continue;
@@ -2373,13 +2511,22 @@ public final class MainActivity extends AppCompatActivity {
             switch (snap.optString("list_name")) {
                 case "following" -> following = payload;
                 case "followers" -> followers = payload;
-                case "pending" -> pending = payload;
+                case "pending" -> {
+                    pending = payload;
+                    pendingPresent = true;
+                    String captured = snap.optString("captured_at", "");
+                    if (captured.isBlank()) captured = snap.optString("updated_at", "");
+                    pendingCapturedAt = parseInstant(captured).toEpochMilli();
+                }
             }
         }
 
         syncedFollowing = following;
         syncedFollowers = followers;
         syncedPending = pending;
+        pendingSnapshotPresent = pendingPresent;
+        pendingSnapshotCapturedAt = pendingCapturedAt;
+        pendingSnapshotCached = false;
         syncedWorkspaceState = state;
         saveWorkspaceCache();
     }
@@ -2450,11 +2597,10 @@ public final class MainActivity extends AppCompatActivity {
                         "Follower you don't follow back", true, false, following, followers));
             }
         } else if ("pending".equals(module)) {
-            for (int i = 0; i < syncedPending.length(); i++) {
-                JSONObject source = syncedPending.optJSONObject(i);
-                if (source == null) continue;
-                String username = source.optString("username", "").toLowerCase(Locale.ROOT);
-                if (username.isBlank() || excluded.contains(username)) continue;
+            for (Map.Entry<String, JSONObject> entry : jsonArrayByUsername(syncedPending).entrySet()) {
+                String username = entry.getKey();
+                JSONObject source = entry.getValue();
+                if (excluded.contains(username)) continue;
                 JSONObject meta = pendingReviewed == null ? null : pendingReviewed.optJSONObject(username);
                 long snoozeUntil = pendingSnooze == null ? 0L : pendingSnooze.optLong(username, 0L);
                 boolean reviewed = meta != null && meta.optLong("reviewedAt", 0L) > 0L;
@@ -2570,7 +2716,7 @@ public final class MainActivity extends AppCompatActivity {
         clearFocusState();
         setGlobalStatus("Cargando " + batch.optString("label", "Focus") + "…");
 
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String currentStatus = batch.optString("status", "prepared");
             if ("prepared".equals(currentStatus)) {
                 String now = Instant.now().toString();
@@ -2692,7 +2838,7 @@ public final class MainActivity extends AppCompatActivity {
         JSONObject item = row.payload instanceof JSONObject ? (JSONObject) row.payload : itemByUsername.get(row.username);
         boolean preserveReviewed = remotelyReviewed.contains(row.username);
 
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String now = Instant.now().toString();
             String batchId = encode(currentBatch.optString("id"));
             String username = encode(row.username);
@@ -2745,7 +2891,7 @@ public final class MainActivity extends AppCompatActivity {
 
     private void finalizeBatch(String decision) {
         setGlobalStatus("Saving review…");
-        runAsync(() -> {
+        runFocusScopedAsync(() -> {
             String now = Instant.now().toString();
             String batchId = currentBatch.optString("id");
             String module = currentBatch.optString("module", "review");
@@ -3139,6 +3285,19 @@ public final class MainActivity extends AppCompatActivity {
             return "Connection problem. Your cached lists are still available.";
         }
         return raw;
+    }
+
+    private void runFocusScopedAsync(Task task, boolean reportError) {
+        final String owner = api.getEmail();
+        final String instagram = api.getInstagramProfile();
+        final long generation = workspaceSyncGeneration;
+        runAsync(() -> {
+            if (!api.hasSession() || generation != workspaceSyncGeneration
+                    || !owner.equalsIgnoreCase(api.getEmail())
+                    || !instagram.equals(api.getInstagramProfile()))
+                throw new IllegalStateException("Cuenta cambiada. Focus anterior cancelado sin modificar otra cuenta.");
+            task.run();
+        }, reportError);
     }
 
     private void runAsync(Task task, boolean reportError) {

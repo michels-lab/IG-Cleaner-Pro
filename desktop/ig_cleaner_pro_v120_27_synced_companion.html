@@ -14922,7 +14922,10 @@ async function pullListSnapshots(){
     const meta=dataMeta?.[name]||{},localAt=Number(meta.capturedAt||0);
     const importAt=meta.dirtyHash===currentHash?Number(meta.dirtyAt||0):0;
     // Do not replace an explicit unsynced local import with an older cloud copy.
-    if(current.length&&Math.max(localAt,importAt)>remoteAt)continue;
+    // Explicitly imported EMPTY Pending is authoritative local evidence too.
+    // A stale cloud read must not bring back old requests before the empty
+    // snapshot can be uploaded. No import marker = cloud may still supply data.
+    if((current.length||importAt)&&Math.max(localAt,importAt)>remoteAt)continue;
     if(currentHash!==String(r.content_hash||'')){
       if(applySnapshot(name,payload))changed.add(name);
     }
