@@ -1,3 +1,11 @@
+## 2026-11-17 — P0 Android 52 Pending vs HTML 0 · preserve verified empty imports
+
+- Owner observed 52 Pending on Android but 0 in HTML and believes HTML is right. **Not a real-account verification:** Android reads cloud/cached snapshots; standalone HTML can have separate local imported Pending and may show 0 due to missing import or filter.
+- Root cause in `desktop/ig_cleaner_pro_v120_27_synced_companion.html`: `pullListSnapshots` ignored freshness of **explicit new empty Pending** because it guarded only `current.length>0`; older cloud Pending could be restored before publication. Fix checks the import timestamp even when local list is empty; missing/partial export never silently clears cloud.
+- Native Android `MainActivity.java` and `screen_mobile_workspace.xml`: Pending source distinguished as SAVED REQUESTS vs CACHED REQUESTS, with import date on Requests screen, missing snapshot shown as unknown, account switch resets stale provenance and saved metadata remains scoped in existing local cache. **No Instagram login/actions or destructive data mutation.**
+- Offline regressions: `tests/cloud-list-snapshot-freshness.test.cjs` adds exact 52 cloud vs newer explicit 0 HTML and missing-import guard; `tests/test_android_workspace_sync_races.py` checks Android source/cached markers, origin timestamps and A→B→A isolation. Exact-head CI, Android install/render and physical owner verification remain required, not assumed.
+- [Detailed audit](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md). Release verified at start: v120.79; this source branch is **NOT published** and does not authorize another release. Preserve Pending history, saved ZIP files, reviewed/protected data and prior cloud snapshots until a verified newer import.
+
 ## 2026-11-17 (Mexico) / 2026-11-18 UTC — FINAL stable v120.79 published
 
 - [Official v120.79 release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.79): 9 SHA256-verified stable assets, exact tag source `b226cc7dbf4d3013959a303a05847ca03c6cd4e2`, [publisher 44204338029](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44204338029) **4/4 SUCCESS**, installed Windows Setup, signed Android APK installed/launched, exact-source Desktop/Android screenshots and integrity.
