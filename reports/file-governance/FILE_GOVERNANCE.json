@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 461,
-  "classified_files_total": 457,
-  "docs_content_inspected": 121,
+  "tracked_files_total": 462,
+  "classified_files_total": 458,
+  "docs_content_inspected": 122,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 117,
+    "document": 118,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "2b4e55994060aaac3b6398c6d0e7b7b89d43fc9ff4abf4ad7e68a6fa114cae97",
-  "evidence_fingerprint": "78dbce5470298177e94ce1e86aab50a325ade38ae4b7f9d5607a0933738366f8",
+  "finding_total": 1,
+  "inventory_fingerprint": "63b2b25aabdf021f5863778f08ef9c7000b96cf7d6c3de5c75e42ddb018e3e96",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -246,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a290c681bff77992aa71adcbb9dc877a09e863b1"
+      "blob": "0e784e20d0932de6fcb8fd4d9f65870938d4d20a"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "33164f73de995786f6593c53a170889d74ecd158"
+      "blob": "98820907b4c74cb5c737ec1dc434aecf08776db4"
     },
     {
       "path": "README_SYNC.md",
@@ -855,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "bfa9ae9fe14233e5ea4f308893d90184f90211a8"
+      "blob": "2b7fd0b766b558f32f1554aadaebca452f890b04"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "b174b61401df75660d474730ceb8d948667072a9"
+      "blob": "d0c75e89b163a35094b14ca3a2ba7ffb35b4b0bc"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1635,6 +1634,13 @@
       "blob": "31971d9f6240b6555ff5be26c6e8c75099af37cc"
     },
     {
+      "path": "docs/audits/2026-11-18-inflight-instagram-rest-guard.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "1811add1aff530c34e1e230a06bce932a0eb900f"
+    },
+    {
       "path": "docs/audits/2026-11-18-manual-reviewed-atomic.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1884,7 +1890,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7ea501921f31a54eeda3e3504b7941831ca78b47"
+      "blob": "020ea8f63b8ac4617eeb738c0dff1e00bc0e0b46"
     },
     {
       "path": "tests/automation-center-browser.test.cjs",
@@ -2157,7 +2163,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "06dd14daaf12869dac4caf0526edef76a8162285"
+      "blob": "7b6fd6810b4e2e9e76286ae52bb37d6c60f8b50f"
     },
     {
       "path": "tests/focus-batch-priority.test.cjs",
@@ -3239,15 +3245,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "b5e8b78dc7e0ac94",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "8 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/automations-execution.test.cjs, tests/cloud-review-pagination-9896.test.cjs, tests/cloud-review-scope-cache.test.cjs, tests/cloud-review-storage-rollback.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
