@@ -102,6 +102,32 @@ const snapshot=(x,name,source,capturedAt)=>{
  await empty.ctx.pullListSnapshots();
  assert.equal(empty.ctx.pendingRequestsRaw.length,0);
 
+ // Reproduction reported by owner: Android still shows 52 historical
+ // cloud requests while a newer, explicitly empty HTML Pending import shows 0.
+ // A read must not resurrect those 52 before the authorized empty upload.
+ const divergent=harness("same-owner-same-instagram");
+ const fiftyTwo=Array.from({length:52},(_,i)=>"old.pending."+i);
+ divergent.remote.set("pending",snapshot(divergent,"pending",fiftyTwo,ago(90000)));
+ divergent.ctx.pendingRequestsRaw=[];
+ divergent.ctx.window.igcMarkLocalSnapshotsDirty(["pending"]);
+ await divergent.ctx.pullListSnapshots();
+ assert.equal(divergent.ctx.pendingRequestsRaw.length,0,
+   "A stale 52-row cloud read must not overwrite verified empty HTML Pending");
+ assert.equal(divergent.remote.get("pending").item_count,52,
+   "Read-only reconciliation must not silently destroy the older cloud evidence");
+ assert.equal((await divergent.ctx.pushListSnapshots()).lists,1,
+   "Explicit empty Pending may replace the stale cloud only after successful upload");
+ assert.equal(divergent.remote.get("pending").item_count,0);
+ await divergent.ctx.pullListSnapshots();
+ assert.equal(divergent.ctx.pendingRequestsRaw.length,0);
+
+ // An HTML with no imported Pending is NOT proof of zero. Keep the cloud.
+ const noPendingImport=harness("unimported");
+ noPendingImport.remote.set("pending",snapshot(noPendingImport,"pending",fiftyTwo,ago(90000)));
+ await noPendingImport.ctx.pullListSnapshots();
+ assert.equal(noPendingImport.ctx.pendingRequestsRaw.length,52,
+   "A missing export must not erase the last known Pending snapshot");
+
  // Native Android Advanced Workspace must never upload stale caches; only
  // explicit imports may travel from Android to Desktop and back.
  const android=harness("android-a","android");
