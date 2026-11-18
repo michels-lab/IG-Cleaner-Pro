@@ -3187,8 +3187,10 @@ public final class MainActivity extends AppCompatActivity {
     private void runFocusScopedAsync(Task task, boolean reportError) {
         final String owner = api.getEmail();
         final String instagram = api.getInstagramProfile();
+        final long generation = workspaceSyncGeneration;
         runAsync(() -> {
-            if (!api.hasSession() || !owner.equalsIgnoreCase(api.getEmail())
+            if (!api.hasSession() || generation != workspaceSyncGeneration
+                    || !owner.equalsIgnoreCase(api.getEmail())
                     || !instagram.equals(api.getInstagramProfile()))
                 throw new IllegalStateException("Cuenta cambiada. Focus anterior cancelado sin modificar otra cuenta.");
             task.run();
