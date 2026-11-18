@@ -16,3 +16,7 @@ When browser `localStorage` rejected an active Focus cohort, the app correctly p
 No owner Instagram account, cookie or local browser data were accessed. Test mocks cannot prove real Chrome quota or a 30-person Focus launch. Source change is diagnostic/retry-state correctness, **not a complete quota cure** or an IndexedDB migration. #371 remains OPEN until real owner browser corroborates that Focus opens and reviews survive restart. #360 counters, #377 physical two-window, live Unfollow/Cancel and Android cross-device checks remain separate.
 
 Published official stable **v120.80** unchanged. v120.81 reserved without release authorization. This PR is source only, not a release, RC or Developer build.
+
+## Exact-head CI negative fixture correction
+
+First #386 CI exposed a **test harness defect**, not an app storage error: `tests/focus-quota-alternative.test.cjs` extracted source only up to `activeBatchUserSet`, whereas the real `igcFocusStorageDiagnostic` function is defined later. A call to the omitted helper failed with `TypeError: ctx.igcFocusStorageDiagnostic is not a function`. Updated the fixture to explicitly evaluate the actual production diagnostic source slice in the same VM, without mocking or weakening assertions. Exact new-head CI must pass before merging.
