@@ -5771,8 +5771,38 @@ function reviewChanged(row){
 }
 
 function saveReviewedState(){
-  saveSet(LS_DONE,doneSet);
-  localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta));
+  // One confirmation updates two legacy browser keys. A quota error on the
+  // second must not leave a saved DONE marker without its relationship/date
+  // metadata. Queue cloud sync only after BOTH writes succeeded.
+  const previousDone=localStorage.getItem(LS_DONE);
+  const previousMeta=localStorage.getItem(LS_REVIEW_META);
+  const restoreInMemory=()=>{
+    let done=[],meta={};
+    try{done=JSON.parse(previousDone||'[]');if(!Array.isArray(done))done=[]}catch{}
+    try{meta=JSON.parse(previousMeta||'{}');if(!meta||typeof meta!=='object'||Array.isArray(meta))meta={}}catch{}
+    doneSet.clear();for(const username of done)doneSet.add(username);
+    for(const username of Object.keys(reviewedMeta))delete reviewedMeta[username];
+    Object.assign(reviewedMeta,meta);
+  };
+  let firstWritten=false,rollbackFailed=false;
+  try{
+    localStorage.setItem(LS_DONE,JSON.stringify([...doneSet]));
+    firstWritten=true;
+    localStorage.setItem(LS_REVIEW_META,JSON.stringify(reviewedMeta));
+  }catch(error){
+    if(firstWritten){
+      try{
+        if(previousDone===null)localStorage.removeItem(LS_DONE);
+        else localStorage.setItem(LS_DONE,previousDone);
+      }catch(recoveryError){rollbackFailed=true}
+    }
+    restoreInMemory();
+    // No success render, no asynchronous cloud publication, and no deletion
+    // of saved profile history. The caller's confirmation fails closed.
+    throw Error('No se guardó la revisión: almacenamiento del navegador rechazó la escritura'+
+      (rollbackFailed?' y no pudo restaurarse la clave Reviewed anterior; exporta respaldo.':'')+
+      '. Error: '+String(error?.name||'StorageError'));
+  }
   window.igcQueueStateSync?.('review-state');
 }
 
