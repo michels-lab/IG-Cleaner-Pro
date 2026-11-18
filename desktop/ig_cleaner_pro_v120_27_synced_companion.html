@@ -3741,40 +3741,26 @@ document.addEventListener('DOMContentLoaded',()=>window.IGC_INSTAGRAM_PROFILES.r
 </div></div></div><div class="page" id="page-automations"><div class="igc-page-flow">
 <div class="igc-page-head"><div class="igc-page-eyebrow">IG CLEANER PRO · WINDOWS</div><h2>Automations</h2><p>Manage every Instagram robot in one workspace. Insights is for analysis; Mutuals remains human-only Focus.</p></div>
 <style id="igc-automation-center-style">
-/* Scoped Automation Center layout: no global theme or saved-state overrides. */
-#page-automations .igc-robot-lanes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:18px}
-#page-automations .igc-robot-lane{min-width:0;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--surface2);display:flex;flex-direction:column;gap:9px}
-#page-automations .igc-robot-lane h3{font-size:1.09rem;margin:0;line-height:1.35;overflow-wrap:anywhere}
-#page-automations .igc-robot-lane-label{font-size:.75rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:700}
-#page-automations .igc-robot-lane-status{font-size:.88rem;line-height:1.5;overflow-wrap:anywhere;white-space:normal;flex:1;margin:0}
-#page-automations .igc-robot-lane .btnrow{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
-#page-automations .igc-robot-lane .btn{min-height:37px;max-width:100%;white-space:normal}
-#page-automations .igc-robot-safety{margin:0 0 18px;line-height:1.55}
-#page-automations .igc-robot-section{min-width:0}
+#page-automations .igc-automation-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:15px}
+#page-automations .igc-automation-nav button{display:flex;flex-direction:column;gap:4px;min-width:0;min-height:58px;padding:11px 14px;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font:inherit;font-weight:750;cursor:pointer}
+#page-automations .igc-automation-nav button span{font-size:.75rem;font-weight:450;color:var(--muted)}
+#page-automations .igc-automation-nav button[aria-selected="true"]{border-color:var(--accent);background:rgba(86,159,224,.13)}
+#page-automations .igc-automation-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#page-automations .igc-robot-safety{margin-bottom:14px}
+#page-automations .igc-robot-section,#page-automations #igcAutomationActivitySection{min-width:0}
+#page-automations .igc-robot-section[hidden],#page-automations #igcAutomationActivitySection[hidden]{display:none!important}
 #page-automations .igc-robot-section > .panel{min-width:0}
 #page-automations .igc-robot-review{margin-top:14px;min-width:0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-#page-automations .igc-robot-review > summary{cursor:pointer;display:list-item;padding:13px 16px;font-weight:650;background:var(--surface2);list-style-position:inside;overflow-wrap:anywhere}
+#page-automations .igc-robot-review > summary{cursor:pointer;display:list-item;padding:13px 16px;font-weight:650;background:var(--surface2)}
 #page-automations .igc-robot-review[open] > summary{border-bottom:1px solid var(--border)}
 #page-automations .igc-robot-review > .panel{margin:0!important;border:0;border-radius:0}
-#page-automations .igc-robot-review > summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
-@media(max-width:800px){#page-automations .igc-robot-lanes{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:520px){#page-automations .igc-robot-lane{padding:13px}#page-automations .igc-robot-lane .btnrow .btn{flex:1 1 130px}}
+@media(max-width:650px){#page-automations .igc-automation-nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-<div class="igc-robot-lanes" id="igcAutomationCommandCenter" aria-label="Robot command center">
-<section class="igc-robot-lane" id="igcAutomationAnalysisLane" aria-labelledby="igcAutomationAnalysisTitle">
-<div class="igc-robot-lane-label">01 / Analysis · No relationship clicks</div>
-<h3 id="igcAutomationAnalysisTitle">Profile Counts &amp; read-only inspection</h3>
-<p class="igc-robot-lane-status" id="igcAutomationAnalysisStatus" role="status" aria-live="polite">Checking local Profile Counts connection…</p>
-<div class="btnrow"><button class="btn primary" type="button" onclick="document.getElementById('igcAutomationsProfileCountsPanel').scrollIntoView({behavior:'smooth',block:'start'})">Open Analysis</button>
-<button class="btn" type="button" onclick="igcAutoChoose('audit');document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Followback audit (read-only)</button></div>
-</section>
-<section class="igc-robot-lane" id="igcAutomationActionLane" aria-labelledby="igcAutomationActionTitle">
-<div class="igc-robot-lane-label">02 / Action · Explicit owner approval</div>
-<h3 id="igcAutomationActionTitle">Unfollow &amp; Cancel Pending</h3>
-<p class="igc-robot-lane-status" id="igcAutomationActionStatus" role="status" aria-live="polite">Checking local action robot…</p>
-<p class="note" id="igcAutomationBatchSummary">Next batch preference: loading. Saved cohorts are kept separately.</p>
-<div class="btnrow"><button class="btn primary" type="button" onclick="document.getElementById('igcAutoPanel').scrollIntoView({behavior:'smooth',block:'start'})">Open Actions</button></div>
-</section>
+<div id="igcAutomationCommandCenter" class="igc-automation-nav" role="tablist" aria-label="Automations sections">
+<button type="button" id="igcAutomationTabAnalysis" role="tab" aria-selected="false" onclick="igcAutomationNavigate('analysis')">Analyze<span>Read-only checks</span></button>
+<button type="button" id="igcAutomationTabActions" role="tab" aria-selected="true" onclick="igcAutomationNavigate('actions')">Actions<span>Unfollow · Cancel</span></button>
+<button type="button" id="igcAutomationTabReview" role="tab" aria-selected="false" onclick="igcAutomationNavigate('review')">Review<span>Unresolved profiles</span></button>
+<button type="button" id="igcAutomationTabHistory" role="tab" aria-selected="false" onclick="igcAutomationNavigate('history')">History<span>Activity &amp; results</span></button>
 </div>
 <p class="note igc-robot-safety" id="igcAutomationConcurrencyNotice"><strong>Browser session safety:</strong> Profile Counts and relationship-changing robots cannot navigate Instagram simultaneously in the current Windows runtime. Finish or pause one before starting the other. Local-only analysis and saved results remain available. Do not retry an uncertain click.</p>
 <section class="igc-robot-section" id="igcActionRobotSection" aria-labelledby="igcActionLaneTitle">
@@ -18046,37 +18032,36 @@ window.igcAutoRender?.();
 <script id="igc-automation-command-center-runtime">
 (function(){
 'use strict';
-// Read only authoritative UI/status nodes. Do not create parallel batch state,
-// new robot actions, storage keys, or polling intervals.
 const get=id=>document.getElementById(id);
-function refresh(){
- const action=get('igcAutoLiveStatus'),analysis=get('igcCountsRobotStatus');
- const actionCard=get('igcAutomationActionStatus'),analysisCard=get('igcAutomationAnalysisStatus');
- if(actionCard&&action)actionCard.textContent=action.textContent||'Robot status not available.';
- if(analysisCard&&analysis)analysisCard.textContent=analysis.textContent||'Robot status not available.';
- const batch=get('igcAutoBatch'),batchInfo=get('igcAutoBatchApprovalDetails'),summary=get('igcAutomationBatchSummary');
- if(summary){
-  const pref=batch&&/^[0-9]+$/.test(String(batch.value))?batch.value:'not selected';
-  const approval=get('igcAutoBatchApproval');
-  summary.textContent='Next batch preference: '+pref+
-   (approval&&approval.style.display!=='none'&&batchInfo&&batchInfo.textContent
-     ? ' · Saved cohort: '+batchInfo.textContent : ' · Existing saved cohorts are never resized automatically.');
+function arrangeReview(){
+ const drawer=get('igcAutoReviewDrawer'),actions=get('igcActionRobotSection');
+ if(!drawer||!actions)return;
+ let section=get('igcAutomationReviewSection');
+ if(!section){
+  section=document.createElement('section');section.id='igcAutomationReviewSection';
+  section.className='igc-robot-section';section.setAttribute('aria-label','Saved issues requiring review');
+  actions.insertAdjacentElement('afterend',section);
+  const head=document.createElement('h3');head.textContent='Review · saved exceptions';section.append(head);
  }
- const issues=get('igcAutoIssueTotal'),caption=get('igcAutoReviewCaption');
- if(caption&&issues)caption.textContent=issues.textContent||'No issue results yet';
+ section.append(drawer);drawer.open=true;
 }
-window.igcAutomationCommandCenterRefresh=refresh;
-for(const id of ['igcAutoLiveStatus','igcCountsRobotStatus','igcAutoBatchApprovalDetails',
-                 'igcAutoIssueTotal','igcAutoBatchApproval']){
- const element=get(id);
- if(element&&typeof MutationObserver!=='undefined')
-  new MutationObserver(refresh).observe(element,{childList:true,characterData:true,subtree:true,
-                                               attributes:id==='igcAutoBatchApproval',
-                                               attributeFilter:id==='igcAutoBatchApproval'?['style']:undefined});
+function navigate(area,scroll=false){
+ if(!['analysis','actions','review','history'].includes(area))area='actions';
+ arrangeReview();
+ const sections={analysis:get('igcAnalysisRobotSection'),actions:get('igcActionRobotSection'),
+  review:get('igcAutomationReviewSection'),history:get('igcAutomationActivitySection')};
+ if(area==='history'&&!sections.history)area='actions';
+ for(const key of ['analysis','actions','review','history']){
+  if(sections[key])sections[key].hidden=key!==area;
+  const tab=get('igcAutomationTab'+key[0].toUpperCase()+key.slice(1));
+  if(tab){tab.setAttribute('aria-selected',String(key===area));tab.tabIndex=key===area?0:-1}
+ }
+ if(scroll&&sections[area])sections[area].scrollIntoView({behavior:'smooth',block:'start'});
+ if(area==='history')window.igcAutomationActivityRefresh?.();
 }
-const batch=get('igcAutoBatch');
-if(batch)batch.addEventListener('input',refresh);
-refresh();
+window.igcAutomationNavigate=area=>navigate(area,true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>navigate('actions'),{once:true});
+else navigate('actions');
 })();
 </script>
 
