@@ -1,5 +1,9 @@
 # Instagram Cleaner Pro
 
+## GRANADA — Atomic Focus history writes (source only)
+
+The Focus bulk opening/reopening history writer now restores **all affected in-memory profile counters and events** when the persistent history write is rejected. Failed operations cannot be silently saved later or disappear only upon reload. The production-function quota/retry/reload regression is CI-wired. [Detailed audit](docs/audits/2026-11-18-focus-history-transaction.md) · [Owner counter issue #360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360) · [storage #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). This does not increase browser storage limits. Official stable v120.80 remains the latest published release; v120.81 not authorized.
+
 ## GRANADA Focus — exact failed-storage diagnostics (source only)
 
 When a Focus cohort is refused by browser storage, the recovery panel now identifies whether the actual rejected write was the normal v2 or smaller v3 attempt, the fixed Focus key, the attempted UTF-16 byte estimate and estimated storage usage, without exposing profile names or stored values. A successful retry clears stale warnings. This **does not free an exhausted quota or prove Focus opened on the owner's browser**. [Root cause and regression audit](docs/audits/2026-11-18-focus-write-diagnostics.md) · [open owner #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). Published stable remains v120.80; v120.81 is not authorized.

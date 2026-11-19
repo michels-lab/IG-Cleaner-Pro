@@ -4775,8 +4775,35 @@ function recordProfileHistory(username,event,details={}){
   h.events=(h.events||[]).concat([{ts:now,event,details:{...details,label:details.label||''}}]).slice(-25);
 }
 function recordRowsHistory(rows,event,details={}){
-  (rows||[]).forEach(r=>recordProfileHistory(r.username,event,details));
-  saveProfileHistory();
+  // A failed write must not leave phantom open/reopen events in RAM, which
+  // could later be persisted by an unrelated action or vanish after reload.
+  if(igcProfileHistoryLoadError)throw Error('Cannot modify unreadable saved profile history');
+  const before=new Map();
+  try{
+    for(const row of rows||[]){
+      const username=cleanUsername(row?.username||'');
+      if(!username)continue;
+      if(!before.has(username)){
+        const original=profileHistory[username];
+        before.set(username,original?{ref:original,fields:{...original}}:null);
+      }
+      recordProfileHistory(username,event,details);
+    }
+    saveProfileHistory();
+  }catch(error){
+    // Restore in-place so any existing consumers of a history record see the
+    // previous counters, dates, metadata and original events array.
+    for(const [username,saved] of before){
+      if(!saved){delete profileHistory[username];continue}
+      const original=saved.ref;
+      for(const key of Object.keys(original)){
+        if(!Object.prototype.hasOwnProperty.call(saved.fields,key))delete original[key];
+      }
+      Object.assign(original,saved.fields);
+      profileHistory[username]=original;
+    }
+    throw error;
+  }
 }
 
 function profileHistoryOf(rowOrUsername){

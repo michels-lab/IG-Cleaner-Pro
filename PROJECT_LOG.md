@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA Focus history RAM/disk rollback after denied writes (source only)
+
+- Root cause: `recordRowsHistory()` incremented per-profile in-memory open/reopen history before calling `saveProfileHistory()`; browser quota failure left phantom events in RAM, later persisting during an unrelated write or disappearing after reload. Fix snapshots affected record references/fields and restores in place on failed mutation/write; new uncommitted RAM rows are discarded but persisted ledgers are never touched. Unreadable saved history fails before mutation.
+- Extended CI-wired production-function `tests/focus-history-compaction.test.cjs`: existing record twice + new record, simulated rejected history write, exact RAM/disk rollback, preserved event-array identity, successful retry and reload; unreadable history negative case. [Audit](docs/audits/2026-11-18-focus-history-transaction.md).
+- Scope #360/#371 source correctness only; real owner's browser, real Instagram actions, A/B physical windows and Android sync remain unverified. Official v120.80 unchanged, future v120.81 unauthorized. No release requested.
+
 ## 2026-11-18 — GRANADA #371 · exact failed Focus write diagnostics (source only)
 
 - Found source evidence gap: existing Focus storage warning always reported full v2 cohort size even when the actual final failed write was compact v3, without key or attempt bytes. Added only fixed key, format and attempted UTF-16 bytes as volatile metadata before each save; failed v3 and blocked v2 are distinct. No profile names, cookies, raw localStorage values or provider error messages are exported. Successful retry clears stale diagnostics.
