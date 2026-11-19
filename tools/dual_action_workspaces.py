@@ -316,7 +316,11 @@ class DualActionWorkspaces:
             # are released even if the disk archive fails.
             lease.acquire()
             try:
-                return robot.cancel_saved_batch(request)
+                # This controller ALREADY holds the exact scope lease. Reuse
+                # its under-lease entrypoint rather than reacquiring a second
+                # incompatible legacy GLOBAL lock (parallel B may still run).
+                return robot._cancel_saved_batch_under_lease(
+                    owner, account, task, batch_id)
             finally:
                 lease.release()
 
