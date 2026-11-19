@@ -48,6 +48,12 @@ function checkRetrySaveFailure(fail){
   activeExtraReviewBatch:batch,activeFocusBatch:batch,Date,JSON,console:{error(){}},
   recordProfileHistory(u,event,details){q.profileHistory[u].events.push({event,details})},
   saveProfileHistory(){if(fail)throw Error("QuotaExceededError")},
+  recordRowsHistory(rows,event,details){
+   // Production history writer restores RAM if the browser rejects the write.
+   const original=JSON.stringify(q.profileHistory);
+   try{rows.forEach(row=>q.recordProfileHistory(row.username,event,details));q.saveProfileHistory();}
+   catch(error){q.profileHistory=JSON.parse(original);throw error;}
+  },
   msg:m=>messages.push(String(m)),
   logAction(){},buildRows(){},applyFilters(){},renderModuleDashboard(){},
   clearActiveFocusBatch(){closed=true;q.activeExtraReviewBatch=null;q.activeFocusBatch=null},

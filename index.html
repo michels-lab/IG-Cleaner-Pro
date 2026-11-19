@@ -10665,7 +10665,7 @@ function igcCommitFocusDecision(batch,decision){
         else localStorage.setItem(key,prior);
       }catch(recoveryError){
         rollbackFailed=true;
-        console.warn('Focus: ledger rollback needs owner backup',recoveryError?.name||'StorageError');
+        console.warn?.('Focus: ledger rollback needs owner backup',recoveryError?.name||'StorageError');
       }
     }
     msg(rollbackFailed
@@ -10685,7 +10685,7 @@ function igcCommitFocusDecision(batch,decision){
       protectedSet=nextProtected;
   }
   try{window.igcQueueStateSync?.('focus-bulk-review-committed')}catch(error){
-    console.warn('Focus: background sync scheduling unavailable',error?.name||'SyncError');
+    console.warn?.('Focus: background sync scheduling unavailable',error?.name||'SyncError');
   }
   return true;
 }
@@ -10697,36 +10697,56 @@ function igcRecordCommittedFocusHistory(batch,decision){
       {kind:batch.kind,label:batch.label,decision,mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
     return true;
   }catch(error){
-    console.warn('Focus: review history not saved',error?.name||'StorageError');
+    console.warn?.('Focus: review history not saved',error?.name||'StorageError');
     msg('La decisión Reviewed/Pending quedó guardada, pero no el historial secundario. Exporta un respaldo.','w');
     return false;
   }
 }
 function igcCommitFocusUnconfirmed(batch){
-  // A failed second look is NOT an undo of a previous Reviewed decision.
-  // Only never-reviewed Pending open attempts may be returned to the queue.
-  if(batch.kind==='pending'&&batch.reviewMode!=='double'){
+  // An unfinished second look is never permission to undo an older Reviewed
+  // result. Unconfirmed history must be durable BEFORE releasing the cohort.
+  const pending=batch.kind==='pending'&&batch.reviewMode!=='double';
+  const oldOpened=pending?new Set(pendingOpenedSet||[]):null;
+  let oldStored=null,wroteOpened=false;
+  if(pending){
     const next=new Set(pendingOpenedSet||[]);
     for(const row of batch.rows||[]){
       if(!pendingReviewedMeta?.[row.username]?.reviewedAt)next.delete(row.username);
     }
-    try{localStorage.setItem(LS_PENDING_OPENED,JSON.stringify([...next]))}
-    catch(error){
+    try{
+      oldStored=localStorage.getItem(LS_PENDING_OPENED);
+      localStorage.setItem(LS_PENDING_OPENED,JSON.stringify([...next]));
+      pendingOpenedSet=next;
+      wroteOpened=true;
+    }catch(error){
       msg('No se pudo guardar el reintento Pending. Conservé la tanda y todas las decisiones anteriores.','w');
       return false;
     }
-    pendingOpenedSet=next;
   }
   try{
     recordRowsHistory(batch.rows||[],'unconfirmed',
-      {kind:batch.kind,label:batch.label,mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
+      {kind:batch.kind,label:batch.label,
+       mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
   }catch(error){
-    console.warn('Focus: unconfirmed history not saved',error?.name||'StorageError');
-    msg('No se pudo guardar el historial secundario del intento; tus revisiones anteriores siguen intactas.','w');
+    let rollbackFailed=false;
+    if(wroteOpened){
+      try{
+        if(oldStored===null)localStorage.removeItem(LS_PENDING_OPENED);
+        else localStorage.setItem(LS_PENDING_OPENED,oldStored);
+        pendingOpenedSet=oldOpened;
+      }catch(recoveryError){
+        rollbackFailed=true;
+        console.warn?.('Focus: Pending open ledger restore failed',recoveryError?.name||'StorageError');
+      }
+    }
+    console.warn?.('Focus: unconfirmed history not saved',error?.name||'StorageError');
+    msg(rollbackFailed
+      ?'Error al guardar el intento: el registro Pending necesita recuperación. Conserva la tanda y exporta respaldo.'
+      :'Error de almacenamiento: no pude guardar el intento fallido. Mantengo la tanda original para reintentar sin borrar revisiones.','w');
+    return false;
   }
   return true;
 }
-
 function confirmSafeFocusReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;
   if(!b||!b.rows||!b.rows.length){
