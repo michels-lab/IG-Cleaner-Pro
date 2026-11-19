@@ -11226,7 +11226,7 @@ function confirmExtraFocusReviewed(){
   if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return false}
   const decision=document.getElementById('extraFocusDecision')?.value||'reviewed';
   if(['pending','mutual'].includes(b.kind)&&
-     !confirm('¿Revisaste realmente los '+b.rows.length+' perfiles y quieres guardar la decisión '+pendingDecisionLabel(decision)+'?'))return false;
+     !confirm('Did you actually review the '+b.rows.length+' profiles and want to save the decision '+pendingDecisionLabel(decision)+'?'))return false;
   if(!igcCommitFocusDecision(b,decision))return false;
   igcRecordCommittedFocusHistory(b,decision);
   try{clearActiveFocusBatch()}catch(error){
@@ -12249,9 +12249,9 @@ function confirmSafeFocusReviewed(){
   const decision=document.getElementById('safeFocusDecision')?.value||'reviewed';
   const sectionLabel=b.kind==='pending'?'Pending Requests':
     (b.kind==='followers'?'Followers':(b.kind==='mutual'?'Mutuos':'Following'));
-  if(!confirm('CONFIRMACIÓN MASIVA\n\nSección: '+sectionLabel+
-      '\nPerfiles: '+b.rows.length+'\nDecisión: '+pendingDecisionLabel(decision)+
-      '\n\nConfirma únicamente los perfiles que realmente revisaste.'))return false;
+  if(!confirm('BULK CONFIRMATION\n\nSection: '+sectionLabel+
+      '\nProfiles: '+b.rows.length+'\nDecision: '+pendingDecisionLabel(decision)+
+      '\n\nConfirm only the profiles you actually reviewed.'))return false;
   if(!igcCommitFocusDecision(b,decision))return false;
   igcRecordCommittedFocusHistory(b,decision);
   try{clearActiveFocusBatch()}catch(error){
