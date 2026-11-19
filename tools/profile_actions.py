@@ -873,8 +873,9 @@ def _live_sibling_owner_proof(context, current_page, expected_handle, session_id
     owner or a changed cookie fails closed. Merely having the target URL or
     another old profile tab is never sufficient proof.
     """
-    if not session_id:
-        return "unknown"
+    # A missing/ambiguous cookie forbids POSITIVE sibling proof, but never
+    # suppresses negative evidence of a DIFFERENT signed-in owner or a login
+    # challenge on another tab. Safety checks must run independently of cache.
     try:
         pages = context.pages
         if not isinstance(pages, (list, tuple)):
@@ -898,8 +899,9 @@ def _live_sibling_owner_proof(context, current_page, expected_handle, session_id
                 if not _same_instagram_owner(observed, expected_handle):
                     return "wrong"
                 matching = True
-        if matching:
-            # Account switch while scanning sibling DOM invalidates its proof.
+        if matching and session_id:
+            # Never use a sibling as positive authentication if the cookie
+            # changes mid-survey. A matching URL/profile label alone is not proof.
             return ("matched" if _local_owner_session_id(context) == session_id
                     else "unsafe")
         return "unknown"
@@ -934,16 +936,30 @@ def _verified_action_owner(page, expected_handle):
         _OWNER_PROFILE_PROBE.bound_session = None
         return False
     identified = signed_in_handle(page)
+    context = page.context
+    session_id = _local_owner_session_id(context)
     if identified is not None:
         if not _same_instagram_owner(identified, expected_handle):
             _OWNER_PROFILE_PROBE.bound_session = None
             return False
-        # A visible owner is a fresh proof in its own right; the fallback
-        # cache requires independent matching owner-profile evidence.
+        # The target's sidebar can be stale after switching accounts in
+        # another robot Chrome tab. Do not trust a matching visible handle
+        # while a previously bound session ID has silently changed.
+        bound = getattr(_OWNER_PROFILE_PROBE, "bound_session", None)
+        if (bound is not None and bound.get("context") is context
+                and bound.get("session_id") != session_id):
+            _OWNER_PROFILE_PROBE.bound_session = None
+            return False
+        # Even a positive CURRENT owner label must not override a conflicting
+        # tab, login page or challenge. Run read-only sibling safety checks
+        # with or without a valid cookie; only positive sibling *reuse*
+        # depends on having the matching fresh cookie.
+        sibling_now = _live_sibling_owner_proof(
+            context, page, expected_handle, session_id)
+        if sibling_now in ("wrong", "unsafe"):
+            _OWNER_PROFILE_PROBE.bound_session = None
+            return False
         return True
-
-    context = page.context
-    session_id = _local_owner_session_id(context)
     bound = getattr(_OWNER_PROFILE_PROBE, "bound_session", None)
     if bound is not None:
         if (session_id and bound["context"] is context

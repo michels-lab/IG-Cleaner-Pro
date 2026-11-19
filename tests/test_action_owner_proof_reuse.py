@@ -338,5 +338,92 @@ class OwnerProofReuseTests(unittest.TestCase):
         self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
 
 
+    def test_visible_target_owner_is_not_enough_when_sibling_disagrees(self):
+        # Before this fix, the positive target sidebar short-circuited the
+        # entire sibling survey. A stale sidebar could authorize a click after
+        # the user switched Instagram in a second tab.
+        for cookie in (owner_cookie("12345"), []):
+            with self.subTest(cookie_present=bool(cookie)):
+                context = Mock()
+                context.cookies.return_value = cookie
+                target = make_page(context)
+                target.is_closed.return_value = False
+                different = make_page(context)
+                different.url = "https://www.instagram.com/"
+                different.is_closed.return_value = False
+                context.pages = [target, different]
+                with patch.object(actions, "challenge_detected", return_value=False), \
+                     patch.object(actions, "signed_in_handle",
+                                  side_effect=lambda p: "other.account" if p is different else "my.profile"), \
+                     patch.object(actions, "verify_selected_owner_profile") as navigate:
+                    self.assertFalse(actions._verified_action_owner(target, "my.profile"))
+                    navigate.assert_not_called()
+                self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
+                context.new_page.assert_not_called()
+
+    def test_visible_target_owner_rejects_challenged_or_login_sibling(self):
+        for condition in ("challenge", "login"):
+            with self.subTest(condition=condition):
+                context = Mock()
+                context.cookies.return_value = owner_cookie("12345")
+                target = make_page(context)
+                target.is_closed.return_value = False
+                sibling = make_page(context)
+                sibling.url = "https://www.instagram.com/"
+                sibling.is_closed.return_value = False
+                if condition == "login":
+                    sibling.locator.return_value.count.return_value = 1
+                    sibling.locator.return_value.nth.return_value.is_visible.return_value = True
+                context.pages = [target, sibling]
+                with patch.object(actions, "challenge_detected",
+                                  side_effect=lambda p: p is sibling and condition == "challenge"), \
+                     patch.object(actions, "signed_in_handle",
+                                  side_effect=lambda p: "my.profile" if p is target else None), \
+                     patch.object(actions, "verify_selected_owner_profile") as navigate:
+                    self.assertFalse(actions._verified_action_owner(target, "my.profile"))
+                    navigate.assert_not_called()
+                context.new_page.assert_not_called()
+
+    def test_visible_target_matching_sibling_is_still_allowed_without_navigations(self):
+        for cookie in (owner_cookie("12345"), []):
+            with self.subTest(cookie_present=bool(cookie)):
+                context = Mock()
+                context.cookies.return_value = cookie
+                target = make_page(context)
+                target.is_closed.return_value = False
+                sibling = make_page(context)
+                sibling.url = "https://www.instagram.com/"
+                sibling.is_closed.return_value = False
+                context.pages = [target, sibling]
+                with patch.object(actions, "challenge_detected", return_value=False), \
+                     patch.object(actions, "signed_in_handle", return_value="my.profile"), \
+                     patch.object(actions, "verify_selected_owner_profile") as navigate:
+                    self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+                    navigate.assert_not_called()
+                context.new_page.assert_not_called()
+                self.assertEqual(self.nav_count, [])
+
+    def test_visible_target_owner_rejects_cached_cookie_change(self):
+        context = Mock()
+        context.cookies.return_value = owner_cookie("12345")
+        target = make_page(context)
+        target.is_closed.return_value = False
+        context.pages = [target]
+        with patch.object(actions, "challenge_detected", return_value=False), \
+             patch.object(actions, "signed_in_handle", return_value=None), \
+             patch.object(actions, "verify_selected_owner_profile", side_effect=self.proof):
+            self.assertTrue(actions._verified_action_owner(target, "my.profile"))
+        self.assertIsNotNone(actions._OWNER_PROFILE_PROBE.bound_session)
+        context.cookies.return_value = owner_cookie("67890")
+        with patch.object(actions, "challenge_detected", return_value=False), \
+             patch.object(actions, "signed_in_handle", return_value="my.profile"), \
+             patch.object(actions, "verify_selected_owner_profile") as navigate:
+            self.assertFalse(actions._verified_action_owner(target, "my.profile"))
+            navigate.assert_not_called()
+        self.assertIsNone(actions._OWNER_PROFILE_PROBE.bound_session)
+        self.assertEqual(context.new_page.call_count, 1)
+
+
+
 if __name__ == "__main__":
     unittest.main()

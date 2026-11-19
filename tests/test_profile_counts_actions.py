@@ -104,9 +104,24 @@ class FakeMissing:
         return 0
 
 
+class FakeRobotContext:
+    """Minimal real-browser shape for exact-target owner safety regressions.
+
+    A Playwright Page *always* exposes its owning context, including its pages
+    and cookies. Old FakePage omitted this, masking cross-tab contradictions.
+    No real login, cookie or Chrome is used.
+    """
+    def __init__(self, page):
+        self.pages = [page]
+
+    def cookies(self, _urls=None):
+        return []
+
+
 class FakePage:
     def __init__(self, task, target="target.user", private=False):
         self.url = "https://www.instagram.com/"
+        self.context = FakeRobotContext(self)
         self.target = target
         self.private = private
         self.menu = FakeRoot("Unfollow", self.choose_unfollow,
