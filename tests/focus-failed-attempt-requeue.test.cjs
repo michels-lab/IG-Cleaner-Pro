@@ -57,7 +57,7 @@ function checkRetrySaveFailure(fail){
   msg:m=>messages.push(String(m)),
   logAction(){},buildRows(){},applyFilters(){},renderModuleDashboard(){},
   clearActiveFocusBatch(){closed=true;q.activeExtraReviewBatch=null;q.activeFocusBatch=null},
-  closeSafeFocusPopup(){},maybeContinueGuidedSession(){}
+  closeSafeFocusPopup(){},closeExtraFocusModal(){},maybeContinueGuidedSession(){}
  };
  vm.createContext(q);vm.runInContext(unconfirmedSource,q);
  assert.doesNotThrow(()=>q.markSafeFocusNotReviewed());
