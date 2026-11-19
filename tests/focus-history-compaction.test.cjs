@@ -69,3 +69,53 @@ stored.set("history",ledgerBefore);ctx.loadProfileHistory();
 assert.equal(ctx.igcProfileHistoryLoadError,false,"Restoring a valid backup should unblock writes");
 assert.doesNotThrow(()=>ctx.saveProfileHistory());
 console.log("PASS: 789 reviewed profiles, 25 events each, legacy migration, failed writes and protected ledgers");
+
+ 
+// GRANADA #360/#371: the production bulk history writer must roll back RAM
+// when browser storage refuses the append. A later successful save must not
+// resurrect uncommitted open/reopen events or duplicate attempted profiles.
+const recordsFrom=html.indexOf("function ensureProfileHistory(");
+const recordsTo=html.indexOf("function profileHistoryOf(",recordsFrom);
+assert(recordsFrom>0&&recordsTo>recordsFrom,"Real bulk history writer missing");
+ctx.cleanUsername=username=>String(username||"").trim().toLowerCase();
+vm.runInContext(html.slice(recordsFrom,recordsTo),ctx);
+const beforeBatch=JSON.stringify(ctx.profileHistory);
+const beforeDisk=stored.get("history");
+const originalRecord=ctx.profileHistory["profile.100"];
+const originalEvents=originalRecord.events;
+failWrites=true;
+assert.throws(()=>ctx.recordRowsHistory([
+ {username:"profile.100"},{username:"brand.new"},{username:"profile.100"}
+],"open",{kind:"main",label:"Focus 30"}),/QuotaExceededError/,
+ "Rejected history write must report a failure");
+assert.equal(JSON.stringify(ctx.profileHistory),beforeBatch,
+ "Failed 30-person history append must restore every prior in-memory counter");
+assert.equal(stored.get("history"),beforeDisk,
+ "Failed history must not modify the durable original");
+assert.equal(ctx.profileHistory["profile.100"],originalRecord,
+ "Rollback must preserve references to an existing profile record");
+assert.equal(ctx.profileHistory["profile.100"].events,originalEvents,
+ "Rollback must restore the exact original event array");
+assert.equal(ctx.profileHistory["brand.new"],undefined,
+ "Rejected new profile events must not survive in memory");
+failWrites=false;
+ctx.recordRowsHistory([
+ {username:"profile.100"},{username:"brand.new"},{username:"profile.100"}
+],"open",{kind:"main",label:"Focus 30"});
+assert.equal(ctx.profileHistory["profile.100"].opened,27,
+ "Successful retry counts two actual repeated rows, not previous failed events");
+assert.equal(ctx.profileHistory["brand.new"].opened,1,
+ "Previously rejected new row gets exactly one successful open");
+const successful=JSON.stringify(ctx.profileHistory);
+ctx.profileHistory={};
+ctx.loadProfileHistory();
+assert.equal(JSON.stringify(ctx.profileHistory),successful,
+ "Successful batch must be reconstructible after page reload");
+ctx.igcProfileHistoryLoadError=true;
+const protectedBefore=JSON.stringify(ctx.profileHistory);
+assert.throws(()=>ctx.recordRowsHistory([{username:"phantom"}],"open"),
+ /Cannot modify unreadable saved profile history/,
+ "Unreadable persisted history must reject append BEFORE any mutation");
+assert.equal(JSON.stringify(ctx.profileHistory),protectedBefore);
+ctx.igcProfileHistoryLoadError=false;
+console.log("PASS: production Focus history bulk writes are atomic in RAM and durable storage across quota/retry/reload");

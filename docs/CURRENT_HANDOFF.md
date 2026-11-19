@@ -1,3 +1,9 @@
+## 2026-11-18 — GRANADA Focus bulk open/reopen history is RAM/disk transactional (source, unpublished)
+
+- `recordRowsHistory()` previously mutated per-profile RAM then could fail the sole `saveProfileHistory()` call under quota. It could later persist uncommitted open/reopen history via another write or lose apparent counts on reload. Source now snapshots each affected record (including event-array and object identity) and rolls back in memory on failure; prior durable records never deleted. Unreadable storage fails before mutation.
+- Production-function negative regression in `tests/focus-history-compaction.test.cjs` covers mixed existing/new profiles, repeat usernames, failed quota, exact rollback, successful retry, reload and corrupted-history fail-closed. [Audit](audits/2026-11-18-focus-history-transaction.md). CI required before merge.
+- Real #360/#371 and #377 physical acceptance remain OPEN; no claim actual Instagram Unfollow/Cancel verified. Published v120.80 immutable; next v120.81 not authorized.
+
 ## 2026-11-18 — GRANADA #371 precise Focus storage attempt diagnostics (unreleased source)
 
 - A Focus storage failure could display the original v2 payload size even when compact v3 was the actual failed retry. Source now records the exact storage key, v2/v3 stage and attempted UTF-16 bytes in volatile non-sensitive diagnostic metadata before each write; the existing storage warning surfaces this redacted detail and successful save clears stale warnings.
