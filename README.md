@@ -109,3 +109,7 @@ Created by **Michel Armando Duarte Flores** · **Michel's Lab** · **TOOLS WITH 
 [Developer GitHub](https://github.com/realmichelduarte) · [Michel's Lab repositories](https://github.com/michels-lab)
 
 This project is **source-available, not open source**. All rights reserved; see [LICENSE.txt](LICENSE.txt). Independent product, not affiliated with or endorsed by Instagram or Meta Platforms, Inc.
+
+## GRANADA — Cross-page A→B→A cloud review sync (unreleased source)
+
+The review/pending cloud sync now ties a **complete multi-page download and a multi-POST upload** to one app owner, Instagram slot and slot generation. Switching A→B→A between requests rejects the original operation, rather than combining rows or sending old account records under the new active slot. The four-second cache is generation-scoped too. The CI-wired regression tests actual production read/push JS, including a delayed second GET and a delayed first of two POSTs. [Root cause and test evidence](docs/audits/2026-11-18-cloud-multipage-aba.md) · [owner counter issue #360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360). Physical owner accounts still need validation; official stable v120.80 remains the published version; v120.81 not authorized.

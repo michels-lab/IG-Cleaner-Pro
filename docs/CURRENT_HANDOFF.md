@@ -1388,3 +1388,9 @@ These checks do not replace Android `assembleDebug` / embedded Workspace packagi
 ## 2026-10-12 — Real Switch Account behavior, not Sign Out
 
 The owner clarified that Switch Accounts must **choose between remembered app login sessions** rather than open Sign In. Implemented in PR #82 (not in stable v120.42): native Android chooser with AndroidKeyStore AES-GCM encrypted session slots and Desktop account selection preserving each login's refresh token; Sign Out removes only the selected saved login. Add another account preserves previous sessions. Login selection rebuilds per-owner data scope and never deletes Followings, Focus, reviews or cloud backups. New Desktop and Android emulator tests added. A real Android phone and Windows owner acceptance are pending.
+
+## 2026-11-18 — GRANADA: prevent multi-request cloud A→B→A sync races (unreleased source)
+
+- Product source reader now captures generation across ALL paginated profile_state GET pages and four-second cache. A→B→A between pages rejects the entire reconciliation. Push captures owner/Instagram slot/generation before local rows and checks after fresh preflight and around every 500-row POST, preventing subsequent wrong-generation uploads after switch.
+- Extended already CI-wired `tests/cloud-review-scope-cache.test.cjs` using production reader and pusher with delayed page 2, fresh cache on ABA, 501-row two-POST interrupted upload. [Audit](audits/2026-11-18-cloud-multipage-aba.md). Preserve all existing decisions and authorization boundaries.
+- Physical #360/#371/#377 acceptance and live automation remain OPEN. Official release remains v120.80; v120.81 not authorized.
