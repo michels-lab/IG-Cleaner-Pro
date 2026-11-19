@@ -13,7 +13,7 @@ for(const token of [
  'function igcPendingDoubleCheckOne(username)','function igcPendingDoubleToggleSelected(username,checked)',
  'igcPendingDoubleSelected.has(r.username)','igcPendingDoubleSeen().has(r.username)',
  "activeFocusBatch.reviewMode='double'","pendingReviewedMeta[r.username]",
- "if(b.reviewMode==='double')"
+ "batch.reviewMode==='double'&&previous.reviewedAt"
 ]) assert(html.includes(token),"Missing real UI/state contract: "+token);
 const store=new Map(),messages=[],opened=[],events=[],data={
  A:Array.from({length:45},(_,i)=>"request"+String(i+1).padStart(2,"0")),
@@ -40,6 +40,7 @@ const ctx={
  pendingOldestFirstSort:(a,b)=>a.username.localeCompare(b.username),
  activeFocusBatch:null,activeExtraReviewBatch:null,pendingReviewedMeta:metadata.A,
  pendingSnoozeMap:{},pendingOpenedSet:new Set(data.A),
+ LS_PENDING_REVIEW_META:"pending-reviewed",LS_PENDING_OPENED:"pending-opened",
  document:{getElementById:id=>({value:"still_pending"})},
  msg:(message,level)=>messages.push({message,level}),
  pendingDecisionLabel:decision=>String(decision),
@@ -53,7 +54,7 @@ const ctx={
   if(!deferHistory)ctx.recordRowsHistory(rows,'open',{kind,label});
   return true;
  },
- recordRowsHistory(){historyWrites++},
+ recordRowsHistory(rows,event,details){historyWrites++;if(event==="review")rows.forEach(r=>events.push({u:r.username,event,details}));},
  saveActiveFocusBatch:()=>{store.set(account+"::active",JSON.stringify(ctx.activeFocusBatch));saves++},
  showSafeFocusPopup:()=>assert.equal(ctx.activeBatchRowResolved(ctx.activeFocusBatch.rows[0],"pending"),false,
   "Original review cannot auto-close a second review"),
@@ -95,12 +96,13 @@ assert.equal(opened.length,45,"Second 15 complete same 45-person cycle");
 assert.equal(ctx.igcPendingDoubleRows().length,0);
 assert.equal(ctx.igcPendingDoubleCheckAll(),false,"Never recycle previously seen in same cycle");
 // Explicit reset only after no pending batch, and never modifies prior decisions.
+const reviewedAfterConfirmation=JSON.stringify(metadata.A);
 ctx.activeFocusBatch=null;ctx.activeExtraReviewBatch=null;
 allow=false;assert.equal(ctx.igcPendingDoubleResetCycle(),false);
 assert.equal(ctx.igcPendingDoubleRows().length,0);
 allow=true;assert.equal(ctx.igcPendingDoubleResetCycle(),true);
 assert.equal(ctx.igcPendingDoubleRows().length,45);
-assert.equal(JSON.stringify(metadata.A),oldA);
+assert.equal(JSON.stringify(metadata.A),reviewedAfterConfirmation);
 // Single and selected do not require wiping reviewed marks.
 assert.equal(ctx.igcPendingDoubleCheckOne("request45"),true);
 assert.equal(ctx.activeFocusBatch.rows.length,1);
@@ -112,6 +114,8 @@ assert.deepEqual(Array.from(ctx.activeFocusBatch.rows,r=>r.username),["request01
 // Confirm a new decision: archive old review, update only selected, keep audit event.
 vm.runInContext(extract("function confirmSafeFocusReviewed(){","function snoozeSafeFocusBatch(days){"),ctx);
 ctx.confirmSafeFocusReviewed();
+// Transactional commit replaces the in-memory snapshot only AFTER all keys persist.
+metadata.A=ctx.pendingReviewedMeta;
 assert.equal(metadata.A.request01.decision,"still_pending");
 assert.equal(metadata.A.request01.reviewSource,"pending_double_check");
 assert.equal(metadata.A.request01.previousReviews.length,1);

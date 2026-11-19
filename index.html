@@ -9753,68 +9753,34 @@ function reopenExtraFocusBatch(){
 }
 
 function markExtraFocusNotReviewed(){
+  // This legacy modal must use the SAME non-destructive path as the principal
+  // Focus dialog. Never delete a decision from a prior Recheck/Double Check.
   const b=activeExtraReviewBatch;
-  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return}
-  if(b.kind==='pending'){
-    b.rows.forEach(r=>{
-      pendingOpenedSet.delete(r.username);
-      if(pendingReviewedMeta&&pendingReviewedMeta[r.username])delete pendingReviewedMeta[r.username];
-    });
-    savePendingOpened();
-    savePendingReviewedMeta();
-    logAction('pending_not_reviewed',`Pending no revisados: ${b.rows.length}`,{count:b.rows.length,source:'pending'});
-    renderPendingRequests();
-    renderModuleDashboard();
-    closeExtraFocusModal();
-    msg(`No se marcaron como revisados. Los ${b.rows.length} pending volverán a salir en focos futuros.`,'w');
-    return;
-  }
-  if(b.kind==='mutual'){
-    b.rows.forEach(r=>{
-      doneSet.delete(r.username);
-      if(reviewedMeta&&reviewedMeta[r.username]?.reviewSource==='followers_mutual_focus')delete reviewedMeta[r.username];
-    });
-    saveReviewedMeta();
-    saveSet(LS_DONE,doneSet);
-    logAction('mutual_not_reviewed',`Seguidores que sigo no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers_mutual'});
-    buildRows();
-    applyFilters();
-    renderFollowersMutualTab();
-    renderModuleDashboard();
-    closeExtraFocusModal();
-    msg(`No se marcaron como revisados. Los ${b.rows.length} seguidores que sigo volverán a salir en focos futuros.`,'w');
-    return;
-  }
-  closeExtraFocusModal();
+  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return false}
+  return markSafeFocusNotReviewed();
 }
-
 function confirmExtraFocusReviewed(){
   const b=activeExtraReviewBatch;
-  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return}
+  if(!b||!b.rows||!b.rows.length){msg('No hay tanda activa.','w');return false}
   const decision=document.getElementById('extraFocusDecision')?.value||'reviewed';
-  if(b.kind==='pending'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} pending requests y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
-  if(b.kind==='mutual'&&!confirm(`¿Seguro que SÍ pudiste revisar estos ${b.rows.length} seguidores que sigo y quieres guardarlos como "${pendingDecisionLabel(decision)}"?\n\nSi no cargaron o no los pudiste revisar, cancela y usa "No pude revisar todavía".`))return;
-  const now=Date.now();
-  // Cierra visualmente de inmediato; luego guarda y re-renderiza.
-  closeSafeFocusPopup();
-  closeFocusDialogAfterDecision?.();
-  if(b.kind==='pending'){
-    b.rows.forEach(r=>{pendingReviewedMeta[r.username]={reviewedAt:now,decision,label:b.label,riskScore:r.riskScore,riskLevel:r.riskLevel,riskReasons:r.riskReasons||[]};pendingOpenedSet.add(r.username);recordProfileHistory(r.username,'review',{kind:'pending',decision,label:b.label})});
-    savePendingReviewedMeta();savePendingOpened();
-    logAction('verify',`Pending marcado: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'pending',decision});
-    renderPendingRequests();
-  }else if(b.kind==='mutual'){
-    b.rows.forEach(r=>{const meta=makeReviewMeta(r,decision,'followers_mutual_focus');meta.mode='followers';reviewedMeta[r.username]=meta;doneSet.add(r.username);if(['keep','suspicious_keep'].includes(decision))protectedSet.add(r.username)});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveSet(LS_PROT,protectedSet);
-    logAction('verify',`Seguidores que sigo marcados: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'followers_mutual',decision});
-    buildRows();applyFilters();renderFollowersMutualTab();
+  if(['pending','mutual'].includes(b.kind)&&
+     !confirm('¿Revisaste realmente los '+b.rows.length+' perfiles y quieres guardar la decisión '+pendingDecisionLabel(decision)+'?'))return false;
+  if(!igcCommitFocusDecision(b,decision))return false;
+  igcRecordCommittedFocusHistory(b,decision);
+  try{clearActiveFocusBatch()}catch(error){
+    msg('Revisiones guardadas, pero el navegador no pudo cerrar la tanda persistida. Conserva un respaldo y vuelve a cargar.','w');
+    return false;
   }
+  closeExtraFocusModal();closeSafeFocusPopup();closeFocusDialogAfterDecision?.();
+  if(b.kind==='pending')renderPendingRequests();
+  else{buildRows();applyFilters();if(b.kind==='mutual')renderFollowersMutualTab();}
   renderModuleDashboard();
-  forceLiveRefresh(`Marcados ${b.rows.length} perfiles como ${decision}`);
-  clearActiveFocusBatch();
-  closeExtraFocusModal();
-  msg(`Tanda marcada: ${b.rows.length} perfiles · ${decision}.`,'s');
   cleanupResolvedActiveBatch('after-decision');
+  forceLiveRefresh('Marcados '+b.rows.length+' perfiles como '+decision);
+  logAction('verify','Tanda confirmada: '+b.rows.length+' · '+decision,
+    {count:b.rows.length,source:b.kind,decision});
+  msg('Tanda guardada: '+b.rows.length+' perfiles · '+pendingDecisionLabel(decision)+'.','s');
+  return true;
 }
 function snoozeExtraFocusBatch(days){
   const b=activeExtraReviewBatch;
@@ -10604,61 +10570,215 @@ function showSafeFocusPopup(kind,rows,label){
 }
 function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Reabiertos ${b.rows.length} perfiles de ${b.label}`)}
 function markSafeFocusNotReviewed(){
-  const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
-  if(b.kind==='pending'){
-    b.rows.forEach(r=>{pendingOpenedSet.delete(r.username);if(pendingReviewedMeta&&pendingReviewedMeta[r.username])delete pendingReviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'pending',label:b.label})});
-    savePendingOpened();savePendingReviewedMeta();saveProfileHistory();logAction('pending_not_reviewed',`Pending no revisados: ${b.rows.length}`,{count:b.rows.length,source:'pending'});renderPendingRequests();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} pending volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
+  const b=activeExtraReviewBatch||activeFocusBatch;
+  if(!b||!b.rows||!b.rows.length){
+    forceClearStuckFocusBatch();
+    msg('No hay tanda activa real; no se guardaron revisiones nuevas.','w');
+    return false;
   }
-  if(b.kind==='followers'){
-    b.rows.forEach(r=>{doneSet.delete(r.username);if(reviewedMeta&&reviewedMeta[r.username]?.reviewSource==='followers_focus')delete reviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'followers',label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('followers_not_reviewed',`Followers no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers'});buildRows();applyFilters();renderFollowersAllWorkspace?.();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} followers volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
+  if(!igcCommitFocusUnconfirmed(b))return false;
+  try{clearActiveFocusBatch()}catch(error){
+    msg('No se pudo cerrar la tanda guardada. Revisa el almacenamiento antes de reintentar; tus decisiones anteriores siguen intactas.','w');
+    return false;
   }
-  if(b.kind==='mutual'){
-    b.rows.forEach(r=>{doneSet.delete(r.username);if(reviewedMeta&&reviewedMeta[r.username]?.reviewSource==='followers_mutual_focus')delete reviewedMeta[r.username];recordProfileHistory(r.username,'unconfirmed',{kind:'mutual',label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('mutual_not_reviewed',`Seguidores que sigo no revisados: ${b.rows.length}`,{count:b.rows.length,source:'followers_mutual'});buildRows();applyFilters();renderFollowersMutualTab();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();msg(`No se marcaron como revisados. Los ${b.rows.length} seguidores que sigo volverán a salir en focos futuros.`,'w');maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');return;
+  if(b.kind==='pending')renderPendingRequests();
+  else{buildRows();applyFilters();
+    if(b.kind==='followers')renderFollowersAllWorkspace?.();
+    if(b.kind==='mutual')renderFollowersMutualTab?.();
   }
-  if(b.kind==='main'){
-    b.rows.forEach(r=>recordProfileHistory(r.username,'unconfirmed',{kind:'main',label:b.label}));
-    saveProfileHistory();
-    logAction('main_not_reviewed',`Seguidos no me siguen no revisados: ${b.rows.length}`,{count:b.rows.length,source:'session_100_main'});
-    buildRows();applyFilters();renderModuleDashboard();clearActiveFocusBatch();closeSafeFocusPopup();
-    msg(`No se marcaron como revisados. Los ${b.rows.length} seguidos volverán a salir en sesiones futuras.`,'w');
-    maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');
-    return;
+  renderModuleDashboard();
+  closeSafeFocusPopup();closeExtraFocusModal();
+  logAction('focus_unconfirmed','Intento sin revisar: '+b.rows.length,
+    {count:b.rows.length,source:b.kind,reviewMode:b.reviewMode||''});
+  msg('No se agregaron ni borraron decisiones de revisión anteriores. La tanda quedó sin confirmar.','w');
+  maybeContinueGuidedSession(b.kind,b.label,'sin_confirmar');
+  return true;
+}
+function igcCommitFocusDecision(batch,decision){
+  // Focus decisions are authoritative only after EVERY required localStorage
+  // ledger is durable. Never show a lower counter or close Review on a
+  // successful first write followed by a rejected second/third write.
+  const kind=batch?.kind,rows=batch?.rows||[];
+  if(!['main','followers','mutual','pending'].includes(kind)||!rows.length){
+    msg('Tanda de Focus inválida; no se modificaron revisiones.','w');return false;
   }
-  closeSafeFocusPopup();
+  const now=Date.now(),writes=[];
+  let nextPendingMeta,nextOpened,nextMeta,nextDone,nextProtected;
+  if(kind==='pending'){
+    nextPendingMeta={...(pendingReviewedMeta||{})};
+    nextOpened=new Set(pendingOpenedSet||[]);
+    for(const row of rows){
+      const previous=nextPendingMeta[row.username]||{};
+      const history=Array.isArray(previous.previousReviews)?previous.previousReviews:[];
+      const archived=batch.reviewMode==='double'&&previous.reviewedAt
+        ?history.concat([{reviewedAt:previous.reviewedAt,decision:previous.decision,
+                         label:previous.label||'',riskScore:previous.riskScore||0}]).slice(-25)
+        :history;
+      nextPendingMeta[row.username]={reviewedAt:now,decision,label:batch.label,
+        riskScore:row.riskScore,riskLevel:row.riskLevel,riskReasons:row.riskReasons||[],
+        ...(archived.length?{previousReviews:archived}:{}),
+        ...(batch.reviewMode==='double'?{reviewSource:'pending_double_check'}:{})};
+      nextOpened.add(row.username);
+    }
+    writes.push([LS_PENDING_REVIEW_META,JSON.stringify(nextPendingMeta)],
+                [LS_PENDING_OPENED,JSON.stringify([...nextOpened])]);
+  }else{
+    nextMeta={...(reviewedMeta||{})};
+    nextDone=new Set(doneSet||[]);
+    nextProtected=new Set(protectedSet||[]);
+    const mode=kind==='main'?'following':'followers';
+    const source=kind==='main'?'session_100_main':
+      (kind==='mutual'?'followers_mutual_focus':'followers_focus');
+    for(const row of rows){
+      const meta=makeReviewMeta(row,decision,source);
+      meta.mode=mode;
+      if(mode==='following')meta.iFollow=true;
+      nextMeta[row.username]=meta;
+      nextDone.add(row.username);
+      if(kind!=='main'&&['keep','suspicious_keep'].includes(decision))
+        nextProtected.add(row.username);
+    }
+    writes.push([LS_REVIEW_META,JSON.stringify(nextMeta)],
+                [LS_DONE,JSON.stringify([...nextDone])]);
+    if(kind!=='main'&&['keep','suspicious_keep'].includes(decision))
+      writes.push([LS_PROT,JSON.stringify([...nextProtected])]);
+  }
+  const before=new Map();
+  try{
+    for(const [key] of writes)before.set(key,localStorage.getItem(key));
+  }catch(error){
+    msg('No se pudo leer el almacenamiento de Focus. Tanda y decisiones intactas.','w');
+    return false;
+  }
+  const written=[];
+  try{
+    for(const [key,value] of writes){
+      localStorage.setItem(key,value);
+      written.push(key);
+    }
+  }catch(error){
+    let rollbackFailed=false;
+    for(const key of written.reverse()){
+      try{
+        const prior=before.get(key);
+        if(prior===null)localStorage.removeItem(key);
+        else localStorage.setItem(key,prior);
+      }catch(recoveryError){
+        rollbackFailed=true;
+        console.warn?.('Focus: ledger rollback needs owner backup',recoveryError?.name||'StorageError');
+      }
+    }
+    msg(rollbackFailed
+      ?'Error de almacenamiento: no pude restaurar todos los registros. NO confirmé la tanda; exporta respaldo y revisa los datos antes de continuar.'
+      :'Error de almacenamiento: NO confirmé la tanda. Conservé Reviewed, Pending y la revisión actual para reintentar.','w');
+    return false;
+  }
+  // Commit RAM only after the last verified persistent write. Account-scoped
+  // storage proxy already chooses the exact Instagram profile for every key.
+  if(kind==='pending'){
+    pendingReviewedMeta=nextPendingMeta;
+    pendingOpenedSet=nextOpened;
+  }else{
+    reviewedMeta=nextMeta;
+    doneSet=nextDone;
+    if(kind!=='main'&&['keep','suspicious_keep'].includes(decision))
+      protectedSet=nextProtected;
+  }
+  try{window.igcQueueStateSync?.('focus-bulk-review-committed')}catch(error){
+    console.warn?.('Focus: background sync scheduling unavailable',error?.name||'SyncError');
+  }
+  return true;
+}
+function igcRecordCommittedFocusHistory(batch,decision){
+  // Chronological history is supplementary; a full history database may need
+  // a backup even when authoritative Reviewed/Pending keys already committed.
+  try{
+    recordRowsHistory(batch.rows||[],'review',
+      {kind:batch.kind,label:batch.label,decision,mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
+    return true;
+  }catch(error){
+    console.warn?.('Focus: review history not saved',error?.name||'StorageError');
+    msg('La decisión Reviewed/Pending quedó guardada, pero no el historial secundario. Exporta un respaldo.','w');
+    return false;
+  }
+}
+function igcCommitFocusUnconfirmed(batch){
+  // An unfinished second look is never permission to undo an older Reviewed
+  // result. Unconfirmed history must be durable BEFORE releasing the cohort.
+  const pending=batch.kind==='pending'&&batch.reviewMode!=='double';
+  const oldOpened=pending?new Set(pendingOpenedSet||[]):null;
+  let oldStored=null,wroteOpened=false;
+  if(pending){
+    const next=new Set(pendingOpenedSet||[]);
+    for(const row of batch.rows||[]){
+      if(!pendingReviewedMeta?.[row.username]?.reviewedAt)next.delete(row.username);
+    }
+    try{
+      oldStored=localStorage.getItem(LS_PENDING_OPENED);
+      localStorage.setItem(LS_PENDING_OPENED,JSON.stringify([...next]));
+      pendingOpenedSet=next;
+      wroteOpened=true;
+    }catch(error){
+      msg('Error de almacenamiento: no se pudo guardar el reintento Pending. Conservé la tanda y todas las decisiones anteriores.','w');
+      return false;
+    }
+  }
+  try{
+    recordRowsHistory(batch.rows||[],'unconfirmed',
+      {kind:batch.kind,label:batch.label,
+       mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
+  }catch(error){
+    let rollbackFailed=false;
+    if(wroteOpened){
+      try{
+        if(oldStored===null)localStorage.removeItem(LS_PENDING_OPENED);
+        else localStorage.setItem(LS_PENDING_OPENED,oldStored);
+        pendingOpenedSet=oldOpened;
+      }catch(recoveryError){
+        rollbackFailed=true;
+        console.warn?.('Focus: Pending open ledger restore failed',recoveryError?.name||'StorageError');
+      }
+    }
+    console.warn?.('Focus: unconfirmed history not saved',error?.name||'StorageError');
+    msg(rollbackFailed
+      ?'Error al guardar el intento: el registro Pending necesita recuperación. Conserva la tanda y exporta respaldo.'
+      :'Error de almacenamiento: no pude guardar el intento fallido. Mantengo la tanda original para reintentar sin borrar revisiones.','w');
+    return false;
+  }
+  return true;
 }
 function confirmSafeFocusReviewed(){
-  const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
-  const decision=document.getElementById('safeFocusDecision')?.value||'reviewed';
-  const sectionLabel=b.kind==='pending'?'Pending Requests':(b.kind==='followers'?'Followers':(b.kind==='mutual'?'Mutuos':'Following'));
-  if(!confirm(`CONFIRMACIÓN MASIVA\n\nSección: ${sectionLabel}\nPerfiles: ${b.rows.length}\nDecisión: ${pendingDecisionLabel(decision)}\n\nEsto guardará la decisión y sacará esta tanda de pendientes vivos.\n\n¿Confirmas que SÍ pudiste revisar las pestañas?`))return;
-  const now=Date.now();
-  closeExtraFocusModal();
-  closeFocusDialogAfterDecision?.();
-  if(b.kind==='pending'){
-    b.rows.forEach(r=>{pendingReviewedMeta[r.username]={reviewedAt:now,decision,label:b.label,riskScore:r.riskScore,riskLevel:r.riskLevel,riskReasons:r.riskReasons||[]};pendingOpenedSet.add(r.username)});
-    savePendingReviewedMeta();savePendingOpened();saveProfileHistory();logAction('verify',`Pending marcado: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'pending',decision});renderPendingRequests();
-  }else if(b.kind==='followers'){
-    b.rows.forEach(r=>{const prev=currentMode;currentMode='followers';const meta=makeReviewMeta(r,decision,'followers_focus');meta.mode='followers';currentMode=prev;reviewedMeta[r.username]=meta;doneSet.add(r.username);if(['keep','suspicious_keep'].includes(decision))protectedSet.add(r.username);recordProfileHistory(r.username,'review',{kind:'followers',decision,label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveSet(LS_PROT,protectedSet);saveProfileHistory();logAction('verify',`Followers marcados: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'followers',decision});buildRows();applyFilters();renderFollowersAllWorkspace?.();
-  }else if(b.kind==='mutual'){
-    b.rows.forEach(r=>{const meta=makeReviewMeta(r,decision,'followers_mutual_focus');meta.mode='followers';reviewedMeta[r.username]=meta;doneSet.add(r.username);if(['keep','suspicious_keep'].includes(decision))protectedSet.add(r.username);recordProfileHistory(r.username,'review',{kind:'mutual',decision,label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveSet(LS_PROT,protectedSet);saveProfileHistory();logAction('verify',`Seguidores que sigo marcados: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'followers_mutual',decision});buildRows();applyFilters();renderFollowersMutualTab();
-  }else if(b.kind==='main'){
-    b.rows.forEach(r=>{const prev=currentMode;currentMode='following';const meta=makeReviewMeta(r,decision,'session_100_main');meta.mode='following';currentMode=prev;reviewedMeta[r.username]=meta;doneSet.add(r.username);recordProfileHistory(r.username,'review',{kind:'main',decision,label:b.label})});
-    saveReviewedMeta();saveSet(LS_DONE,doneSet);saveProfileHistory();logAction('verify',`Seguidos no me siguen marcados: ${b.rows.length} · ${decision}`,{count:b.rows.length,source:'session_100_main',decision});buildRows();applyFilters();
+  const b=activeExtraReviewBatch||activeFocusBatch;
+  if(!b||!b.rows||!b.rows.length){
+    forceClearStuckFocusBatch();msg('No hay tanda activa real.','w');return false;
   }
-  const doneKind=b.kind, doneLabel=b.label;
-  clearActiveFocusBatch();
-  try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
-  closeSafeFocusPopup();
-  renderPendingRequests?.();renderFollowersMutualTab?.();renderModuleDashboard?.();cleanupResolvedActiveBatch('after-decision');
+  const decision=document.getElementById('safeFocusDecision')?.value||'reviewed';
+  const sectionLabel=b.kind==='pending'?'Pending Requests':
+    (b.kind==='followers'?'Followers':(b.kind==='mutual'?'Mutuos':'Following'));
+  if(!confirm('CONFIRMACIÓN MASIVA\n\nSección: '+sectionLabel+
+      '\nPerfiles: '+b.rows.length+'\nDecisión: '+pendingDecisionLabel(decision)+
+      '\n\nConfirma únicamente los perfiles que realmente revisaste.'))return false;
+  if(!igcCommitFocusDecision(b,decision))return false;
+  igcRecordCommittedFocusHistory(b,decision);
+  try{clearActiveFocusBatch()}catch(error){
+    msg('Revisiones guardadas, pero no pude cerrar la tanda persistida. Conserva un respaldo y recarga antes de otra tanda.','w');
+    return false;
+  }
+  closeExtraFocusModal();closeSafeFocusPopup();closeFocusDialogAfterDecision?.();
+  if(b.kind==='pending')renderPendingRequests();
+  else{buildRows();applyFilters();
+    if(b.kind==='followers')renderFollowersAllWorkspace?.();
+    if(b.kind==='mutual')renderFollowersMutualTab?.();
+  }
+  renderPendingRequests?.();renderFollowersMutualTab?.();renderModuleDashboard?.();
+  cleanupResolvedActiveBatch('after-decision');
   renderActiveBatchDock();
-  forceLiveRefresh(`Marcados ${b.rows.length} perfiles como ${decision}`);
-  closeFocusDialogAfterDecision();
-  msg(`Tanda marcada: ${b.rows.length} perfiles · ${pendingDecisionLabel(decision)}.`,'s');
-  maybeContinueGuidedSession(doneKind,doneLabel,'completada');
+  forceLiveRefresh('Marcados '+b.rows.length+' perfiles como '+decision);
+  logAction('verify','Tanda confirmada: '+b.rows.length+' · '+decision,
+    {count:b.rows.length,source:b.kind,decision});
+  msg('Tanda guardada: '+b.rows.length+' perfiles · '+pendingDecisionLabel(decision)+'.','s');
+  maybeContinueGuidedSession(b.kind,b.label,'completada');
+  return true;
 }
 function snoozeSafeFocusBatch(days){
   const b=activeExtraReviewBatch||activeFocusBatch;if(!b||!b.rows||!b.rows.length){forceClearStuckFocusBatch();msg('No hay tanda activa real; limpié el estado atorado.','w');return}
