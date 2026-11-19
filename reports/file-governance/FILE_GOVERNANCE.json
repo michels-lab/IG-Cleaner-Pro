@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "c30ca96d35648ff95619d599523c8851b26ae5434734126efc21162abc8e7e34",
+  "inventory_fingerprint": "2e2286452376640f92e17f7843c2fa4af1eb21e1cb5c083ee13e8303d1803b0d",
   "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
@@ -252,7 +252,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a50ca4aba8eaa2683ae1731f8760a95ad8bd695a"
+      "blob": "8d2de43e333837e2e3c312d4f82bc4c0104ce43a"
     },
     {
       "path": "README.md",
