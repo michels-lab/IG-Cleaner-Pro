@@ -38,7 +38,7 @@ vm.runInContext(
  section("function zipImportScope(){","async function applyZipCore(")+
  section("function parseHTMLUsers(payload,source){","function parseJSONUsers(payload,source){")+
  section("function isPendingOpenableForFocus(row){","function isMutualOpenableForFocus(row){")+
- section("function pendingCandidateRows(){","function openFocusRows(rows,label")+
+ section("function pendingCandidateRows(){","function focusBatchFill(primaryRows, fallbackRows, n, kind){")+
  section("function focusBatchFill(primaryRows, fallbackRows, n, kind){","function followersMutualAnyFocusCandidates(){")+
  section("let pendingTableLimit=300;","function pendingOldestFirstSort(a,b){")+
  section("async function parseZipPending(items,zipName=''){","async function parseZipExtras(groups){")+
