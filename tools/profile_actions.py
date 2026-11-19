@@ -2925,7 +2925,7 @@ class ActionRobot:
         if (task not in ("unfollow", "cancel")
                 or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
                 or data.get("confirmation") != "cancel-batch:" + batch_id):
-            raise ValueError("Confirm the exact owner, task and saved batch to cancel.")
+            raise ValueError("Confirm the exact saved cohort before cancelling.")
         # Same global + owner/account lease as relationship clicks and Review.
         # Never acquire while holding self.lock: a running worker already owns
         # that lease and must be cancelled by signalling its own stop event.
