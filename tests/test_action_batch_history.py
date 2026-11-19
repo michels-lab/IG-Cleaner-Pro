@@ -729,10 +729,20 @@ class ActionBatchHistoryTests(unittest.TestCase):
             def __init__(self):
                 self.pages = [Tab()]
                 self.pages[0].url = "https://www.instagram.com/"
+                self.pages[0].context = self
+
+            def cookies(self, _urls=None):
+                # Playwright browser contexts always supply cookie API.
+                # No ds_user_id is needed because a live owner handle is
+                # separately simulated; sibling mismatch still blocks.
+                return []
+
             def new_page(self):
                 page = Tab()
+                page.context = self
                 self.pages.append(page)
                 return page
+
             def close(self):
                 for page in self.pages:
                     page.close()
