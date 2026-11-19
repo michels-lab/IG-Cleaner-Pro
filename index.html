@@ -10694,7 +10694,7 @@ function igcRecordCommittedFocusHistory(batch,decision){
   // a backup even when authoritative Reviewed/Pending keys already committed.
   try{
     recordRowsHistory(batch.rows||[],'review',
-      {kind:batch.kind,label:batch.label,decision,mode:batch.reviewMode||''});
+      {kind:batch.kind,label:batch.label,decision,mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
     return true;
   }catch(error){
     console.warn('Focus: review history not saved',error?.name||'StorageError');
@@ -10719,7 +10719,7 @@ function igcCommitFocusUnconfirmed(batch){
   }
   try{
     recordRowsHistory(batch.rows||[],'unconfirmed',
-      {kind:batch.kind,label:batch.label,mode:batch.reviewMode||''});
+      {kind:batch.kind,label:batch.label,mode:batch.reviewMode==='double'?'double_check':(batch.reviewMode||'')});
   }catch(error){
     console.warn('Focus: unconfirmed history not saved',error?.name||'StorageError');
     msg('No se pudo guardar el historial secundario del intento; tus revisiones anteriores siguen intactas.','w');
