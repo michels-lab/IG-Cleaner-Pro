@@ -4428,7 +4428,21 @@ function igcDecodeActiveFocusBatch(saved){
 function saveActiveFocusBatch(){
   if(!activeFocusBatch){localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);return}
   const usual=JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch));
-  try{localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,usual)}
+  // Keep only size, fixed storage key and format in volatile diagnostics;
+  // never expose cohort values, profile handles, full URLs or browser secrets.
+  const recordAttempt=(format,payload)=>{
+    if(typeof window!=='undefined')window.igcFocusWriteAttempt={
+      key:LS_ACTIVE_FOCUS_BATCH,format,bytes:2*(String(LS_ACTIVE_FOCUS_BATCH).length+payload.length)
+    };
+  };
+  const clearAttempt=()=>{
+    if(typeof window!=='undefined'){
+      window.igcFocusWriteAttempt=null;
+      window.igcLastFocusStorageError='';
+    }
+  };
+  recordAttempt('v2',usual);
+  try{localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,usual);clearAttempt()}
   catch(error){
     // A SecurityError or broken storage engine must remain a hard failure.
     // The alternate representation is only for exhausted storage quota.
@@ -4436,7 +4450,9 @@ function saveActiveFocusBatch(){
          /quota/i.test(String(error?.message||''))))throw error;
     const small=JSON.stringify(igcEncodeFocusBatchQuota(activeFocusBatch));
     if(small.length>=usual.length)throw error;
+    recordAttempt('v3',small);
     localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,small);
+    clearAttempt();
   }
 }
 function loadActiveFocusBatch(){
@@ -4492,7 +4508,13 @@ function renderActiveBatchDock(){
 // usernames, history payloads, tokens, or raw localStorage values in diagnostics.
 function igcFocusStorageDiagnostic(error,batch){
   const code=String(error?.name||'StorageError').replace(/[^A-Za-z]/g,'').slice(0,40)||'StorageError';
-  let batchKiB='desconocido',totalMiB='desconocido';
+  const attempt=typeof window!=='undefined'?window.igcFocusWriteAttempt:null;
+  const key=typeof attempt?.key==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(attempt.key)
+    ?attempt.key:'FocusBatch';
+  const format=attempt?.format==='v3'?'v3':'v2';
+  const attempted=Number.isSafeInteger(attempt?.bytes)&&attempt.bytes>=0
+    ?attempt.bytes+' bytes':'unknown';
+  let batchKiB='unknown',totalMiB='unknown';
   try{batchKiB=(JSON.stringify(igcEncodeActiveFocusBatch(batch)).length*2/1024).toFixed(1)+' KiB'}catch{}
   try{
     if(typeof localStorage.length==='number'&&typeof localStorage.key==='function'){
@@ -4504,7 +4526,9 @@ function igcFocusStorageDiagnostic(error,batch){
       totalMiB=(chars*2/1048576).toFixed(2)+' MiB';
     }
   }catch{}
-  return code+' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimado)';
+  // No error.message or localStorage VALUES enter the report: those can contain usernames.
+  return code+' · key '+key+' · format '+format+' · attempted '+attempted+
+    ' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimated)';
 }
 function setActiveFocusBatch(kind,rows,label){
   const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;

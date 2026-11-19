@@ -1,5 +1,9 @@
 # Instagram Cleaner Pro
 
+## GRANADA Focus — exact failed-storage diagnostics (source only)
+
+When a Focus cohort is refused by browser storage, the recovery panel now identifies whether the actual rejected write was the normal v2 or smaller v3 attempt, the fixed Focus key, the attempted UTF-16 byte estimate and estimated storage usage, without exposing profile names or stored values. A successful retry clears stale warnings. This **does not free an exhausted quota or prove Focus opened on the owner's browser**. [Root cause and regression audit](docs/audits/2026-11-18-focus-write-diagnostics.md) · [open owner #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). Published stable remains v120.80; v120.81 is not authorized.
+
 ## GRANADA P0 — guard against stale Instagram cloud responses (source, unreleased)
 
 A cloud REST request is tied to its exact app owner, Instagram account and switch generation, so late A→B and A→B→A responses cannot hydrate the wrong workspace or refresh an obsolete request. This source update preserves the already merged atomic Reviewed confirmations ([#383](https://github.com/michels-lab/IG-Cleaner-Pro/pull/383)) and includes negative race regressions. See the [race-condition audit](docs/audits/2026-11-18-inflight-instagram-rest-guard.md). **Not in official stable v120.80**; exact-head CI and real owner A/B verification remain separate gates. Next v120.81 is reserved and unauthorised.
