@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "da36a5917fb4e0b0590dd7191f76b85b3ef6c14ec6fac83fa9bac416bb79e645",
-  "evidence_fingerprint": "fad8adad326ad117dd679f12f5f74f9a317fc8219ef03fb7a6568a63894d9902",
+  "finding_total": 1,
+  "inventory_fingerprint": "29a369a8fb3a185b06cb63bf0f8db0ee00704fd5630fbc81f220a6d45ac9a8ef",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -253,7 +252,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "8d2de43e333837e2e3c312d4f82bc4c0104ce43a"
+      "blob": "9eda8723e67efe6acc507d5ca4e7f8d4b373bd48"
     },
     {
       "path": "README.md",
@@ -890,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a9c921775399b3f793a00755917b66444c2bb4cc"
+      "blob": "dc6b7c3127a38e1033c12b206399c1da9b0581fa"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1590,7 +1589,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a0c4d187947f9bb1e0f46c847037d7cebb69ad92"
+      "blob": "5a2e24ce4524858a3ff9cca301891dbd383ea080"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -3344,15 +3343,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "648d7c45385b59b9",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json, tests/test_action_batch_history.py, tests/test_action_owner_proof_reuse.py, tests/test_profile_counts_actions.py, tools/profile_actions.py",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
