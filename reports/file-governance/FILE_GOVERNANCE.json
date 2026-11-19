@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 469,
-  "classified_files_total": 465,
-  "docs_content_inspected": 128,
+  "tracked_files_total": 471,
+  "classified_files_total": 467,
+  "docs_content_inspected": 129,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 124,
+    "document": 125,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 144,
+    "test": 145,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "ad948d250bc6a80d6f596343de31523986b8669689475a7b24311e466d319bb1",
-  "evidence_fingerprint": "6113a7402d3bb63dbea4ab808b7d8db3f20d47dcf5f89c98394b68d5fcf111cc",
+  "inventory_fingerprint": "61945b4df8a7ec5be29f0540f818652fd73dfc7d89c06cba18c1baa9e711eb81",
+  "evidence_fingerprint": "780cd6dd2e9cccfd3edfe2bef657a886031341125172b45aed0044167b472eee",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "97ecc338ed8c29ab173f756c15aa726f910a9abb"
+      "blob": "d41b8fcd1d1dd116827d6c139565d5ad6e6660bf"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -1691,6 +1691,13 @@
       "blob": "b431412e7d5c557aef3e3a0f0b1db4e97079bd80"
     },
     {
+      "path": "docs/audits/2026-11-19-idle-cancel-batch-wal-lease.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "61842c5ef34db598546b0de0e918aca18a2908ed"
+    },
+    {
       "path": "docs/audits/2026-11-19-native-two-window-robot-session-isolation.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2468,6 +2475,13 @@
       "blob": "f09504d7ea1258bbd42556730ade8497d93b3c71"
     },
     {
+      "path": "tests/test_action_cancel_batch_admission.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "cf30e56d615ece1a507c792778e611507a78cbe9"
+    },
+    {
       "path": "tests/test_action_chrome_profiles.py",
       "role": "test",
       "purpose": "code/test implementation",
@@ -3060,7 +3074,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "40a7cdbe8387c80111ef3abc3bebcc71b93b2990"
+      "blob": "0b5254250bc6b559de4d19d7e9fd90b5c2584186"
     },
     {
       "path": "tools/dual_chrome_sessions.py",
@@ -3123,7 +3137,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "bc470bddca816a331ca91df89a07ee92ba725bbc"
+      "blob": "32c8b7c0d5602426c86c08d156dc56e716b579e8"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3298,11 +3312,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "35e398a626337fa5",
+      "id": "e51b191ea365ac2f",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: tests/pending-zip-completeness.test.cjs, tests/test_windows_single_window_layout.py, tools/ig_cleaner_desktop.py, tools/profile_counts_bridge.py, tools/windows_workspace_picker.py",
+      "observation": "9 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, tests/pending-zip-completeness.test.cjs, tests/test_action_cancel_batch_admission.py, tests/test_windows_single_window_layout.py, tools/dual_action_workspaces.py, tools/ig_cleaner_desktop.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
