@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 463,
-  "classified_files_total": 459,
-  "docs_content_inspected": 123,
+  "tracked_files_total": 464,
+  "classified_files_total": 460,
+  "docs_content_inspected": 124,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 119,
+    "document": 120,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "5223a6e188cae2650d0262646c04a924fe83783ba5a251f2600b9cd07369e0aa",
-  "evidence_fingerprint": "b905968bf6b06fa4d9e3f3d73845beb179592271cadec575df47828b3f09926e",
+  "finding_total": 1,
+  "inventory_fingerprint": "f10c106a7172c256331d7b8cf4b80626352f44585b019976af50c4002055d2c9",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -246,14 +245,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "ad57f4d0380bc10e88cd2b8ed155f9edfedf5ddf"
+      "blob": "f473063fe9719cf677a79ac0c18e9545abce0bfc"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "44892df989823a1088a13c1b9a74d0e928a7377f"
+      "blob": "e4c5b875913ef3ab7cf97001d1c028232d8610dd"
     },
     {
       "path": "README_SYNC.md",
@@ -855,7 +854,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "a2233dc9a9468553df14a3d8074b5b9a387e6f81"
+      "blob": "15aa3d400b7ef0618361128c47edd922d17540d5"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +882,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ac9910aedf4ea8b0d78d2dbb979a126972ad4e24"
+      "blob": "43524ac0b8e0866080ab9b0c40fd10aae3fe1951"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1621,6 +1620,13 @@
       "blob": "d89c31cf48c866eb2969670fe16fff9659fd313e"
     },
     {
+      "path": "docs/audits/2026-11-18-focus-history-transaction.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "1ebcff8ae2589394a3ce7635212280e1d067f936"
+    },
+    {
       "path": "docs/audits/2026-11-18-focus-prune-transaction.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2220,7 +2226,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b82bb9a4a71705f33726cbed0fc638fca2c0f9b7"
+      "blob": "2141101e41aa1fb9a195815f6e73e89c7400478f"
     },
     {
       "path": "tests/focus-quota-alternative.test.cjs",
@@ -3253,15 +3259,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "53a9e04a505b5203",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/focus-quota-alternative.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],

@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 463; classified: 459; readable documents: 123; above read cap: 2; findings: 2.
+Tracked: 464; classified: 460; readable documents: 124; above read cap: 2; findings: 1.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 463; classified: 459; readable documents: 123; above read cap: 2; findi
 | config | 70 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 119 |
+| document | 120 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
@@ -30,7 +30,6 @@ Tracked: 463; classified: 459; readable documents: 123; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: tests/focus-quota-alternative.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 53a9e04a505b5203)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
