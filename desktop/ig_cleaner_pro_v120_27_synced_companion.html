@@ -4530,7 +4530,12 @@ function igcFocusStorageDiagnostic(error,batch){
   return code+' · key '+key+' · format '+format+' · attempted '+attempted+
     ' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimated)';
 }
-function setActiveFocusBatch(kind,rows,label,reviewMode='',deferHistory=false){
+function setActiveFocusBatch(kind,rows,label){
+  // Preserve the original public 3-argument signature for Desktop contracts.
+  // Internal Focus callers can opt into an initial second-pass mode and can
+  // defer history until the independent Pending ledger commits.
+  const reviewMode=arguments[3]||'';
+  const deferHistory=arguments[4]===true;
   const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
   // Pending Double Check must be on disk from the FIRST cohort write. A
