@@ -2914,20 +2914,40 @@ class ActionRobot:
                 "message": "Saved batch cancelled. Action journal and uncertain clicks preserved."}
 
     def cancel_saved_batch(self, data):
-        """Owner cancels an idle persisted cohort after restart, without Chrome.
+        """Archive an idle saved action cohort under its exact cross-process WAL lease.
 
-        The supervisor MUST acquire the exact global+account WAL lease first.
-        A running job is handled by cancel_current_batch instead.
+        Both Windows app windows share one canonical action journal. A separate
+        app can be running even when this ActionRobot has never started; an
+        in-memory idle flag is not authority to modify its saved batch.
         """
         owner, account, task = self._review_scope(data)
         batch_id = data.get("batch_id")
         if (task not in ("unfollow", "cancel")
                 or not isinstance(batch_id, str) or not 1 <= len(batch_id) <= 128
                 or data.get("confirmation") != "cancel-batch:" + batch_id):
-            raise ValueError("Confirm the exact owner, task and saved batch to cancel.")
+            raise ValueError("Confirm the exact saved cohort before cancelling.")
+        # Same global + owner/account lease as relationship clicks and Review.
+        # Never acquire while holding self.lock: a running worker already owns
+        # that lease and must be cancelled by signalling its own stop event.
         with self.lock:
             if self.worker is not None and self.worker.is_alive():
                 raise ValueError("Pause or cancel the active worker through its own action lane.")
+        lease = self._lease_factory(self.data_dir, owner, account).acquire()
+        try:
+            return self._cancel_saved_batch_under_lease(owner, account, task, batch_id)
+        finally:
+            lease.release()
+
+    def _cancel_saved_batch_under_lease(self, owner, account, task, batch_id):
+        """Commit one exact saved batch only when caller ALREADY holds its WAL lease.
+
+        Internal use also supports a two-worker offline cohort manager, which
+        can hold a shared admission lease for the idle account without trying
+        to acquire the legacy GLOBAL lock twice. Never call this unlocked.
+        """
+        with self.collector.browser_admission, self.lock:
+            if self.worker is not None and self.worker.is_alive():
+                raise ValueError("The robot started while cancellation was pending; no batch archived.")
             result = self._archive_cancelled_batch_locked(owner, account, task, batch_id)
             if (self.owner, self.account, self.task) == (owner, account, task):
                 self.status = "cancelled"
@@ -2951,36 +2971,47 @@ class ActionRobot:
         self.current_wait = None
 
     def cancel_current_batch(self, data):
-        """Stop the next operations; never erase or repeat an in-flight action."""
+        """Stop the live worker or safely cancel its exact saved cohort after restart.
+
+        The running worker holds the canonical OS lease itself, so cancellation
+        merely signals its stop event; the worker archives once safe to exit.
+        Idle/cold-start cancellation instead acquires that same lease BEFORE
+        reading or changing the persisted cohort. No click journal is removed.
+        """
         owner, account, task = self._review_scope(data)
         with self.lock:
-            if (owner, account, task) != (self.owner, self.account, self.task):
+            # A robot actively bound to A cannot be retargeted by a request
+            # for B. On a fresh process the owner may recover an older batch
+            # without inventing a running in-memory job.
+            if self.owner and (owner, account, task) != (self.owner, self.account, self.task):
                 raise ValueError("Cancel must name the active owner, account and robot task.")
-            # A historical/recheck scan is READ-ONLY. Stopping that scan must
-            # never archive a separate action cohort just because it exists.
-            pending = (None if self.review_only else
-                       self._pending_review(owner, account, task))
-            batch_id = pending.get("id") if pending else ""
-            if ((data.get("batch_id") or "") != batch_id or
-                    data.get("confirmation") != "cancel-batch:" + batch_id):
-                raise ValueError("Confirm the exact saved cohort before cancelling.")
-            if not batch_id and not (self.worker and self.worker.is_alive()):
-                raise ValueError("There is no active or saved unfinished job to cancel.")
-            self.cancel_requested = True
-            self.cancel_batch_id = batch_id
-            if self.worker and self.worker.is_alive():
+            running = bool(self.worker and self.worker.is_alive())
+            if running:
+                pending = (None if self.review_only else
+                           self._pending_review(owner, account, task))
+                batch_id = pending.get("id") if pending else ""
+                if ((data.get("batch_id") or "") != batch_id or
+                        data.get("confirmation") != "cancel-batch:" + batch_id):
+                    raise ValueError("Confirm the exact saved cohort before cancelling.")
+                self.cancel_requested = True
+                self.cancel_batch_id = batch_id
                 self.stop_event.set()
                 self.status = "cancelling"
                 self.message = ("Cancellation requested. The current operation may be in flight; "
                                 "no new targets will start. Original evidence is preserved.")
-            else:
-                try:
-                    self._finish_owner_cancel_locked()
-                except Exception:
-                    self.cancel_requested = False
-                    self.cancel_batch_id = ""
-                    raise
-            return self.snapshot()
+                return self.snapshot()
+            if self.review_only and self.owner:
+                raise ValueError("Read-only recheck cannot archive a separate action cohort.")
+        # No worker owns this process's OS lease. Do NOT perform disk mutation
+        # under only the Python lock: another Windows app may hold the WAL.
+        # A denied lease keeps all flags, status and on-disk evidence unchanged.
+        result = self.cancel_saved_batch(data)
+        with self.lock:
+            if (self.owner, self.account, self.task) == (owner, account, task):
+                self.cancel_requested = False
+                self.cancel_batch_id = ""
+                return self.snapshot()
+        return {**result, "running": False, "cancel_requested": False}
 
     def _run_with_lease(self, lease):
         # The worker owns the canonical action WAL lease AND its exact Chrome
