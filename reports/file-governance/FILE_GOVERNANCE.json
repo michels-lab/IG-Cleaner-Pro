@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1
+    "BROKEN_RELATIVE_LINK": 1,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 1,
-  "inventory_fingerprint": "2e2286452376640f92e17f7843c2fa4af1eb21e1cb5c083ee13e8303d1803b0d",
-  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
+  "finding_total": 2,
+  "inventory_fingerprint": "1a68100dcb75d39c4fadbd5ca0a1239fb0b563c07a71f5bea03007cca4849af7",
+  "evidence_fingerprint": "fe1139226a441b06c733b947296f8472419ad4a24d5c7f33ce184f18176e633d",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -210,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "ad0b5cce55d4b3cc0f9d288a546f0e3c750dfc43"
+      "blob": "2af7675dd7640654e724f957aa8adc0dd8d44d17"
     },
     {
       "path": ".michelslab/project.yml",
@@ -889,7 +890,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "4797e5c62a39df8b17d74fd767bdae67a81c1478"
+      "blob": "a9c921775399b3f793a00755917b66444c2bb4cc"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -3336,6 +3337,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "882c5f9a5b9b640c",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
