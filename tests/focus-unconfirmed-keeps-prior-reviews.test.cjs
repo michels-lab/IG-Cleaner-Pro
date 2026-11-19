@@ -11,9 +11,16 @@ function scenario(kind,{double=false,quota=false,pendingSaveFail=false}={}){
  const active={kind,label:"Recheck 30",reviewMode:double?"double":undefined,
    rows:[{username:"already.reviewed"},{username:"not.reviewed"}],openedAt:102};
  let cleared=false;
+ const storage=new Map();
  const messages=[];
  const c={
   Date,JSON,Set,console:{error(){}},
+  LS_PENDING_OPENED:'pending-opened',
+  localStorage:{
+    getItem:key=>storage.get(key)??null,
+    setItem(key,value){if(pendingSaveFail)throw Error('QuotaExceededError');storage.set(key,String(value))},
+    removeItem:key=>storage.delete(key)
+  },
   activeFocusBatch:active,activeExtraReviewBatch:active,
   profileHistory:{"already.reviewed":JSON.parse(JSON.stringify(oldHistory))},
   pendingOpenedSet:new Set(["already.reviewed","not.reviewed"]),
@@ -25,6 +32,11 @@ function scenario(kind,{double=false,quota=false,pendingSaveFail=false}={}){
    c.profileHistory[name].events.push({event,details});
   },
   saveProfileHistory(){if(quota)throw Error("QuotaExceededError")},
+  recordRowsHistory(rows,event,details){
+    const previous=JSON.stringify(c.profileHistory);
+    try{rows.forEach(row=>c.recordProfileHistory(row.username,event,details));c.saveProfileHistory();}
+    catch(error){c.profileHistory=JSON.parse(previous);throw error;}
+  },
   savePendingOpened(){if(pendingSaveFail)throw Error("QuotaExceededError")},
   saveReviewedMeta(){throw Error("A retry must NEVER rewrite the Reviewed ledger")},
   savePendingReviewedMeta(){throw Error("A retry must NEVER rewrite the Pending review ledger")},
@@ -33,7 +45,7 @@ function scenario(kind,{double=false,quota=false,pendingSaveFail=false}={}){
   logAction(){},buildRows(){},applyFilters(){},renderModuleDashboard(){},
   renderPendingRequests(){},renderFollowersAllWorkspace(){},renderFollowersMutualTab(){},
   clearActiveFocusBatch(){cleared=true;c.activeFocusBatch=null;c.activeExtraReviewBatch=null},
-  closeSafeFocusPopup(){},maybeContinueGuidedSession(){},
+  closeSafeFocusPopup(){},closeExtraFocusModal(){},maybeContinueGuidedSession(){},
   forceClearStuckFocusBatch(){throw Error("Should have a valid cohort")}
  };
  vm.createContext(c);vm.runInContext(source,c);

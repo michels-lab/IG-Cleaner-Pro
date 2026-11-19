@@ -10719,7 +10719,7 @@ function igcCommitFocusUnconfirmed(batch){
       pendingOpenedSet=next;
       wroteOpened=true;
     }catch(error){
-      msg('No se pudo guardar el reintento Pending. Conservé la tanda y todas las decisiones anteriores.','w');
+      msg('Error de almacenamiento: no se pudo guardar el reintento Pending. Conservé la tanda y todas las decisiones anteriores.','w');
       return false;
     }
   }
