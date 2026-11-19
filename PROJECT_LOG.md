@@ -1,3 +1,12 @@
+## 2026-11-19 — GRANADA #230 / #377: verify owner in *all* open robot Chrome tabs (P0 safety)
+
+- **Causa original:** la prueba de identidad `_verified_action_owner` aceptaba un `signed_in_handle` correcto de la pestaña del objetivo sin mirar los *siblings* del mismo Chrome. Una barra lateral desactualizada de la cuenta A podía coexistir con una cuenta B visible en otra pestaña o con login/challenge. Si el cookie de sesión faltaba, el inspector de siblings también omitía los conflictos negativos.
+- **Cambios implementados:** [PR #394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394), SHA candidato `d5372d18bb076ff849a86c692d51f4651c80c90b`; verificar hermano con sesión distinta/challenge/login aun con cookie ausente; invalidar `ds_user_id` previamente ligado; conservar la optimización de NO navegar repetidamente al perfil del dueño. Cuatro nuevos fixtures de conflicto y pruebas de contexto Playwright realista, [auditoría](docs/audits/2026-11-19-verified-owner-visible-sibling-guard.md).
+- **Pruebas revisadas:** CI principal, Profile Counts, Desktop rendered y Android About **SUCCESS en el SHA candidato**; Windows integrada **EN CURSO** al hacer esta anotación. No llamar P0 cerrado ni integrado hasta PR+CI exactos; aceptación física A/B real e Instagram pendiente.
+- **Avance global:** **50% estimado (6/12 hitos)** de la ruta final P0 v120.81, **sin incremento**, porque se mejoró la seguridad de código pero siguen sin completarse los seis hitos de prueba real/distribución. Publicada v120.80, `release_hold=true`. Próximo: terminar CI Windows; integrar PR al pasar, verificar fuente, ejecutar QA propietario con dos sesiones, luego actualizar Main Repo con fase/fecha/SHAs. Si acceso al master no disponible, declarar `MASTER_SYNC_BLOCKED`.
+
+---
+
 ## 2026-11-19 — Granada: avance global 50% (6/12) y convergencia #391/#392/#393
 
 - **Alcance fijo:** cierre P0 funcional y validación para v120.81, **no porcentaje de líneas ni roadmap infinito**. [Tablero local](docs/PROJECT_PROGRESS.md) y [estado estructurado](.michelslab/project-progress.json); la misma síntesis debe aparecer en el Main Repo.
