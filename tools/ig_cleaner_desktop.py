@@ -254,8 +254,9 @@ def main(argv=None) -> int:
             browser = chrome_path()
             chrome_workspace = chrome_workspace_path(home, workspace)
             chrome_workspace.mkdir(parents=True, exist_ok=True)
-            # Keep existing result and Instagram session paths, so an upgrade
-            # retains earlier robot results and the signed-in Instagram browser.
+            # Keep the primary Windows robot session unchanged across upgrades;
+            # each secondary-window robot has a separate Chrome login root.
+            # Canonical owner/account-scoped action results remain shared.
             legacy = Path.home() / ".ig-cleaner-pro"
             collector = window_collector(
                 home, legacy, workspace, developer=args.developer)
