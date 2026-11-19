@@ -14965,10 +14965,15 @@ async function readCompleteProfileState(fields='*',options={}){
   // device can confirm reviews while this page is still open.
   const owner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
   const account=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+  // A->B->A returns to the same account key, but NEVER the same workspace
+  // generation. One paginated scan must belong to a single generation.
+  const generation=Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
   const sameScope=()=>owner===(typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||''))&&
-    account===String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+    account===String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy')&&
+    generation===Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
   if(!options.fresh&&completeProfileStateCache&&
      completeProfileStateCache.owner===owner&&completeProfileStateCache.account===account&&
+     completeProfileStateCache.generation===generation&&
      Date.now()-completeProfileStateCache.at<4000&&
      (completeProfileStateCache.fields==='*'||completeProfileStateCache.fields===fields))
     return completeProfileStateCache.rows;
@@ -14988,7 +14993,7 @@ async function readCompleteProfileState(fields='*',options={}){
         throw Error('Sync incompleto: se descargaron '+all.length+' de '+expected+' revisiones; no se modificó el historial local');
       // Cache the account KEY captured before pagination, not the registered
       // account OBJECT. Shadowing this local used to disable every cache hit.
-      completeProfileStateCache={at:Date.now(),rows:all,fields,owner,account};
+      completeProfileStateCache={at:Date.now(),rows:all,fields,owner,account,generation};
       return all;
     }
     for(const item of page){
@@ -15001,11 +15006,24 @@ async function readCompleteProfileState(fields='*',options={}){
   throw Error('Sync incompleto: límite de seguridad de paginación de revisiones');
 }
 async function pushProfileState(){
+  // Capture the owner and Instagram slot BEFORE enumerating local reviews.
+  // Per-request REST guards alone cannot protect a multi-POST sync that sees
+  // A->B->A between two requests.
+  const owner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const account=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+  const generation=Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
+  const assertOriginalScope=()=>{
+    if(owner!==(typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||''))||
+       account!==String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy')||
+       generation!==Number(window.IGC_INSTAGRAM_PROFILES?.generation||0))
+      throw Error('Sync detenido: cambió la cuenta o el perfil de Instagram antes de completar la subida de revisiones');
+  };
   const rows=localStateRows();
   if(!rows.length)return 0;
   // The previous single GET silently saw only the newest API page. A complete
   // comparison is mandatory to prevent redundant old-state replays.
   const remote=await readCompleteProfileState('username,module,reviewed_at',{fresh:true});
+  assertOriginalScope();
   const latest=new Map();
   for(const row of remote||[]){
     const key=String(row.username||'').toLowerCase()+'|'+String(row.module||'');
@@ -15013,9 +15031,11 @@ async function pushProfileState(){
   }
   const changed=rows.filter(row=>ms(row.reviewed_at)>(latest.get(String(row.username||'').toLowerCase()+'|'+row.module)||0));
   for(let i=0;i<changed.length;i+=500){
+    assertOriginalScope();
     await rest('profile_state?on_conflict=user_id,username,module',{method:'POST',
       headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify(changed.slice(i,i+500))});
+    assertOriginalScope();
   }
   if(changed.length)completeProfileStateCache=null;
   return changed.length;
