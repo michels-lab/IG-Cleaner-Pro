@@ -11,9 +11,16 @@ for(const [line,text] of spots){
  assert(/===false/.test(text),`Caller must explicitly stop on failed save: line ${line}`);
 }
 const pend=src.slice(src.indexOf("function igcPendingDoubleStart("),src.indexOf("function igcPendingDoubleCheckOne("));
-assert(pend.indexOf("if(setActiveFocusBatch(")>0,"Pending double-check requires durable active batch");
-assert(pend.indexOf("if(setActiveFocusBatch(")<pend.indexOf("seen.add("),
- "Pending second-review cycle cannot advance before active batch persists");
+const doubleCohort=pend.indexOf("if(setActiveFocusBatch(");
+const cycleCommit=pend.indexOf("try{igcPendingDoubleSaveSeen(nextSeen)}");
+const modalReady=pend.lastIndexOf("try{showSafeFocusPopup('pending',chosen,label)}");
+const tabRequest=pend.indexOf("chosen.forEach(r=>{try{window.open(");
+const openHistory=pend.indexOf("recordRowsHistory(chosen,'open'");
+assert(doubleCohort>0,"Pending double-check requires durable active batch");
+assert(cycleCommit>doubleCohort&&modalReady>cycleCommit&&tabRequest>modalReady&&openHistory>tabRequest,
+ "Double Check must persist the cohort, then its cycle, show Reviewed, request tabs and ONLY THEN journal history");
+assert(pend.includes("if(setActiveFocusBatch('pending',chosen,label,'double',true)===false)"),
+ "Double Check mode and deferred history must be part of the FIRST durable cohort");
 const legacy=src.slice(src.indexOf("function openDoubleCheckNoMeSigueN("),src.indexOf("function resetDoubleCheckCycle(",src.indexOf("function openDoubleCheckNoMeSigueN(")));
 assert(legacy.indexOf("if(setActiveFocusBatch(")>0,"Legacy double check must reject failed persistence");
 assert(legacy.indexOf("if(setActiveFocusBatch(")<legacy.indexOf("saveDoubleCheckSeen(seen)"),

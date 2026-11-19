@@ -23,13 +23,13 @@ const store=new Map(),messages=[],opened=[],events=[],data={
  B:Object.fromEntries(data.B.map(u=>[u,{reviewedAt:100,decision:"reviewed",label:"other"}]))
 };
 const oldA=JSON.stringify(metadata.A),oldB=JSON.stringify(metadata.B);
-let account="A", allow=true,qualityChecks=0,saves=0;
+let account="A", allow=true,qualityChecks=0,saves=0,failSeenWrite=false,historyWrites=0;
 const ctx={
  console,Map,Set,Array,Object,Date,Number,String,Math,JSON,encodeURIComponent,
  cleanUsername:u=>String(u||"").toLowerCase().trim(),
  localStorage:{
   getItem:key=>store.get(account+"::"+key)||null,
-  setItem:(key,value)=>store.set(account+"::"+key,String(value)),
+  setItem:(key,value)=>{if(failSeenWrite&&key==="igc_pending_double_check_seen_v1")throw Error("QuotaExceededError");store.set(account+"::"+key,String(value))},
   removeItem:key=>store.delete(account+"::"+key)
  },
  IGC_INSTAGRAM_PROFILES:{active:"A"},
@@ -45,10 +45,15 @@ const ctx={
  pendingDecisionLabel:decision=>String(decision),
  confirm:()=>allow,
  igcConfirmBatchQuality:()=>{qualityChecks++;return allow},
- setActiveFocusBatch(kind,rows,label){
+ setActiveFocusBatch(kind,rows,label,reviewMode='',deferHistory=false){
   ctx.activeFocusBatch={kind,rows:rows.map(r=>({...r})),label,openedAt:Date.now(),status:"opened_unconfirmed"};
+  if(reviewMode==='double'&&kind==='pending')ctx.activeFocusBatch.reviewMode='double';
   ctx.activeExtraReviewBatch=ctx.activeFocusBatch;
+  ctx.saveActiveFocusBatch();
+  if(!deferHistory)ctx.recordRowsHistory(rows,'open',{kind,label});
+  return true;
  },
+ recordRowsHistory(){historyWrites++},
  saveActiveFocusBatch:()=>{store.set(account+"::active",JSON.stringify(ctx.activeFocusBatch));saves++},
  showSafeFocusPopup:()=>assert.equal(ctx.activeBatchRowResolved(ctx.activeFocusBatch.rows[0],"pending"),false,
   "Original review cannot auto-close a second review"),
@@ -127,4 +132,53 @@ account="A";ctx.IGC_INSTAGRAM_PROFILES.active="A";ctx.pendingReviewedMeta=metada
 assert.equal(store.get("A::igc_pending_double_check_seen_v1"),afterA);
 assert.equal(ctx.igcPendingDoubleRows().length,42);
 assert(qualityChecks>=5&&saves>=4);
+
+ 
+// A second review has double mode in its FIRST durable cohort write.
+// Rejecting the independent cycle ledger must neither request Chrome tabs nor
+// record fake opens; original reviewed decisions stay unchanged.
+ctx.activeFocusBatch=null;ctx.activeExtraReviewBatch=null;
+ctx.igcPendingDoubleSaveSeen(new Set());
+const originalReviewed=JSON.stringify(metadata.A),openedBefore=opened.length;
+const historyBefore=historyWrites,savesBefore=saves;
+failSeenWrite=true;
+assert.equal(ctx.igcPendingDoubleCheckAll(),false,
+ "A rejected Pending Double Check cycle write must fail closed");
+assert.equal(saves,savesBefore+1,
+ "Double-mode cohort must require exactly ONE durable active-cohort write");
+assert.equal(ctx.activeFocusBatch.reviewMode,"double");
+assert.equal(JSON.parse(store.get("A::active")).reviewMode,"double",
+ "The FIRST saved cohort must include double review mode even if ledger fails");
+assert.equal(opened.length,openedBefore,"No tabs when the cycle ledger fails");
+assert.equal(historyWrites,historyBefore,
+ "Rejected cycle ledger must not persist phantom open-history events");
+assert.equal(ctx.igcPendingDoubleSeen().size,0,
+ "Failed ledger must not mark profiles visited");
+assert.equal(JSON.stringify(metadata.A),originalReviewed,
+ "Old Pending reviews cannot be changed by failed second pass");
+assert(messages.some(x=>/Double Check pausado/.test(x.message)));
+failSeenWrite=false;
+assert.equal(ctx.igcPendingDoubleCheckAll(),false,
+ "A recoverable failed cohort must not be overwritten");
+// A broken review dialog must stop tab requests but preserve recovery.
+ctx.activeFocusBatch=null;ctx.activeExtraReviewBatch=null;
+ctx.showSafeFocusPopup=()=>{throw Error("Dialog failure")};
+assert.equal(ctx.igcPendingDoubleCheckOne("request01"),false);
+assert.equal(opened.length,openedBefore);
+assert.equal(ctx.activeFocusBatch.reviewMode,"double");
+ctx.activeFocusBatch=null;ctx.activeExtraReviewBatch=null;
+ctx.igcPendingDoubleSaveSeen(new Set());
+ctx.showSafeFocusPopup=()=>true;
+// A thrown first popup must not prevent the remaining real tab requests.
+const oldOpen=ctx.window.open;
+let attemptCount=0;
+ctx.window.open=url=>{attemptCount++;if(attemptCount===1)throw Error("PopupDenied");opened.push({account,url});return null};
+assert.equal(ctx.igcPendingDoubleStart(ctx.igcPendingDoubleRows(false).slice(0,3),"pending double retry"),true);
+assert.equal(attemptCount,3);
+assert.equal(opened.length,openedBefore+2);
+assert.equal(ctx.activeFocusBatch.reviewMode,"double");
+assert.equal(historyWrites,historyBefore+1,
+ "Successful double cohort opening history records once AFTER the cycle is saved");
+ctx.window.open=oldOpen;
+
 console.log("PASS: Pending Double Check 45=30+15, one/selected, no-auto-resolve, crash persistence, non-destructive cancel/confirm, scoped A-B-A and explicit cycle reset");

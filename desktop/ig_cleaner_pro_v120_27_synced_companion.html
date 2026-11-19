@@ -4531,8 +4531,17 @@ function igcFocusStorageDiagnostic(error,batch){
     ' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimated)';
 }
 function setActiveFocusBatch(kind,rows,label){
+  // Preserve the original public 3-argument signature for Desktop contracts.
+  // Internal Focus callers can opt into an initial second-pass mode and can
+  // defer history until the independent Pending ledger commits.
+  const reviewMode=arguments[3]||'';
+  const deferHistory=arguments[4]===true;
   const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
+  // Pending Double Check must be on disk from the FIRST cohort write. A
+  // separate second write could fail, leaving a normal Pending cohort which
+  // misinterprets the owner's already-reviewed second-pass decisions.
+  if(reviewMode==='double'&&kind==='pending')activeFocusBatch.reviewMode='double';
   activeExtraReviewBatch=activeFocusBatch;
   // Persist the unconfirmed cohort FIRST. An exhausted browser storage quota
   // must never silently turn a failed open into a saved 'open' history event.
@@ -4545,9 +4554,11 @@ function setActiveFocusBatch(kind,rows,label){
     return false;
   }
   // History is secondary evidence; failure must not hide the confirmation UI.
-  try{recordRowsHistory(activeFocusBatch.rows,'open',{kind,label})}
-  catch(e){console.error('Focus: open history not persisted',e);
-    try{msg('Aviso: no pude guardar el historial de aperturas. Exporta un respaldo de datos antes de continuar.','w')}catch{}}
+  if(!deferHistory){
+    try{recordRowsHistory(activeFocusBatch.rows,'open',{kind,label})}
+    catch(e){console.error('Focus: open history not persisted',e);
+      try{msg('Aviso: no pude guardar el historial de aperturas. Exporta un respaldo de datos antes de continuar.','w')}catch{}}
+  }
   try{renderActiveBatchDock()}catch(e){console.error('Focus: batch dock render failed',e)}
   return true;
 }
@@ -10548,15 +10559,37 @@ function igcPendingDoubleStart(rows,label){
   if(!igcConfirmBatchQuality(chosen,'pending',label)){
     msg('Segunda revisión cancelada sin cambios de estado.','i');return false;
   }
-  if(setActiveFocusBatch('pending',chosen,label)===false)return false;
-  activeFocusBatch.reviewMode='double';
-  activeExtraReviewBatch=activeFocusBatch;
-  saveActiveFocusBatch();
-  // Store attempts before opening any tabs; popup success is not assumed.
-  chosen.forEach(r=>{seen.add(r.username);igcPendingDoubleSelected.delete(r.username);});
-  igcPendingDoubleSaveSeen(seen);
-  chosen.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
-  showSafeFocusPopup('pending',chosen,label);
+  if(setActiveFocusBatch('pending',chosen,label,'double',true)===false)return false;
+  // Persist the attempt set BEFORE altering selection or asking Chrome for
+  // tabs. A quota denial leaves the already durable double-mode cohort for
+  // explicit recovery, and no hidden accepted or reviewed state.
+  const nextSeen=new Set(seen);
+  chosen.forEach(r=>nextSeen.add(r.username));
+  try{igcPendingDoubleSaveSeen(nextSeen)}catch(error){
+    console.error('Pending Double Check: visit ledger was not saved',error);
+    try{showSafeFocusPopup('pending',chosen,label)}catch(uiError){console.error('Pending Double Check: recovery modal failed',uiError)}
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='La tanda de segunda revisión está guardada, pero falló el registro del ciclo. No solicité pestañas ni marqué nuevos revisados. Conserva el respaldo, libera espacio y recupera o cancela esta tanda.';
+    msg('Pending Double Check pausado: el ciclo no se guardó; no abrí perfiles ni alteré revisiones. Recupera o cancela la tanda guardada.','w');
+    return false;
+  }
+  chosen.forEach(r=>igcPendingDoubleSelected.delete(r.username));
+  // Review must be reachable BEFORE any tab request. One popup exception
+  // cannot abandon the remaining profiles or hide the recovery links.
+  try{showSafeFocusPopup('pending',chosen,label)}catch(error){
+    console.error('Pending Double Check: cannot render review modal',error);
+    msg('La tanda está guardada, pero no pude mostrar Reviewed. Recupera la tanda antes de abrir perfiles.','w');
+    return false;
+  }
+  let rejected=0;
+  chosen.forEach(r=>{try{window.open(r.href,'_blank','noopener,noreferrer')}
+    catch(error){rejected++;console.error('Pending Double Check: tab request rejected',error)}});
+  if(rejected)msg('Chrome rechazó '+rejected+' solicitudes de pestañas de Double Check; usa los enlaces de la ventana Reviewed. No marques perfiles sin revisar.','w');
+  // Opening history is secondary evidence: only append AFTER both the double
+  // cohort and its per-cycle visit ledger are durable, not before.
+  try{recordRowsHistory(chosen,'open',{kind:'pending',label})}
+  catch(error){console.error('Pending Double Check: open history not persisted',error);
+    msg('La tanda Double Check sigue recuperable, pero no se guardó su historial de aperturas. Exporta respaldo.','w')}
   logAction('focus','Pending Double Check: '+chosen.length+' pestañas solicitadas',
     {count:chosen.length,source:'pending_double_check'});
   renderPendingRequests();renderModuleDashboard?.();
@@ -12221,7 +12254,7 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   // If storage is full (common after many reviewed batches), don't silently
   // abort after the owner accepts BATCH PREVIEW. Never lose confirmed reviews
   // or silently count tabs as opened without a restorable active cohort.
-  if(setActiveFocusBatch(kind,rows,label)===false){
+  if(setActiveFocusBatch(kind,rows,label,'',true)===false){
     igcFailedFocusBatch={
       kind,label,rows:rows.map(safeBatchRow),
       account:window.IGC_INSTAGRAM_PROFILES?.active||'legacy',
@@ -12249,8 +12282,26 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   // an app reload cannot silently recycle the same list. The explicit
   // 'Could not review' / Reset opened controls can release these rows.
   if(kind==='pending'){
-    rows.forEach(row=>pendingOpenedSet.add(row.username));
-    savePendingOpened();
+    const beforeOpened=new Set(pendingOpenedSet);
+    try{
+      rows.forEach(row=>pendingOpenedSet.add(row.username));
+      savePendingOpened();
+    }catch(error){
+      // The primary active cohort WAS saved, but Pending's second ledger was
+      // not. Restore RAM in place so counts cannot fall then rebound on reload.
+      pendingOpenedSet.clear();
+      for(const username of beforeOpened)pendingOpenedSet.add(username);
+      console.error('Focus: Pending opened ledger not saved',error);
+      // Preserve the durable, recoverable cohort and manual per-profile links.
+      // Do not make any automatic tab requests or claim that review happened.
+      try{showSafeFocusPopup(kind,rows,label)}catch(uiError){console.error('Focus: Pending recovery modal failed',uiError)}
+      const title=document.getElementById('safeFocusTitle');
+      if(title)title.textContent='Pending Focus pausado · guardado incompleto';
+      const details=document.getElementById('safeFocusText');
+      if(details)details.textContent='La tanda activa quedó guardada, pero el registro Pending de perfiles abiertos no. No solicité pestañas ni marqué revisiones. Recupera esta tanda desde Reviewed, o cancélala antes de intentar otra.';
+      msg('Pending pausado: no pude guardar los perfiles abiertos; conservé el historial y la tanda para recuperación. No abrí pestañas.','w');
+      return false;
+    }
   }
 
   // Owner's Reviewed/recovery panel FIRST: it must be visible even when
@@ -12274,6 +12325,11 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   rows.forEach(r=>{try{window.open(r.href,'_blank','noopener,noreferrer')}
     catch(e){rejected++;console.error('Focus: browser rejected profile tab',e)}});
   if(rejected)msg(`El navegador rechazó ${rejected} solicitud(es) de pestañas. En Reviewed usa el enlace Abrir junto a cada cuenta; no confirmes cuentas que no revisaste.`,'w');
+  // Do not record an 'open' attempt before Pending's second durable ledger
+  // commits. Under quota the function returned above with NO tabs requested.
+  try{recordRowsHistory(rows,'open',{kind,label})}
+  catch(error){console.error('Focus: open history not persisted',error);
+    msg('La tanda sigue recuperable, pero no se guardó su historial de aperturas. Exporta respaldo.','w')}
 
   const expected=target||rows.length;
   logAction('focus',`${label}: ${rows.length} tabs requested; browser may block popups`,

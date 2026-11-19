@@ -1394,3 +1394,9 @@ The owner clarified that Switch Accounts must **choose between remembered app lo
 - Product source reader now captures generation across ALL paginated profile_state GET pages and four-second cache. A→B→A between pages rejects the entire reconciliation. Push captures owner/Instagram slot/generation before local rows and checks after fresh preflight and around every 500-row POST, preventing subsequent wrong-generation uploads after switch.
 - Extended already CI-wired `tests/cloud-review-scope-cache.test.cjs` using production reader and pusher with delayed page 2, fresh cache on ABA, 501-row two-POST interrupted upload. [Audit](audits/2026-11-18-cloud-multipage-aba.md). Preserve all existing decisions and authorization boundaries.
 - Physical #360/#371/#377 acceptance and live automation remain OPEN. Official release remains v120.80; v120.81 not authorized.
+
+## 2026-11-18 — GRANADA P0 Pending second-ledger Focus durability (unreleased source)
+
+- Root cause: Pending active cohort saved first; then `pendingOpenedSet` mutated in RAM and `savePendingOpened()` could fail, leaving counters down with no tabs and a premature `open` event. Source now restores the original RAM Set values/reference, leaves the first durable cohort recoverable and displays a recovery warning without requesting tabs/history. Normal `open` history is deferred until successful required commits.
+- Pending Double Check now saves `reviewMode='double'` in its *initial* durable cohort, checks cycle attempt write before selection/tab requests, shows Reviewed before Chrome calls and catches per-tab exceptions. Negative CI fixtures are part of the existing Focus/Double Check contract tests. [Audit](audits/2026-11-18-pending-focus-two-ledger-durability.md).
+- No real owner signed-in browser, physical two-window verification or Instagram robot action asserted. #360/#371/#377 remain open. Stable v120.80 published; v120.81 NOT authorized, no release.
