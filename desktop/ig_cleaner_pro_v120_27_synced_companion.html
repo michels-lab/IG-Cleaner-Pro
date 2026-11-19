@@ -4651,12 +4651,49 @@ function recoverActiveFocusBatch(){
   if(typeof showSafeFocusPopup==='function')showSafeFocusPopup(activeFocusBatch.kind,activeFocusBatch.rows,activeFocusBatch.label);
   else showExtraFocusModal(activeFocusBatch.kind,activeFocusBatch.rows,activeFocusBatch.label);
 }
+function igcReopenSavedFocusBatch(batch){
+  if(!batch||!Array.isArray(batch.rows)||!batch.rows.length){
+    msg('No hay una tanda guardada para reabrir.','w');return false;
+  }
+  // Never recycle Reviewed/protected/snoozed profiles from an old cohort.
+  // Pending Double Check uses its own reviewMode-aware resolution rule.
+  const unresolved=batch.rows.filter(row=>row&&!activeBatchRowResolved(row,batch.kind));
+  if(!unresolved.length){
+    msg('La tanda ya no contiene perfiles pendientes de revisión.','i');return false;
+  }
+  // Render the existing recoverable Reviewed modal, with direct per-profile
+  // Open links, before asking Chrome to open any tabs. If persistence fails
+  // during the modal's recovery, do not request profiles.
+  try{
+    if(showSafeFocusPopup(batch.kind,unresolved,batch.label)===false){
+      msg('No se pudo guardar la recuperación. Ninguna pestaña fue solicitada.','w');
+      return false;
+    }
+  }catch(error){
+    console.error('Focus: recovery modal not available',error);
+    msg('No se pudo mostrar Reviewed. Conservé la tanda guardada; recupera el panel antes de abrir perfiles.','w');
+    return false;
+  }
+  let rejected=0;
+  for(const row of unresolved){
+    try{window.open(row.href,'_blank','noopener,noreferrer')}
+    catch(error){rejected++;console.error('Focus: reopen tab request rejected',error)}
+  }
+  if(rejected)msg('Chrome rechazó '+rejected+' solicitudes. Usa los enlaces Abrir de Reviewed; no marques perfiles sin revisar.','w');
+  // Reopen is an explicit *request*, not proof that a browser tab was shown.
+  // The history writer itself rolls back RAM on quota failures.
+  try{recordRowsHistory(unresolved,'reopen',{kind:batch.kind,label:batch.label})}
+  catch(error){console.error('Focus: reopen history not saved',error);
+    msg('La tanda sigue recuperable, pero falló el historial de reapertura. Conserva un respaldo.','w')}
+  try{logAction('reopen','Solicité reabrir '+unresolved.length+' perfiles · '+batch.label,
+    {count:unresolved.length,source:batch.kind,rejected})}
+  catch(error){console.error('Focus: reopen action audit not saved',error);
+    msg('No pude guardar el evento de auditoría de reapertura. Conserva un respaldo.','w')}
+  forceLiveRefresh('Solicité '+unresolved.length+' pestañas; revisa Chrome y los enlaces individuales de Reviewed');
+  return true;
+}
 function reopenActiveFocusBatch(){
-  if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No active batch to reopen.','w');return;}
-  activeFocusBatch.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
-  recordRowsHistory(activeFocusBatch.rows,'reopen',{kind:activeFocusBatch.kind,label:activeFocusBatch.label});
-  logAction('reopen',`Reabrir tanda activa ${activeFocusBatch.label}: ${activeFocusBatch.rows.length}`,{count:activeFocusBatch.rows.length,source:activeFocusBatch.kind});
-  forceLiveRefresh(`Reabiertos ${activeFocusBatch.rows.length} perfiles de tanda activa`);
+  return igcReopenSavedFocusBatch(activeFocusBatch);
 }
 function markActiveFocusNotReviewed(){
   if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No active batch.','w');return;}
@@ -10630,15 +10667,6 @@ function igcPendingDoubleResetCycle(){
 }
 
 function pendingCandidateRows(){return pendingRows().filter(isPendingOpenableForFocus).sort(pendingOldestFirstSort)}
-function openFocusRows(rows,label,type='focus',popupKind=''){
-  if(!rows.length){msg('No hay perfiles para abrir en este foco.','w');return false}
-  if(popupKind)showExtraFocusModal(popupKind,rows,label);
-  setTimeout(()=>{rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'))},80);
-  logAction(type,`${label}: ${rows.length} perfiles abiertos`,{count:rows.length,source:label});
-  forceLiveRefresh(`${label}: ${rows.length} perfiles abiertos`);
-  return true
-}
-
 
 function focusBatchFill(primaryRows, fallbackRows, n, kind){
   const target=Number(n||0)||0;
@@ -12069,7 +12097,7 @@ function igcRetryFailedFocus(){
   // openConfirmedFocusRows persists the cohort before any Chrome tab request.
   return openConfirmedFocusRows(failed.rows,failed.label,failed.kind,failed.rows.length,{exact:true});
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No active batch to reopen.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));showSafeFocusPopup(b.kind,b.rows,b.label);logAction('reopen',`Requested reopening ${b.label}: ${b.rows.length} profile tabs`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Requested ${b.rows.length} tabs; use individual Open links if Chrome blocks them`)}
+function reopenSafeFocusBatch(){return igcReopenSavedFocusBatch(activeExtraReviewBatch)}
 // "Couldn't review yet" is a new attempt result, NEVER an undo operation.
 // The same username may have valid earlier Reviewed/Pending decisions that
 // Recheck or Double Check intentionally include.
