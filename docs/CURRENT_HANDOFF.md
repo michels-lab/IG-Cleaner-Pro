@@ -1,3 +1,11 @@
+## 2026-11-19 — Granada P0 #230: identidad contradictoria entre pestañas, PR #394
+
+- **Estado fuente:** candidate `d5372d18bb076ff849a86c692d51f4651c80c90b` [#394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394) corrige retorno temprano con dueño visible, inspección de sibling sin cookie y cookie cambiada en caché. Pruebas Profile Counts, CI principal, Desktop y Android About VERDES; Windows integrada pendiente. Auditoría local [aquí](audits/2026-11-19-verified-owner-visible-sibling-guard.md).
+- **Para reentrar:** revisar `Insta Cleaner integrated Windows app preview` exact-head; solo fusionar si pasa, conservar #230/#377 hasta cuenta física. Nunca inventar clic exitoso ni release.
+- **Ruta global:** 6/12 hitos = 50% estimado, **sin cambio**; v120.80 estable publicada, v120.81 bajo release hold. Registrar evolución en Main Repo.
+
+---
+
 ## 2026-11-19 — Reentrada del seguimiento global: InstaCleaner 50% (6/12)
 
 - **Último source merge:** `fd52d8760ae0bc7e6863db123e17cd722b4afd8a` (#393); #391/#392 también en `main`. 6/6 workflows #393 SUCCESS. Product stable **v120.80** (v120.81 no publicada).
