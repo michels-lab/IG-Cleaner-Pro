@@ -114,5 +114,20 @@
     }
   ],
   "next_step": "Validar Focus 30 y dos sesiones/robots Windows reales; antes no reclamar v120.81 ni cerrar P0 #360/#371/#377.",
-  "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real."
+  "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
+  "last_granada": {
+    "date": "2026-11-19",
+    "issue_numbers": [
+      230,
+      377
+    ],
+    "source_pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/394",
+    "source_head": "d5372d18bb076ff849a86c692d51f4651c80c90b",
+    "outcome": "source_and_regression_tests_committed",
+    "validation": "4/5 exact-head workflows SUCCESS; Windows integrated in progress at checkpoint",
+    "global_percent_before": 50,
+    "global_percent_after": 50,
+    "reason_no_increase": "No additional required owner-live Instagram, hardware or official release acceptance milestone was verified; source safety hardening does not claim a physical gate.",
+    "master_sync": "pending"
+  }
 }
