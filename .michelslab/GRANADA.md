@@ -1,3 +1,7 @@
+## Progreso global obligatorio — Granada 2026-11-19
+
+**Último corte validado**: [50% (6/12 hitos) de la ruta hacia v120.81](../docs/PROJECT_PROGRESS.md). Cada Granada comienza revalidando ese denominador y termina con % actualizado, hito actual, qué falta, bitácora local y registro en [Main Repo](https://github.com/michels-lab/Michel-Software-Standards/blob/main/reports/PROJECT_PROGRESS.md). Fuente integrada no equivale a aprobación física de Instagram ni release. Si el master no se pudo escribir, informar `MASTER_SYNC_BLOCKED` con SHA y causa.
+
 ## GRANADA AMBICIOSA — ampliación del propietario (2026-10-20)
 
 **Obligatorio para este repo y sus Developer Twins:** cada invocación GRANADA debe perseguir un macro-bloque de alto impacto y **varios entregables funcionales y comprobables** (normalmente 3–6 paquetes sustanciales relacionados, si son compatibles), en vez de un micro-PR aislado. Cubrir comportamiento completo, errores/recuperación, persistencia, UI y pruebas de integración donde corresponda. Si un elemento está bloqueado/ocupado, apartarlo con issue/PR/SHA y continuar con el siguiente independiente sin invadir sus archivos. Aceptación física, CI, merge y publicación son hitos distintos. Nunca fabricar datos, hacer clics inseguros ni publicar un release implícitamente.

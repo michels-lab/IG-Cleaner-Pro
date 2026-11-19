@@ -1,3 +1,10 @@
+## 2026-11-19 — Reentrada del seguimiento global: InstaCleaner 50% (6/12)
+
+- **Último source merge:** `fd52d8760ae0bc7e6863db123e17cd722b4afd8a` (#393); #391/#392 también en `main`. 6/6 workflows #393 SUCCESS. Product stable **v120.80** (v120.81 no publicada).
+- **Fuente del progreso:** [12 hitos medidos](PROJECT_PROGRESS.md); el 50% es un cálculo por criterios de ESTA ruta v120.81, no una cifra inventada para el producto histórico. Hitos físicos y release separados del código.
+- **Siguiente:** pruebas de dueño #377/#360/#371/#164/#172, resolver fallos demostrados, recontar hitos, actualizar ambos repos, informar % al inicio y cierre de cada Granada. Nunca llamar GREEN al runtime de Instagram con fixtures offline.
+
+---
 ## 2026-11-18 — GRANADA Focus bulk open/reopen history is RAM/disk transactional (source, unpublished)
 
 - `recordRowsHistory()` previously mutated per-profile RAM then could fail the sole `saveProfileHistory()` call under quota. It could later persist uncommitted open/reopen history via another write or lose apparent counts on reload. Source now snapshots each affected record (including event-array and object identity) and rolls back in memory on failure; prior durable records never deleted. Unreadable storage fails before mutation.

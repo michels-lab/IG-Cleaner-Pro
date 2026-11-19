@@ -1,3 +1,12 @@
+## 2026-11-19 — Granada: avance global 50% (6/12) y convergencia #391/#392/#393
+
+- **Alcance fijo:** cierre P0 funcional y validación para v120.81, **no porcentaje de líneas ni roadmap infinito**. [Tablero local](docs/PROJECT_PROGRESS.md) y [estado estructurado](.michelslab/project-progress.json); la misma síntesis debe aparecer en el Main Repo.
+- **Integrado:** #391 aisla la sesión de robot de cada ventana; #392 protege Cancel Batch con WAL entre procesos y lo recupera tras reinicio; **#393 fusionado** a `main` como `fd52d8760ae0bc7e6863db123e17cd722b4afd8a`, con escritura de Focus/Reviewed/Pending de todo-o-nada y pruebas de Double Check.
+- **Evidencia exacta #393:** 6/6 workflows de PR SUCCESS, incluidos Windows instalado/offline Chrome, CI principal, Profile Counts, Desktop, Android About y antiguo workflow Android Developer (legado de QA, **no** autorización para nueva Developer Edition).
+- **Sin certificar:** prueba física real de dos cuentas/ventanas Windows #377, Focus 30 A→B→A y datos grandes #360/#371, Unfollow #164, Cancel Pending #172 y publicación v120.81. Última estable v120.80; release_hold=true. No ejecutar actos en Instagram sin consentimiento.
+- **Prevención:** el propietario observó que se omitía el avance global en las respuestas y Main Repo aunque GLOBAL_RULES ya lo exigía. Registrar porcentaje en cada Granada, hitos y justificación, publicar Main Repo y no reportar solo PR/CI.
+
+---
 ## 2026-11-18 — GRANADA Focus history RAM/disk rollback after denied writes (source only)
 
 - Root cause: `recordRowsHistory()` incremented per-profile in-memory open/reopen history before calling `saveProfileHistory()`; browser quota failure left phantom events in RAM, later persisting during an unrelated write or disappearing after reload. Fix snapshots affected record references/fields and restores in place on failed mutation/write; new uncommitted RAM rows are discarded but persisted ledgers are never touched. Unreadable saved history fails before mutation.

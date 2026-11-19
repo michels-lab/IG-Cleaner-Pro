@@ -1,0 +1,118 @@
+{
+  "schema": "michels-lab-project-progress-v1",
+  "project": "IG Cleaner Pro",
+  "repository": "michels-lab/IG-Cleaner-Pro",
+  "role": "application",
+  "as_of": "2026-11-19",
+  "scope": "Ruta P0 para la siguiente versión final estable v120.81, aceptación funcional y física de propietario",
+  "estimate_method": "equal_weight_verified_milestones",
+  "progress_percent": 50,
+  "verified_milestones": 6,
+  "total_milestones": 12,
+  "phase": "source_integrated_ci_green_physical_validation_pending",
+  "last_source_merge": "fd52d8760ae0bc7e6863db123e17cd722b4afd8a",
+  "latest_verified_stable": "v120.80",
+  "release_hold": true,
+  "owner_physical_acceptance": false,
+  "milestones": [
+    {
+      "key": "import_scope",
+      "description": "Import ZIP y aislamiento lógico de perfiles en fuente/CI",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80"
+      ]
+    },
+    {
+      "key": "independent_window_ui",
+      "description": "Elección de ventana primaria/secundaria y UI independiente, CI offline",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/377"
+      ]
+    },
+    {
+      "key": "robot_session_isolation",
+      "description": "Perfiles reales de navegador del robot separados por ventana",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/pull/391"
+      ]
+    },
+    {
+      "key": "wal_interlock",
+      "description": "Registro de intención previa al clic y exclusión entre procesos",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/172"
+      ]
+    },
+    {
+      "key": "cancel_restart",
+      "description": "Cancel Batch guardado recuperable tras reinicio con bloqueo de WAL",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/pull/392"
+      ]
+    },
+    {
+      "key": "focus_atomic_review",
+      "description": "Confirmación masiva Reviewed/Pending atómica y Double Check sin borrar decisiones anteriores",
+      "status": "verified",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/pull/393",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44601259144"
+      ]
+    },
+    {
+      "key": "storage_real_quota",
+      "description": "Focus 30 bajo cuota real con historial grande, exportación y recuperación sin pérdida",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/371"
+      ]
+    },
+    {
+      "key": "two_windows_physical",
+      "description": "Dos ventanas Windows simultáneas con sesión IG A/B real y UX Automations aceptada",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/377"
+      ]
+    },
+    {
+      "key": "focus_physical_no_rebound",
+      "description": "30 revisiones reales, Recheck/Double, refresh/reinicio A→B→A sin rebote",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/360"
+      ]
+    },
+    {
+      "key": "unfollow_live",
+      "description": "Unfollow real confirmado por objetivo y journal sin falsos OK/repeticiones",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/164"
+      ]
+    },
+    {
+      "key": "cancel_pending_live",
+      "description": "Cancel Pending real, estado ya no solicitado y no reabrir perfiles resueltos",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/issues/172"
+      ]
+    },
+    {
+      "key": "stable_publish",
+      "description": "v120.81 oficial: QA de distribución/aprobación de gates, activos y verificación posterior",
+      "status": "pending",
+      "evidence": [
+        "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80"
+      ]
+    }
+  ],
+  "next_step": "Validar Focus 30 y dos sesiones/robots Windows reales; antes no reclamar v120.81 ni cerrar P0 #360/#371/#377.",
+  "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real."
+}
