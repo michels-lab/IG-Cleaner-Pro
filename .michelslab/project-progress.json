@@ -10,7 +10,7 @@
   "verified_milestones": 6,
   "total_milestones": 12,
   "phase": "source_integrated_ci_green_physical_validation_pending",
-  "last_source_merge": "fd52d8760ae0bc7e6863db123e17cd722b4afd8a",
+  "last_source_merge": "3c6ad280f64fe7b870dee61b587575655ce47beb",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -117,17 +117,26 @@
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-19",
-    "issue_numbers": [
+    "issues": [
       230,
       377
     ],
-    "source_pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/394",
+    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/394",
     "source_head": "d5372d18bb076ff849a86c692d51f4651c80c90b",
-    "outcome": "source_and_regression_tests_committed",
-    "validation": "4/5 exact-head workflows SUCCESS; Windows integrated in progress at checkpoint",
-    "global_percent_before": 50,
-    "global_percent_after": 50,
-    "reason_no_increase": "No additional required owner-live Instagram, hardware or official release acceptance milestone was verified; source safety hardening does not claim a physical gate.",
-    "master_sync": "pending"
+    "merged_commit": "3c6ad280f64fe7b870dee61b587575655ce47beb",
+    "outcome": "merged_source_fix_and_verified_5_of_5_ci",
+    "validated_workflows": [
+      "IG Cleaner Pro CI",
+      "Profile Counts feature tests",
+      "Desktop rendered UI",
+      "Android About rendered UI",
+      "Insta Cleaner integrated Windows app preview"
+    ],
+    "percent_before": 50,
+    "percent_after": 50,
+    "reason_no_increase": "Safety code source + automated QA changed, but none of the six remaining owner-live acceptance/release milestones was proven.",
+    "owner_live_qa": "pending",
+    "release": "v120.80 published; v120.81 held",
+    "master_sync": "in_progress"
   }
 }
