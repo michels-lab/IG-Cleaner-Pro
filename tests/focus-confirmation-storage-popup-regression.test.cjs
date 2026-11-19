@@ -15,9 +15,9 @@ const src=[
   section("function openConfirmedFocusRows(","\n</script>")
 ].join("\n");
 new vm.Script(src);
-function scenario({quota=false,historyQuota=false,openThrows=false}={}){
+function scenario({quota=false,historyQuota=false,openThrows=false,pendingOpenedQuota=false}={}){
   const trace=[],messages=[],nodes=new Map();
-  let storageUnavailable=quota;
+  let storageUnavailable=quota,openedLedgerUnavailable=pendingOpenedQuota,storedCohort=null;
   const node=id=>{
     if(!nodes.has(id))nodes.set(id,{
       id,textContent:"",innerHTML:"",value:"",disabled:false,style:{display:"none"},
@@ -34,8 +34,8 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     Date,Number,Math,JSON,Set,Array,String,
     document:{getElementById:node},
     activeFocusBatch:null,activeExtraReviewBatch:null,igcFailedFocusBatch:null,currentMode:'following',
-    safeBatchRow:x=>({...x}),recordRowsHistory(){if(storageUnavailable||historyQuota)throw Error("QuotaExceededError")},
-    saveActiveFocusBatch(){if(storageUnavailable)throw Error("QuotaExceededError")},
+    safeBatchRow:x=>({...x}),recordRowsHistory(){trace.push('history');if(storageUnavailable||historyQuota)throw Error("QuotaExceededError")},
+    saveActiveFocusBatch(){if(storageUnavailable)throw Error("QuotaExceededError");storedCohort=JSON.parse(JSON.stringify(ctx.activeFocusBatch))},
     renderActiveBatchDock(){},
     activeBatchRowResolved:()=>false,
     igcWhyOpened:()=>"",igcProfileHistoryText:()=>"",igcReviewChangeInfo:()=>({text:"",changed:false}),
@@ -47,13 +47,16 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
     igcConfirmBatchQuality(){trace.push("quality");return true},
     msg(txt){messages.push(String(txt))},
     logAction(){},forceLiveRefresh(){},
-    pendingOpenedSet:new Set(),savePendingOpened(){},
+    pendingOpenedSet:new Set(['prior.pending']),savePendingOpened(){if(openedLedgerUnavailable)throw Error('QuotaExceededError')},
     window:{IGC_INSTAGRAM_PROFILES:{active:'first'},open(){trace.push("window.open");if(openThrows)throw Error("BrowserDenied")}},
     lastPendingBatch:[],lastMutualBatch:[]
   };
   vm.createContext(ctx);
   vm.runInContext(src,ctx,{timeout:2000});
-  return {ctx,rows,trace,messages,node,setStorageUnavailable:value=>{storageUnavailable=Boolean(value)}};
+  return {ctx,rows,trace,messages,node,
+    savedCohort:()=>storedCohort,
+    setStorageUnavailable:value=>{storageUnavailable=Boolean(value)},
+    setPendingOpenedUnavailable:value=>{openedLedgerUnavailable=Boolean(value)}};
 }
 // Quota failure must be explicit, not silently stop after owner accepts the dialog.
 {
@@ -146,4 +149,38 @@ function scenario({quota=false,historyQuota=false,openThrows=false}={}){
   assert.equal(x.node("safeFocusPopup").style.display,"flex");
   assert.equal(x.node("safeFocusConfirmBtn").disabled,false);
 }
+
+// Regression #371/#360: the PRIMARY unconfirmed cohort may save successfully
+// even though Pending's separately stored 'opened' ledger rejects the write.
+// No Chrome tabs or opening-history records should run in that state.
+{
+  const x=scenario({pendingOpenedQuota:true});
+  const original=x.ctx.pendingOpenedSet;
+  assert.equal(x.ctx.openConfirmedFocusRows(x.rows,"pending foco 30","pending",30),false);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,0,
+    "Pending opened-ledger quota failure must stop BEFORE requesting tabs");
+  assert.equal(x.trace.filter(t=>t==="history").length,0,
+    "Rejected Pending opened-ledger must not leave phantom 'open' history");
+  assert.equal(x.ctx.pendingOpenedSet,original,
+    "Rollback must retain the existing Set reference used by the rest of the UI");
+  assert.deepEqual([...x.ctx.pendingOpenedSet],["prior.pending"],
+    "Failed Pending cohort cannot decrement counts by mutating opened RAM");
+  assert.equal(x.savedCohort().kind,"pending",
+    "The FIRST saved cohort remains durable and recoverable rather than erased");
+  assert.equal(x.ctx.activeFocusBatch.kind,"pending");
+  assert.equal(x.node("safeFocusPopup").style.display,"flex",
+    "Pending storage failure must leave direct per-profile recovery links visible");
+  assert(x.messages.some(t=>/Pending pausado/i.test(t)),
+    "Owner must see that no tabs or review confirmations were processed");
+  // A later explicit new attempt after the prior cohort was safely canceled
+  // must work with exactly the original candidates, no phantom handled rows.
+  x.ctx.clearActiveFocusBatch();
+  x.setPendingOpenedUnavailable(false);
+  assert.equal(x.ctx.openConfirmedFocusRows(x.rows,"pending retry","pending",30),true);
+  assert.equal(x.trace.filter(t=>t==="window.open").length,2);
+  assert.equal(x.trace.filter(t=>t==="history").length,1);
+  assert.deepEqual([...x.ctx.pendingOpenedSet],
+    ["prior.pending","example.one","example.two"]);
+}
+
 console.log("PASS: Focus confirms recoverably under quota failure, browser popup exceptions, and normal batches");
