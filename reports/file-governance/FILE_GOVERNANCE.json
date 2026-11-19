@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 468,
-  "classified_files_total": 464,
-  "docs_content_inspected": 127,
+  "tracked_files_total": 469,
+  "classified_files_total": 465,
+  "docs_content_inspected": 128,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 123,
+    "document": 124,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "7a778f303b3f5be43038684bb95a7a99a99f704670198a8777c3cbe81c885e77",
-  "evidence_fingerprint": "a7928652a3d1d8fa84d35021b80c79e0440cb3ac7c56a6810bbd3bea0f4fda37",
+  "inventory_fingerprint": "ad948d250bc6a80d6f596343de31523986b8669689475a7b24311e466d319bb1",
+  "evidence_fingerprint": "6113a7402d3bb63dbea4ab808b7d8db3f20d47dcf5f89c98394b68d5fcf111cc",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1691,6 +1691,13 @@
       "blob": "b431412e7d5c557aef3e3a0f0b1db4e97079bd80"
     },
     {
+      "path": "docs/audits/2026-11-19-native-two-window-robot-session-isolation.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "fd69f08776a7f24f4809c10b3f7a02e7ff2c8d68"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2906,7 +2913,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "ace65fd5262edf9d28a9ad34cfb9af6a07aee017"
+      "blob": "0dda431476bce0af7ba647198d8875d05963d221"
     },
     {
       "path": "tests/test_windows_updater.py",
@@ -3074,7 +3081,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "fb94c32471285b34d6e9e4d2b2e3307f8d0ddf20"
+      "blob": "77848df9d44022aace97d658d47203c740c28381"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -3130,7 +3137,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "be669ec2d816b7d6578c8d08038e00113b772c99"
+      "blob": "92286c0bbcd64e36fac3432ece9bcbef9fb42df7"
     },
     {
       "path": "tools/profile_counts_instagram.py",
@@ -3277,7 +3284,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "92c3e98d3d94fc7f4a38c3eb1ba416bbd97d4568"
+      "blob": "f04742b5db5b2e8249dadfa5ca6d4b909ab4e491"
     }
   ],
   "findings": [
@@ -3291,11 +3298,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "5009eec9ab8e1140",
+      "id": "35e398a626337fa5",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/pending-zip-completeness.test.cjs",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: tests/pending-zip-completeness.test.cjs, tests/test_windows_single_window_layout.py, tools/ig_cleaner_desktop.py, tools/profile_counts_bridge.py, tools/windows_workspace_picker.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
