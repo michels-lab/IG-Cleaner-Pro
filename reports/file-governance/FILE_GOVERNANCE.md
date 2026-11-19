@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 466; classified: 462; readable documents: 126; above read cap: 2; findings: 2.
+Tracked: 468; classified: 464; readable documents: 127; above read cap: 2; findings: 2.
 
 ## File roles
 
@@ -18,11 +18,11 @@ Tracked: 466; classified: 462; readable documents: 126; above read cap: 2; findi
 | config | 70 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 122 |
+| document | 123 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
-| test | 143 |
+| test | 144 |
 | text_metadata | 2 |
 | web_ui | 7 |
 | workflow | 12 |
@@ -30,7 +30,7 @@ Tracked: 466; classified: 462; readable documents: 126; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-storage-all-modes.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 8ef6db72bb3c1a7e)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: tests/pending-zip-completeness.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 5009eec9ab8e1140)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

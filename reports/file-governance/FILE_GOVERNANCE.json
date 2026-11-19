@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 466,
-  "classified_files_total": 462,
-  "docs_content_inspected": 126,
+  "tracked_files_total": 468,
+  "classified_files_total": 464,
+  "docs_content_inspected": 127,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 70,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 122,
+    "document": 123,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 143,
+    "test": 144,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "b8558a6d4271391cdc813cb33c00a40fb04c134fb45dcdea4dad0b7df02a1482",
-  "evidence_fingerprint": "bff4c6a1e7b5eef6d67f9aefea706a368ffdae3683087c69e52fa536ed9d6bbc",
+  "inventory_fingerprint": "7a778f303b3f5be43038684bb95a7a99a99f704670198a8777c3cbe81c885e77",
+  "evidence_fingerprint": "a7928652a3d1d8fa84d35021b80c79e0440cb3ac7c56a6810bbd3bea0f4fda37",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "0f7f4b6200b67c258f902b30378d9d8413b4255d"
+      "blob": "97ecc338ed8c29ab173f756c15aa726f910a9abb"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -246,14 +246,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a5e86da52b0cbfde5387892df83164e6d5d13dc0"
+      "blob": "1dbd2bef5bb911a7ff4c2bc1632a0b77cd24fc07"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "c4385ca4577a8c109e7a7f9e7b5ffb53e8175319"
+      "blob": "39358988dfa3014f09578a3c4079b7f67c020eee"
     },
     {
       "path": "README_SYNC.md",
@@ -855,7 +855,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "4364488068326bf8ef0477aea647a63f01ee9655"
+      "blob": "df86880706184fc19b65caedda2ce85b8cee0b73"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -883,7 +883,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "eea25850587864cf850193911281edfe3ea4672f"
+      "blob": "6afe672b53bfcd6a609075887949c2402c940011"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1684,6 +1684,13 @@
       "blob": "69a7b00fb36d930570b38ca19073ea70d325a7e6"
     },
     {
+      "path": "docs/audits/2026-11-19-focus-reopen-single-path.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "b431412e7d5c557aef3e3a0f0b1db4e97079bd80"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2251,6 +2258,13 @@
       "blob": "933e2f1578f0e7d77a5b4eb2184510cafbf18938"
     },
     {
+      "path": "tests/focus-reopen-recovery.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "45f31ebf64f11259a712ea286b9d4f0116337991"
+    },
+    {
       "path": "tests/focus-storage-all-modes.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2353,7 +2367,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "966c876302104c00d4b5f3f2dbc213159fd833fc"
+      "blob": "91ead4ec7cf48add071b7e1717aeb08888fdc513"
     },
     {
       "path": "tests/pending-zip-shards-runtime.test.cjs",
@@ -3277,11 +3291,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "8ef6db72bb3c1a7e",
+      "id": "5009eec9ab8e1140",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/focus-storage-all-modes.test.cjs",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: tests/pending-zip-completeness.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
