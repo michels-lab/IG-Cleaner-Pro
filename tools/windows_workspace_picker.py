@@ -21,6 +21,19 @@ def chrome_workspace_path(home: Path, workspace: str) -> Path:
 
 
 
+def instagram_robot_session_path(home: Path, workspace: str) -> Path:
+    """Preserve the ORIGINAL robot browser for window 1; isolate window 2.
+
+    The canonical action/WAL directory stays common and remains independently
+    scoped by owner/account. This path is ONLY the persistent Chrome session
+    root; it must never be copied, migrated or deleted when opening a slot.
+    """
+    if workspace not in WORKSPACES:
+        raise ValueError("Choose a supported InstaCleaner window.")
+    return Path(home) / ("instagram-browser" if workspace == "primary"
+                         else "instagram-browser-secondary")
+
+
 def ui_document_path(home: Path, workspace: str, filename: str = "IG-Cleaner-Pro.html") -> Path:
     """Keep the original file:// origin for account 1; isolate account 2."""
     if workspace not in WORKSPACES:

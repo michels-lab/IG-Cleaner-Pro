@@ -35,6 +35,59 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     picker.chrome_workspace_path(root, invalid)
 
+    def test_two_native_windows_isolate_real_robot_sessions_without_moving_journals(self):
+        from action_chrome_profiles import ActionChromeProfiles
+        from profile_counts_bridge import build_server
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home, legacy = root / "InstaCleaner", root / ".ig-cleaner-pro"
+            legacy.mkdir()
+            original = legacy / "instagram-browser"
+            original.mkdir()
+            (original / "OriginalOwnerSessionMarker").write_text("KEEP", encoding="utf-8")
+            # The existing primary browser folder and canonical WAL are never
+            # migrated, renamed, copied or deleted just to open account 2.
+            for developer in (False, True):
+                with self.subTest(developer=developer):
+                    first = app.window_collector(home, legacy, "primary", developer=developer)
+                    second = app.window_collector(home, legacy, "secondary", developer=developer)
+                    base = home if developer else legacy
+                    self.assertEqual(first.session_dir, base / "instagram-browser")
+                    self.assertEqual(second.session_dir, base / "instagram-browser-secondary")
+                    self.assertNotEqual(first.session_dir, second.session_dir)
+                    self.assertEqual(first.data_dir, second.data_dir,
+                        "The owner/account-scoped canonical audit/WAL remains common")
+                    self.assertNotEqual(
+                        ActionChromeProfiles(first.session_dir).directory("owner", "ig_first_12345678"),
+                        ActionChromeProfiles(second.session_dir).directory("owner", "ig_first_12345678"))
+                    self.assertFalse(second.session_dir.exists(),
+                        "Selecting a slot alone must not create or modify Chrome sessions")
+                    servers = []
+                    try:
+                        for collector in (first, second):
+                            servers.append(build_server(collector, "offline-test-token", 0,
+                                developer_mode=developer, audit_root=legacy / "profile-counts"))
+                        self.assertEqual(servers[0].actions.session_dir, first.session_dir)
+                        self.assertEqual(servers[1].actions.session_dir, second.session_dir)
+                        self.assertNotEqual(servers[0].dual_chrome_sessions.root,
+                                            servers[1].dual_chrome_sessions.root)
+                        self.assertEqual(servers[0].actions.data_dir,
+                                         servers[1].actions.data_dir)
+                    finally:
+                        for server in servers:
+                            server.server_close()
+            self.assertEqual((original / "OriginalOwnerSessionMarker").read_text(), "KEEP")
+            self.assertFalse((legacy / "instagram-browser-secondary").exists())
+            self.assertEqual(
+                Path(__file__).resolve().parents[1].joinpath(
+                    "tools/ig_cleaner_desktop.py").read_text().count(
+                    "collector = window_collector("), 2,
+                "Installed Windows smoke and normal launch must share isolation mapping")
+            for invalid in ("", "../primary", "PRIMARY", "third"):
+                with self.assertRaises(ValueError):
+                    app.window_collector(home, legacy, invalid)
+
     def test_native_choice_maps_each_button_and_cancel_without_side_effects(self):
         import ctypes
         from unittest.mock import patch
