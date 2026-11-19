@@ -24,7 +24,8 @@ from profile_counts_bridge import Collector, build_server
 from windows_updater import WindowsUpdater, numeric_version
 from automation_activity_ui import AUTOMATION_ACTIVITY_PANEL
 from windows_workspace_picker import (chrome_workspace_path, instance_mutex_name,
-                                      ui_document_path, select_workspace)
+                                      instagram_robot_session_path, ui_document_path,
+                                      select_workspace)
 
 
 APP_NAME = "Insta Cleaner Pro"
@@ -81,6 +82,18 @@ def prepare_html(source: Path, destination: Path, *, automation_activity=False) 
     finally:
         temporary.unlink(missing_ok=True)
     return destination
+
+
+def window_collector(home: Path, legacy: Path, workspace: str, *, developer=False) -> Collector:
+    """Share the canonical WAL, never the two Windows robot Chrome sessions.
+
+    A new second window may sign in separately, while the primary window keeps
+    its exact historical on-disk Instagram browser identity across upgrades.
+    This constructor does not open Chrome, sign in or write user files.
+    """
+    session_root = home if developer else legacy
+    data_root = home / "audit-scratch" if developer else legacy / "profile-counts"
+    return Collector(data_root, instagram_robot_session_path(session_root, workspace))
 
 
 def chrome_path() -> Path:
@@ -204,9 +217,8 @@ def main(argv=None) -> int:
             legacy = Path.home() / ".ig-cleaner-pro"
             manager = (None if args.developer else
                        WindowsUpdater(app_version(), home, legacy / "profile-counts"))
-            collector = (Collector(home / "audit-scratch", home / "instagram-browser")
-                         if args.developer else
-                         Collector(legacy / "profile-counts", legacy / "instagram-browser"))
+            collector = window_collector(
+                home, legacy, args.workspace or "primary", developer=args.developer)
             server = build_server(collector, "installer-smoke-session-token", 0,
                                   updater=manager, developer_mode=args.developer,
                                   audit_root=legacy / "profile-counts")
@@ -242,12 +254,12 @@ def main(argv=None) -> int:
             browser = chrome_path()
             chrome_workspace = chrome_workspace_path(home, workspace)
             chrome_workspace.mkdir(parents=True, exist_ok=True)
-            # Keep existing result and Instagram session paths, so an upgrade
-            # retains earlier robot results and the signed-in Instagram browser.
+            # Keep the primary Windows robot session unchanged across upgrades;
+            # each secondary-window robot has a separate Chrome login root.
+            # Canonical owner/account-scoped action results remain shared.
             legacy = Path.home() / ".ig-cleaner-pro"
-            collector = (Collector(home / "audit-scratch", home / "instagram-browser")
-                         if args.developer else
-                         Collector(legacy / "profile-counts", legacy / "instagram-browser"))
+            collector = window_collector(
+                home, legacy, workspace, developer=args.developer)
             token = secrets.token_urlsafe(32)
             updater = (None if args.developer else
                        WindowsUpdater(app_version(), home, legacy / "profile-counts"))

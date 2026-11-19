@@ -729,7 +729,13 @@ def build_server(collector: Collector, token: str, port: int = 0, updater=None,
     collector.live_relationships = live_relationships
     # Chrome login cookies MUST live outside exportable counts/journal data.
     # Keep them next to the legacy browser session, never inside data_dir.
-    dual_chrome_sessions = DualChromeSessions(collector.session_dir.parent / "account-browser-profiles")
+    # Native Windows account slots have separately signed-in action browsers.
+    # Keep auxiliary manual Chrome sessions isolated too. Slot 1 retains its
+    # original directory and any pre-existing sessions without migration.
+    dual_root = ("account-browser-profiles-secondary"
+                 if collector.session_dir.name == "instagram-browser-secondary"
+                 else "account-browser-profiles")
+    dual_chrome_sessions = DualChromeSessions(collector.session_dir.parent / dual_root)
     dual_robot_lanes = (DualRobotLanes(dual_chrome_sessions) if not developer_mode else None)
     dual_action_preflight = (DualActionPreflight(dual_chrome_sessions, actions)
                              if not developer_mode else None)
