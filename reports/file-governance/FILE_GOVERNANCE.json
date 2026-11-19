@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 473,
-  "classified_files_total": 469,
-  "docs_content_inspected": 130,
+  "tracked_files_total": 475,
+  "classified_files_total": 471,
+  "docs_content_inspected": 131,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -11,10 +11,10 @@
     "asset": 20,
     "bitacora": 1,
     "build_script": 6,
-    "config": 70,
+    "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 126,
+    "document": 127,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "e7381c12529ac0fd588631d97f3905c57c62bbc82ca003256fb2ee8e8117b0fb",
-  "evidence_fingerprint": "b62b26e372d04a55a22ba7d1621a02ca268bbdf36f01a371c06c5b7b2d9ceb60",
+  "finding_total": 1,
+  "inventory_fingerprint": "c30ca96d35648ff95619d599523c8851b26ae5434734126efc21162abc8e7e34",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -162,7 +161,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "6ae49ea35c62d7a82bae72d1898de493e5cba1ce"
+      "blob": "a030ae0ca6b8b277f52a83e6b61e8f34a7931821"
     },
     {
       "path": ".michelslab/agents/contrarian.md",
@@ -207,6 +206,13 @@
       "blob": "9e531b43c7a171c8ae733ded2f2106e2e8775766"
     },
     {
+      "path": ".michelslab/project-progress.json",
+      "role": "config",
+      "purpose": "machine-readable configuration",
+      "certainty": "rule",
+      "blob": "ad0b5cce55d4b3cc0f9d288a546f0e3c750dfc43"
+    },
+    {
       "path": ".michelslab/project.yml",
       "role": "config",
       "purpose": "machine-readable configuration",
@@ -225,7 +231,7 @@
       "role": "agent",
       "purpose": "assistant role/instructions",
       "certainty": "rule",
-      "blob": "99880f720f8ac05a628797e6eccf97079e624031"
+      "blob": "02075b551136a00dfa5721a9886080c8c3510ad2"
     },
     {
       "path": "LICENSE.txt",
@@ -246,7 +252,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "1dbd2bef5bb911a7ff4c2bc1632a0b77cd24fc07"
+      "blob": "a50ca4aba8eaa2683ae1731f8760a95ad8bd695a"
     },
     {
       "path": "README.md",
@@ -883,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "6afe672b53bfcd6a609075887949c2402c940011"
+      "blob": "4797e5c62a39df8b17d74fd767bdae67a81c1478"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1577,6 +1583,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "a3cf31c477c643f44a59488fe3f78d88b74f862e"
+    },
+    {
+      "path": "docs/PROJECT_PROGRESS.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "a0c4d187947f9bb1e0f46c847037d7cebb69ad92"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -3323,15 +3336,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "16d551d776adc8b0",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "15 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs, tests/focus-failed-attempt-requeue.test.cjs, tests/focus-unconfirmed-keeps-prior-reviews.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
