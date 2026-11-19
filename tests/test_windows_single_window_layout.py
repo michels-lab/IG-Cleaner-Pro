@@ -81,7 +81,7 @@ class WindowsIndependentWindowTests(unittest.TestCase):
             self.assertFalse((legacy / "instagram-browser-secondary").exists())
             self.assertEqual(
                 Path(__file__).resolve().parents[1].joinpath(
-                    "tools/ig_cleaner_desktop.py").read_text().count(
+                    "tools/ig_cleaner_desktop.py").read_text(encoding="utf-8").count(
                     "collector = window_collector("), 2,
                 "Installed Windows smoke and normal launch must share isolation mapping")
             for invalid in ("", "../primary", "PRIMARY", "third"):
