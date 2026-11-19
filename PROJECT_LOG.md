@@ -1,3 +1,12 @@
+## 2026-11-19 — Granada #394 INTEGRADA: prueba de identidad entre pestañas del robot (5/5 CI)
+
+- **Código en `main`:** [PR #394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394), merge `3c6ad280f64fe7b870dee61b587575655ce47beb`, corrige identificación de un dueño aparentemente correcto en la pestaña del objetivo cuando otra pestaña del mismo Chrome muestra identidad contradictoria, desafío/login o el ID de sesión cacheado cambió. Bloquea la acción en lugar de confiar en el sidebar antiguo; sin navegación extra a /owner/ ni acceso a cookies externas.
+- **Verificaciones reales de CI en SHA del PR `d5372d18...`:** 5/5 SUCCESS: CI, Profile Counts, Desktop rendered, Android About rendered, Windows Setup integrado + Chromium offline. Fixture Browser.context existente actualizado; cuatro regresiones negativas nuevas. [Análisis](docs/audits/2026-11-19-verified-owner-visible-sibling-guard.md).
+- **Estado honesto del producto:** **50% → 50% (6/12 hitos)** de la ruta P0 v120.81. No hay QA física del dueño con dos cuentas, Unfollow/Cancel Pending real, Focus sin rebote real ni instalación/upgrade física. No cerrar #230/#377/#360/#371/#164/#172. Release estable v120.80, `release_hold=true`.
+- **Bitácora/Main Repo:** actualizar registros estructurados y tablero central, conservar numerador, documentar SHA de la fuente y sin atribuir al usuario una aprobación no dada.
+
+---
+
 ## 2026-11-19 — GRANADA #230 / #377: verify owner in *all* open robot Chrome tabs (P0 safety)
 
 - **Causa original:** la prueba de identidad `_verified_action_owner` aceptaba un `signed_in_handle` correcto de la pestaña del objetivo sin mirar los *siblings* del mismo Chrome. Una barra lateral desactualizada de la cuenta A podía coexistir con una cuenta B visible en otra pestaña o con login/challenge. Si el cookie de sesión faltaba, el inspector de siblings también omitía los conflictos negativos.
