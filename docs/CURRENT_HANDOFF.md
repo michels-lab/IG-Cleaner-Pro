@@ -1,3 +1,11 @@
+## 2026-11-19 — Reentrada tras merge de Granada #394
+
+- Source P0 [#394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394) **MERGED** `3c6ad280f64fe7b870dee61b587575655ce47beb`. Cinco workflows exact-head SUCCESS. Cierre de código/QA offline únicamente; no liberación v120.81 ni cuenta real.
+- Guard contra sidebar visible desactualizado y dueño/challenge contradictorio en otra pestaña, incluso con cookie faltante. Las cuatro pruebas nuevas conservan separación de acciones vs pruebas de identidad, sin clicks reales.
+- **Ruta global: 50% → 50%, 6/12 hitos.** Próximo bloque QA física #377/#230, Focus #360/#371 y robots #164/#172; luego gates para v120.81. No relajar release hold. [Tablero](PROJECT_PROGRESS.md).
+
+---
+
 ## 2026-11-19 — Granada P0 #230: identidad contradictoria entre pestañas, PR #394
 
 - **Estado fuente:** candidate `d5372d18bb076ff849a86c692d51f4651c80c90b` [#394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394) corrige retorno temprano con dueño visible, inspección de sibling sin cookie y cookie cambiada en caché. Pruebas Profile Counts, CI principal, Desktop y Android About VERDES; Windows integrada pendiente. Auditoría local [aquí](audits/2026-11-19-verified-owner-visible-sibling-guard.md).
