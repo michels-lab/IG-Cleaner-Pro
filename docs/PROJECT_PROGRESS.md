@@ -1,5 +1,7 @@
 # InstaCleaner Pro — avance global verificable
 
+**Granada 2026-11-19 — guard de identidad Chrome del robot:** [PR #394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394) **fusionado en `main`** como `3c6ad280f64fe7b870dee61b587575655ce47beb` tras **5/5 workflows exact-head SUCCESS**, incluyendo Windows Setup integrado y Chromium offline. Corrige el retorno prematuro de un dueño visible, ahora bloqueando clics si otra pestaña Instagram evidencia una cuenta distinta/login/challenge incluso sin cookie, o si el ID de sesión ligado cambió. No hace clics reales ni certifica dos cuentas físicas. **Progreso global: 50% → 50% (6/12 hitos)**; #230/#377 y otros P0 físicos siguen ABIERTOS. La estable pública sigue siendo v120.80; `release_hold=true` y v120.81 no se publicó.
+
 **Corte:** 2026-11-19 · **Ruta:** cierre P0 y siguiente versión final estable v120.81.
 
 ## 50% estimado — 6/12 hitos de aceptación verificados
