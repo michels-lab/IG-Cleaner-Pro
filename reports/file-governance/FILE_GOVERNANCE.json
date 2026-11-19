@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 475,
-  "classified_files_total": 471,
-  "docs_content_inspected": 131,
+  "tracked_files_total": 476,
+  "classified_files_total": 472,
+  "docs_content_inspected": 132,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 127,
+    "document": 128,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "1a68100dcb75d39c4fadbd5ca0a1239fb0b563c07a71f5bea03007cca4849af7",
-  "evidence_fingerprint": "fe1139226a441b06c733b947296f8472419ad4a24d5c7f33ce184f18176e633d",
+  "inventory_fingerprint": "dd06cec4dcba18d1ef3117da0a30f8f67cb14e7254db5cf68684f6d93d4e5948",
+  "evidence_fingerprint": "fad8adad326ad117dd679f12f5f74f9a317fc8219ef03fb7a6568a63894d9902",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1726,6 +1726,13 @@
       "blob": "fd69f08776a7f24f4809c10b3f7a02e7ff2c8d68"
     },
     {
+      "path": "docs/audits/2026-11-19-verified-owner-visible-sibling-guard.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "7d103cd3652b801f584377e504443cc65f2eb742"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2500,7 +2507,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f09504d7ea1258bbd42556730ade8497d93b3c71"
+      "blob": "710e525faf0ba5620ab95a8b93d435403ab09d07"
     },
     {
       "path": "tests/test_action_cancel_batch_admission.py",
@@ -2542,7 +2549,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "9518330f96520e690ed97875b5656d59e89388f0"
+      "blob": "381de5735248def61d3bc017f18d26e293ceff57"
     },
     {
       "path": "tests/test_action_reference_worker_contract.py",
@@ -2857,7 +2864,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "931ebf881f7d78dac14267859f5fae247504f338"
+      "blob": "e5417e0ed36ff3e340b325fcb691738b9d767e36"
     },
     {
       "path": "tests/test_profile_counts_audit.py",
@@ -3165,7 +3172,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "32c8b7c0d5602426c86c08d156dc56e716b579e8"
+      "blob": "046a78c5efc6b91da0bee7d16ca0845661fbd8e0"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3340,11 +3347,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "882c5f9a5b9b640c",
+      "id": "648d7c45385b59b9",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json, tests/test_action_batch_history.py, tests/test_action_owner_proof_reuse.py, tests/test_profile_counts_actions.py, tools/profile_actions.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }

@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 475; classified: 471; readable documents: 131; above read cap: 2; findings: 2.
+Tracked: 476; classified: 472; readable documents: 132; above read cap: 2; findings: 2.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 475; classified: 471; readable documents: 131; above read cap: 2; findi
 | config | 71 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 127 |
+| document | 128 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
@@ -30,7 +30,7 @@ Tracked: 475; classified: 471; readable documents: 131; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 882c5f9a5b9b640c)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json, tests/test_action_batch_history.py, tests/test_action_owner_proof_reuse.py, tests/test_profile_counts_actions.py, tools/profile_actions.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 648d7c45385b59b9)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
