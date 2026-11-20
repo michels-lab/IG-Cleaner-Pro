@@ -126,17 +126,20 @@
     "workstreams": [
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/396",
-        "head": "dd980e2362955763d850efb6fa134c0b54e6fcf9",
-        "phase": "source_implemented_ci_pending_windows_integrated",
-        "effect": "Close bound localhost bridge on listener-thread startup error; non-blocking optional update discovery; close services when Chrome fails",
-        "evidence": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44828563649"
+        "head": "7a28d4fd2285e0d7fb1bbef43851d2cf5aa69168",
+        "phase": "source_implemented_exact_head_ci_in_progress",
+        "correction": "Bounded Windows Setup acceptance job increased from 35 to 65 minutes; all installation and undo QA retained",
+        "effect": "Local bridge startup lifecycle safely closes after failed updater / Chrome, and listener thread failure",
+        "ci": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840304865"
       },
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/397",
-        "head": "a81b4ec9898cb986a786333d7ea3dfd3caae4990",
-        "phase": "source_implemented_ci_pending_final_gates",
-        "effect": "Both HTMLs v3 lossless history dictionary, standalone active cohort v2/v3 + fail-closed guarded browser open + rollback",
-        "evidence": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44829643793"
+        "head": "ad52281c16c3943e73950a365f998ddbcb1b39cf",
+        "phase": "source_implemented_exact_head_ci_in_progress",
+        "correction": "Matched PR #396's Windows job timeout source to avoid merge conflict",
+        "effect": "Lossless v3 history, standalone quota fallback and protected Focus browser launch",
+        "ci": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840361167",
+        "note": "Run restarted at new exact-head after workflow alignment"
       }
     ],
     "real_owner_browser_acceptance": false,
@@ -150,7 +153,12 @@
       "#172 live Cancel Pending",
       "Official v120.81 gated publication"
     ],
-    "note": "Code branches and CI success do not count toward six remaining physical/release milestones"
+    "note": "Code branches and CI success do not count toward six remaining physical/release milestones",
+    "ci_root_cause": "Previously the 35min GitHub Actions Windows job was cancelled while running installed setup/wizard/uninstall, with three bounded subprocesses totaling 1740s + packaging; 65min cap allows a verifiable success/fail",
+    "progress_before": 50,
+    "progress_after": 50,
+    "last_verified_stable": "v120.80",
+    "source_merged": false
   },
   "last_continuation": {
     "date": "2026-11-20",
