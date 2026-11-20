@@ -25,5 +25,13 @@ These are verified source-path defects and probable contributors, not a claim th
 
 Wired into existing `.github/workflows/ci.yml`. Additional UI, Windows packaging and Android checks remain separate gates.
 
+
+## Additional standalone cohort defect and correction
+The same legacy `index.html` also differed in **active cohort** persistence: its `saveActiveFocusBatch()` used the entire raw row object, `setActiveFocusBatch()` appended `open` history *before* storing the cohort, and **seven** downstream launch sites ignored persistence errors and would proceed toward `window.open`. The former `clearActiveFocusBatch()` cleared RAM before a possibly refused storage removal. That combination directly explains a dangerous source scenario: Focus counters and popup requests can disagree, and the saved cohort may reappear after refresh.
+
+The standalone now shares Desktop's validated **v2 active cohort and quota-only smaller v3 fallback**, redacted write diagnostics, durable-first `setActiveFocusBatch` with rollback, durable-first cohort deletion and pruning, and explicit fail-stop guards at every legacy `setActiveFocusBatch` callsite. Its main Focus 30 entrypoint renders Reviewed recovery **before** attempting tabs, catches each `window.open` exception independently and records opening attempts only afterward; the unresolved cohort stays recoverable if Chrome blocks tabs. The Double Check selected-cycle update occurs after the cohort commit rather than before. No confirmed review is inferred from any tab request.
+
+`tests/focus-standalone-cohort-recovery.test.cjs` executes the actual save/load/set/clear logic of both HTMLs under near-quota, hard-quota and denied-delete storage, and executes the standalone main Focus 30 button path: zero tabs on failed save, and exactly 30 tab requests on recovered save, with Reviewed visible before browser requests. This is additional **offline** evidence; it does not prove the owner's browser permitted those 30 tabs.
+
 ## Honest acceptance boundary
 Source and offline QA ≠ owner's real browser. Issue #371 remains OPEN until Focus 30 runs on the real account without deleting historical Reviews; #360 remains OPEN until count rebound has been physically excluded after refresh and A→B→A. #377 physical two-window, #164 Unfollow and #172 Cancel Pending remain open. The fixed v120.81 progress denominator stays **6/12 = 50%**; publish only after all applicable governance gates pass. No Developer edition, RC or preview release.
