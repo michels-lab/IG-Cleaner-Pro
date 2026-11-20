@@ -3,7 +3,7 @@
   "project": "IG Cleaner Pro",
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "scope": "Ruta P0 para la siguiente versión final estable v120.81, aceptación funcional y física de propietario",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 50,
@@ -145,5 +145,22 @@
       "master_progress_percent": 50,
       "main_report_ci": "Project Progress Governance SUCCESS"
     }
+  },
+  "last_continuation": {
+    "date": "2026-11-20",
+    "source_pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/395",
+    "source_branch": "qa/focus-bulk-789-existing-decisions-20261120",
+    "source_head_sha": "5ec91b5d1c5fc366b9e87824cbae83e077fa22e5",
+    "test_code_sha": "4a2c15869c1db412786d208676a4fbc20e0a187a",
+    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/qa/focus-bulk-789-existing-decisions-20261120/docs/audits/2026-11-20-focus-789-existing-decisions.md",
+    "status": "open_4_of_5_checks_passed_android_visual_in_progress",
+    "progress_before": 50,
+    "progress_after": 50,
+    "verified_milestones": 6,
+    "total_milestones": 12,
+    "scope": "Regression ejecuta funciones reales con 789 decisiones anteriores, 30 nuevas, error en escritura segunda clave, recarga y A→B→A",
+    "pending": "Android About check no completado; PR no fusionado; #360/#371/#377 y robots reales sin aceptación; v120.81 bloqueada",
+    "owner_live_qa": "pending",
+    "latest_public_release": "v120.80"
   }
 }
