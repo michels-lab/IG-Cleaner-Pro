@@ -33,12 +33,14 @@ for(const entry of [
     removeItem(k){raw.delete(fullKey(k))}
   };
   let cleared=0,hidden=0;
+  const priorUsers=Array.from({length:789},(_,i)=>"prior."+i);
+  const originalReviewed=Object.fromEntries(priorUsers.map(username=>[username,{reviewedAt:777,decision:"keep"}]));
   const state={
     Date,Math,Array,Set,JSON,Map,console,
     localStorage,window:{igcQueueStateSync:k=>sync.push(k)},
     LS_REVIEW_META:"review-meta",LS_DONE:"done",LS_PROT:"protected",
     LS_PENDING_REVIEW_META:"pending-meta",LS_PENDING_OPENED:"pending-opened",
-    reviewedMeta:{older:{reviewedAt:777}},doneSet:new Set(["older"]),
+    reviewedMeta:{...originalReviewed},doneSet:new Set(priorUsers),
     protectedSet:new Set(["protected.old"]),pendingReviewedMeta:{},
     pendingOpenedSet:new Set(),activeFocusBatch:null,activeExtraReviewBatch:null,
     currentMode:"following",
@@ -77,24 +79,35 @@ for(const entry of [
   assert.equal(hidden,0,entry+": never close modal on failed persistence");
   assert.deepEqual(Object.fromEntries([...raw].filter(([k])=>k.startsWith("A::"))),before,
     entry+": second-write rejection restores every durable byte");
-  assert.equal(state.doneSet.size,1);
-  assert.equal(Object.keys(state.reviewedMeta).length,1);
+  assert.equal(state.doneSet.size,789);
+  assert.equal(Object.keys(state.reviewedMeta).length,789);
   assert.equal(sync.length,0);
   failKey="";
   assert.equal(state.confirmSafeFocusReviewed(),true,entry+": retry successfully commits exact 30");
-  assert.equal(state.doneSet.size,31);
-  assert.equal(JSON.parse(raw.get("A::done")).length,31);
-  assert.equal(Object.keys(JSON.parse(raw.get("A::review-meta"))).length,31);
+  assert.equal(state.doneSet.size,819);
+  assert.equal(JSON.parse(raw.get("A::done")).length,819);
+  assert.equal(Object.keys(JSON.parse(raw.get("A::review-meta"))).length,819);
   assert.equal(cleared,1);
   assert.equal(sync.length,1);
   assert.equal(state.reviewedMeta["target.0"].mode,"following");
   assert.equal(state.reviewedMeta["target.0"].iFollow,true);
+  for(const user of priorUsers){
+    assert(state.doneSet.has(user),"An earlier reviewed account must remain confirmed: "+user);
+    assert.equal(state.reviewedMeta[user].reviewedAt,777,
+      "An earlier review timestamp must be preserved: "+user);
+  }
+  // Simulated refresh: committed 789+30 must restore from the exact saved bytes.
+  const beforeRefresh=JSON.stringify([...state.doneSet].sort());
+  state.doneSet=new Set(JSON.parse(raw.get("A::done")));
+  state.reviewedMeta=JSON.parse(raw.get("A::review-meta"));
+  assert.equal(JSON.stringify([...state.doneSet].sort()),beforeRefresh);
+  assert.equal(Object.keys(state.reviewedMeta).length,819);
   // Genuine new B user may add to B without causing a rebound in A.
   active="B";state.doneSet=new Set();state.reviewedMeta={};
   state.protectedSet=new Set();seed();
   assert.equal(state.igcCommitFocusDecision({kind:"main",rows:[{username:"b.user"}],label:"B"},"reviewed"),true);
   assert.deepEqual(JSON.parse(raw.get("B::done")),["b.user"]);
-  assert.equal(JSON.parse(raw.get("A::done")).length,31,"Switch A-B-A must preserve previous 30 reviews");
+  assert.equal(JSON.parse(raw.get("A::done")).length,819,"Switch A-B-A must preserve 789 earlier + 30 new decisions");
   active="A";
   state.doneSet=new Set(JSON.parse(raw.get("A::done")));
   state.reviewedMeta=JSON.parse(raw.get("A::review-meta"));
@@ -152,5 +165,5 @@ for(const entry of [
   assert.equal(JSON.stringify([...state.doneSet]),beforeDone);
   throwOnGet=false;
   assert(warnings.some(x=>x.s.includes("NO confirmé")));
-  console.log("PASS "+entry+": 30-person atomic Focus commit, A-B-A, Pending double, protected, denial and legacy no-undo");
+  console.log("PASS "+entry+": 789 prior+30-person atomic Focus commit, refresh, A-B-A, Pending double, protected, denial and legacy no-undo");
 }
