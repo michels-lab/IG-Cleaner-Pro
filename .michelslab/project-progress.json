@@ -116,35 +116,41 @@
   "next_step": "Validar Focus 30 y dos sesiones/robots Windows reales; antes no reclamar v120.81 ni cerrar P0 #360/#371/#377.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
-    "date": "2026-11-19",
-    "issues": [
-      230,
-      377
+    "date": "2026-11-20",
+    "global_progress_before": 50,
+    "global_progress_after": 50,
+    "verified": 6,
+    "total": 12,
+    "scope": "GRANADA P0 #371 Focus/browser storage + #377 native Windows lifecycle; real source fixes under exact-head QA",
+    "source_main_before": "9eda09fe533bb48f031152df0eff11c2af4278f7",
+    "workstreams": [
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/396",
+        "head": "dd980e2362955763d850efb6fa134c0b54e6fcf9",
+        "phase": "source_implemented_ci_pending_windows_integrated",
+        "effect": "Close bound localhost bridge on listener-thread startup error; non-blocking optional update discovery; close services when Chrome fails",
+        "evidence": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44828563649"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/397",
+        "head": "a81b4ec9898cb986a786333d7ea3dfd3caae4990",
+        "phase": "source_implemented_ci_pending_final_gates",
+        "effect": "Both HTMLs v3 lossless history dictionary, standalone active cohort v2/v3 + fail-closed guarded browser open + rollback",
+        "evidence": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44829643793"
+      }
     ],
-    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/394",
-    "source_head": "d5372d18bb076ff849a86c692d51f4651c80c90b",
-    "merged_commit": "3c6ad280f64fe7b870dee61b587575655ce47beb",
-    "outcome": "merged_source_fix_and_verified_5_of_5_ci",
-    "validated_workflows": [
-      "IG Cleaner Pro CI",
-      "Profile Counts feature tests",
-      "Desktop rendered UI",
-      "Android About rendered UI",
-      "Insta Cleaner integrated Windows app preview"
+    "real_owner_browser_acceptance": false,
+    "latest_verified_stable": "v120.80",
+    "release_hold": true,
+    "remaining": [
+      "#371 Focus real Chrome 30 near quota, restore all historical decisions",
+      "#377 physical two Windows A/B",
+      "#360 counters across refresh and A-B-A",
+      "#164 live Unfollow",
+      "#172 live Cancel Pending",
+      "Official v120.81 gated publication"
     ],
-    "percent_before": 50,
-    "percent_after": 50,
-    "reason_no_increase": "Safety code source + automated QA changed, but none of the six remaining owner-live acceptance/release milestones was proven.",
-    "owner_live_qa": "pending",
-    "release": "v120.80 published; v120.81 held",
-    "master_sync": {
-      "status": "synced_verified",
-      "main_report_commit": "0185e6fc136194d09df23dcd1ebb058ebe5e62b0",
-      "main_log_commit": "0b4e2e1ea99cb17f5df8c33c755a7b3cbb1fc8e8",
-      "verified_on": "2026-11-19",
-      "master_progress_percent": 50,
-      "main_report_ci": "Project Progress Governance SUCCESS"
-    }
+    "note": "Code branches and CI success do not count toward six remaining physical/release milestones"
   },
   "last_continuation": {
     "date": "2026-11-20",
