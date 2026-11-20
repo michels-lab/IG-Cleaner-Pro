@@ -206,7 +206,11 @@ jobs:
   windows-portable:
     name: Insta Cleaner Pro integrated Windows installer
     runs-on: windows-latest
-    timeout-minutes: 35
+    # End-to-end Windows Setup QA includes multiple bounded child processes
+    # (600 + 240 + 900 seconds), after standalone Chromium and PyInstaller.
+    # A 35-minute job timeout cancelled #396/#397 before acceptance could
+    # produce a PASS or bounded FAIL. Keep every child limit and check.
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
