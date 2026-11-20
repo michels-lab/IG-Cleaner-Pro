@@ -14,3 +14,8 @@ The native Windows launcher started the authenticated localhost controller, then
 
 ## Scope and hard boundaries
 This is source + mocked offline lifecycle QA. It does **not** establish two physical Windows/Instagram A/B windows, validate the owner's browser-storage quota (#371), fix counter rebound (#360), click Unfollow (#164) or Cancel Pending (#172), or approve v120.81. Global progress remains **6/12 = 50%** until a new existing owner-live or release milestone is demonstrably complete. Official published stable remains **v120.80**; no Developer Edition or preview release is requested.
+
+## Root cause of previously cancelled acceptance (reproduced from GitHub Actions metadata)
+Both installer previews for this campaign were **cancelled** by the job's `timeout-minutes: 35`: [Windows #396 run 44828563649](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44828563649) and [Focus #397 run 44829643695](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44829643695). The job contains three independent bounded child phases of 600s + 240s + 900s (29 minutes) **after** separately preparing Python, Playwright, Chromium, PyInstaller and native preview builds. When GitHub cancelled it, the installed Windows acceptance was still running and later steps had not executed. Cancellation is **neither PASS nor product failure**.
+
+Raised the **job-level** budget from 35 to 65 minutes, preserving all per-child fail-fast timeouts and every installation/uninstall/security check. CI may now produce a real success or a real bounded failure. This is not an exemption from Windows acceptance and not physical A/B Instagram proof.
