@@ -29,11 +29,12 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
   // Unknown per-profile/event fields, noncanonical arrays and user-supplied
   // information must remain lossless: no data pruning to make Focus work.
   records["custom.user"]={
-    username:"custom.user",reviewed:9,arbitraryCustom:{notes:"do not lose"},
+    username:"custom.user",reviewed:9,
     events:[
       {ts:1,event:"review",details:{decision:"keep"},unknownField:"preserve"},
       ["legacy","array",123],{ts:9,event:"open",details:{kind:"pending"}}
-    ]
+    ],
+    arbitraryCustom:{notes:"do not lose"}
   };
   const exact=JSON.stringify(records);
   let account="A",denied=false,quota=Infinity;
