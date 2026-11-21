@@ -9,8 +9,8 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "three_PRs_integrated_and_exact_head_ci_green_owner_real_browser_acceptance_pending",
-  "last_source_merge": "79475dd7a1b05e35f7a7de77f2223a7ffc95788f",
+  "phase": "four_PRs_merged_exact_head_green_physical_acceptance_pending",
+  "last_source_merge": "02bbb1b5f49c9fb07aa2965819b4c9db9bfd30fb",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -117,7 +117,7 @@
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-20",
-    "scope": "GRANADA integrated root-cause repairs on Windows, Focus and audit race",
+    "scope": "GRANADA P0 #371/#360 standalone Focus & Pending durable opening, continuation after #396/#397/#398",
     "progress_before": 50,
     "progress_after": 50,
     "verified_milestones": 6,
@@ -143,6 +143,13 @@
         "exact_head_sha": "6a8a0e4afa1b6ef31d26d9fb584e0966128fa866",
         "checks": "6/6 SUCCESS",
         "effect": "File Steward regenerates report after concurrent main update; synthetic two-writer git race test"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/399",
+        "merged_commit": "02bbb1b5f49c9fb07aa2965819b4c9db9bfd30fb",
+        "exact_head_sha": "10bd6f6de30d8d242ca8237d01bf0fa7edc137d8",
+        "checks": "5/5 SUCCESS",
+        "effect": "Standalone Focus storage-failure Retry button, exact initial 30 rows, disabled false confirmation, redacted diagnostics, Pending second opened ledger and both manual Reopen paths reject failed storage"
       }
     ],
     "exact_head_checks_url": [
@@ -150,7 +157,7 @@
       "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840593528",
       "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44842856335"
     ],
-    "main_after_merge": "79475dd7a1b05e35f7a7de77f2223a7ffc95788f",
+    "main_after_merge": "02bbb1b5f49c9fb07aa2965819b4c9db9bfd30fb",
     "post_merge_main_ci": "in_progress_at_record_time",
     "physical_owner_browser": "pending",
     "blocker_issues": [
@@ -161,7 +168,7 @@
       "#172"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "50% is 6/12 acceptance milestones; all three PRs integrated and CI green. Never infer physical Instagram success from offline tests."
+    "note": "50% is 6/12 fixed acceptance milestones. PR #399 source merged and 5/5 checks passing; live Chrome popups/account actions remain unverified."
   },
   "last_continuation": {
     "date": "2026-11-20",
