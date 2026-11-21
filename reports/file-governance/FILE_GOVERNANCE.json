@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "21e31fb970c762d39b63765e1e7c31a5b86f5cffbadddca2c184d3630af7a6db",
+  "inventory_fingerprint": "b40c2ca0c1128bac61bfd20b1a851e7887426a3c316a70bbf6bfb7534ed942d3",
   "evidence_fingerprint": "c4e0e110ebcde6590d81cafb78baf1dedbed9b95c8ee22541f89b256a94c569c",
   "files": [
     {
@@ -211,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "8a8de2dae6172720e18e3d1e6b59a94dfa6b1346"
+      "blob": "a6c576c09ed664c5dc673d91ea784eaa45d4ecd8"
     },
     {
       "path": ".michelslab/project.yml",
@@ -1590,7 +1590,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "5d57ffe6c59e94dee8e29e8a9a300ef4f9208847"
+      "blob": "28ae1c19941eec38db644f100ae787e4c3985b52"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
