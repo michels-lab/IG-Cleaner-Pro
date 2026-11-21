@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 477; classified: 473; readable documents: 133; above read cap: 2; findings: 2.
+Tracked: 478; classified: 474; readable documents: 134; above read cap: 2; findings: 2.
 
 ## File roles
 
@@ -18,7 +18,7 @@ Tracked: 477; classified: 473; readable documents: 133; above read cap: 2; findi
 | config | 71 |
 | database_migration | 7 |
 | database_schema | 1 |
-| document | 129 |
+| document | 130 |
 | index | 5 |
 | installer_metadata | 1 |
 | source | 56 |
@@ -30,7 +30,7 @@ Tracked: 477; classified: 473; readable documents: 133; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 2 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json, tests/focus-bulk-durable-confirmation.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 802c39577cd49d91)
+- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, tests/focus-bulk-durable-confirmation.test.cjs, tests/test_native_desktop.py, tools/ig_cleaner_desktop.py. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 7ff7e8bfe113aa36)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.
