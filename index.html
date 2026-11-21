@@ -4072,6 +4072,7 @@ function recoverActiveFocusBatch(){
 }
 function reopenActiveFocusBatch(){
   if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No hay tanda activa para reabrir.','w');return;}
+  if(!igcEnsurePendingOpenedBeforeTabs(activeFocusBatch))return false;
   activeFocusBatch.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   recordRowsHistory(activeFocusBatch.rows,'reopen',{kind:activeFocusBatch.kind,label:activeFocusBatch.label});
   logAction('reopen',`Reabrir tanda activa ${activeFocusBatch.label}: ${activeFocusBatch.rows.length}`,{count:activeFocusBatch.rows.length,source:activeFocusBatch.kind});
@@ -10877,7 +10878,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small>${esc(focusContextText(r,kind))}</small></div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Solicité reabrir ${b.rows.length} pestañas de ${b.label}; Chrome puede bloquearlas`)}
+function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}if(!igcEnsurePendingOpenedBeforeTabs(b))return false;b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Solicité reabrir ${b.rows.length} pestañas de ${b.label}; Chrome puede bloquearlas`)}
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;
   if(!b||!b.rows||!b.rows.length){
@@ -11121,6 +11122,23 @@ function closeFocusDialogAfterDecision(){
 // preview without ever marking a target reviewed or requesting Chrome tabs.
 // This transient preview is intentionally not claimed as persisted on disk.
 let igcFailedFocusBatch=null;
+function igcEnsurePendingOpenedBeforeTabs(batch){
+  if(batch?.kind!=='pending')return true;
+  const beforeOpened=new Set(pendingOpenedSet);
+  try{
+    (batch.rows||[]).forEach(row=>pendingOpenedSet.add(row.username));
+    savePendingOpened();
+    return true;
+  }catch(error){
+    // Both initial Focus and manual reopen must refuse to request Chrome
+    // tabs if Pending's secondary ledger cannot be made durable.
+    pendingOpenedSet.clear();
+    for(const username of beforeOpened)pendingOpenedSet.add(username);
+    console.error('Pending Focus: opened ledger not durable',error?.name||'StorageError');
+    msg('Pending Focus pausado: registro de aperturas no guardado. Ninguna pestaña solicitada.','w');
+    return false;
+  }
+}
 function igcSetFocusRecoveryUI(failed){
   for(const id of ['safeFocusReopenBtn','safeFocusNotReviewedBtn','safeFocusSnooze7Btn','safeFocusSnooze30Btn','safeFocusDecision']){
     const element=document.getElementById(id);
@@ -11190,23 +11208,13 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   igcSetFocusRecoveryUI(false);
   // Pending additionally tracks profiles selected for opening. Commit that
   // second ledger BEFORE requesting tabs. Restore RAM if quota refuses it.
-  if(kind==='pending'){
-    const beforeOpened=new Set(pendingOpenedSet);
-    try{
-      rows.forEach(row=>pendingOpenedSet.add(row.username));
-      savePendingOpened();
-    }catch(error){
-      pendingOpenedSet.clear();
-      for(const username of beforeOpened)pendingOpenedSet.add(username);
-      console.error('Pending Focus: opened ledger not durable',error?.name||'StorageError');
-      try{showSafeFocusPopup(kind,rows,label)}catch{}
-      const title=document.getElementById('safeFocusTitle');
-      if(title)title.textContent='Pending Focus pausado · guardado incompleto';
-      const details=document.getElementById('safeFocusText');
-      if(details)details.textContent='La tanda activa está guardada, pero el registro Pending no. No se solicitaron pestañas ni se marcaron revisiones. Recupérala desde Reviewed o cancélala antes de otra tanda.';
-      msg('Pending Focus pausado: se conservó la tanda, se restauraron contadores y no se solicitaron pestañas.','w');
-      return false;
-    }
+  if(!igcEnsurePendingOpenedBeforeTabs({kind,rows})){
+    try{showSafeFocusPopup(kind,rows,label)}catch{}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Pending Focus pausado · guardado incompleto';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='La tanda activa está guardada, pero el registro Pending no. No se solicitaron pestañas ni se marcaron revisiones. Recupérala desde Reviewed o cancélala antes de otra tanda.';
+    return false;
   }
   try{showSafeFocusPopup(kind,rows,label)}
   catch(error){
