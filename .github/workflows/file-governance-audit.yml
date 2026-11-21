@@ -33,8 +33,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Prove audit safety on synthetic git fixture
-        run: python3 tools/test_repository_file_auditor.py
+      - name: Prove audit safety and moving-main publish recovery in real git fixtures
+        run: |
+          python3 tools/test_repository_file_auditor.py
+          python3 -m unittest discover -s tests -p 'test_file_steward_publish_race.py' -v
       - name: Enumerate all tracked paths, inspect documents and write local delta log
         run: python3 tools/repository_file_auditor.py --repo .
       - name: Commit only generated audit reports in this repository
