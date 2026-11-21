@@ -209,7 +209,7 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
     // secondary Pending ledger check while that storage key is rejected.
     const safeReopen=extract("function reopenSafeFocusBatch(", "function markSafeFocusNotReviewed(");
     const toolbarReopen=extract("function reopenActiveFocusBatch(", "function markActiveFocusNotReviewed(");
-    vm.runInContext(safeReopen+"\\n"+toolbarReopen,state,{timeout:3000});
+    vm.runInContext(safeReopen+"\n"+toolbarReopen,state,{timeout:3000});
     state.activeExtraReviewBatch=state.activeFocusBatch;
     assert.equal(state.reopenSafeFocusBatch(),false,
       "Review Reopen must fail closed if Pending journal is unwritable");
