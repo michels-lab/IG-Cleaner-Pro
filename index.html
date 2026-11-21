@@ -11188,7 +11188,27 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   }
   igcFailedFocusBatch=null;
   igcSetFocusRecoveryUI(false);
-  try{showSafeFocusPopup(kind,rows,label)
+  // Pending additionally tracks profiles selected for opening. Commit that
+  // second ledger BEFORE requesting tabs. Restore RAM if quota refuses it.
+  if(kind==='pending'){
+    const beforeOpened=new Set(pendingOpenedSet);
+    try{
+      rows.forEach(row=>pendingOpenedSet.add(row.username));
+      savePendingOpened();
+    }catch(error){
+      pendingOpenedSet.clear();
+      for(const username of beforeOpened)pendingOpenedSet.add(username);
+      console.error('Pending Focus: opened ledger not durable',error?.name||'StorageError');
+      try{showSafeFocusPopup(kind,rows,label)}catch{}
+      const title=document.getElementById('safeFocusTitle');
+      if(title)title.textContent='Pending Focus pausado · guardado incompleto';
+      const details=document.getElementById('safeFocusText');
+      if(details)details.textContent='La tanda activa está guardada, pero el registro Pending no. No se solicitaron pestañas ni se marcaron revisiones. Recupérala desde Reviewed o cancélala antes de otra tanda.';
+      msg('Pending Focus pausado: se conservó la tanda, se restauraron contadores y no se solicitaron pestañas.','w');
+      return false;
+    }
+  }
+  try{showSafeFocusPopup(kind,rows,label)}
   catch(error){
     msg('La tanda está guardada, pero no pude mostrar Reviewed. Recupérala antes de abrir perfiles.','w');
     return false;
