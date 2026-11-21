@@ -20,3 +20,7 @@ The already-wired `tests/focus-standalone-cohort-recovery.test.cjs` invokes the 
 ## Remaining external verification
 
 CI cannot prove an owner-signed-in Chrome session's popup permissions or local-storage quota. Keep #371, #360, #164, #172, #377 and v120.81 release held until physical acceptance; do not advance 6/12 milestone count solely because tests pass.
+
+## Pending second-ledger parity (additional Granada finding)
+
+The standalone `openConfirmedFocusRows(...,'pending')` had omitted the durable `pendingOpenedSet` write that the Desktop implementation already enforces. This could show a provisional Pending counter change that disappears on refresh or allow profiles to be requested with no recoverable visited-cycle ledger. The standalone now writes `LS_PENDING_OPENED` **after** the active Focus cohort, but **before** any Chrome tab request. On failure it restores the exact previous in-memory set without mutating saved bytes, keeps the original active cohort recoverable, displays the specific Pending failure reason, and requests zero tabs. New actual-source test injects a second-key quota rejection, proves no 31st pseudo-visit/no new Chrome request, then retries successfully with preserved prior Pending and Reviewed records. This is not proof of a real Instagram Pending cancellation or real Chrome popup behavior.
