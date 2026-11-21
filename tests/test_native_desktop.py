@@ -200,5 +200,95 @@ class DesktopAppTests(unittest.TestCase):
 
 
 
+    def _run_startup_fault(self, workspace, *, update_error=False,
+                           chrome_error=False, thread_error=False):
+        """Exercise real main() exception boundary without Chrome/Instagram."""
+        from contextlib import ExitStack
+        from unittest.mock import Mock
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ui = root / "ui.html"
+            ui.write_bytes(b"<html><body>" + b"X" * 101000 + b"</body></html>")
+            chrome = root / "chrome.exe"
+            chrome.write_bytes(b"stub")
+            server = Mock()
+            server.server_port = 33477
+            server.actions.worker = None
+            server.collector.worker = None
+            updater = Mock()
+            if update_error:
+                updater.check.side_effect = OSError("offline or updater denied")
+            thread = Mock()
+            if thread_error:
+                thread.start.side_effect = RuntimeError("thread refused")
+            process = Mock()
+            process.wait.return_value = 0
+
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(native, "bundled_html", return_value=ui))
+                stack.enter_context(patch.object(native, "app_home", return_value=root / "app"))
+                stack.enter_context(patch.object(native, "chrome_path", return_value=chrome))
+                stack.enter_context(patch.object(native, "app_version", return_value="120.80"))
+                stack.enter_context(patch.object(native, "WindowsUpdater", return_value=updater))
+                stack.enter_context(patch.object(native, "window_collector", return_value=Mock()))
+                stack.enter_context(patch.object(native, "build_server", return_value=server))
+                stack.enter_context(patch.object(native, "acquire_single_instance", return_value=123))
+                release = stack.enter_context(patch.object(native, "release_single_instance"))
+                stack.enter_context(patch.object(native.threading, "Thread", return_value=thread))
+                spawned = stack.enter_context(patch.object(native.subprocess, "Popen", return_value=process))
+                warning = stack.enter_context(patch.object(native, "alert"))
+                if chrome_error:
+                    spawned.side_effect = OSError("Chrome launch refused")
+                result = native.main(["--workspace", workspace])
+
+            release.assert_called_once_with(123)
+            if thread_error:
+                self.assertEqual(result, 1)
+                thread.start.assert_called_once()
+                spawned.assert_not_called()
+                updater.check.assert_not_called()
+                # Server thread was never started: shutdown() would deadlock.
+                server.server_close.assert_called_once()
+                server.shutdown.assert_not_called()
+                warning.assert_called_once()
+            else:
+                thread.start.assert_called_once()
+                updater.check.assert_called_once()
+                spawned.assert_called_once()
+                server.actions.stop_event.set.assert_called_once()
+                server.collector.stop.assert_called_once()
+                server.shutdown.assert_called_once()
+                server.server_close.assert_called_once()
+                if chrome_error:
+                    self.assertEqual(result, 1)
+                    process.wait.assert_not_called()
+                    warning.assert_called_once()
+                else:
+                    self.assertEqual(result, 0)
+                    process.wait.assert_called_once()
+                    warning.assert_not_called()
+                app_args = spawned.call_args.args[0]
+                self.assertTrue(any(x.startswith("--user-data-dir=")
+                                    and ("secondary" in x) == (workspace == "secondary")
+                                    for x in app_args))
+            return result
+
+    def test_optional_updater_failure_never_blocks_both_windows(self):
+        for workspace in ("primary", "secondary"):
+            with self.subTest(workspace=workspace):
+                self._run_startup_fault(workspace, update_error=True)
+
+    def test_chrome_launch_error_releases_loopback_and_slot(self):
+        for workspace in ("primary", "secondary"):
+            with self.subTest(workspace=workspace):
+                self._run_startup_fault(workspace, chrome_error=True)
+
+    def test_server_thread_start_failure_closes_socket_without_deadlock(self):
+        for workspace in ("primary", "secondary"):
+            with self.subTest(workspace=workspace):
+                self._run_startup_fault(workspace, thread_error=True)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -267,17 +267,33 @@ def main(argv=None) -> int:
                 collector, token, 0, updater=updater,
                 developer_mode=args.developer, audit_root=legacy / "profile-counts")
             worker = threading.Thread(target=server.serve_forever, daemon=True)
-            worker.start()
-            # Version awareness starts automatically, but never downloads,
-            # installs or changes Instagram state without explicit approval.
-            if updater is not None:
-                updater.check()
             try:
+                worker.start()
+            except Exception:
+                # A bound loopback socket must not outlive a failed startup.
+                # Thread.start failed: serve_forever never began, so calling
+                # shutdown() here would block indefinitely. Close only socket.
+                server.server_close()
+                raise
+            try:
+                # Update discovery is optional and may fail (offline Windows,
+                # blocked thread creation, denied updater cache). It must not
+                # strand the local action controller or prevent app startup.
+                if updater is not None:
+                    try:
+                        updater.check()
+                    except Exception as error:
+                        print("Insta Cleaner: update check unavailable (" +
+                              type(error).__name__ + "); launching installed version.",
+                              file=sys.stderr)
                 chrome = subprocess.Popen(chrome_app_args(
                     browser, page, chrome_workspace, server.server_port, token,
                     developer=args.developer))
                 chrome.wait()
             finally:
+                # Protect update discovery, process spawn and window lifecycle.
+                # Even when Chrome cannot start, stop both robot lanes and
+                # release the loopback listener before freeing the slot mutex.
                 stop_safely(server)
             return 0
         finally:
