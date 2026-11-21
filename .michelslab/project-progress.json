@@ -9,8 +9,8 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "source_integrated_ci_green_physical_validation_pending",
-  "last_source_merge": "badf10cd98b4bfc43c8879d162e83f994667de66",
+  "phase": "three_PRs_integrated_and_exact_head_ci_green_owner_real_browser_acceptance_pending",
+  "last_source_merge": "79475dd7a1b05e35f7a7de77f2223a7ffc95788f",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -117,48 +117,51 @@
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-20",
-    "global_progress_before": 50,
-    "global_progress_after": 50,
-    "verified": 6,
-    "total": 12,
-    "scope": "GRANADA P0 #371 Focus/browser storage + #377 native Windows lifecycle; real source fixes under exact-head QA",
-    "source_main_before": "9eda09fe533bb48f031152df0eff11c2af4278f7",
-    "workstreams": [
+    "scope": "GRANADA integrated root-cause repairs on Windows, Focus and audit race",
+    "progress_before": 50,
+    "progress_after": 50,
+    "verified_milestones": 6,
+    "total_milestones": 12,
+    "source_prs_merged": [
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/396",
-        "head": "7a28d4fd2285e0d7fb1bbef43851d2cf5aa69168",
-        "phase": "source_implemented_exact_head_ci_in_progress",
-        "correction": "Bounded Windows Setup acceptance job increased from 35 to 65 minutes; all installation and undo QA retained",
-        "effect": "Local bridge startup lifecycle safely closes after failed updater / Chrome, and listener thread failure",
-        "ci": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840304865"
+        "merged_commit": "9eee09e99a1e9e164b10606c0c7966dda236a2d1",
+        "exact_head_sha": "7a28d4fd2285e0d7fb1bbef43851d2cf5aa69168",
+        "checks": "7/7 SUCCESS",
+        "effect": "dual independent Windows slot safe start/teardown + timeout job 35→65 min"
       },
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/397",
-        "head": "ad52281c16c3943e73950a365f998ddbcb1b39cf",
-        "phase": "source_implemented_exact_head_ci_in_progress",
-        "correction": "Matched PR #396's Windows job timeout source to avoid merge conflict",
-        "effect": "Lossless v3 history, standalone quota fallback and protected Focus browser launch",
-        "ci": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840361167",
-        "note": "Run restarted at new exact-head after workflow alignment"
+        "merged_commit": "ade9e3e8e68e8b004f17cb4a84881e2c57392c28",
+        "exact_head_sha": "ad52281c16c3943e73950a365f998ddbcb1b39cf",
+        "checks": "10/10 SUCCESS",
+        "effect": "lossless v3 history migration in Desktop+standalone, quota cohort fallback and no phantom browser opens"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/398",
+        "merged_commit": "79475dd7a1b05e35f7a7de77f2223a7ffc95788f",
+        "exact_head_sha": "6a8a0e4afa1b6ef31d26d9fb584e0966128fa866",
+        "checks": "6/6 SUCCESS",
+        "effect": "File Steward regenerates report after concurrent main update; synthetic two-writer git race test"
       }
     ],
-    "real_owner_browser_acceptance": false,
-    "latest_verified_stable": "v120.80",
-    "release_hold": true,
-    "remaining": [
-      "#371 Focus real Chrome 30 near quota, restore all historical decisions",
-      "#377 physical two Windows A/B",
-      "#360 counters across refresh and A-B-A",
-      "#164 live Unfollow",
-      "#172 live Cancel Pending",
-      "Official v120.81 gated publication"
+    "exact_head_checks_url": [
+      "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840304865",
+      "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44840593528",
+      "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44842856335"
     ],
-    "note": "Code branches and CI success do not count toward six remaining physical/release milestones",
-    "ci_root_cause": "Previously the 35min GitHub Actions Windows job was cancelled while running installed setup/wizard/uninstall, with three bounded subprocesses totaling 1740s + packaging; 65min cap allows a verifiable success/fail",
-    "progress_before": 50,
-    "progress_after": 50,
-    "last_verified_stable": "v120.80",
-    "source_merged": false
+    "main_after_merge": "79475dd7a1b05e35f7a7de77f2223a7ffc95788f",
+    "post_merge_main_ci": "in_progress_at_record_time",
+    "physical_owner_browser": "pending",
+    "blocker_issues": [
+      "#371",
+      "#377",
+      "#360",
+      "#164",
+      "#172"
+    ],
+    "release": "v120.80 public; v120.81 on hold",
+    "note": "50% is 6/12 acceptance milestones; all three PRs integrated and CI green. Never infer physical Instagram success from offline tests."
   },
   "last_continuation": {
     "date": "2026-11-20",
