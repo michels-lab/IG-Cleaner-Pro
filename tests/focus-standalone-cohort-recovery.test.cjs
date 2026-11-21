@@ -205,6 +205,18 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
       "Already-durable Pending cohort stays recoverable for manual review");
     assert.equal(memory.get("history"),historyBefore,
       "No phantom open history for rejected Pending cycle");
+    // The older modal and toolbar Reopen handlers must not bypass the
+    // secondary Pending ledger check while that storage key is rejected.
+    const safeReopen=extract("function reopenSafeFocusBatch(", "function markSafeFocusNotReviewed(");
+    const toolbarReopen=extract("function reopenActiveFocusBatch(", "function markActiveFocusNotReviewed(");
+    vm.runInContext(safeReopen+"\\n"+toolbarReopen,state,{timeout:3000});
+    state.activeExtraReviewBatch=state.activeFocusBatch;
+    assert.equal(state.reopenSafeFocusBatch(),false,
+      "Review Reopen must fail closed if Pending journal is unwritable");
+    assert.equal(state.reopenActiveFocusBatch(),false,
+      "Toolbar Reopen must fail closed if Pending journal is unwritable");
+    assert.equal(opens,opensBeforePending,"Reopen fallbacks cannot bypass Pending quota gate");
+    assert.deepEqual([...state.pendingOpenedSet],existingPending);
     state.clearActiveFocusBatch();
     rejectPendingLedger=false;
     assert.equal(state.openConfirmedFocusRows(rows,"Pending Focus 30","pending",30),true);
