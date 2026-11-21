@@ -33,30 +33,49 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Prove audit safety on synthetic git fixture
-        run: python3 tools/test_repository_file_auditor.py
+      - name: Prove audit safety and moving-main publish recovery in real git fixtures
+        run: |
+          python3 tools/test_repository_file_auditor.py
+          python3 -m unittest discover -s tests -p 'test_file_steward_publish_race.py' -v
       - name: Enumerate all tracked paths, inspect documents and write local delta log
         run: python3 tools/repository_file_auditor.py --repo .
       - name: Commit only generated audit reports in this repository
-        if: github.event_name != 'pull_request'
+        # Only push from the main push/schedule context, never a PR or an
+        # arbitrary workflow_dispatch branch. This job changes REPORTS only.
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- reports/file-governance/FILE_GOVERNANCE.json reports/file-governance/FILE_GOVERNANCE.md reports/file-governance/SUMMARY.json docs/audits/FILE_GOVERNANCE_LOG.md
-          if ! git diff --cached --quiet; then
+          # The previous 'commit then rebase' collided with another steward
+          # report update on a moving main and FAILED due to four report-file
+          # conflicts. Regenerate from latest remote instead of rebasing old
+          # generated evidence (which would make its inventory stale).
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "::error::Main no longer descends from the audited source; abort, no force push."
+              exit 1
+            fi
+            if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+              # Safe because Actions runs in a fresh, ephemeral checkout, and
+              # its only edits are generated report files. Never delete data
+              # in an owner's browser or an application workspace.
+              git reset --hard origin/main
+              python3 tools/repository_file_auditor.py --repo .
+            fi
+            git add -- reports/file-governance/FILE_GOVERNANCE.json reports/file-governance/FILE_GOVERNANCE.md reports/file-governance/SUMMARY.json docs/audits/FILE_GOVERNANCE_LOG.md
+            if git diff --cached --quiet; then
+              echo "Audit already matches current main; nothing to publish."
+              exit 0
+            fi
             git commit -m "chore(file-steward): refresh local audit findings [skip ci]"
-            for attempt in 1 2 3; do
-              if git push; then
-                echo "Audit report committed and published."
-                exit 0
-              fi
-              git fetch origin main
-              if ! git rebase origin/main; then
-                git rebase --abort || true
-                echo "::error::Audit report conflicts with another writer; no force push"
-                exit 1
-              fi
-            done
-            echo "::error::Audit report push failed after safe retries"
-            exit 1
-          fi
+            if git push origin HEAD:main; then
+              echo "Audit regenerated and published on current main."
+              exit 0
+            fi
+            echo "::warning::Main advanced during audit push (attempt $attempt); refresh and regenerate safely."
+          done
+          echo "::error::Audit main kept advancing after five conflict-safe regenerations."
+          exit 1
