@@ -94,27 +94,88 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
   assert.equal(memory.has("focus-cohort"),false);
 
   if(entry==="index.html"){
-    // Execute the actual standalone Focus button path, not a copied function.
-    const mainSource=extract("function openConfirmedFocusRows(","\n</script>");
+    // Execute the real standalone pause/Retry/Focus path, NOT test copies.
+    // Deliberately use a mutable DOM mock to verify the user cannot click
+    // Reviewed, reopen, or snooze an unsaved/never-opened failed cohort.
+    const mainSource=extract("let igcFailedFocusBatch=null;","\n</script>");
     new vm.Script(mainSource);
+    const ids=[
+      "safeFocusPopup","safeFocusTitle","safeFocusText","safeConfirmPreview",
+      "safeFocusList","safeFocusConfirmBtn","safeFocusReopenBtn",
+      "safeFocusNotReviewedBtn","safeFocusSnooze7Btn","safeFocusSnooze30Btn",
+      "safeFocusDecision","safeFocusRetryStorageBtn"
+    ];
+    const ui=new Map(ids.map(id=>[id,{
+      style:{display:"none"},classList:{add(){},remove(){}},
+      textContent:"",innerHTML:"",disabled:false
+    }]));
+    state.document={getElementById:id=>ui.get(id)||null};
+    state.esc=str=>String(str).replaceAll("&","&amp;").replaceAll("<","&lt;");
+    state.currentMode="following";
+    state.window.IGC_INSTAGRAM_PROFILES={active:"A"};
     let opens=0;
     state.window.open=()=>{trace.push("open");opens++};
     state.allMainFocusOpenableRows=()=>rows;
     state.focusBatchFill=actual=>actual;
     state.showSafeFocusPopup=()=>trace.push("review");
-    state.logAction=()=>trace.push("log");
+    const actions=[];
+    state.logAction=(type,text)=>actions.push(String(text));
     state.forceLiveRefresh=()=>{};
     state.closeSafeFocusPopup=()=>{};
-    vm.runInContext(mainSource,state);
+    vm.runInContext(mainSource,state,{timeout:3000});
+    for(const id of [
+      "safeFocusConfirmBtn","safeFocusReopenBtn","safeFocusNotReviewedBtn",
+      "safeFocusSnooze7Btn","safeFocusSnooze30Btn","safeFocusRetryStorageBtn"
+    ])assert(src.includes('id="'+id+'"'),entry+": visible recovery control "+id);
     cap=1;
+    const beforeBlocked=new Map(memory);
     assert.equal(state.openConfirmedFocusRows(rows,"Focus 30","main",30),false);
     assert.equal(opens,0,"Rejected cohort MUST NOT request any Chrome tab");
     assert(!trace.includes("review"),"Rejected cohort cannot offer a false confirmation");
+    assert.equal(ui.get("safeFocusTitle").textContent,"Focus pausado · almacenamiento");
+    assert.equal(ui.get("safeFocusRetryStorageBtn").style.display,"block");
+    assert.equal(ui.get("safeFocusConfirmBtn").disabled,true);
+    assert.equal(ui.get("safeFocusReopenBtn").disabled,true);
+    assert.equal(ui.get("safeFocusNotReviewedBtn").disabled,true);
+    assert.equal(ui.get("safeFocusDecision").disabled,true);
+    assert.equal(ui.get("safeFocusList").innerHTML.includes("Sin abrir · guardado fallido"),true);
+    assert.equal(ui.get("safeFocusText").textContent.includes("Reintentar guardar y abrir"),true);
+    assert(!ui.get("safeFocusText").textContent.includes("target."),
+      "Storage error diagnostics must never disclose private usernames");
+    assert.deepEqual([...memory],[...beforeBlocked],"Quota error must preserve every stored byte");
+    assert.equal(vm.runInContext("igcFailedFocusBatch.rows.length",state),30);
+
+    // Owner switches accounts after a failure. Retry must never borrow A's
+    // saved preview to open in B or in a different mode.
     cap=Infinity;
-    assert.equal(state.openConfirmedFocusRows(rows,"Focus 30","main",30),true);
-    assert.equal(opens,30,"Recovered Focus must request all 30 profile tabs");
+    state.window.IGC_INSTAGRAM_PROFILES.active="B";
+    assert.equal(state.igcRetryFailedFocus(),false);
+    assert.equal(opens,0);
+    state.window.IGC_INSTAGRAM_PROFILES.active="A";
+    state.currentMode="pending";
+    assert.equal(state.igcRetryFailedFocus(),false);
+    assert.equal(opens,0);
+    state.currentMode="following";
+
+    // Even if current live list / ZIP changes between failure and retry,
+    // the explicit Retry must use exactly the original 30 saved usernames.
+    state.focusBatchFill=()=>{throw Error("Retry may NOT refill from changed ZIP")};
+    assert.equal(state.igcRetryFailedFocus(),true);
+    assert.equal(opens,30,"Explicit Retry must request precisely 30 original Chrome tabs");
     assert(trace.indexOf("review")>=0&&trace.indexOf("review")<trace.indexOf("open"),
       "Reviewed recovery must be visible before popups are requested");
+    assert.equal(ui.get("safeFocusConfirmBtn").disabled,false);
+    assert.equal(ui.get("safeFocusRetryStorageBtn").style.display,"none");
+    assert.equal(vm.runInContext("igcFailedFocusBatch",state),null);
+    const persistedAfterRetry=state.igcDecodeActiveFocusBatch(JSON.parse(memory.get("focus-cohort")));
+    assert.deepEqual(persistedAfterRetry.rows.map(x=>x.username),rows.map(x=>x.username));
+    assert.deepEqual(memory.get("reviewed"),stableBefore.get("reviewed"));
+    assert.deepEqual(memory.get("pending"),stableBefore.get("pending"));
+    assert.deepEqual(memory.get("history"),stableBefore.get("history"));
+    assert(actions.every(t=>!t.includes("perfiles abiertos")),
+      "Window.open with noopener does not prove that Chrome really opened a tab");
+    assert(actions.some(t=>t.includes("pestañas solicitadas")),
+      "The audit must count requests, not claim that accounts were visited");
   }
   console.log("PASS "+entry+": saved v3 Focus, full quota, retry, exact old reviews, durable removal and standalone browser guard");
 }
