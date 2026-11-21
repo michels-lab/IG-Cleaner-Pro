@@ -3800,12 +3800,89 @@ function safeBatchRow(row){
     relationGood:!!row.relationGood
   };
 }
+const IGC_FOCUS_ROW_FIELDS=['username','href','name','relation','riskScore','riskLevel','riskReasons','timestamp','dateMain','dateOther','iFollow','isFollower','followsBack','relationGood'];
+function igcEncodeActiveFocusBatch(batch){
+  if(!batch)return null;
+  return {...batch,storageFormat:2,
+    rows:(batch.rows||[]).map(row=>IGC_FOCUS_ROW_FIELDS.map(field=>row[field]===undefined?null:row[field]))};
+}
+// A second lossless encoding is attempted ONLY after the normal v2 save is
+// rejected for quota. A canonical URL is represented by an empty field, and
+// four boolean flags by one small integer. No confirmed state is rewritten.
+function igcEncodeFocusBatchQuota(batch){
+  if(!batch)return null;
+  return {...batch,storageFormat:3,rows:(batch.rows||[]).map(row=>{
+    const user=row.username;
+    const href=row.href;
+    const canonical='https://www.instagram.com/'+user+'/';
+    const flags=(row.iFollow?1:0)|(row.isFollower?2:0)|(row.followsBack?4:0)|(row.relationGood?8:0);
+    return [user,href===canonical?0:(href===undefined?null:(href===null?1:href)),row.name||'',row.relation||'',
+      row.riskScore||0,row.riskLevel||'',row.riskReasons||[],row.timestamp||0,
+      row.dateMain||0,row.dateOther||0,flags];
+  })};
+}
+function igcDecodeActiveFocusBatch(saved){
+  if(!saved||!Array.isArray(saved.rows))return saved;
+  if(saved.storageFormat===3){
+    const {storageFormat,...cohort}=saved;
+    return {...cohort,rows:saved.rows.map(values=>{
+      if(!Array.isArray(values)||values.length!==11||
+         typeof values[0]!=='string'||!values[0]||
+         typeof values[10]!=='number'||!Number.isInteger(values[10])||
+         values[10]<0||values[10]>15)throw Error('Invalid quota-safe Focus row');
+      const [username,href,name,relation,riskScore,riskLevel,riskReasons,
+        timestamp,dateMain,dateOther,flags]=values;
+      if((typeof href!=='string'&&href!==0&&href!==1&&href!==null)||typeof name!=='string'||typeof relation!=='string')throw Error('Invalid quota-safe Focus fields');
+      return safeBatchRow({username,
+        href:href===0?'https://www.instagram.com/'+username+'/':(href===null?undefined:(href===1?null:href)),
+        name,relation,riskScore,riskLevel,riskReasons,timestamp,dateMain,dateOther,
+        iFollow:!!(flags&1),isFollower:!!(flags&2),
+        followsBack:!!(flags&4),relationGood:!!(flags&8)});
+    })};
+  }
+  if(saved.storageFormat!==2)return saved;
+  const {storageFormat,...cohort}=saved;
+  return {...cohort,rows:saved.rows.map(values=>{
+    if(!Array.isArray(values)||values.length!==IGC_FOCUS_ROW_FIELDS.length)throw Error('Invalid compact Focus row');
+    const row={};
+    IGC_FOCUS_ROW_FIELDS.forEach((field,index)=>{if(values[index]!==null&&values[index]!==undefined)row[field]=values[index]});
+    if(typeof row.username!=='string'||!row.username)throw Error('Invalid Focus username');
+    return safeBatchRow(row);
+  })};
+}
 function saveActiveFocusBatch(){
-  if(activeFocusBatch)localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,JSON.stringify(activeFocusBatch));
-  else localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);
+  if(!activeFocusBatch){localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);return}
+  const usual=JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch));
+  // Keep only size, fixed storage key and format in volatile diagnostics;
+  // never expose cohort values, profile handles, full URLs or browser secrets.
+  const recordAttempt=(format,payload)=>{
+    if(typeof window!=='undefined')window.igcFocusWriteAttempt={
+      key:LS_ACTIVE_FOCUS_BATCH,format,bytes:2*(String(LS_ACTIVE_FOCUS_BATCH).length+payload.length)
+    };
+  };
+  const clearAttempt=()=>{
+    if(typeof window!=='undefined'){
+      window.igcFocusWriteAttempt=null;
+      window.igcLastFocusStorageError='';
+    }
+  };
+  recordAttempt('v2',usual);
+  try{localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,usual);clearAttempt()}
+  catch(error){
+    // A SecurityError or broken storage engine must remain a hard failure.
+    // The alternate representation is only for exhausted storage quota.
+    if(!(/quota/i.test(String(error?.name||''))||
+         /quota/i.test(String(error?.message||''))))throw error;
+    const small=JSON.stringify(igcEncodeFocusBatchQuota(activeFocusBatch));
+    if(small.length>=usual.length)throw error;
+    recordAttempt('v3',small);
+    localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,small);
+    clearAttempt();
+  }
 }
 function loadActiveFocusBatch(){
-  try{activeFocusBatch=JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null')}catch{activeFocusBatch=null}
+  try{activeFocusBatch=igcDecodeActiveFocusBatch(JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null'))}
+  catch(e){console.error('Focus: saved cohort could not be decoded',e);activeFocusBatch=null}
   if(activeFocusBatch&&(!Array.isArray(activeFocusBatch.rows)||!activeFocusBatch.rows.length))activeFocusBatch=null;
 }
 function activeBatchUserSet(kind){
@@ -3852,18 +3929,69 @@ function renderActiveBatchDock(){
   });
   return;
 }
+function igcFocusStorageDiagnostic(error,batch){
+  const code=String(error?.name||'StorageError').replace(/[^A-Za-z]/g,'').slice(0,40)||'StorageError';
+  const attempt=typeof window!=='undefined'?window.igcFocusWriteAttempt:null;
+  const key=typeof attempt?.key==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(attempt.key)
+    ?attempt.key:'FocusBatch';
+  const format=attempt?.format==='v3'?'v3':'v2';
+  const attempted=Number.isSafeInteger(attempt?.bytes)&&attempt.bytes>=0
+    ?attempt.bytes+' bytes':'unknown';
+  let batchKiB='unknown',totalMiB='unknown';
+  try{batchKiB=(JSON.stringify(igcEncodeActiveFocusBatch(batch)).length*2/1024).toFixed(1)+' KiB'}catch{}
+  try{
+    if(typeof localStorage.length==='number'&&typeof localStorage.key==='function'){
+      let chars=0;
+      for(let i=0;i<localStorage.length;i++){
+        const key=localStorage.key(i);
+        chars+=String(key||'').length+String(localStorage.getItem(key)||'').length;
+      }
+      totalMiB=(chars*2/1048576).toFixed(2)+' MiB';
+    }
+  }catch{}
+  // No error.message or localStorage VALUES enter the report: those can contain usernames.
+  return code+' · key '+key+' · format '+format+' · attempted '+attempted+
+    ' · tamaño de tanda '+batchKiB+' · almacenamiento usado '+totalMiB+' (estimated)';
+}
 function setActiveFocusBatch(kind,rows,label){
+  // Preserve the original public 3-argument signature for Desktop contracts.
+  // Internal Focus callers can opt into an initial second-pass mode and can
+  // defer history until the independent Pending ledger commits.
+  const reviewMode=arguments[3]||'';
+  const deferHistory=arguments[4]===true;
+  const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
   activeFocusBatch={kind,label,rows:(rows||[]).map(safeBatchRow),openedAt:Date.now(),status:'opened_unconfirmed'};
-  recordRowsHistory(activeFocusBatch.rows,'open',{kind,label});
+  // Pending Double Check must be on disk from the FIRST cohort write. A
+  // separate second write could fail, leaving a normal Pending cohort which
+  // misinterprets the owner's already-reviewed second-pass decisions.
+  if(reviewMode==='double'&&kind==='pending')activeFocusBatch.reviewMode='double';
   activeExtraReviewBatch=activeFocusBatch;
-  saveActiveFocusBatch();
-  renderActiveBatchDock();
+  // Persist the unconfirmed cohort FIRST. An exhausted browser storage quota
+  // must never silently turn a failed open into a saved 'open' history event.
+  try{saveActiveFocusBatch()}catch(e){
+    console.error('Focus: cannot persist active batch',e);
+    try{if(typeof window!=='undefined')window.igcLastFocusStorageError=igcFocusStorageDiagnostic(e,activeFocusBatch)}catch{}
+    activeFocusBatch=previous;
+    activeExtraReviewBatch=previousExtra;
+    try{msg('Error de almacenamiento: no se pudo guardar la tanda. No abrí perfiles ni alteré revisiones; exporta respaldo.','e')}catch{}
+    return false;
+  }
+  // History is secondary evidence; failure must not hide the confirmation UI.
+  if(!deferHistory){
+    try{recordRowsHistory(activeFocusBatch.rows,'open',{kind,label})}
+    catch(e){console.error('Focus: open history not persisted',e);
+      try{msg('Aviso: no pude guardar el historial de aperturas. Exporta un respaldo de datos antes de continuar.','w')}catch{}}
+  }
+  try{renderActiveBatchDock()}catch(e){console.error('Focus: batch dock render failed',e)}
+  return true;
 }
 function clearActiveFocusBatch(){
+  // Commit the persistent delete before clearing the displayed cohort.
+  // The previous two-delete path could leave RAM empty after SecurityError
+  // while the old batch still existed on disk and would return on reload.
+  localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
-  try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
-  saveActiveFocusBatch();
   renderActiveBatchDock();
 }
 function activeBatchRowResolved(row,kind){
@@ -3894,29 +4022,41 @@ function activeBatchRowResolved(row,kind){
 }
 function pruneResolvedActiveFocusBatch(){
   if(!activeFocusBatch||!Array.isArray(activeFocusBatch.rows)||!activeFocusBatch.rows.length)return false;
-  const before=activeFocusBatch.rows.length;
-  const kind=activeFocusBatch.kind;
-  activeFocusBatch.rows=activeFocusBatch.rows.filter(r=>!activeBatchRowResolved(r,kind));
-  const after=activeFocusBatch.rows.length;
-  if(after===0){
+  const previous=activeFocusBatch,previousExtra=activeExtraReviewBatch;
+  const remaining=previous.rows.filter(r=>!activeBatchRowResolved(r,previous.kind));
+  if(remaining.length===previous.rows.length)return false;
+  // Do not mutate the in-memory cohort until persistent storage has committed.
+  // Otherwise a rejected write can make the UI disagree with the saved cohort
+  // after a reload, silently recycling/reducing the wrong Focus targets.
+  if(remaining.length===0){
+    try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}
+    catch(e){
+      console.error('Focus: cannot remove fully resolved durable cohort',e);
+      return false;
+    }
     activeFocusBatch=null;
     activeExtraReviewBatch=null;
-    try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
-    return before>0;
-  }
-  if(after!==before){
-    activeExtraReviewBatch=activeFocusBatch;
-    saveActiveFocusBatch();
     return true;
   }
-  return false;
+  const next={...previous,rows:remaining};
+  activeFocusBatch=next;
+  try{saveActiveFocusBatch()}
+  catch(e){
+    activeFocusBatch=previous;
+    activeExtraReviewBatch=previousExtra;
+    console.error('Focus: cannot persist resolved-row cleanup',e);
+    return false;
+  }
+  activeExtraReviewBatch=next;
+  return true;
 }
 function forceClearStuckFocusBatch(){
   if(!activeFocusBatch&&!localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)){msg('No hay tanda atorada que borrar.','i');return;}
   if(!confirm('¿Borrar la tanda activa atorada? Esto NO borra revisiones ni decisiones guardadas; solo oculta/limpia el popup de tanda activa.'))return;
+  try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}
+  catch(error){msg('No pude borrar la tanda persistida. Tus revisiones y tanda siguen intactas.','w');return false}
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
-  try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}catch{}
   renderActiveBatchDock();
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
@@ -3955,8 +4095,146 @@ function cancelActiveFocusBatch(){
 }
 setInterval(renderActiveBatchDock,60000);
 
-function saveProfileHistory(){localStorage.setItem(LS_PROFILE_HISTORY,JSON.stringify(profileHistory||{}));}
-function loadProfileHistory(){try{profileHistory=JSON.parse(localStorage.getItem(LS_PROFILE_HISTORY)||'{}')||{}}catch{profileHistory={}}}
+let igcProfileHistoryLoadError=false;
+function igcHistoryFieldNames(){
+  return ['username','opened','reopened','reviewed','unconfirmed','snoozed','lastOpened','lastReviewed','lastDecision','lastSection','events'];
+}
+function igcPackHistoryEvents(events){
+  if(!Array.isArray(events))return events;
+  return events.map(ev=>{
+    if(ev&&typeof ev==='object'&&!Array.isArray(ev)&&Object.keys(ev).length===3
+      &&Object.prototype.hasOwnProperty.call(ev,'ts')
+      &&Object.prototype.hasOwnProperty.call(ev,'event')
+      &&Object.prototype.hasOwnProperty.call(ev,'details'))return [0,ev.ts,ev.event,ev.details];
+    return [1,ev];
+  });
+}
+function igcUnpackHistoryEvents(events){
+  if(!Array.isArray(events))return events;
+  return events.map(ev=>{
+    if(!Array.isArray(ev)||!ev.length)throw Error('Invalid compact history event');
+    if(ev[0]===0&&ev.length===4)return {ts:ev[1],event:ev[2],details:ev[3]};
+    if(ev[0]===1&&ev.length===2)return ev[1];
+    throw Error('Invalid compact history event tag');
+  });
+}
+function igcPackProfileHistory(history){
+  const fields=igcHistoryFieldNames();
+  return {__igcHistoryCompact:2,rows:Object.entries(history||{}).map(([user,entry])=>{
+    if(!entry||typeof entry!=='object'||Array.isArray(entry))return [user,-1,entry];
+    let mask=0;
+    const values=fields.map((field,i)=>{
+      if(!Object.prototype.hasOwnProperty.call(entry,field))return null;
+      mask|=(1<<i);
+      return field==='events'?igcPackHistoryEvents(entry[field]):entry[field];
+    });
+    const extras={};
+    for(const [key,value] of Object.entries(entry))if(!fields.includes(key))extras[key]=value;
+    return [user,mask,...values,extras];
+  })};
+}
+function igcUnpackProfileHistory(saved){
+  // v3 shares v2's exact field-mask decoder. Re-expand only dictionary-backed
+  // event details, then reuse its strict row validation and prototype-safe keys.
+  if(saved&&saved.__igcHistoryCompact===3){
+    if(!Array.isArray(saved.rows)||!Array.isArray(saved.dictionary))
+      throw Error('Invalid v3 profile history');
+    const eventField=2+igcHistoryFieldNames().indexOf('events');
+    const rows=saved.rows.map(record=>{
+      if(!Array.isArray(record))throw Error('Invalid v3 history row');
+      if(record[1]===-1)return record;
+      const events=record[eventField];
+      if(!Array.isArray(events))return record;
+      const expanded=events.map(ev=>{
+        if(!Array.isArray(ev)||!ev.length)throw Error('Invalid v3 history event');
+        if(ev[0]===1&&ev.length===2)return ev;
+        if(ev[0]!==0||ev.length!==3||!Number.isSafeInteger(ev[2])||
+           ev[2]<0||ev[2]>=saved.dictionary.length)
+          throw Error('Invalid v3 event dictionary reference');
+        const pair=saved.dictionary[ev[2]];
+        if(!Array.isArray(pair)||pair.length!==2)
+          throw Error('Invalid v3 event dictionary record');
+        return [0,ev[1],pair[0],pair[1]];
+      });
+      const clone=record.slice();
+      clone[eventField]=expanded;
+      return clone;
+    });
+    return igcUnpackProfileHistory({__igcHistoryCompact:2,rows});
+  }
+  if(!saved||saved.__igcHistoryCompact!==2)return saved||{};
+  if(!Array.isArray(saved.rows))throw Error('Invalid compact profile history');
+  const fields=igcHistoryFieldNames(),result={};
+  for(const record of saved.rows){
+    if(!Array.isArray(record)||typeof record[0]!=='string')throw Error('Invalid compact profile history row');
+    const [username,mask]=record;
+    if(mask===-1&&record.length===3){Object.defineProperty(result,username,{value:record[2],enumerable:true,writable:true,configurable:true});continue;}
+    if(!Number.isInteger(mask)||mask<0||mask>=1<<fields.length||record.length!==fields.length+3)throw Error('Invalid compact profile history fields');
+    const entry={};
+    fields.forEach((field,index)=>{
+      if(mask&(1<<index))entry[field]=field==='events'?igcUnpackHistoryEvents(record[index+2]):record[index+2];
+    });
+    const extras=record[fields.length+2];
+    if(!extras||typeof extras!=='object'||Array.isArray(extras))throw Error('Invalid compact profile history extras');
+    for(const [key,value] of Object.entries(extras))Object.defineProperty(entry,key,{value,enumerable:true,writable:true,configurable:true});
+    Object.defineProperty(result,username,{value:entry,enumerable:true,writable:true,configurable:true});
+  }
+  return result;
+}
+function igcPackProfileHistoryV3(history){
+  // Shared dictionary for repeated (event, details) pairs across all users.
+  // Nothing is discarded: unknown event shapes remain literal v2 records.
+  const packed=igcPackProfileHistory(history);
+  const eventField=2+igcHistoryFieldNames().indexOf('events');
+  const dictionary=[],seen=new Map();
+  const rows=packed.rows.map(record=>{
+    if(!Array.isArray(record)||record[1]===-1)return record;
+    const events=record[eventField];
+    if(!Array.isArray(events))return record;
+    const next=record.slice();
+    next[eventField]=events.map(ev=>{
+      if(!Array.isArray(ev)||ev[0]!==0||ev.length!==4)return ev;
+      const pair=[ev[2],ev[3]],key=JSON.stringify(pair);
+      let id=seen.get(key);
+      if(id===undefined){id=dictionary.length;dictionary.push(pair);seen.set(key,id)}
+      return [0,ev[1],id];
+    });
+    return next;
+  });
+  return {__igcHistoryCompact:3,dictionary,rows};
+}
+function igcCompactHistoryText(history){
+  // Keep the smallest exact representation. Plain and v2 remain readable;
+  // v3 never increases storage or changes exported in-memory history.
+  const plain=JSON.stringify(history||{});
+  const compact2=JSON.stringify(igcPackProfileHistory(history||{}));
+  const compact3=JSON.stringify(igcPackProfileHistoryV3(history||{}));
+  return [plain,compact2,compact3].reduce((best,text)=>text.length<best.length?text:best);
+}
+function saveProfileHistory(){
+  if(igcProfileHistoryLoadError)throw Error('Cannot overwrite unreadable saved profile history; restore a backup first');
+  localStorage.setItem(LS_PROFILE_HISTORY,igcCompactHistoryText(profileHistory));
+}
+function loadProfileHistory(){
+  try{
+    const raw=localStorage.getItem(LS_PROFILE_HISTORY)||'{}';
+    const persisted=JSON.parse(raw);
+    profileHistory=igcUnpackProfileHistory(persisted);
+    igcProfileHistoryLoadError=false;
+    // Older v2 compact ledgers may still be much larger than v3. Migrate
+    // atomically in the SAME key, only if shorter. Quota denial leaves every
+    // original saved byte intact and the decoded in-memory history usable.
+    const compact=igcCompactHistoryText(profileHistory);
+    if(compact.length<raw.length){
+      try{localStorage.setItem(LS_PROFILE_HISTORY,compact)}
+      catch(e){console.warn('Focus history compaction deferred: browser storage write failed',e?.name||e)}
+    }
+  }catch(e){
+    igcProfileHistoryLoadError=true;
+    console.error('Focus: history storage could not be loaded; writes blocked to prevent losing confirmed history',e);
+    profileHistory={};
+  }
+}
 function saveGuidedSession100(){if(guidedSession100)localStorage.setItem(LS_GUIDED_SESSION_100,JSON.stringify(guidedSession100));else localStorage.removeItem(LS_GUIDED_SESSION_100)}
 function loadGuidedSession100(){try{guidedSession100=JSON.parse(localStorage.getItem(LS_GUIDED_SESSION_100)||'null')}catch{guidedSession100=null}}
 function ensureProfileHistory(username){
@@ -3977,8 +4255,35 @@ function recordProfileHistory(username,event,details={}){
   h.events=(h.events||[]).concat([{ts:now,event,details:{...details,label:details.label||''}}]).slice(-25);
 }
 function recordRowsHistory(rows,event,details={}){
-  (rows||[]).forEach(r=>recordProfileHistory(r.username,event,details));
-  saveProfileHistory();
+  // A failed write must not leave phantom open/reopen events in RAM, which
+  // could later be persisted by an unrelated action or vanish after reload.
+  if(igcProfileHistoryLoadError)throw Error('Cannot modify unreadable saved profile history');
+  const before=new Map();
+  try{
+    for(const row of rows||[]){
+      const username=cleanUsername(row?.username||'');
+      if(!username)continue;
+      if(!before.has(username)){
+        const original=profileHistory[username];
+        before.set(username,original?{ref:original,fields:{...original}}:null);
+      }
+      recordProfileHistory(username,event,details);
+    }
+    saveProfileHistory();
+  }catch(error){
+    // Restore in-place so any existing consumers of a history record see the
+    // previous counters, dates, metadata and original events array.
+    for(const [username,saved] of before){
+      if(!saved){delete profileHistory[username];continue}
+      const original=saved.ref;
+      for(const key of Object.keys(original)){
+        if(!Object.prototype.hasOwnProperty.call(saved.fields,key))delete original[key];
+      }
+      Object.assign(original,saved.fields);
+      profileHistory[username]=original;
+    }
+    throw error;
+  }
 }
 
 function profileHistoryOf(rowOrUsername){
@@ -6770,10 +7075,13 @@ function openDoubleCheckNoMeSigueN(n=30){
     return;
   }
 
-  rows.forEach(r=>seen.add(r.username));
-  saveDoubleCheckSeen(seen);
-
-  setActiveFocusBatch('main',rows,`double check no me siguen ${n}`);
+  if(setActiveFocusBatch('main',rows,`double check no me siguen ${n}`)===false)return false;
+  const nextSeen=new Set(seen);
+  rows.forEach(r=>nextSeen.add(r.username));
+  try{saveDoubleCheckSeen(nextSeen)}catch(error){
+    msg('Double Check guardado como tanda recuperable, pero falló el registro del ciclo. No abrí perfiles.','w');
+    return false;
+  }
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`double check no me siguen ${n}`);
 
@@ -6840,7 +7148,7 @@ function openRecheckNotFollowingN(n=30){
     return;
   }
 
-  setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`);
+  if(setActiveFocusBatch('main',rows,`revisión nueva no me siguen ${n}`)===false)return false;
   rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   showSafeFocusPopup('main',rows,`revisión nueva no me siguen ${n}`);
   logAction('focus',`revisión nueva no me siguen ${n}: ${rows.length} perfiles abiertos`,{count:rows.length,source:'recheck_not_following',requested:n});
@@ -10038,7 +10346,7 @@ function launchReopenFocusBatch(rows,label,n=30,source='recheck_not_following'){
   const target=Number(n||rows.length)||rows.length;
   const finalRows=rows.slice(0,target);
 
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
   // Siempre mostrar confirmación después de abrir, incluyendo recheck/double check.
@@ -10234,7 +10542,7 @@ function launchRecheckFocusBatchV95(rows,label,n=30,source='recheck_not_followin
   const finalRows=rows.slice(0,target);
 
   // Keep active batch so the confirmation buttons know what to save.
-  setActiveFocusBatch('main',finalRows,label);
+  if(setActiveFocusBatch('main',finalRows,label)===false)return false;
 
   finalRows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
 
@@ -10438,7 +10746,7 @@ function v96OpenNoMeSigueRecheck(n=30,mode='recheck'){
   }
 
   const label=mode==='double'?`double check no me siguen ${n}`:`revisar de nuevo no me siguen ${n}`;
-  setActiveFocusBatch('main',rows,label);
+  if(setActiveFocusBatch('main',rows,label)===false)return false;
   activeExtraReviewBatch=activeFocusBatch;
 
   // Abrir inmediatamente dentro del click.
@@ -10554,7 +10862,7 @@ function closeSafeFocusPopup(){const p=document.getElementById('safeFocusPopup')
 function showSafeFocusPopup(kind,rows,label){
   const unresolved=(rows||[]).filter(r=>!activeBatchRowResolved(r,kind));
   if(!unresolved.length){clearActiveFocusBatch();closeSafeFocusPopup();msg('Esta tanda ya estaba resuelta; limpié el popup atorado.','s');return;}
-  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){setActiveFocusBatch(kind,unresolved,label);}
+  if(!activeFocusBatch||activeFocusBatch.kind!==kind||activeFocusBatch.label!==label){if(setActiveFocusBatch(kind,unresolved,label)===false)return false;}
   activeExtraReviewBatch=activeFocusBatch||{kind,rows:[...unresolved],label,openedAt:Date.now()};
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
@@ -10824,13 +11132,21 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
     return false;
   }
 
-  setActiveFocusBatch(kind,rows,label);
-
-  // Los focos SIEMPRE abren perfiles. No son selección.
-  rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
-
-  // La confirmación SIEMPRE queda activa.
-  showSafeFocusPopup(kind,rows,label);
+  // Persist the exact active cohort before requesting any Chrome tabs.
+  // The owner must be able to recover Review even if a popup was blocked.
+  if(setActiveFocusBatch(kind,rows,label,'',true)===false)return false;
+  try{showSafeFocusPopup(kind,rows,label)}
+  catch(error){
+    msg('La tanda está guardada, pero no pude mostrar Reviewed. Recupérala antes de abrir perfiles.','w');
+    return false;
+  }
+  let rejected=0;
+  rows.forEach(r=>{try{window.open(r.href,'_blank','noopener,noreferrer')}
+    catch(error){rejected++;console.error('Focus popup denied',error)}});
+  if(rejected)msg('Chrome rechazó '+rejected+' solicitudes de perfiles. Usa Reviewed para abrirlas manualmente; no confirmes perfiles que no revisaste.','w');
+  // This is requested/opened-attempt history, NEVER a review confirmation.
+  try{recordRowsHistory(rows,'open',{kind,label})}
+  catch(error){msg('La tanda sigue recuperable, pero no pudo guardar el historial de aperturas. Exporta respaldo.','w')}
 
   const expected=target||rows.length;
   logAction('focus',`${label}: ${rows.length} perfiles abiertos`,{count:rows.length,source:label,requested:expected});

@@ -4757,6 +4757,34 @@ function igcPackProfileHistory(history){
   })};
 }
 function igcUnpackProfileHistory(saved){
+  // v3 shares v2's exact field-mask decoder. Re-expand only dictionary-backed
+  // event details, then reuse its strict row validation and prototype-safe keys.
+  if(saved&&saved.__igcHistoryCompact===3){
+    if(!Array.isArray(saved.rows)||!Array.isArray(saved.dictionary))
+      throw Error('Invalid v3 profile history');
+    const eventField=2+igcHistoryFieldNames().indexOf('events');
+    const rows=saved.rows.map(record=>{
+      if(!Array.isArray(record))throw Error('Invalid v3 history row');
+      if(record[1]===-1)return record;
+      const events=record[eventField];
+      if(!Array.isArray(events))return record;
+      const expanded=events.map(ev=>{
+        if(!Array.isArray(ev)||!ev.length)throw Error('Invalid v3 history event');
+        if(ev[0]===1&&ev.length===2)return ev;
+        if(ev[0]!==0||ev.length!==3||!Number.isSafeInteger(ev[2])||
+           ev[2]<0||ev[2]>=saved.dictionary.length)
+          throw Error('Invalid v3 event dictionary reference');
+        const pair=saved.dictionary[ev[2]];
+        if(!Array.isArray(pair)||pair.length!==2)
+          throw Error('Invalid v3 event dictionary record');
+        return [0,ev[1],pair[0],pair[1]];
+      });
+      const clone=record.slice();
+      clone[eventField]=expanded;
+      return clone;
+    });
+    return igcUnpackProfileHistory({__igcHistoryCompact:2,rows});
+  }
   if(!saved||saved.__igcHistoryCompact!==2)return saved||{};
   if(!Array.isArray(saved.rows))throw Error('Invalid compact profile history');
   const fields=igcHistoryFieldNames(),result={};
@@ -4776,9 +4804,35 @@ function igcUnpackProfileHistory(saved){
   }
   return result;
 }
+function igcPackProfileHistoryV3(history){
+  // Shared dictionary for repeated (event, details) pairs across all users.
+  // Nothing is discarded: unknown event shapes remain literal v2 records.
+  const packed=igcPackProfileHistory(history);
+  const eventField=2+igcHistoryFieldNames().indexOf('events');
+  const dictionary=[],seen=new Map();
+  const rows=packed.rows.map(record=>{
+    if(!Array.isArray(record)||record[1]===-1)return record;
+    const events=record[eventField];
+    if(!Array.isArray(events))return record;
+    const next=record.slice();
+    next[eventField]=events.map(ev=>{
+      if(!Array.isArray(ev)||ev[0]!==0||ev.length!==4)return ev;
+      const pair=[ev[2],ev[3]],key=JSON.stringify(pair);
+      let id=seen.get(key);
+      if(id===undefined){id=dictionary.length;dictionary.push(pair);seen.set(key,id)}
+      return [0,ev[1],id];
+    });
+    return next;
+  });
+  return {__igcHistoryCompact:3,dictionary,rows};
+}
 function igcCompactHistoryText(history){
-  const plain=JSON.stringify(history||{}),packed=JSON.stringify(igcPackProfileHistory(history||{}));
-  return packed.length<plain.length?packed:plain;
+  // Keep the smallest exact representation. Plain and v2 remain readable;
+  // v3 never increases storage or changes exported in-memory history.
+  const plain=JSON.stringify(history||{});
+  const compact2=JSON.stringify(igcPackProfileHistory(history||{}));
+  const compact3=JSON.stringify(igcPackProfileHistoryV3(history||{}));
+  return [plain,compact2,compact3].reduce((best,text)=>text.length<best.length?text:best);
 }
 function saveProfileHistory(){
   if(igcProfileHistoryLoadError)throw Error('Cannot overwrite unreadable saved profile history; restore a backup first');
@@ -4790,12 +4844,13 @@ function loadProfileHistory(){
     const persisted=JSON.parse(raw);
     profileHistory=igcUnpackProfileHistory(persisted);
     igcProfileHistoryLoadError=false;
-    if(!persisted?.__igcHistoryCompact){
-      const compact=igcCompactHistoryText(profileHistory);
-      if(compact.length<raw.length){
-        try{localStorage.setItem(LS_PROFILE_HISTORY,compact)}
-        catch(e){console.warn('Focus history compaction deferred: browser storage write failed',e?.name||e)}
-      }
+    // Older v2 compact ledgers may still be much larger than v3. Migrate
+    // atomically in the SAME key, only if shorter. Quota denial leaves every
+    // original saved byte intact and the decoded in-memory history usable.
+    const compact=igcCompactHistoryText(profileHistory);
+    if(compact.length<raw.length){
+      try{localStorage.setItem(LS_PROFILE_HISTORY,compact)}
+      catch(e){console.warn('Focus history compaction deferred: browser storage write failed',e?.name||e)}
     }
   }catch(e){
     igcProfileHistoryLoadError=true;
