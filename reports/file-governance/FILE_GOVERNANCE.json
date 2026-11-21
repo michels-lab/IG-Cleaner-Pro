@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 482,
-  "classified_files_total": 478,
-  "docs_content_inspected": 135,
+  "tracked_files_total": 483,
+  "classified_files_total": 479,
+  "docs_content_inspected": 136,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 131,
+    "document": 132,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "b40c2ca0c1128bac61bfd20b1a851e7887426a3c316a70bbf6bfb7534ed942d3",
+  "inventory_fingerprint": "08aa10ee86e59e8bdea1d653a05c1051e42b4eccf425dc629e18941ad41cad2f",
   "evidence_fingerprint": "c4e0e110ebcde6590d81cafb78baf1dedbed9b95c8ee22541f89b256a94c569c",
   "files": [
     {
@@ -1747,6 +1747,13 @@
       "blob": "01672117f9a39353c832f5db88f118498a318169"
     },
     {
+      "path": "docs/audits/2026-11-20-focus-standalone-quota-retry.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "9b637f14cb9d9a0e270e3a7a1599c32e72ac6ba5"
+    },
+    {
       "path": "docs/audits/2026-11-20-windows-startup-recovery.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1765,7 +1772,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "1c069db8c120a2a2673168aa379958d695d758fb"
+      "blob": "f8b5465969b06a214645586f123480c9f9c3b4e0"
     },
     {
       "path": "packaging/chrome-extension/README.md",
@@ -2346,7 +2353,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f941748e802543cc87670602e4b64c0c388bc4bc"
+      "blob": "e5b9f1955c1bd5aea5a4a621adced9c89c1466cf"
     },
     {
       "path": "tests/focus-storage-all-modes.test.cjs",
