@@ -4072,6 +4072,7 @@ function recoverActiveFocusBatch(){
 }
 function reopenActiveFocusBatch(){
   if(!activeFocusBatch||!activeFocusBatch.rows?.length){msg('No hay tanda activa para reabrir.','w');return;}
+  if(!igcEnsurePendingOpenedBeforeTabs(activeFocusBatch))return false;
   activeFocusBatch.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));
   recordRowsHistory(activeFocusBatch.rows,'reopen',{kind:activeFocusBatch.kind,label:activeFocusBatch.label});
   logAction('reopen',`Reabrir tanda activa ${activeFocusBatch.label}: ${activeFocusBatch.rows.length}`,{count:activeFocusBatch.rows.length,source:activeFocusBatch.kind});
@@ -10849,11 +10850,12 @@ function resetDoubleCheckCycle(show=true){
 </select>
 </div>
 </div><div class="safe-confirm-preview" id="safeConfirmPreview"><b>Confirmación segura:</b> revisa las pestañas antes de guardar. Nada se marca hasta que confirmes.</div><div class="safe-focus-actions">
-<button class="btn primary" onclick="confirmSafeFocusReviewed()">✅ Sí pude revisar / guardar decisión</button>
-<button class="btn" onclick="reopenSafeFocusBatch()">🔁 Volver a abrir perfiles</button>
-<button class="btn orange" onclick="markSafeFocusNotReviewed()">❌ No pude revisar todavía</button>
-<button class="btn orange" onclick="snoozeSafeFocusBatch(7)">⏸ Pausar 7 días</button>
-<button class="btn orange" onclick="snoozeSafeFocusBatch(30)">⏸ Pausar 30 días</button>
+<button class="btn primary" id="safeFocusConfirmBtn" onclick="confirmSafeFocusReviewed()">✅ Sí pude revisar / guardar decisión</button>
+<button class="btn" id="safeFocusReopenBtn" onclick="reopenSafeFocusBatch()">🔁 Volver a abrir perfiles</button>
+<button class="btn primary" id="safeFocusRetryStorageBtn" onclick="igcRetryFailedFocus()" style="display:none">↻ Reintentar guardar y abrir</button>
+<button class="btn orange" id="safeFocusNotReviewedBtn" onclick="markSafeFocusNotReviewed()">❌ No pude revisar todavía</button>
+<button class="btn orange" id="safeFocusSnooze7Btn" onclick="snoozeSafeFocusBatch(7)">⏸ Pausar 7 días</button>
+<button class="btn orange" id="safeFocusSnooze30Btn" onclick="snoozeSafeFocusBatch(30)">⏸ Pausar 30 días</button>
 <button class="btn red" onclick="closeSafeFocusPopup()">Cerrar sin marcar</button>
 </div></div><div class="safe-focus-list" id="safeFocusList"></div></div></div>
 </div>
@@ -10867,7 +10869,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
   const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
-  const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='followers'?`Se abrieron ${rows.length} followers. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='mutual'?`Se abrieron ${rows.length} followers mutuos. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:`Se abrieron ${rows.length} seguidos que no te siguen. Revisa las pestañas de Instagram y regresa aquí para confirmar.`));
+  const text=`Tanda guardada de ${rows.length} perfiles. Se solicitarán sus pestañas, pero Chrome puede bloquear algunas o todas. Usa Abrir junto a cada perfil y confirma únicamente lo que revisaste.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
@@ -10876,7 +10878,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small>${esc(focusContextText(r,kind))}</small></div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Reabiertos ${b.rows.length} perfiles de ${b.label}`)}
+function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}if(!igcEnsurePendingOpenedBeforeTabs(b))return false;b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Solicité reabrir ${b.rows.length} pestañas de ${b.label}; Chrome puede bloquearlas`)}
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;
   if(!b||!b.rows||!b.rows.length){
@@ -11116,14 +11118,62 @@ function closeFocusDialogAfterDecision(){
   });
 }
 
-function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
+// A rejected browser write must be recoverable from the SAME, account-bound
+// preview without ever marking a target reviewed or requesting Chrome tabs.
+// This transient preview is intentionally not claimed as persisted on disk.
+let igcFailedFocusBatch=null;
+function igcEnsurePendingOpenedBeforeTabs(batch){
+  if(batch?.kind!=='pending')return true;
+  const beforeOpened=new Set(pendingOpenedSet);
+  try{
+    (batch.rows||[]).forEach(row=>pendingOpenedSet.add(row.username));
+    savePendingOpened();
+    return true;
+  }catch(error){
+    // Both initial Focus and manual reopen must refuse to request Chrome
+    // tabs if Pending's secondary ledger cannot be made durable.
+    pendingOpenedSet.clear();
+    for(const username of beforeOpened)pendingOpenedSet.add(username);
+    console.error('Pending Focus: opened ledger not durable',error?.name||'StorageError');
+    msg('Pending Focus pausado: registro de aperturas no guardado. Ninguna pestaña solicitada.','w');
+    return false;
+  }
+}
+function igcSetFocusRecoveryUI(failed){
+  for(const id of ['safeFocusReopenBtn','safeFocusNotReviewedBtn','safeFocusSnooze7Btn','safeFocusSnooze30Btn','safeFocusDecision']){
+    const element=document.getElementById(id);
+    if(element)element.disabled=!!failed;
+  }
+  const confirm=document.getElementById('safeFocusConfirmBtn');
+  if(confirm)confirm.disabled=!!failed;
+  const retry=document.getElementById('safeFocusRetryStorageBtn');
+  if(retry){retry.style.display=failed?'block':'none';retry.disabled=!failed;}
+}
+function igcRetryFailedFocus(){
+  const failed=igcFailedFocusBatch;
+  if(!failed||!failed.rows?.length){msg('No hay una tanda fallida para reintentar.','w');return false;}
+  const account=window.IGC_INSTAGRAM_PROFILES?.active||'legacy';
+  if(account!==failed.account||currentMode!==failed.mode){
+    msg('Cambió la cuenta o sección: inicia un Focus nuevo para no mezclar perfiles.','w');
+    return false;
+  }
+  if(activeFocusBatch?.rows?.length){
+    msg('Ya existe una tanda recuperable. Resuélvela antes de intentar otra.','w');
+    return false;
+  }
+  // Only the owner's explicit Retry click can attempt again. Never refill
+  // with other candidates: exactly the originally selected usernames.
+  return openConfirmedFocusRows(failed.rows,failed.label,failed.kind,failed.rows.length,{exact:true});
+}
+function openConfirmedFocusRows(rows,label,kind,requestedCount=null,opts={}){
   const target=Number(requestedCount||0)||0;
   let fallback=[];
   if(kind==='pending' && typeof pendingAnyFocusCandidates==='function')fallback=pendingAnyFocusCandidates();
   else if(kind==='followers' && typeof followersFocusCandidates==='function')fallback=followersFocusCandidates();
   else if(kind==='mutual' && typeof followersMutualAnyFocusCandidates==='function')fallback=followersMutualAnyFocusCandidates();
   else if(kind==='main')fallback=allMainFocusOpenableRows();
-  rows=focusBatchFill(rows||[],fallback,target||((rows||[]).length),'pending'===kind?'pending':kind);
+  if(opts?.exact)rows=(rows||[]).filter(Boolean);
+  else rows=focusBatchFill(rows||[],fallback,target||((rows||[]).length),'pending'===kind?'pending':kind);
 
   if(!rows.length){
     msg('No hay perfiles vivos para abrir en este foco; limpié lo que ya estaba resuelto.','w');
@@ -11134,7 +11184,38 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
 
   // Persist the exact active cohort before requesting any Chrome tabs.
   // The owner must be able to recover Review even if a popup was blocked.
-  if(setActiveFocusBatch(kind,rows,label,'',true)===false)return false;
+  if(setActiveFocusBatch(kind,rows,label,'',true)===false){
+    igcFailedFocusBatch={
+      kind,label,rows:rows.map(safeBatchRow),
+      account:window.IGC_INSTAGRAM_PROFILES?.active||'legacy',mode:currentMode
+    };
+    igcSetFocusRecoveryUI(true);
+    const popup=document.getElementById('safeFocusPopup');
+    if(popup){popup.style.display='flex';popup.classList.add('show');}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Focus pausado · almacenamiento';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='No se guardó la tanda; NO se abrieron perfiles ni se marcaron revisiones. Exporta respaldo, libera espacio sin borrar los datos de InstaCleaner y pulsa Reintentar guardar y abrir.'+
+      (window.igcLastFocusStorageError?' Diagnóstico: '+window.igcLastFocusStorageError:'');
+    const preview=document.getElementById('safeConfirmPreview');
+    if(preview)preview.textContent='Tanda sin guardar: no marques perfiles como revisados. El reintento guarda antes de abrir.';
+    const list=document.getElementById('safeFocusList');
+    if(list)list.innerHTML=rows.map(row=>'<div class="safe-focus-row"><b>@'+esc(row.username)+'</b><span>Sin abrir · guardado fallido</span></div>').join('');
+    msg('Focus pausado por almacenamiento; ninguna pestaña solicitada ni revisión alterada. Usa Reintentar guardar y abrir.','e');
+    return false;
+  }
+  igcFailedFocusBatch=null;
+  igcSetFocusRecoveryUI(false);
+  // Pending additionally tracks profiles selected for opening. Commit that
+  // second ledger BEFORE requesting tabs. Restore RAM if quota refuses it.
+  if(!igcEnsurePendingOpenedBeforeTabs({kind,rows})){
+    try{showSafeFocusPopup(kind,rows,label)}catch{}
+    const title=document.getElementById('safeFocusTitle');
+    if(title)title.textContent='Pending Focus pausado · guardado incompleto';
+    const details=document.getElementById('safeFocusText');
+    if(details)details.textContent='La tanda activa está guardada, pero el registro Pending no. No se solicitaron pestañas ni se marcaron revisiones. Recupérala desde Reviewed o cancélala antes de otra tanda.';
+    return false;
+  }
   try{showSafeFocusPopup(kind,rows,label)}
   catch(error){
     msg('La tanda está guardada, pero no pude mostrar Reviewed. Recupérala antes de abrir perfiles.','w');
@@ -11149,12 +11230,13 @@ function openConfirmedFocusRows(rows,label,kind,requestedCount=null){
   catch(error){msg('La tanda sigue recuperable, pero no pudo guardar el historial de aperturas. Exporta respaldo.','w')}
 
   const expected=target||rows.length;
-  logAction('focus',`${label}: ${rows.length} perfiles abiertos`,{count:rows.length,source:label,requested:expected});
-  forceLiveRefresh(`${label}: ${rows.length}/${expected} perfiles abiertos · confirmación activa`);
+  logAction('focus',`${label}: ${rows.length} pestañas solicitadas (Chrome puede bloquearlas)`,
+            {count:rows.length,source:label,requested:expected});
+  forceLiveRefresh(`${label}: ${rows.length}/${expected} pestañas solicitadas · usa Reviewed para comprobar cada perfil`);
   if(rows.length<expected){
-    msg(`${label}: solo había ${rows.length} perfiles abribles de ${expected}.`, 'w');
+    msg(`${label}: ${rows.length}/${expected} candidatos; comprueba las pestañas y usa los enlaces directos de Reviewed.`, 'w');
   }else{
-    msg(`${label}: ${rows.length} perfiles abiertos.`, 's');
+    msg(`${label}: solicitadas ${rows.length} pestañas. Chrome puede bloquearlas; usa los enlaces de Reviewed.`, 'i');
   }
   return true;
 }
