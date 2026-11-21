@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "03da35a5fc7d7f7e0ae0f8bae74e489cd9c9a36d9ed64f0328425984e73a27d9",
+  "inventory_fingerprint": "7e8d1d923e766df5ccbddbcc6b3a14ed0ad9e7efe1a750209511275291c8b6ef",
   "evidence_fingerprint": "c4e0e110ebcde6590d81cafb78baf1dedbed9b95c8ee22541f89b256a94c569c",
   "files": [
     {
@@ -1590,7 +1590,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "28ae1c19941eec38db644f100ae787e4c3985b52"
+      "blob": "6f0374b2a08663ecc3c1697187dca285bf0383c0"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
