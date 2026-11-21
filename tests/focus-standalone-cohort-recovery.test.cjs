@@ -176,6 +176,43 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
       "Window.open with noopener does not prove that Chrome really opened a tab");
     assert(actions.some(t=>t.includes("pestañas solicitadas")),
       "The audit must count requests, not claim that accounts were visited");
+
+    // Pending has an extra opened/visited-cycle ledger. A quota rejection
+    // there MUST roll back the RAM counter and request NO Chrome tabs, even
+    // though the separate active cohort was already saved successfully.
+    state.clearActiveFocusBatch();
+    const existingPending=["prior.pending"];
+    state.pendingOpenedSet=new Set(existingPending);
+    memory.set("pending-opened",JSON.stringify(existingPending));
+    let rejectPendingLedger=true;
+    state.savePendingOpened=()=>{
+      if(rejectPendingLedger){const e=Error("quota");e.name="QuotaExceededError";throw e}
+      localStorage.setItem("pending-opened",JSON.stringify([...state.pendingOpenedSet]));
+    };
+    state.pendingAnyFocusCandidates=()=>rows;
+    state.focusBatchFill=selected=>selected;
+    const opensBeforePending=opens,historyBefore=memory.get("history");
+    assert.equal(state.openConfirmedFocusRows(rows,"Pending Focus 30","pending",30),false);
+    assert.equal(opens,opensBeforePending,
+      "Pending second-ledger quota rejection cannot request Chrome tabs");
+    assert.equal(ui.get("safeFocusTitle").textContent,
+      "Pending Focus pausado · guardado incompleto");
+    assert.deepEqual([...state.pendingOpenedSet],existingPending,
+      "Pending RAM counter must be rolled back after save refusal");
+    assert.equal(memory.get("pending-opened"),JSON.stringify(existingPending),
+      "Saved Pending previous decisions cannot change when second key fails");
+    assert.equal(state.activeFocusBatch.kind,"pending",
+      "Already-durable Pending cohort stays recoverable for manual review");
+    assert.equal(memory.get("history"),historyBefore,
+      "No phantom open history for rejected Pending cycle");
+    state.clearActiveFocusBatch();
+    rejectPendingLedger=false;
+    assert.equal(state.openConfirmedFocusRows(rows,"Pending Focus 30","pending",30),true);
+    assert.equal(opens,opensBeforePending+30);
+    assert.equal(JSON.parse(memory.get("pending-opened")).length,31);
+    assert(JSON.parse(memory.get("pending-opened")).includes("prior.pending"));
+    assert.equal(memory.get("reviewed"),stableBefore.get("reviewed"),
+      "Pending opening must not mutate Reviewed confirmations");
   }
   console.log("PASS "+entry+": saved v3 Focus, full quota, retry, exact old reviews, durable removal and standalone browser guard");
 }
