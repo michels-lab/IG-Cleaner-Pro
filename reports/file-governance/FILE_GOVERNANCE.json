@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 478,
-  "classified_files_total": 474,
-  "docs_content_inspected": 134,
+  "tracked_files_total": 482,
+  "classified_files_total": 478,
+  "docs_content_inspected": 135,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 130,
+    "document": 131,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 146,
+    "test": 149,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "0f656539f004035379df9b43f90b0950d3096520f30b8ff62d70108cb7c41e6b",
-  "evidence_fingerprint": "4c40250519f1721f43570b3e8dff4146f09d864cad7d9b35d9d763acd66a1478",
+  "inventory_fingerprint": "21e31fb970c762d39b63765e1e7c31a5b86f5cffbadddca2c184d3630af7a6db",
+  "evidence_fingerprint": "c4e0e110ebcde6590d81cafb78baf1dedbed9b95c8ee22541f89b256a94c569c",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "eee2e92c1b5c01fbba174e0d61543fdbebd3d5d4"
+      "blob": "7bbd0fc30e56902f33f71b71068304eae0f4f790"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -113,7 +113,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "93662f728d61f0d5956238dfc5ed948fefcc81d0"
+      "blob": "d088b19ba0d87c932f5e9bbf970a9300038f9ea0"
     },
     {
       "path": ".github/workflows/profile-counts-ci.yml",
@@ -862,7 +862,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "e94d7ec922c00eec2282fbb6459dc5d573a82bcd"
+      "blob": "3ffd69e40563b9ca9613c3cab1a82d8c8bfa9c4c"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1740,6 +1740,13 @@
       "blob": "f48901c88111945e078446ed220fbd3fc4eba773"
     },
     {
+      "path": "docs/audits/2026-11-20-focus-lossless-history-v3.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "01672117f9a39353c832f5db88f118498a318169"
+    },
+    {
       "path": "docs/audits/2026-11-20-windows-startup-recovery.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1758,7 +1765,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "fdbb0aea0a56e79f085d8a9809e32cbd79c871c0"
+      "blob": "1c069db8c120a2a2673168aa379958d695d758fb"
     },
     {
       "path": "packaging/chrome-extension/README.md",
@@ -2314,6 +2321,13 @@
       "blob": "2141101e41aa1fb9a195815f6e73e89c7400478f"
     },
     {
+      "path": "tests/focus-history-v3-parity.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "a2569056a28cec6ccfe43c086403cda42ad5f6ff"
+    },
+    {
       "path": "tests/focus-quota-alternative.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2326,6 +2340,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "45f31ebf64f11259a712ea286b9d4f0116337991"
+    },
+    {
+      "path": "tests/focus-standalone-cohort-recovery.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "f941748e802543cc87670602e4b64c0c388bc4bc"
     },
     {
       "path": "tests/focus-storage-all-modes.test.cjs",
@@ -2774,6 +2795,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "ffe1edc11b99870385cc4468aa0a98e51d30052d"
+    },
+    {
+      "path": "tests/test_file_steward_publish_race.py",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "0c7bdefb182d1284f4034528ab1dfd2e16782457"
     },
     {
       "path": "tests/test_granada_csv_recovery.py",
@@ -3361,11 +3389,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "7ff7e8bfe113aa36",
+      "id": "195ce267322b8d33",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, tests/focus-bulk-durable-confirmation.test.cjs, tests/test_native_desktop.py, tools/ig_cleaner_desktop.py",
+      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
