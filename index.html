@@ -10868,7 +10868,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(kind==='pending')lastPendingBatch=[...(rows||[])];
   if(kind==='mutual')lastMutualBatch=[...(rows||[])];
   const title=kind==='pending'?'Revisión de pending requests':(kind==='followers'?'Revisión de followers':(kind==='mutual'?'Revisión de mutuos':'Revisión de following'));
-  const text=kind==='pending'?`Se abrieron ${rows.length} pending requests. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='followers'?`Se abrieron ${rows.length} followers. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:(kind==='mutual'?`Se abrieron ${rows.length} followers mutuos. Revisa las pestañas de Instagram y regresa aquí para confirmar.`:`Se abrieron ${rows.length} seguidos que no te siguen. Revisa las pestañas de Instagram y regresa aquí para confirmar.`));
+  const text=`Tanda guardada de ${rows.length} perfiles. Se solicitarán sus pestañas, pero Chrome puede bloquear algunas o todas. Usa Abrir junto a cada perfil y confirma únicamente lo que revisaste.`;
   const titleEl=document.getElementById('safeFocusTitle');if(titleEl)titleEl.textContent=title;
   const textEl=document.getElementById('safeFocusText');if(textEl)textEl.textContent=text;
   const decision=document.getElementById('safeFocusDecision');if(decision)decision.value=kind==='pending'?'still_pending':'reviewed';
@@ -10877,7 +10877,7 @@ function showSafeFocusPopup(kind,rows,label){
   if(list)list.innerHTML=(rows||[]).map(r=>`<div class="safe-focus-row"><div class="igc-focus-ident"><span class="igc-avatar">${esc((r.username||'?').slice(0,1).toUpperCase())}</span><div><b>@${esc(r.username)}</b><small>${esc(focusContextText(r,kind))}</small></div></div><a class="link" href="${esc(r.href)}" target="_blank" rel="noopener">Abrir</a></div>`).join('');
   const popup=document.getElementById('safeFocusPopup');if(popup){popup.style.display='flex';popup.classList.add('show');}
 }
-function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Reabiertos ${b.rows.length} perfiles de ${b.label}`)}
+function reopenSafeFocusBatch(){const b=activeExtraReviewBatch;if(!b||!b.rows||!b.rows.length){msg('No hay una tanda activa para reabrir.','w');return}b.rows.forEach(r=>window.open(r.href,'_blank','noopener,noreferrer'));logAction('reopen',`Reabrir ${b.label}: ${b.rows.length} perfiles`,{count:b.rows.length,source:b.kind});forceLiveRefresh(`Solicité reabrir ${b.rows.length} pestañas de ${b.label}; Chrome puede bloquearlas`)}
 function markSafeFocusNotReviewed(){
   const b=activeExtraReviewBatch||activeFocusBatch;
   if(!b||!b.rows||!b.rows.length){
