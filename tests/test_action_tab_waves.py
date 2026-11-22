@@ -130,6 +130,21 @@ class TenTabWaveTests(unittest.TestCase):
                          {"profile_03": "checking"})
         self.assertEqual(len(browser.created), 10)
 
+    def test_final_prefetch_cleanup_preserves_external_closure(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        external = tabs.open("manually_closed")
+        staged = tabs.open("internal_cleanup")
+        tabs.tabs["manually_closed"]["status"] = "prefetched"
+        tabs.tabs["internal_cleanup"]["status"] = "prefetched"
+        external.close()
+        tabs.close_unacted_prefetches()
+        self.assertTrue(staged.is_closed())
+        self.assertEqual(tabs.unresolved_manual_closures(),
+                         {"manually_closed": "prefetched"})
+        self.assertIsNone(tabs.open("manually_closed"))
+        self.assertFalse(tabs.has_open_tabs())
+
     def test_verified_robot_close_does_not_create_false_manual_closure(self):
         browser = FakeChrome()
         tabs = ActionTabPool(browser)
