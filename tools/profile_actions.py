@@ -3713,6 +3713,10 @@ class ActionRobot:
                         if len(stage_names) >= stage_limit:
                             break
                         if action_tabs.open(candidate) is None:
+                            # Chrome may have closed a previously staged tab
+                            # between the first wave check and this allocation.
+                            if stop_for_manual_target_close():
+                                return False
                             break
                         action_tabs.tabs[candidate]["status"] = "queued"
                         stage_names.append(candidate)
@@ -3861,6 +3865,12 @@ class ActionRobot:
                         else:
                             work_page = action_tabs.open(user)
                         if work_page is None:
+                            # A target may be closed during pacing, AFTER the
+                            # loop-entry guard but BEFORE this late allocation.
+                            # Persist its no-replay Review instead of only
+                            # displaying a transient generic tab warning.
+                            if stop_for_manual_target_close():
+                                break
                             with self.lock:
                                 self.status = "review"
                                 self.message = ("Ten Instagram tabs need manual review. "
