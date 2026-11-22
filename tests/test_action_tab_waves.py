@@ -197,7 +197,7 @@ class TenTabWaveTests(unittest.TestCase):
 
     def test_worker_stops_on_closure_before_another_stage_or_action(self):
         source = inspect.getsource(ActionRobot._run)
-        self.assertEqual(source.count("if stop_for_manual_target_close():"), 2)
+        self.assertEqual(source.count("if stop_for_manual_target_close():"), 4)
         self.assertIn("_assert_unchanged_action_journal(path, journal)", source)
         self.assertIn("_atomic_json(path, revised)", source)
         self.assertIn("self.status = \"review\"", source)
