@@ -180,6 +180,10 @@ class ActionTabPool:
         self.context = context
         self.limit = limit
         self.tabs = {}
+        # An owner-closed target is not a free invitation to open that same
+        # username again. Keep a per-job tombstone separate from live tabs;
+        # normal robot-confirmed close() never enters this registry.
+        self.closed_unresolved = {}
 
     def _prune_manually_closed(self):
         for user, item in list(self.tabs.items()):
@@ -191,11 +195,22 @@ class ActionTabPool:
                 item["status"] = "tab_state_unknown"
                 continue
             if closed:
+                self.closed_unresolved.setdefault(user, item["status"])
                 self.tabs.pop(user, None)
+
+    def unresolved_manual_closures(self):
+        """Return owner-closed, unverified targets even after Chrome frees slots.
+
+        A closed Playwright tab is NOT a verified action result. The caller
+        must persist a conservative Review barrier before staging more tabs.
+        """
+        self._prune_manually_closed()
+        return dict(self.closed_unresolved)
 
     def open(self, username):
         self._prune_manually_closed()
-        if username in self.tabs or len(self.tabs) >= self.limit:
+        if (username in self.tabs or username in self.closed_unresolved
+                or len(self.tabs) >= self.limit):
             return None
         target = self.context.new_page()
         self.tabs[username] = {"page": target, "status": "checking",
@@ -1255,6 +1270,35 @@ def _preclick_no_action(entry):
             and (message in (LEGACY_MISSING_RELATIONSHIP_CONTROL,
                              MISSING_RELATIONSHIP_CONTROL)
                  or message.startswith(MISSING_RELATIONSHIP_CONTROL + " Profile layout:")))
+
+
+def _manual_close_review_record(previous):
+    """Create a durable no-replay Review only if there is no possible click.
+
+    An existing WAL, ambiguous/invalid history or confirmed outcome is NEVER
+    rewritten. A historical proven pre-click miss can be superseded by this
+    owner-closed-tab Review while retaining its complete earlier evidence.
+    The returned record is only a proposal; the caller must fsync it before
+    permitting any further target navigation.
+    """
+    if previous is not None and not _preclick_no_action(previous):
+        return None
+    history = []
+    if previous is not None:
+        history = list(previous.get("attempt_history", []))
+        history.append({k: v for k, v in previous.items()
+                        if k != "attempt_history"})
+    return {
+        "status": "review",
+        "origin": "robot",
+        "issue": "owner_closed_target_tab",
+        "message": (
+            "Chrome target tab was closed before a verified result. "
+            "No relationship click intent was recorded for this target; "
+            "manual Review is required, with no automatic reopen or replay."),
+        "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "attempt_history": history,
+    }
 
 
 def _saved_journal_blocks_action(journal, username):
@@ -3608,6 +3652,41 @@ class ActionRobot:
                                             "The previous UI audit remains available.")
                         return
                 stopped_for_review = False
+
+                def stop_for_manual_target_close():
+                    """Fail closed across ten-tab waves AND the next resume.
+
+                    The UI alone must not be the only record: an unverified
+                    closed target needs durable Review before another target
+                    opens. Preserve every possible-click WAL unchanged.
+                    """
+                    nonlocal stopped_for_review
+                    closed = action_tabs.unresolved_manual_closures() if action_tabs else {}
+                    if not closed:
+                        return False
+                    if self.task in ("unfollow", "cancel") and not self.review_only:
+                        for closed_user in closed:
+                            proposed = _manual_close_review_record(journal.get(closed_user))
+                            if proposed is None:
+                                continue
+                            _assert_unchanged_action_journal(path, journal)
+                            revised = dict(journal)
+                            revised[closed_user] = proposed
+                            _atomic_json(path, revised)
+                            journal.clear()
+                            journal.update(revised)
+                            self._discard_stale_recheck(closed_user)
+                    with self.lock:
+                        self.status = "review"
+                        self.message = (
+                            "Chrome tab closed before an outcome was verified. "
+                            "No automatic reopening or relationship click replay: @" +
+                            ", @".join(sorted(closed)[:5]) +
+                            ". Check the saved Review history before a new batch.")
+                        self.open_review_tabs = action_tabs.overview()
+                    stopped_for_review = True
+                    return True
+
                 def stage_next_wave(start_index):
                     """Stage one target by default; ten only on explicit selection.
 
@@ -3617,6 +3696,8 @@ class ActionRobot:
                     is processed immediately, BEFORE opening the next user.
                     """
                     nonlocal visits, rests, stopped_for_review
+                    if stop_for_manual_target_close():
+                        return False
                     if not action_tabs or action_tabs.has_open_tabs():
                         return False
                     # Sequential avoids jumping back to the first tab after
@@ -3710,6 +3791,11 @@ class ActionRobot:
                     if self.stop_event.is_set():
                         with self.lock: self.status, self.message = "paused", "Progress saved; select Resume."
                         return
+                    # A tab can disappear between stages or while the owner
+                    # inspects a different target. Do not re-open that same
+                    # username just because Chrome freed a visual slot.
+                    if stop_for_manual_target_close():
+                        break
                     # Safe pre-click login failures are retryable after a user
                     # explicitly starts another batch. Never replay ambiguous
                     # or potentially clicked results automatically.
