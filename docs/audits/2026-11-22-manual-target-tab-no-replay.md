@@ -15,7 +15,7 @@ Date: 2026-11-22. Source-only candidate for #164 and #172. No real Instagram cre
 
 ## Regression
 
-Nine new offline cases are in the existing CI-wired `tests/test_action_tab_waves.py`: sequential and ten-tab closures, proper robot-confirmed closure, durable Review/no-replay, earlier pre-click evidence retained, no overwrite of WAL/invalid evidence, reload and account A/B isolation, transport error retaining tab, worker-stage wiring.
+Ten new offline cases are in the existing CI-wired `tests/test_action_tab_waves.py`: sequential and ten-tab closures, proper robot-confirmed closure, durable Review/no-replay, earlier pre-click evidence retained, no overwrite of WAL/invalid evidence, reload and account A/B isolation, transport error retaining tab, final-prefetch cleanup and worker-stage wiring.
 
 Local tests cannot establish successful Instagram actions, physical Windows window behavior, or installer quality. Keep #164/#172 and physical acceptance OPEN. Latest official stable is v120.80. Do not publish v120.81 until the fixed 12-hit criteria are met.
 
