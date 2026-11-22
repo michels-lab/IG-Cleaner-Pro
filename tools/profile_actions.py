@@ -281,6 +281,10 @@ class ActionTabPool:
         and let the worker hold the session for human inspection. These tabs
         have no relationship click: the original WAL/visit log is untouched.
         """
+        # Observe a manual/browser close BEFORE intentionally cleaning up
+        # remaining prefetch tabs; otherwise the cleanup would forget that
+        # its target was never verified and silently permit a resume.
+        self._prune_manually_closed()
         no_action = {"queued", "prefetching", "prefetched",
                      "prefetch_pending", "loading_profile"}
         for username, item in list(self.tabs.items()):
@@ -4229,6 +4233,10 @@ class ActionRobot:
                 # target is still prefetched in one of the 10 open slots.
                 if action_tabs:
                     action_tabs.close_unacted_prefetches()
+                    # A close can land after the final target loop, while
+                    # cleanup is finishing. Persist a Review barrier even if
+                    # the earlier loop-entry guards never saw this closure.
+                    stop_for_manual_target_close()
                     with self.lock:
                         self.open_review_tabs = action_tabs.overview()
                 # Unverified target tabs must remain visible for manual inspection.
