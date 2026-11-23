@@ -147,8 +147,8 @@
     ],
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/403",
-      "head_sha": "502a299851208a2d9e803b8387484b88798cb8c2",
-      "checks": "latest exact-head 1/10 SUCCESS at recording; CI in progress",
+      "head_sha": "79555c88db0afd22622e3b54a984d2fa3ca422e8",
+      "checks": "ten exact-head jobs restarted; CI in progress after new tests aligned to actual owner-facing error",
       "effect": "Unreadable saved Focus cohort cannot be treated as empty/overwritten; forced clear requires owner approval and successful storage deletion"
     },
     "physical_owner_browser": "pending",
@@ -164,8 +164,8 @@
     "source_candidate_prs": [
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/403",
-        "head_sha": "502a299851208a2d9e803b8387484b88798cb8c2",
-        "checks": "latest exact-head 1/10 SUCCESS at recording; CI in progress",
+        "head_sha": "79555c88db0afd22622e3b54a984d2fa3ca422e8",
+        "checks": "ten exact-head jobs restarted; CI in progress after new tests aligned to actual owner-facing error",
         "effect": "Unreadable saved Focus cohort cannot be treated as empty/overwritten; forced clear requires owner approval and successful storage deletion",
         "state": "open"
       }
