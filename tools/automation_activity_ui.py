@@ -58,7 +58,7 @@ const sessionStart=Date.now(); // This native app page session; reset on reload.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
  ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
  ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
-let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],unavailableTasks=[],lastKey='',lastActive='',batchSequence=0;
+let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],unavailableTasks=[],lastKey='',lastActive='',batchSequence=0,scopeEpoch=0;
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
  if(txt!==undefined)x.textContent=String(txt);return x;
@@ -174,14 +174,15 @@ function summarize(records,id,now,originFilter='all'){
  }
  return out;
 }
-async function readHistory(account,task){
- const a=auth(),request={owner,account,task};
+async function readHistory(account,task,expectedOwner){
+ // Bind the request owner before async I/O; the global owner may switch.
+ const a=auth(),request={owner:expectedOwner,account,task};
  const response=await fetch('http://127.0.0.1:'+a.port+'/api/actions/history',{
    method:'POST',headers:{'X-IGC-Bridge-Token':a.token,'Content-Type':'application/json'},
    body:JSON.stringify(request)
  });
  const data=await response.json();
- if(!response.ok||data.owner!==owner||data.account!==account||data.task!==task||
+ if(!response.ok||data.owner!==expectedOwner||data.account!==account||data.task!==task||
     !Array.isArray(data.history_rows))throw Error('Historial no verificable para la cuenta seleccionada.');
  return data.history_rows.map(x=>({
    task,username:x.username,status:x.status,at:x.at,
@@ -284,13 +285,13 @@ function showBatch(state){
    '. Procesados NO significa acciones confirmadas. Un estado desconocido se muestra como —, nunca como 0.';
 }
 function refreshBatch(account,expectedOwner){
- const request=++batchSequence;
+ const request=++batchSequence,expectedEpoch=scopeEpoch;
  readBatchStatus(account,expectedOwner).then(state=>{
-  if(request!==batchSequence||owner!==expectedOwner||
+  if(request!==batchSequence||scopeEpoch!==expectedEpoch||owner!==expectedOwner||
      $('igcActAccount')?.value!==account||context().owner!==expectedOwner)return;
   showBatch(state);
  }).catch(()=>{
-  if(request!==batchSequence||owner!==expectedOwner||
+  if(request!==batchSequence||scopeEpoch!==expectedEpoch||owner!==expectedOwner||
      $('igcActAccount')?.value!==account||context().owner!==expectedOwner)return;
   showBatch({unavailable:true});
  });
@@ -389,10 +390,11 @@ function render(records){
 async function refresh(){
  const ctx=context(),selector=$('igcActAccount');
  if(!selector)return;
- if(!ctx.owner){latest=[];owner='';lastKey='';lastActive='';dataReady=false;clearValues();
+ if(!ctx.owner){scopeEpoch++;latest=[];owner='';lastKey='';lastActive='';dataReady=false;clearValues();
    selector.replaceChildren();setStatus('Inicia sesión para consultar estadísticas guardadas.');return}
  const signature=ctx.owner+'|'+ctx.accounts.map(a=>a.account+':'+a.handle).join('|');
  if(signature!==lastKey){
+   scopeEpoch++; // Owner, account registry, or handle identity changed.
    const selected=selector.value;
    selector.replaceChildren();
    for(const account of ctx.accounts){
@@ -405,6 +407,7 @@ async function refresh(){
    owner=ctx.owner;registry=ctx.accounts;lastKey=signature;lastActive=ctx.active;
    latest=[];dataReady=false;clearValues();
  }else if(ctx.active!==lastActive){
+   scopeEpoch++; // A -> B -> A must invalidate the first A response.
    // A real Instagram workspace switch invalidates the old account's numbers,
    // even if an earlier network request is still outstanding.
    if(ctx.active)selector.value=ctx.active;
@@ -417,14 +420,14 @@ async function refresh(){
  }
  loading=true;
  const button=$('igcActRefresh');if(button)button.disabled=true;
- const account=selector.value;
+ const account=selector.value,requestEpoch=scopeEpoch;
  try{
    // A single corrupt Cancel Pending WAL must not erase valid Unfollow
    // counts (or vice versa). Require exact owner/account/task for every row.
    const tasks=['unfollow','cancel'];
-   const responses=await Promise.allSettled(tasks.map(task=>readHistory(account,task)));
+   const responses=await Promise.allSettled(tasks.map(task=>readHistory(account,task,ctx.owner)));
    // Reject stale responses after an account selection or login switch.
-   if(owner!==ctx.owner||selector.value!==account||
+   if(scopeEpoch!==requestEpoch||owner!==ctx.owner||selector.value!==account||
       context().owner!==ctx.owner||context().active!==ctx.active)return;
    const failed=tasks.filter((task,i)=>responses[i].status!=='fulfilled');
    if(failed.length===tasks.length)
@@ -440,14 +443,14 @@ async function refresh(){
      ' · origen robot confirmado cuando está registrado. Históricos sin origen: separados.');
  }catch(e){
    // Do not erase another account's metrics after a late failed request.
-   if(owner===ctx.owner&&selector.value===account&&
+   if(scopeEpoch===requestEpoch&&owner===ctx.owner&&selector.value===account&&
       context().owner===ctx.owner&&context().active===ctx.active){
      latest=[];dataReady=false;clearJournalValues();
      setStatus('Sin historial verificable: '+String(e.message||e).slice(0,120));
    }
  }finally{
    // Live batch progress remains available even when history is missing.
-   if(owner===ctx.owner&&selector.value===account&&
+   if(scopeEpoch===requestEpoch&&owner===ctx.owner&&selector.value===account&&
       context().owner===ctx.owner&&context().active===ctx.active){
      refreshBatch(account,ctx.owner);
    }
@@ -477,7 +480,7 @@ function mount(){
  // The page already has a primary Instagram account picker. Do not present
  // a second, conflicting account selector in the History workspace.
  const select=node('select');select.id='igcActAccount';select.hidden=true;
- select.addEventListener('change',()=>{latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
+ select.addEventListener('change',()=>{scopeEpoch++;latest=[];dataReady=false;clearValues();refresh()});panel.append(select);
  const taskLabel=node('label',null,'Tipo de acción');taskLabel.htmlFor='igcActTask';panel.append(taskLabel);
  const task=node('select');task.id='igcActTask';
  for(const [value,label] of [['all','Todas las acciones'],['unfollow','Unfollow'],
