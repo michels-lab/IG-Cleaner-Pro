@@ -112,7 +112,8 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                 robot.targets = ["first.person", "second.person"]
                 attempted, observed = [], []
 
-                def action(_page, username, _task, _expected, **kwargs):
+                def action(_page, username, _task, _expected,
+                           can_act=None, **kwargs):
                     attempted.append(username)
                     # Deliberately omit on_pre_click: no durable WAL exists.
                     return "ok", "Action confirmed in visible Instagram UI."
@@ -144,7 +145,7 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             attempted = []
 
             def action(_page, username, _task, _expected,
-                       on_pre_click=None, **kwargs):
+                       can_act=None, on_pre_click=None, **kwargs):
                 attempted.append(username)
                 on_pre_click("relationship_control")
                 on_pre_click("cancel_request_confirmation")
