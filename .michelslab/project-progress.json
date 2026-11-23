@@ -4,13 +4,13 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
   "as_of": "2026-11-23",
-  "scope": "Ruta P0 hacia v120.81; #404 integrado y Windows History #405 en CI exact-head, aceptación física pendiente",
+  "scope": "Ruta P0 v120.81: #404 & #405 source merged and tested; #406 pre-auth writes in CI; physical acceptance pending",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "PR404 merged; PR405 native History A-B-A in exact-head CI 5/7 SUCCESS and 2 in progress; physical owner milestone 6/12",
-  "last_source_merge": "c0fa2b61f56127d92fd60f57181b59ed8e301d88",
+  "phase": "PR404 10/10 and PR405 7/7 source CI merged; PR406 cloud preauth/write A-B-A test candidate awaiting exact-head CI; physical owner 6/12",
+  "last_source_merge": "c6d3ec4144a5d682589af98f39f4ddc0badbbfc2",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -113,11 +113,11 @@
       ]
     }
   ],
-  "next_step": "Check PR405 exact-head CI for SHA 32a78d9be624d79e0407726b285b30862841d456: Windows Chromium test plus installed app and Android About must pass. Only then safe merge. 6/12 physical acceptance and v120.81 held.",
+  "next_step": "Validate PR406 exact-head 83effbc0fe7009f2f862e515491ef6b1342d79c1 new CI (old SHA failed only auth-yield timing assertion). Merge only when all required checks pass. Physical browser Focus 30/reload A-B-A, two native windows, real Unfollow/Cancel and gated release remain.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-23",
-    "scope": "Merged #404 stale cloud Reviewed/Following/Followers/Pending/Double Check A-B-A response fence; opened #405 Windows History read-only stale-A-B-A journal fence",
+    "scope": "Cloud downloads #404 merged; Windows native History #405 merged; cloud writes pre-auth single owner/account #406 in CI",
     "progress_before": 50,
     "progress_after": 50,
     "verified_milestones": 6,
@@ -157,26 +157,33 @@
         "exact_head_sha": "739b93c4f69abe116584d5091341453fa48713d0",
         "checks": "10/10 SUCCESS",
         "effect": "Reject late asynchronous A-B-A cloud review, list and Double Check responses before any local mutation"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/405",
+        "merged_commit": "c6d3ec4144a5d682589af98f39f4ddc0badbbfc2",
+        "exact_head_sha": "32a78d9be624d79e0407726b285b30862841d456",
+        "checks": "7/7 SUCCESS",
+        "effect": "Native installed Windows History owner/account epoch fence; browser A-B-A regression and 7 required checks"
       }
     ],
     "current_pr": {
-      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/405",
-      "head_sha": "32a78d9be624d79e0407726b285b30862841d456",
-      "checks": "5/7 exact-head SUCCESS, no failures as of last check; Android About visual and integrated Windows pending; earlier head failures fixed obsolete test-signature marker",
-      "effect": "Windows installed History activity/read-only journal scope epoch and immutable requested owner; Chromium A-B-A regression",
+      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/406",
+      "head_sha": "83effbc0fe7009f2f862e515491ef6b1342d79c1",
+      "checks": "Exact-head CI pending; prior Desktop test initial failure due await ensureAuth test timing fixed, rerun underway",
+      "effect": "REST capture BEFORE auth refresh; multi-stage sync, lists, Focus and event chunk writes require same owner/account generation",
       "state": "open"
     },
     "physical_owner_browser": "pending",
     "blocker_issues": [
+      "#360",
       "#371",
       "#377",
-      "#360",
       "#164",
       "#172",
       "#298"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "6/12 50% unchanged; no physical Chrome actions or owner acceptance. PR404 merged, PR405 under exact-head CI."
+    "note": "Source CI and merges do not close six owner-physical milestones; official route 6/12 = 50%. PR406 pending QA and not merged."
   },
   "last_continuation": {
     "date": "2026-11-20",
