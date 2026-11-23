@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 492,
-  "classified_files_total": 488,
-  "docs_content_inspected": 141,
+  "tracked_files_total": 494,
+  "classified_files_total": 490,
+  "docs_content_inspected": 142,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 137,
+    "document": 138,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 153,
+    "test": 154,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "d30b13abcdacbc2c045df1ae7638c61507d1d8e32df8603f5715cc4e3ed72401",
-  "evidence_fingerprint": "fe1139226a441b06c733b947296f8472419ad4a24d5c7f33ce184f18176e633d",
+  "inventory_fingerprint": "c352cd158e69ffaf419b93d77d22d7b353fa7011103a016fc9fabd5a4e024501",
+  "evidence_fingerprint": "081fa41856f40ba905d2f47b9b87b803853aba27f33d05fab344fe83e71054ae",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "201d33e43a2e0ab974d94773409785096ca06ab6"
+      "blob": "b1425731be05e5279e907d4fb429732f19339fd4"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -1796,6 +1796,13 @@
       "blob": "1c5f3752c40fc9bcc9dc03bbb67cc993395135bd"
     },
     {
+      "path": "docs/audits/2026-11-23-windows-history-aba-epoch.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "3d52a1b0d4f6e0a1b24be4a1d9093e959b2744b1"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2034,6 +2041,13 @@
       "blob": "020ea8f63b8ac4617eeb738c0dff1e00bc0e0b46"
     },
     {
+      "path": "tests/automation-activity-aba-browser.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "bc8000731b9daa56cc1ed6df94a05eed18c1080c"
+    },
+    {
       "path": "tests/automation-center-browser.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2045,7 +2059,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b19cd65a535ba825e343dbd5c5f76521d2a057ce"
+      "blob": "f553c1011e16bf6d3803aeff882cf848c7fe1794"
     },
     {
       "path": "tests/automations-cold-start.test.cjs",
@@ -3137,7 +3151,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e73cfe40bd63a6f2beec48bced9f36b318abb8d6"
+      "blob": "3fe754e721a57c25d27844e8281bdcd6fd603613"
     },
     {
       "path": "tools/build_standalone_desktop_html.py",
@@ -3459,11 +3473,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "882c5f9a5b9b640c",
+      "id": "8d0be135f841156e",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json",
+      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, tests/automation-activity-aba-browser.test.cjs, tests/automation-warning-events.test.cjs, tools/automation_activity_ui.py",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
