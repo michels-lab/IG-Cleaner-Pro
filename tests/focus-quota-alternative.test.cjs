@@ -61,15 +61,15 @@ let rejectedQuota;
 assert.throws(()=>ctx.saveActiveFocusBatch(),e=>{rejectedQuota=e;return /quota/i.test(String(e.name))},
  "A truly full browser must fail closed rather than invent a Focus review");
 assert.equal(storage.get("focus-cohort"),previous,"Failed save preserves older durable batch");
-// New failure-path regression must reveal the actual failed v3 payload, not
+// New failure-path regression must reveal the actual failed v4 payload, not
 // only the larger v2 estimation; reporting values/usernames is forbidden.
 const quotaReport=ctx.igcFocusStorageDiagnostic(rejectedQuota,ctx.activeFocusBatch);
 assert.match(quotaReport,/key focus-cohort/,"Report fixed failing storage key");
-assert.match(quotaReport,/format v3/,"Final rejected compact encoding must be identified");
+assert.match(quotaReport,/format v4/,"Final rejected compact encoding must be identified");
 assert.match(quotaReport,/attempted [1-9][0-9]* bytes/,"Report exact attempted write size");
 assert(!quotaReport.includes("member.")&&!quotaReport.includes("https:"),
  "Never export private usernames or stored URLs through the diagnostic");
-assert.equal(ctx.window.igcFocusWriteAttempt.format,"v3");
+assert.equal(ctx.window.igcFocusWriteAttempt.format,"v4");
 errorKind="security";cap=Infinity;
 let rejectedSecurity;
 assert.throws(()=>ctx.saveActiveFocusBatch(),e=>{rejectedSecurity=e;return e.name==="SecurityError"},

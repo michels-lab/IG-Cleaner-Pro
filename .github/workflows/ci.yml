@@ -166,6 +166,7 @@ jobs:
           node tests/focus-storage-all-modes.test.cjs
           node tests/focus-compact-persistence.test.cjs
           node tests/focus-quota-alternative.test.cjs
+          node tests/focus-dictionary-quota-recovery.test.cjs
           node tests/focus-history-compaction.test.cjs
           node tests/focus-history-v3-parity.test.cjs
           node tests/focus-standalone-cohort-recovery.test.cjs
