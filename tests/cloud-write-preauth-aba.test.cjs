@@ -132,6 +132,10 @@ async function testFullSyncPipelineFence(){
  t.ctx.console={error:()=>{}};
  const fn=t.load(productionSync,'({syncNow})').syncNow;
  const operation=fn(false);
+ // Production sync intentionally yields at await ensureAuth() before entering
+ // the next stage; let that microtask run before freezing the deferred fetch.
+ await Promise.resolve();
+ await Promise.resolve();
  assert.equal(stages,1,'Sync reads registered Instagram account first');
  t.switchAccount(B);t.switchAccount(A);wait.resolve(true);
  await operation;
