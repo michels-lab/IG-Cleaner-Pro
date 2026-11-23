@@ -180,6 +180,7 @@ jobs:
           node tests/cloud-review-scope-cache.test.cjs
           node tests/cloud-review-storage-rollback.test.cjs
           node tests/cloud-review-pull-account-aba.test.cjs
+          node tests/cloud-stale-list-cycle-aba.test.cjs
           node tests/cloud-review-pagination-9896.test.cjs
           node tests/cloud-audit-pagination.test.cjs
           node tests/review-current-vs-historical.test.cjs
