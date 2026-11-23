@@ -4072,6 +4072,25 @@ class ActionRobot:
                         result = "review"
                         if not details.startswith("Pending verification:"):
                             details = "Pending verification: " + details
+                    # A relationship transport can report a stale success
+                    # after the owner or browser closed the exact target tab.
+                    # Even a durable click intent proves only an attempted
+                    # mutation, not the final state of a vanished page.
+                    closed_before_success_commit = False
+                    if (not self.review_only and self.task in ("unfollow", "cancel")
+                            and result == "ok"):
+                        try:
+                            closed_before_success_commit = work_page.is_closed()
+                        except Exception:
+                            # A broken Chrome transport is not positive proof.
+                            closed_before_success_commit = True
+                        if closed_before_success_commit:
+                            result = "review"
+                            details = (
+                                "Pending verification: the target Chrome tab "
+                                "closed before the verified result was committed. "
+                                "Existing possible-click evidence is preserved; "
+                                "never claim OK or repeat the action.")
                     # A target showing Follow is not evidence THIS job
                     # performed Unfollow/Cancel. Require the current exact
                     # durable click WAL before accepting any claimed OK.
@@ -4096,6 +4115,8 @@ class ActionRobot:
                     # from the account-scoped no-replay journal.
                     issue = (
                         "success_without_current_click_intent" if success_without_wal
+                        else "target_tab_closed_before_success_commit"
+                        if closed_before_success_commit
                         else _action_issue(self.task, result, details)
                         if result != "skipped" else "")
                     if self.review_only:
