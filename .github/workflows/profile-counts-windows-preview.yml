@@ -63,6 +63,7 @@ on:
       - 'tools/windows_workspace_picker.py'
       - 'tests/test_windows_single_window_layout.py'
       - 'tests/automation-center-browser.test.cjs'
+      - 'tests/automation-activity-aba-browser.test.cjs'
       - 'tests/dual-workspace-sidebar-browser.test.cjs'
       - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
@@ -161,6 +162,7 @@ on:
       - 'tools/windows_workspace_picker.py'
       - 'tests/test_windows_single_window_layout.py'
       - 'tests/automation-center-browser.test.cjs'
+      - 'tests/automation-activity-aba-browser.test.cjs'
       - 'tests/dual-workspace-sidebar-browser.test.cjs'
       - 'tests/test_dual_new_batch_preflight.py'
       - 'tests/test_native_desktop.py'
@@ -424,6 +426,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Native single-account History artifact preparation failed.' }
           node tests/automation-center-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro-Native.html"
           if ($LASTEXITCODE -ne 0) { throw 'Native four-section Automations and History rendered QA failed.' }
+          node tests/automation-activity-aba-browser.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Windows History A-B-A stale journal or owner scope regression failed.' }
           node tests/live-relationships-browser.test.cjs "artifacts/profile-counts-preview/IG-Cleaner-Pro.html"
           if ($LASTEXITCODE -ne 0) { throw 'Windows live relationship UI test failed.' }
       - name: Build Windows executable with embedded Playwright driver
