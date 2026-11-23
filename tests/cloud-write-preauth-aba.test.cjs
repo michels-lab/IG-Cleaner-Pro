@@ -10,7 +10,8 @@ function fragment(start,end){
  return src.slice(a,b);
 }
 const productionOwner=fragment('function sessionOwner(session){','function expiresAtSeconds(session){');
-const productionScopeAndRest=fragment('function igcCaptureSyncScope(){','const IGC_SYNC_TABLES=');
+const productionScope=fragment('function igcCaptureSyncScope(){','async function rest(path,opt={}){');
+const productionRest=fragment('async function rest(path,opt={}){','const IGC_SYNC_TABLES=');
 const productionPushEvents=fragment('async function pushEvents(){','async function pullEvents(){');
 const productionPushLists=fragment('async function pushListSnapshots(){','async function pullListSnapshots(){');
 const productionFocus=fragment('async function pushPreparedBatches(){','function normalizeLegacyReviewState(){');
@@ -30,7 +31,7 @@ function setup(){
    jfetch:async(path,opt)=>{calls.push({type:'http',account:reg.active,path,body:opt?.body});return []},
    ensureAuth:async()=>true,refresh:async()=>true,console};
  const load=(code,expression)=>vm.runInNewContext(
-   productionOwner+'\n'+productionScopeAndRest+'\n'+code+'\n'+expression,
+   productionOwner+'\n'+productionScope+'\n'+(code||productionRest)+'\n'+expression,
    {...ctx,sessionOwner:undefined}, {timeout:3000});
  // By default, tests exercise exactly the production sessionOwner helper.
  const rest=load('','({rest,igcCaptureSyncScope})');
