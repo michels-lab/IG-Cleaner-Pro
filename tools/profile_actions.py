@@ -1206,6 +1206,53 @@ def _invalid_saved_action_record(record):
             and intent.get("outcome_recorded") is not True)
 
 
+def _success_has_current_click_intent(record, task, batch_id):
+    """A verified Unfollow/Cancel OK requires this exact durable click intent.
+
+    The visible final Follow state is necessary, but never enough on its own:
+    without the matching WAL there is no proof that the approved current job
+    actually sent a relationship-changing click. Existing no-action outcomes
+    use separate already_not_* states, not OK.
+    """
+    allowed = {
+        "unfollow": {"relationship_control", "unfollow_menu",
+                     "private_unfollow_confirmation"},
+        "cancel": {"relationship_control", "cancel_request_confirmation"},
+    }
+    if task not in allowed or not isinstance(record, dict):
+        return False
+    intent = record.get("click_intent")
+    if not isinstance(intent, dict) or not isinstance(batch_id, str) or not batch_id:
+        return False
+    phases = intent.get("phases")
+    return (
+        intent.get("batch_id") == batch_id and
+        intent.get("task") == task and
+        isinstance(phases, list) and
+        bool(phases) and
+        phases[0] == "relationship_control" and
+        all(isinstance(phase, str) for phase in phases) and
+        len(phases) == len(set(phases)) and
+        all(phase in allowed[task] for phase in phases) and
+        intent.get("phase") == phases[-1] and
+        intent.get("outcome_recorded") is not True
+    )
+
+
+def _commit_action_result(path, journal, username, record):
+    """Persist an action outcome before publishing it to the worker's RAM.
+
+    A failed fsync/replace cannot leave a fictional OK in memory to be
+    carried into a later attempt. The prior WAL remains the source of truth.
+    """
+    _assert_unchanged_action_journal(path, journal)
+    revised = dict(journal)
+    revised[username] = record
+    _atomic_json(path, revised)
+    journal.clear()
+    journal.update(revised)
+
+
 def _public_action_record(record):
     """Non-destructive public status, including legacy ambiguous unavailable."""
     if not _invalid_saved_action_record(record):
@@ -4025,10 +4072,53 @@ class ActionRobot:
                         result = "review"
                         if not details.startswith("Pending verification:"):
                             details = "Pending verification: " + details
+                    # A relationship transport can report a stale success
+                    # after the owner or browser closed the exact target tab.
+                    # Even a durable click intent proves only an attempted
+                    # mutation, not the final state of a vanished page.
+                    closed_before_success_commit = False
+                    if (not self.review_only and self.task in ("unfollow", "cancel")
+                            and result == "ok"):
+                        try:
+                            closed_before_success_commit = work_page.is_closed()
+                        except Exception:
+                            # A broken Chrome transport is not positive proof.
+                            closed_before_success_commit = True
+                        if closed_before_success_commit:
+                            result = "review"
+                            details = (
+                                "Pending verification: the target Chrome tab "
+                                "closed before the verified result was committed. "
+                                "Existing possible-click evidence is preserved; "
+                                "never claim OK or repeat the action.")
+                    # A target showing Follow is not evidence THIS job
+                    # performed Unfollow/Cancel. Require the current exact
+                    # durable click WAL before accepting any claimed OK.
+                    # Missing proof could conceal an interrupted click: block
+                    # the rest of this batch, retain the target for Review
+                    # and never auto-retry the relationship mutation.
+                    success_without_wal = (
+                        not self.review_only
+                        and self.task in ("unfollow", "cancel")
+                        and result == "ok"
+                        and not _success_has_current_click_intent(
+                            journal.get(user), self.task, self.active_batch_id))
+                    if success_without_wal:
+                        result = "review"
+                        details = (
+                            "Pending verification: Chrome reported success but "
+                            "the exact current batch click-intent journal is missing "
+                            "or does not match. Outcome unknown; no automatic "
+                            "replay or next relationship action.")
                     # Persist the result BEFORE closing any confirmed tab.
                     # A browser close failure must never erase a clicked action
                     # from the account-scoped no-replay journal.
-                    issue = _action_issue(self.task, result, details) if result != "skipped" else ""
+                    issue = (
+                        "success_without_current_click_intent" if success_without_wal
+                        else "target_tab_closed_before_success_commit"
+                        if closed_before_success_commit
+                        else _action_issue(self.task, result, details)
+                        if result != "skipped" else "")
                     if self.review_only:
                         self._save_recheck_result(user, result, details)
                     elif result != "skipped":
@@ -4042,7 +4132,7 @@ class ActionRobot:
                         if previous_attempt.get("status"):
                             history.append({k: v for k, v in previous_attempt.items()
                                             if k != "attempt_history"})
-                        journal[user] = {"status": result, "message": details,
+                        revised_outcome = {"status": result, "message": details,
                                          # Only this verified worker can assign robot origin.
                                          "origin": "robot",
                                          "audit_relation": relation, "issue": issue,
@@ -4058,7 +4148,7 @@ class ActionRobot:
                                                    ("ok", "already_not_following",
                                                     "already_not_requested"),
                                             }} if previous_attempt.get("click_intent") else {})}
-                        _atomic_json(path, journal)
+                        _commit_action_result(path, journal, user, revised_outcome)
                         self._discard_stale_recheck(user)
                     # A PROFILE-scoped anomaly must not derail every later
                     # unrelated target. The result and any first-click intent
@@ -4076,6 +4166,8 @@ class ActionRobot:
                         and isinstance(recorded, dict)
                         and not _invalid_saved_action_record(recorded)
                         and recorded.get("status") == result
+                        and not success_without_wal
+                        and not closed_before_success_commit
                         and ((self.task == "cancel" and result == "review")
                              or (self.task == "unfollow"
                                  and result in ("review", "error")

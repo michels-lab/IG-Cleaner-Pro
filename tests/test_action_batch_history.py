@@ -663,6 +663,8 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 calls.append(username)
                 if username != "next.eligible":
                     return "blocked", "The target profile area could not be found."
+                # A true OK must represent an owner-approved, journaled click.
+                kwargs["on_pre_click"]("relationship_control")
                 robot.stop_event.set()
                 return "ok", "Action confirmed: Follow."
             fake_pw = types.SimpleNamespace(chromium=types.SimpleNamespace(
@@ -762,6 +764,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 if username == "uncertain.first":
                     kwargs["on_pre_click"]("relationship_control")
                     return "review", "The profile does not show Following."
+                kwargs["on_pre_click"]("relationship_control")
                 robot.stop_event.set()
                 return "ok", "Action confirmed: Follow."
 
@@ -843,6 +846,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
             robot.handle, robot.task = "owner.name", "unfollow"
             robot.targets = ["wave." + str(i) for i in range(40)]
             robot.tab_flow = "ten_tabs"  # four complete explicit legacy waves
+            robot.active_batch_id = "forty-owner-approved-unfollow-wave"
             robot.rest_minutes, robot.min_delay_seconds = 0, 0
             observations = []
             def real_verified_action(page, username, *_args, **_kwargs):
@@ -850,6 +854,7 @@ class ActionBatchHistoryTests(unittest.TestCase):
                 live=[p.url for p in browser.pages[1:] if not p.is_closed()]
                 observations.append((username, live))
                 self.assertIn("https://www.instagram.com/"+username+"/", live)
+                _kwargs["on_pre_click"]("relationship_control")
                 return "ok", "Action confirmed: visible Follow after Unfollow."
             fake_playwright = types.SimpleNamespace(chromium=types.SimpleNamespace(
                 launch_persistent_context=lambda **kwargs: browser))
