@@ -103,6 +103,62 @@ class CancelWarningContinuesBatch(unittest.TestCase):
             robot._run()
         return chrome
 
+    def test_unfollow_and_cancel_never_report_ok_without_current_wal(self):
+        """A surprising OK from any transport cannot fabricate a click."""
+        for task in ("unfollow", "cancel"):
+            with self.subTest(task=task), tempfile.TemporaryDirectory() as folder:
+                robot = self.new_robot(folder)
+                robot.task = task
+                robot.targets = ["first.person", "second.person"]
+                attempted, observed = [], []
+
+                def action(_page, username, _task, _expected, **kwargs):
+                    attempted.append(username)
+                    # Deliberately omit on_pre_click: no durable WAL exists.
+                    return "ok", "Action confirmed in visible Instagram UI."
+
+                def finish_review(_seconds):
+                    observed.append((robot.status, robot.message))
+                    robot.stop_event.set()
+                    return True
+
+                robot.stop_event.wait = finish_review
+                self.run_offline(robot, action)
+                self.assertEqual(attempted, ["first.person"])
+                self.assertTrue(observed)
+                self.assertEqual(observed[0][0], "review")
+                self.assertIn("no automatic", observed[0][1].lower())
+                saved = _read_json(robot._base(), {})
+                self.assertEqual(saved["first.person"]["status"], "review")
+                self.assertEqual(saved["first.person"]["issue"],
+                                 "success_without_current_click_intent")
+                self.assertNotIn("click_intent", saved["first.person"])
+                self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
+                self.assertNotIn("second.person", saved)
+
+    def test_real_worker_approved_click_wal_still_allows_verified_ok(self):
+        """Valid current-batch intent can finish OK without invented success."""
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.new_robot(folder)
+            robot.targets = ["first.person"]
+            attempted = []
+
+            def action(_page, username, _task, _expected,
+                       on_pre_click=None, **kwargs):
+                attempted.append(username)
+                on_pre_click("relationship_control")
+                on_pre_click("cancel_request_confirmation")
+                return "ok", "Cancel Request confirmed after read-only refresh."
+
+            self.run_offline(robot, action)
+            saved = _read_json(robot._base(), {})
+            self.assertEqual(attempted, ["first.person"])
+            self.assertEqual(saved["first.person"]["status"], "ok")
+            self.assertEqual(saved["first.person"]["click_intent"]["batch_id"],
+                             robot.active_batch_id)
+            self.assertEqual(saved["first.person"]["click_intent"]["task"], "cancel")
+            self.assertTrue(saved["first.person"]["click_intent"]["outcome_recorded"])
+
     def test_real_worker_review_when_unused_chrome_tab_refuses_to_close(self):
         """An unclosed prefetch cannot vanish or produce a fake completed batch."""
         with tempfile.TemporaryDirectory() as folder:
