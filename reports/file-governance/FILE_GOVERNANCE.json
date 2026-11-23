@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 486,
-  "classified_files_total": 482,
-  "docs_content_inspected": 138,
+  "tracked_files_total": 487,
+  "classified_files_total": 483,
+  "docs_content_inspected": 139,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 134,
+    "document": 135,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "be38756e2b866e1ee5b9bf36509273593af6b346980bf40621a5f1cd962d5801",
-  "evidence_fingerprint": "ca5d1d6bb95eeb17b972149b029f6eac0c7c9f2f8210626ee73010705a5c4300",
+  "inventory_fingerprint": "13f800972eaf7755dde6d3a2b58b5e73c8e73ca2e5cdb9487f5aff02fe697ffc",
+  "evidence_fingerprint": "f0cfe7dd9009ae3ec5c0cc971bd87eca36ef495808d659acc4f3f443d21aaf47",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1768,6 +1768,13 @@
       "blob": "9e8be9c799c21deceade3b9f925dd92b816fceac"
     },
     {
+      "path": "docs/audits/2026-11-23-action-success-wal-atomic-result.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "ec3808d12819a94763ca855f9aecbc2ef26dcd81"
+    },
+    {
       "path": "docs/audits/2026-11-23-focus-dictionary-quota-v4.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -2570,7 +2577,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "710e525faf0ba5620ab95a8b93d435403ab09d07"
+      "blob": "81f180452c10048e7282be3c7661f02735b92343"
     },
     {
       "path": "tests/test_action_cancel_batch_admission.py",
@@ -2654,7 +2661,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7ed61640a5a1ae905e6319f7e99b8d8f444c27c6"
+      "blob": "dde1d02f63439cfc0d0dbbb64629c04d49f6e3e2"
     },
     {
       "path": "tests/test_android_focus_account_transition.py",
@@ -2717,7 +2724,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "e71b057e01bedca3ac53cd11c93849ca79a254e4"
+      "blob": "f249d4dd49c69d1cac37e3784d723aa0a64244ce"
     },
     {
       "path": "tests/test_desktop_visual_artifact_resolution.py",
@@ -3242,7 +3249,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "c80f1821c48201167426e52871d5c8276b4213eb"
+      "blob": "4f0e86e26d22ca042bda5663656961012bca839b"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3417,11 +3424,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "f7dbefd88d09c387",
+      "id": "ca8da69c06686219",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "15 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
+      "observation": "18 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
