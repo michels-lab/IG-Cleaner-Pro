@@ -3804,7 +3804,8 @@ const IGC_FOCUS_ROW_FIELDS=['username','href','name','relation','riskScore','ris
 function igcEncodeActiveFocusBatch(batch){
   if(!batch)return null;
   return {...batch,storageFormat:2,
-    rows:(batch.rows||[]).map(row=>IGC_FOCUS_ROW_FIELDS.map(field=>row[field]===undefined?null:row[field]))};
+    rows:(batch.rows||[]).map(row=>IGC_FOCUS_ROW_FIELDS.map(field=>
+      row[field]===undefined?null:(field==='href'&&row[field]===null?{_igcExplicitNullHref:1}:row[field])))};
 }
 // A second lossless encoding is attempted ONLY after the normal v2 save is
 // rejected for quota. A canonical URL is represented by an empty field, and
@@ -3909,7 +3910,14 @@ function igcDecodeActiveFocusBatch(saved){
   return {...cohort,rows:saved.rows.map(values=>{
     if(!Array.isArray(values)||values.length!==IGC_FOCUS_ROW_FIELDS.length)throw Error('Invalid compact Focus row');
     const row={};
-    IGC_FOCUS_ROW_FIELDS.forEach((field,index)=>{if(values[index]!==null&&values[index]!==undefined)row[field]=values[index]});
+    IGC_FOCUS_ROW_FIELDS.forEach((field,index)=>{
+      const value=values[index];
+      // Legacy v2 null meant absent. Newly saved explicit-null href has its
+      // own tagged value so old v2 records still decode unchanged.
+      if(field==='href'&&value&&typeof value==='object'&&!Array.isArray(value)&&
+         Object.keys(value).length===1&&value._igcExplicitNullHref===1)row[field]=null;
+      else if(value!==null&&value!==undefined)row[field]=value;
+    });
     if(typeof row.username!=='string'||!row.username)throw Error('Invalid Focus username');
     return safeBatchRow(row);
   })};
