@@ -1,3 +1,12 @@
+## 2026-11-23 — GRANADA #405 integrada y #406 P0 nueva carrera de escritura
+
+- [#405](https://github.com/michels-lab/IG-Cleaner-Pro/pull/405) MERGED `c6d3ec4144a5d682589af98f39f4ddc0badbbfc2` después de **7/7 CI SUCCESS exact-head** `32a78d9be624d79e0407726b285b30862841d456`. Windows History read-only no publica datos de un request A tras A→B→A; prueba Chromium ejecuta mismo script del producto.
+- [#406](https://github.com/michels-lab/IG-Cleaner-Pro/pull/406) abierto SHA `711ace0054be8376b78b5cbd76b4c490b4e0b247`: causa confirmada en el HTML Desktop, `rest()` capturaba contexto DESPUÉS de `await ensureAuth()`, exponiendo subidas a otro `account_key` en cambios rápidos de cuenta. Se agregó guard propietario/IG/generación al entrar; protección de `syncNow` entre todas las etapas, y de `pushEvents`, `pushListSnapshots` y `pushPreparedBatches` entre páginas/metadata.
+- Regresión de funciones reales `tests/cloud-write-preauth-aba.test.cjs` (A→B→A, cambio de dueño, token renovado válido, 501 audit, 550 Focus, listas y pipeline) integrada a CI. Dos primeras corridas del Desktop contract fallaron en la **aserción de tiempo del test** `Sync reads registered Instagram account first` (no esperó microtask de Auth VM), no en fuentes de Instagram. Tercer HEAD usa `setImmediate` acotado y diagnóstico del error real; **CI pendiente**. No degradar guard o falsificar QA. [Auditoría](docs/audits/2026-11-23-cloud-write-preauth-account-fence.md).
+- Ruta de aceptación **50% → 50% (6/12)**: #371/#360/#377/#164/#172 físicos todavía abiertos; v120.80 publicada, v120.81 retenida, sin acciones reales ni release nuevo. Master y Main Repo actualizados con evidencia de #405 y estado candidato de #406.
+
+---
+
 ## 2026-11-23 — Granada #404 integrado; #405 Windows History candidato (6/12 = 50%)
 
 - [#404](https://github.com/michels-lab/IG-Cleaner-Pro/pull/404) fuente cloud A→B→A **MERGED** `c0fa2b61f56127d92fd60f57181b59ed8e301d88` tras 10/10 exact-head SUCCESS. No confundir con prueba física.
