@@ -9,7 +9,7 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "PR404 10/10 and PR405 7/7 source CI merged; PR406 cloud preauth/write A-B-A test candidate awaiting exact-head CI; physical owner 6/12",
+  "phase": "PR404+405 merged; PR406 latest exact-head Desktop & offline SUCCESS, remaining CI running; physical 6/12",
   "last_source_merge": "c6d3ec4144a5d682589af98f39f4ddc0badbbfc2",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
@@ -113,7 +113,7 @@
       ]
     }
   ],
-  "next_step": "Validate PR406 exact-head 83effbc0fe7009f2f862e515491ef6b1342d79c1 new CI (old SHA failed only auth-yield timing assertion). Merge only when all required checks pass. Physical browser Focus 30/reload A-B-A, two native windows, real Unfollow/Cancel and gated release remain.",
+  "next_step": "PR406 HEAD be7c41a2c5ab02a087806cbd9c3f15dc52e85af2: verify all applicable checks including integrated Windows and Android before merge. Source QA not owner browser physical acceptance. Then test real Focus30, two Windows profiles and Unfollow/Cancel, stable v120.81 hold.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-23",
@@ -168,8 +168,8 @@
     ],
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/406",
-      "head_sha": "83effbc0fe7009f2f862e515491ef6b1342d79c1",
-      "checks": "Exact-head CI pending; prior Desktop test initial failure due await ensureAuth test timing fixed, rerun underway",
+      "head_sha": "be7c41a2c5ab02a087806cbd9c3f15dc52e85af2",
+      "checks": "2/9 exact-head SUCCESS (Desktop local-app contract and offline-contract); seven in-progress, no failures; earlier stale fixture lacked new production helper, corrected",
       "effect": "REST capture BEFORE auth refresh; multi-stage sync, lists, Focus and event chunk writes require same owner/account generation",
       "state": "open"
     },
