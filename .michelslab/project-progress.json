@@ -9,7 +9,7 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "pr400_merged_pr401_window_ci_pending_pr402_focus_v4_ci_pending_physical_acceptance_pending",
+  "phase": "PR401 fixture WAL corrected renewed CI; PR402 Focus v4 codec+v2 explicit null fixed 6of10 CI; no owner acceptance",
   "last_source_merge": "360c5745bccd658a7616f6141c6c30bf3b252aa7",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
@@ -146,21 +146,21 @@
       "#172"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "6/12 remain the exact fixed P0 owner acceptance criteria, 50 percent. PR402 source smoke does not close real browser Focus quota #371. No release v120.81.",
+    "note": "Source changes are not user physical acceptance or stable release; 6/12 fixed P0 milestones = 50%, v120.80 remains public and v120.81 stays held.",
     "source_candidate_prs": [
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/401",
-        "head_sha": "e8a0e5942b63a7182ca063303ddab44e9a1d0311",
+        "head_sha": "022657db04808908402ca41b0b628ea83eb7ac53",
         "state": "open",
-        "last_certified": "5/7 source exact-head checks green; Desktop and Windows in progress",
-        "effect": "Win robot success requires same-batch WAL, durable outcome and live target tab"
+        "last_certified": "7 CI checks newly running; old five-success state does not certify new head",
+        "effect": "Win Unfollow/Cancel requires same-batch WAL, current tab, durable result; 40-target offline fixture now journals each claimed real-click"
       },
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/402",
-        "head_sha": "4a1e3dcc96a5068f46210f2204304b32763b958d",
+        "head_sha": "dcf80fc24a5927dfab3ad0e794db77de48b30369",
         "state": "open",
-        "last_certified": "10 jobs initially queued; separate source codec smoke passed",
-        "effect": "Lossless v4 Focus batch storage fallback on quota in both HTML entrypoints; 30.2 percent smaller than v3 synthetic fixture"
+        "last_certified": "6/10 exact-head CI green at status cut, including Desktop and offline; integrated Windows pending",
+        "effect": "Focus v4 lossless quota fallback on both HTMLs and v2 explicit null href preservation with legacy compatibility"
       }
     ]
   },
