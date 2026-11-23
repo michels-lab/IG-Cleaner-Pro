@@ -9,8 +9,8 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "pr400_pr401_pr402_merged_and_ci_validated_pr403_corrupt_focus_guard_source_ci_pending_physical_acceptance_open",
-  "last_source_merge": "0343bea327585c98038e861e338cdd749b6aed91",
+  "phase": "P0 PR400/401/402/403 source merged verified CI; cloud A-B-A source PR404 in CI; owner physical acceptance 6of12",
+  "last_source_merge": "c39942be25b6528eb386c8dd3ca0f4e44735b654",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -113,11 +113,11 @@
       ]
     }
   ],
-  "next_step": "Validate exact #403 CI; merge only after all 10 successful checks; then seek owner physical browser Focus 30/counters and actual Windows A/B and Instagram Unfollow/Cancel, before separately authorized release v120.81.",
+  "next_step": "Check exact PR404 CI, repair failed test if needed, merge on all required successes; then physical owner Focus 30/reload A-B-A, Windows 2-window + real Unfollow/Cancel acceptance for official release.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-23",
-    "scope": "Windows verified-click no-replay PR400/401 merged; Focus quota v4 PR402 merged; unreadable cohort protection PR403 source in CI",
+    "scope": "Confirmed merged Focus protected cohort #403; cloud stale cross-account Reviewed, lists, Double Check reads guarded in PR404",
     "progress_before": 50,
     "progress_after": 50,
     "verified_milestones": 6,
@@ -143,13 +143,20 @@
         "exact_head_sha": "dcf80fc24a5927dfab3ad0e794db77de48b30369",
         "checks": "10/10 SUCCESS",
         "effect": "Focus quota recovery v4 lossless dictionary in Desktop + standalone and correct null/absent URL preservation"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/403",
+        "merged_commit": "c39942be25b6528eb386c8dd3ca0f4e44735b654",
+        "exact_head_sha": "79555c88db0afd22622e3b54a984d2fa3ca422e8",
+        "checks": "10/10 SUCCESS",
+        "effect": "Focus unreadable persisted cohort never overwritten silently; explicit owner-confirmed durable deletion before RAM cleanup"
       }
     ],
     "current_pr": {
-      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/403",
-      "head_sha": "79555c88db0afd22622e3b54a984d2fa3ca422e8",
-      "checks": "9/10 exact-head SUCCESS, 0 failures; integrated Windows installer in progress, all other nine completed successfully; PR open, no release",
-      "effect": "Unreadable saved Focus cohort cannot be treated as empty/overwritten; forced clear requires owner approval and successful storage deletion"
+      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/404",
+      "head_sha": "739b93c4f69abe116584d5091341453fa48713d0",
+      "checks": "CI started on exact head, 1/10 success at last cut",
+      "effect": "Fail closed against late cloud A->B and A->B->A responses for Reviewed, Following/Followers/Pending snapshots and Double Check cycles"
     },
     "physical_owner_browser": "pending",
     "blocker_issues": [
@@ -160,13 +167,13 @@
       "#172"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "P0 6/12 is fixed physical acceptance milestone count, not source PR count. PR403 source still pending. No physical Instagram account test or v120.81 stable release.",
+    "note": "All P0 source merges validated but real browser Focus 30, no-rebound, two actual Windows windows and Instagram Unfollow/Cancel still unverified; keep 6/12 (50%). Public v120.80; v120.81 held.",
     "source_candidate_prs": [
       {
-        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/403",
-        "head_sha": "79555c88db0afd22622e3b54a984d2fa3ca422e8",
-        "checks": "9/10 exact-head SUCCESS, 0 failures; integrated Windows installer in progress, all other nine completed successfully; PR open, no release",
-        "effect": "Unreadable saved Focus cohort cannot be treated as empty/overwritten; forced clear requires owner approval and successful storage deletion",
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/404",
+        "head_sha": "739b93c4f69abe116584d5091341453fa48713d0",
+        "checks": "CI started on exact head, 1/10 success at last cut",
+        "effect": "Fail closed against late cloud A->B and A->B->A responses for Reviewed, Following/Followers/Pending snapshots and Double Check cycles",
         "state": "open"
       }
     ]
