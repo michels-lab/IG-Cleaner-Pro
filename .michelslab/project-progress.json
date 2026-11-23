@@ -9,7 +9,7 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "PR404 cloud A-B-A source MERGED 10/10 CI; PR405 Windows native History A-B-A candidate OPEN in CI; owner acceptance 6/12",
+  "phase": "PR404 merged; PR405 native History A-B-A in exact-head CI 5/7 SUCCESS and 2 in progress; physical owner milestone 6/12",
   "last_source_merge": "c0fa2b61f56127d92fd60f57181b59ed8e301d88",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
@@ -113,7 +113,7 @@
       ]
     }
   ],
-  "next_step": "Review PR405 exact HEAD a75f06b544fa4a9f4d645ff3ae4883a16c9a7c39 all applicable jobs; repair if failed, merge only after passing. Physical Focus 30 / reload A-B-A, two native Windows windows and real Unfollow/Cancel acceptance still required for v120.81.",
+  "next_step": "Check PR405 exact-head CI for SHA 32a78d9be624d79e0407726b285b30862841d456: Windows Chromium test plus installed app and Android About must pass. Only then safe merge. 6/12 physical acceptance and v120.81 held.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-23",
@@ -161,8 +161,8 @@
     ],
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/405",
-      "head_sha": "a75f06b544fa4a9f4d645ff3ae4883a16c9a7c39",
-      "checks": "7 initial checks queued/in progress; not validated",
+      "head_sha": "32a78d9be624d79e0407726b285b30862841d456",
+      "checks": "5/7 exact-head SUCCESS, no failures as of last check; Android About visual and integrated Windows pending; earlier head failures fixed obsolete test-signature marker",
       "effect": "Windows installed History activity/read-only journal scope epoch and immutable requested owner; Chromium A-B-A regression",
       "state": "open"
     },
