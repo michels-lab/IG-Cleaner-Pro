@@ -318,6 +318,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Developer real Instagram read-only/consent gate tests failed." }
           node tests/focus-dictionary-quota-recovery.test.cjs
           if ($LASTEXITCODE -ne 0) { throw 'Focus dictionary codec failed on Windows Desktop/HTML; original owner history must remain intact.' }
+          node tests/focus-corrupt-cohort-guard.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Unreadable prior Focus cohort was overwritten or falsely cleared; refuse Windows acceptance.' }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           node tests/pending-zip-completeness.test.cjs
