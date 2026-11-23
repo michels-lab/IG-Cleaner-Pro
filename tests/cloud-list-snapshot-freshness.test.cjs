@@ -39,6 +39,11 @@ function harness(account,deviceType='desktop'){
  };
  ctx.account=account;
  vm.createContext(ctx);
+ // The production pushListSnapshots function now requires the real shared
+ // owner/account/generation fence. Keep this offline list-fixture scoped to
+ // a single stable legacy workspace; test its real helper, not a no-op mock.
+ vm.runInContext(slice("function sessionOwner(session){","function expiresAtSeconds(session){"),ctx);
+ vm.runInContext(slice("function igcCaptureSyncScope(){","async function rest(path,opt={}){"),ctx);
  vm.runInContext(slice("function hash(s){","function renderSyncedLists(changed){"),ctx);
  vm.runInContext(slice("window.igcMarkLocalSnapshotsDirty=function(kinds){","async function pushPreparedBatches(){"),ctx);
  return {ctx,remote,writes,renders,store};
