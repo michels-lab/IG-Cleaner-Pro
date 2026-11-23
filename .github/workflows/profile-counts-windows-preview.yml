@@ -322,6 +322,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Unreadable prior Focus cohort was overwritten or falsely cleared; refuse Windows acceptance.' }
           node tests/cloud-review-pull-account-aba.test.cjs
           if ($LASTEXITCODE -ne 0) { throw 'Stale cloud A-B-A review pull changed a new account or bypassed sync generation gate.' }
+          node tests/cloud-stale-list-cycle-aba.test.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Cloud A-B-A downloaded lists or Double Check cycles crossed account identity.' }
           node tests/pending-focus-reimport.test.cjs
           if ($LASTEXITCODE -ne 0) { throw "Stale Focus import refresh failed." }
           node tests/pending-zip-completeness.test.cjs
