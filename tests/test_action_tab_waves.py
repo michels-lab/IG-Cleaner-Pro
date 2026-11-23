@@ -3,12 +3,18 @@
 These tests use offline fake Chrome pages; no Instagram contact or mutation.
 """
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import inspect
 import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from profile_actions import ActionRobot, ActionTabPool, MAX_ACTION_TABS
+from profile_actions import (
+    ActionRobot, ActionTabPool, MAX_ACTION_TABS,
+    MISSING_RELATIONSHIP_CONTROL, _manual_close_review_record,
+    _saved_journal_blocks_action, _invalid_saved_action_record,
+    _atomic_json, _read_json,
+)
 
 
 class FakePage:
@@ -89,6 +95,128 @@ class TenTabWaveTests(unittest.TestCase):
         tabs.record("pending_profile", "already_not_requested")
         self.assertTrue(page.is_closed())
         self.assertFalse(tabs.has_open_tabs())
+
+    def test_manually_closed_sequential_tab_never_reopens_automatically(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        first = tabs.open("profile_a")
+        first.close()  # Human closes the target before an action is verified.
+        self.assertIsNone(tabs.prepared("profile_a"))
+        self.assertEqual(tabs.unresolved_manual_closures(),
+                         {"profile_a": "checking"})
+        self.assertFalse(tabs.has_open_tabs())
+        self.assertIsNone(tabs.open("profile_a"))
+        self.assertEqual(len(browser.created), 1)
+        # A DIFFERENT approved target can still be allocated only after the
+        # worker has durably acknowledged this closure.
+        self.assertIsNotNone(tabs.open("profile_b"))
+        self.assertEqual(len(browser.created), 2)
+
+    def test_manually_closed_tab_in_ten_tab_wave_survives_slot_reclamation(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        for i in range(10):
+            tabs.open("profile_%02d" % i)
+        tabs.prepared("profile_03").close()
+        self.assertEqual(tabs.unresolved_manual_closures(),
+                         {"profile_03": "checking"})
+        self.assertEqual(len(tabs.overview()), 9)
+        self.assertIsNone(tabs.open("profile_03"))
+        for i in range(10):
+            if i != 3:
+                tabs.record("profile_%02d" % i, "ok")
+        self.assertFalse(tabs.has_open_tabs())
+        self.assertEqual(tabs.unresolved_manual_closures(),
+                         {"profile_03": "checking"})
+        self.assertEqual(len(browser.created), 10)
+
+    def test_final_prefetch_cleanup_preserves_external_closure(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        external = tabs.open("manually_closed")
+        staged = tabs.open("internal_cleanup")
+        tabs.tabs["manually_closed"]["status"] = "prefetched"
+        tabs.tabs["internal_cleanup"]["status"] = "prefetched"
+        external.close()
+        tabs.close_unacted_prefetches()
+        self.assertTrue(staged.is_closed())
+        self.assertEqual(tabs.unresolved_manual_closures(),
+                         {"manually_closed": "prefetched"})
+        self.assertIsNone(tabs.open("manually_closed"))
+        self.assertFalse(tabs.has_open_tabs())
+
+    def test_verified_robot_close_does_not_create_false_manual_closure(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        tabs.open("confirmed")
+        tabs.record("confirmed", "ok")
+        self.assertEqual(tabs.unresolved_manual_closures(), {})
+        self.assertFalse(tabs.has_open_tabs())
+
+    def test_unconfirmed_manual_close_is_durable_review_not_fake_ok(self):
+        record = _manual_close_review_record(None)
+        self.assertEqual(record["status"], "review")
+        self.assertEqual(record["issue"], "owner_closed_target_tab")
+        self.assertNotIn("click_intent", record)
+        self.assertTrue(_saved_journal_blocks_action(
+            {"profile_a": record}, "profile_a"))
+        self.assertFalse(_invalid_saved_action_record(record))
+
+    def test_previous_proven_no_click_is_retained_as_attempt_history(self):
+        prior = {
+            "status": "review", "issue": "profile_load_timeout",
+            "message": MISSING_RELATIONSHIP_CONTROL +
+                       " Waiting timed out: No action clicked.",
+            "at": "2026-11-19T00:00:00Z",
+        }
+        record = _manual_close_review_record(prior)
+        self.assertIsNotNone(record)
+        self.assertEqual(record["attempt_history"], [prior])
+        self.assertTrue(_saved_journal_blocks_action({"p": record}, "p"))
+        self.assertNotIn("click_intent", prior)
+
+    def test_possible_click_or_corrupt_prior_evidence_is_not_overwritten(self):
+        possible_click = {
+            "status": "review", "issue": "unfollow_pending_verification",
+            "click_intent": {"phase": "relationship_control",
+                             "outcome_recorded": False},
+        }
+        for original in (possible_click, {"status": "ok"},
+                         {"status": "mystery"}, {},
+                         {"status": "review", "click_intent": None}):
+            self.assertIsNone(_manual_close_review_record(original))
+        self.assertEqual(possible_click["click_intent"]["phase"],
+                         "relationship_control")
+
+    def test_review_survives_disk_reload_without_cross_account_contamination(self):
+        with TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / "scope-a.json", Path(tmp) / "scope-b.json"
+            prior_b = {"unrelated": {"status": "ok", "origin": "robot"}}
+            _atomic_json(b, prior_b)
+            _atomic_json(a, {"target": _manual_close_review_record(None)})
+            self.assertTrue(_saved_journal_blocks_action(
+                _read_json(a, {}), "target"))
+            self.assertEqual(_read_json(b, {}), prior_b)
+
+    def test_unknown_browser_transport_retains_slot_not_manual_tombstone(self):
+        browser = FakeChrome()
+        tabs = ActionTabPool(browser)
+        page = tabs.open("transport")
+        def unreliable():
+            raise OSError("browser disconnected")
+        page.is_closed = unreliable
+        self.assertEqual(tabs.unresolved_manual_closures(), {})
+        self.assertEqual(tabs.overview(),
+                         [{"username": "transport", "status": "tab_state_unknown"}])
+        self.assertIsNone(tabs.open("transport"))
+
+    def test_worker_stops_on_closure_before_another_stage_or_action(self):
+        source = inspect.getsource(ActionRobot._run)
+        self.assertEqual(source.count("if stop_for_manual_target_close():"), 4)
+        self.assertIn("_assert_unchanged_action_journal(path, journal)", source)
+        self.assertIn("_atomic_json(path, revised)", source)
+        self.assertIn("self.status = \"review\"", source)
+        self.assertIn("stopped_for_review = True", source)
 
     def test_robot_is_wave_based_no_rolling_prefetch(self):
         source = inspect.getsource(ActionRobot._run)
