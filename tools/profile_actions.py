@@ -1231,6 +1231,7 @@ def _success_has_current_click_intent(record, task, batch_id):
         isinstance(phases, list) and
         bool(phases) and
         phases[0] == "relationship_control" and
+        all(isinstance(phase, str) for phase in phases) and
         len(phases) == len(set(phases)) and
         all(phase in allowed[task] for phase in phases) and
         intent.get("phase") == phases[-1] and
