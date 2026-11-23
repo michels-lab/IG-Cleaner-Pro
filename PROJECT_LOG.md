@@ -1,3 +1,11 @@
+## 2026-11-23 — Granada #404 integrado; #405 Windows History candidato (6/12 = 50%)
+
+- [#404](https://github.com/michels-lab/IG-Cleaner-Pro/pull/404) fuente cloud A→B→A **MERGED** `c0fa2b61f56127d92fd60f57181b59ed8e301d88` tras 10/10 exact-head SUCCESS. No confundir con prueba física.
+- [#405](https://github.com/michels-lab/IG-Cleaner-Pro/pull/405) **OPEN / CI pending** a HEAD `a75f06b544fa4a9f4d645ff3ae4883a16c9a7c39`: corrige respuestas tardías de History nativo Windows con `scopeEpoch` y propietario de consulta inmutable, prueba Chromium A→B→A más cambio de dueño. [Auditoría](docs/audits/2026-11-23-windows-history-aba-epoch.md).
+- **Avance anterior→actual 50%→50% (6/12)**, aceptación de Chrome/Windows dual/robots reales pendiente, [v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80) última estable. No release v120.81. Reentrada: revisar checks exact-head PR405; QA física #371/#360/#377/#164/#172.
+
+---
+
 ## 2026-11-19 — Granada #394 INTEGRADA: prueba de identidad entre pestañas del robot (5/5 CI)
 
 - **Código en `main`:** [PR #394](https://github.com/michels-lab/IG-Cleaner-Pro/pull/394), merge `3c6ad280f64fe7b870dee61b587575655ce47beb`, corrige identificación de un dueño aparentemente correcto en la pestaña del objetivo cuando otra pestaña del mismo Chrome muestra identidad contradictoria, desafío/login o el ID de sesión cacheado cambió. Bloquea la acción en lugar de confiar en el sidebar antiguo; sin navegación extra a /owner/ ni acceso a cookies externas.
