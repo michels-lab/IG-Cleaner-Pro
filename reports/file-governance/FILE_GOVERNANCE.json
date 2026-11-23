@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 484,
-  "classified_files_total": 480,
-  "docs_content_inspected": 137,
+  "tracked_files_total": 486,
+  "classified_files_total": 482,
+  "docs_content_inspected": 138,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 133,
+    "document": 134,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 149,
+    "test": 150,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "d959d44f4a5f565aeb2d649fe549553b4f47b50efc8d423cd177e27bd4225e3d",
-  "evidence_fingerprint": "276ef30d5eb184f74aa2ee203b0510081f7587b628879ea9b7ad24b642c1db0d",
+  "inventory_fingerprint": "be38756e2b866e1ee5b9bf36509273593af6b346980bf40621a5f1cd962d5801",
+  "evidence_fingerprint": "ca5d1d6bb95eeb17b972149b029f6eac0c7c9f2f8210626ee73010705a5c4300",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -99,7 +99,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "7bbd0fc30e56902f33f71b71068304eae0f4f790"
+      "blob": "59b49f3835bb61714bcc137c0250a962060483cb"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -127,7 +127,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "60691b7970acaad23904e80cc87bec4b8c629a6a"
+      "blob": "5a666ba23c6ec30c8c8bb137852f5a3f6a6703bf"
     },
     {
       "path": ".github/workflows/release-docs-contract.yml",
@@ -211,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "05a23d692ece12f94ad42231d6d95a7c33603e37"
+      "blob": "da35af86548e45f0217275514960a44b0d210b8e"
     },
     {
       "path": ".michelslab/project.yml",
@@ -862,7 +862,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "3ffd69e40563b9ca9613c3cab1a82d8c8bfa9c4c"
+      "blob": "fb793eeeaedaf8c5a7455f235d90b6202338552a"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -1590,7 +1590,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "6f0374b2a08663ecc3c1697187dca285bf0383c0"
+      "blob": "111fea0a2d96097e25a5a594f8ec20fd0adc2fe4"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -1768,6 +1768,13 @@
       "blob": "9e8be9c799c21deceade3b9f925dd92b816fceac"
     },
     {
+      "path": "docs/audits/2026-11-23-focus-dictionary-quota-v4.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "1c5f3752c40fc9bcc9dc03bbb67cc993395135bd"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -1779,7 +1786,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "f8b5465969b06a214645586f123480c9f9c3b4e0"
+      "blob": "e7e2bef42ffee1ee5a1045304e0b091d8ad9bf43"
     },
     {
       "path": "packaging/chrome-extension/README.md",
@@ -2321,6 +2328,13 @@
       "blob": "5ee6777ad0bca6e5ee9c5166406a9075f7adcce8"
     },
     {
+      "path": "tests/focus-dictionary-quota-recovery.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "203862c451cd82ed6977c1dbed9a01b5ac7d82df"
+    },
+    {
       "path": "tests/focus-failed-attempt-requeue.test.cjs",
       "role": "test",
       "purpose": "code/test implementation",
@@ -2346,7 +2360,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "933e2f1578f0e7d77a5b4eb2184510cafbf18938"
+      "blob": "eb9b2c9b04764801b710a2e512a1826af50e5f09"
     },
     {
       "path": "tests/focus-reopen-recovery.test.cjs",
@@ -3403,11 +3417,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "cc2cc0942093c070",
+      "id": "f7dbefd88d09c387",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
+      "observation": "15 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
