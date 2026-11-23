@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "0faf2575706f939e2f91554084aa19941480d3ee23dff76153358428750d3eab",
-  "evidence_fingerprint": "7850d522a85004224a43e2fbf62601fcae1b0b144c3498865f8d3270240a9168",
+  "finding_total": 1,
+  "inventory_fingerprint": "e7195e6cac76cafbd34c13757533ca8d79fc938a2045d0b4b70131ae636eb088",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -253,7 +252,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "9eda8723e67efe6acc507d5ca4e7f8d4b373bd48"
+      "blob": "f9845cdfdfafdbc9be3d036fdffcb2164a27d839"
     },
     {
       "path": "README.md",
@@ -890,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "dc6b7c3127a38e1033c12b206399c1da9b0581fa"
+      "blob": "10ac6667d0a7406949244b1a19a03dad697cfc14"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1590,7 +1589,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "177aacb9006a4e4ebde8f3e5114a5aa0fcb2af2a"
+      "blob": "6d05f4dc9e6242298d02599f1824b79cb393bc77"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -3456,15 +3455,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "2c289520941b27a9",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "21 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/cloud-review-pull-account-aba.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
