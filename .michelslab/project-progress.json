@@ -155,7 +155,7 @@
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/404",
       "head_sha": "739b93c4f69abe116584d5091341453fa48713d0",
-      "checks": "CI started on exact head, 1/10 success at last cut",
+      "checks": "6/10 SUCCESS exact-head ae0cd... revised head 739b93c4f69abe116584d5091341453fa48713d0; no failures; Windows, Android visual and HTML visual checks in progress",
       "effect": "Fail closed against late cloud A->B and A->B->A responses for Reviewed, Following/Followers/Pending snapshots and Double Check cycles"
     },
     "physical_owner_browser": "pending",
@@ -172,7 +172,7 @@
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/404",
         "head_sha": "739b93c4f69abe116584d5091341453fa48713d0",
-        "checks": "CI started on exact head, 1/10 success at last cut",
+        "checks": "6/10 SUCCESS exact-head ae0cd... revised head 739b93c4f69abe116584d5091341453fa48713d0; no failures; Windows, Android visual and HTML visual checks in progress",
         "effect": "Fail closed against late cloud A->B and A->B->A responses for Reviewed, Following/Followers/Pending snapshots and Double Check cycles",
         "state": "open"
       }
