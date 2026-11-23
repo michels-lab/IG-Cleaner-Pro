@@ -1,3 +1,11 @@
+## 2026-11-23 — Reentrada GRANADA #406; #405 fuente integrada
+
+- PR #405 merged SHA `c6d3ec4144a5d682589af98f39f4ddc0badbbfc2`, exact-head **7/7 SUCCESS**.
+- PR #406 [source](https://github.com/michels-lab/IG-Cleaner-Pro/pull/406) HEAD `711ace0054be8376b78b5cbd76b4c490b4e0b247` OPEN/CI running; refactoriza `rest()` para congelar la cuenta antes de Auth-refresh, y `syncNow`/uploads para no mezclar A/B entre awaits. Última revisión test de VM con `setImmediate` acotado después de dos aserciones de sincronía fallidas, no se deshabilitó protección.
+- Siguiente paso: revisar exact-head Desktop generic, Windows instalado, Android, rendered UI, offline; reparar pruebas reales si fallan; fusionar solo con todos los gates aplicables en verde. No tocar cuentas reales ni publicar v120.81. Ruta 6/12 = 50% pendiente de #360/#371/#377/#164/#172.
+
+---
+
 ## 2026-11-23 — Granada #404 integrado; #405 Windows History candidato (6/12 = 50%)
 
 - [#404](https://github.com/michels-lab/IG-Cleaner-Pro/pull/404) fuente cloud A→B→A **MERGED** `c0fa2b61f56127d92fd60f57181b59ed8e301d88` tras 10/10 exact-head SUCCESS. No confundir con prueba física.
