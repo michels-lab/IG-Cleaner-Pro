@@ -26,3 +26,8 @@ No physical acceptance of Instagram, two Windows instances, Focus quota or 30 re
 ## Source QA gate
 
 PR exact-head offline contract + Windows integrated installer + Desktop/Android / visual checks when emitted. Do not merge before relevant checks pass; do not publish stable release before physical requirements are satisfied.
+
+## Additional same-run Chrome closure guard
+
+- Even with a correctly armed current-batch WAL, a browser transport may report `ok` after the exact target tab has already closed (e.g., user closes Chrome during verification or a transport misreports a stale success). The worker now checks the live target page **again before final result commit**. A closed/uninspectable tab becomes a durable `review` with `target_tab_closed_before_success_commit`, and the existing click intent remains. It is never counted as verified OK or silently deferred as a harmless per-target warning.
+- Real worker integration tests simulate both Unfollow and Cancel: durable click intent, externally closed target tab, stale `ok`, and a second selected user. Assert only the first was visited and no second mutation occurred.
