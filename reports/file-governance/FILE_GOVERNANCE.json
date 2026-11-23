@@ -28,7 +28,7 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "54e709175baacfd848980ff34ae69bb7ca792e140588a7e6e15f66e66baac429",
+  "inventory_fingerprint": "0faf2575706f939e2f91554084aa19941480d3ee23dff76153358428750d3eab",
   "evidence_fingerprint": "7850d522a85004224a43e2fbf62601fcae1b0b144c3498865f8d3270240a9168",
   "files": [
     {
@@ -211,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "403bbe2b3297885cd9439e48c9d048d71f271854"
+      "blob": "6a622092e8e4285ce426156ba999039fb7aec286"
     },
     {
       "path": ".michelslab/project.yml",
