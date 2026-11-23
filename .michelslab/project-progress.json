@@ -9,7 +9,7 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "granada_pr402_focus_v4_8of10_pr401_wal_3of7_ci_incomplete_owner_validation_pending",
+  "phase": "granada_pr401_6of7_pr402_8of10_windows_ci_remaining_no_owner_live_acceptance",
   "last_source_merge": "360c5745bccd658a7616f6141c6c30bf3b252aa7",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
@@ -152,7 +152,7 @@
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/401",
         "head_sha": "022657db04808908402ca41b0b628ea83eb7ac53",
         "state": "open",
-        "last_certified": "3/7 CI success; Android build/HTML and related gates pending",
+        "last_certified": "6/7 exact-head checks successful, no failures; only integrated Windows installer still in progress",
         "effect": "Win Unfollow/Cancel requires same-batch action WAL and live Chrome target before durable OK; old 40-target test fixtures now journal successful fake clicks"
       },
       {
