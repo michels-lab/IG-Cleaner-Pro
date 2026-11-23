@@ -132,11 +132,12 @@ async function testFullSyncPipelineFence(){
  t.ctx.console={error:()=>{}};
  const fn=t.load(productionSync,'({syncNow})').syncNow;
  const operation=fn(false);
- // Production sync intentionally yields at await ensureAuth() before entering
- // the next stage; let that microtask run before freezing the deferred fetch.
- await Promise.resolve();
- await Promise.resolve();
- assert.equal(stages,1,'Sync reads registered Instagram account first');
+ // Production runs in a separate VM realm: auth callbacks and promise
+ // continuations are scheduled on that realm's microtask queue. Yield to the
+ // event loop until its deferred registry fetch actually begins (bounded).
+ for(let i=0;i<20&&stages===0&&t.S.busy;i++)
+   await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(stages,1,'Sync reads registered Instagram account first; '+String(t.S.lastError||errors.join(' | ')));
  t.switchAccount(B);t.switchAccount(A);wait.resolve(true);
  await operation;
  assert.equal(stages,1,'A-B-A invalidates pipeline before any further stages');
