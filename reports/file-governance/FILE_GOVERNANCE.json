@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 483,
-  "classified_files_total": 479,
-  "docs_content_inspected": 136,
+  "tracked_files_total": 484,
+  "classified_files_total": 480,
+  "docs_content_inspected": 137,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 132,
+    "document": 133,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 2,
-  "inventory_fingerprint": "7e8d1d923e766df5ccbddbcc6b3a14ed0ad9e7efe1a750209511275291c8b6ef",
-  "evidence_fingerprint": "c4e0e110ebcde6590d81cafb78baf1dedbed9b95c8ee22541f89b256a94c569c",
+  "inventory_fingerprint": "d959d44f4a5f565aeb2d649fe549553b4f47b50efc8d423cd177e27bd4225e3d",
+  "evidence_fingerprint": "276ef30d5eb184f74aa2ee203b0510081f7587b628879ea9b7ad24b642c1db0d",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -1761,6 +1761,13 @@
       "blob": "e22c4c2b11b904b94cc4d3cd7723fe6163ee3296"
     },
     {
+      "path": "docs/audits/2026-11-22-manual-target-tab-no-replay.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "9e8be9c799c21deceade3b9f925dd92b816fceac"
+    },
+    {
       "path": "docs/product-reviews/README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
@@ -2619,7 +2626,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6a8cc95b867d76270f15ff76fb711dbf99756184"
+      "blob": "78ca667ab835c4b52ef5b07c36640119d1dc6f7d"
     },
     {
       "path": "tests/test_action_visit_pacing.py",
@@ -3221,7 +3228,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "046a78c5efc6b91da0bee7d16ca0845661fbd8e0"
+      "blob": "c80f1821c48201167426e52871d5c8276b4213eb"
     },
     {
       "path": "tools/profile_counts_audit.py",
@@ -3396,11 +3403,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "195ce267322b8d33",
+      "id": "cc2cc0942093c070",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "11 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
+      "observation": "13 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .github/workflows/profile-counts-windows-preview.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, index.html, tests/focus-bulk-durable-confirmation.test.cjs",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
