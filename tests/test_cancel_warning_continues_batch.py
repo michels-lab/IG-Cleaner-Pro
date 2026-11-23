@@ -137,6 +137,38 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                 self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
                 self.assertNotIn("second.person", saved)
 
+    def test_closed_target_cannot_turn_current_wal_into_green_ok(self):
+        """A browser-closed target is REVIEW even after its click intent."""
+        for task in ("cancel", "unfollow"):
+            with self.subTest(task=task), tempfile.TemporaryDirectory() as folder:
+                robot = self.new_robot(folder)
+                robot.task = task
+                robot.targets = ["first.person", "second.person"]
+                attempted = []
+
+                def action(page, username, _task, _expected,
+                           can_act=None, on_pre_click=None, **kwargs):
+                    attempted.append(username)
+                    on_pre_click("relationship_control")
+                    if task == "cancel":
+                        on_pre_click("cancel_request_confirmation")
+                    page.close()  # Chrome target closed before terminal commit.
+                    return "ok", "Synthetic stale success after browser tab closure"
+
+                self.run_offline(robot, action)
+                saved = _read_json(robot._base(), {})
+                self.assertEqual(attempted, ["first.person"],
+                                 "Closure must not allow action on another target")
+                self.assertEqual(saved["first.person"]["status"], "review")
+                self.assertEqual(saved["first.person"]["issue"],
+                                 "target_tab_closed_before_success_commit")
+                self.assertIn("click_intent", saved["first.person"])
+                self.assertEqual(saved["first.person"]["click_intent"]["task"], task)
+                self.assertNotIn("second.person", saved,
+                                 "Next relationship mutation must not run")
+                self.assertTrue(_saved_journal_blocks_action(saved, "first.person"))
+                self.assertNotEqual(robot.status, "complete")
+
     def test_real_worker_approved_click_wal_still_allows_verified_ok(self):
         """Valid current-batch intent can finish OK without invented success."""
         with tempfile.TemporaryDirectory() as folder:
