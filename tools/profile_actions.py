@@ -4167,6 +4167,7 @@ class ActionRobot:
                         and not _invalid_saved_action_record(recorded)
                         and recorded.get("status") == result
                         and not success_without_wal
+                        and not closed_before_success_commit
                         and ((self.task == "cancel" and result == "review")
                              or (self.task == "unfollow"
                                  and result in ("review", "error")
