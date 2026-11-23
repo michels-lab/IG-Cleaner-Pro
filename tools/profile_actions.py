@@ -1214,19 +1214,26 @@ def _success_has_current_click_intent(record, task, batch_id):
     actually sent a relationship-changing click. Existing no-action outcomes
     use separate already_not_* states, not OK.
     """
-    if task not in ("unfollow", "cancel") or not isinstance(record, dict):
+    allowed = {
+        "unfollow": {"relationship_control", "unfollow_menu",
+                     "private_unfollow_confirmation"},
+        "cancel": {"relationship_control", "cancel_request_confirmation"},
+    }
+    if task not in allowed or not isinstance(record, dict):
         return False
     intent = record.get("click_intent")
-    if not isinstance(intent, dict):
+    if not isinstance(intent, dict) or not isinstance(batch_id, str) or not batch_id:
         return False
     phases = intent.get("phases")
     return (
         intent.get("batch_id") == batch_id and
         intent.get("task") == task and
-        intent.get("phase") in SAVED_CLICK_PHASES and
         isinstance(phases, list) and
-        "relationship_control" in phases and
-        all(phase in SAVED_CLICK_PHASES for phase in phases) and
+        bool(phases) and
+        phases[0] == "relationship_control" and
+        len(phases) == len(set(phases)) and
+        all(phase in allowed[task] for phase in phases) and
+        intent.get("phase") == phases[-1] and
         intent.get("outcome_recorded") is not True
     )
 
