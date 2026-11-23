@@ -3821,7 +3821,71 @@ function igcEncodeFocusBatchQuota(batch){
       row.dateMain||0,row.dateOther||0,flags];
   })};
 }
+// Lossless third-stage quota fallback: share repeated display metadata inside
+// ONE unconfirmed Focus cohort, never rewrite Reviewed/Pending/history keys.
+// Noncanonical URLs, row order, exact risk reasons and every flag still round-trip.
+function igcEncodeFocusBatchDictionary(batch){
+  const compact=igcEncodeFocusBatchQuota(batch);
+  if(!compact||!Array.isArray(compact.rows))return compact;
+  const stringsCount=new Map(), reasonsCount=new Map();
+  for(const row of compact.rows){
+    for(const i of [2,3,5]){
+      const value=row[i];
+      if(typeof value==='string'&&value.length>=4)
+        stringsCount.set(value,(stringsCount.get(value)||0)+1);
+    }
+    if(Array.isArray(row[6])){
+      const value=JSON.stringify(row[6]);
+      if(value.length>=10)reasonsCount.set(value,(reasonsCount.get(value)||0)+1);
+    }
+  }
+  const strings=[...stringsCount].filter(([,n])=>n>1).map(([v])=>v);
+  const reasonLists=[...reasonsCount].filter(([,n])=>n>1).map(([v])=>JSON.parse(v));
+  const stringIds=new Map(strings.map((value,i)=>[value,i]));
+  const reasonIds=new Map(reasonLists.map((value,i)=>[JSON.stringify(value),i]));
+  return {...compact,storageFormat:4,dictionary:{strings,reasonLists},
+    rows:compact.rows.map(row=>{
+      const values=[...row];
+      for(const i of [2,3,5])
+        if(typeof values[i]==='string'&&stringIds.has(values[i]))values[i]=stringIds.get(values[i]);
+      if(Array.isArray(values[6])){
+        const key=JSON.stringify(values[6]);
+        if(reasonIds.has(key))values[6]={_igcFocusDict:reasonIds.get(key)};
+      }
+      return values;
+    })};
+}
 function igcDecodeActiveFocusBatch(saved){
+  if(saved.storageFormat===4){
+    const dictionary=saved.dictionary;
+    if(!dictionary||!Array.isArray(dictionary.strings)||!Array.isArray(dictionary.reasonLists)||
+       dictionary.strings.some(v=>typeof v!=='string')||
+       dictionary.reasonLists.some(v=>!Array.isArray(v)))
+      throw Error('Invalid dictionary Focus cohort');
+    const rows=saved.rows.map(row=>{
+      if(!Array.isArray(row)||row.length!==11)throw Error('Invalid dictionary Focus row');
+      const values=[...row];
+      for(const i of [2,3,5]){
+        if(typeof values[i]==='number'){
+          if(!Number.isSafeInteger(values[i])||values[i]<0||values[i]>=dictionary.strings.length)
+            throw Error('Invalid dictionary Focus string reference');
+          values[i]=dictionary.strings[values[i]];
+        }
+      }
+      const reasons=values[6];
+      if(reasons&&typeof reasons==='object'&&!Array.isArray(reasons)){
+        const keys=Object.keys(reasons),id=reasons._igcFocusDict;
+        if(keys.length!==1||keys[0]!=='_igcFocusDict'||!Number.isSafeInteger(id)||
+           id<0||id>=dictionary.reasonLists.length)
+          throw Error('Invalid dictionary Focus reasons reference');
+        values[6]=dictionary.reasonLists[id];
+      }
+      return values;
+    });
+    const {storageFormat,dictionary:unusedDictionary,...cohort}=saved;
+    return igcDecodeActiveFocusBatch({...cohort,storageFormat:3,rows});
+  }
+
   if(!saved||!Array.isArray(saved.rows))return saved;
   if(saved.storageFormat===3){
     const {storageFormat,...cohort}=saved;
@@ -3876,8 +3940,16 @@ function saveActiveFocusBatch(){
     const small=JSON.stringify(igcEncodeFocusBatchQuota(activeFocusBatch));
     if(small.length>=usual.length)throw error;
     recordAttempt('v3',small);
-    localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,small);
-    clearAttempt();
+    try{localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,small);clearAttempt()}
+    catch(compactError){
+      if(!(/quota/i.test(String(compactError?.name||''))||
+           /quota/i.test(String(compactError?.message||''))))throw compactError;
+      const dictionary=JSON.stringify(igcEncodeFocusBatchDictionary(activeFocusBatch));
+      if(dictionary.length>=small.length)throw compactError;
+      recordAttempt('v4',dictionary);
+      localStorage.setItem(LS_ACTIVE_FOCUS_BATCH,dictionary);
+      clearAttempt();
+    }
   }
 }
 function loadActiveFocusBatch(){
@@ -3934,7 +4006,7 @@ function igcFocusStorageDiagnostic(error,batch){
   const attempt=typeof window!=='undefined'?window.igcFocusWriteAttempt:null;
   const key=typeof attempt?.key==='string'&&/^[A-Za-z0-9_-]{1,80}$/.test(attempt.key)
     ?attempt.key:'FocusBatch';
-  const format=attempt?.format==='v3'?'v3':'v2';
+  const format=attempt?.format==='v4'?'v4':(attempt?.format==='v3'?'v3':'v2');
   const attempted=Number.isSafeInteger(attempt?.bytes)&&attempt.bytes>=0
     ?attempt.bytes+' bytes':'unknown';
   let batchKiB='unknown',totalMiB='unknown';
