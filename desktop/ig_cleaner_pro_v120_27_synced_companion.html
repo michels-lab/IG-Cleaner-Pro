@@ -15447,7 +15447,20 @@ function applyOneState(r){
   return true;
 }
 async function pullProfileState(){
+  // A cloud page can resolve after Instagram account A -> B (or A -> B -> A).
+  // Capture both the signed-in owner and profile generation before ANY await;
+  // stale A data must never be committed under B's scoped localStorage keys.
+  const sourceOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const sourceProfile=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  const sourceAccount=String(sourceProfile?.active||'legacy');
+  const sourceGeneration=Number(sourceProfile?.generation||0);
   const rows=await readCompleteProfileState('*',{fresh:true});
+  const currentOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const currentProfile=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  if(sourceOwner!==currentOwner||
+     sourceAccount!==String(currentProfile?.active||'legacy')||
+     sourceGeneration!==Number(currentProfile?.generation||0))
+    throw Error('Sync de revisiones cancelada: cambió la cuenta o el perfil de Instagram durante la descarga. No se modificaron revisiones locales.');
   // Cloud reconciliation must never create phantom Reviewed changes in RAM
   // if the browser refuses a durable write. Save the exact prior identity-
   // scoped state and restore it on any failed multi-key localStorage commit.
