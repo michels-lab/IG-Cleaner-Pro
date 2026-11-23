@@ -79,6 +79,12 @@ class WorkerJournalGateTests(unittest.TestCase):
                     {"click_intent": {**valid["click_intent"], "phases": "relationship_control"}},
                     {"click_intent": {**valid["click_intent"], "outcome_recorded": True}},
                     {"click_intent": {**valid["click_intent"], "phase": "unknown"}},
+                    {"click_intent": {**valid["click_intent"], "phases": [{}]}},
+                    {"click_intent": {**valid["click_intent"],
+                                      "phases": ["relationship_control", "relationship_control"]}},
+                    {"click_intent": {**valid["click_intent"],
+                                      "phase": "unfollow_menu",
+                                      "phases": ["relationship_control"]}},
                     {"click_intent": {**valid["click_intent"],
                                       "phases": ["relationship_control", "alien_phase"]}}):
             with self.subTest(bad=bad):
