@@ -3923,6 +3923,13 @@ function igcDecodeActiveFocusBatch(saved){
   })};
 }
 function saveActiveFocusBatch(){
+  // An unreadable persisted batch is NOT an empty queue: never overwrite it
+  // during a new Focus attempt, a backup import or an implicit cleanup.
+  if(globalThis.igcFocusUnreadableBatch){
+    const error=new Error('Hay una tanda guardada ilegible. Exporta respaldo y decide su recuperación explícitamente antes de abrir otra tanda.');
+    error.name='FocusRecoveryRequired';
+    throw error;
+  }
   if(!activeFocusBatch){localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH);return}
   const usual=JSON.stringify(igcEncodeActiveFocusBatch(activeFocusBatch));
   // Keep only size, fixed storage key and format in volatile diagnostics;
@@ -3961,9 +3968,21 @@ function saveActiveFocusBatch(){
   }
 }
 function loadActiveFocusBatch(){
-  try{activeFocusBatch=igcDecodeActiveFocusBatch(JSON.parse(localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)||'null'))}
-  catch(e){console.error('Focus: saved cohort could not be decoded',e);activeFocusBatch=null}
-  if(activeFocusBatch&&(!Array.isArray(activeFocusBatch.rows)||!activeFocusBatch.rows.length))activeFocusBatch=null;
+  try{
+    const raw=localStorage.getItem(LS_ACTIVE_FOCUS_BATCH);
+    if(raw===null){activeFocusBatch=null;globalThis.igcFocusUnreadableBatch=false;return;}
+    const restored=igcDecodeActiveFocusBatch(JSON.parse(raw));
+    if(!restored||!Array.isArray(restored.rows)||!restored.rows.length)
+      throw Error('Invalid saved Focus cohort shape');
+    activeFocusBatch=restored;
+    globalThis.igcFocusUnreadableBatch=false;
+  }catch(e){
+    // Preserve every byte of the unconfirmed prior cohort for owner recovery.
+    // A new Start/Retry must never replace this damaged source of evidence.
+    console.error('Focus: saved cohort could not be decoded',e);
+    activeFocusBatch=null;
+    globalThis.igcFocusUnreadableBatch=true;
+  }
 }
 function activeBatchUserSet(kind){
   if(!activeFocusBatch||activeFocusBatch.kind!==kind)return new Set();
@@ -4066,6 +4085,8 @@ function setActiveFocusBatch(kind,rows,label){
   return true;
 }
 function clearActiveFocusBatch(){
+  if(globalThis.igcFocusUnreadableBatch)
+    throw Error('Unreadable saved Focus cohort: explicit owner recovery required before deletion.');
   // Commit the persistent delete before clearing the displayed cohort.
   // The previous two-delete path could leave RAM empty after SecurityError
   // while the old batch still existed on disk and would return on reload.
@@ -4131,17 +4152,33 @@ function pruneResolvedActiveFocusBatch(){
   return true;
 }
 function forceClearStuckFocusBatch(){
-  if(!activeFocusBatch&&!localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)){msg('No hay tanda atorada que borrar.','i');return;}
-  if(!confirm('¿Borrar la tanda activa atorada? Esto NO borra revisiones ni decisiones guardadas; solo oculta/limpia el popup de tanda activa.'))return;
+  let raw;
+  try{raw=localStorage.getItem(LS_ACTIVE_FOCUS_BATCH)}
+  catch(e){
+    msg('No pude leer la tanda guardada. No eliminé nada; exporta respaldo y revisa los permisos.','e');
+    return false;
+  }
+  if(!activeFocusBatch&&raw===null){
+    globalThis.igcFocusUnreadableBatch=false;
+    msg('No hay ninguna tanda atascada.','i');
+    return false;
+  }
+  if(!confirm('¿Eliminar SOLO la tanda activa atascada? No se borran Reviewed, Pending, protegidos ni historial. Si el registro está ilegible, sus perfiles sin confirmar no podrán reconstruirse. Exporta respaldo antes de confirmar.'))return false;
   try{localStorage.removeItem(LS_ACTIVE_FOCUS_BATCH)}
-  catch(error){msg('No pude borrar la tanda persistida. Tus revisiones y tanda siguen intactas.','w');return false}
+  catch(e){
+    // A refused storage deletion must not clear the corresponding RAM state.
+    msg('El navegador rechazó eliminar la tanda. Conservé su registro y tus revisiones.','e');
+    return false;
+  }
   activeFocusBatch=null;
   activeExtraReviewBatch=null;
+  globalThis.igcFocusUnreadableBatch=false;
   renderActiveBatchDock();
   renderPendingRequests?.();
   renderFollowersMutualTab?.();
   renderModuleDashboard?.();
-  msg('Popup/tanda activa atorada borrada. Tus revisiones guardadas se conservan.','s');
+  msg('Solo la tanda atascada fue eliminada. Tus revisiones e historial siguen guardados.','s');
+  return true;
 }
 function recoverActiveFocusBatch(){
   if(cleanupResolvedActiveBatch('recover'))return;
