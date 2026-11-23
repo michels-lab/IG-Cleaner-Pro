@@ -9,7 +9,7 @@
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "PR401 fixture WAL corrected renewed CI; PR402 Focus v4 codec+v2 explicit null fixed 6of10 CI; no owner acceptance",
+  "phase": "granada_pr402_focus_v4_8of10_pr401_wal_3of7_ci_incomplete_owner_validation_pending",
   "last_source_merge": "360c5745bccd658a7616f6141c6c30bf3b252aa7",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
@@ -146,21 +146,21 @@
       "#172"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "Source changes are not user physical acceptance or stable release; 6/12 fixed P0 milestones = 50%, v120.80 remains public and v120.81 stays held.",
+    "note": "Strict release hold. No exact-head PR merge before all CI and user real-browser 6 open P0 milestones. 6/12=50%; public stable v120.80.",
     "source_candidate_prs": [
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/401",
         "head_sha": "022657db04808908402ca41b0b628ea83eb7ac53",
         "state": "open",
-        "last_certified": "7 CI checks newly running; old five-success state does not certify new head",
-        "effect": "Win Unfollow/Cancel requires same-batch WAL, current tab, durable result; 40-target offline fixture now journals each claimed real-click"
+        "last_certified": "3/7 CI success; Android build/HTML and related gates pending",
+        "effect": "Win Unfollow/Cancel requires same-batch action WAL and live Chrome target before durable OK; old 40-target test fixtures now journal successful fake clicks"
       },
       {
         "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/402",
         "head_sha": "dcf80fc24a5927dfab3ad0e794db77de48b30369",
         "state": "open",
-        "last_certified": "6/10 exact-head CI green at status cut, including Desktop and offline; integrated Windows pending",
-        "effect": "Focus v4 lossless quota fallback on both HTMLs and v2 explicit null href preservation with legacy compatibility"
+        "last_certified": "8/10 CI success, no failures; Windows integrated and Android APK visual in progress",
+        "effect": "New v4 lossless batch dictionary on both HTMLs, fallback only after v2/v3 quota failure; explicit null vs undefined URL data preserved including legacy v2 support"
       }
     ]
   },
