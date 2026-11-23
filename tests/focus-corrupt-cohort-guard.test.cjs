@@ -69,7 +69,9 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
   assert.equal(ctx.igcFocusUnreadableBatch,true);
   denyRemove=false;approve=false;
   // An independent second account must still operate, without modifying A.
-  current="B";ctx.activeFocusBatch=cohort;ctx.saveActiveFocusBatch();
+  current="B";ctx.loadActiveFocusBatch();
+  assert.equal(ctx.igcFocusUnreadableBatch,false,"B must start with an independent empty cohort");
+  ctx.activeFocusBatch=cohort;ctx.saveActiveFocusBatch();
   const exactB=storage.get("B::activeFocus");
   ctx.activeFocusBatch=null;ctx.loadActiveFocusBatch();
   assert.equal(ctx.igcFocusUnreadableBatch,false,entry+": B must not inherit A's guard");
