@@ -133,9 +133,9 @@
     ],
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/401",
-      "head_sha": "d3e3c41ee43d9c0396a405fc335cf2d67cb2fa8b",
-      "checks": "4/7 SUCCESS at source cut; Windows and other CI in progress",
-      "effect": "Refuse false OK without exact current click WAL; commit action result to memory only after durable filesystem write"
+      "head_sha": "e8a0e5942b63a7182ca063303ddab44e9a1d0311",
+      "checks": "CI restarted for latest PR head; no completed checks certified yet at this cut",
+      "effect": "Exact WAL success proof, disk-first final outcomes, and fail-closed if Chrome target tab closes before success commit"
     },
     "physical_owner_browser": "pending",
     "blocker_issues": [
@@ -146,7 +146,7 @@
       "#172"
     ],
     "release": "v120.80 public; v120.81 on hold",
-    "note": "50% is 6/12 fixed acceptance milestones, not completed code. PR #401 is NOT merged or published at this cut."
+    "note": "Source PR #401 open. 7 CI workflows queued/running for latest exact head. No release and no physical owner acceptance; keep 6/12 (50%)."
   },
   "last_continuation": {
     "date": "2026-11-20",
