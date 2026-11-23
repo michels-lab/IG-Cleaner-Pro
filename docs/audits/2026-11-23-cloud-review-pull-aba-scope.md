@@ -25,3 +25,15 @@ This is a credible source-level cause of confusing Focus counters and account co
 ## Status
 
 P0 #360 remains OPEN until the real affected account browser proves 30 new reviews persist without count bounce after refresh/restart, pending isolated from Reviewed, and A→B→A. Physical #371/#377/#164/#172 remain OPEN. Strict official score **6/12 (50%)**, public stable **v120.80**, **v120.81 held**, no real Instagram actions.
+
+
+## Expanded same PR — cloud list snapshots and Double Check cycles
+
+The same confirmed post-await state-drift defect also existed in two more async pulls:
+
+- `pullListSnapshots()`: remote Following/Followers/Pending snapshot could finish after A→B or A→B→A and then call `applySnapshot()`, `saveDataMeta()` and `renderSyncedLists()` against the new active account. It now compares the same owner/account/generation before applying **any** list payload or saving import metadata.
+- `pullDoubleCheckCycle()`: a late remote Double Check epoch/seen response could write `IGC_DOUBLE_CYCLE_KEY` and `LS_DOUBLE_CHECK_SEEN` into another account. It now checks scope immediately after its remote await and **before** the first localStorage read/write.
+- New independent `tests/cloud-stale-list-cycle-aba.test.cjs` executes the actual production list and cycle pull functions with deferred remote responses. It verifies A→B, A→B→A, owner sign-in change and fresh B success, while protecting saved A/B cycles, list snapshots, metadata and visible render counters.
+- Both tests are mandatory in generic Desktop CI and integrated Windows QA. Direct V8 source evaluation of the latest pushed functions rejected two stale replies, permitted a fresh B list and cycle, and preserved A's prior Double Check ledger.
+
+As before, a physical account/counter regression is necessary to resolve #360. No automatic mutations or real Instagram browsing were performed.
