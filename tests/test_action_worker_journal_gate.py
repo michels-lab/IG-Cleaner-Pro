@@ -14,7 +14,8 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_actions import (
     ActionRobot, _assert_unchanged_action_journal,
-    _atomic_json, _saved_journal_blocks_action)
+    _atomic_json, _read_json, _saved_journal_blocks_action,
+    _success_has_current_click_intent, _commit_action_result)
 from profile_counts_bridge import Collector
 
 
@@ -55,6 +56,67 @@ class WorkerJournalGateTests(unittest.TestCase):
         robot.task, robot.targets = "unfollow", ["target.one"]
         robot.active_batch_id = "approved-exact-batch"
         return robot
+
+    def test_exact_batch_wal_is_mandatory_for_any_relationship_ok(self):
+        valid = {
+            "status": "review",
+            "click_intent": {
+                "batch_id": "batch-A", "task": "unfollow",
+                "phase": "relationship_control",
+                "phases": ["relationship_control"],
+                "written_at": "2026-11-23T00:00:00Z",
+            },
+        }
+        self.assertTrue(_success_has_current_click_intent(
+            valid, "unfollow", "batch-A"))
+        self.assertFalse(_success_has_current_click_intent(
+            valid, "cancel", "batch-A"))
+        self.assertFalse(_success_has_current_click_intent(
+            valid, "unfollow", "batch-B"))
+        for bad in (None, {}, {"status": "ok"},
+                    {"click_intent": None},
+                    {"click_intent": {**valid["click_intent"], "phases": []}},
+                    {"click_intent": {**valid["click_intent"], "phases": "relationship_control"}},
+                    {"click_intent": {**valid["click_intent"], "outcome_recorded": True}},
+                    {"click_intent": {**valid["click_intent"], "phase": "unknown"}},
+                    {"click_intent": {**valid["click_intent"],
+                                      "phases": ["relationship_control", "alien_phase"]}}):
+            with self.subTest(bad=bad):
+                self.assertFalse(_success_has_current_click_intent(
+                    bad, "unfollow", "batch-A"))
+
+    def test_failed_final_outcome_write_keeps_original_wal_and_ram(self):
+        with tempfile.TemporaryDirectory() as folder:
+            robot = self.make_robot(folder)
+            initial = {"target.one": {
+                "status": "review", "issue": "interrupted_action_uncertain",
+                "click_intent": {
+                    "batch_id": robot.active_batch_id, "task": "unfollow",
+                    "phase": "relationship_control",
+                    "phases": ["relationship_control"],
+                },
+            }}
+            _atomic_json(robot._base(), initial)
+            original = robot._base().read_bytes()
+            snapshot = json.loads(json.dumps(initial))
+            confirmed = {
+                **snapshot["target.one"], "status": "ok",
+                "click_intent": {**snapshot["target.one"]["click_intent"],
+                                 "outcome_recorded": True},
+            }
+            with patch("profile_actions._atomic_json",
+                       side_effect=OSError("simulated disk full")):
+                with self.assertRaisesRegex(OSError, "disk full"):
+                    _commit_action_result(
+                        robot._base(), snapshot, "target.one", confirmed)
+            self.assertEqual(snapshot, initial)
+            self.assertEqual(robot._base().read_bytes(), original)
+            self.assertTrue(_saved_journal_blocks_action(snapshot, "target.one"))
+            _commit_action_result(
+                robot._base(), snapshot, "target.one", confirmed)
+            self.assertEqual(snapshot["target.one"]["status"], "ok")
+            self.assertTrue(_read_json(robot._base(), {})["target.one"]
+                            ["click_intent"]["outcome_recorded"])
 
     def test_prefetch_and_execution_both_share_strict_no_replay_gate(self):
         run = inspect.getsource(ActionRobot._run)
