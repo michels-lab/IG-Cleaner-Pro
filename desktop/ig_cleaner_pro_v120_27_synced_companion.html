@@ -15157,7 +15157,19 @@ async function pushListSnapshots(){
   return {lists:rows.length,profiles:rows.reduce((n,r)=>n+r.item_count,0)};
 }
 async function pullListSnapshots(){
+  // A delayed cloud response must not mutate a different Instagram account,
+  // including a generation-changing A -> B -> A round trip.
+  const beforeOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const beforeRegistry=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  const beforeAccount=String(beforeRegistry?.active||'legacy');
+  const beforeGeneration=Number(beforeRegistry?.generation||0);
   const rows=await rest('list_snapshots?select=list_name,payload,item_count,source_device,content_hash,captured_at,updated_at',{method:'GET'});
+  const afterOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const afterRegistry=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  if(beforeOwner!==afterOwner||
+     beforeAccount!==String(afterRegistry?.active||'legacy')||
+     beforeGeneration!==Number(afterRegistry?.generation||0))
+    throw Error('Sync cancelada: cambió la cuenta o el perfil de Instagram durante la descarga. No se modificaron listas ni ciclos locales.');
   const changed=new Set();let profiles=0;
   for(const r of rows||[]){
     const name=r.list_name;
@@ -15447,7 +15459,20 @@ function applyOneState(r){
   return true;
 }
 async function pullProfileState(){
+  // A cloud page can resolve after Instagram account A -> B (or A -> B -> A).
+  // Capture both the signed-in owner and profile generation before ANY await;
+  // stale A data must never be committed under B's scoped localStorage keys.
+  const sourceOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const sourceProfile=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  const sourceAccount=String(sourceProfile?.active||'legacy');
+  const sourceGeneration=Number(sourceProfile?.generation||0);
   const rows=await readCompleteProfileState('*',{fresh:true});
+  const currentOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const currentProfile=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  if(sourceOwner!==currentOwner||
+     sourceAccount!==String(currentProfile?.active||'legacy')||
+     sourceGeneration!==Number(currentProfile?.generation||0))
+    throw Error('Sync de revisiones cancelada: cambió la cuenta o el perfil de Instagram durante la descarga. No se modificaron revisiones locales.');
   // Cloud reconciliation must never create phantom Reviewed changes in RAM
   // if the browser refuses a durable write. Save the exact prior identity-
   // scoped state and restore it on any failed multi-key localStorage commit.
@@ -15508,7 +15533,19 @@ async function pullProfileState(){
 // Reconcile epoch first, then union usernames only within the SAME cycle.
 const IGC_DOUBLE_CYCLE_KEY='ig_cleaner_double_check_epoch';
 async function pullDoubleCheckCycle(){
+  // A delayed cloud response must not mutate a different Instagram account,
+  // including a generation-changing A -> B -> A round trip.
+  const beforeOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const beforeRegistry=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  const beforeAccount=String(beforeRegistry?.active||'legacy');
+  const beforeGeneration=Number(beforeRegistry?.generation||0);
   const rows=await rest('workspace_state?select=payload&state_key=eq.focus_double_check_cycle&limit=1',{method:'GET'});
+  const afterOwner=typeof S==='undefined'?'':String(S?.session?.user?.id||S?.session?.user?.email||'');
+  const afterRegistry=typeof window==='undefined'?null:window.IGC_INSTAGRAM_PROFILES;
+  if(beforeOwner!==afterOwner||
+     beforeAccount!==String(afterRegistry?.active||'legacy')||
+     beforeGeneration!==Number(afterRegistry?.generation||0))
+    throw Error('Sync cancelada: cambió la cuenta o el perfil de Instagram durante la descarga. No se modificaron listas ni ciclos locales.');
   const remote=rows?.[0]?.payload;
   if(!remote)return;
   const localEpoch=Number(localStorage.getItem(IGC_DOUBLE_CYCLE_KEY)||0);
