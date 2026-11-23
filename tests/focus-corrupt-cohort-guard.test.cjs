@@ -50,7 +50,7 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
   assert.equal(ctx.activeFocusBatch,null);
   // A fresh, apparently valid cohort must never replace an unreadable previous one.
   ctx.activeFocusBatch=cohort;
-  assert.throws(()=>ctx.saveActiveFocusBatch(),/Una tanda guardada ilegible/);
+  assert.throws(()=>ctx.saveActiveFocusBatch(),/Hay una tanda guardada ilegible/);
   assert.equal(storage.get("A::activeFocus"),damaged);
   ctx.activeFocusBatch=null;
   assert.equal(ctx.setActiveFocusBatch("main",cohort.rows,"new batch"),false,
@@ -101,7 +101,7 @@ for(const entry of ["index.html","desktop/ig_cleaner_pro_v120_27_synced_companio
   // Read permission errors are also fail-closed and never treated as empty.
   denyRead=true;ctx.loadActiveFocusBatch();
   assert.equal(ctx.igcFocusUnreadableBatch,true);
-  assert.throws(()=>ctx.saveActiveFocusBatch(),/Una tanda guardada ilegible/);
+  assert.throws(()=>ctx.saveActiveFocusBatch(),/Hay una tanda guardada ilegible/);
   denyRead=false;
   const safe=storage.get("A::activeFocus");
   assert.equal(safe!==null,true);
