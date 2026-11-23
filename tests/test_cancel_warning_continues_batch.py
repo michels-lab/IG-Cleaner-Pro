@@ -128,7 +128,7 @@ class CancelWarningContinuesBatch(unittest.TestCase):
                 self.assertEqual(attempted, ["first.person"])
                 self.assertTrue(observed)
                 self.assertEqual(observed[0][0], "review")
-                self.assertIn("no automatic", observed[0][1].lower())
+                self.assertIn("No relationship click will be repeated.", observed[0][1])
                 saved = _read_json(robot._base(), {})
                 self.assertEqual(saved["first.person"]["status"], "review")
                 self.assertEqual(saved["first.person"]["issue"],
