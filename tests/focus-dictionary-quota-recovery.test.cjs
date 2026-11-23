@@ -82,6 +82,14 @@ for(const entry of ["desktop/ig_cleaner_pro_v120_27_synced_companion.html","inde
   assert.equal(persisted.get("A::focus"),JSON.stringify(invalid),
     "Unverifiable prior data must not be overwritten by loading it");
   persisted.set("A::focus",savedA);
+  // The new no-overwrite guard must remain active until the restored valid
+  // cohort is explicitly loaded again; replacing raw bytes in a test fixture
+  // alone is not proof that the app actually recovered from corruption.
+  assert.equal(ctx.igcFocusUnreadableBatch,true);
+  assert.throws(()=>ctx.saveActiveFocusBatch(),/FocusRecoveryRequired/);
+  ctx.loadActiveFocusBatch();
+  assert.equal(ctx.igcFocusUnreadableBatch,false);
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.activeFocusBatch)),orig);
   cap=1;ctx.activeFocusBatch=batch;
   assert.throws(()=>ctx.saveActiveFocusBatch(),/QuotaExceededError/,
     entry+": insufficient quota must fail, not delete past decisions");
