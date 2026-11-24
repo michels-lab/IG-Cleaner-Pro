@@ -1,0 +1,24 @@
+# GRANADA: global owner lifecycle, registry, backup and destructive operations are one transaction scope
+
+**Date:** 2026-11-24. **Scope:** `desktop/ig_cleaner_pro_v120_27_synced_companion.html` (embedded Desktop and Android WebView source); **no signed-in Instagram or production Supabase operations performed**. The published release [v120.81](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) is immutable and remains the verified stable. **v120.82 is not authorized**.
+
+## Root cause and actual failure boundary
+
+The previous `rest()` guarded each *individual* network request against owner/account/generation changes, but several owner-level procedures made **multiple sequential REST calls**, whose next call captured whichever owner/account was active *then*. Thus changing A→B after the first table could cause the next step of a confirmed "DELETE CLOUD" for A to delete B's tables, log out B, or replace the current owner's counters. Global and per-Instagram cloud backups could concatenate A/B pages or emit a mixed-owner JSON. The Double Check delayed timer captured its identity only when fired, silently repurposing A's timer to B; profile registry refresh lacked a full-life scope and could apply a stale A response after B or A→B→A. Worse, `refreshInstagramAccounts` automatically invoked `purgeLocalWorkspace` when a cloud account row was absent, deleting locally saved account histories/IndexedDB during what the user perceived as a read-only refresh.
+
+## Production changes
+
+1. Capture the established `igcCaptureSyncScope()` **at entry**, before any `ensureAuth()`, REST, prompt, confirmation or timer. Check across *all* pages/tables, after awaits and before export delivery, later deletion, on-screen success or sign-out.
+2. Make both **full cloud export** and **individual Instagram workspace backup** scope-atomic. On a changed session or A→B→A, abort with no mixed-owner file, no falsely completed export; incomplete server pagination returns an error, not a partial backup.
+3. **Global cloud deletion** and **individual workspace Delete** both reject stale owner switches before additional calls and final UI/session mutation. Keep positive explicit owner confirmation and accurate partial-deletion warning; no rollback is falsely promised if an earlier server request had already committed.
+4. `refreshInstagramAccounts` tracks a monotonic per-refresh epoch and active owner/account/generation, reads account list **and summaries before commit**, ignores older in-flight results and **NEVER purges localStorage or IndexedDB** during a read-only cloud refresh. Missing picker entries are removed from the visible selector but their original local bytes are retained for owner backup/recovery. Only a separately confirmed individual account deletion may invoke `purgeLocalWorkspace`.
+5. Explicit purge checks scope before every localStorage removal and **after** `indexedDB.databases()` / each deletion await. A delayed A operation cannot resume deleting databases after switching to B.
+6. Scheduled Double Check cloud reconciliation captures owner/account at timer creation, rejects stale callbacks and checks after every auth/pull/push await.
+
+## Negative fixtures and exact-head gates
+
+`tests/cloud-owner-global-lifecycle-aba.test.cjs` loads the **actual production function bodies** in Node VM with deferred authenticated owner switches. It tests A→B and A→B→A during DELETE; no second REST under B, no sign-out/false success; paginated backup no mixed files; valid backup when unchanged; read-only registry refresh preserves orphaned local Reviewed data, concurrent old/new requests cannot overwrite; individual backup/delete refuse stale owner before local purge; scheduled Double Check cannot become a B job; explicit IndexedDB purge cannot resume after owner changes. Tests contain **synthetic** data only, never cookies, usernames from the owner, live IG connections or account actions. `.github/workflows/ci.yml` runs the fixture alongside existing cloud A-B-A regressions.
+
+**Acceptance boundary:** this is source/root-cause protection; does **not** prove owner real Chrome Focus quota, Focus counter persistence, signed-in Unfollow/Cancel, or physical dual-window A/B acceptance. The fixed 12-item P0 route remains **7/12 (58%)**, with five real-account P0 milestones open. Do not publish v120.82 without separate authorization and official current-SHA installed Windows, Android, visual, signing and SHA256 gates.
+
+**Prevention:** future multi-REST/user-data operations must capture scope at the **top-level operation**, not only inside `rest()`; local data deletion must be explicit and verified, never inferred from transient cloud list absence. No data migrations, no saved browser storage clearing and no Instagram click automation performed in this change.
