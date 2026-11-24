@@ -1,3 +1,9 @@
+## GRANADA 24-nov-2026 — #413: History sigue únicamente al perfil activo
+
+[PR #413](https://github.com/michels-lab/IG-Cleaner-Pro/pull/413) OPEN, nueva fuente separada de v120.82: elimina selección implícita de otra cuenta, descarta respuestas con generación o registry obsoletos incluso A→B→A entre sondeos, limpia métricas de perfil sin registrar. [Auditoría](docs/audits/2026-11-24-history-pinned-identity.md). Regresión Chromium en revisión. 58% (7/12) sin aceptación física. [Publicador v120.82](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) en ejecución sobre SHA fijo `84b84e7a5dec057a869b72fe149dfde3f037cf00`; #413 no pertenece a ese release. Última publicada v120.81.
+
+---
+
 ## v120.82 — FINAL release requested (24-Nov-2026)
 
 Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.
