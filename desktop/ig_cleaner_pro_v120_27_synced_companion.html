@@ -15657,46 +15657,62 @@ window.igcQueueDoubleCheckCycle=function(){
 };
 async function touchDevice(){const d=currentDevice();await rest('devices?on_conflict=user_id,device_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{device_id:d.id,device_type:d.type,label:d.label,last_seen:new Date().toISOString()}])})}
 let instagramRegistryLoaded=false;
+let igcRegistryRefreshEpoch=0;
 async function refreshInstagramAccounts(){
+ const assertSameWorkspace=igcCaptureSyncScope();
+ const refreshEpoch=++igcRegistryRefreshEpoch;
  const registry=window.IGC_INSTAGRAM_PROFILES;
+ const assertCurrent=()=>{
+  assertSameWorkspace();
+  // A slower earlier query must never overwrite a newer complete registry.
+  if(refreshEpoch!==igcRegistryRefreshEpoch)
+   throw Error('Consulta de perfiles reemplazada por una actualización más reciente.');
+ };
  registry.setCloudStatus('Consultando los perfiles de tu cuenta…');
  let rows;
  try{
   rows=await rest('instagram_accounts?select=account_key,username,label,updated_at&order=created_at.asc',{method:'GET',globalAccountData:true});
+  assertCurrent();
   if(!Array.isArray(rows))throw new Error('La nube devolvió una respuesta de perfiles inválida');
  }catch(error){
+  // A stale request must not replace the current owner's cloud status.
+  assertCurrent();
   const detail=String(error?.message||error);
   registry.setCloudStatus('Unable to load the complete profile list: '+detail+'. Open Account to check your session, or select Refresh profiles.','error');
   throw new Error('No se pudieron cargar los perfiles de Instagram: '+detail);
  }
  const profiles=rows;
  if(!profiles.some(x=>x.account_key==='legacy')){
+  assertCurrent();
   await rest('instagram_accounts?on_conflict=user_id,account_key',{
    method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},
    body:JSON.stringify([{account_key:'legacy',label:'Datos anteriores'}])
   });
+  assertCurrent();
   profiles.unshift({account_key:'legacy',label:'Datos anteriores'});
  }
- // Another device may have deleted a workspace: never keep it resurrectable
- // from a stale browser cache after the authoritative server registry refresh.
- for(const previous of registry.accounts){
-  if(previous.account_key==='legacy'||profiles.some(x=>x.account_key===previous.account_key))continue;
-  try{await registry.purgeLocalWorkspace(previous.account_key)}
-  catch(error){console.warn('No se pudo limpiar por completo el perfil eliminado:',error);}
- }
+ assertCurrent();
  const selected=registry.active;
  if(selected!=='legacy'&&!profiles.some(x=>x.account_key===selected)){
-  window.IGC_INSTAGRAM_PROFILES.switch('legacy');
+  registry.switch('legacy');
   throw new Error('La identidad activa no pertenece a tu cuenta; volviendo a los datos anteriores.');
  }
- // One RLS-filtered RPC returns only counts/timestamps, never full historical rows.
+ // Download both authoritative registry and RLS-filtered metadata before
+ // making ANY registry changes; a late A→B→A reply cannot touch B or A.
  const summaries=await rest('rpc/igc_instagram_profile_summaries',{method:'GET',globalAccountData:true});
+ assertCurrent();
  if(Array.isArray(summaries))for(const profile of profiles){
   const meta=summaries.find(a=>a.account_key===profile.account_key);
   if(meta)Object.assign(profile,meta);
  }
- registry._verified=true;
+ assertCurrent();
+ // A READ-ONLY refresh must NEVER purge localStorage/IndexedDB. Missing
+ // remote rows may be transient, incomplete or from another owner. Updating
+ // the picker is enough to avoid resurrecting stale workspace options;
+ // raw history is retained for safe backup/recovery. Only an explicit
+ // confirmed account Delete may call purgeLocalWorkspace.
  registry.setAccounts(profiles);
+ registry._verified=true;
  registry.setCloudStatus(profiles.length+' espacio(s) de Instagram registrados (incluyendo Datos anteriores cuando existe). Son cuentas de trabajo, no personas de tus listas.','success');
  instagramRegistryLoaded=true;
  return true;
