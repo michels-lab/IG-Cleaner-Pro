@@ -5,7 +5,7 @@ No file is auto-deleted or declared unused.
 
 ## Coverage
 
-Tracked: 496; classified: 492; readable documents: 143; above read cap: 2; findings: 2.
+Tracked: 496; classified: 492; readable documents: 143; above read cap: 2; findings: 1.
 
 ## File roles
 
@@ -30,7 +30,6 @@ Tracked: 496; classified: 492; readable documents: 143; above read cap: 2; findi
 ## Findings (human review required)
 
 - **CONFIRMED / BROKEN_RELATIVE_LINK** release/RELEASE_NOTES.md: Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md. Next: Fix link or restore target (ID 5c362704fd56e07f)
-- **REVIEW / POTENTIAL_UNLOGGED_CHANGES** PROJECT_LOG.md: 5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/cloud-list-snapshot-freshness.test.cjs, tests/cloud-write-preauth-aba.test.cjs. Next: Inspect diffs and reconcile only meaningful decisions/results in the canonical log (ID 120b1e2efb3f5a50)
 
 Complete path → purpose/role/certainty list lives in FILE_GOVERNANCE.json. SUMMARY.json has counts only for master polling.
 A dated file, duplicate, or suspicious name is an **investigation candidate**, not unwanted material.

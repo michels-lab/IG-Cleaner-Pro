@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 1
   },
-  "finding_total": 2,
-  "inventory_fingerprint": "dbe9e57bbf19b6a1dfb50a58abc21766bdcc633d9d8a5588e5e470f0ccb7a6ba",
-  "evidence_fingerprint": "d5522c160240a912b3a172bb153c58d512691051565a7c15f56ecd65a6252ea9",
+  "finding_total": 1,
+  "inventory_fingerprint": "8ccc4b250491242528300a09a53678fdc1e5aabf19c8efba2902542f1bd14f21",
+  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -211,7 +210,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "4a0788a4c850f7a804070abfd0b6a879e7392ebe"
+      "blob": "4e4b28e0b81afe177b75fb0b2d9c8feae982132a"
     },
     {
       "path": ".michelslab/project.yml",
@@ -225,7 +224,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "3bf3c2da111d4a54c222f9a68ed4ba4608569591"
+      "blob": "d30b3b1d73708b69aba4234372a7883c1fcc7548"
     },
     {
       "path": "AGENTS.md",
@@ -253,28 +252,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "044dbecdd15cfc32a71912d9e460c044b24907da"
+      "blob": "5cef23e3a799565cbf5c52db7c1fb5acd365c92e"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "39358988dfa3014f09578a3c4079b7f67c020eee"
+      "blob": "c3e3eefb414db9773b413d462fa9034b4477cfa6"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "e64d92da632c2836a5ac91cb316d3e002f60af91"
+      "blob": "70913be1dc055a77548e897fb6f82cecbfe7eb65"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "416af6b31faeea6ea46b56f52d145fc14d1ab028"
+      "blob": "d9047fbb99d727f60caa7a6813bdbadbe3ef9952"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -862,7 +861,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "7169969749ebb050d1bf19b1c2f2b136f5f9d950"
+      "blob": "923dafb3be78214268c016d26429e880ada026ee"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -890,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "bcc42a94a114ea8936a58fbf18a7de26607a950b"
+      "blob": "f28c1f671d8e621e2a00a41427c9ae748f52ed30"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1590,14 +1589,14 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "10d29bf3536637803c4ac1f115008b5880fd0603"
+      "blob": "2c862f07f758002befb577f02e12012fc82a01d3"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "c9002f15d8445704bb15a507ee4b9348e231d5d3"
+      "blob": "21ef23be7fbada9841ed126211f7c8abde871cdf"
     },
     {
       "path": "docs/audits/2026-11-17-automation-history-casefold-reconciliation.md",
@@ -1898,28 +1897,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "a89085236799f5cba2f9a6fc98e9bf042adc594c"
+      "blob": "630033f5de1bcf1e8557731ff10008dd1596fe7e"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "45864549177aec7703f9c5297c4169bfb4e4c90a"
+      "blob": "2aa9e7537ef109f33839a3d2337d869c872a61d2"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "4daae86479bd32a7b39804c2d9c475fa9497eedc"
+      "blob": "6158560c4fbb81568ee4da30c1cf205c66ae5751"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "5014742de3164c378821b75928bd0fa6c17f73f4"
+      "blob": "979dbda2753b3680e9e1629b161eb76d542d6889"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3067,7 +3066,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "242fe3b9b1c03dfb72cfe4389a55f759f3a041e9"
+      "blob": "c801f02a0801631f7da45f5478db3bd30b6ffd7e"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3361,7 +3360,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0be15b1789526f7423df2068c01482d27fac65fe"
+      "blob": "6bfb30c1a2ab1ef6d8c6b46e586928d25c2b3c4a"
     },
     {
       "path": "tools/repository_file_auditor.py",
@@ -3484,15 +3483,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "120b1e2efb3f5a50",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "5 implementation/config paths changed since this log's last commit; examples: .github/workflows/ci.yml, .michelslab/project-progress.json, desktop/ig_cleaner_pro_v120_27_synced_companion.html, tests/cloud-list-snapshot-freshness.test.cjs, tests/cloud-write-preauth-aba.test.cjs",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
