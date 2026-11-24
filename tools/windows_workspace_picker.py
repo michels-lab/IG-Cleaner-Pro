@@ -51,7 +51,28 @@ def instance_mutex_name(workspace: str, *, developer: bool = False) -> str:
     return prefix + ("_SecondWindow" if workspace == "secondary" else "")
 
 
-def select_workspace() -> str | None:
+def workspace_is_open(workspace: str, *, developer: bool = False) -> bool:
+    """Read the existing named mutex without creating/reserving an app slot."""
+    import ctypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenMutexW.argtypes = [ctypes.c_uint32, ctypes.c_bool, ctypes.c_wchar_p]
+    kernel32.OpenMutexW.restype = ctypes.c_void_p
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel32.CloseHandle.restype = ctypes.c_bool
+    handle = kernel32.OpenMutexW(0x00100000, False,
+                                instance_mutex_name(workspace, developer=developer))
+    if handle:
+        kernel32.CloseHandle(handle)
+        return True
+    error = ctypes.get_last_error()
+    if error == 2:  # ERROR_FILE_NOT_FOUND: genuinely absent
+        return False
+    # Access denied or an unexpected probe failure is not evidence of a free slot.
+    # The authoritative CreateMutexW gate still runs at actual launch.
+    return True
+
+
+def select_workspace(*, developer: bool = False) -> str | None:
     """Use a labeled Windows task dialog rather than ambiguous Yes/No buttons.
 
     Cancel returns None and does not touch user data or start the browser.
@@ -94,25 +115,37 @@ def select_workspace() -> str | None:
             ("cxWidth", wintypes.UINT),
         ]
 
-    buttons = (TaskDialogButton * 2)(
-        TaskDialogButton(101, "Cuenta principal\nConserva tu sesión anterior"),
-        TaskDialogButton(102, "Segunda cuenta\nAbre una sesión totalmente independiente"),
+    labels = {
+        "primary": (101, "Primary account\nKeep your existing session"),
+        "secondary": (102, "Second account\nOpen its independent session"),
+    }
+    free = [slot for slot in WORKSPACES
+            if not workspace_is_open(slot, developer=developer)]
+    busy = [slot for slot in WORKSPACES if slot not in free]
+    buttons = (TaskDialogButton * len(free))(
+        *(TaskDialogButton(*labels[slot]) for slot in free)
     )
     config = TaskDialogConfig()
     config.cbSize = ctypes.sizeof(TaskDialogConfig)
     # TDF_USE_COMMAND_LINKS and TDF_ALLOW_DIALOG_CANCELLATION
     config.dwFlags = 0x0010 | 0x0008
-    # TDCBF_CANCEL_BUTTON
-    config.dwCommonButtons = 0x0008
+    config.dwCommonButtons = 0x0008  # Cancel
     config.pszWindowTitle = "Instagram Cleaner Pro"
-    config.pszMainInstruction = "¿Con qué cuenta quieres trabajar?"
-    config.pszContent = (
-        "Cada cuenta tiene su propia ventana, inicio de sesión y datos de navegador. "
-        "Para abrir ambas, ejecuta InstaCleaner otra vez y elige la otra cuenta."
+    config.pszMainInstruction = ("Which account window do you want to open?"
+                                if free else "Both account windows are already open")
+    status = " ".join(
+        ("Primary account" if slot == "primary" else "Second account") +
+        ": already open or unavailable." for slot in busy
     )
-    config.cButtons = 2
-    config.pButtons = buttons
-    config.nDefaultButton = 101
+    config.pszContent = (
+        "Each window has its own sign-in and browser data. "
+        + (status + " " if status else "")
+        + ("Choose an available window, or cancel without changing anything."
+           if free else "Use an existing window or close one before launching again.")
+    )
+    config.cButtons = len(free)
+    config.pButtons = buttons if free else None
+    config.nDefaultButton = labels[free[0]][0] if free else 2
     config.cxWidth = 260
     selected = ctypes.c_int(0)
     call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
@@ -122,4 +155,4 @@ def select_workspace() -> str | None:
     result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
     if result < 0:
         raise RuntimeError("No se pudo abrir el selector de cuentas de Windows.")
-    return {101: "primary", 102: "secondary"}.get(selected.value)
+    return next((slot for slot in free if labels[slot][0] == selected.value), None)
