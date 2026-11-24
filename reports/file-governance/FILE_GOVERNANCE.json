@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 497,
-  "classified_files_total": 493,
-  "docs_content_inspected": 144,
+  "tracked_files_total": 499,
+  "classified_files_total": 495,
+  "docs_content_inspected": 145,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,11 +14,11 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 140,
+    "document": 141,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
-    "test": 155,
+    "test": 156,
     "text_metadata": 2,
     "web_ui": 7,
     "workflow": 12
@@ -27,7 +27,7 @@
     "BROKEN_RELATIVE_LINK": 1
   },
   "finding_total": 1,
-  "inventory_fingerprint": "341a20a74daec49ac87124906fc3641f2cb451cc24665a215ae9c6f5d263dee7",
+  "inventory_fingerprint": "81210c9e86e73af5033267ac1b626c53465a47e926cf86dfd24a9fb02faa1e4b",
   "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
   "files": [
     {
@@ -98,7 +98,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "87e56b0a1508f71761f660007211b9f62dfc0291"
+      "blob": "98f638dd682bc7b4a2088652bdab51bdbbc04c78"
     },
     {
       "path": ".github/workflows/desktop-rendered-ui.yml",
@@ -210,7 +210,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "30f19d27a49942f37b4a8be608ab7a93f55e5c8e"
+      "blob": "71a6d42754ae9b798184f7fbf77f3ccab853c118"
     },
     {
       "path": ".michelslab/project.yml",
@@ -252,7 +252,7 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "7bde9630237de0d9cf31b778495fd5ef70e5bf97"
+      "blob": "3b14a2027f31f079bea76cb72ac43ce6c405840b"
     },
     {
       "path": "README.md",
@@ -861,7 +861,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "923dafb3be78214268c016d26429e880ada026ee"
+      "blob": "0ae263dd546dc305993112dc82b863c47a92068e"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -889,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d50204f7c593f6e923333bdbdd474654f5064a6e"
+      "blob": "6190cb05e1e52a9b8be4d43a9a9b171d4139f936"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1596,7 +1596,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "da8bf528b6c83751d1a8e6d25c43298721d7688b"
+      "blob": "670a38e06d9e68d7949135537128853156bffd87"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -1814,6 +1814,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "3d52a1b0d4f6e0a1b24be4a1d9093e959b2744b1"
+    },
+    {
+      "path": "docs/audits/2026-11-24-global-operations-account-aba-fence.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "aa463473ab02a6b62bfe98c7658141ca3ffdc51a"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -2136,6 +2143,13 @@
       "purpose": "code/test implementation",
       "certainty": "rule",
       "blob": "6a3ac8d0c0f5093ba114fbaf87e1a0b7c83c6ea2"
+    },
+    {
+      "path": "tests/cloud-owner-global-lifecycle-aba.test.cjs",
+      "role": "test",
+      "purpose": "code/test implementation",
+      "certainty": "rule",
+      "blob": "dc55406194efad1dc49e3c78c06647889547b972"
     },
     {
       "path": "tests/cloud-review-monotonic.test.cjs",
