@@ -83,7 +83,7 @@ async function testExportNeverMixesPagesOrOwners(){
  assert.deepEqual(Object.keys(ok.saved[0].payload.tables),ok.ctx.IGC_SYNC_TABLES);
 }
 async function testRegistryIsNonDestructiveAndLatestWins(){
- const good=setup(registry);const stateKey="igc_profile__fixture__"+A+"__ig_v13_done";
+ const good=setup(registry);good.reg.active="legacy";const stateKey="igc_profile__fixture__"+A+"__ig_v13_done";
  const disk=new Map([[stateKey,'["old-reviewed"]']]);
  good.ctx.localStorage={getItem:key=>disk.get(key)};
  good.ctx.rest=async path=>path.startsWith("rpc/")?[]:[{account_key:"legacy"}];
@@ -92,7 +92,7 @@ async function testRegistryIsNonDestructiveAndLatestWins(){
  assert.equal(disk.get(stateKey),'["old-reviewed"]',"Missing profile must never auto-delete history");
  assert.equal(good.reg.accounts.some(x=>x.account_key===A),false,"Old picker entry may be pruned without deleting its history");
  assert.equal(good.reg._verified,true);
- const stale=setup(registry),old=deferred();let requests=0;
+ const stale=setup(registry),old=deferred();stale.reg.active="legacy";let requests=0;
  stale.ctx.rest=async path=>{
   if(path.startsWith("rpc/"))return [];
   requests++;return requests===1?old.promise:[{account_key:"legacy"},{account_key:B,username:"beta"}];
