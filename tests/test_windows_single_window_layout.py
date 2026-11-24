@@ -88,31 +88,60 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     app.window_collector(home, legacy, invalid)
 
-    def test_native_choice_maps_each_button_and_cancel_without_side_effects(self):
+    def test_native_choice_maps_available_buttons_and_cancel_without_side_effects(self):
         import ctypes
         from unittest.mock import patch
 
-        class TaskDialogStub:
-            def __init__(self, selected):
-                self.selected = selected
-            def __call__(self, config, output, *_args):
-                self_config = config._obj
-                assert self_config.cButtons == 2
-                assert self_config.nDefaultButton == 101
-                assert "cuenta" in self_config.pszMainInstruction.lower()
-                ctypes.cast(output, ctypes.POINTER(ctypes.c_int)).contents.value = self.selected
-                return 0
+        cases = [
+            ((), 101, "primary"), ((), 102, "secondary"), ((), 2, None),
+            (("primary",), 102, "secondary"), (("primary",), 101, None),
+            (("secondary",), 101, "primary"), (("secondary",), 2, None),
+            (("primary", "secondary"), 2, None),
+            (("primary", "secondary"), 101, None),
+        ]
+        for occupied, selected, expected in cases:
+            with self.subTest(occupied=occupied, button=selected):
+                free = [slot for slot in picker.WORKSPACES if slot not in occupied]
+                expected_ids = [101 if slot == "primary" else 102 for slot in free]
 
-        class FakeLibrary:
-            def __init__(self, selected):
-                self.TaskDialogIndirect = TaskDialogStub(selected)
+                class TaskDialogStub:
+                    def __call__(self, config, output, *_args):
+                        cfg = config._obj
+                        self_ids = [cfg.pButtons[i].nButtonID for i in range(cfg.cButtons)]
+                        self.assertEqual(self_ids, expected_ids)
+                        self.assertEqual(cfg.nDefaultButton, expected_ids[0] if free else 2)
+                        self.assertIn("account", cfg.pszMainInstruction.lower())
+                        ctypes.cast(output, ctypes.POINTER(ctypes.c_int)).contents.value = selected
+                        return 0
 
-        for selected, expected in ((101, "primary"), (102, "secondary"), (2, None)):
-            with self.subTest(button=selected):
+                # Stub the native dialog only; the actual layout generation and
+                # selection mapping run for every available/busy combination.
+                stub = TaskDialogStub()
+                stub.assertEqual = self.assertEqual
+                stub.assertIn = self.assertIn
+                class FakeLibrary:
+                    TaskDialogIndirect = stub
+
                 with (patch.object(picker.sys, "platform", "win32"),
-                     patch.object(ctypes, "WinDLL", return_value=FakeLibrary(selected),
-                                  create=True)):
-                    self.assertEqual(picker.select_workspace(), expected)
+                      patch.object(picker, "workspace_is_open",
+                                   side_effect=lambda slot, **kw: slot in occupied) as probe,
+                      patch.object(ctypes, "WinDLL", return_value=FakeLibrary(), create=True)):
+                    self.assertEqual(picker.select_workspace(developer=True), expected)
+                    self.assertEqual([call.kwargs for call in probe.call_args_list],
+                                     [{"developer": True}, {"developer": True}])
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows named mutex runtime")
+    def test_picker_probes_existing_slots_without_reserving_or_creating_them(self):
+        self.assertFalse(picker.workspace_is_open("primary", developer=True))
+        self.assertFalse(picker.workspace_is_open("secondary", developer=True))
+        handle = app.acquire_single_instance(workspace="primary", developer=True)
+        try:
+            self.assertTrue(picker.workspace_is_open("primary", developer=True))
+            self.assertFalse(picker.workspace_is_open("secondary", developer=True))
+            self.assertFalse(picker.workspace_is_open("primary", developer=False))
+        finally:
+            app.release_single_instance(handle)
+        self.assertFalse(picker.workspace_is_open("primary", developer=True))
 
     def test_named_mutex_guards_slots_independently(self):
         a = picker.instance_mutex_name("primary")
@@ -200,9 +229,9 @@ class WindowsIndependentWindowTests(unittest.TestCase):
         html = (ROOT / "desktop/ig_cleaner_pro_v120_27_synced_companion.html").read_text(encoding="utf-8")
         launcher = (ROOT / "tools/ig_cleaner_desktop.py").read_text(encoding="utf-8")
         self.assertIn("TaskDialogIndirect", chooser)
-        self.assertIn("Cuenta principal", chooser)
-        self.assertIn("Segunda cuenta", chooser)
-        self.assertIn("select_workspace()", launcher)
+        self.assertIn("Primary account", chooser)
+        self.assertIn("Second account", chooser)
+        self.assertIn("select_workspace(developer=args.developer)", launcher)
         self.assertIn("acquire_single_instance(developer=args.developer, workspace=workspace)", launcher)
         for forbidden in ('id="igcDualSecondary"', 'class="igc-dual-workspace"',
                           "openOtherWorkspace(asWindow=false)", "IGC_WINDOW_PROFILE_KEY",
