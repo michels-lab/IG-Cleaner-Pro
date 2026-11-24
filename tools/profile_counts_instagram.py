@@ -66,11 +66,12 @@ def own_profile_from_anchors(anchors):
 def visible_link_descriptors(page):
     return page.evaluate("""() => [...document.querySelectorAll('a[href], [role=link][href]')]
         .filter(el => { const r=el.getBoundingClientRect();
+          for (let p=el; p; p=p.parentElement) {
+            if (Number(getComputedStyle(p).opacity) <= 0) return false;
+          }
           return r.width>0 && r.height>0 &&
             r.bottom>0 && r.top<innerHeight &&
-            r.right>0 && r.left<innerWidth &&
-            [...(function* () { for (let p=el; p; p=p.parentElement) yield p; })()]
-              .every(p => Number(getComputedStyle(p).opacity) > 0); })
+            r.right>0 && r.left<innerWidth; })
         .map(el => ({
           href: el.getAttribute('href') || '',
           text: (el.innerText || '').trim().slice(0,80),
@@ -190,8 +191,7 @@ def own_profile_edit_identity(page):
                     }
                     return r.width > 0 && r.height > 0 &&
                       r.bottom > 0 && r.top < innerHeight &&
-                      r.right > 0 && r.left < innerWidth &&
-                      true;
+                      r.right > 0 && r.left < innerWidth;
                 }"""):
                     visible_edits += 1
             except Exception:
