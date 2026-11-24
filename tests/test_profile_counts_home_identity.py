@@ -107,6 +107,13 @@ class HomeIdentityChromiumTests(unittest.TestCase):
         self.home(include_switch=False, nav="realmichelduarte")
         self.assertEqual(signed_in_handle(self.page), "realmichelduarte")
 
+    def test_transparent_parent_switcher_never_proves_logged_in_owner(self):
+        # Elements with opacity:1 can inherit a visually invisible parent.
+        self.home()
+        self.page.locator("#owner").evaluate(
+            "el => el.parentElement.style.opacity = '0'")
+        self.assertIsNone(signed_in_handle(self.page))
+
     def test_offscreen_profile_nav_never_proves_logged_in_owner(self):
         # Old code checked width/height but NOT left/right viewport bounds:
         # a transformed/collapsed sidebar could count as current login proof.
@@ -115,6 +122,9 @@ class HomeIdentityChromiumTests(unittest.TestCase):
           <nav style="position:absolute;left:-4000px;top:10px;width:300px">
             <a href="/wrong.account/" aria-label="Profile">Profile</a>
           </nav></body></html>""")
+        self.assertIsNone(signed_in_handle(self.page))
+        self.page.locator("nav").evaluate("el => el.style.left = '10px'")
+        self.page.locator("nav").evaluate("el => el.style.opacity = '0'")
         self.assertIsNone(signed_in_handle(self.page))
         self.page.set_content("""<!doctype html><html><body>
           <nav><a href="/correct.account/" aria-label="Profile">Profile</a></nav>
@@ -126,21 +136,24 @@ class HomeIdentityChromiumTests(unittest.TestCase):
         # An offscreen/transparent Edit profile button must not authorize
         # Unfollow, Cancel Pending or reuse of an owner-proof cache.
         self.page.unroute("**/*")
-        css = ["position:absolute;left:-4000px;top:10px",
-               "opacity:0", "display:block"]
+        css = ["position:absolute;left:-4000px;top:10px"]
+        parent_css = ["display:block"]
         def owner_route(route):
             route.fulfill(status=200, content_type="text/html", body=(
                 '<html><body><header><h2>correct.account</h2>' +
-                '<button style="' + css[0] + '">Edit profile</button>' +
+                '<div style="' + parent_css[0] + '"><button style="' +
+                css[0] + '">Edit profile</button></div>' +
                 '</header></body></html>'
             ))
         self.page.route("https://www.instagram.com/**", owner_route)
-        for style, expected in [
-                ("position:absolute;left:-4000px;top:10px", None),
-                ("opacity:0", None),
-                ("display:block", "correct.account")]:
-            with self.subTest(style=style):
+        for style, parent, expected in [
+                ("position:absolute;left:-4000px;top:10px", "display:block", None),
+                ("opacity:0", "display:block", None),
+                ("display:block", "opacity:0", None),
+                ("display:block", "display:block", "correct.account")]:
+            with self.subTest(style=style, parent=parent):
                 css[0] = style
+                parent_css[0] = parent
                 self.page.goto("https://www.instagram.com/correct.account/",
                                wait_until="domcontentloaded")
                 self.assertEqual(own_profile_edit_identity(self.page), expected)
