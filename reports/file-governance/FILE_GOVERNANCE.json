@@ -28,8 +28,8 @@
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
   "finding_total": 3,
-  "inventory_fingerprint": "77bfbcb2c310fb6e9e6485f2e66c286a3bda0119661123b63244ee8bf4d1f2f0",
-  "evidence_fingerprint": "e0bb4d4b845f58ed1388c0db1ea1262eacb3e5ad023e2fb696f5cb23e1793f4a",
+  "inventory_fingerprint": "1678699874ba842a28f522f8394061b4a9245d9913b36188e63bec7c8423d8d5",
+  "evidence_fingerprint": "5d38b9fe52d45c6da66bf9134e9a378fa5945ac0e609076c4ebb4d44f8981828",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -211,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "cbdc2dfe305d613c65a08d07e96e0264dc02e8a4"
+      "blob": "bdfb6e64277e094a2d24129051a471ba05e861d5"
     },
     {
       "path": ".michelslab/project.yml",
@@ -225,7 +225,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "47cd29d3b258a0d9e1ee713666e0b8bd44d266ba"
+      "blob": "62aa2ec8346e989fa551f99283352b76392c6268"
     },
     {
       "path": "AGENTS.md",
@@ -253,28 +253,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "a3e1105b48e987ab3995358124cdc287bf6d6e10"
+      "blob": "fd36ecc120445316e285ef3229a864cca41735f3"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "eebcd207ce1d347dbf88d477396939b80b956762"
+      "blob": "ebe33027802050b8533da3427504f9394b5577e7"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "bffa184736724de962400c7efada1107594780ef"
+      "blob": "5c5818119a29be672199959cc06912586e9234f1"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "d9047fbb99d727f60caa7a6813bdbadbe3ef9952"
+      "blob": "1debd076cb500a5f65593df733f022e71404af06"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -862,7 +862,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "0ae263dd546dc305993112dc82b863c47a92068e"
+      "blob": "ed148e5c7424d514d691209034cc84af8150d6e6"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -890,7 +890,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "4195a69315171dd188d42f81f8c41c785fe2dc8e"
+      "blob": "dffbcbfd57a0575990b3f6b34efe82b694a2a07c"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1597,14 +1597,14 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ec03de18dd61382909f7b3153e6b2eab6b081406"
+      "blob": "ad69315af1245009087cebf5937dca7063eb80c4"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "e4243b8e5b83e0f60535ab2114fa71f765adb217"
+      "blob": "423ec1df974a0bda080b901d5459542b1f814bd9"
     },
     {
       "path": "docs/audits/2026-11-17-automation-history-casefold-reconciliation.md",
@@ -1926,28 +1926,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "63af3108301f0df26b8412d6e909938cc2cec5fe"
+      "blob": "d033d063d90ddefcd8f6f869b34c2115dbc269f2"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "2aa9e7537ef109f33839a3d2337d869c872a61d2"
+      "blob": "30de270a9cfde9e3dfd402120bbd03234eea88cf"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "fb27b9925ec43b395971c9dff5a027a921096835"
+      "blob": "c15f62a36b553e81ac32f316d4200ea370eb2921"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "3e67a28fdc8b41feeaeaf26f4c9b7fd86c58fefa"
+      "blob": "40b60cf36d4815e7dca4e0744d4bd87a61408cfa"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3102,7 +3102,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "b3a762899afeef3fafd6ff7d5702f0ecbb095560"
+      "blob": "85e315818c52343e5300b5c0fc8016cdd43d15a5"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3396,7 +3396,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "6bfb30c1a2ab1ef6d8c6b46e586928d25c2b3c4a"
+      "blob": "84745897e0452d3af06674f4be6b20dd9e9aa920"
     },
     {
       "path": "tools/repository_file_auditor.py",
@@ -3531,11 +3531,11 @@
       "state": "REVIEW_REQUIRED"
     },
     {
-      "id": "ed50b31ceb9c32ff",
+      "id": "882c5f9a5b9b640c",
       "code": "POTENTIAL_UNLOGGED_CHANGES",
       "severity": "review",
       "path": "PROJECT_LOG.md",
-      "observation": "2 implementation/config paths changed since this log's last commit; examples: tests/automation-activity-aba-browser.test.cjs, tools/automation_activity_ui.py",
+      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json",
       "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
