@@ -66,7 +66,12 @@ def own_profile_from_anchors(anchors):
 def visible_link_descriptors(page):
     return page.evaluate("""() => [...document.querySelectorAll('a[href], [role=link][href]')]
         .filter(el => { const r=el.getBoundingClientRect();
-          return r.width>0 && r.height>0 && r.bottom>0; })
+          for (let p=el; p; p=p.parentElement) {
+            if (Number(getComputedStyle(p).opacity) <= 0) return false;
+          }
+          return r.width>0 && r.height>0 &&
+            r.bottom>0 && r.top<innerHeight &&
+            r.right>0 && r.left<innerWidth; })
         .map(el => ({
           href: el.getAttribute('href') || '',
           text: (el.innerText || '').trim().slice(0,80),
@@ -108,6 +113,9 @@ def visible_switcher_account_rows(page):
     return page.evaluate("""() => {
       const visible = (node) => {
         const r = node.getBoundingClientRect();
+        for (let p=node; p; p=p.parentElement) {
+          if (Number(getComputedStyle(p).opacity) <= 0) return false;
+        }
         return r.width > 0 && r.height > 0 && r.bottom > 0 &&
           r.top < innerHeight && r.right > 0 && r.left < innerWidth;
       };
@@ -167,7 +175,28 @@ def own_profile_edit_identity(page):
     edit = re.compile(r"^\s*(?:edit profile|editar perfil|modifier le profil|profil bearbeiten)\s*$", re.I)
     controls = [header.get_by_role(role, name=edit) for role in ("button", "link")]
     names = header.locator("h1,h2,[role=heading]").all_inner_texts()
-    if sum(c.count() for c in controls) == 1 and any(
+    # A matched name + an offscreen/transparent "Edit profile" control is
+    # NOT current ownership evidence. Chrome can keep inactive responsive
+    # controls in the DOM even when Instagram hides the account sidebar.
+    # Count only controls physically visible inside this viewport.
+    visible_edits = 0
+    for candidate_control in controls:
+        for i in range(min(candidate_control.count(), 8)):
+            control = candidate_control.nth(i)
+            try:
+                if control.is_visible() and control.evaluate("""el => {
+                    const r = el.getBoundingClientRect();
+                    for (let p=el; p; p=p.parentElement) {
+                      if (Number(getComputedStyle(p).opacity) <= 0) return false;
+                    }
+                    return r.width > 0 && r.height > 0 &&
+                      r.bottom > 0 && r.top < innerHeight &&
+                      r.right > 0 && r.left < innerWidth;
+                }"""):
+                    visible_edits += 1
+            except Exception:
+                return None  # An unreadable owner control is not proof.
+    if visible_edits == 1 and any(
         str(n).strip().lstrip("@").casefold() == candidate for n in names
     ):
         return candidate

@@ -1,3 +1,11 @@
+## GRANADA 24-nov-2026 — PR #410 source abierto; verificación de identidad visible
+
+**Cambio de código en revisión:** [PR #410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410) modifica `tools/profile_counts_instagram.py` para no usar un enlace Profile fuera de pantalla ni un botón Edit profile transparente/desplazado como evidencia de identidad activa. Nueva regresión [Chromium sintético](tests/test_profile_counts_home_identity.py), análisis [raíz y controles](docs/audits/2026-11-24-visible-owner-controls-viewport.md). No se conectó a Instagram ni se modificaron cuentas; **CI exact-head por confirmar**, no etiquetar merge o publicación hasta evidencia.
+
+**Avance P0:** 58% (7/12) → 58% (7/12); cinco criterios físicos siguen abiertos (#371, #377, #360, #164, #172), y navegación real del perfil propio #230 aún requiere aceptación. **Última FINAL publicada v120.81**; #409 ya integrado pero no distribuido, #410 aún no integrado. v120.82 retenida. Sin release ni RC en esta Granada.
+
+---
+
 ## GRANADA 24-nov-2026 — PR #409 integrado · CI 9/9 · avance 58% (7/12)
 
 **Cambio real de código:** [PR #409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409) **MERGED** `61e18ef212815c0939cfcc720e78692c0d9acb2b` tras **9/9 controles SUCCESS exact-head** `12f519bb40bc8c8efe2a6e4d91418d9a4bd5e1c8` (Desktop real/contratos, Windows Setup instalado, Android WebView/render, firma de CI, Supabase). [Auditoría de causa raíz](https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md).

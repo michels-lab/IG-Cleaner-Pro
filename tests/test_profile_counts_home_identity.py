@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from profile_counts_instagram import (signed_in_handle, own_profile_from_switcher_rows,
-                                      verify_selected_owner_profile)
+                                      own_profile_edit_identity, verify_selected_owner_profile)
 
 try:
     from playwright.sync_api import sync_playwright
@@ -106,6 +106,58 @@ class HomeIdentityChromiumTests(unittest.TestCase):
     def test_nav_only_legacy_layout_still_works(self):
         self.home(include_switch=False, nav="realmichelduarte")
         self.assertEqual(signed_in_handle(self.page), "realmichelduarte")
+
+    def test_transparent_parent_switcher_never_proves_logged_in_owner(self):
+        # Elements with opacity:1 can inherit a visually invisible parent.
+        self.home()
+        self.page.locator("#owner").evaluate(
+            "el => el.parentElement.style.opacity = '0'")
+        self.assertIsNone(signed_in_handle(self.page))
+
+    def test_offscreen_profile_nav_never_proves_logged_in_owner(self):
+        # Old code checked width/height but NOT left/right viewport bounds:
+        # a transformed/collapsed sidebar could count as current login proof.
+        self.page.set_content("""<!doctype html><html><body>
+          <main><p>Feed (no account switcher)</p></main>
+          <nav style="position:absolute;left:-4000px;top:10px;width:300px">
+            <a href="/wrong.account/" aria-label="Profile">Profile</a>
+          </nav></body></html>""")
+        self.assertIsNone(signed_in_handle(self.page))
+        self.page.locator("nav").evaluate("el => el.style.left = '10px'")
+        self.page.locator("nav").evaluate("el => el.style.opacity = '0'")
+        self.assertIsNone(signed_in_handle(self.page))
+        self.page.set_content("""<!doctype html><html><body>
+          <nav><a href="/correct.account/" aria-label="Profile">Profile</a></nav>
+          </body></html>""")
+        self.assertEqual(signed_in_handle(self.page), "correct.account")
+
+    def test_owner_edit_profile_requires_visible_in_viewport_control(self):
+        # The exact owner's URL + matching h2 is never proof on its own.
+        # An offscreen/transparent Edit profile button must not authorize
+        # Unfollow, Cancel Pending or reuse of an owner-proof cache.
+        self.page.unroute("**/*")
+        css = ["position:absolute;left:-4000px;top:10px"]
+        parent_css = ["display:block"]
+        def owner_route(route):
+            route.fulfill(status=200, content_type="text/html", body=(
+                '<html><body><header><h2>correct.account</h2>' +
+                '<div style="' + parent_css[0] + '"><button style="' +
+                css[0] + '">Edit profile</button></div>' +
+                '</header></body></html>'
+            ))
+        self.page.route("https://www.instagram.com/**", owner_route)
+        for style, parent, expected in [
+                ("position:absolute;left:-4000px;top:10px", "display:block", None),
+                ("opacity:0", "display:block", None),
+                ("display:block", "opacity:0", None),
+                ("display:block", "display:block", "correct.account")]:
+            with self.subTest(style=style, parent=parent):
+                css[0] = style
+                parent_css[0] = parent
+                self.page.goto("https://www.instagram.com/correct.account/",
+                               wait_until="domcontentloaded")
+                self.assertEqual(own_profile_edit_identity(self.page), expected)
+                self.assertEqual(signed_in_handle(self.page), expected)
 
     def test_selected_owner_page_needs_edit_profile_button(self):
         # Offline Instagram URL navigation; no real site is contacted.
