@@ -4,11 +4,11 @@
 
 [v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) has **nine SHA256-verified assets**, signed Android public APK, integrated installed Windows Setup and offline Desktop HTML, with [official 4/4 publisher SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358). This published milestone moves the **12-item P0 owner acceptance path from 6/12 (50%) to 7/12 (58%)**. Live Focus no-counter-rebound, two independent Windows Instagram logins, Unfollow, Cancel Pending, and physical Android/Windows backup upgrade remain owner-pending. Do not claim real account acceptance. **v120.82 is only reserved, not authorized.**
 
-## GRANADA — Atomic Focus history writes (source only)
+## GRANADA — Atomic Focus history writes (included in v120.81; owner QA pending)
 
 The Focus bulk opening/reopening history writer now restores **all affected in-memory profile counters and events** when the persistent history write is rejected. Failed operations cannot be silently saved later or disappear only upon reload. The production-function quota/retry/reload regression is CI-wired. [Detailed audit](docs/audits/2026-11-18-focus-history-transaction.md) · [Owner counter issue #360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360) · [storage #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). This does not increase browser storage limits. Official stable v120.81 is now publicly released (9 SHA256 assets; 4/4 publisher SUCCESS). Owner physical Focus/storage acceptance is still open.
 
-## GRANADA Focus — exact failed-storage diagnostics (source only)
+## GRANADA Focus — exact failed-storage diagnostics (included in v120.81; owner QA pending)
 
 When a Focus cohort is refused by browser storage, the recovery panel now identifies whether the actual rejected write was the normal v2 or smaller v3 attempt, the fixed Focus key, the attempted UTF-16 byte estimate and estimated storage usage, without exposing profile names or stored values. A successful retry clears stale warnings. This **does not free an exhausted quota or prove Focus opened on the owner's browser**. [Root cause and regression audit](docs/audits/2026-11-18-focus-write-diagnostics.md) · [open owner #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). Published stable v120.81 includes this source fix; browser quota and Focus real-owner acceptance are still pending.
 
@@ -36,7 +36,7 @@ When the normal lossless compact Focus batch cannot fit in browser storage, Inst
 
 ## Post-v120.80 GRANADA work (included in v120.81; physical tests pending)
 
-The Windows Automations activity panel now has a source-branch **robot-confirmed versus unknown legacy-origin filter**. It applies the same period tiles and journal view while preserving contradictory same-time records as unresolved instead of inventing successes. [Implementation audit](docs/audits/2026-11-18-automations-origin-integrity.md) · [Owner issue #298](https://github.com/michels-lab/IG-Cleaner-Pro/issues/298). **Source only: not in published v120.80, with no new stable release and no real-user Windows proof.** Manual+robot combined totals are not claimed.
+The Windows Automations activity panel now has a source-branch **robot-confirmed versus unknown legacy-origin filter**. It applies the same period tiles and journal view while preserving contradictory same-time records as unresolved instead of inventing successes. [Implementation audit](docs/audits/2026-11-18-automations-origin-integrity.md) · [Owner issue #298](https://github.com/michels-lab/IG-Cleaner-Pro/issues/298). **Included in official stable v120.81; still no real-owner Windows account proof.** Manual+robot combined totals are not claimed.
 
 ## Next-source Granada: independent Windows account windows (not in v120.80)
 
@@ -44,7 +44,7 @@ The owner rejected the duplicated **Cuenta 1/Cuenta 2** in-window panels. In [so
 
 ## Pending Android vs HTML (shipped source fix; physical owner verification pending)
 
-Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. A source-only fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, loads **complete paginated Android review history** instead of treating a server-capped page as the full history, and labels Android Pending numbers by cache/cloud provenance and import age. **Shipped in v120.80; physical Instagram data reconciliation still unverified.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
+Owner report: Android can show a cached/cloud Pending snapshot (e.g., **52**) while a standalone HTML displays **0** locally. Neither surface proves live Instagram status. The shipped v120.81 fix now retains a newer **verified empty** HTML import instead of restoring an older cloud snapshot, loads **complete paginated Android review history** instead of treating a server-capped page as the full history, and labels Android Pending numbers by cache/cloud provenance and import age. **Shipped in v120.80; physical Instagram data reconciliation still unverified.** No historical data is deleted. [Root cause, negative fixtures and acceptance](docs/audits/2026-11-17-pending-android-html-52-vs-zero.md).
 
 ## Operación Granada — auditoría de aplicación y plugins (2026-10-21)
 
@@ -114,14 +114,14 @@ Created by **Michel Armando Duarte Flores** · **Michel's Lab** · **TOOLS WITH 
 
 This project is **source-available, not open source**. All rights reserved; see [LICENSE.txt](LICENSE.txt). Independent product, not affiliated with or endorsed by Instagram or Meta Platforms, Inc.
 
-## GRANADA — Cross-page A→B→A cloud review sync (unreleased source)
+## GRANADA — Cross-page A→B→A cloud review sync (shipped v120.81; owner QA pending)
 
 The review/pending cloud sync now ties a **complete multi-page download and a multi-POST upload** to one app owner, Instagram slot and slot generation. Switching A→B→A between requests rejects the original operation, rather than combining rows or sending old account records under the new active slot. The four-second cache is generation-scoped too. The CI-wired regression tests actual production read/push JS, including a delayed second GET and a delayed first of two POSTs. [Root cause and test evidence](docs/audits/2026-11-18-cloud-multipage-aba.md) · [owner counter issue #360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360). Physical owner accounts still need validation; official stable v120.81 is now published; owner live Instagram acceptance remains pending.
 
-## GRANADA — Pending Focus two-ledger recovery and Double Check (source only)
+## GRANADA — Pending Focus two-ledger recovery and Double Check (shipped v120.81; owner QA pending)
 
 Fixed two real Focus partial-write paths: when an active Pending cohort was saved but the separate opened-ledger write failed, RAM counters used to drop although no tabs were requested; that failure now rolls back Pending RAM and leaves the cohort recoverable with a visible warning. Pending Double Check now saves its **second-pass mode in the first cohort write**, persists the attempt ledger before changing selection, shows Reviewed before tab requests, and isolates popup exceptions. Both paths defer `open` history until required ledgers are durable. CI-wired negative tests reproduce quota denial, manual retry, a broken dialog and a thrown popup. [Root-cause audit](docs/audits/2026-11-18-pending-focus-two-ledger-durability.md) · [#360](https://github.com/michels-lab/IG-Cleaner-Pro/issues/360) · [#371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). Owner physical verification remains open; latest published stable is v120.81, owner physical QA still pending.
 
-## GRANADA — Unified Focus reopen (unreleased source)
+## GRANADA — Unified Focus reopen (shipped v120.81; owner QA pending)
 
 Both Active Batch Reopen and Reviewed Reopen now use the same recovery-first implementation: already-resolved profiles are excluded, owner Reviewed and direct links appear **before** Chrome requests, one rejected popup does not suppress the remaining profiles, and failed secondary history/audit writes cannot erase a saved cohort. The unused timer-based launcher that incorrectly claimed profiles were opened was removed from source. Production-function negative cases are wired to CI. [Audit](docs/audits/2026-11-19-focus-reopen-single-path.md) · [Owner storage issue #371](https://github.com/michels-lab/IG-Cleaner-Pro/issues/371). Requires real owner-browser acceptance. Published stable is v120.81 after 4/4 governed publisher checks; owner acceptance remains pending.
