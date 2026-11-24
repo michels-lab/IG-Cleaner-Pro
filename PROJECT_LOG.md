@@ -1,3 +1,9 @@
+## GRANADA 24-nov-2026 — #410 integrado; #411 Automations responsive
+
+**58% (7/12) → 58% (7/12).** [#410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410) integrado `7e3dd5420362c9e235b9966da5e5bffc8955da5f`, 8/8 SUCCESS exact-head `5e6e84f035974b02b920f39fa344b995b4295065`. [Auditoría](docs/audits/2026-11-24-visible-owner-controls-viewport.md). [#411](https://github.com/michels-lab/IG-Cleaner-Pro/pull/411) abierto HEAD `16f4f7f30a385471ceb0f0ca7fc02b66a4d7a196`: tiempo máximo de lectura local 8 s incluso JSON, estado de tanda independiente del historial, reintento tras fallo, supervisor no verificable no equivale a detenido. Regresión Chromium de timeout parcial, total y recuperación en revisión; CI pendiente. No modificación de datos ni acciones Instagram reales. Cinco hitos físicos #371/#377/#360/#164/#172 pendientes. FINAL v120.81 publicada; #409/#410 no distribuidos y #411 no integrado; v120.82 retenida.
+
+---
+
 ## GRANADA 24-nov-2026 — PR #410 source abierto; verificación de identidad visible
 
 **Cambio de código en revisión:** [PR #410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410) modifica `tools/profile_counts_instagram.py` para no usar un enlace Profile fuera de pantalla ni un botón Edit profile transparente/desplazado como evidencia de identidad activa. Nueva regresión [Chromium sintético](tests/test_profile_counts_home_identity.py), análisis [raíz y controles](docs/audits/2026-11-24-visible-owner-controls-viewport.md). No se conectó a Instagram ni se modificaron cuentas; **CI exact-head por confirmar**, no etiquetar merge o publicación hasta evidencia.
