@@ -14955,14 +14955,19 @@ function privacyDataStatus(text,type=''){
   el.style.color=type==='error'?'#ff9aa8':type==='ok'?'#83e4be':'';
 }
 async function fetchAllCloudRows(table){
+  // One owner and one account for every page of this cloud export.
+  const assertSameWorkspace=igcCaptureSyncScope();
   const all=[];let offset=0;
   while(true){
+    assertSameWorkspace();
     const rows=await rest(`${table}?select=*&limit=1000&offset=${offset}`,{method:'GET',globalAccountData:true});
-    if(!Array.isArray(rows))break;
+    assertSameWorkspace();
+    if(!Array.isArray(rows))throw Error('Exportación incompleta: página de nube inválida');
     all.push(...rows);
     if(rows.length<1000)break;
     offset+=rows.length;
   }
+  assertSameWorkspace();
   return all;
 }
 async function deliverPrivacyJson(fileName,payload){
@@ -14980,15 +14985,19 @@ async function deliverPrivacyJson(fileName,payload){
 }
 window.igcPrivacyExportCloudData=async function(){
   if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
+  const assertSameWorkspace=igcCaptureSyncScope();
   S.busy=true;
   try{
-    await ensureAuth();
+    await ensureAuth();assertSameWorkspace();
     privacyDataStatus('Preparando export de datos sincronizados…');
     const tables={};const counts={};
     for(const table of IGC_SYNC_TABLES){
+      assertSameWorkspace();
       tables[table]=await fetchAllCloudRows(table);
+      assertSameWorkspace();
       counts[table]=tables[table].length;
     }
+    assertSameWorkspace();
     const payload={
       schema:'ig-cleaner-cloud-export-v1',
       exportedAt:new Date().toISOString(),
@@ -14999,7 +15008,9 @@ window.igcPrivacyExportCloudData=async function(){
       tables
     };
     const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    assertSameWorkspace();
     await deliverPrivacyJson(`IG-Cleaner-Pro-cloud-export-${stamp}.json`,payload);
+    assertSameWorkspace();
     privacyDataStatus(`Export listo · ${Object.values(counts).reduce((a,b)=>a+b,0)} filas sincronizadas.`,'ok');
   }catch(e){
     privacyDataStatus(`No se pudo exportar: ${e.message||e}`,'error');
@@ -15010,24 +15021,33 @@ window.igcPrivacyExportCloudData=async function(){
 };
 window.igcPrivacyDeleteCloudData=async function(){
   if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
+  // A single owner-authorized deletion cannot continue into the new owner
+  // after an A→B→A switch between otherwise individually scoped REST calls.
+  const assertSameWorkspace=igcCaptureSyncScope();
   try{
-    await ensureAuth();
+    await ensureAuth();assertSameWorkspace();
     if(!confirm('This will delete ALL synced cloud data for this account. Your original exports and independent local backups will not be deleted. Continue?'))return;
+    assertSameWorkspace();
     const typed=prompt('Confirmación final: type DELETE CLOUD');
     if(String(typed||'').trim().toUpperCase()!=='DELETE CLOUD'){privacyDataStatus('Deletion canceled.');return}
+    assertSameWorkspace();
     S.busy=true;
     privacyDataStatus('Deleting synchronized data…');
     const order=['instagram_focus_batch_items','instagram_focus_batches','instagram_profile_state','instagram_audit_events','instagram_list_snapshots','instagram_workspace_state','instagram_accounts','focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
     for(const table of order){
+      assertSameWorkspace();
       await rest(`${table}?user_id=not.is.null`,{method:'DELETE',globalAccountData:true,headers:{Prefer:'return=minimal'}});
+      assertSameWorkspace();
     }
+    // Abort without signing out the new owner or fabricating success.
+    assertSameWorkspace();
     dataMeta={};saveDataMeta();
     S.stats={eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0};
     S.session=null;saveSession();notifyHostSession(true);renderAuthUi();schedule();
     privacyDataStatus('Datos sincronizados borrados. Sesión cerrada para evitar una resincronización automática.','ok');
     status('Datos de nube borrados · sesión cerrada. Tus datos locales permanecen intactos.','warn');
   }catch(e){
-    privacyDataStatus(`No se pudo borrar la nube: ${e.message||e}`,'error');
+    privacyDataStatus(`Borrado no completado: ${e.message||e}. Revisa el estado antes de reintentar; una fase anterior puede haberse aplicado.`,'error');
   }finally{
     S.busy=false;
     renderStats();
