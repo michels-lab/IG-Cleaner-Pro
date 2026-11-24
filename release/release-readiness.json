@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-release-readiness-v1",
   "release_hold": true,
-  "reason": "Product is not accepted complete; release_hold remains true. Owner explicitly authorizes one stable v120.81 distribution for subsequent physical review, via exact-tag one-time exception. Mandatory automated publisher gates stay fail-closed.",
+  "reason": "Owner-directed v120.81 stable distribution to permit post-release physical testing was published and its single-use permission consumed. Product remains unfinished. Future v120.82 has NO publication authorization; green CI is not owner acceptance.",
   "owner_final_acceptance": {
     "approved": false,
     "release_tag": null,
@@ -31,17 +31,20 @@
     173,
     176
   ],
-  "next_version": "v120.81",
-  "notes": "v120.80 published 2026-11-18 04:21:23Z with 9 assets; next v120.81 authorized only for owner physical review by fresh 2026-11-23 instruction. Never claim user accepted P0 #360/#371/#377/#164/#172 or turn critical_acceptance true; release hold stays true.",
+  "next_version": "v120.82",
+  "notes": "Official v120.81 published 2026-11-24T03:42:17Z exact tagged SHA fc1cd03a476dc4c5797e90e89e18d22733c34175 after all 4/4 official governed jobs SUCCESS, 9 SHA256 assets. Owner Instagram Focus/Unfollow/Cancel, Windows simultaneous A/B and physical Samsung/backup acceptance remain pending. Next v120.82 not authorized.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.81",
     "source": "explicit-owner-chat-instruction-2026-11-23",
     "owner_direct_quote": "op granada y dale release",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "previous_published_release": "v120.80",
-    "disclosure": "One-time authorization ONLY to publish final stable v120.81 for owner post-publication review. Physical Instagram owner actions, two-account real behavior, Focus counters, Windows backup/upgrade and Android device acceptance remain unverified; owner final acceptance still false. Do not waive exact-source mandatory installer, emulator signed APK, screenshots, hashes, or release receipts."
+    "disclosure": "Consumed once by official FINAL v120.81 on 2026-11-24 UTC, source fc1cd03a and 4/4 publisher SUCCESS; future v120.82 unapproved. No owner signed-in Instagram or physical Samsung acceptance inferred.",
+    "consumed_by_release": "v120.81",
+    "consumed_run": 45319438358,
+    "consumed_at": "2026-11-24T03:42:17Z"
   },
   "owner_device_review_release_override_history": [
     {

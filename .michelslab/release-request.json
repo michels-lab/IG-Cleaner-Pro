@@ -1,12 +1,12 @@
 {
   "version": "120.81",
   "tag": "v120.81",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly requested 'op granada y dale release' in this conversation on 2026-11-23, for this app only; one-time FINAL stable distribution for owner post-publication inspection, subject to exact-source governed publisher gates.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.80",
   "requested_at": "2026-11-23",
   "owner_acceptance_note": "Owner explicitly authorizes v120.81 FINAL stable for physical testing AFTER publication. release_hold=true, owner_final_acceptance=false, product-critical real Instagram actions, Focus reload/no rebound, dual-window A/B, actual Samsung and personal data preservation remain UNVERIFIED. Mandatory exact-source installed Windows Setup, permanent-key Android APK, real Android/desktop screenshots, checksums and updater provenance are NOT waived. No RC or public Developer edition.",
@@ -18,5 +18,10 @@
     "published_at": "2026-11-18T04:21:23Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80",
     "asset_count": 9
-  }
+  },
+  "published_run": 45319438358,
+  "published_commit": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
+  "published_at": "2026-11-24T03:42:17Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
+  "publication_note": "Official FINAL stable v120.81 published 2026-11-24 03:42:17 UTC from exact source fc1cd03a476dc4c5797e90e89e18d22733c34175 via governed publisher run 45319438358, all 4/4 jobs SUCCESS, exactly 9 public SHA256-digested assets. Installed Windows Setup startup/uninstall and production-signed Android stable emulator launch passed. Authorization consumed once. This is NOT proof of owner physical real Instagram acceptance. v120.82 not authorized."
 }

@@ -2,7 +2,7 @@
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.80**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/44235048175), **9 SHA-256-tracked stable assets**. Public Windows Setup and production-signed Android APK passed exact-source installed launch, rendered UI and integrity gates. The next reserved development version **v120.81 is authorized for governed FINAL publication only after exact-source gates pass**; this is a one-use owner-directed device-review release, not a claim of physical Instagram acceptance; v120.80 is already published and its one-time owner device-review permission is consumed. Publishing does not prove real Instagram actions; Developer Editions remain canceled and physical two-account acceptance is still open.
+Current published stable: **v120.81**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81), [successful exact-commit publisher](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358), **9 SHA-256-tracked stable assets**. Public Windows Setup installed/launched/uninstalled, production-signed Android stable APK installed/launched in emulator, same-source Home/About renders and integrity gates passed. The next reserved development version **v120.82 is not authorized**. One-time v120.81 permission consumed. Release is for owner's post-publication physical review, not proof of live Instagram Unfollow/Cancel/Focus or two-account physical acceptance. Developer Editions remain canceled.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -99,7 +99,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.81**, authorized for governed FINAL publication only after exact-source gates pass; it is not published until official release assets are independently verified. The v120.80 owner-requested release is officially published from exact source e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b at https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80, and its single-use permission was consumed on 2026-11-18 UTC. Official automated exact-source NORMAL FINAL safety gates remain mandatory; live Instagram and device acceptance are not claimed. Every later official release requires separate explicit approval and installed Windows/Android, signing, UI, integrity and updater verification.
+The next reserved release target is **v120.82**, not authorized for publication. The owner-requested [v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) was published from exact source `fc1cd03a476dc4c5797e90e89e18d22733c34175` by the [official publisher run #45319438358](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358), with 4/4 jobs SUCCESS and 9 SHA256 assets. Its single-use permission was consumed on 2026-11-24 UTC. Real Instagram and physical device acceptance remains unverified. Every later official release requires a separate explicit approval and same-source installed Windows/Android, signing, UI, integrity, backup/update provenance verification.
 
 Authority: `release/distribution-manifest.json`.
 

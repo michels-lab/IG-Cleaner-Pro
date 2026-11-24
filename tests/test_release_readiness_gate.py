@@ -39,6 +39,10 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         self.assertEqual(consumed[0]['consumed_by_release'], 'v120.79')
         self.assertEqual(consumed[0]['consumed_run'], 44204338029)
         self.assertTrue(override['physical_tests_deferred'])
+        self.assertEqual(override['release_tag'], 'v120.81')
+        self.assertIs(override['authorized'], False, 'v120.81 owner authorization must be consumed')
+        self.assertEqual(override['consumed_by_release'], 'v120.81')
+        self.assertEqual(override['consumed_run'], 45319438358)
         self.assertTrue(override['automated_publisher_gates_required'])
         self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-23')
         request = json.loads((ROOT/'.michelslab/release-request.json').read_text(encoding='utf-8'))
@@ -58,16 +62,18 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
             self.assertFalse(override['authorized'])
             with self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current, next_tag, {})
-        for old in ('v120.76', 'v120.77', 'v120.78', 'v120.79', 'v120.80'):
+        for old in ('v120.76', 'v120.77', 'v120.78', 'v120.79', 'v120.80', 'v120.81'):
             if old == next_tag:
                 continue
             with self.subTest(old_tag=old), self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current, old, {})
         self.assertTrue(any(not value for value in self.current['critical_acceptance'].values()))
         if request.get('status') == 'published':
-            self.assertEqual(request.get('tag'), self.current['next_version'])
-            self.assertGreater(int(request.get('published_run', 0)), 0)
-            self.assertEqual(override.get('consumed_by_release'), self.current['next_version'])
+            self.assertEqual(request.get('tag'), 'v120.81')
+            self.assertEqual(self.current['next_version'], 'v120.82')
+            self.assertEqual(request.get('published_commit'), 'fc1cd03a476dc4c5797e90e89e18d22733c34175')
+            self.assertEqual(request.get('published_run'), 45319438358)
+            self.assertEqual(override.get('consumed_by_release'), request['tag'])
             self.assertEqual(override.get('consumed_run'), request['published_run'])
 
     def test_green_ci_does_not_override_owner_hold(self):

@@ -4,14 +4,14 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
   "as_of": "2026-11-23",
-  "scope": "Ruta P0 120.81: source #404/#405/#406 integrado, solicitud oficial #407 merged y publicador GitHub Actions en cola; usuario probará después de publicar",
+  "scope": "Ruta P0 v120.81 FINAL publicada con 9 SHA256 assets, fuente exacta y 4/4 official publisher jobs SUCCESS; 5 hitos con validación de usuario/Instagram reales pendientes",
   "estimate_method": "equal_weight_verified_milestones",
-  "progress_percent": 50,
-  "verified_milestones": 6,
+  "progress_percent": 58,
+  "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "PR #407 merged fc1cd03a; governed stable v120.81 publisher run 45319438358 queued; latest verified release still v120.80, physical acceptance remains 6/12",
+  "phase": "OFFICIAL v120.81 stable published/verified, PR#407 10/10 exact-head, publisher 4/4; owner physical 7/12",
   "last_source_merge": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
-  "latest_verified_stable": "v120.80",
+  "latest_verified_stable": "v120.81",
   "release_hold": true,
   "owner_physical_acceptance": false,
   "milestones": [
@@ -107,20 +107,22 @@
     {
       "key": "stable_publish",
       "description": "v120.81 oficial: QA de distribución/aprobación de gates, activos y verificación posterior",
-      "status": "pending",
+      "status": "verified",
       "evidence": [
-        "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80"
+        "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/GRANADA_V12081_FINAL_RECEIPT_2026-11-23.md"
       ]
     }
   ],
-  "next_step": "Verify official release publisher run 45319438358 source SHA fc1cd03a476dc4c5797e90e89e18d22733c34175. Only when all 4 governed jobs pass and actual v120.81 tag/assets/checksums/signature evidence exist, mark release published and update 7/12; otherwise record blockers and keep 50%. Owner physical Instagram/Windows/Android acceptance remains separate.",
-  "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
+  "next_step": "Owner tests v120.81 official artifacts: backup/history first, physical two independent Windows Instagram A/B profiles, Focus30 quota and no reappearing counters after reload, real Unfollow and Cancel Pending exact account/target, Android Samsung data sync. Keep five user physical P0 milestones pending. Next v120.82 not authorized; never republish 120.81.",
+  "limitations": "58% = round(100*7/12) fixed P0 milestone route. Stable publication IS verified through official tagged source and 4/4 exact-SHA jobs with 9 assets; it does NOT certify owner real signed-in Instagram, physical device/account actions or total historical project completeness.",
   "last_granada": {
     "date": "2026-11-23",
-    "scope": "Merged cloud A-B-A #404/#405/#406; authorized exact-tag stable v120.81 distribution to permit owner physical tests, PR #407 merged",
+    "scope": "Merged cloud A-B-A 404/405/406, governed v120.81 FINAL request #407, official release 4/4 SUCCESS 9 SHA-256 assets; consumed one-time owner authorization",
     "progress_before": 50,
-    "progress_after": 50,
-    "verified_milestones": 6,
+    "progress_after": 58,
+    "verified_milestones": 7,
     "total_milestones": 12,
     "source_prs_merged": [
       {
@@ -176,8 +178,8 @@
     "current_pr": {
       "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/407",
       "head_sha": "9b0c434da95b820f74652cd1371ac557b98ae1da",
-      "checks": "9/10 exact-head SUCCESS, final Desktop visual runner still in progress when merged; official independent exact-main visual publisher gate remains mandatory",
-      "effect": "v120.81 one-time owner-authorized guarded stable candidate: version metadata, Android signing continuity, Desktop UI versions and release request",
+      "checks": "10/10 exact-head SUCCESS",
+      "effect": "v120.81 final metadata/version and one-use owner approval; stable publisher and device proof gated",
       "state": "merged",
       "merged_commit": "fc1cd03a476dc4c5797e90e89e18d22733c34175"
     },
@@ -192,14 +194,17 @@
     ],
     "release": {
       "tag": "v120.81",
-      "state": "workflow_requested_not_yet_published",
+      "state": "published_official_4_of_4_success",
       "publisher_run": 45319438358,
       "source_sha": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
-      "url": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358",
-      "latest_stable": "v120.80",
-      "physical_acceptance": "pending"
+      "url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
+      "assets": 9,
+      "sha256_digest_verified": true,
+      "latest_stable": "v120.81",
+      "physical_acceptance": "pending",
+      "next_release": "v120.82_not_authorized"
     },
-    "note": "50% (6/12), do not increase until official GitHub release verified. Owner authorizes release to test, not completion of physical P0."
+    "note": "Official publication milestone VERIFIED. 7/12=58% rounded; five actual owner physical product acceptance remain. release_hold=true, owner_final_acceptance=false."
   },
   "last_continuation": {
     "date": "2026-11-20",
