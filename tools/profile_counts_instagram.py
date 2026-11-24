@@ -69,7 +69,8 @@ def visible_link_descriptors(page):
           return r.width>0 && r.height>0 &&
             r.bottom>0 && r.top<innerHeight &&
             r.right>0 && r.left<innerWidth &&
-            getComputedStyle(el).opacity !== '0'; })
+            [...(function* () { for (let p=el; p; p=p.parentElement) yield p; })()]
+              .every(p => Number(getComputedStyle(p).opacity) > 0); })
         .map(el => ({
           href: el.getAttribute('href') || '',
           text: (el.innerText || '').trim().slice(0,80),
@@ -111,6 +112,9 @@ def visible_switcher_account_rows(page):
     return page.evaluate("""() => {
       const visible = (node) => {
         const r = node.getBoundingClientRect();
+        for (let p=node; p; p=p.parentElement) {
+          if (Number(getComputedStyle(p).opacity) <= 0) return false;
+        }
         return r.width > 0 && r.height > 0 && r.bottom > 0 &&
           r.top < innerHeight && r.right > 0 && r.left < innerWidth;
       };
@@ -181,10 +185,13 @@ def own_profile_edit_identity(page):
             try:
                 if control.is_visible() and control.evaluate("""el => {
                     const r = el.getBoundingClientRect();
+                    for (let p=el; p; p=p.parentElement) {
+                      if (Number(getComputedStyle(p).opacity) <= 0) return false;
+                    }
                     return r.width > 0 && r.height > 0 &&
                       r.bottom > 0 && r.top < innerHeight &&
                       r.right > 0 && r.left < innerWidth &&
-                      getComputedStyle(el).opacity !== '0';
+                      true;
                 }"""):
                     visible_edits += 1
             except Exception:
