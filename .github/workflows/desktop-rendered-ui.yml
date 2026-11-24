@@ -39,7 +39,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.57.0
           npx playwright install --with-deps chromium
-      - name: GRANADA owner identity: render offscreen/transparent DOM and require visible proof
+      - name: 'GRANADA owner identity: render offscreen/transparent DOM and require visible proof'
         run: |
           python3 -m pip install playwright==1.57.0
           python3 -m unittest discover -s tests -p 'test_profile_counts_home_identity.py' -v
