@@ -1,3 +1,11 @@
+## GRANADA 24-nov-2026 — PR #410 abierto, owner identity viewport; avance 58% (7/12)
+
+**Código propuesto** [PR #410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410): la navegación de perfil y Edit profile deben estar realmente visibles en pantalla para servir como prueba de identidad de la sesión Chrome, sin confiar en controles desplazados o transparentes. [Regresiones Chromium y auditoría](audits/2026-11-24-visible-owner-controls-viewport.md). **Pendiente verificación CI exact-head y merge**; sin actividad sobre cuenta real.
+
+**Porcentaje 58% → 58% (7/12)**; no se suman hitos por reforzar código. Pendientes P0 #371, #377, #360, #164, #172, y verificación física #230. Última FINAL oficial v120.81, código #409 aún no publicado; PR #410 tampoco. v120.82 reservada, `release_hold=true` y `owner_physical_acceptance=false`.
+
+---
+
 ## GRANADA 24-nov-2026 — PR #409 integrado · CI 9/9 · avance 58% (7/12)
 
 **Cambio real de código:** [PR #409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409) **MERGED** `61e18ef212815c0939cfcc720e78692c0d9acb2b` tras **9/9 controles SUCCESS exact-head** `12f519bb40bc8c8efe2a6e4d91418d9a4bd5e1c8` (Desktop real/contratos, Windows Setup instalado, Android WebView/render, firma de CI, Supabase). [Auditoría de causa raíz](https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md).
