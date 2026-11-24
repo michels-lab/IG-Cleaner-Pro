@@ -133,7 +133,7 @@ def acquire_single_instance(*, developer=False, workspace='primary'):
         raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
     if ctypes.get_last_error() == 183:
         kernel32.CloseHandle(handle)
-        raise RuntimeError("Esa cuenta ya tiene una ventana abierta. Elige la otra cuenta al iniciar.")
+        raise RuntimeError("This account window is already open. Choose the other available window at startup.")
     return handle
 
 
@@ -243,7 +243,7 @@ def main(argv=None) -> int:
             print("PASS: UI embebida, controlador Playwright y servidor local disponibles.")
             return 0
 
-        workspace = args.workspace or (select_workspace() if sys.platform == "win32" else "primary")
+        workspace = args.workspace or (select_workspace(developer=args.developer) if sys.platform == "win32" else "primary")
         if workspace is None:
             return 0  # Explicit Cancel; do not start backend, browser or robot.
         mutex = acquire_single_instance(developer=args.developer, workspace=workspace)
