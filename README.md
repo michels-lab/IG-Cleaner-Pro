@@ -1,5 +1,9 @@
 # Instagram Cleaner Pro
 
+## GRANADA 24 Nov — owner identity: exclude offscreen/transparent controls (source PR #410; NOT released)
+
+[PR #410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410) adds real-code checks so the Chrome robot does not identify the logged-in owner from offscreen navigation links or an invisible/transparent Edit profile control. Includes [offline Chromium regressions and cause analysis](docs/audits/2026-11-24-visible-owner-controls-viewport.md). **Await exact-head CI/merge; not included in v120.81.** Physical live Instagram owner/navigation acceptance remains open, as do five P0 gates. This work does **not** authorize v120.82 or claim successful Unfollow/Cancel Pending.
+
 ## Current VERIFIED stable and P0 acceptance — 23 Nov 2026 Saltillo
 
 [v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) has **nine SHA256-verified assets**, signed Android public APK, integrated installed Windows Setup and offline Desktop HTML, with [official 4/4 publisher SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358). This published milestone moves the **12-item P0 owner acceptance path from 6/12 (50%) to 7/12 (58%)**. Live Focus no-counter-rebound, two independent Windows Instagram logins, Unfollow, Cancel Pending, and physical Android/Windows backup upgrade remain owner-pending. Do not claim real account acceptance. **v120.82 is only reserved, not authorized.**
