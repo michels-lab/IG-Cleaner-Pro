@@ -4,13 +4,13 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
   "as_of": "2026-11-23",
-  "scope": "Ruta P0 v120.81: #404 & #405 source merged and tested; #406 pre-auth writes in CI; physical acceptance pending",
+  "scope": "Ruta P0 120.81: source #404/#405/#406 integrado, solicitud oficial #407 merged y publicador GitHub Actions en cola; usuario probará después de publicar",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 50,
   "verified_milestones": 6,
   "total_milestones": 12,
-  "phase": "PR404+405 merged; PR406 latest exact-head Desktop & offline SUCCESS, remaining CI running; physical 6/12",
-  "last_source_merge": "c6d3ec4144a5d682589af98f39f4ddc0badbbfc2",
+  "phase": "PR #407 merged fc1cd03a; governed stable v120.81 publisher run 45319438358 queued; latest verified release still v120.80, physical acceptance remains 6/12",
+  "last_source_merge": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
   "latest_verified_stable": "v120.80",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -113,11 +113,11 @@
       ]
     }
   ],
-  "next_step": "PR406 HEAD be7c41a2c5ab02a087806cbd9c3f15dc52e85af2: verify all applicable checks including integrated Windows and Android before merge. Source QA not owner browser physical acceptance. Then test real Focus30, two Windows profiles and Unfollow/Cancel, stable v120.81 hold.",
+  "next_step": "Verify official release publisher run 45319438358 source SHA fc1cd03a476dc4c5797e90e89e18d22733c34175. Only when all 4 governed jobs pass and actual v120.81 tag/assets/checksums/signature evidence exist, mark release published and update 7/12; otherwise record blockers and keep 50%. Owner physical Instagram/Windows/Android acceptance remains separate.",
   "limitations": "50% es avance de 12 criterios fijos de ESTA ruta P0 hacia v120.81; NO es porcentaje de todas las funcionalidades históricas, ni certificación de Instagram real.",
   "last_granada": {
     "date": "2026-11-23",
-    "scope": "Cloud downloads #404 merged; Windows native History #405 merged; cloud writes pre-auth single owner/account #406 in CI",
+    "scope": "Merged cloud A-B-A #404/#405/#406; authorized exact-tag stable v120.81 distribution to permit owner physical tests, PR #407 merged",
     "progress_before": 50,
     "progress_after": 50,
     "verified_milestones": 6,
@@ -164,14 +164,22 @@
         "exact_head_sha": "32a78d9be624d79e0407726b285b30862841d456",
         "checks": "7/7 SUCCESS",
         "effect": "Native installed Windows History owner/account epoch fence; browser A-B-A regression and 7 required checks"
+      },
+      {
+        "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/406",
+        "merged_commit": "57d596f1d9507e3de23ab31cf6cd6eead195b0a8",
+        "exact_head_sha": "be7c41a2c5ab02a087806cbd9c3f15dc52e85af2",
+        "checks": "9/9 SUCCESS",
+        "effect": "Scoped REST before token refresh, multistage sync and chunk writes"
       }
     ],
     "current_pr": {
-      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/406",
-      "head_sha": "be7c41a2c5ab02a087806cbd9c3f15dc52e85af2",
-      "checks": "2/9 exact-head SUCCESS (Desktop local-app contract and offline-contract); seven in-progress, no failures; earlier stale fixture lacked new production helper, corrected",
-      "effect": "REST capture BEFORE auth refresh; multi-stage sync, lists, Focus and event chunk writes require same owner/account generation",
-      "state": "open"
+      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/407",
+      "head_sha": "9b0c434da95b820f74652cd1371ac557b98ae1da",
+      "checks": "9/10 exact-head SUCCESS, final Desktop visual runner still in progress when merged; official independent exact-main visual publisher gate remains mandatory",
+      "effect": "v120.81 one-time owner-authorized guarded stable candidate: version metadata, Android signing continuity, Desktop UI versions and release request",
+      "state": "merged",
+      "merged_commit": "fc1cd03a476dc4c5797e90e89e18d22733c34175"
     },
     "physical_owner_browser": "pending",
     "blocker_issues": [
@@ -182,8 +190,16 @@
       "#172",
       "#298"
     ],
-    "release": "v120.80 public; v120.81 on hold",
-    "note": "Source CI and merges do not close six owner-physical milestones; official route 6/12 = 50%. PR406 pending QA and not merged."
+    "release": {
+      "tag": "v120.81",
+      "state": "workflow_requested_not_yet_published",
+      "publisher_run": 45319438358,
+      "source_sha": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
+      "url": "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358",
+      "latest_stable": "v120.80",
+      "physical_acceptance": "pending"
+    },
+    "note": "50% (6/12), do not increase until official GitHub release verified. Owner authorizes release to test, not completion of physical P0."
   },
   "last_continuation": {
     "date": "2026-11-20",
