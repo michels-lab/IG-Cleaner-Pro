@@ -4,13 +4,13 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
   "as_of": "2026-11-24",
-  "scope": "Ruta P0 12 hitos: v120.81 publicada, #409 fuente nueva integrada para preservar historiales y cancelar DELETE/backup/registry A-B-A; aceptación real #371/#377/#360/#164/#172 pendiente",
+  "scope": "Ruta P0 12 hitos; v120.81 publicada; #409/#410 integrados, #411 en revisión; 5 hitos físicos abiertos",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 58,
   "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "GRANADA #409 MERGED 9/9 exact-head CI; cloud privacy/export/registry cross-owner fences and no automatic local purge; latest public FINAL v120.81, user physical acceptance 7/12",
-  "last_source_merge": "61e18ef212815c0939cfcc720e78692c0d9acb2b",
+  "phase": "GRANADA #410 merged 8/8 exact-head; #411 native Windows History bounded local reads candidate; P0 7/12",
+  "last_source_merge": "7e3dd5420362c9e235b9966da5e5bffc8955da5f",
   "latest_verified_stable": "v120.81",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -209,7 +209,14 @@
       "scope": "Whole-owner DELETE/export, per-profile backup/delete, monotonic remote registry refresh, orphaned local history preserved and scheduled Double Check A-B-A"
     },
     "regression": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/tests/cloud-owner-global-lifecycle-aba.test.cjs",
-    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md"
+    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md",
+    "new_source_pr_410": {
+      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/410",
+      "state": "merged",
+      "merge_sha": "7e3dd5420362c9e235b9966da5e5bffc8955da5f",
+      "head_sha": "5e6e84f035974b02b920f39fa344b995b4295065",
+      "exact_checks": "8/8 SUCCESS"
+    }
   },
   "last_continuation": {
     "date": "2026-11-20",
@@ -293,15 +300,12 @@
   ],
   "candidate_granada": {
     "date": "2026-11-24",
-    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/410",
+    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/411",
+    "head_sha": "16f4f7f30a385471ceb0f0ca7fc02b66a4d7a196",
     "status": "open_waiting_exact_head_CI_merge",
-    "changed_source": "tools/profile_counts_instagram.py",
-    "regression": "tests/test_profile_counts_home_identity.py",
-    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/granada/owner-visible-proof-viewport-20261124/docs/audits/2026-11-24-visible-owner-controls-viewport.md",
-    "effect": "Require viewport-visible owner Profile/Edit profile evidence; offline fixture only; physical IG pending",
+    "effect": "Automations History bounded local reads, independent batch status, partial/unknown and retry",
     "progress_before": 58,
     "progress_after": 58,
-    "latest_public_release": "v120.81",
-    "source_not_in_public_release": true
+    "latest_public_release": "v120.81"
   }
 }
