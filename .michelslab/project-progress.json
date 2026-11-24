@@ -3,14 +3,14 @@
   "project": "IG Cleaner Pro",
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
-  "as_of": "2026-11-23",
-  "scope": "Ruta P0 v120.81 FINAL publicada con 9 SHA256 assets, fuente exacta y 4/4 official publisher jobs SUCCESS; 5 hitos con validación de usuario/Instagram reales pendientes",
+  "as_of": "2026-11-24",
+  "scope": "Ruta P0 12 hitos: v120.81 publicada, #409 fuente nueva integrada para preservar historiales y cancelar DELETE/backup/registry A-B-A; aceptación real #371/#377/#360/#164/#172 pendiente",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 58,
   "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "OFFICIAL v120.81 stable published/verified, PR#407 10/10 exact-head, publisher 4/4; owner physical 7/12",
-  "last_source_merge": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
+  "phase": "GRANADA #409 MERGED 9/9 exact-head CI; cloud privacy/export/registry cross-owner fences and no automatic local purge; latest public FINAL v120.81, user physical acceptance 7/12",
+  "last_source_merge": "61e18ef212815c0939cfcc720e78692c0d9acb2b",
   "latest_verified_stable": "v120.81",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -115,12 +115,12 @@
       ]
     }
   ],
-  "next_step": "Owner tests v120.81 official artifacts: backup/history first, physical two independent Windows Instagram A/B profiles, Focus30 quota and no reappearing counters after reload, real Unfollow and Cancel Pending exact account/target, Android Samsung data sync. Keep five user physical P0 milestones pending. Next v120.82 not authorized; never republish 120.81.",
+  "next_step": "Owner physical v120.81 Focus quota/no rebound, two independent signed-in Windows sessions, real Unfollow and Cancel Pending, physical Android/backup acceptance. Source #409 fixes additional owner-scope safety but is unreleased: v120.82 requires explicit new approval plus official release gates. Never claim signed-in Instagram acceptance from CI.",
   "limitations": "58% = round(100*7/12) fixed P0 milestone route. Stable publication IS verified through official tagged source and 4/4 exact-SHA jobs with 9 assets; it does NOT certify owner real signed-in Instagram, physical device/account actions or total historical project completeness.",
   "last_granada": {
-    "date": "2026-11-23",
-    "scope": "Merged cloud A-B-A 404/405/406, governed v120.81 FINAL request #407, official release 4/4 SUCCESS 9 SHA-256 assets; consumed one-time owner authorization",
-    "progress_before": 50,
+    "date": "2026-11-24",
+    "scope": "GRANADA production source #409 global DELETE/export A-B-A, registry no automatic local data purge, per-workspace backup and Double Check delayed timer; no live account actions or new release",
+    "progress_before": 58,
     "progress_after": 58,
     "verified_milestones": 7,
     "total_milestones": 12,
@@ -194,17 +194,22 @@
     ],
     "release": {
       "tag": "v120.81",
-      "state": "published_official_4_of_4_success",
-      "publisher_run": 45319438358,
-      "source_sha": "fc1cd03a476dc4c5797e90e89e18d22733c34175",
-      "url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
-      "assets": 9,
-      "sha256_digest_verified": true,
-      "latest_stable": "v120.81",
-      "physical_acceptance": "pending",
-      "next_release": "v120.82_not_authorized"
+      "state": "published_prior_to_new_source",
+      "next": "v120.82_unapproved",
+      "source_merge_unreleased": "61e18ef212815c0939cfcc720e78692c0d9acb2b",
+      "physical_owner_acceptance": "pending"
     },
-    "note": "Official publication milestone VERIFIED. 7/12=58% rounded; five actual owner physical product acceptance remain. release_hold=true, owner_final_acceptance=false."
+    "note": "Do not add new milestone for source/code; 7/12=58% remains. Real owner issues #371, #377, #360, #164, #172 still OPEN.",
+    "new_source_pr": {
+      "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/409",
+      "state": "merged",
+      "head_sha": "12f519bb40bc8c8efe2a6e4d91418d9a4bd5e1c8",
+      "merge_sha": "61e18ef212815c0939cfcc720e78692c0d9acb2b",
+      "exact_checks": "9/9 SUCCESS",
+      "scope": "Whole-owner DELETE/export, per-profile backup/delete, monotonic remote registry refresh, orphaned local history preserved and scheduled Double Check A-B-A"
+    },
+    "regression": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/tests/cloud-owner-global-lifecycle-aba.test.cjs",
+    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md"
   },
   "last_continuation": {
     "date": "2026-11-20",
