@@ -14909,22 +14909,28 @@ async function ensureAuth(){
  }
  return true;
 }
+// Freeze the owner, Instagram account and generation at a function's ENTRY,
+// before any potentially async auth-refresh/network/second-page operation.
+function igcCaptureSyncScope(){
+ const owner=sessionOwner(S.session);
+ const account=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
+ const generation=Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
+ return function assertSameWorkspace(){
+  if(owner!==sessionOwner(S.session)||
+     account!==String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy')||
+     generation!==Number(window.IGC_INSTAGRAM_PROFILES?.generation||0))
+    throw new Error('La cuenta o el perfil de Instagram cambió durante la sincronización. Intenta otra vez.');
+ };
+}
 async function rest(path,opt={}){
+ // Do NOT capture the scope AFTER ensureAuth(): its refresh may await while
+ // the user switches A→B→A, otherwise stale payload can be sent to new B.
+ const assertSameWorkspace=igcCaptureSyncScope();
  await ensureAuth();
- const originalOwner=sessionOwner(S.session);
- const originalInstagram=String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy');
- const originalGeneration=Number(window.IGC_INSTAGRAM_PROFILES?.generation||0);
+ assertSameWorkspace();
  const usedAccess=S.session.access_token;
  const scoped=window.IGC_INSTAGRAM_PROFILES.scopeRest(path,opt);
  path=scoped.path;opt=scoped.opt;
- // The underlying REST endpoint is chosen for exactly one Instagram slot.
- // A late response/retry from A must never hydrate B after an A->B switch.
- const assertSameWorkspace=()=>{
-  if(originalOwner!==sessionOwner(S.session)||
-     originalInstagram!==String(window.IGC_INSTAGRAM_PROFILES?.active||'legacy')||
-     originalGeneration!==Number(window.IGC_INSTAGRAM_PROFILES?.generation||0))
-    throw new Error('La cuenta o el perfil de Instagram cambió durante la sincronización. Intenta otra vez.');
- };
  const checked=async()=>{
   assertSameWorkspace();
   const result=await jfetch('/rest/v1/'+path,opt);
@@ -15041,7 +15047,20 @@ function currentDevice(){
 }
 function eventToDb(e){return {id:e.id,event_at:iso(e.ts),username:e.username||null,action:e.action,device_id:e.deviceId||'unknown',device_type:e.deviceType||'other',device_label:e.deviceLabel||'',module:e.module||'unknown',batch_id:e.batchId||null,batch_label:e.batchLabel||'',batch_size:Number(e.batchSize||0),decision:e.decision||'',origin_event_id:e.originEventId||null,meta:e.meta||{}}}
 function eventFromDb(r){return {id:r.id,ts:ms(r.event_at),username:r.username||'',action:r.action,deviceId:r.device_id,deviceType:r.device_type,deviceLabel:r.device_label,module:r.module,batchId:r.batch_id||'',batchLabel:r.batch_label||'',batchSize:r.batch_size||0,decision:r.decision||'',originEventId:r.origin_event_id||'',meta:r.meta||{}}}
-async function pushEvents(){const arr=(window.igcAuditGetEvents?.()||[]).map(eventToDb);if(!arr.length)return 0;for(let i=0;i<arr.length;i+=500)await rest('audit_events?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr.slice(i,i+500))});S.stats.eventsUp=arr.length;return arr.length}
+async function pushEvents(){
+ const assertSameWorkspace=igcCaptureSyncScope();
+ const arr=(window.igcAuditGetEvents?.()||[]).map(eventToDb);
+ if(!arr.length)return 0;
+ for(let i=0;i<arr.length;i+=500){
+  assertSameWorkspace();
+  await rest('audit_events?on_conflict=user_id,id',{method:'POST',
+   headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+   body:JSON.stringify(arr.slice(i,i+500))});
+  assertSameWorkspace();
+ }
+ S.stats.eventsUp=arr.length;
+ return arr.length;
+}
 async function pullEvents(){
   // PostgREST may enforce a smaller per-page cap than the requested limit.
   // Advance by ACTUAL rows, not 1,000, and only commit after an empty final page.
@@ -15119,8 +15138,10 @@ window.igcMarkLocalSnapshotsDirty=function(kinds){
   saveDataMeta();
 };
 async function pushListSnapshots(){
+  const assertSameWorkspace=igcCaptureSyncScope();
   const d=currentDevice();
   const remote=await rest('list_snapshots?select=list_name,content_hash,captured_at,updated_at',{method:'GET'});
+  assertSameWorkspace(); // Remote account A cannot reconcile local account B.
   const known=new Map((remote||[]).map(row=>[row.list_name,row]));
   const rows=[],pendingMeta=[];
   for(const name of ['following','followers','pending']){
@@ -15149,10 +15170,13 @@ async function pushListSnapshots(){
     pendingMeta.push([name,{hash:contentHash,capturedAt:Date.parse(capturedAt),sourceDevice:d.type,itemCount:payload.length}]);
   }
   if(rows.length){
+    assertSameWorkspace();
     await rest('list_snapshots?on_conflict=user_id,list_name',{method:'POST',
       headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+    assertSameWorkspace(); // Never publish stale A upload metadata into B.
     pendingMeta.forEach(([name,meta])=>dataMeta[name]=meta);
   }
+  assertSameWorkspace();
   saveDataMeta();
   return {lists:rows.length,profiles:rows.reduce((n,r)=>n+r.item_count,0)};
 }
@@ -15195,7 +15219,40 @@ async function pullListSnapshots(){
   return {lists:(rows||[]).length,profiles,changed:changed.size};
 }
 
-async function pushPreparedBatches(){let p={};try{p=JSON.parse(localStorage.getItem(BATCH_LS)||'{}')||{}}catch{}const batches=[];const items=[];for(const [k,b] of Object.entries(p)){if(!b?.usernames?.length)continue;if(!b.syncId){b.syncId=`focus_${b.createdAt}_${b.kind}_${b.n}_${hash(b.usernames.join('|'))}`;p[k]=b}batches.push({id:b.syncId,module:b.kind,label:b.label||`${b.kind} Foco ${b.n}`,target_size:Number(b.n||b.usernames.length),status:'prepared',created_device:currentDevice().type,created_at:iso(b.createdAt),source_signature:b.signature||'',updated_at:new Date().toISOString()});b.usernames.forEach((u,i)=>{const c=rowContext(u,b.kind);items.push({batch_id:b.syncId,position:i+1,username:u,status:'pending',context:{...c,preparedAt:b.createdAt}})})}try{localStorage.setItem(BATCH_LS,JSON.stringify(p))}catch{}if(batches.length){await rest('focus_batches?on_conflict=user_id,id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(batches)});for(let i=0;i<items.length;i+=500)await rest('focus_batch_items?on_conflict=user_id,batch_id,username',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(items.slice(i,i+500))})}S.stats.batchesUp=batches.length;return batches.length}
+async function pushPreparedBatches(){
+ const assertSameWorkspace=igcCaptureSyncScope();
+ let p={};try{p=JSON.parse(localStorage.getItem(BATCH_LS)||'{}')||{}}catch{}
+ const batches=[],items=[];
+ for(const [k,b] of Object.entries(p)){
+  if(!b?.usernames?.length)continue;
+  if(!b.syncId){b.syncId=`focus_${b.createdAt}_${b.kind}_${b.n}_${hash(b.usernames.join('|'))}`;p[k]=b}
+  batches.push({id:b.syncId,module:b.kind,label:b.label||`${b.kind} Foco ${b.n}`,
+    target_size:Number(b.n||b.usernames.length),status:'prepared',
+    created_device:currentDevice().type,created_at:iso(b.createdAt),
+    source_signature:b.signature||'',updated_at:new Date().toISOString()});
+  b.usernames.forEach((u,i)=>{
+   const c=rowContext(u,b.kind);
+   items.push({batch_id:b.syncId,position:i+1,username:u,status:'pending',
+     context:{...c,preparedAt:b.createdAt}});
+  });
+ }
+ try{localStorage.setItem(BATCH_LS,JSON.stringify(p))}catch{}
+ if(batches.length){
+  assertSameWorkspace();
+  await rest('focus_batches?on_conflict=user_id,id',{method:'POST',
+   headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(batches)});
+  assertSameWorkspace();
+  for(let i=0;i<items.length;i+=500){
+   assertSameWorkspace();
+   await rest('focus_batch_items?on_conflict=user_id,batch_id,username',{method:'POST',
+    headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},
+    body:JSON.stringify(items.slice(i,i+500))});
+   assertSameWorkspace();
+  }
+ }
+ S.stats.batchesUp=batches.length;
+ return batches.length;
+}
 function normalizeLegacyReviewState(){
   let changed=0;
   const now=Date.now();
@@ -15761,15 +15818,51 @@ window.igcDeleteInstagramProfile=async function(){
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
 async function syncNow(manual=true){
  if(igcDeveloperReadOnly()){
-  renderAuthUi();status("Developer Edition: account sign-in enabled; production cloud synchronization disabled.",'warn');
+  renderAuthUi();
+  status("Developer Edition: account sign-in enabled; production cloud synchronization disabled.",'warn');
   return;
  }
- cfgFromUi();if(S.busy)return;S.busy=true;status('Syncing lists, reviews and Focus…');try{await ensureAuth();await refreshInstagramAccounts();normalizeLegacyReviewState();await touchDevice();const listUp=await pushListSnapshots();const lists=await pullListSnapshots();const down=await pullEvents();const st=await pullProfileState();await pullDoubleCheckCycle();const up=await pushEvents();await pushProfileState();await pushWorkspaceState();await pushDoubleCheckCycle();const batches=await pushPreparedBatches();S.lastSync=Date.now();S.lastError='';
-const currentReviews=withTempMode('following',()=>buildRowsForMode('following').filter(r=>isDoneValidForMode(r,'following')).length);
-const historyLabel=st.rows.toLocaleString('es-MX'),currentLabel=currentReviews.toLocaleString('es-MX');
-status(`Sync completo · ${lists.profiles} registros en listas · ${historyLabel} revisiones históricas descargadas (todas las secciones) · ${currentLabel} revisiones vigentes en Following · ${batches} Focus publicados.`,'ok');
-window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Historial de nube: '+historyLabel+' registros de revisión entre Review, Followers y Pending; Following actual: '+currentLabel+' revisiones vigentes. Los totales históricos NO son personas actualmente revisadas.','success');
-try{renderReviewRealtimePanel?.();renderAlwaysAccountSummary?.()}catch{}}catch(e){S.lastError=String(e.message||e);status(`Sync detenido: ${S.lastError}`,'warn');window.IGC_INSTAGRAM_PROFILES.setCloudStatus('No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');if(manual)console.error(e)}finally{S.busy=false;renderStats()}}
+ cfgFromUi();
+ if(S.busy)return;
+ // One complete multi-stage sync MUST belong to one immutable owner/account
+ // generation; guarding individual REST requests cannot prevent A/B mixtures
+ // if an account changes between completed requests.
+ const assertSameWorkspace=igcCaptureSyncScope();
+ S.busy=true;status('Syncing lists, reviews and Focus…');
+ try{
+  await ensureAuth();assertSameWorkspace();
+  await refreshInstagramAccounts();assertSameWorkspace();
+  normalizeLegacyReviewState();
+  await touchDevice();assertSameWorkspace();
+  const listUp=await pushListSnapshots();assertSameWorkspace();
+  const lists=await pullListSnapshots();assertSameWorkspace();
+  const down=await pullEvents();assertSameWorkspace();
+  const st=await pullProfileState();assertSameWorkspace();
+  await pullDoubleCheckCycle();assertSameWorkspace();
+  const up=await pushEvents();assertSameWorkspace();
+  await pushProfileState();assertSameWorkspace();
+  await pushWorkspaceState();assertSameWorkspace();
+  await pushDoubleCheckCycle();assertSameWorkspace();
+  const batches=await pushPreparedBatches();assertSameWorkspace();
+  S.lastSync=Date.now();S.lastError='';
+  const currentReviews=withTempMode('following',()=>
+    buildRowsForMode('following').filter(r=>isDoneValidForMode(r,'following')).length);
+  const historyLabel=st.rows.toLocaleString('es-MX'),currentLabel=currentReviews.toLocaleString('es-MX');
+  status(`Sync completo · ${lists.profiles} registros en listas · ${historyLabel} revisiones históricas descargadas (todas las secciones) · ${currentLabel} revisiones vigentes en Following · ${batches} Focus publicados.`,'ok');
+  window.IGC_INSTAGRAM_PROFILES.setCloudStatus('Historial de nube: '+historyLabel+
+   ' registros de revisión entre Review, Followers y Pending; Following actual: '+
+   currentLabel+' revisiones vigentes. Los totales históricos NO son personas actualmente revisadas.','success');
+  try{renderReviewRealtimePanel?.();renderAlwaysAccountSummary?.()}catch{}
+ }catch(e){
+  S.lastError=String(e.message||e);
+  status(`Sync detenido: ${S.lastError}`,'warn');
+  window.IGC_INSTAGRAM_PROFILES.setCloudStatus(
+    'No se completó la sincronización: '+S.lastError+'. Abre Cuenta para revisar la conexión.','error');
+  if(manual)console.error(e);
+ }finally{
+  S.busy=false;renderStats();
+ }
+}
 window.igcSyncPasswordSignIn=async function(){try{status('Iniciando sesión…');await signInPassword();if(igcOwnerFingerprint()!==IGC_INSTAGRAM_OWNER){location.reload();return}status(`Conectado como ${S.session?.user?.email||S.cfg.email}.`,'ok');await syncNow(false)}catch(e){status(`No pude iniciar sesión: ${e.message||e}`,'warn')}};
 window.igcSyncToggleOtp=function(){const g=document.getElementById('igcSyncOtpGroup');if(g)g.style.display=g.style.display==='none'?'grid':'none'};
 window.igcSyncSendCode=async function(){try{status('Enviando código…');await sendOtp()}catch(e){status(`No pude enviar el código: ${e.message||e}`,'warn')}};
