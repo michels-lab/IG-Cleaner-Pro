@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 499,
-  "classified_files_total": 495,
-  "docs_content_inspected": 145,
+  "tracked_files_total": 500,
+  "classified_files_total": 496,
+  "docs_content_inspected": 146,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 141,
+    "document": 142,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,11 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 1
+    "BROKEN_RELATIVE_LINK": 1,
+    "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 1,
-  "inventory_fingerprint": "81210c9e86e73af5033267ac1b626c53465a47e926cf86dfd24a9fb02faa1e4b",
-  "evidence_fingerprint": "ef6aced8d951f8c903b55fe825876379014e0329cf2ee521b172173205bf1dcb",
+  "finding_total": 2,
+  "inventory_fingerprint": "0ccd9e2dff464bad7a4c85fef21833e392c61d1d565a47fbefa7dbe150577e87",
+  "evidence_fingerprint": "b440a24e3c4fe37ee04342ca0f8d19aaf520b03b765a38eb55b2d684eee99b59",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -105,7 +106,7 @@
       "role": "workflow",
       "purpose": "GitHub Actions automation",
       "certainty": "rule",
-      "blob": "b7874fae931d5a4590134c94eb50c85e7ba7001a"
+      "blob": "6dbd6fc3ef1baf4a663e6e373323c3b52fec0664"
     },
     {
       "path": ".github/workflows/file-governance-audit.yml",
@@ -210,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "71a6d42754ae9b798184f7fbf77f3ccab853c118"
+      "blob": "271e092fc0be65133d82190090ddfaec72d6deee"
     },
     {
       "path": ".michelslab/project.yml",
@@ -252,14 +253,14 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "3b14a2027f31f079bea76cb72ac43ce6c405840b"
+      "blob": "6aba438b961b6bb13f93ca5657a25588422590ff"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "afd9b403e9c6fd4ae375241291bba679c2c31ae1"
+      "blob": "d3ec4f96bda85d65b85b7ebf491fbb392b457bae"
     },
     {
       "path": "README_SYNC.md",
@@ -1596,7 +1597,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "670a38e06d9e68d7949135537128853156bffd87"
+      "blob": "ca2c9be4999c31a13d6619ffcc67b4571935865d"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
@@ -1821,6 +1822,13 @@
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
       "blob": "aa463473ab02a6b62bfe98c7658141ca3ffdc51a"
+    },
+    {
+      "path": "docs/audits/2026-11-24-visible-owner-controls-viewport.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "d8b540caea9e0419f09bb9d5a453cea547aadee8"
     },
     {
       "path": "docs/product-reviews/README.md",
@@ -3045,7 +3053,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "7a33d71b93c73d1db25c1b438be7b5061d639587"
+      "blob": "f0efa6a3cfbd4e652ae51d8108665769795ed06a"
     },
     {
       "path": "tests/test_profile_counts_pacing.py",
@@ -3353,7 +3361,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "8bee8d9684c77751600b37ca363029effffe0038"
+      "blob": "bef7889e9662e970f9e7558788fb9a83215b7127"
     },
     {
       "path": "tools/profile_counts_pacing.py",
@@ -3504,6 +3512,15 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "c615f57cf7bca2f7",
+      "code": "POTENTIAL_UNLOGGED_CHANGES",
+      "severity": "review",
+      "path": "PROJECT_LOG.md",
+      "observation": "4 implementation/config paths changed since this log's last commit; examples: .github/workflows/desktop-rendered-ui.yml, .michelslab/project-progress.json, tests/test_profile_counts_home_identity.py, tools/profile_counts_instagram.py",
+      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],
