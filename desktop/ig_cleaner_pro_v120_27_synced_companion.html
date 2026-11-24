@@ -2877,17 +2877,21 @@ window.IGC_INSTAGRAM_PROFILES={
   const remove=document.getElementById('igcDeleteInstagramButton');
   if(remove)remove.disabled=this.active==='legacy';
  },
- async purgeLocalWorkspace(key){
+ async purgeLocalWorkspace(key,assertSameWorkspace=()=>{}){
   if(!/^ig_[a-z0-9_-]{8,64}$/.test(String(key)))throw Error('Legacy data is protected');
+  assertSameWorkspace();
   const prefix='igc_profile__'+IGC_INSTAGRAM_OWNER+'__'+key+'__';
   for(let i=igcRawProfileStorage.length-1;i>=0;i--){
+   assertSameWorkspace();
    const k=igcRawProfileStorage.key(i);
    if(k?.startsWith(prefix))igcRawProfileStorage.removeItem(k);
   }
   // Remove only this identity's history databases, never any legacy DB.
   if(typeof window.indexedDB?.databases==='function'){
    const databases=await window.indexedDB.databases();
+   assertSameWorkspace();
    for(const item of databases||[]){
+    assertSameWorkspace();
     if(!item.name?.startsWith(prefix))continue;
     await new Promise((resolve,reject)=>{
      const req=window.indexedDB.deleteDatabase(item.name);
@@ -2895,6 +2899,7 @@ window.IGC_INSTAGRAM_PROFILES={
      req.onerror=()=>reject(req.error||Error('No se pudo limpiar el historial local'));
      req.onblocked=()=>reject(Error('Close another tab using this profile and try again'));
     });
+    assertSameWorkspace();
    }
   }
  },
@@ -14955,14 +14960,19 @@ function privacyDataStatus(text,type=''){
   el.style.color=type==='error'?'#ff9aa8':type==='ok'?'#83e4be':'';
 }
 async function fetchAllCloudRows(table){
+  // One owner and one account for every page of this cloud export.
+  const assertSameWorkspace=igcCaptureSyncScope();
   const all=[];let offset=0;
   while(true){
+    assertSameWorkspace();
     const rows=await rest(`${table}?select=*&limit=1000&offset=${offset}`,{method:'GET',globalAccountData:true});
-    if(!Array.isArray(rows))break;
+    assertSameWorkspace();
+    if(!Array.isArray(rows))throw Error('Exportación incompleta: página de nube inválida');
     all.push(...rows);
     if(rows.length<1000)break;
     offset+=rows.length;
   }
+  assertSameWorkspace();
   return all;
 }
 async function deliverPrivacyJson(fileName,payload){
@@ -14980,15 +14990,19 @@ async function deliverPrivacyJson(fileName,payload){
 }
 window.igcPrivacyExportCloudData=async function(){
   if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
+  const assertSameWorkspace=igcCaptureSyncScope();
   S.busy=true;
   try{
-    await ensureAuth();
+    await ensureAuth();assertSameWorkspace();
     privacyDataStatus('Preparando export de datos sincronizados…');
     const tables={};const counts={};
     for(const table of IGC_SYNC_TABLES){
+      assertSameWorkspace();
       tables[table]=await fetchAllCloudRows(table);
+      assertSameWorkspace();
       counts[table]=tables[table].length;
     }
+    assertSameWorkspace();
     const payload={
       schema:'ig-cleaner-cloud-export-v1',
       exportedAt:new Date().toISOString(),
@@ -14999,7 +15013,9 @@ window.igcPrivacyExportCloudData=async function(){
       tables
     };
     const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    assertSameWorkspace();
     await deliverPrivacyJson(`IG-Cleaner-Pro-cloud-export-${stamp}.json`,payload);
+    assertSameWorkspace();
     privacyDataStatus(`Export listo · ${Object.values(counts).reduce((a,b)=>a+b,0)} filas sincronizadas.`,'ok');
   }catch(e){
     privacyDataStatus(`No se pudo exportar: ${e.message||e}`,'error');
@@ -15010,24 +15026,33 @@ window.igcPrivacyExportCloudData=async function(){
 };
 window.igcPrivacyDeleteCloudData=async function(){
   if(S.busy){privacyDataStatus('Hay una sincronización en curso. Intenta de nuevo en un momento.');return}
+  // A single owner-authorized deletion cannot continue into the new owner
+  // after an A→B→A switch between otherwise individually scoped REST calls.
+  const assertSameWorkspace=igcCaptureSyncScope();
   try{
-    await ensureAuth();
+    await ensureAuth();assertSameWorkspace();
     if(!confirm('This will delete ALL synced cloud data for this account. Your original exports and independent local backups will not be deleted. Continue?'))return;
+    assertSameWorkspace();
     const typed=prompt('Confirmación final: type DELETE CLOUD');
     if(String(typed||'').trim().toUpperCase()!=='DELETE CLOUD'){privacyDataStatus('Deletion canceled.');return}
+    assertSameWorkspace();
     S.busy=true;
     privacyDataStatus('Deleting synchronized data…');
     const order=['instagram_focus_batch_items','instagram_focus_batches','instagram_profile_state','instagram_audit_events','instagram_list_snapshots','instagram_workspace_state','instagram_accounts','focus_batch_items','focus_batches','profile_state','audit_events','list_snapshots','workspace_state','devices'];
     for(const table of order){
+      assertSameWorkspace();
       await rest(`${table}?user_id=not.is.null`,{method:'DELETE',globalAccountData:true,headers:{Prefer:'return=minimal'}});
+      assertSameWorkspace();
     }
+    // Abort without signing out the new owner or fabricating success.
+    assertSameWorkspace();
     dataMeta={};saveDataMeta();
     S.stats={eventsUp:0,eventsDown:0,statesDown:0,batchesUp:0,listsDown:0,profilesDown:0};
     S.session=null;saveSession();notifyHostSession(true);renderAuthUi();schedule();
     privacyDataStatus('Datos sincronizados borrados. Sesión cerrada para evitar una resincronización automática.','ok');
     status('Datos de nube borrados · sesión cerrada. Tus datos locales permanecen intactos.','warn');
   }catch(e){
-    privacyDataStatus(`No se pudo borrar la nube: ${e.message||e}`,'error');
+    privacyDataStatus(`Borrado no completado: ${e.message||e}. Revisa el estado antes de reintentar; una fase anterior puede haberse aplicado.`,'error');
   }finally{
     S.busy=false;
     renderStats();
@@ -15625,58 +15650,85 @@ async function pushDoubleCheckCycle(){
 }
 let doubleCyclePushTimer=null;
 window.igcQueueDoubleCheckCycle=function(){
+  // Capture before the timer is registered; a delayed A callback may not
+  // become a B callback after switching accounts (including A→B→A).
+  const assertSameWorkspace=igcCaptureSyncScope();
   clearTimeout(doubleCyclePushTimer);
   doubleCyclePushTimer=setTimeout(async()=>{
+    try{assertSameWorkspace()}catch{return}
     if(!S.session?.access_token)return;
-    if(S.busy){window.igcQueueDoubleCheckCycle();return}
+    if(S.busy){
+      try{assertSameWorkspace();window.igcQueueDoubleCheckCycle()}catch{}
+      return;
+    }
     S.busy=true;
-    try{await ensureAuth();await pullDoubleCheckCycle();await pushDoubleCheckCycle()}
-    catch(e){console.warn('Double Check cloud cycle',e)}
+    try{
+      assertSameWorkspace();
+      await ensureAuth();assertSameWorkspace();
+      await pullDoubleCheckCycle();assertSameWorkspace();
+      await pushDoubleCheckCycle();assertSameWorkspace();
+    }catch(e){console.warn('Double Check cloud cycle',e)}
     finally{S.busy=false}
   },850);
 };
 async function touchDevice(){const d=currentDevice();await rest('devices?on_conflict=user_id,device_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{device_id:d.id,device_type:d.type,label:d.label,last_seen:new Date().toISOString()}])})}
 let instagramRegistryLoaded=false;
+let igcRegistryRefreshEpoch=0;
 async function refreshInstagramAccounts(){
+ const assertSameWorkspace=igcCaptureSyncScope();
+ const refreshEpoch=++igcRegistryRefreshEpoch;
  const registry=window.IGC_INSTAGRAM_PROFILES;
+ const assertCurrent=()=>{
+  assertSameWorkspace();
+  // A slower earlier query must never overwrite a newer complete registry.
+  if(refreshEpoch!==igcRegistryRefreshEpoch)
+   throw Error('Consulta de perfiles reemplazada por una actualización más reciente.');
+ };
  registry.setCloudStatus('Consultando los perfiles de tu cuenta…');
  let rows;
  try{
   rows=await rest('instagram_accounts?select=account_key,username,label,updated_at&order=created_at.asc',{method:'GET',globalAccountData:true});
+  assertCurrent();
   if(!Array.isArray(rows))throw new Error('La nube devolvió una respuesta de perfiles inválida');
  }catch(error){
+  // A stale request must not replace the current owner's cloud status.
+  assertCurrent();
   const detail=String(error?.message||error);
   registry.setCloudStatus('Unable to load the complete profile list: '+detail+'. Open Account to check your session, or select Refresh profiles.','error');
   throw new Error('No se pudieron cargar los perfiles de Instagram: '+detail);
  }
  const profiles=rows;
  if(!profiles.some(x=>x.account_key==='legacy')){
+  assertCurrent();
   await rest('instagram_accounts?on_conflict=user_id,account_key',{
    method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},
    body:JSON.stringify([{account_key:'legacy',label:'Datos anteriores'}])
   });
+  assertCurrent();
   profiles.unshift({account_key:'legacy',label:'Datos anteriores'});
  }
- // Another device may have deleted a workspace: never keep it resurrectable
- // from a stale browser cache after the authoritative server registry refresh.
- for(const previous of registry.accounts){
-  if(previous.account_key==='legacy'||profiles.some(x=>x.account_key===previous.account_key))continue;
-  try{await registry.purgeLocalWorkspace(previous.account_key)}
-  catch(error){console.warn('No se pudo limpiar por completo el perfil eliminado:',error);}
- }
+ assertCurrent();
  const selected=registry.active;
  if(selected!=='legacy'&&!profiles.some(x=>x.account_key===selected)){
-  window.IGC_INSTAGRAM_PROFILES.switch('legacy');
+  registry.switch('legacy');
   throw new Error('La identidad activa no pertenece a tu cuenta; volviendo a los datos anteriores.');
  }
- // One RLS-filtered RPC returns only counts/timestamps, never full historical rows.
+ // Download both authoritative registry and RLS-filtered metadata before
+ // making ANY registry changes; a late A→B→A reply cannot touch B or A.
  const summaries=await rest('rpc/igc_instagram_profile_summaries',{method:'GET',globalAccountData:true});
+ assertCurrent();
  if(Array.isArray(summaries))for(const profile of profiles){
   const meta=summaries.find(a=>a.account_key===profile.account_key);
   if(meta)Object.assign(profile,meta);
  }
- registry._verified=true;
+ assertCurrent();
+ // A READ-ONLY refresh must NEVER purge localStorage/IndexedDB. Missing
+ // remote rows may be transient, incomplete or from another owner. Updating
+ // the picker is enough to avoid resurrecting stale workspace options;
+ // raw history is retained for safe backup/recovery. Only an explicit
+ // confirmed account Delete may call purgeLocalWorkspace.
  registry.setAccounts(profiles);
+ registry._verified=true;
  registry.setCloudStatus(profiles.length+' espacio(s) de Instagram registrados (incluyendo Datos anteriores cuando existe). Son cuentas de trabajo, no personas de tus listas.','success');
  instagramRegistryLoaded=true;
  return true;
@@ -15748,12 +15800,15 @@ window.igcAddInstagramProfile=async function(){
  }catch(error){status('No se creó el perfil: '+String(error.message||error),'warn');alert(String(error.message||error));window.IGC_INSTAGRAM_PROFILES.render();}
 };
 async function igcReadInstagramBackupTable(table,key){
+ const assertSameWorkspace=igcCaptureSyncScope();
  const name=(key==='legacy'?'':'instagram_')+table;
  const rows=[];let offset=0;
  while(true){
+  assertSameWorkspace();
   const filter=key==='legacy'?'':'&account_key=eq.'+encodeURIComponent(key);
   const batch=await rest(name+'?select=*'+filter+'&limit=1000&offset='+offset,
    {method:'GET',globalAccountData:true});
+  assertSameWorkspace();
   if(!Array.isArray(batch))throw Error('No fue posible leer los datos de '+table);
   rows.push(...batch);
   if(batch.length<1000)return rows;
@@ -15762,15 +15817,21 @@ async function igcReadInstagramBackupTable(table,key){
 }
 window.igcExportSelectedInstagramProfile=async function(){
  if(S.busy)throw Error('Hay una sincronización en curso. Reintenta el respaldo.');
+ const assertSameWorkspace=igcCaptureSyncScope();
  const registry=window.IGC_INSTAGRAM_PROFILES;
  const key=registry.active;
- await ensureAuth();await refreshInstagramAccounts();
+ await ensureAuth();assertSameWorkspace();
+ await refreshInstagramAccounts();assertSameWorkspace();
  const account=registry.accounts.find(a=>a.account_key===key);
  if(!account)throw Error('Este perfil ya no existe. No se preparó ningún respaldo.');
  const tables={},counts={};
  for(const table of ['list_snapshots','profile_state','audit_events','focus_batches','focus_batch_items','workspace_state']){
-  const rows=await igcReadInstagramBackupTable(table,key);tables[table]=rows;counts[table]=rows.length;
+  assertSameWorkspace();
+  const rows=await igcReadInstagramBackupTable(table,key);
+  assertSameWorkspace();
+  tables[table]=rows;counts[table]=rows.length;
  }
+ assertSameWorkspace();
  const now=new Date().toISOString();
  const payload={
   schema:'ig-cleaner-instagram-profile-cloud-export-v1',exportedAt:now,
@@ -15778,41 +15839,53 @@ window.igcExportSelectedInstagramProfile=async function(){
   account_key:key,account,counts,tables,
   note:'Respaldo de los datos sincronizados en Supabase; no incluye exports originales ni datos locales que no se hayan sincronizado. Conservar en lugar seguro. Su restauración requiere un flujo de importación compatible.'
  };
+ assertSameWorkspace();
  await deliverPrivacyJson('IG-Cleaner-Instagram-'+key+'-'+now.replace(/[:.]/g,'-')+'.json',payload);
+ assertSameWorkspace();
  status('Respaldo individual preparado para '+(account.username?'@'+account.username:account.label)+'. Comprueba tu carpeta de descargas.','ok');
  return true;
 };
 window.igcDeleteInstagramProfile=async function(){
  if(S.busy){status('La sincronización está ocupada. Vuelve a intentar.','warn');return;}
+ const assertSameWorkspace=igcCaptureSyncScope();
  const profile=window.IGC_INSTAGRAM_PROFILES;
  const key=profile.active;
  if(key==='legacy'){alert('Datos anteriores está protegido y no se puede eliminar.');return;}
  let username='';
  try{
-  await ensureAuth();
+  await ensureAuth();assertSameWorkspace();
   if(!await refreshInstagramAccounts())throw Error('No se pudieron cargar los perfiles');
+  assertSameWorkspace();
   const row=profile.accounts.find(a=>a.account_key===key);
   if(!row)throw Error('Este perfil ya no está disponible. Actualiza e intenta de nuevo.');
   username=row.username||'';
   const display=username?'@'+username:(row.label||'Perfil sin @usuario');
   const choice=confirm('You are about to PERMANENTLY delete '+display+' and its synced lists, reviews, Focus and history.\n\nWould you like to EXPORT an individual backup first?\n\nOK = export backup first. Cancel = continue without backup.');
+  assertSameWorkspace();
   if(choice){
-   await window.igcExportSelectedInstagramProfile();
+   await window.igcExportSelectedInstagramProfile();assertSameWorkspace();
    if(!confirm('Confirm your backup file was saved before continuing.\n\nContinue deleting '+display+'?'))return;
+   assertSameWorkspace();
   }
   const required=username?'ELIMINAR @'+username:'BORRAR '+key.slice(-6);
   const typed=prompt('Solo se eliminará '+display+'. Datos anteriores y otros Instagram no cambian.\n\nEscribe exactamente '+required+' para confirmar:');
+  assertSameWorkspace();
   if(typed===null)return;
   if(typed.trim()!==required){alert('Confirmación incorrecta. No se eliminó nada.');return;}
   S.busy=true;
+  assertSameWorkspace();
   const result=await rest('rpc/igc_delete_instagram_profile',{method:'POST',
     body:JSON.stringify({p_account_key:key,p_expected_username:username||null})});
+  assertSameWorkspace();
   if(result!==true)throw Error('La base de datos no confirmó el borrado');
-  try{await profile.purgeLocalWorkspace(key)}catch(e){console.warn('Limpieza local parcial:',e);}
+  // Only explicit owner-confirmed deletion may purge local account data.
+  try{await profile.purgeLocalWorkspace(key,assertSameWorkspace)}
+  catch(e){assertSameWorkspace();console.warn('Limpieza local parcial:',e);}
+  assertSameWorkspace();
   profile.setAccounts(profile.accounts.filter(a=>a.account_key!==key));
   status(display+' eliminado. Volviendo a Datos anteriores.','ok');
   profile.switch('legacy');
- }catch(e){status('No se eliminó '+(username?'@'+username:'el perfil')+': '+String(e.message||e),'warn');alert(String(e.message||e));}
+ }catch(e){status('Borrado no completado para '+(username?'@'+username:'el perfil')+': '+String(e.message||e)+'. Comprueba el estado antes de reintentar.','warn');alert(String(e.message||e));}
  finally{S.busy=false;}
 };
 window.igcRenameLegacyInstagramProfile=window.igcEditInstagramProfile;
