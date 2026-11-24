@@ -1,3 +1,13 @@
+## v120.82 — FINAL release requested (24-Nov-2026)
+
+Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.
+
+- [#409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409): account-bound cloud DELETE and export, preserve local history on registry refresh.
+- [#410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410): reject hidden/offscreen/transparent identity controls.
+- [#411](https://github.com/michels-lab/IG-Cleaner-Pro/pull/411): independent Automations batch status and 8-second local journal deadline, partial/unknown counts and retry.
+
+---
+
 # IG Cleaner Pro — Update, Distribution & State Migration Contract
 
 **Published stable: [v120.81](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81). Next reserved version: v120.82 (not published).** The built-in Windows updater checks the published GitHub stable channel without installing anything automatically; downloading and launching the verified Setup both require explicit owner action. This document reports the published channel, not the candidate asset names in the distribution manifest.
