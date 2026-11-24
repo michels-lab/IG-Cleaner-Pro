@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-release-readiness-v1",
   "release_hold": true,
-  "reason": "Owner explicitly rejected publishing while InstaCleaner product-critical work and real Instagram acceptance remain incomplete. CI green alone is NOT a complete product.",
+  "reason": "Product is not accepted complete; release_hold remains true. Owner explicitly authorizes one stable v120.81 distribution for subsequent physical review, via exact-tag one-time exception. Mandatory automated publisher gates stay fail-closed.",
   "owner_final_acceptance": {
     "approved": false,
     "release_tag": null,
@@ -32,18 +32,16 @@
     176
   ],
   "next_version": "v120.81",
-  "notes": "Official stable v120.80 published from e5396cf2710cbd6d9f9ac7f03e5e6eeef948560b; publisher 44235048175 4/4 SUCCESS, nine assets. One-time owner device-review exception consumed; v120.81 reserved WITHOUT authorization. release_hold=true, owner_final_acceptance=false, critical owner physical acceptance remains open.",
+  "notes": "v120.80 published 2026-11-18 04:21:23Z with 9 assets; next v120.81 authorized only for owner physical review by fresh 2026-11-23 instruction. Never claim user accepted P0 #360/#371/#377/#164/#172 or turn critical_acceptance true; release hold stays true.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.80",
-    "source": "explicit-owner-chat-instruction-2026-11-17",
+    "authorized": true,
+    "release_tag": "v120.81",
+    "source": "explicit-owner-chat-instruction-2026-11-23",
+    "owner_direct_quote": "op granada y dale release",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "owner_direct_quote": "op granada completa y release",
-    "disclosure": "Consumed by official FINAL v120.80 publication 2026-11-18T04:21:23Z; nine verified assets and 4/4 governed jobs. Physical owner account behavior still unverified; not reusable for v120.81.",
-    "previous_published_release": "v120.79",
-    "consumed_by_release": "v120.80",
-    "consumed_run": 44235048175
+    "previous_published_release": "v120.80",
+    "disclosure": "One-time authorization ONLY to publish final stable v120.81 for owner post-publication review. Physical Instagram owner actions, two-account real behavior, Focus counters, Windows backup/upgrade and Android device acceptance remain unverified; owner final acceptance still false. Do not waive exact-source mandatory installer, emulator signed APK, screenshots, hashes, or release receipts."
   },
   "owner_device_review_release_override_history": [
     {
@@ -91,6 +89,18 @@
       "previous_published_release": "v120.78",
       "consumed_by_release": "v120.79",
       "consumed_run": 44204338029
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.80",
+      "source": "explicit-owner-chat-instruction-2026-11-17",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "owner_direct_quote": "op granada completa y release",
+      "disclosure": "Consumed by official FINAL v120.80 publication 2026-11-18T04:21:23Z; nine verified assets and 4/4 governed jobs. Physical owner account behavior still unverified; not reusable for v120.81.",
+      "previous_published_release": "v120.79",
+      "consumed_by_release": "v120.80",
+      "consumed_run": 44235048175
     }
   ]
 }
