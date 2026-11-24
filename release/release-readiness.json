@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-release-readiness-v1",
   "release_hold": true,
-  "reason": "Owner-directed v120.81 stable distribution to permit post-release physical testing was published and its single-use permission consumed. Product remains unfinished. Future v120.82 has NO publication authorization; green CI is not owner acceptance.",
+  "reason": "Product remains unfinished; explicit owner one-use stable v120.82 distribution for physical review after mandatory gates.",
   "owner_final_acceptance": {
     "approved": false,
     "release_tag": null,
@@ -32,19 +32,16 @@
     176
   ],
   "next_version": "v120.82",
-  "notes": "Official v120.81 published 2026-11-24T03:42:17Z exact tagged SHA fc1cd03a476dc4c5797e90e89e18d22733c34175 after all 4/4 official governed jobs SUCCESS, 9 SHA256 assets. Owner Instagram Focus/Unfollow/Cancel, Windows simultaneous A/B and physical Samsung/backup acceptance remain pending. Next v120.82 not authorized.",
+  "notes": "v120.81 published; new v120.82 explicitly authorized 2026-11-24. All critical physical acceptance remains false.",
   "owner_device_review_release_override": {
-    "authorized": false,
-    "release_tag": "v120.81",
-    "source": "explicit-owner-chat-instruction-2026-11-23",
-    "owner_direct_quote": "op granada y dale release",
+    "authorized": true,
+    "release_tag": "v120.82",
+    "source": "explicit-owner-chat-instruction-2026-11-24",
+    "owner_direct_quote": "dale release perra",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "previous_published_release": "v120.80",
-    "disclosure": "Consumed once by official FINAL v120.81 on 2026-11-24 UTC, source fc1cd03a and 4/4 publisher SUCCESS; future v120.82 unapproved. No owner signed-in Instagram or physical Samsung acceptance inferred.",
-    "consumed_by_release": "v120.81",
-    "consumed_run": 45319438358,
-    "consumed_at": "2026-11-24T03:42:17Z"
+    "previous_published_release": "v120.81",
+    "disclosure": "One-use official stable v120.82 distribution; no physical acceptance claim; no automated gate waived."
   },
   "owner_device_review_release_override_history": [
     {
@@ -104,6 +101,19 @@
       "previous_published_release": "v120.79",
       "consumed_by_release": "v120.80",
       "consumed_run": 44235048175
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.81",
+      "source": "explicit-owner-chat-instruction-2026-11-23",
+      "owner_direct_quote": "op granada y dale release",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "previous_published_release": "v120.80",
+      "disclosure": "Consumed once by official FINAL v120.81 on 2026-11-24 UTC, source fc1cd03a and 4/4 publisher SUCCESS; future v120.82 unapproved. No owner signed-in Instagram or physical Samsung acceptance inferred.",
+      "consumed_by_release": "v120.81",
+      "consumed_run": 45319438358,
+      "consumed_at": "2026-11-24T03:42:17Z"
     }
   ]
 }

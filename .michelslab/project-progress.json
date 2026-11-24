@@ -9,8 +9,8 @@
   "progress_percent": 58,
   "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "GRANADA #410 merged 8/8 exact-head; #411 native Windows History bounded local reads candidate; P0 7/12",
-  "last_source_merge": "7e3dd5420362c9e235b9966da5e5bffc8955da5f",
+  "phase": "GRANADA #411 MERGED 6/6; v120.82 authorized, governed publication pending; P0 7/12",
+  "last_source_merge": "8eeeefa8d9fd0224ad1d75fcc9d22fd5e6a86898",
   "latest_verified_stable": "v120.81",
   "release_hold": true,
   "owner_physical_acceptance": false,
@@ -301,11 +301,9 @@
   "candidate_granada": {
     "date": "2026-11-24",
     "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/411",
-    "head_sha": "16f4f7f30a385471ceb0f0ca7fc02b66a4d7a196",
-    "status": "open_waiting_exact_head_CI_merge",
-    "effect": "Automations History bounded local reads, independent batch status, partial/unknown and retry",
-    "progress_before": 58,
-    "progress_after": 58,
-    "latest_public_release": "v120.81"
+    "state": "merged",
+    "merge_sha": "8eeeefa8d9fd0224ad1d75fcc9d22fd5e6a86898",
+    "checks": "6/6 SUCCESS",
+    "release": "v120.82 authorized not published"
   }
 }

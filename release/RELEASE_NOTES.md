@@ -1,3 +1,13 @@
+## v120.82 — FINAL release requested (24-Nov-2026)
+
+Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.
+
+- [#409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409): account-bound cloud DELETE and export, preserve local history on registry refresh.
+- [#410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410): reject hidden/offscreen/transparent identity controls.
+- [#411](https://github.com/michels-lab/IG-Cleaner-Pro/pull/411): independent Automations batch status and 8-second local journal deadline, partial/unknown counts and retry.
+
+---
+
 ## v120.81 — Granada account-scoped cloud writes, Focus persistence and native History (FINAL published 2026-11-24 UTC)
 
 **Publication verified:** [official v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81), exact immutable tagged source `fc1cd03a476dc4c5797e90e89e18d22733c34175`, [governed publisher #45319438358](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358) **4/4 SUCCESS** and [full nine-asset SHA256 receipt](../docs/GRANADA_V12081_FINAL_RECEIPT_2026-11-23.md). Production-signed public Android stable APK installed and launched in emulator; integrated Windows Setup installed/started/uninstalled and real Desktop + Android screenshot proof validated. One-use owner authorization consumed; next v120.82 reserved UNAUTHORIZED. Owner real signed-in Instagram, Focus30 rebound/quotas, two actual concurrent Windows accounts and physical Samsung acceptance remain UNVERIFIED. Stable only, no RC/Developer edition.
