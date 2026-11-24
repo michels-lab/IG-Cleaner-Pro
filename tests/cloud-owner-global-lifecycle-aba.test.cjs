@@ -44,6 +44,9 @@ function setup(code){
   pullDoubleCheckCycle:async()=>{},pushDoubleCheckCycle:async()=>{}
  };
  vm.createContext(ctx);vm.runInContext(owner+"\n"+scope+"\n"+code,ctx,{timeout:4000});
+ // Privacy code includes its real delivery helper; intercept only actual file
+ // output, not cloud/owner logic, so the Node VM never opens a browser download.
+ ctx.deliverPrivacyJson=async(name,payload)=>{saved.push({name,payload})};
  return {ctx,S,reg,w,messages,calls,saved,
   swap(){reg.active=B;reg.generation++;reg.active=A;reg.generation++},
   otherOwner(){S.session={user:{email:"owner-b@example.test"},access_token:"token-b"};}
