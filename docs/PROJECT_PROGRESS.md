@@ -1,3 +1,13 @@
+## Granada v120.81 FINAL publicado — 23-nov-2026 Saltillo (24-nov UTC)
+
+**Evidencia oficial:** [GitHub FINAL v120.81](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81), tag fuente exacta `fc1cd03a476dc4c5797e90e89e18d22733c34175`; [publicador gobernado #45319438358](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358) **4/4 SUCCESS**, **9 activos SHA-256 verificados**, instalada/iniciada APK Android firmada de producción en emulador, Setup Windows integrado instalado/iniciado/desinstalado y capturas reales de Home/About en Android y Desktop. [Recibo de nueve activos](docs/GRANADA_V12081_FINAL_RECEIPT_2026-11-23.md) . PR de publicación [#407](https://github.com/michels-lab/IG-Cleaner-Pro/pull/407) **10/10 SUCCESS exact-head**; código fuente #404/#405/#406 previamente integrado.
+
+**Avance P0 anterior → actual: 50% (6/12) → 58% (7/12)** por el hito nuevo y real `stable_publish`. Cinco hitos restantes **NO** validados con cuentas/dispositivos reales: Focus 30 cuota/contador al recargar, dos ventanas Windows con distintas sesiones IG al mismo tiempo, confirmación Unfollow de objetivo exacto, Cancel Pending real, y otros escenarios de aceptación física/estado. La ruta 12/12 mide este P0, no todo el código histórico.
+
+**Gobierno:** v120.81 ya es la última pública estable, la autorización única fue consumida; próxima v120.82 **reservada, no autorizada**. `release_hold=true`, `owner_final_acceptance=false` permanecen: una entrega para que el dueño la evalúe NO equivale a aceptar funcionalidades en Instagram real. Datos locales/historial intactos en pruebas simuladas; exportar backup antes de actualizar. No RC ni Developer release. Bitácora maestra y Main Repo deben concordar con el SHA real.
+
+### Historial anterior a la publicación FINAL v120.81
+
 **GRANADA 23-nov-2026 — v120.81 solicitud oficial activada; todavía NO publicada**
 
 - **Código fusionado:** #404 (`c0fa2b61`, 10/10 CI), #405 (`c6d3ec41`, 7/7 CI), #406 (`57d596f1`, 9/9 CI): evita descargas y subidas atrasadas A→B→A, cambio de dueño entre fases del Sync, falso contador/history Windows y recarga de estados. Son pruebas de producción simuladas, no acciones reales sobre Instagram.
