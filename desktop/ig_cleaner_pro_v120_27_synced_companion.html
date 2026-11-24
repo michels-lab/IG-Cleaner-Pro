@@ -15645,13 +15645,24 @@ async function pushDoubleCheckCycle(){
 }
 let doubleCyclePushTimer=null;
 window.igcQueueDoubleCheckCycle=function(){
+  // Capture before the timer is registered; a delayed A callback may not
+  // become a B callback after switching accounts (including A→B→A).
+  const assertSameWorkspace=igcCaptureSyncScope();
   clearTimeout(doubleCyclePushTimer);
   doubleCyclePushTimer=setTimeout(async()=>{
+    try{assertSameWorkspace()}catch{return}
     if(!S.session?.access_token)return;
-    if(S.busy){window.igcQueueDoubleCheckCycle();return}
+    if(S.busy){
+      try{assertSameWorkspace();window.igcQueueDoubleCheckCycle()}catch{}
+      return;
+    }
     S.busy=true;
-    try{await ensureAuth();await pullDoubleCheckCycle();await pushDoubleCheckCycle()}
-    catch(e){console.warn('Double Check cloud cycle',e)}
+    try{
+      assertSameWorkspace();
+      await ensureAuth();assertSameWorkspace();
+      await pullDoubleCheckCycle();assertSameWorkspace();
+      await pushDoubleCheckCycle();assertSameWorkspace();
+    }catch(e){console.warn('Double Check cloud cycle',e)}
     finally{S.busy=false}
   },850);
 };
