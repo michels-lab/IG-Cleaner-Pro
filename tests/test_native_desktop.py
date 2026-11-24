@@ -61,11 +61,11 @@ class DesktopAppTests(unittest.TestCase):
         handle = native.acquire_single_instance(workspace="primary")
         second = None
         try:
-            with self.assertRaisesRegex(RuntimeError, "ventana abierta"):
+            with self.assertRaisesRegex(RuntimeError, "already open"):
                 native.acquire_single_instance(workspace="primary")
             second = native.acquire_single_instance(workspace="secondary")
             self.assertIsNotNone(second, "A second independent account window is allowed.")
-            with self.assertRaisesRegex(RuntimeError, "ventana abierta"):
+            with self.assertRaisesRegex(RuntimeError, "already open"):
                 native.acquire_single_instance(workspace="secondary")
         finally:
             native.release_single_instance(second)
@@ -85,7 +85,7 @@ class DesktopAppTests(unittest.TestCase):
                   patch.object(native, "chrome_path") as browser,
                   patch.object(native.subprocess, "Popen") as spawn):
                 self.assertEqual(native.main([]), 0)
-                picker.assert_called_once_with()
+                picker.assert_called_once_with(developer=False)
                 prepare.assert_not_called()
                 mutex.assert_not_called()
                 backend.assert_not_called()
