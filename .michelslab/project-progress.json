@@ -9,7 +9,7 @@
   "progress_percent": 58,
   "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "GRANADA #411 MERGED 6/6; v120.82 authorized, governed publication pending; P0 7/12",
+  "phase": "v120.82 publisher in progress; independent #413 active-profile History source review; P0 7/12",
   "last_source_merge": "8eeeefa8d9fd0224ad1d75fcc9d22fd5e6a86898",
   "latest_verified_stable": "v120.81",
   "release_hold": true,
@@ -300,10 +300,11 @@
   ],
   "candidate_granada": {
     "date": "2026-11-24",
-    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/411",
-    "state": "merged",
-    "merge_sha": "8eeeefa8d9fd0224ad1d75fcc9d22fd5e6a86898",
-    "checks": "6/6 SUCCESS",
-    "release": "v120.82 authorized not published"
+    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/413",
+    "status": "open pending exact-head CI",
+    "effect": "Canonical active account, generation, registry fence",
+    "progress_before": 58,
+    "progress_after": 58,
+    "release": "v120.82 publisher running on prior exact SHA; v120.81 published"
   }
 }
