@@ -1,3 +1,18 @@
+## GRANADA 24-nov-2026 — PR #409 integrado · CI 9/9 · avance 58% (7/12)
+
+**Cambio real de código:** [PR #409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409) **MERGED** `61e18ef212815c0939cfcc720e78692c0d9acb2b` tras **9/9 controles SUCCESS exact-head** `12f519bb40bc8c8efe2a6e4d91418d9a4bd5e1c8` (Desktop real/contratos, Windows Setup instalado, Android WebView/render, firma de CI, Supabase). [Auditoría de causa raíz](https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/audits/2026-11-24-global-operations-account-aba-fence.md).
+
+- Captura dueño/cuenta/generación **al iniciar** export y DELETE CLOUD, respaldo y eliminación individual; revalida después de cada await, página, confirmación, borrado y antes de completar o cerrar sesión. Una confirmación de A **no puede continuar bajo B**, incluso al regresar a A (A→B→A).
+- `refreshInstagramAccounts` descarta respuestas obsoletas por epoch de solicitud y cambio de perfil/propietario; ya **no** llama `purgeLocalWorkspace` durante una simple actualización. Un perfil ausente de la nube puede salir del selector, pero sus historiales originales locales/IndexedDB quedan preservados. El borrado local exige eliminación individual explícitamente confirmada y guardas posteriores a esperas de IndexedDB.
+- Timer de Double Check congelado a su propietario desde que se programa; exportación con múltiples páginas falla íntegramente ante cambio de cuenta en vez de producir archivos cruzados. [Nueva prueba negativa de funciones reales](https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/tests/cloud-owner-global-lifecycle-aba.test.cjs), con cuentas ficticias, sin clics reales ni conexión Instagram.
+
+**Métrica global:** **58% (7/12) → 58% (7/12)**. No sumar hitos por compilar o fusionar. Cinco hitos P0 reales aún abiertos: #371 cuota real Focus, #377 dos sesiones Windows, #360 contador tras recargar y A→B→A, #164 Unfollow real, #172 Cancel Pending real. El usuario aún debe probar en navegador/cuentas/dispositivos físicos; **no** se declararon robots exitosos sobre Instagram.
+
+**Distribución:** [v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) es la última **publicada**, anterior a #409; **este cambio NO está en v120.81**. v120.82 está reservada **sin autorización**; `release_hold=true`, `owner_final_acceptance=false`. No RC ni publicación automática.
+
+
+---
+
 ## Granada v120.81 FINAL publicado — 23-nov-2026 Saltillo (24-nov UTC)
 
 **Evidencia oficial:** [GitHub FINAL v120.81](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81), tag fuente exacta `fc1cd03a476dc4c5797e90e89e18d22733c34175`; [publicador gobernado #45319438358](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358) **4/4 SUCCESS**, **9 activos SHA-256 verificados**, instalada/iniciada APK Android firmada de producción en emulador, Setup Windows integrado instalado/iniciado/desinstalado y capturas reales de Home/About en Android y Desktop. [Recibo de nueve activos](GRANADA_V12081_FINAL_RECEIPT_2026-11-23.md) . PR de publicación [#407](https://github.com/michels-lab/IG-Cleaner-Pro/pull/407) **10/10 SUCCESS exact-head**; código fuente #404/#405/#406 previamente integrado.
