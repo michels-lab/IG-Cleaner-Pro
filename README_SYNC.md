@@ -1,3 +1,13 @@
+## v120.82 — FINAL release requested (24-Nov-2026)
+
+Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.
+
+- [#409](https://github.com/michels-lab/IG-Cleaner-Pro/pull/409): account-bound cloud DELETE and export, preserve local history on registry refresh.
+- [#410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410): reject hidden/offscreen/transparent identity controls.
+- [#411](https://github.com/michels-lab/IG-Cleaner-Pro/pull/411): independent Automations batch status and 8-second local journal deadline, partial/unknown counts and retry.
+
+---
+
 # Instagram Cleaner Pro — Desktop + Android + Supabase Sync
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
