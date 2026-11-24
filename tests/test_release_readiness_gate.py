@@ -33,20 +33,23 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         history = self.current['owner_device_review_release_override_history']
         consumed = [item for item in history if item.get('release_tag') == 'v120.79']
         self.assertEqual(len(consumed), 1)
+        self.assertTrue(any(x.get('consumed_by_release') == 'v120.80' and x.get('authorized') is False for x in history),
+          'The earlier stable review authorization must remain consumed in history')
         self.assertIs(consumed[0]['authorized'], False)
         self.assertEqual(consumed[0]['consumed_by_release'], 'v120.79')
         self.assertEqual(consumed[0]['consumed_run'], 44204338029)
         self.assertTrue(override['physical_tests_deferred'])
         self.assertTrue(override['automated_publisher_gates_required'])
-        self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-17')
+        self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-23')
         request = json.loads((ROOT/'.michelslab/release-request.json').read_text(encoding='utf-8'))
         active = request.get('authorized') is True and request.get('status') in ('requested', 'authorized')
         if active:
             self.assertEqual(request['tag'], next_tag)
             self.assertTrue(override['authorized'])
             self.assertEqual(override['release_tag'], next_tag)
-            self.assertEqual(override['owner_direct_quote'], 'op granada completa y release')
+            self.assertEqual(override['owner_direct_quote'], 'op granada y dale release')
             check_readiness(self.current, next_tag, {})
+            self.assertEqual(override['release_tag'], 'v120.81')
             forged = deepcopy(self.current)
             forged['owner_device_review_release_override']['release_tag'] = 'v120.77'
             with self.assertRaises(ReleaseBlocked):
@@ -62,10 +65,10 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
                 check_readiness(self.current, old, {})
         self.assertTrue(any(not value for value in self.current['critical_acceptance'].values()))
         if request.get('status') == 'published':
-            self.assertEqual(request.get('tag'), 'v120.80')
-            self.assertEqual(request.get('published_run'), 44235048175)
-            self.assertEqual(override.get('consumed_by_release'), 'v120.80')
-            self.assertEqual(override.get('consumed_run'), 44235048175)
+            self.assertEqual(request.get('tag'), self.current['next_version'])
+            self.assertGreater(int(request.get('published_run', 0)), 0)
+            self.assertEqual(override.get('consumed_by_release'), self.current['next_version'])
+            self.assertEqual(override.get('consumed_run'), request['published_run'])
 
     def test_green_ci_does_not_override_owner_hold(self):
         case=deepcopy(self.valid)
