@@ -100,4 +100,55 @@ async function scenario(){
   console.log('Windows Automations history A-B-A, new B, owner switch and fixed-owner request PASS');
  }finally{await browser.close()}
 }
-scenario().catch(error=>{console.error(error);process.exitCode=1});
+async function stalledBridgeScenario(){
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ try{
+  const page=await browser.newPage();
+  await page.setContent('<main id="page-automations"><div class="igc-page-flow"><section id="igcAutomationCommandCenter"></section></div></main>');
+  await page.evaluate(({A,OWNER})=>{
+   window.location.hash='#igc-robot=1234.'+'a'.repeat(32);
+   window.IGC_INSTAGRAM_PROFILES={owner:OWNER,active:A,accounts:[{account_key:A,username:'first.account'}]};
+   const realTimeout=window.setTimeout.bind(window);
+   window.setTimeout=(callback,ms,...args)=>realTimeout(callback,ms===8000?1200:ms,...args);
+   window.__mode='partial';window.__aborted=0;
+   window.fetch=async (url,options={})=>{
+    const stall=()=>new Promise((resolve,reject)=>{
+     options.signal?.addEventListener('abort',()=>{window.__aborted++;reject(Error('aborted'));},{once:true});
+    });
+    if(String(url).includes('/api/actions/history')){
+     const identity=JSON.parse(options.body);
+     if(window.__mode==='all-timeout'||(window.__mode==='partial'&&identity.task==='cancel')){
+      // A headers-only reply whose JSON body never arrives also needs a timeout.
+      return {ok:true,json:stall};
+     }
+     return {ok:true,json:async()=>({...identity,history_rows:identity.task==='unfollow'?
+      [{username:'confirmed.one',status:'ok',origin:'robot',at:new Date().toISOString()}]:[]})};
+    }
+    if(String(url).includes('dual-action-workspaces')){
+     if(window.__mode==='all-timeout')return stall();
+     return {ok:true,json:async()=>({owner:OWNER,lanes:[]})};
+    }
+    return {ok:true,json:async()=>({owner:OWNER,account:A,task:'unfollow',
+      running:window.__mode==='partial',status:'running',processed:2,total:30,successful:1})};
+   };
+  },{A,OWNER});
+  await page.addScriptTag({content:script});
+  await page.waitForFunction(()=>document.querySelector('#igcActBatchTitle')?.textContent.includes('en ejecución'));
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—','Live state renders before stalled journal');
+  await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='≥1');
+  assert.match(await page.locator('#igcActStatus').innerText(),/PARCIAL/);
+  assert.equal(await page.locator('#igcActRefresh').isEnabled(),true);
+  assert.equal(await page.evaluate(()=>window.__aborted),1);
+  await page.evaluate(()=>{window.__mode='all-timeout';window.igcAutomationActivityRefresh()});
+  await page.waitForFunction(()=>document.querySelector('#igcActStatus')?.textContent.includes('Sin historial verificable'));
+  await page.waitForFunction(()=>document.querySelector('#igcActBatchTitle')?.textContent.includes('no verificable'));
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—','No stale or fabricated zero counts after outage');
+  assert.equal(await page.locator('#igcActRefresh').isEnabled(),true);
+  await page.evaluate(()=>{window.__mode='recovered';window.igcAutomationActivityRefresh()});
+  await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='1');
+  assert.match(await page.locator('#igcActStatus').innerText(),/Actualizado/);
+  await page.close();
+  console.log('Windows Automations: stalled JSON, independent live batch, partial/unknown history and recovery PASS');
+ }finally{await browser.close()}
+}
+(async()=>{await scenario();await stalledBridgeScenario()})().catch(error=>{console.error(error);process.exitCode=1});

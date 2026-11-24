@@ -53,6 +53,7 @@ const OWNER=/^u_[a-z0-9]+_[0-9]{1,4}$/;
 const ACCOUNT=/^(?:legacy|ig_[a-z0-9_-]{8,64})$/;
 const HANDLE=/^[a-z0-9._]{1,30}$/i;
 const TOKEN=/^[A-Za-z0-9_-]{20,256}$/;
+const BRIDGE_READ_TIMEOUT_MS=8000;
 const sessionStart=Date.now(); // This native app page session; reset on reload.
 // Primary periods mirror igcStandardActivityTop() in Manual Actions.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
@@ -174,15 +175,35 @@ function summarize(records,id,now,originFilter='all'){
  }
  return out;
 }
+// Bound the entire read, including response decoding. A failed local
+// controller must not hold the History refresh lock or stale counters forever.
+async function bridgeReadJson(url,options={}){
+ const controller=new AbortController();
+ let timer;
+ try{
+   return await Promise.race([
+     (async()=>{
+       const response=await fetch(url,{...options,signal:controller.signal});
+       const data=await response.json();
+       return {ok:response.ok,data};
+     })(),
+     new Promise((_,reject)=>{
+       timer=setTimeout(()=>{
+         reject(Error('Local controller read timed out.'));
+         controller.abort();
+       },BRIDGE_READ_TIMEOUT_MS);
+     })
+   ]);
+ }finally{clearTimeout(timer)}
+}
 async function readHistory(account,task,expectedOwner){
  // Bind the request owner before async I/O; the global owner may switch.
  const a=auth(),request={owner:expectedOwner,account,task};
- const response=await fetch('http://127.0.0.1:'+a.port+'/api/actions/history',{
+ const {ok,data}=await bridgeReadJson('http://127.0.0.1:'+a.port+'/api/actions/history',{
    method:'POST',headers:{'X-IGC-Bridge-Token':a.token,'Content-Type':'application/json'},
    body:JSON.stringify(request)
  });
- const data=await response.json();
- if(!response.ok||data.owner!==expectedOwner||data.account!==account||data.task!==task||
+ if(!ok||data.owner!==expectedOwner||data.account!==account||data.task!==task||
     !Array.isArray(data.history_rows))throw Error('Historial no verificable para la cuenta seleccionada.');
  return data.history_rows.map(x=>({
    task,username:x.username,status:x.status,at:x.at,
@@ -197,9 +218,8 @@ async function readBatchStatus(account,expectedOwner){
  const a=auth();
  const headers={'X-IGC-Bridge-Token':a.token};
  async function get(path){
-  const res=await fetch('http://127.0.0.1:'+a.port+path,{headers});
-  const x=await res.json();
-  if(!res.ok)throw Error('No hay estado de tanda verificable.');
+  const {ok,data:x}=await bridgeReadJson('http://127.0.0.1:'+a.port+path,{headers});
+  if(!ok)throw Error('No hay estado de tanda verificable.');
   return x;
  }
  // Both are READ-ONLY. Two-account workspaces and the standard robot have
@@ -233,12 +253,13 @@ async function readBatchStatus(account,expectedOwner){
    ownerSiblingProofs:exactSingle.owner_sibling_proofs,scope:'robot principal'}:null;
  if(dualState?.running===true)return dualState;
  if(singleState?.running===true)return singleState;
- if(dualState&&['unfollow','cancel'].includes(dualState.task))return dualState;
- if(singleState&&['unfollow','cancel'].includes(singleState.task))return singleState;
- // An unrelated idle response from one supervisor cannot prove that the
- // other account-scoped supervisor has stopped if its endpoint is offline.
+ // A stopped previous batch from one supervisor also cannot prove that
+ // the other supervisor has stopped. Show a known running batch above;
+ // otherwise an unavailable supervisor means the current state is unknown.
  if(dual.status==='rejected'||single.status==='rejected')
    throw new Error('Estado del controlador local no verificable.');
+ if(dualState&&['unfollow','cancel'].includes(dualState.task))return dualState;
+ if(singleState&&['unfollow','cancel'].includes(singleState.task))return singleState;
  return null;
 }
 function showBatch(state){
@@ -421,6 +442,10 @@ async function refresh(){
  loading=true;
  const button=$('igcActRefresh');if(button)button.disabled=true;
  const account=selector.value,requestEpoch=scopeEpoch;
+ // Live batch status is independent from the potentially slow journal.
+ // On a new account, clearValues() already invalidated previous requests.
+ refreshBatch(account,ctx.owner);
+ setStatus('Refreshing saved history…');
  try{
    // A single corrupt Cancel Pending WAL must not erase valid Unfollow
    // counts (or vice versa). Require exact owner/account/task for every row.
@@ -449,11 +474,6 @@ async function refresh(){
      setStatus('Sin historial verificable: '+String(e.message||e).slice(0,120));
    }
  }finally{
-   // Live batch progress remains available even when history is missing.
-   if(scopeEpoch===requestEpoch&&owner===ctx.owner&&selector.value===account&&
-      context().owner===ctx.owner&&context().active===ctx.active){
-     refreshBatch(account,ctx.owner);
-   }
    loading=false;if(button)button.disabled=false;
    if(refreshAgain){refreshAgain=false;refresh()}
  }
