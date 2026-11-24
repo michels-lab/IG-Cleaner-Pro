@@ -1,3 +1,14 @@
+## GRANADA 23-nov-2026 — v120.81 solicitud oficial activada; todavía NO publicada
+
+- **Código fusionado:** #404 (`c0fa2b61`, 10/10 CI), #405 (`c6d3ec41`, 7/7 CI), #406 (`57d596f1`, 9/9 CI): evita descargas y subidas atrasadas A→B→A, cambio de dueño entre fases del Sync, falso contador/history Windows y recarga de estados. Son pruebas de producción simuladas, no acciones reales sobre Instagram.
+- **Publicación solicitada:** [PR #407](https://github.com/michels-lab/IG-Cleaner-Pro/pull/407) **MERGED** `fc1cd03a476dc4c5797e90e89e18d22733c34175`; `.michelslab/release-request.json` solicita sólo **v120.81 FINAL estable** para que el dueño la pruebe físicamente después. Reconciliados Gradle `12081`, Android signing `120.81` con certificado permanente sin cambiar, Desktop About `v120.81` y manifest de nueve activos. La revisión PR cerró con 9/10 CI SUCCESS y el visual Desktop aún ejecutándose, sin failures; el **publicador independiente** revalida visual/instalación/firma exact-SHA.
+- **Workflow oficial:** [run #45319438358](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358) creado para el SHA del merge. Al cierre está **queued, release v120.81 aún NO disponible**. Última [v120.80](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.80) verificada con nueve assets. No declarar publicación hasta cuatro jobs oficiales SUCCESS, tag real, activos y SHA256SUMS.
+- **Avance anterior → actual 50% → 50% = 6/12 hitos.** Publicación, cuando se verifique, podrá completar el hito 7; no se finge real Focus30/counter no rebound, ventanas A/B independientes con login, Unfollow real, Cancel Pending, teléfono Samsung/upgrade y export privada. `release_hold=true`, `owner_final_acceptance=false` significa producto pendiente aunque el usuario pidió distribución única para pruebas físicas posteriores. No RC/beta/Developer.
+
+
+---
+
+
 ## 2026-11-23 — GRANADA #405 integrada y #406 P0 nueva carrera de escritura
 
 - [#405](https://github.com/michels-lab/IG-Cleaner-Pro/pull/405) MERGED `c6d3ec4144a5d682589af98f39f4ddc0badbbfc2` después de **7/7 CI SUCCESS exact-head** `32a78d9be624d79e0407726b285b30862841d456`. Windows History read-only no publica datos de un request A tras A→B→A; prueba Chromium ejecuta mismo script del producto.
