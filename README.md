@@ -1,3 +1,11 @@
+## Granada v120.82 FINAL publicada — 24-nov-2026
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), exact tagged source `84b84e7a5dec057a869b72fe149dfde3f037cf00`, [publicador #45358286199](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) **4/4 SUCCESS**, 9 activos con SHA-256, Windows Setup instalado/iniciado/desinstalado, Android firmado instalado/iniciado en emulador y capturas Home/About verificadas. [Recibo](docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md). #409/#410/#411 incluidos. #413 y #414 son desarrollo posterior independiente; no incluidos. Avance **58% (7/12)**, aceptación física sigue pendiente #371/#377/#360/#164/#172. Autorización única consumida; v120.83 reservada no autorizada. No RC ni beta.
+
+---
+
+**v120.82 — official stable GitHub release, published November 24, 2026 (UTC).** [Download](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82) · [Receipt](docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md).
+
 ## v120.82 — FINAL release requested (24-Nov-2026)
 
 Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.
@@ -20,7 +28,7 @@ Owner explicitly authorized official stable distribution for subsequent physical
 
 [PR #410](https://github.com/michels-lab/IG-Cleaner-Pro/pull/410) adds real-code checks so the Chrome robot does not identify the logged-in owner from offscreen navigation links or an invisible/transparent Edit profile control. Includes [offline Chromium regressions and cause analysis](docs/audits/2026-11-24-visible-owner-controls-viewport.md). **Await exact-head CI/merge; not included in v120.81.** Physical live Instagram owner/navigation acceptance remains open, as do five P0 gates. This work does **not** authorize v120.82 or claim successful Unfollow/Cancel Pending.
 
-## Current VERIFIED stable and P0 acceptance — 23 Nov 2026 Saltillo
+## Historical v120.81 stable and P0 acceptance — 23 Nov 2026 Saltillo
 
 [v120.81 FINAL](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81) has **nine SHA256-verified assets**, signed Android public APK, integrated installed Windows Setup and offline Desktop HTML, with [official 4/4 publisher SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45319438358). This published milestone moves the **12-item P0 owner acceptance path from 6/12 (50%) to 7/12 (58%)**. Live Focus no-counter-rebound, two independent Windows Instagram logins, Unfollow, Cancel Pending, and physical Android/Windows backup upgrade remain owner-pending. Do not claim real account acceptance. **v120.82 is only reserved, not authorized.**
 
@@ -78,7 +86,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **New in v120.71:** Windows/Desktop has **two independently pinned InstaCleaner account tabs/windows** (open in tab / detach to window) and can request **two isolated persistent Chrome windows** for manual login to different Instagram accounts. Each owner/account Chrome login uses a different user-data folder, separate from exported robot data. The read-only Followers/Following bulk scanner offers owner-bound Recomendado/Más pausado/Personalizado safety controls and mandatory cooldown. **This is NOT two concurrent automated Unfollow/Cancel robots**: relationship-changing workers remain serial, and complete results with the owner's actual Instagram logins still need physical acceptance.
 
-**Current published stable: v120.81. Next reserved version: v120.82, not published.**
+**Current published stable: v120.82. Next reserved version: v120.83, not published.**
 
 v120.81 is published and its one-time owner authorization is consumed. v120.82 is reserved without authorization. Real Instagram acceptance remains open; no RC, beta or Developer editions.
 
