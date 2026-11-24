@@ -71,7 +71,7 @@ function auth(){
 }
 function context(){
  const p=window.IGC_INSTAGRAM_PROFILES;
- if(!p||!OWNER.test(p.owner||''))return {owner:'',accounts:[],active:''};
+ if(!p||!OWNER.test(p.owner||''))return {owner:'',accounts:[],active:'',generation:null};
  let arr=Array.isArray(p.accounts)?p.accounts:[];
  // The canonical registry getter is authoritative, including an empty
  // result. Never resurrect a removed identity from a fallback cache.
