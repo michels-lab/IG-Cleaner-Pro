@@ -290,5 +290,18 @@
       "release": "v120.80 public; v120.81 on hold",
       "note": "50% is 6/12 fixed acceptance milestones. PR #399 source merged and 5/5 checks passing; live Chrome popups/account actions remain unverified."
     }
-  ]
+  ],
+  "candidate_granada": {
+    "date": "2026-11-24",
+    "pr": "https://github.com/michels-lab/IG-Cleaner-Pro/pull/410",
+    "status": "open_waiting_exact_head_CI_merge",
+    "changed_source": "tools/profile_counts_instagram.py",
+    "regression": "tests/test_profile_counts_home_identity.py",
+    "audit": "https://github.com/michels-lab/IG-Cleaner-Pro/blob/granada/owner-visible-proof-viewport-20261124/docs/audits/2026-11-24-visible-owner-controls-viewport.md",
+    "effect": "Require viewport-visible owner Profile/Edit profile evidence; offline fixture only; physical IG pending",
+    "progress_before": 58,
+    "progress_after": 58,
+    "latest_public_release": "v120.81",
+    "source_not_in_public_release": true
+  }
 }
