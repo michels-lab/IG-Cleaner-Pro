@@ -72,7 +72,7 @@ def workspace_is_open(workspace: str, *, developer: bool = False) -> bool:
     return True
 
 
-def select_workspace(*, developer: bool = False) -> str | None:
+def select_workspace(*, developer: bool = False, _smoke_cancel: bool = False) -> str | None:
     """Use a labeled Windows task dialog rather than ambiguous Yes/No buttons.
 
     Cancel returns None and does not touch user data or start the browser.
@@ -150,6 +150,25 @@ def select_workspace(*, developer: bool = False) -> str | None:
     config.nDefaultButton = labels[free[0]][0] if free else 2
     config.cxWidth = 260
     selected = ctypes.c_int(0)
+    callback = None
+    if _smoke_cancel:
+        # Installed-binary CI only: exercise the real Win32 dialog and dismiss
+        # it through its own Cancel command, without starting either workspace.
+        post = ctypes.WinDLL("user32", use_last_error=True).PostMessageW
+        post.argtypes = [wintypes.HWND, wintypes.UINT, ctypes.c_size_t, ctypes.c_ssize_t]
+        post.restype = wintypes.BOOL
+        callback_type = ctypes.WINFUNCTYPE(ctypes.c_int32, wintypes.HWND,
+                                            wintypes.UINT, ctypes.c_size_t,
+                                            ctypes.c_ssize_t, ctypes.c_ssize_t)
+
+        @callback_type
+        def callback(hwnd, notification, *_args):
+            if notification in (0, 4):  # TDN_CREATED / TDN_TIMER
+                post(hwnd, 0x0400 + 102, 2, 0)  # TDM_CLICK_BUTTON / IDCANCEL
+            return 0
+
+        config.dwFlags |= 0x0800  # TDF_CALLBACK_TIMER
+        config.pfCallback = ctypes.cast(callback, ctypes.c_void_p)
     try:
         call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
         call.argtypes = [ctypes.POINTER(TaskDialogConfig), ctypes.POINTER(ctypes.c_int),
@@ -157,12 +176,18 @@ def select_workspace(*, developer: bool = False) -> str | None:
         call.restype = ctypes.c_int32  # HRESULT is signed 32-bit.
         result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
     except (OSError, AttributeError):
+        if _smoke_cancel:
+            raise
         return fallback_workspace_dialog(free)
     if result != 0:
+        if _smoke_cancel:
+            raise RuntimeError(f'Native account chooser failed: HRESULT 0x{result & 0xffffffff:08X}')
         # A missing common-controls activation context or rejected ABI must
         # never make the installed app impossible to start. Preserve explicit
         # owner choice and Cancel; never silently pick a different account.
         return fallback_workspace_dialog(free)
+    if _smoke_cancel and selected.value != 2:
+        raise RuntimeError('Native account chooser did not return Cancel.')
     return next((slot for slot in free if labels[slot][0] == selected.value), None)
 
 def fallback_workspace_dialog(free: list[str]) -> str | None:
