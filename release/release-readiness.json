@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-release-readiness-v1",
   "release_hold": true,
-  "reason": "Owner-directed P0 startup hotfix v120.83 under explicit Granada invocation; product completion hold and physical gates remain.",
+  "reason": "v120.83 official startup hotfix published, single-use permission consumed. v120.84 unauthorized; physical startup and owner acceptance incomplete.",
   "owner_final_acceptance": {
     "approved": false,
     "release_tag": null,
@@ -31,17 +31,20 @@
     173,
     176
   ],
-  "next_version": "v120.83",
-  "notes": "v120.82 published but normal owner startup failed #416. v120.83 authorized once for repair distribution subject to exact-source publisher gates; no owner acceptance claim.",
+  "next_version": "v120.84",
+  "notes": "v120.83 published 2026-11-25T07:38:40Z, 23a4759b0aae444e876f54017050f59a252720e3, publisher 45568444602 4/4 SUCCESS; next v120.84 unauthorized.",
   "owner_device_review_release_override": {
-    "authorized": true,
+    "authorized": false,
     "release_tag": "v120.83",
     "source": "explicit-owner-chat-instruction-2026-11-25",
     "owner_direct_quote": "op granada",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
     "previous_published_release": "v120.82",
-    "disclosure": "One-time startup hotfix distribution after all publisher gates. #416 owner physical startup and five P0 milestones remain unverified."
+    "disclosure": "Consumed by v120.83 FINAL; no future release authorization or physical acceptance.",
+    "consumed_by_release": "v120.83",
+    "consumed_run": 45568444602,
+    "consumed_at": "2026-11-25T07:38:40Z"
   },
   "owner_device_review_release_override_history": [
     {

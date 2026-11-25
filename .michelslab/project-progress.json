@@ -4,14 +4,14 @@
   "repository": "michels-lab/IG-Cleaner-Pro",
   "role": "application",
   "as_of": "2026-11-24",
-  "scope": "P0 12 milestones; v120.82 published, owner startup failure; #414 hotfix merged; physical 5 milestones pending",
+  "scope": "P0 12 milestones; v120.83 official startup hotfix; 5 physical acceptance milestones pending",
   "estimate_method": "equal_weight_verified_milestones",
   "progress_percent": 58,
   "verified_milestones": 7,
   "total_milestones": 12,
-  "phase": "P0 #416 hotfix #414 merged 6/6; v120.83 governed FINAL authorization; exact-head publication checks pending",
+  "phase": "v120.83 FINAL published 4/4 SUCCESS; #416 physical startup pending; #413 independent CI; P0 7/12",
   "last_source_merge": "940e657ca465580f5bcf02da01b24fefcb147dfa",
-  "latest_verified_stable": "v120.82",
+  "latest_verified_stable": "v120.83",
   "release_hold": true,
   "owner_physical_acceptance": false,
   "milestones": [
@@ -106,7 +106,7 @@
     },
     {
       "key": "stable_publish",
-      "description": "Official stable release distribution validated (v120.81 and v120.82)",
+      "description": "Official stable release distribution validated through v120.83",
       "status": "verified",
       "evidence": [
         "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
@@ -114,11 +114,14 @@
         "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/GRANADA_V12081_FINAL_RECEIPT_2026-11-23.md",
         "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82",
         "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199",
-        "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md"
+        "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602",
+        "https://github.com/michels-lab/IG-Cleaner-Pro/blob/main/docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md"
       ]
     }
   ],
-  "next_step": "v120.83 governed release; physical startup first; then acceptance.",
+  "next_step": "Owner normal launch v120.83; then physical P0 acceptance. #413 independent source CI; v120.84 unauthorized.",
   "limitations": "58% = round(100*7/12) fixed P0 milestone route. Stable publication IS verified through official tagged source and 4/4 exact-SHA jobs with 9 assets; it does NOT certify owner real signed-in Instagram, physical device/account actions or total historical project completeness.",
   "last_granada": {
     "date": "2026-11-24",
@@ -302,13 +305,13 @@
     }
   ],
   "candidate_granada": {
-    "date": "2026-11-24",
+    "date": "2026-11-25",
     "prs": [
-      413,
-      414
+      413
     ],
+    "head": "94081371beec878b0c3b5ca4b553a8a9d43ceebb",
     "status": "open pending exact-head CI",
-    "release": "v120.82 published; v120.83 unauthorized"
+    "release": "v120.83 published; v120.84 unauthorized"
   },
   "last_granada_20261124_release": {
     "tag": "v120.82",
@@ -327,7 +330,15 @@
     "pr": 414,
     "checks": "6/6 SUCCESS",
     "merge": "940e657ca465580f5bcf02da01b24fefcb147dfa",
-    "release": "v120.83 requested, not published",
-    "owner_startup": "unverified"
+    "release": "published",
+    "owner_startup": "unverified",
+    "tag": "v120.83",
+    "source": "23a4759b0aae444e876f54017050f59a252720e3",
+    "run": 45568444602,
+    "assets": 9,
+    "success": "4/4",
+    "published_at": "2026-11-25T07:38:40Z",
+    "progress_before": 58,
+    "progress_after": 58
   }
 }

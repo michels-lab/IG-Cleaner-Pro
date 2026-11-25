@@ -1,12 +1,12 @@
 {
   "version": "120.83",
   "tag": "v120.83",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly invoked 'op granada' on 2026-11-25 after reporting v120.82 startup failure and directing repair; standing Granada FINAL-only authority, limited to this startup hotfix and mandatory exact-source distribution gates.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.82",
   "requested_at": "2026-11-25",
   "owner_acceptance_note": "One-time owner-directed post-publication review of the startup fix. Physical startup, signed-in Instagram and device acceptance remain unverified. release_hold=true, owner_final_acceptance=false. All installed native chooser, Windows, Android signing, UI, checksum and update gates required.",
@@ -18,5 +18,10 @@
     "published_at": "2026-11-24T08:51:20Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82",
     "asset_count": 9
-  }
+  },
+  "published_run": 45568444602,
+  "published_commit": "23a4759b0aae444e876f54017050f59a252720e3",
+  "published_at": "2026-11-25T07:38:40Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83",
+  "publication_note": "Official FINAL v120.83 published with 4/4 publisher SUCCESS and 9 SHA256 assets. One-time authorization consumed; owner normal startup not yet verified."
 }
