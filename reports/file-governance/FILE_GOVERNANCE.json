@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 501,
-  "classified_files_total": 497,
-  "docs_content_inspected": 147,
+  "tracked_files_total": 502,
+  "classified_files_total": 498,
+  "docs_content_inspected": 148,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 143,
+    "document": 144,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,11 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 2,
-    "POTENTIAL_UNLOGGED_CHANGES": 1
+    "BROKEN_RELATIVE_LINK": 5
   },
-  "finding_total": 3,
-  "inventory_fingerprint": "1678699874ba842a28f522f8394061b4a9245d9913b36188e63bec7c8423d8d5",
-  "evidence_fingerprint": "5d38b9fe52d45c6da66bf9134e9a378fa5945ac0e609076c4ebb4d44f8981828",
+  "finding_total": 5,
+  "inventory_fingerprint": "cd3e9ba67e09a57173f98d156ba9b0e2e21aad4ca17ade042cdbf7780167a6d8",
+  "evidence_fingerprint": "f615da13c74e30b26e2e42bdc63f6ed29d44115958de37195b332b5499f57e9f",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -211,7 +210,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "bdfb6e64277e094a2d24129051a471ba05e861d5"
+      "blob": "3ad6901a468a9cbc542eeac389776d0336405123"
     },
     {
       "path": ".michelslab/project.yml",
@@ -225,7 +224,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "62aa2ec8346e989fa551f99283352b76392c6268"
+      "blob": "e739351af8bf5a3bb6da401aac4bd31d47a25c42"
     },
     {
       "path": "AGENTS.md",
@@ -253,21 +252,21 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "fd36ecc120445316e285ef3229a864cca41735f3"
+      "blob": "59b52bdeb142b2a82a889cd0808c8124927a562c"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "ebe33027802050b8533da3427504f9394b5577e7"
+      "blob": "89f02f545f6c0956a0960b84e5b30d02cd7d5dbf"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "5c5818119a29be672199959cc06912586e9234f1"
+      "blob": "8dcb2fad401fcd57c1b4ddf0d7e87254c5bcab6c"
     },
     {
       "path": "android/app/build.gradle.kts",
@@ -890,7 +889,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "dffbcbfd57a0575990b3f6b34efe82b694a2a07c"
+      "blob": "8e0b40f7a612397177bab783cadef5014aaef4f7"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1509,6 +1508,13 @@
       "blob": "396821a647b213d4ae429aaffa7cd5bb548660e2"
     },
     {
+      "path": "docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "19f0ce3b4be8748a3db330c7a76dd5647d94ed74"
+    },
+    {
       "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1597,14 +1603,14 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ad69315af1245009087cebf5937dca7063eb80c4"
+      "blob": "d83c762a6cdbf38db72a01da9f74448762b4c28a"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "423ec1df974a0bda080b901d5459542b1f814bd9"
+      "blob": "9a043689698e4e0d8fa89f563cecbb6ecce4c617"
     },
     {
       "path": "docs/audits/2026-11-17-automation-history-casefold-reconciliation.md",
@@ -1926,7 +1932,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d033d063d90ddefcd8f6f869b34c2115dbc269f2"
+      "blob": "5e20cbffcdd8d7efe4e2652355b486c8102b6cfe"
     },
     {
       "path": "release/android-signing.json",
@@ -1940,14 +1946,14 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "c15f62a36b553e81ac32f316d4200ea370eb2921"
+      "blob": "c3032c5be82bd0f50795fb434fecff79678dfe65"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "40b60cf36d4815e7dca4e0744d4bd87a61408cfa"
+      "blob": "b55739e2c47453165227eb14365e45ab458ab187"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3102,7 +3108,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "85e315818c52343e5300b5c0fc8016cdd43d15a5"
+      "blob": "515eb40db5fa30f8c34c26ec682765f971862972"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3513,11 +3519,38 @@
   ],
   "findings": [
     {
+      "id": "43f9e3af91f2b36f",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/PROJECT_PROGRESS.md",
+      "observation": "Missing: docs/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
       "id": "b7b89c0ec3f42069",
       "code": "BROKEN_RELATIVE_LINK",
       "severity": "confirmed",
       "path": "docs/PROJECT_PROGRESS.md",
       "observation": "Missing: docs/docs/audits/2026-11-24-visible-owner-controls-viewport.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "1eed8bdccf588c59",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
+      "observation": "Missing: docs/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "d34dbdedaafa4d6f",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "release/RELEASE_NOTES.md",
+      "observation": "Missing: release/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
       "recommendation": "Fix link or restore target",
       "state": "REVIEW_REQUIRED"
     },
@@ -3528,15 +3561,6 @@
       "path": "release/RELEASE_NOTES.md",
       "observation": "Missing: release/docs/GRANADA_V12070_FINAL_RECEIPT_2026-10-27.md",
       "recommendation": "Fix link or restore target",
-      "state": "REVIEW_REQUIRED"
-    },
-    {
-      "id": "882c5f9a5b9b640c",
-      "code": "POTENTIAL_UNLOGGED_CHANGES",
-      "severity": "review",
-      "path": "PROJECT_LOG.md",
-      "observation": "1 implementation/config paths changed since this log's last commit; examples: .michelslab/project-progress.json",
-      "recommendation": "Inspect diffs and reconcile only meaningful decisions/results in the canonical log",
       "state": "REVIEW_REQUIRED"
     }
   ],

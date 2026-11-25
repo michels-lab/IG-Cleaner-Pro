@@ -1949,3 +1949,12 @@ Automatic evidence deltas, pending human triage. No deletion authority.
 - Finding changes: 1 NEW; 1 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 0 new paths, 0 removed paths, 0 reclassified paths.
 - NEW — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID 882c5f9a5b9b640c).
 - NO_LONGER_DETECTED — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID ed50b31ceb9c32ff).
+
+## 2026-11-25 00:49 UTC
+
+- All tracked 502; findings 5; inventory cd3e9ba67e09; evidence f615da13c74e. Full local report in reports/file-governance/. Status REVIEW_REQUIRED.
+- Finding changes: 3 NEW; 1 NO_LONGER_DETECTED (not necessarily resolved). Inventory: 1 new paths, 0 removed paths, 0 reclassified paths.
+- NEW — BROKEN_RELATIVE_LINK at `docs/UPDATE_AND_STATE_MIGRATION.md` (ID 1eed8bdccf588c59).
+- NEW — BROKEN_RELATIVE_LINK at `docs/PROJECT_PROGRESS.md` (ID 43f9e3af91f2b36f).
+- NEW — BROKEN_RELATIVE_LINK at `release/RELEASE_NOTES.md` (ID d34dbdedaafa4d6f).
+- NO_LONGER_DETECTED — POTENTIAL_UNLOGGED_CHANGES at `PROJECT_LOG.md` (ID 882c5f9a5b9b640c).
