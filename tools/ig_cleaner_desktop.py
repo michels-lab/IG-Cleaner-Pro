@@ -201,8 +201,9 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.smoke_chooser:
-            if select_workspace(developer=args.developer, _smoke_cancel=True) is not None:
-                raise RuntimeError("Native account chooser smoke test did not cancel.")
+            for choice, expected in (("primary", "primary"), ("secondary", "secondary"), ("cancel", None)):
+                if select_workspace(developer=args.developer, _smoke_choice=choice) != expected:
+                    raise RuntimeError("Native account chooser smoke test selected the wrong window.")
             return 0
         source = bundled_html()
         if args.smoke_startup:
