@@ -85,9 +85,11 @@ def select_workspace(*, developer: bool = False) -> str | None:
     from ctypes import wintypes
 
     class TaskDialogButton(ctypes.Structure):
+        _pack_ = 1  # commctrl.h uses byte-packed task-dialog structures.
         _fields_ = [("nButtonID", ctypes.c_int), ("pszButtonText", wintypes.LPCWSTR)]
 
     class TaskDialogConfig(ctypes.Structure):
+        _pack_ = 1
         _fields_ = [
             ("cbSize", wintypes.UINT),
             ("hwndParent", wintypes.HWND),
@@ -148,11 +150,44 @@ def select_workspace(*, developer: bool = False) -> str | None:
     config.nDefaultButton = labels[free[0]][0] if free else 2
     config.cxWidth = 260
     selected = ctypes.c_int(0)
-    call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
-    call.argtypes = [ctypes.POINTER(TaskDialogConfig), ctypes.POINTER(ctypes.c_int),
-                     ctypes.c_void_p, ctypes.c_void_p]
-    call.restype = ctypes.c_long
-    result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
-    if result < 0:
-        raise RuntimeError("No se pudo abrir el selector de cuentas de Windows.")
+    try:
+        call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
+        call.argtypes = [ctypes.POINTER(TaskDialogConfig), ctypes.POINTER(ctypes.c_int),
+                         ctypes.c_void_p, ctypes.c_void_p]
+        call.restype = ctypes.c_int32  # HRESULT is signed 32-bit.
+        result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
+    except (OSError, AttributeError):
+        return fallback_workspace_dialog(free)
+    if result != 0:
+        # A missing common-controls activation context or rejected ABI must
+        # never make the installed app impossible to start. Preserve explicit
+        # owner choice and Cancel; never silently pick a different account.
+        return fallback_workspace_dialog(free)
     return next((slot for slot in free if labels[slot][0] == selected.value), None)
+
+def fallback_workspace_dialog(free: list[str]) -> str | None:
+    """Universal Win32 recovery when comctl32 TaskDialogIndirect fails."""
+    import ctypes
+    from ctypes import wintypes
+
+    message_box = ctypes.WinDLL("user32", use_last_error=True).MessageBoxW
+    message_box.argtypes = [wintypes.HWND, wintypes.LPCWSTR,
+                            wintypes.LPCWSTR, wintypes.UINT]
+    message_box.restype = ctypes.c_int
+    title = "Insta Cleaner Pro"
+    if not free:
+        message_box(None, "Both account windows are already open or unavailable.",
+                    title, 0x40)
+        return None
+    if len(free) == 1:
+        name = "Primary account" if free[0] == "primary" else "Second account"
+        result = message_box(None, "Open " + name + "?\n\nOK = Open; Cancel = Exit.",
+                             title, 0x01 | 0x40 | 0x100)
+        return free[0] if result == 1 else None
+    result = message_box(
+        None, "Choose your independent account window:\n\n"
+              "Yes = Primary account (existing session)\n"
+              "No = Second account (separate session)\n"
+              "Cancel = Exit without changes.",
+        title, 0x03 | 0x40 | 0x200)
+    return {6: "primary", 7: "secondary"}.get(result)
