@@ -1,3 +1,9 @@
+## Granada 25-nov-2026 — v120.83 FINAL publicada: reparación de arranque
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83), exact tagged source `23a4759b0aae444e876f54017050f59a252720e3`, [publicador #45568444602](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602) **4/4 SUCCESS**, nueve activos SHA-256. Instalador Windows y selector nativo instalado (dos botones y Cancel), actualización y conservación de datos, render visual y Android firmado en emulador aprobados. [Recibo](docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md). #416 aceptación física pendiente; #413 desarrollo independiente excluido. Ruta P0 **58% (7/12)**; v120.84 reservada sin autorización. No RC/beta.
+
+---
+
 ## Granada 25-nov-2026 — v120.83: reparación de arranque normal Windows
 
 P0 [#416](https://github.com/michels-lab/IG-Cleaner-Pro/issues/416): v120.82 falla en el selector nativo en el equipo del propietario. [#414](https://github.com/michels-lab/IG-Cleaner-Pro/pull/414) MERGED `940e657ca465580f5bcf02da01b24fefcb147dfa`, 6/6 exact-head SUCCESS; [Windows installed runtime/upgrade/data preservation PASS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45540032613/job/138956033580), incluye prueba de ambos botones reales y Cancel. ABI packed, fallback, ventanas disponibles, mismos directorios. v120.83 FINAL solicitada bajo autorización Granada para hotfix, no publicada todavía. v120.82 sigue estable publicada pero con fallo físico de arranque. #413 independiente excluido. Ruta histórica P0 58% (7/12); aceptación física pendiente. No RC/beta.

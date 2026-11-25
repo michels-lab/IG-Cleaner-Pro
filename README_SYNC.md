@@ -1,3 +1,9 @@
+## Granada 25-nov-2026 — v120.83 FINAL publicada: reparación de arranque
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83), exact tagged source `23a4759b0aae444e876f54017050f59a252720e3`, [publicador #45568444602](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602) **4/4 SUCCESS**, nueve activos SHA-256. Instalador Windows y selector nativo instalado (dos botones y Cancel), actualización y conservación de datos, render visual y Android firmado en emulador aprobados. [Recibo](docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md). #416 aceptación física pendiente; #413 desarrollo independiente excluido. Ruta P0 **58% (7/12)**; v120.84 reservada sin autorización. No RC/beta.
+
+---
+
 ## Granada v120.82 FINAL publicada — 24-nov-2026
 
 [Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), exact tagged source `84b84e7a5dec057a869b72fe149dfde3f037cf00`, [publicador #45358286199](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) **4/4 SUCCESS**, 9 activos con SHA-256, Windows Setup instalado/iniciado/desinstalado, Android firmado instalado/iniciado en emulador y capturas Home/About verificadas. [Recibo](docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md). #409/#410/#411 incluidos. #413 y #414 son desarrollo posterior independiente; no incluidos. Avance **58% (7/12)**, aceptación física sigue pendiente #371/#377/#360/#164/#172. Autorización única consumida; v120.83 reservada no autorizada. No RC ni beta.
@@ -18,7 +24,7 @@ Owner explicitly authorized official stable distribution for subsequent physical
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.82**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), [publisher 4/4 SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199), 9 SHA-256 assets. The next reserved development version **v120.83 is authorized for governed FINAL publication only after exact-source gates pass**. One-time v120.82 permission consumed; physical acceptance remains open.
+Current published stable: **v120.83**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83), [publisher 4/4 SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602), 9 SHA-256 assets. The next reserved development version **v120.84 is not authorized**. One-time v120.83 permission consumed; physical startup acceptance remains open.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -115,7 +121,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.83**, authorized only for governed FINAL publication after exact-source gates pass. v120.82 published from 84b84e7a5dec057a869b72fe149dfde3f037cf00; one-use authorization consumed. Mandatory exact-source and device acceptance gates remain.
+The next reserved release target is **v120.84**, not authorized for publication. v120.83 published from 23a4759b0aae444e876f54017050f59a252720e3; one-use authorization consumed. Mandatory exact-source and device acceptance gates remain.
 
 Authority: `release/distribution-manifest.json`.
 

@@ -1,3 +1,11 @@
+## Granada 25-nov-2026 — v120.83 FINAL publicada: reparación de arranque
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83), exact tagged source `23a4759b0aae444e876f54017050f59a252720e3`, [publicador #45568444602](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602) **4/4 SUCCESS**, nueve activos SHA-256. Instalador Windows y selector nativo instalado (dos botones y Cancel), actualización y conservación de datos, render visual y Android firmado en emulador aprobados. [Recibo](docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md). #416 aceptación física pendiente; #413 desarrollo independiente excluido. Ruta P0 **58% (7/12)**; v120.84 reservada sin autorización. No RC/beta.
+
+---
+
+**v120.83 — official stable GitHub release, published November 25, 2026 (UTC).** [Download](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83) · [Receipt](docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md).
+
 ## Granada 25-nov-2026 — v120.83: reparación de arranque normal Windows
 
 P0 [#416](https://github.com/michels-lab/IG-Cleaner-Pro/issues/416): v120.82 falla en el selector nativo en el equipo del propietario. [#414](https://github.com/michels-lab/IG-Cleaner-Pro/pull/414) MERGED `940e657ca465580f5bcf02da01b24fefcb147dfa`, 6/6 exact-head SUCCESS; [Windows installed runtime/upgrade/data preservation PASS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45540032613/job/138956033580), incluye prueba de ambos botones reales y Cancel. ABI packed, fallback, ventanas disponibles, mismos directorios. v120.83 FINAL solicitada bajo autorización Granada para hotfix, no publicada todavía. v120.82 sigue estable publicada pero con fallo físico de arranque. #413 independiente excluido. Ruta histórica P0 58% (7/12); aceptación física pendiente. No RC/beta.
@@ -92,7 +100,7 @@ Local-first Instagram export analyzer by **Michel's Lab**. Review Following/Foll
 
 **New in v120.71:** Windows/Desktop has **two independently pinned InstaCleaner account tabs/windows** (open in tab / detach to window) and can request **two isolated persistent Chrome windows** for manual login to different Instagram accounts. Each owner/account Chrome login uses a different user-data folder, separate from exported robot data. The read-only Followers/Following bulk scanner offers owner-bound Recomendado/Más pausado/Personalizado safety controls and mandatory cooldown. **This is NOT two concurrent automated Unfollow/Cancel robots**: relationship-changing workers remain serial, and complete results with the owner's actual Instagram logins still need physical acceptance.
 
-**Current published stable: v120.82. Next reserved version: v120.83, not published.**
+**Current published stable: v120.83. Next reserved version: v120.84, not published.**
 
 v120.81 is published and its one-time owner authorization is consumed. v120.82 is reserved without authorization. Real Instagram acceptance remains open; no RC, beta or Developer editions.
 

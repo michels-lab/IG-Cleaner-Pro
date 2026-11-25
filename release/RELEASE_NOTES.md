@@ -1,3 +1,9 @@
+## Granada 25-nov-2026 — v120.83 FINAL publicada: reparación de arranque
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.83), exact tagged source `23a4759b0aae444e876f54017050f59a252720e3`, [publicador #45568444602](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45568444602) **4/4 SUCCESS**, nueve activos SHA-256. Instalador Windows y selector nativo instalado (dos botones y Cancel), actualización y conservación de datos, render visual y Android firmado en emulador aprobados. [Recibo](docs/GRANADA_V12083_FINAL_RECEIPT_2026-11-25.md). #416 aceptación física pendiente; #413 desarrollo independiente excluido. Ruta P0 **58% (7/12)**; v120.84 reservada sin autorización. No RC/beta.
+
+---
+
 ## v120.83 — P0 Windows startup hotfix (FINAL publication authorized, not yet published)
 
 Owner's v120.82 normal startup failed (#416). #414 merged after 6/6 exact-head checks, installed native dialog both account buttons and Cancel, and upgrade/data preservation passed. Fix byte-packed TaskDialog ABI; explicit fallback and available isolated slots; no account data changes. v120.82 remains latest published until exact-source governed publisher success. Physical startup not yet accepted. #413 is independent and excluded. No RC/beta.
