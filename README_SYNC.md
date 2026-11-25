@@ -18,7 +18,7 @@ Owner explicitly authorized official stable distribution for subsequent physical
 
 > **Auth email issue (2026-10-11):** Hosted Supabase Auth/Brevo email templates remain a separate unresolved infrastructure check; successful GitHub release does not certify OTP deliverability.
 
-Current published stable: **v120.82**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), [publisher 4/4 SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199), 9 SHA-256 assets. The next reserved development version **v120.83 is not authorized**. One-time v120.82 permission consumed; physical acceptance remains open.
+Current published stable: **v120.82**, [official GitHub release](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), [publisher 4/4 SUCCESS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199), 9 SHA-256 assets. The next reserved development version **v120.83 is authorized for governed FINAL publication only after exact-source gates pass**. One-time v120.82 permission consumed; physical acceptance remains open.
 
 ## v120.41 — Safe app-user switch and Desktop Instagram registry refresh
 
@@ -115,7 +115,7 @@ Manual/device validation is still required before calling the Android stable art
 
 ## Release rule
 
-The next reserved release target is **v120.83**, not authorized for publication. v120.82 published from 84b84e7a5dec057a869b72fe149dfde3f037cf00; one-use authorization consumed. Mandatory exact-source and device acceptance gates remain.
+The next reserved release target is **v120.83**, authorized only for governed FINAL publication after exact-source gates pass. v120.82 published from 84b84e7a5dec057a869b72fe149dfde3f037cf00; one-use authorization consumed. Mandatory exact-source and device acceptance gates remain.
 
 Authority: `release/distribution-manifest.json`.
 
