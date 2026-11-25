@@ -108,7 +108,7 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                     def __call__(self, config, output, *_args):
                         cfg = config._obj
                         # The Windows SDK uses byte-packed structures, not ctypes' default padding.
-                        self.assertEqual(ctypes.sizeof(cfg), 32 + 15 * ctypes.sizeof(ctypes.c_void_p))
+                        self.assertEqual(ctypes.sizeof(cfg), 32 + 16 * ctypes.sizeof(ctypes.c_void_p))
                         self.assertEqual(ctypes.sizeof(cfg.pButtons._type_), 4 + ctypes.sizeof(ctypes.c_void_p))
                         self.assertEqual(type(cfg).hwndParent.offset, 4)
                         self_ids = [cfg.pButtons[i].nButtonID for i in range(cfg.cButtons)]
