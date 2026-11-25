@@ -197,8 +197,13 @@ def main(argv=None) -> int:
                         help="Choose an isolated window directly; otherwise Windows asks at startup.")
     parser.add_argument("--smoke-startup", action="store_true",
                         help="Initialize the installed UI and local controller without Instagram.")
+    parser.add_argument("--smoke-chooser", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:
+        if args.smoke_chooser:
+            if select_workspace(developer=args.developer, _smoke_cancel=True) is not None:
+                raise RuntimeError("Native account chooser smoke test did not cancel.")
+            return 0
         source = bundled_html()
         if args.smoke_startup:
             # Test the REAL installed executable's file:// and local backend
