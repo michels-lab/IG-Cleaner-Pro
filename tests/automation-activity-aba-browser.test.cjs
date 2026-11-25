@@ -61,12 +61,16 @@ async function scenario(){
       origin:'robot',at:new Date().toISOString()}]);
     window.__releaseHistory(1,[]);
   },{A,B});
-  await page.waitForFunction(()=>window.__historyRequests.length===4);
+  await page.waitForFunction(()=>window.__historyRequests.length===6);
+  const switched=await page.evaluate(()=>window.__historyRequests.slice(2).map(r=>r.identity.account));
+  assert.deepEqual(switched,[B,B,A,A],'New accounts must query immediately without waiting for old journal');
   assert.equal(await page.locator('#igcActCount_today').innerText(),'—',
     'Late first A journal must never render after A-B-A');
-  await page.evaluate(()=>{window.__releaseHistory(2,[{
+  await page.evaluate(()=>{window.__releaseHistory(2,[{username:'obsolete.b',status:'ok',origin:'robot',at:new Date().toISOString()}]);window.__releaseHistory(3,[])});
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+  await page.evaluate(()=>{window.__releaseHistory(4,[{
     username:'fresh.current',status:'ok',origin:'robot',at:new Date().toISOString()
-  }]);window.__releaseHistory(3,[])});
+  }]);window.__releaseHistory(5,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='1');
 
   // A fresh B refresh is allowed, but a previous A count must disappear.
@@ -74,12 +78,12 @@ async function scenario(){
     window.IGC_INSTAGRAM_PROFILES.active=B;
     window.igcAutomationActivityRefresh();
   },B);
-  await page.waitForFunction(()=>window.__historyRequests.length===6);
+  await page.waitForFunction(()=>window.__historyRequests.length===8);
   assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
-  await page.evaluate(()=>{window.__releaseHistory(4,[{
+  await page.evaluate(()=>{window.__releaseHistory(6,[{
     username:'second.one',status:'ok',origin:'robot',at:new Date().toISOString()
   },{username:'second.two',status:'ok',origin:'robot',at:new Date().toISOString()}]);
-    window.__releaseHistory(5,[])});
+    window.__releaseHistory(7,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='2');
 
   // Switching authenticated app owner invalidates the previous account
@@ -89,11 +93,11 @@ async function scenario(){
       accounts:[{account_key:A,username:'another.owner'}]};
     window.igcAutomationActivityRefresh();
   },{A,SECOND});
-  await page.waitForFunction(()=>window.__historyRequests.length===8);
-  const afterOwner=await page.evaluate(()=>window.__historyRequests.slice(6).map(r=>r.identity));
+  await page.waitForFunction(()=>window.__historyRequests.length===10);
+  const afterOwner=await page.evaluate(()=>window.__historyRequests.slice(8).map(r=>r.identity));
   assert(afterOwner.every(r=>r.owner===SECOND&&r.account===A),
     'New requests must bind the new owner before async fetch');
-  await page.evaluate(()=>{window.__releaseHistory(6,[]);window.__releaseHistory(7,[])});
+  await page.evaluate(()=>{window.__releaseHistory(8,[]);window.__releaseHistory(9,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='0');
   assert.equal(await page.locator('#igcActMetric_verified').innerText(),'0');
   await page.close();
@@ -151,4 +155,50 @@ async function stalledBridgeScenario(){
   console.log('Windows Automations: stalled JSON, independent live batch, partial/unknown history and recovery PASS');
  }finally{await browser.close()}
 }
-(async()=>{await scenario();await stalledBridgeScenario()})().catch(error=>{console.error(error);process.exitCode=1});
+async function pinnedIdentityScenario(){
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ try{
+  const page=await browser.newPage();
+  await page.setContent('<main id="page-automations"><div class="igc-page-flow"><section id="igcAutomationCommandCenter"></section></div></main>');
+  await page.evaluate(({A,B,OWNER})=>{
+   window.location.hash='#igc-robot=1234.'+'a'.repeat(32);
+   window.IGC_INSTAGRAM_PROFILES={owner:OWNER,active:'legacy',generation:1,
+     accounts:[{account_key:A,username:'first.account'},{account_key:B,username:'second.account'}]};
+   window.__reads=[];
+   window.fetch=async(url,options={})=>{
+    if(String(url).includes('/api/actions/history')){
+     const identity=JSON.parse(options.body);
+     return new Promise(resolve=>window.__reads.push({identity,resolve}));
+    }
+    return {ok:true,json:async()=>({owner:OWNER,lanes:[]})};
+   };
+   window.__resolve=(index,rows)=>{
+    const pending=window.__reads[index];
+    pending.resolve({ok:true,json:async()=>({...pending.identity,history_rows:rows})});
+   };
+  },{A,B,OWNER});
+  await page.addScriptTag({content:script});
+  await page.waitForFunction(()=>document.querySelector('#igcActStatus')?.textContent.includes('Select a registered'));
+  assert.equal(await page.evaluate(()=>window.__reads.length),0,'Unnamed active profile must not silently query first named account');
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+  await page.evaluate(A=>{window.IGC_INSTAGRAM_PROFILES.active=A;window.IGC_INSTAGRAM_PROFILES.generation++;window.igcAutomationActivityRefresh()},A);
+  await page.waitForFunction(()=>window.__reads.length===2);
+  // No History refresh observes the intervening B. Only the canonical
+  // workspace generation can reject the first A result before the poll.
+  await page.evaluate(({A,B})=>{
+   const p=window.IGC_INSTAGRAM_PROFILES;p.active=B;p.generation++;p.active=A;p.generation++;
+   window.__resolve(0,[{username:'stale.first',status:'ok',origin:'robot',at:new Date().toISOString()}]);
+   window.__resolve(1,[]);
+  },{A,B});
+  await page.waitForFunction(()=>window.__reads.length===4);
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+  await page.evaluate(()=>{window.__resolve(2,[{username:'fresh.first',status:'ok',origin:'robot',at:new Date().toISOString()}]);window.__resolve(3,[])});
+  await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='1');
+  await page.evaluate(()=>{window.IGC_INSTAGRAM_PROFILES.accounts=[];window.igcAutomationActivityRefresh()});
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+  assert.equal(await page.evaluate(()=>window.__reads.length),4,'Empty registry cannot resurrect cached account');
+  await page.close();
+  console.log('Native History: unnamed profile, invisible ABA generation and empty registry PASS');
+ }finally{await browser.close()}
+}
+(async()=>{await scenario();await stalledBridgeScenario();await pinnedIdentityScenario()})().catch(error=>{console.error(error);process.exitCode=1});
