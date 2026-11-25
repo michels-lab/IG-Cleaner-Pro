@@ -37,6 +37,7 @@ try {
   if ($devShortcut.Arguments -ne '--developer') { throw "Developer shortcut must launch --developer." }
   # Real installed binary, not a copied portable EXE.
   RunBounded $exe @('--healthcheck') 'Installed app binary' 75
+  RunBounded $exe @('--smoke-chooser') 'Installed native account chooser (real Win32 Cancel)' 45
   RunBounded $exe @('--smoke-startup') 'Installed primary startup path' 100
   RunBounded $exe @('--smoke-startup','--workspace','secondary') 'Installed second-window startup path' 100
   RunBounded $exe @('--smoke-startup','--developer') 'Installed Developer Edition startup path' 100
