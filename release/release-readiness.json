@@ -1,7 +1,7 @@
 {
   "schema": "ig-cleaner-release-readiness-v1",
   "release_hold": true,
-  "reason": "Product remains unfinished; explicit owner one-use stable v120.82 distribution for physical review after mandatory gates.",
+  "reason": "Owner-directed P0 startup hotfix v120.83 under explicit Granada invocation; product completion hold and physical gates remain.",
   "owner_final_acceptance": {
     "approved": false,
     "release_tag": null,
@@ -31,17 +31,17 @@
     173,
     176
   ],
-  "next_version": "v120.82",
-  "notes": "v120.81 published; new v120.82 explicitly authorized 2026-11-24. All critical physical acceptance remains false.",
+  "next_version": "v120.83",
+  "notes": "v120.82 published but normal owner startup failed #416. v120.83 authorized once for repair distribution subject to exact-source publisher gates; no owner acceptance claim.",
   "owner_device_review_release_override": {
     "authorized": true,
-    "release_tag": "v120.82",
-    "source": "explicit-owner-chat-instruction-2026-11-24",
-    "owner_direct_quote": "dale release perra",
+    "release_tag": "v120.83",
+    "source": "explicit-owner-chat-instruction-2026-11-25",
+    "owner_direct_quote": "op granada",
     "physical_tests_deferred": true,
     "automated_publisher_gates_required": true,
-    "previous_published_release": "v120.81",
-    "disclosure": "One-use official stable v120.82 distribution; no physical acceptance claim; no automated gate waived."
+    "previous_published_release": "v120.82",
+    "disclosure": "One-time startup hotfix distribution after all publisher gates. #416 owner physical startup and five P0 milestones remain unverified."
   },
   "owner_device_review_release_override_history": [
     {
@@ -114,6 +114,19 @@
       "consumed_by_release": "v120.81",
       "consumed_run": 45319438358,
       "consumed_at": "2026-11-24T03:42:17Z"
+    },
+    {
+      "authorized": false,
+      "release_tag": "v120.82",
+      "source": "explicit-owner-chat-instruction-2026-11-24",
+      "owner_direct_quote": "dale release perra",
+      "physical_tests_deferred": true,
+      "automated_publisher_gates_required": true,
+      "previous_published_release": "v120.81",
+      "disclosure": "Consumed by v120.82 FINAL; no future release authorization or physical acceptance.",
+      "consumed_by_release": "v120.82",
+      "consumed_run": 45358286199,
+      "consumed_at": "2026-11-24T08:51:20Z"
     }
   ]
 }

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "audit_kind": "deterministic_full_tracked_tree",
-  "tracked_files_total": 501,
-  "classified_files_total": 497,
-  "docs_content_inspected": 147,
+  "tracked_files_total": 503,
+  "classified_files_total": 499,
+  "docs_content_inspected": 149,
   "large_docs_skipped": 2,
   "excluded_reports": 4,
   "roles": {
@@ -14,7 +14,7 @@
     "config": 71,
     "database_migration": 7,
     "database_schema": 1,
-    "document": 143,
+    "document": 145,
     "index": 5,
     "installer_metadata": 1,
     "source": 56,
@@ -24,12 +24,12 @@
     "workflow": 12
   },
   "finding_counts": {
-    "BROKEN_RELATIVE_LINK": 2,
+    "BROKEN_RELATIVE_LINK": 5,
     "POTENTIAL_UNLOGGED_CHANGES": 1
   },
-  "finding_total": 3,
-  "inventory_fingerprint": "1678699874ba842a28f522f8394061b4a9245d9913b36188e63bec7c8423d8d5",
-  "evidence_fingerprint": "5d38b9fe52d45c6da66bf9134e9a378fa5945ac0e609076c4ebb4d44f8981828",
+  "finding_total": 6,
+  "inventory_fingerprint": "3d42453fa13988e2c06f837b6a1a9d1e45e6ed4da8502c9b78465bad22b6cad7",
+  "evidence_fingerprint": "ea9cc93b450b749b5444448c23b027a800e39f6b06f5cfd9dc77ecbe4c882537",
   "files": [
     {
       "path": ".github/ISSUE_TEMPLATE/chatgpt-task.yml",
@@ -211,7 +211,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "bdfb6e64277e094a2d24129051a471ba05e861d5"
+      "blob": "3ff929fc33c82fcacad75097f6f50a33ad5b459e"
     },
     {
       "path": ".michelslab/project.yml",
@@ -225,7 +225,7 @@
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "62aa2ec8346e989fa551f99283352b76392c6268"
+      "blob": "661065e98c655da585eb399e0c8ab9c0ce0d2c6b"
     },
     {
       "path": "AGENTS.md",
@@ -253,28 +253,28 @@
       "role": "bitacora",
       "purpose": "technical/audit change history",
       "certainty": "rule",
-      "blob": "fd36ecc120445316e285ef3229a864cca41735f3"
+      "blob": "e57ace6b40f550cd92523a218185a10f39231d8f"
     },
     {
       "path": "README.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "ebe33027802050b8533da3427504f9394b5577e7"
+      "blob": "a7268525ddb6ed2e82823a36bb32561ca72220e6"
     },
     {
       "path": "README_SYNC.md",
       "role": "index",
       "purpose": "navigation/onboarding",
       "certainty": "rule",
-      "blob": "5c5818119a29be672199959cc06912586e9234f1"
+      "blob": "9f1f749196b4c8f69d4859632e76c08d9c32b4b8"
     },
     {
       "path": "android/app/build.gradle.kts",
       "role": "build_script",
       "purpose": "platform build/project/installer script",
       "certainty": "inferred",
-      "blob": "1debd076cb500a5f65593df733f022e71404af06"
+      "blob": "aef461e62484142732e6ae598c4b42385dea1f48"
     },
     {
       "path": "android/app/src/androidTest/java/com/michelslab/igcleaner/AboutRenderTest.java",
@@ -862,7 +862,7 @@
       "role": "web_ui",
       "purpose": "local HTML documentation or web interface",
       "certainty": "inferred",
-      "blob": "ed148e5c7424d514d691209034cc84af8150d6e6"
+      "blob": "6dcea31b3f19ec5427a881e0e1d1398d68c525c0"
     },
     {
       "path": "docs/ANDROID_SIGNING.md",
@@ -890,7 +890,7 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "dffbcbfd57a0575990b3f6b34efe82b694a2a07c"
+      "blob": "57a2e674482f0f538e12a9aa6c6ce7307f148d9a"
     },
     {
       "path": "docs/DEVELOPER_EDITION.md",
@@ -1509,6 +1509,13 @@
       "blob": "396821a647b213d4ae429aaffa7cd5bb548660e2"
     },
     {
+      "path": "docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "19f0ce3b4be8748a3db330c7a76dd5647d94ed74"
+    },
+    {
       "path": "docs/GRANADA_VISIBLE_DUAL_ACTION_WINDOWS_2026-10-30.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1597,14 +1604,14 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "ad69315af1245009087cebf5937dca7063eb80c4"
+      "blob": "145ac73ed81f0fd60a19260b1b34956d96936b15"
     },
     {
       "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "423ec1df974a0bda080b901d5459542b1f814bd9"
+      "blob": "9a043689698e4e0d8fa89f563cecbb6ecce4c617"
     },
     {
       "path": "docs/audits/2026-11-17-automation-history-casefold-reconciliation.md",
@@ -1831,6 +1838,13 @@
       "blob": "aa463473ab02a6b62bfe98c7658141ca3ffdc51a"
     },
     {
+      "path": "docs/audits/2026-11-24-native-slot-availability.md",
+      "role": "document",
+      "purpose": "manual/decision/report/historical note",
+      "certainty": "inferred",
+      "blob": "14c5d52c9183e54ac2a5d6b59614e31e7bf19754"
+    },
+    {
       "path": "docs/audits/2026-11-24-visible-owner-controls-viewport.md",
       "role": "document",
       "purpose": "manual/decision/report/historical note",
@@ -1926,28 +1940,28 @@
       "role": "document",
       "purpose": "manual/decision/report/historical note",
       "certainty": "inferred",
-      "blob": "d033d063d90ddefcd8f6f869b34c2115dbc269f2"
+      "blob": "f660f2945f3b45fba606c985fe134f773b2ed4e2"
     },
     {
       "path": "release/android-signing.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "30de270a9cfde9e3dfd402120bbd03234eea88cf"
+      "blob": "1adff38ae3533fe639dee64f90137f724fc3ddb3"
     },
     {
       "path": "release/distribution-manifest.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "c15f62a36b553e81ac32f316d4200ea370eb2921"
+      "blob": "3eb18e9481cddf65b510815826688414b8e989fb"
     },
     {
       "path": "release/release-readiness.json",
       "role": "config",
       "purpose": "machine-readable configuration",
       "certainty": "rule",
-      "blob": "40b60cf36d4815e7dca4e0744d4bd87a61408cfa"
+      "blob": "696dff88c08c0110b91cf08e393ad8522d3ff8df"
     },
     {
       "path": "supabase/email-templates/confirmation.html",
@@ -3025,7 +3039,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "d121c8a7664135f4c4cfc716636c491210273bc4"
+      "blob": "ae59708ee9906dcb6dc8554e65948b16f3e26c13"
     },
     {
       "path": "tests/test_profile_actions_chromium.py",
@@ -3102,7 +3116,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "85e315818c52343e5300b5c0fc8016cdd43d15a5"
+      "blob": "09d68af733b9a2c03a1e1b9ba7d9761c83eb80b1"
     },
     {
       "path": "tests/test_robot_interlock.py",
@@ -3137,7 +3151,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0dda431476bce0af7ba647198d8875d05963d221"
+      "blob": "a7660997170e0f1189fb43cddc51a8175165f8e6"
     },
     {
       "path": "tests/test_windows_updater.py",
@@ -3305,7 +3319,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "49d5bb1075caf6d2c985a92463d4db71ee196db5"
+      "blob": "d8f260ed3d6d44d5dc0c894952527af8ddd6fa35"
     },
     {
       "path": "tools/ig_structured_probe.py",
@@ -3396,7 +3410,7 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "84745897e0452d3af06674f4be6b20dd9e9aa920"
+      "blob": "29e391df613e69a09352e4adefd35c01773b783f"
     },
     {
       "path": "tools/repository_file_auditor.py",
@@ -3459,7 +3473,7 @@
       "role": "test",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "0f490f6f671a9bfb24580c4c1afa26f6e1a28b25"
+      "blob": "badd4c205bf55b3cb7aea24ea46409524cfe6e41"
     },
     {
       "path": "tools/test_windows_installer_wizard.ps1",
@@ -3508,16 +3522,43 @@
       "role": "source",
       "purpose": "code/test implementation",
       "certainty": "rule",
-      "blob": "f04742b5db5b2e8249dadfa5ca6d4b909ab4e491"
+      "blob": "b3a81b3172b928bc2051d78f650791fa0ce8349d"
     }
   ],
   "findings": [
+    {
+      "id": "43f9e3af91f2b36f",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/PROJECT_PROGRESS.md",
+      "observation": "Missing: docs/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
     {
       "id": "b7b89c0ec3f42069",
       "code": "BROKEN_RELATIVE_LINK",
       "severity": "confirmed",
       "path": "docs/PROJECT_PROGRESS.md",
       "observation": "Missing: docs/docs/audits/2026-11-24-visible-owner-controls-viewport.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "1eed8bdccf588c59",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "docs/UPDATE_AND_STATE_MIGRATION.md",
+      "observation": "Missing: docs/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
+      "recommendation": "Fix link or restore target",
+      "state": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "d34dbdedaafa4d6f",
+      "code": "BROKEN_RELATIVE_LINK",
+      "severity": "confirmed",
+      "path": "release/RELEASE_NOTES.md",
+      "observation": "Missing: release/docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md",
       "recommendation": "Fix link or restore target",
       "state": "REVIEW_REQUIRED"
     },

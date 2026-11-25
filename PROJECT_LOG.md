@@ -1,6 +1,12 @@
-## GRANADA 24-nov-2026 — #413: History sigue únicamente al perfil activo
+## Granada 25-nov-2026 — v120.83: reparación de arranque normal Windows
 
-[PR #413](https://github.com/michels-lab/IG-Cleaner-Pro/pull/413) OPEN, nueva fuente separada de v120.82: elimina selección implícita de otra cuenta, descarta respuestas con generación o registry obsoletos incluso A→B→A entre sondeos, limpia métricas de perfil sin registrar. [Auditoría](docs/audits/2026-11-24-history-pinned-identity.md). Regresión Chromium en revisión. 58% (7/12) sin aceptación física. [Publicador v120.82](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) en ejecución sobre SHA fijo `84b84e7a5dec057a869b72fe149dfde3f037cf00`; #413 no pertenece a ese release. Última publicada v120.81.
+P0 [#416](https://github.com/michels-lab/IG-Cleaner-Pro/issues/416): v120.82 falla en el selector nativo en el equipo del propietario. [#414](https://github.com/michels-lab/IG-Cleaner-Pro/pull/414) MERGED `940e657ca465580f5bcf02da01b24fefcb147dfa`, 6/6 exact-head SUCCESS; [Windows installed runtime/upgrade/data preservation PASS](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45540032613/job/138956033580), incluye prueba de ambos botones reales y Cancel. ABI packed, fallback, ventanas disponibles, mismos directorios. v120.83 FINAL solicitada bajo autorización Granada para hotfix, no publicada todavía. v120.82 sigue estable publicada pero con fallo físico de arranque. #413 independiente excluido. Ruta histórica P0 58% (7/12); aceptación física pendiente. No RC/beta.
+
+---
+
+## Granada v120.82 FINAL publicada — 24-nov-2026
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), exact tagged source `84b84e7a5dec057a869b72fe149dfde3f037cf00`, [publicador #45358286199](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) **4/4 SUCCESS**, 9 activos con SHA-256, Windows Setup instalado/iniciado/desinstalado, Android firmado instalado/iniciado en emulador y capturas Home/About verificadas. [Recibo](docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md). #409/#410/#411 incluidos. #413 y #414 son desarrollo posterior independiente; no incluidos. Avance **58% (7/12)**, aceptación física sigue pendiente #371/#377/#360/#164/#172. Autorización única consumida; v120.83 reservada no autorizada. No RC ni beta.
 
 ---
 

@@ -61,12 +61,16 @@ async function scenario(){
       origin:'robot',at:new Date().toISOString()}]);
     window.__releaseHistory(1,[]);
   },{A,B});
-  await page.waitForFunction(()=>window.__historyRequests.length===4);
+  await page.waitForFunction(()=>window.__historyRequests.length===6);
+  const switched=await page.evaluate(()=>window.__historyRequests.slice(2).map(r=>r.identity.account));
+  assert.deepEqual(switched,[B,B,A,A],'New accounts must query immediately without waiting for old journal');
   assert.equal(await page.locator('#igcActCount_today').innerText(),'—',
     'Late first A journal must never render after A-B-A');
-  await page.evaluate(()=>{window.__releaseHistory(2,[{
+  await page.evaluate(()=>{window.__releaseHistory(2,[{username:'obsolete.b',status:'ok',origin:'robot',at:new Date().toISOString()}]);window.__releaseHistory(3,[])});
+  assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
+  await page.evaluate(()=>{window.__releaseHistory(4,[{
     username:'fresh.current',status:'ok',origin:'robot',at:new Date().toISOString()
-  }]);window.__releaseHistory(3,[])});
+  }]);window.__releaseHistory(5,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='1');
 
   // A fresh B refresh is allowed, but a previous A count must disappear.
@@ -74,12 +78,12 @@ async function scenario(){
     window.IGC_INSTAGRAM_PROFILES.active=B;
     window.igcAutomationActivityRefresh();
   },B);
-  await page.waitForFunction(()=>window.__historyRequests.length===6);
+  await page.waitForFunction(()=>window.__historyRequests.length===8);
   assert.equal(await page.locator('#igcActCount_today').innerText(),'—');
-  await page.evaluate(()=>{window.__releaseHistory(4,[{
+  await page.evaluate(()=>{window.__releaseHistory(6,[{
     username:'second.one',status:'ok',origin:'robot',at:new Date().toISOString()
   },{username:'second.two',status:'ok',origin:'robot',at:new Date().toISOString()}]);
-    window.__releaseHistory(5,[])});
+    window.__releaseHistory(7,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='2');
 
   // Switching authenticated app owner invalidates the previous account
@@ -89,11 +93,11 @@ async function scenario(){
       accounts:[{account_key:A,username:'another.owner'}]};
     window.igcAutomationActivityRefresh();
   },{A,SECOND});
-  await page.waitForFunction(()=>window.__historyRequests.length===8);
-  const afterOwner=await page.evaluate(()=>window.__historyRequests.slice(6).map(r=>r.identity));
+  await page.waitForFunction(()=>window.__historyRequests.length===10);
+  const afterOwner=await page.evaluate(()=>window.__historyRequests.slice(8).map(r=>r.identity));
   assert(afterOwner.every(r=>r.owner===SECOND&&r.account===A),
     'New requests must bind the new owner before async fetch');
-  await page.evaluate(()=>{window.__releaseHistory(6,[]);window.__releaseHistory(7,[])});
+  await page.evaluate(()=>{window.__releaseHistory(8,[]);window.__releaseHistory(9,[])});
   await page.waitForFunction(()=>document.querySelector('#igcActCount_today')?.textContent==='0');
   assert.equal(await page.locator('#igcActMetric_verified').innerText(),'0');
   await page.close();

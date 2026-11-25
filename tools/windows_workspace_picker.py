@@ -51,7 +51,28 @@ def instance_mutex_name(workspace: str, *, developer: bool = False) -> str:
     return prefix + ("_SecondWindow" if workspace == "secondary" else "")
 
 
-def select_workspace() -> str | None:
+def workspace_is_open(workspace: str, *, developer: bool = False) -> bool:
+    """Read the existing named mutex without creating/reserving an app slot."""
+    import ctypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenMutexW.argtypes = [ctypes.c_uint32, ctypes.c_bool, ctypes.c_wchar_p]
+    kernel32.OpenMutexW.restype = ctypes.c_void_p
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel32.CloseHandle.restype = ctypes.c_bool
+    handle = kernel32.OpenMutexW(0x00100000, False,
+                                instance_mutex_name(workspace, developer=developer))
+    if handle:
+        kernel32.CloseHandle(handle)
+        return True
+    error = ctypes.get_last_error()
+    if error == 2:  # ERROR_FILE_NOT_FOUND: genuinely absent
+        return False
+    # Access denied or an unexpected probe failure is not evidence of a free slot.
+    # The authoritative CreateMutexW gate still runs at actual launch.
+    return True
+
+
+def select_workspace(*, developer: bool = False, _smoke_choice: str | None = None) -> str | None:
     """Use a labeled Windows task dialog rather than ambiguous Yes/No buttons.
 
     Cancel returns None and does not touch user data or start the browser.
@@ -64,9 +85,11 @@ def select_workspace() -> str | None:
     from ctypes import wintypes
 
     class TaskDialogButton(ctypes.Structure):
+        _pack_ = 1  # commctrl.h uses byte-packed task-dialog structures.
         _fields_ = [("nButtonID", ctypes.c_int), ("pszButtonText", wintypes.LPCWSTR)]
 
     class TaskDialogConfig(ctypes.Structure):
+        _pack_ = 1
         _fields_ = [
             ("cbSize", wintypes.UINT),
             ("hwndParent", wintypes.HWND),
@@ -94,32 +117,105 @@ def select_workspace() -> str | None:
             ("cxWidth", wintypes.UINT),
         ]
 
-    buttons = (TaskDialogButton * 2)(
-        TaskDialogButton(101, "Cuenta principal\nConserva tu sesión anterior"),
-        TaskDialogButton(102, "Segunda cuenta\nAbre una sesión totalmente independiente"),
+    labels = {
+        "primary": (101, "Primary account\nKeep your existing session"),
+        "secondary": (102, "Second account\nOpen its independent session"),
+    }
+    free = [slot for slot in WORKSPACES
+            if not workspace_is_open(slot, developer=developer)]
+    busy = [slot for slot in WORKSPACES if slot not in free]
+    buttons = (TaskDialogButton * len(free))(
+        *(TaskDialogButton(*labels[slot]) for slot in free)
     )
     config = TaskDialogConfig()
     config.cbSize = ctypes.sizeof(TaskDialogConfig)
     # TDF_USE_COMMAND_LINKS and TDF_ALLOW_DIALOG_CANCELLATION
     config.dwFlags = 0x0010 | 0x0008
-    # TDCBF_CANCEL_BUTTON
-    config.dwCommonButtons = 0x0008
+    config.dwCommonButtons = 0x0008  # Cancel
     config.pszWindowTitle = "Instagram Cleaner Pro"
-    config.pszMainInstruction = "¿Con qué cuenta quieres trabajar?"
-    config.pszContent = (
-        "Cada cuenta tiene su propia ventana, inicio de sesión y datos de navegador. "
-        "Para abrir ambas, ejecuta InstaCleaner otra vez y elige la otra cuenta."
+    config.pszMainInstruction = ("Which account window do you want to open?"
+                                if free else "Both account windows are already open")
+    status = " ".join(
+        ("Primary account" if slot == "primary" else "Second account") +
+        ": already open or unavailable." for slot in busy
     )
-    config.cButtons = 2
-    config.pButtons = buttons
-    config.nDefaultButton = 101
+    config.pszContent = (
+        "Each window has its own sign-in and browser data. "
+        + (status + " " if status else "")
+        + ("Choose an available window, or cancel without changing anything."
+           if free else "Use an existing window or close one before launching again.")
+    )
+    config.cButtons = len(free)
+    config.pButtons = buttons if free else None
+    config.nDefaultButton = labels[free[0]][0] if free else 2
     config.cxWidth = 260
     selected = ctypes.c_int(0)
-    call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
-    call.argtypes = [ctypes.POINTER(TaskDialogConfig), ctypes.POINTER(ctypes.c_int),
-                     ctypes.c_void_p, ctypes.c_void_p]
-    call.restype = ctypes.c_long
-    result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
-    if result < 0:
-        raise RuntimeError("No se pudo abrir el selector de cuentas de Windows.")
-    return {101: "primary", 102: "secondary"}.get(selected.value)
+    callback = None
+    if _smoke_choice is not None:
+        # Installed-binary CI only: invoke a real button in the native dialog.
+        # Do not launch a workspace or mutate user data in this mode.
+        if _smoke_choice not in ('cancel', *free):
+            raise RuntimeError('Requested native chooser smoke button is unavailable.')
+        smoke_button = 2 if _smoke_choice == 'cancel' else labels[_smoke_choice][0]
+        post = ctypes.WinDLL("user32", use_last_error=True).PostMessageW
+        post.argtypes = [wintypes.HWND, wintypes.UINT, ctypes.c_size_t, ctypes.c_ssize_t]
+        post.restype = wintypes.BOOL
+        callback_type = ctypes.WINFUNCTYPE(ctypes.c_int32, wintypes.HWND,
+                                            wintypes.UINT, ctypes.c_size_t,
+                                            ctypes.c_ssize_t, ctypes.c_ssize_t)
+
+        @callback_type
+        def callback(hwnd, notification, *_args):
+            if notification in (0, 4):  # TDN_CREATED / TDN_TIMER
+                post(hwnd, 0x0400 + 102, smoke_button, 0)  # TDM_CLICK_BUTTON
+            return 0
+
+        config.dwFlags |= 0x0800  # TDF_CALLBACK_TIMER
+        config.pfCallback = ctypes.cast(callback, ctypes.c_void_p)
+    try:
+        call = ctypes.WinDLL("comctl32", use_last_error=True).TaskDialogIndirect
+        call.argtypes = [ctypes.POINTER(TaskDialogConfig), ctypes.POINTER(ctypes.c_int),
+                         ctypes.c_void_p, ctypes.c_void_p]
+        call.restype = ctypes.c_int32  # HRESULT is signed 32-bit.
+        result = call(ctypes.byref(config), ctypes.byref(selected), None, None)
+    except (OSError, AttributeError):
+        if _smoke_choice is not None:
+            raise
+        return fallback_workspace_dialog(free)
+    if result != 0:
+        if _smoke_choice is not None:
+            raise RuntimeError(f'Native account chooser failed: HRESULT 0x{result & 0xffffffff:08X}')
+        # A missing common-controls activation context or rejected ABI must
+        # never make the installed app impossible to start. Preserve explicit
+        # owner choice and Cancel; never silently pick a different account.
+        return fallback_workspace_dialog(free)
+    if _smoke_choice is not None and selected.value != smoke_button:
+        raise RuntimeError('Native account chooser returned the wrong button.')
+    return next((slot for slot in free if labels[slot][0] == selected.value), None)
+
+def fallback_workspace_dialog(free: list[str]) -> str | None:
+    """Universal Win32 recovery when comctl32 TaskDialogIndirect fails."""
+    import ctypes
+    from ctypes import wintypes
+
+    message_box = ctypes.WinDLL("user32", use_last_error=True).MessageBoxW
+    message_box.argtypes = [wintypes.HWND, wintypes.LPCWSTR,
+                            wintypes.LPCWSTR, wintypes.UINT]
+    message_box.restype = ctypes.c_int
+    title = "Insta Cleaner Pro"
+    if not free:
+        message_box(None, "Both account windows are already open or unavailable.",
+                    title, 0x40)
+        return None
+    if len(free) == 1:
+        name = "Primary account" if free[0] == "primary" else "Second account"
+        result = message_box(None, "Open " + name + "?\n\nOK = Open; Cancel = Exit.",
+                             title, 0x01 | 0x40 | 0x100)
+        return free[0] if result == 1 else None
+    result = message_box(
+        None, "Choose your independent account window:\n\n"
+              "Yes = Primary account (existing session)\n"
+              "No = Second account (separate session)\n"
+              "Cancel = Exit without changes.",
+        title, 0x03 | 0x40 | 0x200)
+    return {6: "primary", 7: "secondary"}.get(result)

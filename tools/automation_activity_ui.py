@@ -59,7 +59,7 @@ const sessionStart=Date.now(); // This native app page session; reset on reload.
 const PERIODS=[['session','Esta sesión'],['today','Hoy'],['d7','Últimos 7 días'],
  ['h1','Última hora'],['h2','Últimas 2 horas'],['h3','Últimas 3 horas'],
  ['h24','Últimas 24 horas'],['week','Esta semana'],['month','Este mes'],['all','Histórico']];
-let owner='',registry=[],loading=false,refreshAgain=false,dataReady=false,latest=[],unavailableTasks=[],lastKey='',lastActive='',lastGeneration=null,batchSequence=0,scopeEpoch=0;
+let owner='',registry=[],journalRequest=null,refreshAgain=false,dataReady=false,latest=[],unavailableTasks=[],lastKey='',lastActive='',lastGeneration=null,batchSequence=0,scopeEpoch=0,batchController=null;
 function node(tag,name,txt){
  const x=document.createElement(tag);if(name)x.className=name;
  if(txt!==undefined)x.textContent=String(txt);return x;
@@ -87,6 +87,7 @@ function context(){
  return {owner:p.owner,accounts,active,generation:p.generation??null};
 }
 function registrySignature(ctx){
+ if(!ctx.owner)return '';
  return ctx.owner+'|'+ctx.accounts.map(a=>a.account+':'+a.handle).join('|');
 }
 function isCurrentScope(ctx,account){
@@ -184,10 +185,16 @@ function summarize(records,id,now,originFilter='all'){
 // Bound the entire read, including response decoding. A failed local
 // controller must not hold the History refresh lock or stale counters forever.
 async function bridgeReadJson(url,options={}){
- const controller=new AbortController();
- let timer;
+ const controller=new AbortController(),outer=options.signal;
+ let timer,abortRead;
+ if(outer?.aborted)throw Error('History scope changed.');
+ const cancelled=new Promise((_,reject)=>{
+  abortRead=()=>{controller.abort();reject(Error('History scope changed.'))};
+  outer?.addEventListener('abort',abortRead,{once:true});
+ });
  try{
    return await Promise.race([
+     cancelled,
      (async()=>{
        const response=await fetch(url,{...options,signal:controller.signal});
        const data=await response.json();
@@ -200,14 +207,14 @@ async function bridgeReadJson(url,options={}){
        },BRIDGE_READ_TIMEOUT_MS);
      })
    ]);
- }finally{clearTimeout(timer)}
+ }finally{clearTimeout(timer);outer?.removeEventListener('abort',abortRead)}
 }
-async function readHistory(account,task,expectedOwner){
+async function readHistory(account,task,expectedOwner,signal){
  // Bind the request owner before async I/O; the global owner may switch.
  const a=auth(),request={owner:expectedOwner,account,task};
  const {ok,data}=await bridgeReadJson('http://127.0.0.1:'+a.port+'/api/actions/history',{
    method:'POST',headers:{'X-IGC-Bridge-Token':a.token,'Content-Type':'application/json'},
-   body:JSON.stringify(request)
+   body:JSON.stringify(request),signal
  });
  if(!ok||data.owner!==expectedOwner||data.account!==account||data.task!==task||
     !Array.isArray(data.history_rows))throw Error('Historial no verificable para la cuenta seleccionada.');
@@ -220,11 +227,11 @@ async function readHistory(account,task,expectedOwner){
    })):[]
  }));
 }
-async function readBatchStatus(account,expectedOwner){
+async function readBatchStatus(account,expectedOwner,signal){
  const a=auth();
  const headers={'X-IGC-Bridge-Token':a.token};
  async function get(path){
-  const {ok,data:x}=await bridgeReadJson('http://127.0.0.1:'+a.port+path,{headers});
+  const {ok,data:x}=await bridgeReadJson('http://127.0.0.1:'+a.port+path,{headers,signal});
   if(!ok)throw Error('No hay estado de tanda verificable.');
   return x;
  }
@@ -314,7 +321,9 @@ function showBatch(state){
 function refreshBatch(account,expectedOwner){
  const request=++batchSequence,expectedEpoch=scopeEpoch,ctx=context();
  if(!isCurrentScope(ctx,account)||ctx.owner!==expectedOwner)return;
- readBatchStatus(account,expectedOwner).then(state=>{
+ batchController?.abort();
+ const controller=new AbortController();batchController=controller;
+ readBatchStatus(account,expectedOwner,controller.signal).then(state=>{
   if(request!==batchSequence||scopeEpoch!==expectedEpoch||owner!==expectedOwner||
      $('igcActAccount')?.value!==account||!isCurrentScope(ctx,account))return;
   showBatch(state);
@@ -335,6 +344,7 @@ function clearJournalValues(){
 }
 function clearValues(){
  batchSequence++;
+ batchController?.abort();batchController=null;
  unavailableTasks=[];
  const bt=$('igcActBatchTitle');if(bt)bt.textContent='—';
  const b=$('igcActBatch');if(b)b.textContent='—';
@@ -415,14 +425,19 @@ function render(records){
    const el=$('igcActMetric_'+key);if(el)el.textContent=display(data[key]);
  }
 }
+function invalidateJournalScope(){
+ scopeEpoch++;
+ journalRequest?.abort();journalRequest=null;refreshAgain=false;
+ const button=$('igcActRefresh');if(button)button.disabled=false;
+}
 async function refresh(){
  const ctx=context(),selector=$('igcActAccount');
  if(!selector)return;
- if(!ctx.owner){scopeEpoch++;latest=[];owner='';lastKey='';lastActive='';lastGeneration=null;dataReady=false;clearValues();
+ if(!ctx.owner){invalidateJournalScope();latest=[];owner='';lastKey='';lastActive='';lastGeneration=null;dataReady=false;clearValues();
    selector.replaceChildren();setStatus('Inicia sesión para consultar estadísticas guardadas.');return}
  const signature=registrySignature(ctx);
  if(signature!==lastKey){
-   scopeEpoch++; // Owner, account registry, or handle identity changed.
+   invalidateJournalScope(); // Owner, account registry, or handle identity changed.
    selector.replaceChildren();
    for(const account of ctx.accounts){
      const opt=node('option',null,'@'+account.handle);opt.value=account.account;selector.append(opt);
@@ -434,7 +449,7 @@ async function refresh(){
    lastGeneration=ctx.generation;
    latest=[];dataReady=false;clearValues();
  }else if(ctx.active!==lastActive||ctx.generation!==lastGeneration){
-   scopeEpoch++; // A -> B -> A must invalidate the first A response.
+   invalidateJournalScope(); // A -> B -> A must invalidate the first A response.
    // A real Instagram workspace switch invalidates the old account's numbers,
    // even if an earlier network request is still outstanding.
    selector.value=ctx.active;
@@ -448,8 +463,8 @@ async function refresh(){
    latest=[];dataReady=false;clearValues();
    setStatus('Select a registered Instagram profile in this window to view its history.');return;
  }
- if(loading){refreshAgain=true;return;}
- loading=true;
+ if(journalRequest){refreshAgain=true;return;}
+ const controller=new AbortController();journalRequest=controller;
  const button=$('igcActRefresh');if(button)button.disabled=true;
  const account=ctx.active,requestEpoch=scopeEpoch;
  // Live batch status is independent from the potentially slow journal.
@@ -460,7 +475,7 @@ async function refresh(){
    // A single corrupt Cancel Pending WAL must not erase valid Unfollow
    // counts (or vice versa). Require exact owner/account/task for every row.
    const tasks=['unfollow','cancel'];
-   const responses=await Promise.allSettled(tasks.map(task=>readHistory(account,task,ctx.owner)));
+   const responses=await Promise.allSettled(tasks.map(task=>readHistory(account,task,ctx.owner,controller.signal)));
    // Reject stale responses after an account selection or login switch.
    if(scopeEpoch!==requestEpoch||owner!==ctx.owner||selector.value!==account||
       !isCurrentScope(ctx,account))return;
@@ -484,8 +499,11 @@ async function refresh(){
      setStatus('Sin historial verificable: '+String(e.message||e).slice(0,120));
    }
  }finally{
-   loading=false;if(button)button.disabled=false;
-   if(refreshAgain){refreshAgain=false;refresh()}
+   // A superseded request must not unlock or restart the new account's refresh.
+   if(journalRequest===controller){
+     journalRequest=null;if(button)button.disabled=false;
+     if(refreshAgain){refreshAgain=false;refresh()}
+   }
  }
 }
 function mount(){

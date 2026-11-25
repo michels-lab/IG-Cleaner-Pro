@@ -1,3 +1,13 @@
+## v120.83 — P0 Windows startup hotfix (FINAL publication authorized, not yet published)
+
+Owner's v120.82 normal startup failed (#416). #414 merged after 6/6 exact-head checks, installed native dialog both account buttons and Cancel, and upgrade/data preservation passed. Fix byte-packed TaskDialog ABI; explicit fallback and available isolated slots; no account data changes. v120.82 remains latest published until exact-source governed publisher success. Physical startup not yet accepted. #413 is independent and excluded. No RC/beta.
+
+## Granada v120.82 FINAL publicada — 24-nov-2026
+
+[Release oficial](https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82), exact tagged source `84b84e7a5dec057a869b72fe149dfde3f037cf00`, [publicador #45358286199](https://github.com/michels-lab/IG-Cleaner-Pro/actions/runs/45358286199) **4/4 SUCCESS**, 9 activos con SHA-256, Windows Setup instalado/iniciado/desinstalado, Android firmado instalado/iniciado en emulador y capturas Home/About verificadas. [Recibo](docs/GRANADA_V12082_FINAL_RECEIPT_2026-11-24.md). #409/#410/#411 incluidos. #413 y #414 son desarrollo posterior independiente; no incluidos. Avance **58% (7/12)**, aceptación física sigue pendiente #371/#377/#360/#164/#172. Autorización única consumida; v120.83 reservada no autorizada. No RC ni beta.
+
+---
+
 ## v120.82 — FINAL release requested (24-Nov-2026)
 
 Owner explicitly authorized official stable distribution for subsequent physical testing. Source #409, #410 and #411 integrated; #411 6/6 exact-head SUCCESS. Latest published remains v120.81 until governed publisher succeeds. All exact-source installer, signed APK, rendered UI and checksum gates remain mandatory. P0 58% (7/12), five real-account/device milestones pending. No RC, beta or Developer publication.

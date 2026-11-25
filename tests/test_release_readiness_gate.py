@@ -44,17 +44,22 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
         self.assertIs(prior[0]['authorized'], False)
         self.assertEqual(prior[0]['consumed_by_release'], 'v120.81')
         self.assertEqual(prior[0]['consumed_run'], 45319438358)
+        previous = [item for item in history if item.get('release_tag') == 'v120.82']
+        self.assertEqual(len(previous), 1)
+        self.assertIs(previous[0]['authorized'], False)
+        self.assertEqual(previous[0]['consumed_by_release'], 'v120.82')
+        self.assertEqual(previous[0]['consumed_run'], 45358286199)
         self.assertTrue(override['automated_publisher_gates_required'])
-        self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-24')
+        self.assertEqual(override['source'], 'explicit-owner-chat-instruction-2026-11-25')
         request = json.loads((ROOT/'.michelslab/release-request.json').read_text(encoding='utf-8'))
         active = request.get('authorized') is True and request.get('status') in ('requested', 'authorized')
         if active:
             self.assertEqual(request['tag'], next_tag)
             self.assertTrue(override['authorized'])
             self.assertEqual(override['release_tag'], next_tag)
-            self.assertEqual(override['owner_direct_quote'], 'dale release perra')
+            self.assertEqual(override['owner_direct_quote'], 'op granada')
             check_readiness(self.current, next_tag, {})
-            self.assertEqual(override['release_tag'], 'v120.82')
+            self.assertEqual(override['release_tag'], 'v120.83')
             forged = deepcopy(self.current)
             forged['owner_device_review_release_override']['release_tag'] = 'v120.77'
             with self.assertRaises(ReleaseBlocked):
@@ -63,17 +68,17 @@ class OwnerCompletionReleaseGateTests(unittest.TestCase):
             self.assertFalse(override['authorized'])
             with self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current, next_tag, {})
-        for old in ('v120.76', 'v120.77', 'v120.78', 'v120.79', 'v120.80', 'v120.81'):
+        for old in ('v120.76', 'v120.77', 'v120.78', 'v120.79', 'v120.80', 'v120.81', 'v120.82'):
             if old == next_tag:
                 continue
             with self.subTest(old_tag=old), self.assertRaises(ReleaseBlocked):
                 check_readiness(self.current, old, {})
         self.assertTrue(any(not value for value in self.current['critical_acceptance'].values()))
         if request.get('status') == 'published':
-            self.assertEqual(request.get('tag'), 'v120.81')
-            self.assertEqual(self.current['next_version'], 'v120.82')
-            self.assertEqual(request.get('published_commit'), 'fc1cd03a476dc4c5797e90e89e18d22733c34175')
-            self.assertEqual(request.get('published_run'), 45319438358)
+            self.assertEqual(request.get('tag'), 'v120.82')
+            self.assertEqual(self.current['next_version'], 'v120.83')
+            self.assertEqual(request.get('published_commit'), '84b84e7a5dec057a869b72fe149dfde3f037cf00')
+            self.assertEqual(request.get('published_run'), 45358286199)
             self.assertEqual(override.get('consumed_by_release'), request['tag'])
             self.assertEqual(override.get('consumed_run'), request['published_run'])
 

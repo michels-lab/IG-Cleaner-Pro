@@ -133,7 +133,7 @@ def acquire_single_instance(*, developer=False, workspace='primary'):
         raise OSError("No se pudo reservar la instancia de Insta Cleaner.")
     if ctypes.get_last_error() == 183:
         kernel32.CloseHandle(handle)
-        raise RuntimeError("Esa cuenta ya tiene una ventana abierta. Elige la otra cuenta al iniciar.")
+        raise RuntimeError("This account window is already open. Choose the other available window at startup.")
     return handle
 
 
@@ -197,8 +197,14 @@ def main(argv=None) -> int:
                         help="Choose an isolated window directly; otherwise Windows asks at startup.")
     parser.add_argument("--smoke-startup", action="store_true",
                         help="Initialize the installed UI and local controller without Instagram.")
+    parser.add_argument("--smoke-chooser", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     try:
+        if args.smoke_chooser:
+            for choice, expected in (("primary", "primary"), ("secondary", "secondary"), ("cancel", None)):
+                if select_workspace(developer=args.developer, _smoke_choice=choice) != expected:
+                    raise RuntimeError("Native account chooser smoke test selected the wrong window.")
+            return 0
         source = bundled_html()
         if args.smoke_startup:
             # Test the REAL installed executable's file:// and local backend
@@ -243,7 +249,7 @@ def main(argv=None) -> int:
             print("PASS: UI embebida, controlador Playwright y servidor local disponibles.")
             return 0
 
-        workspace = args.workspace or (select_workspace() if sys.platform == "win32" else "primary")
+        workspace = args.workspace or (select_workspace(developer=args.developer) if sys.platform == "win32" else "primary")
         if workspace is None:
             return 0  # Explicit Cancel; do not start backend, browser or robot.
         mutex = acquire_single_instance(developer=args.developer, workspace=workspace)
