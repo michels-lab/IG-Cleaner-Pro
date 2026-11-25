@@ -1,12 +1,12 @@
 {
   "version": "120.82",
   "tag": "v120.82",
-  "authorized": true,
+  "authorized": false,
   "authorization_source": "Owner explicitly requested 'dale release perra' on 2026-11-24 for InstaCleaner only; single-use official stable distribution for physical review after mandatory gates.",
   "requested_channel": "stable",
   "github_prerelease": false,
   "android_stable_artifact": "signed-production-keystore",
-  "status": "requested",
+  "status": "published",
   "previous_stable_release": "v120.81",
   "requested_at": "2026-11-24",
   "owner_acceptance_note": "Owner permits v120.82 stable distribution for subsequent physical testing. release_hold=true and owner_final_acceptance=false; live Instagram, Focus, two Windows sessions and physical Samsung/backup acceptance remain pending. All automated publisher gates remain mandatory.",
@@ -18,5 +18,10 @@
     "published_at": "2026-11-24T03:42:17Z",
     "release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.81",
     "asset_count": 9
-  }
+  },
+  "published_run": 45358286199,
+  "published_commit": "84b84e7a5dec057a869b72fe149dfde3f037cf00",
+  "published_at": "2026-11-24T08:51:20Z",
+  "published_release_url": "https://github.com/michels-lab/IG-Cleaner-Pro/releases/tag/v120.82",
+  "publication_note": "Official FINAL v120.82 published with 4/4 publisher SUCCESS and 9 SHA256 assets. One-time authorization consumed; physical acceptance not inferred."
 }
