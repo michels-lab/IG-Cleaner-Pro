@@ -107,6 +107,10 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                 class TaskDialogStub:
                     def __call__(self, config, output, *_args):
                         cfg = config._obj
+                        # The Windows SDK uses byte-packed structures, not ctypes' default padding.
+                        self.assertEqual(ctypes.sizeof(cfg), 32 + 15 * ctypes.sizeof(ctypes.c_void_p))
+                        self.assertEqual(ctypes.sizeof(cfg.pButtons._type_), 4 + ctypes.sizeof(ctypes.c_void_p))
+                        self.assertEqual(type(cfg).hwndParent.offset, 4)
                         self_ids = [cfg.pButtons[i].nButtonID for i in range(cfg.cButtons)]
                         self.assertEqual(self_ids, expected_ids)
                         self.assertEqual(cfg.nDefaultButton, expected_ids[0] if free else 2)
@@ -129,6 +133,57 @@ class WindowsIndependentWindowTests(unittest.TestCase):
                     self.assertEqual(picker.select_workspace(developer=True), expected)
                     self.assertEqual([call.kwargs for call in probe.call_args_list],
                                      [{"developer": True}, {"developer": True}])
+
+    def test_taskdialog_failure_uses_explicit_fallback_not_startup_error(self):
+        import ctypes
+        from unittest.mock import patch
+
+        class FailingDialog:
+            def __call__(self, *_args):
+                return -2147024809  # E_INVALIDARG
+
+        class FailingLibrary:
+            TaskDialogIndirect = FailingDialog()
+
+        with (patch.object(picker.sys, "platform", "win32"),
+              patch.object(picker, "workspace_is_open", return_value=False),
+              patch.object(ctypes, "WinDLL", return_value=FailingLibrary(), create=True),
+              patch.object(picker, "fallback_workspace_dialog", return_value="secondary") as fallback):
+            self.assertEqual(picker.select_workspace(), "secondary")
+            fallback.assert_called_once_with(["primary", "secondary"])
+
+        with (patch.object(picker.sys, "platform", "win32"),
+              patch.object(picker, "workspace_is_open", return_value=False),
+              patch.object(ctypes, "WinDLL", side_effect=OSError("comctl32 unavailable"), create=True),
+              patch.object(picker, "fallback_workspace_dialog", return_value=None) as fallback):
+            self.assertIsNone(picker.select_workspace())
+            fallback.assert_called_once_with(["primary", "secondary"])
+
+    def test_fallback_dialog_respects_explicit_choices_and_cancel(self):
+        import ctypes
+        from unittest.mock import patch
+
+        class MessageBoxStub:
+            def __init__(self, result):
+                self.result = result
+            def __call__(self, *_args):
+                return self.result
+
+        cases = [
+            (["primary", "secondary"], 6, "primary"),
+            (["primary", "secondary"], 7, "secondary"),
+            (["primary", "secondary"], 2, None),
+            (["primary"], 1, "primary"),
+            (["secondary"], 1, "secondary"),
+            (["secondary"], 2, None),
+            ([], 1, None),
+        ]
+        for free, response, expected in cases:
+            with self.subTest(free=free, response=response):
+                class FakeLibrary:
+                    MessageBoxW = MessageBoxStub(response)
+                with patch.object(ctypes, "WinDLL", return_value=FakeLibrary(), create=True):
+                    self.assertEqual(picker.fallback_workspace_dialog(free), expected)
 
     @unittest.skipUnless(sys.platform == "win32", "Windows named mutex runtime")
     def test_picker_probes_existing_slots_without_reserving_or_creating_them(self):
